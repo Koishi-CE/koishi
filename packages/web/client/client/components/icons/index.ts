@@ -1,4 +1,3 @@
-import * as components from "@koishi-ce/components";
 import {
 	type App,
 	type Component,
@@ -7,6 +6,7 @@ import {
 	markRaw,
 	reactive,
 } from "vue";
+import * as components from "../../../../components/client/index.ts";
 import Default from "./activity/default.vue";
 import Ellipsis from "./activity/ellipsis.vue";
 import Home from "./activity/home.vue";
@@ -112,8 +112,8 @@ export function install(app: App) {
 			props: {
 				name: String,
 			},
-			render(props) {
-				const component = registry[props.name];
+			render(props: { name?: string }) {
+				const component = props.name ? registry[props.name] : undefined;
 				return component && h(component);
 			},
 		}),

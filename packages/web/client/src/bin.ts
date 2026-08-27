@@ -14,6 +14,6 @@ cli.command("build [root]").action((root) => {
 
 cli.parse();
 
-if (!cli.matchedCommand && !cli.options.help) {
+if (!cli.matchedCommand && !cli.options["help"]) {
 	cli.outputHelp();
 }

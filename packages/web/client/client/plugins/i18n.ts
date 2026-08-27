@@ -24,7 +24,10 @@ export default class I18nService extends Service {
 		ctx.effect(() =>
 			watchEffect(
 				() => {
-					this.i18n.global.locale.value = config.value.locale;
+					const locale = config.value.locale;
+					if (locale) {
+						this.i18n.global.locale.value = locale;
+					}
 				},
 				{ flush: "post" },
 			),

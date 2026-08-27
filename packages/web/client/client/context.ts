@@ -37,17 +37,23 @@ export function useContext() {
 
 export function useRpc<T>(): Ref<T> {
 	const parent = inject("cordis") as Context;
-	return parent.extension?.data;
+	return parent.extension?.data as Ref<T>;
 }
 
-export type Internal = {};
+// 各服务通过 `declare module "../context"` 对 Internal 做接口合并,
+// 因此这里必须是 interface 而非类型别名(空 interface 不能被 biome 自动
+// 改写为 type alias,否则合并会变成 TS2300 重复标识符)
+// biome-ignore lint/suspicious/noEmptyInterface: 需要保持 interface 以支持声明合并
+export interface Internal {}
 
 export class Context extends cordis.Context {
 	app: App;
 
 	constructor() {
 		super();
-		this.extension = null;
+		// cordis.Context 上对应字段不含 null(exactOptionalPropertyTypes),
+		// 运行时以 null 表示「尚未加载」,类型层面按已知模式收窄
+		this.extension = null as never;
 		this.internal = {} as Internal;
 		this.app = createApp(
 			defineComponent({
@@ -85,7 +91,7 @@ export class Context extends cordis.Context {
 		});
 	}
 
-	wrapComponent(component: Component) {
+	wrapComponent(component: Component | undefined) {
 		if (!component) return;
 		if (!this.extension) return component;
 		return defineComponent((props, { slots }) => {

@@ -2,8 +2,18 @@ import yaml from "@maikolib/vite-plugin-yaml";
 import vue from "@vitejs/plugin-vue";
 import { existsSync, promises as fs, globSync, readFileSync } from "fs";
 import { dirname, resolve } from "path";
-import type { RollupOutput } from "rollup";
 import * as vite from "vite";
+
+// vite 8 基于 rolldown,rollup 已不在依赖树中;这里按实际消费的字段
+// 局部声明构建产物类型(替代原先的 `import type { RollupOutput }`)
+interface BuildResult {
+	output: Array<{
+		fileName: string;
+		type: string;
+		source?: any;
+		code?: string;
+	}>;
+}
 
 // 将全部工作区包名映射到其源码目录,行为对齐根 tsconfig 的 paths 别名。
 // 没有被任何工作区包依赖的插件(如 plugin-logger)不会出现在 node_modules
@@ -106,6 +116,8 @@ export async function build(root: string, config: vite.UserConfig = {}) {
 						...workspaceAliases,
 						"vue-i18n": "@koishi-ce/client",
 						"@koishi-ce/components": "@koishi-ce/client",
+						// 虚拟子路径,类型见 packages/web/components/client/shims.d.ts
+						"schemastery-vue/client": "schemastery-vue",
 					},
 				},
 				define: {
@@ -114,15 +126,15 @@ export async function build(root: string, config: vite.UserConfig = {}) {
 			} as vite.InlineConfig,
 			config,
 		),
-	)) as RollupOutput[];
+	)) as BuildResult[];
 
-	for (const item of results[0].output) {
+	for (const item of results[0]!.output) {
 		if (item.fileName === "index.mjs") item.fileName = "index.js";
 		const dest = root + "/dist/" + item.fileName;
 		if (item.type === "asset") {
 			await fs.writeFile(dest, item.source);
 		} else {
-			const result = await vite.transformWithEsbuild(item.code, dest, {
+			const result = await vite.transformWithEsbuild(item.code!, dest, {
 				minifyWhitespace: true,
 				charset: "utf8",
 			});
@@ -133,7 +145,7 @@ export async function build(root: string, config: vite.UserConfig = {}) {
 
 export async function createServer(
 	baseDir: string,
-	config?: vite.InlineConfig,
+	config: vite.InlineConfig = {},
 ) {
 	const root = resolve(__dirname, "../app");
 	return vite.createServer(
@@ -182,6 +194,8 @@ export async function createServer(
 						"../vue.js": "vue",
 						"../vue-router.js": "vue-router",
 						"../vueuse.js": "@vueuse/core",
+						// 虚拟子路径,类型见 packages/web/components/client/shims.d.ts
+						"schemastery-vue/client": "schemastery-vue",
 					},
 				},
 				optimizeDeps: {

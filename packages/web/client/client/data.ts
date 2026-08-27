@@ -1,3 +1,4 @@
+/// <reference path="./shims.d.ts" />
 import type { Promisify, Universal } from "@koishi-ce/koishi";
 import type {
 	ClientConfig,
@@ -24,7 +25,7 @@ export function withProxy(url: string) {
 	return (global.proxyBase || "") + url;
 }
 
-export const socket = ref<Universal.WebSocket>(null);
+export const socket = ref<Universal.WebSocket | null>(null);
 const listeners: Record<string, (data: any) => void> = {};
 const responseHooks: Record<string, [Function, Function]> = {};
 
@@ -50,11 +51,11 @@ export function receive<T = any>(event: string, listener: (data: T) => void) {
 	listeners[event] = listener;
 }
 
-receive("data", ({ key, value }) => {
+receive<{ key: keyof Store; value: any }>("data", ({ key, value }) => {
 	store[key] = value;
 });
 
-receive("patch", ({ key, value }) => {
+receive<{ key: keyof Store; value: any }>("patch", ({ key, value }) => {
 	if (Array.isArray(store[key])) {
 		store[key].push(...value);
 	} else if (store[key]) {
@@ -89,7 +90,7 @@ export function connect(ctx: Context, callback: () => Universal.WebSocket) {
 	const reconnect = () => {
 		socket.value = null;
 		for (const key in store) {
-			store[key] = undefined;
+			(store as Record<string, unknown>)[key] = undefined;
 		}
 		console.log("[koishi] websocket disconnected, will retry in 1s...");
 		setTimeout(() => {
@@ -104,7 +105,7 @@ export function connect(ctx: Context, callback: () => Universal.WebSocket) {
 		const data = JSON.parse(ev.data);
 		console.debug("↓%c", "color:purple", data.type, data.body);
 		if (data.type in listeners) {
-			listeners[data.type](data.body);
+			listeners[data.type]?.(data.body);
 		}
 		ctx.emit(data.type, data.body);
 	});

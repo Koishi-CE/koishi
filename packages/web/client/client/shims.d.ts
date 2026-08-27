@@ -1,0 +1,52 @@
+/**
+ * 浏览器端类型垫片(packages/web/client 自身使用;app 项目通过
+ * app/shims.d.ts 引用本文件):
+ *
+ * 1. "schemastery-vue/client":见 packages/web/components/client/shims.d.ts
+ *    (下方 reference 引入的唯一权威声明)。
+ * 2. "@koishi-ce/plugin-console":本包 node_modules 中没有该插件的链接
+ *    (依赖方向相反,浏览器端 tsconfig 也没有 paths),且该插件源码含有
+ *    node 专属导入,无法直接进入浏览器程序,故在此按其公开面手写声明。
+ *    字段与 plugins/webui/console/src/node/index.ts 的 ClientConfig 以及
+ *    packages/node/console 的 DataService / Console.Services 保持一致。
+ */
+/// <reference path="../../components/client/shims.d.ts" />
+
+declare module "@koishi-ce/plugin-console" {
+	import type { Schema } from "@koishi-ce/koishi";
+	import type { Dict } from "cosmokit";
+
+	export interface ClientConfig {
+		devMode: boolean;
+		uiPath: string;
+		endpoint: string;
+		static?: boolean;
+		heartbeat?: HeartbeatConfig;
+		proxyBase?: string;
+	}
+
+	interface HeartbeatConfig {
+		interval?: number;
+		timeout?: number;
+	}
+
+	export interface Events {
+		ping(): string;
+	}
+
+	export abstract class DataService<T = any> {}
+
+	export interface EntryData {
+		files: string[];
+		paths?: string[];
+		data: () => any;
+	}
+
+	export namespace Console {
+		export interface Services {
+			entry: DataService<Dict<EntryData>>;
+			schema: DataService<Dict<Schema>>;
+			permissions: DataService<string[]>;
+		}
+	}
+}

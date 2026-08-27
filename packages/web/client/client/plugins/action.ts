@@ -91,7 +91,7 @@ export default class ActionService extends Service {
 		super(ctx, "$action", true);
 		ctx.mixin("$action", ["action", "menu", "define"]);
 
-		ctx.internal.scope = shallowReactive({});
+		ctx.internal.scope = shallowReactive({} as Store<ActionContext>);
 		ctx.internal.menus = reactive({});
 		ctx.internal.actions = reactive({});
 		ctx.internal.activeMenus = reactive([]);
@@ -106,7 +106,7 @@ export default class ActionService extends Service {
 				let ctrlKey = false,
 					shiftKey = false,
 					metaKey = false,
-					code: string;
+					code: string | undefined;
 				for (const key of keys) {
 					switch (key) {
 						case "shift":
@@ -169,19 +169,21 @@ export default class ActionService extends Service {
 	}
 }
 
-function createScope(scope: Store<ActionContext>, prefix = "") {
-	return new Proxy(
-		{},
-		{
-			get: (target, key) => {
-				if (typeof key === "symbol") return target[key];
-				key = prefix + key;
-				if (key in scope) return toValue(scope[key]);
-				const _prefix = key + ".";
-				if (Object.keys(scope).some((k) => k.startsWith(_prefix))) {
-					return createScope(scope, key + ".");
-				}
-			},
+function createScope(
+	scope: Store<ActionContext>,
+	prefix = "",
+): Flatten<ActionContext> {
+	return new Proxy({} as Record<string, unknown>, {
+		get: (target, key) => {
+			if (typeof key === "symbol")
+				return (target as Record<symbol, unknown>)[key];
+			key = prefix + key;
+			const source = scope as Record<string, MaybeRefOrGetter<unknown>>;
+			if (key in scope) return toValue(source[key]);
+			const _prefix = key + ".";
+			if (Object.keys(scope).some((k) => k.startsWith(_prefix))) {
+				return createScope(scope, key + ".");
+			}
 		},
-	);
+	}) as Flatten<ActionContext>;
 }

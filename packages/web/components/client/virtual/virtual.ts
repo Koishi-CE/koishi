@@ -1,18 +1,21 @@
 import { reactive } from "vue";
 
-enum CALC_TYPE {
-	INIT,
-	FIXED,
-	DYNAMIC,
-}
+// erasableSyntaxOnly:enum → const 对象 + 同名类型
+const CALC_TYPE = {
+	INIT: 0,
+	FIXED: 1,
+	DYNAMIC: 2,
+} as const;
+
+type CalcType = (typeof CALC_TYPE)[keyof typeof CALC_TYPE];
 
 const LEADING_BUFFER = 2;
 
 export interface Range {
-	start?: number;
-	end?: number;
-	padFront?: number;
-	padBehind?: number;
+	start: number;
+	end: number;
+	padFront: number;
+	padBehind: number;
 }
 
 interface VirtualConfig {
@@ -28,16 +31,27 @@ export default class Virtual {
 		["footer", 0],
 	]);
 
-	firstRangeTotalSize = 0;
+	// delete 操作要求属性可选(fixedSizeValue/firstRangeTotalSize 会被 delete)
+	firstRangeTotalSize?: number = 0;
 	firstRangeAverageSize = 0;
 	lastCalcIndex = 0;
-	fixedSizeValue = 0;
-	calcType = CALC_TYPE.INIT;
+	fixedSizeValue?: number = 0;
+	calcType: CalcType = CALC_TYPE.INIT;
 	offset = 0;
 	direction: 0 | 1 | -1 = 0;
-	range = reactive<Range>({});
+	// 构造函数末尾 checkRange → updateRange 会立即写入全部字段,
+	// 这里给出零值仅为满足必填类型,不改变任何可观察行为
+	range = reactive<Range>({
+		start: 0,
+		end: 0,
+		padFront: 0,
+		padBehind: 0,
+	});
 
-	constructor(public param: VirtualConfig) {
+	param: VirtualConfig;
+
+	constructor(param: VirtualConfig) {
+		this.param = param;
 		this.checkRange(0, param.count);
 	}
 
@@ -147,12 +161,12 @@ export default class Virtual {
 
 	// return the pass overs according to current scroll offset
 	private getScrollOvers() {
-		const offset = this.offset - this.sizes.get("header");
+		const offset = this.offset - (this.sizes.get("header") ?? 0);
 		if (offset <= 0) return 0;
 
 		// if is fixed type, that can be easily
 		if (this.isFixedType()) {
-			return Math.floor(offset / this.fixedSizeValue);
+			return Math.floor(offset / this.fixedSizeValue!);
 		}
 
 		let low = 0;
@@ -191,7 +205,7 @@ export default class Virtual {
 		for (let index = 0; index < givenIndex; index++) {
 			offset =
 				offset +
-				(this.sizes.get(this.param.uids[index]) ?? this.getEstimateSize());
+				(this.sizes.get(this.param.uids[index]!) ?? this.getEstimateSize());
 		}
 
 		// remember last calculate index
@@ -247,7 +261,7 @@ export default class Virtual {
 	// return total front offset
 	getPadFront() {
 		if (this.isFixedType()) {
-			return this.fixedSizeValue * this.range.start;
+			return this.fixedSizeValue! * this.range.start;
 		} else {
 			return this.getOffset(this.range.start);
 		}
@@ -259,7 +273,7 @@ export default class Virtual {
 		const lastIndex = this.getLastIndex();
 
 		if (this.isFixedType()) {
-			return (lastIndex - end) * this.fixedSizeValue;
+			return (lastIndex - end) * this.fixedSizeValue!;
 		}
 
 		// if it's all calculated, return the exactly offset
@@ -274,7 +288,7 @@ export default class Virtual {
 	// get the item estimate size
 	getEstimateSize() {
 		return this.isFixedType()
-			? this.fixedSizeValue
+			? this.fixedSizeValue!
 			: this.firstRangeAverageSize || this.param.estimated;
 	}
 }

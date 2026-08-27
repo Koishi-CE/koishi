@@ -6,7 +6,9 @@ declare module "@koishi-ce/client" {
 	}
 
 	interface Config {
-		activities: Dict<ActivityOverride>;
+		// 运行时的默认配置(initial fallback)并不包含该字段,
+		// 故声明为可选(exactOptionalPropertyTypes 下不显式赋 undefined)
+		activities?: Dict<ActivityOverride>;
 	}
 }
 

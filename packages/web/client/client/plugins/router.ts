@@ -51,22 +51,31 @@ export namespace Activity {
 	}
 }
 
-export interface Activity extends Activity.Options {}
+// 实例上的 desc/name/icon 是 getter(toValue 解析后的值),与 Options 中
+// MaybeRefOrGetter 形状不同,故从继承中排除后再声明
+export interface Activity
+	extends Omit<Activity.Options, "desc" | "name" | "icon"> {
+	desc?: string | undefined;
+	name?: string | undefined;
+	icon?: string | undefined;
+}
 
 function getActivityId(path: string) {
 	return path.split("/").find(Boolean) ?? "";
 }
 
-export const redirectTo = ref<string>();
+export const redirectTo = ref<string | null>();
 
 export class Activity {
 	id: string;
 	_disposables: Disposable[] = [];
 
-	constructor(
-		public ctx: Context,
-		public options: Activity.Options,
-	) {
+	ctx: Context;
+	options: Activity.Options;
+
+	constructor(ctx: Context, options: Activity.Options) {
+		this.ctx = ctx;
+		this.options = options;
 		options.order ??= 0;
 		options.position ??= "top";
 		Object.assign(this, omit(options, ["icon", "name", "desc", "disabled"]));
@@ -110,9 +119,10 @@ export class Activity {
 
 	disabled() {
 		if (this.ctx.bail("activity", this)) return true;
-		if (!this.fields.every((key) => store[key])) return true;
+		if (!this.fields?.every((key) => store[key])) return true;
 		if (this.when && !this.when()) return true;
 		if (this.options.disabled?.()) return true;
+		return false;
 	}
 
 	dispose() {
@@ -144,7 +154,10 @@ export default class RouterService extends Service {
 		ctx.effect(() =>
 			this.router.afterEach((route) => {
 				const { name, fullPath } = this.router.currentRoute.value;
-				this.cache[name] = fullPath;
+				if (name) {
+					// 本应用的路由名均为字符串;reactive 收窄了索引签名,不含 symbol
+					this.cache[name as string] = fullPath;
+				}
 				if (route.meta.activity) {
 					document.title = `${route.meta.activity.name}`;
 					if (initialTitle) document.title += ` | ${initialTitle}`;
@@ -154,7 +167,7 @@ export default class RouterService extends Service {
 
 		this.router.beforeEach(async (to, from) => {
 			if (to.matched.length) {
-				if (to.matched[0].path !== "/") {
+				if (to.matched[0]?.path !== "/") {
 					redirectTo.value = null;
 				}
 				return;
@@ -162,8 +175,8 @@ export default class RouterService extends Service {
 
 			if (from === START_LOCATION) {
 				await ctx.$loader.initTask;
-				to = this.router.resolve(to);
-				if (to.matched.length) return to;
+				const resolved = this.router.resolve(to);
+				if (resolved.matched.length) return resolved;
 			}
 
 			redirectTo.value = to.fullPath;
@@ -180,8 +193,11 @@ export default class RouterService extends Service {
 
 	slot(options: SlotOptions) {
 		options.order ??= 0;
-		options.component = this.ctx.wrapComponent(options.component);
-		if (options.when) options.disabled = () => !options.when();
+		options.component = this.ctx.wrapComponent(options.component)!;
+		if (options.when) {
+			const { when } = options;
+			options.disabled = () => !when();
+		}
 		return this.ctx.effect(() => {
 			const list = (this.views[options.type] ||= []);
 			insert(list, options);
@@ -193,7 +209,7 @@ export default class RouterService extends Service {
 	}
 
 	page(options: Activity.Options) {
-		options.component = this.ctx.wrapComponent(options.component);
+		options.component = this.ctx.wrapComponent(options.component)!;
 		return this.ctx.effect(() => {
 			const activity = new Activity(this.ctx, options);
 			return () => activity.dispose();

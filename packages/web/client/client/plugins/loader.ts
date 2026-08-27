@@ -1,3 +1,4 @@
+import type { EntryData } from "@koishi-ce/plugin-console";
 import type { EffectScope } from "cordis";
 import type { Dict } from "cosmokit";
 import { type Ref, ref, shallowReactive, watch } from "vue";
@@ -39,13 +40,13 @@ const loaders: Dict<(ctx: Context, url: string) => Promise<void>> = {
 	},
 	async [``](ctx, url) {
 		const exports = await import(/* @vite-ignore */ url);
-		ctx.plugin(unwrapExports(exports), ctx.extension.data);
+		ctx.plugin(unwrapExports(exports), ctx.extension?.data);
 	},
 };
 
 export interface LoadResult {
 	scope: EffectScope;
-	paths: string[];
+	paths?: string[] | undefined;
 	done: Ref<boolean>;
 	data: Ref;
 }
@@ -53,7 +54,7 @@ export interface LoadResult {
 export default class LoaderService extends Service {
 	private backendId: any;
 
-	public extensions: Dict<LoadResult> = shallowReactive({});
+	public extensions: Dict<LoadResult> = shallowReactive({} as Dict<LoadResult>);
 
 	constructor(ctx: Context) {
 		super(ctx, "$loader", true);
@@ -62,7 +63,8 @@ export default class LoaderService extends Service {
 			const entry = store.entry?.[id];
 			if (!entry) return;
 			entry.data = data;
-			this.extensions[id].data.value = data;
+			const extension = this.extensions[id];
+			if (extension) extension.data.value = data;
 		});
 	}
 
@@ -70,7 +72,7 @@ export default class LoaderService extends Service {
 		watch(
 			() => store.entry,
 			async (newValue, oldValue) => {
-				const { _id, ...rest } = newValue || {};
+				const { _id, ...rest } = (newValue || {}) as Dict<EntryData>;
 				if (this.backendId && _id && this.backendId !== _id) {
 					window.location.reload();
 					return;
@@ -79,7 +81,7 @@ export default class LoaderService extends Service {
 
 				for (const key in this.extensions) {
 					if (rest[key]) continue;
-					this.extensions[key].scope.dispose();
+					this.extensions[key]?.scope.dispose();
 					delete this.extensions[key];
 				}
 
@@ -97,11 +99,14 @@ export default class LoaderService extends Service {
 							files.map((url) => {
 								for (const ext in loaders) {
 									if (!url.endsWith(ext)) continue;
-									return loaders[ext](scope.ctx, url);
+									return loaders[ext]?.(scope.ctx, url);
 								}
 							}),
 						);
-						task.finally(() => (this.extensions[key].done.value = true));
+						task.finally(() => {
+							const extension = this.extensions[key];
+							if (extension) extension.done.value = true;
+						});
 					}),
 				);
 

@@ -1,7 +1,7 @@
-import { Schema } from "@koishi-ce/components";
 import { usePreferredDark } from "@vueuse/core";
 import type { Dict } from "cosmokit";
 import { type Component, computed, markRaw, reactive, watchEffect } from "vue";
+import { Schema } from "../../../components/client/index.ts";
 import type { Context } from "../context";
 import { Service } from "../utils";
 import { useConfig } from "./setting";
@@ -86,6 +86,7 @@ export default class ThemeService extends Service {
 				() => {
 					if (!config.value.theme) return;
 					const root = window.document.querySelector("html");
+					if (!root) return;
 					root.setAttribute("theme", config.value.theme[colorMode.value]);
 					if (colorMode.value === "dark") {
 						root.classList.add("dark");

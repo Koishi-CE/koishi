@@ -1,7 +1,7 @@
-import { Schema, SchemaBase } from "@koishi-ce/components";
 import { type RemovableRef, useLocalStorage } from "@vueuse/core";
 import { type Dict, remove } from "cosmokit";
 import { type Component, computed, markRaw, reactive, ref, watch } from "vue";
+import { Schema, SchemaBase } from "../../../components/client/index.ts";
 import type { Config } from "..";
 import type { Context } from "../context";
 import { insert, type Ordered, Service } from "../utils";
@@ -28,13 +28,15 @@ interface SettingOptions extends Ordered {
 
 export let useStorage = <T extends object>(
 	key: string,
-	version: number,
+	version?: number,
 	fallback?: () => T,
 ): RemovableRef<T> => {
-	const initial = fallback ? fallback() : ({} as T);
-	initial["__version__"] = version;
+	const initial = (fallback ? fallback() : {}) as T & {
+		__version__?: number | undefined;
+	};
+	initial.__version__ = version;
 	const storage = useLocalStorage("koishi.console." + key, initial);
-	if (storage.value["__version__"] !== version) {
+	if (storage.value.__version__ !== version) {
 		storage.value = initial;
 	}
 	return storage;
@@ -68,14 +70,21 @@ export function createStorage<T extends object>(
 	return reactive<T>(storage.value["data"]);
 }
 
-export const original = useStorage<Config>("config", undefined, () => ({
-	theme: {
-		mode: "auto",
-		dark: "default-dark",
-		light: "default-light",
-	},
-	locale: "zh-CN",
-}));
+// 默认配置本来就是「部分」配置:各插件向 Config 合并的必填字段
+// (如 status)在此处并不存在,故做一次收窄断言以兼容任意增强
+export const original = useStorage<Config>(
+	"config",
+	undefined,
+	() =>
+		({
+			theme: {
+				mode: "auto",
+				dark: "default-dark",
+				light: "default-light",
+			},
+			locale: "zh-CN",
+		}) as unknown as Config,
+);
 
 export const resolved = ref({} as Config);
 
@@ -142,7 +151,7 @@ export default class SettingService extends Service {
 	}
 
 	extendSchema(extension: SchemaBase.Extension) {
-		extension.component = this.ctx.wrapComponent(extension.component);
+		extension.component = this.ctx.wrapComponent(extension.component)!;
 		return this.ctx.effect(() => {
 			SchemaBase.extensions.add(extension);
 			return () => SchemaBase.extensions.delete(extension);
@@ -152,7 +161,8 @@ export default class SettingService extends Service {
 	settings(options: SettingOptions) {
 		markRaw(options);
 		options.order ??= 0;
-		options.component = this.ctx.wrapComponent(options.component);
+		const component = this.ctx.wrapComponent(options.component);
+		if (component) options.component = component;
 		return this.ctx.effect(() => {
 			const list = (this.ctx.internal.settings[options.id] ||= []);
 			insert(list, options);

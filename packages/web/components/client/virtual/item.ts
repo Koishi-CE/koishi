@@ -24,7 +24,9 @@ export const useRefDirective = (ref: Ref): Directive<Element> => ({
 	},
 });
 
-function findFirstLegitChild(node: VNode[]): VNode {
+function findFirstLegitChild(
+	node: VNode[] | undefined,
+): VNode | null | undefined {
 	if (!node) return null;
 	for (const child of node) {
 		if (typeof child === "object") {
@@ -73,7 +75,7 @@ const VirtualItem = defineComponent({
 
 		return () => {
 			const head = findFirstLegitChild(slots.default?.(attrs));
-			return withDirectives(head, [[directive]]);
+			return withDirectives(head!, [[directive]]);
 		};
 	},
 });
