@@ -16,7 +16,10 @@ Early restructuring phase:
 
 ## Layout
 
-- `packages/` — libraries that are imported (`core`, `loader`, `cli`, `client`, `console`, ...)
-- `plugins/` — runtime plugins mounted by the Koishi loader
+- `packages/node/` — libraries that run on Node (`core`, `loader`, `cli`, `console`, `utils`, `i18n-utils`)
+- `packages/web/` — libraries that run in the browser (`client`, `components`, `market`)
+- `plugins/common/` — general-purpose bot plugins (`bind`, `broadcast`, `callme`, `echo`, `help`, `inspect`)
+- `plugins/infra/` — infrastructure plugins (`http`, `server`, `proxy-agent`, `hmr`, `mock`)
+- `plugins/webui/` — console/webui plugins (`admin`, `auth`, `config`, `market`, ...) — node side in `src/`, Vue side in `client/` (upstream convention)
 - `apps/` — deployable applications (website `online`, plugin `registry`)
 - `tooling/` — build/release/CI helpers

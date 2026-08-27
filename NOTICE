@@ -6,13 +6,13 @@ This repository is a derivative work combining code from two upstream repositori
 
 | Directory | Upstream | License |
 | --- | --- | --- |
-| `packages/core`, `packages/loader`, `packages/utils`, `packages/i18n-utils`, `packages/cli` | [koishijs/koishi](https://github.com/koishijs/koishi) `packages/*` | MIT — [LICENSE](./LICENSE) |
-| `plugins/http`, `plugins/server`, `plugins/hmr`, `plugins/mock`, `plugins/proxy-agent` | [koishijs/koishi](https://github.com/koishijs/koishi) `plugins/*` | MIT — [LICENSE](./LICENSE) |
-| `plugins/bind`, `plugins/broadcast`, `plugins/callme`, `plugins/echo`, `plugins/help`, `plugins/inspect` | [koishijs/koishi](https://github.com/koishijs/koishi) `plugins/common/*` | MIT — [LICENSE](./LICENSE) |
-| `packages/client`, `packages/components`, `packages/market` | [koishijs/webui](https://github.com/koishijs/webui) `packages/*` | AGPL-3.0 — [LICENSES/webui-AGPL-3.0](./LICENSES/webui-AGPL-3.0) |
-| `plugins/actions`, `plugins/admin`, `plugins/analytics`, `plugins/auth`, `plugins/commands`, `plugins/config`, `plugins/console`, `plugins/explorer`, `plugins/insight`, `plugins/locales`, `plugins/logger`, `plugins/market`, `plugins/notifier`, `plugins/oobe`, `plugins/sandbox`, `plugins/status` | [koishijs/webui](https://github.com/koishijs/webui) `plugins/*` | AGPL-3.0 — [LICENSES/webui-AGPL-3.0](./LICENSES/webui-AGPL-3.0) |
+| `packages/node/{core,loader,utils,i18n-utils,cli}` | [koishijs/koishi](https://github.com/koishijs/koishi) `packages/*` | MIT — [LICENSE](./LICENSE) |
+| `plugins/infra/{http,server,hmr,mock,proxy-agent}` | [koishijs/koishi](https://github.com/koishijs/koishi) `plugins/*` | MIT — [LICENSE](./LICENSE) |
+| `plugins/common/{bind,broadcast,callme,echo,help,inspect}` | [koishijs/koishi](https://github.com/koishijs/koishi) `plugins/common/*` | MIT — [LICENSE](./LICENSE) |
+| `packages/web/{client,components,market}` | [koishijs/webui](https://github.com/koishijs/webui) `packages/*` | AGPL-3.0 — [LICENSES/webui-AGPL-3.0](./LICENSES/webui-AGPL-3.0) |
+| `plugins/webui/{actions,admin,analytics,auth,commands,config,console,explorer,insight,locales,logger,market,notifier,oobe,sandbox,status}` | [koishijs/webui](https://github.com/koishijs/webui) `plugins/*` | AGPL-3.0 — [LICENSES/webui-AGPL-3.0](./LICENSES/webui-AGPL-3.0) |
 | `apps/online` | [koishijs/webui](https://github.com/koishijs/webui) `packages/online` | AGPL-3.0 — [LICENSES/webui-AGPL-3.0](./LICENSES/webui-AGPL-3.0) |
-| `packages/console`, `apps/registry` | [koishijs/webui](https://github.com/koishijs/webui) | MIT (declared in the upstream package.json of each package) |
+| `packages/node/console`, `apps/registry` | [koishijs/webui](https://github.com/koishijs/webui) | MIT (declared in the upstream package.json of each package) |
 
 Copyright (c) 2019-present Shigma and Koishijs contributors.
 

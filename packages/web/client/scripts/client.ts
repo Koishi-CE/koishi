@@ -2,6 +2,8 @@ import { RollupOutput } from 'rollup'
 import { appendFile, copyFile } from 'fs/promises'
 import { resolve } from 'path'
 import * as vite from 'vite'
+import unocss from 'unocss/vite'
+import mini from 'unocss/preset-mini'
 import vue from '@vitejs/plugin-vue'
 import yaml from '@maikolib/vite-plugin-yaml'
 
@@ -11,55 +13,15 @@ function findModulePath(id: string) {
   return path.slice(0, path.indexOf(keyword)) + keyword.slice(0, -1)
 }
 
-const configPlugin: vite.Plugin = {
-  name: 'config',
-  transformIndexHtml(template) {
-    const headInjection = [
-      '<link rel="manifest" href="/manifest.json">',
-      `<script>KOISHI_CONFIG = ${JSON.stringify({
-        static: true,
-        uiPath: '/',
-        endpoint: 'https://registry.koishi.chat',
-      })}</script>`,
-    ].map(line => '\n    ' + line).join('')
-    return template.replace('</title>', '</title>' + headInjection)
-  },
-}
+const cwd = resolve(__dirname, '../../../..')
+const dist = cwd + '/plugins/webui/console/dist'
 
-const cwd = resolve(__dirname, '../../..')
-const dist = cwd + '/apps/online/dist'
-
-const builtins = [
-  '@koishijs/core',
-  '@satorijs/core',
-  '@satorijs/elements',
-  'cordis',
-  'dns',
-  'fs',
-  'js-yaml',
-  'koishi',
-  'reggol',
-  'schemastery',
-  'process',
-  'path',
-]
-
-const shims = {
-  dns: '@cordiverse/dns',
-  fs: '@cordiverse/fs',
-  path: '@cordiverse/path',
-}
-
-function toExternal(name: string) {
-  return 'https://registry.koishi.chat/modules/' + (shims[name] ?? name) + '/index.js'
-}
-
-export async function build(root: string, config: vite.UserConfig = {}) {
+export async function build(root: string, config: vite.UserConfig = {}, isClient = false) {
   const { rollupOptions = {} } = config.build || {}
   return await vite.build({
     root,
     build: {
-      outDir: cwd + '/apps/online/dist',
+      outDir: cwd + '/plugins/webui/console/dist',
       emptyOutDir: true,
       cssCodeSplit: false,
       ...config.build,
@@ -71,7 +33,6 @@ export async function build(root: string, config: vite.UserConfig = {}) {
           root + '/vue-router.js',
           root + '/client.js',
           root + '/vueuse.js',
-          ...builtins.map(toExternal),
         ],
         output: {
           format: 'module',
@@ -83,29 +44,47 @@ export async function build(root: string, config: vite.UserConfig = {}) {
       },
     },
     plugins: [
-      vue() as any,
+      vue(),
       yaml(),
-      configPlugin,
+      ...config.plugins || [],
     ],
+    css: {
+      preprocessorOptions: {
+        scss: {
+          api: 'modern-compiler',
+        },
+      },
+    },
     resolve: {
       alias: {
         'vue': root + '/vue.js',
         'vue-router': root + '/vue-router.js',
         '@vueuse/core': root + '/vueuse.js',
-        '@koishijs/client/app': '@koishijs/client/app',
         '@koishijs/client': root + '/client.js',
-        ...Object.fromEntries(builtins.map((id) => [id, toExternal(id)])),
+        ...isClient ? {
+          'vue-i18n': findModulePath('vue-i18n') + '/dist/vue-i18n.esm-browser.prod.js',
+          '@intlify/core-base': findModulePath('@intlify/core-base') + '/dist/core-base.esm-browser.prod.js',
+        } : {
+          'vue-i18n': root + '/client.js',
+        },
       },
-    },
-    define: {
-      'process.env.NODE_ENV': JSON.stringify('production'),
     },
   }) as RollupOutput
 }
 
 export default async function () {
-  // build for play main
-  const { output } = await build(cwd + '/apps/online/app')
+  // build for console main
+  const { output } = await build(cwd + '/packages/web/client/app', {
+    plugins: [
+      unocss({
+        presets: [
+          mini({
+            preflight: false,
+          }),
+        ],
+      }),
+    ],
+  })
 
   await Promise.all([
     copyFile(findModulePath('vue') + '/dist/vue.runtime.esm-browser.prod.js', dist + '/vue.js'),
@@ -151,7 +130,7 @@ export default async function () {
         preserveEntrySignatures: 'strict',
       },
     },
-  })
+  }, true)
 
   for (const file of output) {
     if (file.type === 'asset' && file.name === 'style.css') {

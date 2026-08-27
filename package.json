@@ -4,8 +4,11 @@
   "type": "module",
   "private": true,
   "workspaces": [
-    "packages/*",
-    "plugins/*",
+    "packages/node/*",
+    "packages/web/*",
+    "plugins/common/*",
+    "plugins/infra/*",
+    "plugins/webui/*",
     "apps/*",
     "tooling/*"
   ],

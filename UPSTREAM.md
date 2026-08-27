@@ -11,17 +11,20 @@ Snapshot started from:
 
 | This repo | Upstream |
 | --- | --- |
-| `packages/cli` | koishi `packages/koishi` (npm package name stays `koishi`) |
-| `packages/{core,loader,utils,i18n-utils}` | koishi `packages/*` (unchanged) |
-| `packages/{client,components,console,market}` | webui `packages/*` |
+| `packages/node/cli` | koishi `packages/koishi` (npm package name stays `koishi`) |
+| `packages/node/{core,loader,utils,i18n-utils}` | koishi `packages/*` (unchanged) |
+| `packages/node/console` | webui `packages/console` |
+| `packages/web/{client,components,market}` | webui `packages/*` |
 | `apps/{online,registry}` | webui `packages/*` |
-| `plugins/{http,server,hmr,mock,proxy-agent}` | koishi `plugins/*` |
-| `plugins/{bind,broadcast,callme,echo,help,inspect}` | koishi `plugins/common/*` (flattened one level) |
-| the 16 remaining `plugins/*` | webui `plugins/*` (flattened) |
+| `plugins/infra/{http,server,hmr,mock,proxy-agent}` | koishi `plugins/*` |
+| `plugins/common/{bind,broadcast,callme,echo,help,inspect}` | koishi `plugins/common/*` |
+| the 16 `plugins/webui/*` | webui `plugins/*` |
 | `tsconfig.client.json` | webui `tsconfig.client.json` |
 | `apps/online/vercel.json` | webui `vercel.json` |
 | `LICENSES/webui-AGPL-3.0` | webui `LICENSE` |
 | root `package.json`, `tsconfig.json`, `yakumo.yml` | rewritten (merged from both repo roots) |
+
+Local regrouping (upstream packages are flat `packages/*` / `plugins/*`): `packages/node` and `packages/web` split by runtime, `plugins/{common,infra,webui}` split by origin/role. npm package names are unchanged, so sync by mapping the upstream package name to its directory here via the table above.
 
 Everything else at the repo root (README, NOTICE, biome.json, ...) is new.
 
