@@ -1,0 +1,6 @@
+{
+    "js/ts.experimental.useTsgo": true,
+    "material-icon-theme.folders.associations": {
+        "webui": "web",
+    }
+}
