@@ -1,4 +1,3 @@
-// @ts-expect-error
 import { version } from "../package.json";
 
 export * from "@koishi-ce/utils";

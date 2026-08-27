@@ -46,14 +46,16 @@ export namespace Permissions {
 
 export class Permissions {
 	public store: Permissions.Entry[] = [];
+	public ctx: Context;
 
-	constructor(public ctx: Context) {
+	constructor(ctx: Context) {
+		this.ctx = ctx;
 		defineProperty(this, Context.current, ctx);
 		ctx.alias("permissions", ["perms"]);
 
 		this.define("authority:(value)", {
-			check: ({ value }, { user }: Partial<Session<"authority">>) => {
-				return !user || user.authority >= +value;
+			check: ({ value }, { user }: Partial<Session<any, any, any>>) => {
+				return !user || user["authority"] >= +value;
 			},
 			list: () =>
 				Array(5)
@@ -61,17 +63,17 @@ export class Permissions {
 					.map((_, i) => `authority:${i}`),
 		});
 
-		this.provide("(name)", ({ name }, session) => {
-			return session.bot?.checkPermission(name, session);
+		this.provide("(name)", async ({ name }, session) => {
+			return (await session.bot?.checkPermission(name, session)) ?? false;
 		});
 
 		this.provide(
 			"(name)",
-			({ name }, session: Partial<Session<"permissions", "permissions">>) => {
-				return (
+			({ name }, session: Partial<Session<any, any, any>>) => {
+				return !!(
 					session.permissions?.includes(name) ||
-					session.user?.permissions?.includes(name) ||
-					session.channel?.permissions?.includes(name)
+					session.user?.["permissions"]?.includes(name) ||
+					session.channel?.["permissions"]?.includes(name)
 				);
 			},
 		);
@@ -133,7 +135,7 @@ export class Permissions {
 		parents: Iterable<string>,
 		result = new Set<string>(),
 	): Set<string> {
-		let name: string;
+		let name: string | undefined;
 		const queue = [...parents];
 		while ((name = queue.shift())) {
 			if (result.has(name)) continue;
@@ -154,7 +156,7 @@ export class Permissions {
 		session: Partial<Session> = {},
 		cache: Map<string, Promise<boolean>> = new Map(),
 	) {
-		session = session[Context.shadow] || session;
+		session = (session as any)[Context.shadow] || session;
 		if (typeof names === "string") names = [names];
 		for (const name of this.subgraph("depends", names)) {
 			const parents = [...this.subgraph("inherits", [name])];

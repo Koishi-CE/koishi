@@ -1,5 +1,5 @@
 import { Schema } from "@satorijs/core";
-import { type Dict, remove } from "cosmokit";
+import { type Dict, defineProperty, remove } from "cosmokit";
 import { Context } from "./context";
 import type { Computed } from "./filter";
 
@@ -71,6 +71,8 @@ Schema.prototype.computed = function computed(this: Schema, options = {}) {
 
 const kSchemaOrder = Symbol("schema-order");
 
+type SchemaWithOrder = Schema & { [kSchemaOrder]?: number };
+
 declare module "@satorijs/core" {
 	interface Context {
 		schema: SchemaService;
@@ -84,7 +86,10 @@ declare module "@satorijs/core" {
 export class SchemaService {
 	_data: Dict<Schema> = Object.create(null);
 
-	constructor(public ctx: Context) {
+	ctx: Context;
+
+	constructor(ctx: Context) {
+		this.ctx = ctx;
 		this.extend(
 			"intercept.http",
 			Schema.object({
@@ -100,22 +105,25 @@ export class SchemaService {
 	extend(name: string, schema: Schema, order = 0) {
 		const caller = this[Context.current];
 		const target = this.get(name);
-		const index = target.list.findIndex((a) => a[kSchemaOrder] < order);
-		schema[kSchemaOrder] = order;
+		const list = (target.list ??= []);
+		const index = list.findIndex(
+			(a) => ((a as SchemaWithOrder)[kSchemaOrder] ?? Number.NaN) < order,
+		);
+		defineProperty(schema, kSchemaOrder, order);
 		if (index >= 0) {
-			target.list.splice(index, 0, schema);
+			list.splice(index, 0, schema);
 		} else {
-			target.list.push(schema);
+			list.push(schema);
 		}
 		this.ctx.emit("internal/schema", name);
 		caller?.on("dispose", () => {
-			remove(target.list, schema);
+			remove(list, schema);
 			this.ctx.emit("internal/schema", name);
 		});
 	}
 
 	get(name: string) {
-		return (this._data[name] ||= Schema.intersect([]));
+		return (this._data[name] ??= Schema.intersect([]));
 	}
 
 	set(name: string, schema: Schema) {

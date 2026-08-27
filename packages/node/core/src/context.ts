@@ -67,6 +67,11 @@ export interface Context {
 export class Context extends satori.Context {
 	static shadow = Symbol.for("session.shadow");
 
+	// 值侧由类静态承载,类型侧见下方 namespace(erasableSyntaxOnly 不允许 namespace 内运行时值)
+	static Config = Schema.intersect([
+		Schema.object({}),
+	]) as unknown as Context.Config.Static;
+
 	constructor(config: Context.Config = {}) {
 		super(config);
 		this.mixin("$processor", ["match", "middleware"]);
@@ -92,7 +97,9 @@ export class Context extends satori.Context {
 		this.provide("model", undefined, true);
 		this.provide("http", undefined, true);
 		this.provide("$commander", new Commander(this, this.config), true);
-		this.plugin(minato.Database);
+		this.plugin(
+			minato.Database as unknown as cordis.Plugin.Constructor<Context>,
+		);
 		this.plugin(Koishi, this.config);
 	}
 
@@ -172,22 +179,21 @@ export class Context extends satori.Context {
 }
 
 export default class Koishi extends cordis.Service<Context.Config, Context> {
+	override config: Context.Config;
+
 	bot = new BotMixin(this.ctx);
 	database = new DatabaseMixin(this.ctx);
 	session = new SessionMixin(this.ctx);
 
-	constructor(
-		ctx: Context,
-		public config: Context.Config,
-	) {
+	constructor(ctx: Context, config: Context.Config) {
 		super(ctx, "koishi", true);
+		this.config = config;
 	}
 }
 
-satori.Session.prototype[Context.filter] = function (
-	this: Session,
-	ctx: Context,
-) {
+(satori.Session.prototype as unknown as Record<symbol, unknown>)[
+	Context.filter
+] = function (this: Session, ctx: Context) {
 	return ctx.filter(this);
 };
 
@@ -197,8 +203,6 @@ export namespace Context {
 		delay?: Config.Delay;
 		request?: HTTP.Config;
 	}
-
-	export const Config = Schema.intersect([Schema.object({})]) as Config.Static;
 
 	export namespace Config {
 		export interface Basic extends Commander.Config {
@@ -221,6 +225,7 @@ export namespace Context {
 		}
 
 		export interface Static extends Schema<Config> {
+			list: Schema[];
 			Basic: Schema<Basic>;
 			I18n: Schema<I18n>;
 			Delay: Schema<Delay>;
@@ -335,7 +340,7 @@ export abstract class Service<
 	T = any,
 	C extends Context = Context,
 > extends satori.Service<T, C> {
-	[satori.Service.setup]() {
+	override [satori.Service.setup]() {
 		this.ctx = new Context() as C;
 	}
 }

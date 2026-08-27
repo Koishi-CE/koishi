@@ -11,8 +11,11 @@ export namespace Computed {
 	}
 }
 
-export type Computed<T> = T | Eval.Expr<T> | ((session: Session) => T);
-export type Filter = (session: Session) => boolean;
+export type Computed<T> =
+	| T
+	| Eval.Expr<T>
+	| ((session: Session<any, any, any>) => T);
+export type Filter = (session: Session<any, any, any>) => boolean;
 
 declare module "./context" {
 	interface Context {
@@ -43,7 +46,10 @@ function property<K extends keyof Session>(
 }
 
 export class FilterService {
-	constructor(private ctx: Context) {
+	private ctx: Context;
+
+	constructor(ctx: Context) {
+		this.ctx = ctx;
 		defineProperty(this, Context.current, ctx);
 
 		ctx.filter = () => true;
@@ -65,17 +71,23 @@ export class FilterService {
 
 	union(arg: Filter | Context) {
 		const filter = typeof arg === "function" ? arg : arg.filter;
-		return this.ctx.extend({ filter: (s) => this.ctx.filter(s) || filter(s) });
+		return this.ctx.extend({
+			filter: (s: Session) => this.ctx.filter(s) || filter(s),
+		});
 	}
 
 	intersect(arg: Filter | Context) {
 		const filter = typeof arg === "function" ? arg : arg.filter;
-		return this.ctx.extend({ filter: (s) => this.ctx.filter(s) && filter(s) });
+		return this.ctx.extend({
+			filter: (s: Session) => this.ctx.filter(s) && filter(s),
+		});
 	}
 
 	exclude(arg: Filter | Context) {
 		const filter = typeof arg === "function" ? arg : arg.filter;
-		return this.ctx.extend({ filter: (s) => this.ctx.filter(s) && !filter(s) });
+		return this.ctx.extend({
+			filter: (s: Session) => this.ctx.filter(s) && !filter(s),
+		});
 	}
 
 	user(...values: string[]) {

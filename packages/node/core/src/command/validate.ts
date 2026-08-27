@@ -40,19 +40,19 @@ export default function validate(ctx: Context) {
 	// check user
 	ctx.before(
 		"command/execute",
-		async (argv: Argv<"authority">) => {
+		async (argv: Argv<"authority">): Promise<string | void> => {
 			const { session, options, command } = argv;
-			if (!session.user) return;
+			if (!session?.user || !command) return;
 
-			function sendHint(message: string, ...param: any[]) {
-				return command.config.showWarning ? session.text(message, param) : "";
-			}
+			const sendHint = (message: string, ...param: any[]) =>
+				command.config.showWarning ? session.text(message, param) : "";
 
 			// check permissions
 			const permissions = [`command:${command.name}`];
 			for (const option of Object.values(command._options)) {
-				if (option.name in options) {
-					permissions.push(`command:${command.name}:option:${option.name}`);
+				const { name } = option;
+				if (name !== undefined && name in (options ?? {})) {
+					permissions.push(`command:${command.name}:option:${name}`);
 				}
 			}
 			if (!(await ctx.permissions.test(permissions, session))) {
@@ -65,17 +65,18 @@ export default function validate(ctx: Context) {
 	// check argv
 	ctx.before(
 		"command/execute",
-		async (argv: Argv) => {
-			const { args, options, command, session } = argv;
-			function sendHint(message: string, ...param: any[]) {
-				return command.config.showWarning ? session.text(message, param) : "";
-			}
+		async (argv: Argv): Promise<string | void> => {
+			const { args = [], options = {}, command, session } = argv;
+			if (!command || !session) return;
+			const sendHint = (message: string, ...param: any[]) =>
+				command.config.showWarning ? session.text(message, param) : "";
 
 			// check argument count
 			if (command.config.checkArgCount) {
 				let index = args.length;
 				while (command._arguments[index]?.required) {
 					const decl = command._arguments[index];
+					if (!decl) break;
 					await session.send(
 						session.text("internal.prompt-argument", [
 							session.text(`commands.${command.name}.arguments.${decl.name}`),

@@ -1,5 +1,5 @@
 import type * as utils from "@koishi-ce/utils";
-import { type Fragment, Universal } from "@satorijs/core";
+import type { Fragment, Universal } from "@satorijs/core";
 import type { Dict, MaybeArray } from "cosmokit";
 import type { Driver, FlatKeys, FlatPick, Update } from "minato";
 import * as minato from "minato";
@@ -81,9 +81,7 @@ export interface User {
 }
 
 export namespace User {
-	export enum Flag {
-		ignore = 1,
-	}
+	export type Flag = 1;
 
 	export type Field = keyof User;
 	export type Observed<K extends Field = Field> = utils.Observed<
@@ -91,6 +89,13 @@ export namespace User {
 		Promise<void>
 	>;
 }
+
+// erasableSyntaxOnly 禁止 enum;与同名 namespace 合并声明,保持 User.Flag API
+export const User = {
+	Flag: {
+		ignore: 1,
+	},
+};
 
 export interface Binding {
 	aid: number;
@@ -112,10 +117,7 @@ export interface Channel {
 }
 
 export namespace Channel {
-	export enum Flag {
-		ignore = 1,
-		silent = 4,
-	}
+	export type Flag = 1 | 4;
 
 	export type Field = keyof Channel;
 	export type Observed<K extends Field = Field> = utils.Observed<
@@ -124,10 +126,21 @@ export namespace Channel {
 	>;
 }
 
+// erasableSyntaxOnly 禁止 enum;与同名 namespace 合并声明,保持 Channel.Flag API
+export const Channel = {
+	Flag: {
+		ignore: 1,
+		silent: 4,
+	},
+};
+
 interface KoishiDatabase extends minato.Database<Tables, Types, Context> {}
 
 class KoishiDatabase {
-	constructor(public ctx: Context) {
+	ctx: Context;
+
+	constructor(ctx: Context) {
+		this.ctx = ctx;
 		ctx.mixin(this, {
 			getUser: "database.getUser",
 			setUser: "database.setUser",
@@ -188,7 +201,8 @@ class KoishiDatabase {
 		);
 
 		ctx.on("login-added", ({ platform }) => {
-			if (platform in ctx.model.tables.user.fields) return;
+			const table = ctx.model.tables["user"];
+			if (table && platform in table.fields) return;
 			ctx.model.migrate("user", { [platform]: "string(255)" }, async (db) => {
 				const users = await db.get("user", { [platform]: { $exists: true } }, [
 					"id",
@@ -197,11 +211,11 @@ class KoishiDatabase {
 				await db.upsert(
 					"binding",
 					users
-						.filter((u) => u[platform])
+						.filter((u) => (u as Record<string, unknown>)[platform])
 						.map((user) => ({
 							aid: user.id,
 							bid: user.id,
-							pid: user[platform],
+							pid: (user as unknown as Record<string, string>)[platform] ?? "",
 							platform,
 						})),
 				);
@@ -215,9 +229,9 @@ class KoishiDatabase {
 		modifier?: Driver.Cursor<K>,
 	): Promise<FlatPick<User, K>> {
 		const [binding] = await this.get("binding", { platform, pid }, ["aid"]);
-		if (!binding) return;
+		if (!binding) return undefined as never;
 		const [user] = await this.get("user", { id: binding.aid }, modifier);
-		return user;
+		return user as FlatPick<User, K>;
 	}
 
 	async setUser(platform: string, pid: string, data: Update<User>) {
@@ -252,6 +266,7 @@ class KoishiDatabase {
 	getSelfIds(platforms?: string[]): Dict<string[]> {
 		const selfIdMap: Dict<string[]> = Object.create(null);
 		for (const bot of this.ctx.bots) {
+			if (!bot.platform || !bot.selfId) continue;
 			if (platforms && !platforms.includes(bot.platform)) continue;
 			(selfIdMap[bot.platform] ||= []).push(bot.selfId);
 		}
@@ -289,10 +304,11 @@ class KoishiDatabase {
 	async broadcast(
 		...args: [Fragment, boolean?] | [readonly string[], Fragment, boolean?]
 	) {
-		let channels: string[], platforms: string[];
+		let channels: string[] | undefined;
+		let platforms: string[] | undefined;
 		if (Array.isArray(args[0])) {
-			channels = args.shift() as any;
-			platforms = channels.map((c) => c.split(":")[0]);
+			channels = args.shift() as string[];
+			platforms = channels.map((c) => c.split(":")[0] ?? c);
 		}
 		const [content, forced] = args as [Fragment, boolean];
 		if (!content) return [];
@@ -324,12 +340,14 @@ class KoishiDatabase {
 		return (
 			await Promise.all(
 				this.ctx.bots.map((bot) => {
-					const targets = assignMap[bot.platform]?.[bot.selfId];
+					const targets = bot.platform
+						? assignMap[bot.platform]?.[bot.selfId]
+						: undefined;
 					if (!targets) return Promise.resolve([]);
 					const sessions = targets.map(({ id, guildId, locales }) => {
 						const session = bot.session({
 							type: "message",
-							channel: { id, type: Universal.Channel.Type.TEXT },
+							channel: { id, type: 0 satisfies Universal.Channel.Type },
 							guild: { id: guildId },
 						});
 						session.locales = locales;

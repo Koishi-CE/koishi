@@ -42,8 +42,8 @@ export function createMatch<P extends string>(
 		const capture = regexp.exec(string);
 		if (!capture) return;
 		const data: any = {};
-		for (let i = 0; i < groups.length; i++) {
-			data[groups[i]] = capture[i + 1];
+		for (const [i, name] of groups.entries()) {
+			data[name] = capture[i + 1];
 		}
 		return data;
 	};
@@ -58,7 +58,7 @@ export namespace I18n {
 
 	export interface Store {
 		[kTemplate]?: string;
-		[K: string]: Node;
+		[k: string]: Node;
 	}
 
 	export type Formatter = (
@@ -78,16 +78,29 @@ export namespace I18n {
 }
 
 export class I18n {
+	static Config: Schema<I18n.Config> = Schema.object({
+		locales: Schema.array(String)
+			.role("table")
+			.default(["zh-CN", "en-US", "fr-FR", "ja-JP", "de-DE", "ru-RU"])
+			.description("可用的语言列表。按照回退顺序排列。"),
+		output: Schema.union([
+			Schema.const("prefer-user").description("优先使用用户语言"),
+			Schema.const("prefer-channel").description("优先使用频道语言"),
+		])
+			.default("prefer-channel")
+			.description("输出语言偏好设置。"),
+	}).description("国际化设置");
+
 	_data: Dict<Dict<string>> = {};
 	_presets: Dict<I18n.Renderer> = {};
 
 	locales: LocaleTree;
 
-	constructor(
-		public ctx: Context,
-		config: I18n.Config,
-	) {
-		this.locales = LocaleTree.from(config.locales);
+	ctx: Context;
+
+	constructor(ctx: Context, config: I18n.Config = {}) {
+		this.ctx = ctx;
+		this.locales = LocaleTree.from(config.locales ?? []);
 
 		this.define("", { "": "" });
 		this.define("zh-CN", zhCN);
@@ -122,12 +135,14 @@ export class I18n {
 		if (typeof value === "object" && value && !prefix.includes("@")) {
 			for (const key in value) {
 				if (key.startsWith("_")) continue;
-				yield* this.set(locale, prefix + key + ".", value[key]);
+				const child = value[key];
+				if (child === undefined) continue;
+				yield* this.set(locale, prefix + key + ".", child);
 			}
 		} else if (prefix.includes("@")) {
 			throw new Error("preset is deprecated");
 		} else if (typeof value === "string") {
-			const dict = this._data[locale];
+			const dict = (this._data[locale] ??= {});
 			const path = prefix.slice(0, -1);
 			if (
 				!isNullable(dict[path]) &&
@@ -139,18 +154,19 @@ export class I18n {
 			dict[path] = value;
 			yield path;
 		} else {
-			delete this._data[locale][prefix.slice(0, -1)];
+			const dict = (this._data[locale] ??= {});
+			delete dict[prefix.slice(0, -1)];
 		}
 	}
 
 	define(locale: string, dict: I18n.Store): () => void;
 	define(locale: string, key: string, value: I18n.Node): () => void;
-	define(locale: string, ...args: [I18n.Store] | [string, I18n.Node]) {
-		const dict = (this._data[locale] ||= {});
+	define(locale: string, dictOrKey: I18n.Store | string, value?: I18n.Node) {
+		const dict = (this._data[locale] ??= {});
 		const paths = [
-			...(typeof args[0] === "string"
-				? this.set(locale, args[0] + ".", args[1])
-				: this.set(locale, "", args[0])),
+			...(typeof dictOrKey === "string"
+				? this.set(locale, dictOrKey + ".", value ?? "")
+				: this.set(locale, "", dictOrKey)),
 		];
 		this.ctx.emit("internal/i18n");
 		return this.ctx.collect("i18n", () => {
@@ -184,11 +200,9 @@ export class I18n {
 	}
 
 	_render(value: I18n.Node, params: any, locale: string) {
-		if (value === undefined) return;
-
 		if (typeof value !== "string") {
 			const preset = value[kTemplate];
-			const render = this._presets[preset];
+			const render = preset === undefined ? undefined : this._presets[preset];
 			if (!render) throw new Error(`Preset "${preset}" not found`);
 			return [h.text(render(value, params, locale))];
 		}
@@ -217,8 +231,9 @@ export class I18n {
 		}
 
 		// path not found
-		logger.warn("missing", paths[0]);
-		return [h.text(paths[0])];
+		const path = paths[0] ?? "";
+		logger.warn("missing", path);
+		return [h.text(path)];
 	}
 }
 
@@ -228,17 +243,4 @@ export namespace I18n {
 		output?: "prefer-user" | "prefer-channel";
 		match?: "strict" | "prefer-input" | "prefer-output";
 	}
-
-	export const Config: Schema<Config> = Schema.object({
-		locales: Schema.array(String)
-			.role("table")
-			.default(["zh-CN", "en-US", "fr-FR", "ja-JP", "de-DE", "ru-RU"])
-			.description("可用的语言列表。按照回退顺序排列。"),
-		output: Schema.union([
-			Schema.const("prefer-user").description("优先使用用户语言"),
-			Schema.const("prefer-channel").description("优先使用频道语言"),
-		])
-			.default("prefer-channel")
-			.description("输出语言偏好设置。"),
-	}).description("国际化设置");
 }

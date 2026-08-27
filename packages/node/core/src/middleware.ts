@@ -36,33 +36,37 @@ declare module "./context" {
 }
 
 export class SessionError extends Error {
-	constructor(
-		public path: string | string[],
-		public param?: Dict,
-	) {
-		super(makeArray(path)[0]);
+	path: string | string[];
+	param?: Dict | undefined;
+
+	constructor(path: string | string[], param?: Dict) {
+		super(makeArray(path)[0] ?? "");
+		this.path = path;
+		this.param = param;
 	}
 }
 
 export type Next = (next?: Next.Callback) => Promise<void | Fragment>;
-export type Middleware<S extends Session = Session> = (
+export type Middleware<S extends Session<any, any, any> = Session> = (
 	session: S,
 	next: Next,
 ) => Awaitable<void | Fragment>;
 
 export namespace Next {
-	export const MAX_DEPTH = 64;
-
 	export type Queue = ((next?: Next) => Awaitable<void | Fragment>)[];
 	export type Callback =
 		| void
 		| string
 		| ((next?: Next) => Awaitable<void | Fragment>);
-
-	export async function compose(callback: Callback, next?: Next) {
-		return typeof callback === "function" ? callback(next) : callback;
-	}
 }
+
+export const Next = {
+	MAX_DEPTH: 64,
+
+	async compose(callback: Next.Callback, next?: Next) {
+		return typeof callback === "function" ? callback(next) : callback;
+	},
+};
 
 export interface Matcher extends Matcher.Options {
 	context: Context;
@@ -91,7 +95,10 @@ export class Processor {
 	_sessions: Dict<Session> = Object.create(null);
 	_matchers = new Set<Matcher>();
 
-	constructor(private ctx: Context) {
+	private ctx: Context;
+
+	constructor(ctx: Context) {
+		this.ctx = ctx;
 		defineProperty(this, Context.current, ctx);
 
 		// bind built-in event listeners
@@ -108,7 +115,7 @@ export class Processor {
 
 		ctx.component(
 			"execute",
-			async (attrs, children, session) => {
+			async (_attrs, children, session) => {
 				return session.execute(children.join(""), true);
 			},
 			{ session: true },
@@ -116,9 +123,9 @@ export class Processor {
 
 		ctx.component(
 			"prompt",
-			async (attrs, children, session) => {
+			async (_attrs, children, session) => {
 				await session.send(children);
-				return session.prompt();
+				return (await session.prompt()) ?? "";
 			},
 			{ session: true },
 		);
@@ -126,39 +133,43 @@ export class Processor {
 		ctx.component(
 			"i18n",
 			async (attrs, children, session) => {
-				return session.i18n(attrs.path, children);
+				return session.i18n(attrs["path"], children);
 			},
 			{ session: true },
 		);
 
-		ctx.component("random", async (attrs, children) => {
+		ctx.component("random", async (_attrs, children) => {
 			return Random.pick(children);
 		});
 
 		ctx.component("plural", async (attrs, children) => {
-			const path = attrs.count in children ? attrs.count : children.length - 1;
-			return children[path];
+			const path =
+				attrs["count"] in children ? attrs["count"] : children.length - 1;
+			return children[path] ?? "";
 		});
 
 		const units = ["day", "hour", "minute", "second"] as const;
 
 		ctx.component(
 			"i18n:time",
-			(attrs, children, session) => {
-				let ms = +attrs.value;
+			(attrs, _children, session) => {
+				let ms = +attrs["value"];
 				for (let index = 0; index < 3; index++) {
-					const major = Time[units[index]];
-					const minor = Time[units[index + 1]];
+					const majorUnit = units[index];
+					const minorUnit = units[index + 1];
+					if (!majorUnit || !minorUnit) continue;
+					const major = Time[majorUnit];
+					const minor = Time[minorUnit];
 					if (ms >= major - minor / 2) {
 						ms += minor / 2;
 						let result =
 							Math.floor(ms / major) +
 							" " +
-							session.text("general." + units[index]);
+							session.text(`general.${majorUnit}`);
 						if (ms % major > minor) {
 							result +=
 								` ${Math.floor((ms % major) / minor)} ` +
-								session.text("general." + units[index + 1]);
+								session.text(`general.${minorUnit}`);
 						}
 						return result;
 					}
@@ -179,14 +190,13 @@ export class Processor {
 	}
 
 	middleware(middleware: Middleware, options?: boolean | EventOptions) {
-		if (typeof options !== "object") {
-			options = { prepend: options };
-		}
+		const resolved: EventOptions = typeof options === "object" ? options : {};
+		if (typeof options === "boolean") resolved.prepend = options;
 		return this.ctx.lifecycle.register(
 			"middleware",
 			this._hooks,
 			middleware,
-			options,
+			resolved,
 		);
 	}
 
@@ -215,23 +225,24 @@ export class Processor {
 		let content = stripped.content;
 		if (quote?.content) content += " " + quote.content;
 
-		let params: [string, ...string[]] = null;
-		const match = (pattern: any) => {
-			if (!pattern) return;
+		const match = (pattern: any): [string, ...string[]] | null => {
+			if (!pattern) return null;
 			if (typeof pattern === "string") {
 				if ((!fuzzy && content !== pattern) || !content.startsWith(pattern))
-					return;
-				params = [content, content.slice(pattern.length)];
-				if (fuzzy && !stripped.appel && params[1].match(/^\S/)) {
-					params = null;
+					return null;
+				const rest = content.slice(pattern.length);
+				if (fuzzy && !stripped.appel && rest.match(/^\S/)) {
+					return null;
 				}
+				return [content, rest];
 			} else {
-				params = pattern.exec(content);
+				return pattern.exec(content);
 			}
 		};
 
+		let params: [string, ...string[]] | null = null;
 		if (!i18n) {
-			match(pattern);
+			params = match(pattern);
 		} else {
 			for (const locale of this.ctx.i18n.fallback([])) {
 				const store = this.ctx.i18n._data[locale];
@@ -243,7 +254,7 @@ export class Processor {
 						: "";
 					value = new RegExp(`^(?:${value})${rest}$`);
 				}
-				match(value);
+				params = match(value);
 				if (!params) continue;
 				session.locales = [locale];
 				break;
@@ -251,11 +262,12 @@ export class Processor {
 		}
 
 		if (!params) return;
+		const captured = params;
 		session.response = async () => {
-			const output = await session.resolve(response, params);
+			const output = await session.resolve(response, captured);
 			return h.normalize(
 				output,
-				params.map((source) => (source ? h.parse(source) : "")),
+				captured.map((source) => (source ? h.parse(source) : "")),
 			);
 		};
 	}
@@ -276,7 +288,7 @@ export class Processor {
 				this.ctx.emit("before-attach-channel", session, channelFields);
 				const channel = await session.observeChannel(channelFields);
 				// for backwards compatibility
-				channel.guildId = session.guildId;
+				channel.guildId = session.guildId ?? channel.guildId;
 
 				// emit attach event
 				if (await this.ctx.serial(session, "attach-channel", session)) return;
@@ -391,9 +403,10 @@ export class SharedCache<T> {
 
 	delete(ref: number) {
 		for (const key of [...this.#keyMap.keys()]) {
-			const { refs } = this.#keyMap.get(key);
-			refs.delete(ref);
-			if (!refs.size) {
+			const entry = this.#keyMap.get(key);
+			if (!entry) continue;
+			entry.refs.delete(ref);
+			if (!entry.refs.size) {
 				this.#keyMap.delete(key);
 			}
 		}

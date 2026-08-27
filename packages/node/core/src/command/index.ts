@@ -1,4 +1,10 @@
-import { type Bot, type Fragment, h, Schema, Universal } from "@satorijs/core";
+import {
+	type Bot,
+	type Fragment,
+	h,
+	Schema,
+	type Universal,
+} from "@satorijs/core";
 import { type Awaitable, defineProperty, Time } from "cosmokit";
 import { Context } from "../context";
 import type { Channel, User } from "../database";
@@ -27,7 +33,7 @@ declare module "../context" {
 	}
 
 	interface Events {
-		"before-parse"(content: string, session: Session): Argv;
+		"before-parse"(content: string, session: Session): Argv | undefined;
 		"command-added"(command: Command): void;
 		"command-updated"(command: Command): void;
 		"command-removed"(command: Command): void;
@@ -61,10 +67,12 @@ export namespace Commander {
 export class Commander {
 	_commandList: Command[] = [];
 
-	constructor(
-		private ctx: Context,
-		private config: Commander.Config = {},
-	) {
+	private ctx: Context;
+	private config: Commander.Config;
+
+	constructor(ctx: Context, config: Commander.Config = {}) {
+		this.ctx = ctx;
+		this.config = config;
 		defineProperty(this, Context.current, ctx);
 		ctx.plugin(validate);
 
@@ -90,7 +98,7 @@ export class Commander {
 				defineProperty(
 					session,
 					"argv",
-					ctx.bail("before-parse", session.content, session),
+					ctx.bail("before-parse", session.content ?? "", session),
 				);
 				if (!session.argv) {
 					ctx
@@ -128,7 +136,7 @@ export class Commander {
 
 		ctx.middleware((session, next) => {
 			// execute command
-			if (!this.resolveCommand(session.argv)) return next();
+			if (!session.argv || !this.resolveCommand(session.argv)) return next();
 			return session.execute(session.argv, next);
 		});
 
@@ -143,7 +151,7 @@ export class Commander {
 			} = session;
 			if (argv?.command || (!isDirect && !prefix && !appel)) return next();
 			const content = session.stripped.content.slice((prefix ?? "").length);
-			const actual = content.split(/\s/, 1)[0].toLowerCase();
+			const actual = (content.split(/\s/, 1)[0] ?? "").toLowerCase();
 			if (!actual) return next();
 
 			return next(async (next) => {
@@ -162,7 +170,7 @@ export class Commander {
 						);
 					},
 				});
-				if (!name) return next();
+				if (!name) return next?.();
 				const message =
 					name +
 					content.slice(actual.length) +
@@ -188,13 +196,14 @@ export class Commander {
 
 		ctx.on("ready", () => {
 			const bots = ctx.bots.filter(
-				(v) => v.status === Universal.Status.ONLINE && v.updateCommands,
+				(v) => v.status === (1 satisfies Universal.Status) && v.updateCommands,
 			);
 			bots.forEach((bot) => this.updateCommands(bot));
 		});
 
 		ctx.on("bot-status-updated", async (bot) => {
-			if (bot.status !== Universal.Status.ONLINE || !bot.updateCommands) return;
+			if (bot.status !== (1 satisfies Universal.Status) || !bot.updateCommands)
+				return;
 			this.updateCommands(bot);
 		});
 
@@ -209,7 +218,7 @@ export class Commander {
 
 		this.domain(
 			"number",
-			(source, session) => {
+			(source, _session) => {
 				// support `,` and `_` as delimiters
 				// https://github.com/koishijs/koishi/issues/1386
 				const value = +source.replace(/[,_]/g, "");
@@ -221,7 +230,7 @@ export class Commander {
 
 		this.domain(
 			"integer",
-			(source, session) => {
+			(source, _session) => {
 				const value = +source.replace(/[,_]/g, "");
 				if (value * 0 === 0 && Math.floor(value) === value) return value;
 				throw new Error("internal.invalid-integer");
@@ -231,7 +240,7 @@ export class Commander {
 
 		this.domain(
 			"posint",
-			(source, session) => {
+			(source, _session) => {
 				const value = +source.replace(/[,_]/g, "");
 				if (value * 0 === 0 && Math.floor(value) === value && value > 0)
 					return value;
@@ -242,7 +251,7 @@ export class Commander {
 
 		this.domain(
 			"natural",
-			(source, session) => {
+			(source, _session) => {
 				const value = +source.replace(/[,_]/g, "");
 				if (value * 0 === 0 && Math.floor(value) === value && value >= 0)
 					return value;
@@ -253,7 +262,7 @@ export class Commander {
 
 		this.domain(
 			"bigint",
-			(source, session) => {
+			(source, _session) => {
 				try {
 					return BigInt(source.replace(/[,_]/g, ""));
 				} catch {
@@ -263,7 +272,7 @@ export class Commander {
 			{ numeric: true },
 		);
 
-		this.domain("date", (source, session) => {
+		this.domain("date", (source, _session) => {
 			const timestamp = Time.parseDate(source);
 			if (+timestamp) return timestamp;
 			throw new Error("internal.invalid-date");
@@ -277,7 +286,7 @@ export class Commander {
 			}
 			const code = h.from(source);
 			if (code && code.type === "at") {
-				return `${session.platform}:${code.attrs.id}`;
+				return `${session.platform}:${code.attrs["id"]}`;
 			}
 			throw new Error("internal.invalid-user");
 		});
@@ -290,7 +299,7 @@ export class Commander {
 			}
 			const code = h.from(source);
 			if (code && code.type === "sharp") {
-				return `${session.platform}:${code.attrs.id}`;
+				return `${session.platform}:${code.attrs["id"]}`;
 			}
 			throw new Error("internal.invalid-channel");
 		});
@@ -307,7 +316,7 @@ export class Commander {
 		key = name,
 		type = name,
 	) {
-		this.domain(name, (source, session) => {
+		this.domain(name, (source, _session) => {
 			const code = h.from(source, { type });
 			if (code && code.type === type) {
 				return code.attrs;
@@ -320,6 +329,7 @@ export class Commander {
 		return this._commandList.find((cmd) => {
 			if (!Object.hasOwn(cmd._aliases, name)) return false;
 			const alias = cmd._aliases[name];
+			if (!alias) return false;
 			return session?.resolve(alias.filter) ?? true;
 		});
 	}
@@ -359,10 +369,10 @@ export class Commander {
 		if (!key) return {};
 		const segments = Command.normalize(key).split(".");
 		let i = 1,
-			name = segments[0],
-			command: Command;
+			name = segments[0] ?? "",
+			command: Command | undefined;
 		while ((command = this.get(name, session)) && i < segments.length) {
-			name = command.name + "." + segments[i++];
+			name = command.name + "." + (segments[i++] ?? "");
 		}
 		return { command, name };
 	}
@@ -370,24 +380,35 @@ export class Commander {
 	inferCommand(argv: Argv) {
 		if (!argv) return;
 		if (argv.command) return argv.command;
-		if (argv.name)
-			return (argv.command = this.resolve(argv.name, argv.session));
+		if (argv.name) {
+			const command = this.resolve(argv.name, argv.session);
+			if (command) argv.command = command;
+			return argv.command;
+		}
 
-		const { stripped, isDirect, quote } = argv.session;
+		const session = argv.session;
+		if (!session) return;
+		const { stripped, isDirect, quote } = session;
 		// guild message should have prefix or appel to be interpreted as a command call
 		const isStrict =
 			this.config.prefixMode === "strict" || (!isDirect && !stripped.appel);
 		if (argv.root && stripped.prefix === null && isStrict) return;
 		const segments: string[] = [];
-		while (argv.tokens.length) {
-			const { content } = argv.tokens[0];
+		const tokens = argv.tokens ?? [];
+		while (tokens.length) {
+			const token = tokens[0];
+			if (!token) break;
+			const { content } = token;
 			segments.push(content);
 			const { name, command } = this._resolve(segments.join("."), argv.session);
 			if (!command) break;
-			argv.tokens.shift();
+			tokens.shift();
 			argv.command = command;
-			argv.args = command._aliases[name].args;
-			argv.options = command._aliases[name].options;
+			const alias = name ? command._aliases[name] : undefined;
+			if (alias) {
+				if (alias.args) argv.args = alias.args;
+				if (alias.options) argv.options = alias.options;
+			}
 			if (command._arguments.length) break;
 		}
 		// https://github.com/koishijs/koishi/issues/1432
@@ -397,7 +418,7 @@ export class Commander {
 			argv.command?.config.captureQuote !== false &&
 			quote?.content
 		) {
-			argv.tokens.push({
+			(argv.tokens ??= []).push({
 				content: quote.content,
 				quoted: true,
 				inters: [],
@@ -408,12 +429,13 @@ export class Commander {
 	}
 
 	resolveCommand(argv: Argv) {
-		if (!this.inferCommand(argv)) return;
+		const command = this.inferCommand(argv);
+		if (!command) return;
 		if (argv.tokens?.every((token) => !token.inters.length)) {
-			const { options, args, error } = argv.command.parse(argv);
-			argv.options = options;
-			argv.args = args;
-			argv.error = error;
+			const { options, args, error } = command.parse(argv);
+			argv.options = options ?? {};
+			argv.args = args ?? [];
+			argv.error = error ?? "";
 		}
 		return argv.command;
 	}
@@ -421,20 +443,20 @@ export class Commander {
 	command(def: string, ...args: [Command.Config?] | [string, Command.Config?]) {
 		const desc = typeof args[0] === "string" ? (args.shift() as string) : "";
 		const config = args[0] as Command.Config;
-		const path = Command.normalize(def.split(" ", 1)[0]);
+		const path = Command.normalize(def.split(" ", 1)[0] ?? def);
 		const decl = def.slice(path.length);
 		const segments = path.split(/(?=[./])/g);
 
 		/** parent command in the chain */
-		let parent: Command;
+		let parent: Command | undefined;
 		/** the first created command */
-		let root: Command;
+		let root: Command | undefined;
 		const created: Command[] = [];
 		segments.forEach((segment, index) => {
 			const code = segment.charCodeAt(0);
 			const name =
 				code === 46
-					? parent.name + segment
+					? (parent?.name ?? "") + segment
 					: code === 47
 						? segment.slice(1)
 						: segment;
@@ -456,7 +478,8 @@ export class Commander {
 						command.parent = parent;
 					}
 				}
-				return (parent = command);
+				parent = command;
+				return;
 			}
 			const isLast = index === segments.length - 1;
 			command = new Command(
@@ -479,11 +502,15 @@ export class Commander {
 			parent = command;
 		});
 
+		if (!parent) throw new Error(`invalid command definition: ${def}`);
 		Object.assign(parent.config, config);
 		// Make sure `command.config` is set before emitting any events
 		created.forEach((command) => this.ctx.emit("command-added", command));
 		parent[Context.current] = this.ctx;
-		if (root) this.ctx.collect(`command <${root.name}>`, () => root.dispose());
+		if (root) {
+			const created = root;
+			this.ctx.collect(`command <${created.name}>`, () => created.dispose());
+		}
 		return parent;
 	}
 
@@ -505,7 +532,7 @@ export class Commander {
 		return this.ctx.set(service, { transform, ...options });
 	}
 
-	resolveDomain(type: Argv.Type) {
+	resolveDomain(type: Argv.Type | undefined) {
 		if (typeof type === "function") {
 			return { transform: type };
 		} else if (type instanceof RegExp) {
@@ -543,7 +570,7 @@ export class Commander {
 				argv.error = `internal.invalid-${kind}`;
 			} else {
 				const message = argv.session.text(
-					err["message"] || "internal.check-syntax",
+					(err as Error).message || "internal.check-syntax",
 				);
 				argv.error = argv.session.text(`internal.invalid-${kind}`, [
 					name,
@@ -554,8 +581,8 @@ export class Commander {
 	}
 
 	parseDecl(source: string) {
-		let cap: RegExpExecArray;
-		const result = [] as DeclarationList;
+		let cap: RegExpExecArray | null;
+		const result: DeclarationList = Object.assign([], { stripped: "" });
 		// eslint-disable-next-line no-cond-assign
 		while ((cap = BRACKET_REGEXP.exec(source))) {
 			let rawName = cap[0].slice(1, -1);
@@ -567,10 +594,10 @@ export class Commander {
 			const [name, rawType] = rawName.split(":");
 			const type = rawType ? (rawType.trim() as Argv.DomainType) : undefined;
 			result.push({
-				name,
 				variadic,
-				type,
 				required: cap[0][0] === "<",
+				...(name !== undefined ? { name } : {}),
+				...(type !== undefined ? { type } : {}),
 			});
 		}
 		result.stripped = source

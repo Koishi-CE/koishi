@@ -26,7 +26,7 @@ export interface SuggestOptions extends CompareOptions {
 
 export interface Stripped {
 	content: string;
-	prefix: string;
+	prefix: string | null;
 	appel: boolean;
 	hasAt: boolean;
 	atSelf: boolean;
@@ -78,7 +78,10 @@ export interface Session<
 	scope?: string;
 	response?: () => Promise<Fragment>;
 	resolve<T, R extends any[]>(
-		source: T | Eval.Expr | ((session: this, ...args: R) => T),
+		source:
+			| T
+			| Eval.Expr
+			| ((session: Session<any, any, any>, ...args: R) => T),
 		...args: R
 	): T extends Eval.Expr
 		? Eval<T>
@@ -89,7 +92,7 @@ export interface Session<
 	username: string;
 	send(fragment: Fragment, options?: Universal.SendOptions): Promise<string[]>;
 	cancelQueued(delay?: number): void;
-	sendQueued(content: Fragment, delay?: number): Promise<string[]>;
+	sendQueued(content: Fragment, delay?: number): Promise<string[] | undefined>;
 	getChannel<K extends Channel.Field = never>(
 		id?: string,
 		fields?: K[],
@@ -110,17 +113,17 @@ export interface Session<
 	i18n(path: string | string[], params?: object): h[];
 	collect<T extends "user" | "channel">(
 		key: T,
-		argv: Argv,
+		argv: Argv | undefined,
 		fields?: Set<keyof Tables[T]>,
 	): Set<keyof Tables[T]>;
 	execute(content: string | Argv, next?: true | Next): Promise<h[]>;
-	middleware(middleware: Middleware<this>): () => boolean;
-	prompt(timeout?: number): Promise<string>;
+	middleware(middleware: Middleware<Session<any, any, any>>): () => boolean;
+	prompt(timeout?: number): Promise<string | undefined>;
 	prompt<T>(
-		callback: (session: this) => Awaitable<T>,
+		callback: (session: Session<any, any, any>) => Awaitable<T>,
 		options?: PromptOptions,
 	): Promise<T>;
-	suggest(options: SuggestOptions): Promise<string>;
+	suggest(options: SuggestOptions): Promise<string | undefined>;
 }
 
 interface KoishiSession<
@@ -132,7 +135,7 @@ interface KoishiSession<
 	// because they will override the actual properties in the instance.
 	_stripped: Stripped;
 	_queuedTasks: Task[];
-	_queuedTimeout: NodeJS.Timeout;
+	_queuedTimeout: NodeJS.Timeout | null;
 }
 
 class KoishiSession<U, G, C> {
@@ -161,7 +164,10 @@ class KoishiSession<U, G, C> {
 	}
 
 	resolve<T, R extends any[]>(
-		source: T | Eval.Expr | ((session: this, ...args: R) => T),
+		source:
+			| T
+			| Eval.Expr
+			| ((session: Session<any, any, any>, ...args: R) => T),
 		...args: R
 	): T extends Eval.Expr
 		? Eval<T>
@@ -177,7 +183,7 @@ class KoishiSession<U, G, C> {
 		return executeEval({ _: this }, source);
 	}
 
-	_stripNickname(content: string) {
+	_stripNickname(content: string): string | undefined {
 		if (content.startsWith("@")) content = content.slice(1);
 		for (const nickname of this.resolve(this.app.koishi.config.nickname) ??
 			[]) {
@@ -187,6 +193,7 @@ class KoishiSession<U, G, C> {
 			if (!capture) continue;
 			return rest.slice(capture[0].length);
 		}
+		return undefined;
 	}
 
 	/** @deprecated */
@@ -204,12 +211,14 @@ class KoishiSession<U, G, C> {
 		let hasAt = false;
 		const elements = this.elements.slice();
 		while (elements[0]?.type === "at") {
-			const { attrs } = elements.shift();
-			if (attrs.id === this.selfId) {
+			const element = elements.shift();
+			if (!element) break;
+			const { attrs } = element;
+			if (attrs["id"] === this.selfId) {
 				atSelf = appel = true;
 			}
 			// quote messages may contain mentions
-			if (!this.quote?.user?.id || this.quote.user.id !== attrs.id) {
+			if (!this.quote?.user?.id || this.quote.user.id !== attrs["id"]) {
 				hasAt = true;
 			}
 			// @ts-expect-error
@@ -232,25 +241,28 @@ class KoishiSession<U, G, C> {
 	}
 
 	get username(): string {
-		return this.user && this.user["name"]
-			? this.user["name"]
-			: this.author.nick || this.author.name || this.userId;
+		const user = this.user as User.Observed<"name"> | undefined;
+		if (user?.name) return user.name;
+		return this.author.nick || this.author.name || this.userId || "";
 	}
 
-	async send(fragment: Fragment, options: Universal.SendOptions = {}) {
+	async send(
+		fragment: Fragment,
+		options: Universal.SendOptions = {},
+	): Promise<string[]> {
 		const elements = h.normalize(fragment);
-		if (!elements.length) return;
+		if (!elements.length) return [];
 		options.session = this;
 		return this.bot
-			.sendMessage(this.channelId, elements, this.event.referrer, options)
+			.sendMessage(this.channelId ?? "", elements, this.event.referrer, options)
 			.catch<string[]>((error) => {
 				logger.warn(error);
 				return [];
 			});
 	}
 
-	cancelQueued(delay = this.app.koishi.config.delay.cancel) {
-		clearTimeout(this._queuedTimeout);
+	cancelQueued(delay = this.app.koishi.config.delay?.cancel ?? 0) {
+		clearTimeout(this._queuedTimeout ?? undefined);
 		this._queuedTasks = [];
 		this._queuedTimeout = setTimeout(() => this._next(), delay);
 	}
@@ -261,7 +273,7 @@ class KoishiSession<U, G, C> {
 			this._queuedTimeout = null;
 			return;
 		}
-		this.send(task.content).then(task.resolve, task.reject);
+		this.send(task.content).then((ids) => task.resolve(ids ?? []), task.reject);
 		this._queuedTimeout = setTimeout(() => this._next(), task.delay);
 	}
 
@@ -269,7 +281,7 @@ class KoishiSession<U, G, C> {
 		const text = h.normalize(content).join("");
 		if (!text) return;
 		if (isNullable(delay)) {
-			const { message, character } = this.app.koishi.config.delay;
+			const { message = 0, character = 0 } = this.app.koishi.config.delay ?? {};
 			delay = Math.max(message, character * text.length);
 		}
 		return new Promise<string[]>((resolve, reject) => {
@@ -279,24 +291,26 @@ class KoishiSession<U, G, C> {
 	}
 
 	async getChannel<K extends Channel.Field = never>(
-		id = this.channelId,
+		id = this.channelId ?? "",
 		fields: K[] = [],
-	) {
+	): Promise<Channel> {
 		const { app, platform, guildId } = this;
 		if (!fields.length) return { platform, id, guildId } as Channel;
 		const channel = await app.database.getChannel(platform, id, fields);
-		if (channel) return channel;
-		const assignee = this.resolve(app.koishi.config.autoAssign)
+		if (channel) return channel as unknown as Channel;
+		const assignee = this.resolve(app.koishi.config.autoAssign ?? true)
 			? this.selfId
 			: "";
 		if (assignee) {
 			return app.database.createChannel(platform, id, {
 				assignee,
-				guildId,
+				guildId: guildId ?? "",
 				createdAt: new Date(),
 			});
 		} else {
-			const channel = app.model.tables.channel.create();
+			const table = app.model.tables["channel"];
+			const channel = table?.create();
+			if (!channel) throw new Error("cannot create detached channel");
 			Object.assign(channel, { platform, id, guildId, $detached: true });
 			return channel;
 		}
@@ -315,7 +329,7 @@ class KoishiSession<U, G, C> {
 			data,
 			async (diff) => {
 				// https://github.com/koishijs/koishi/issues/1267
-				if (data["$detached"]) return;
+				if ("$detached" in data && data["$detached"]) return;
 				await this.app.database.setChannel(platform, channelId, diff as any);
 			},
 			`channel ${key}`,
@@ -326,30 +340,35 @@ class KoishiSession<U, G, C> {
 	async observeChannel<T extends Channel.Field = never>(
 		fields: Iterable<T>,
 	): Promise<Channel.Observed<T | G>> {
-		const tasks = [this._observeChannelLike(this.channelId, fields)];
+		const tasks = [this._observeChannelLike(this.channelId ?? "", fields)];
 		if (this.channelId !== this.guildId) {
-			tasks.push(this._observeChannelLike(this.guildId, fields));
+			tasks.push(this._observeChannelLike(this.guildId ?? "", fields));
 		}
-		const [channel, guild = channel] = await Promise.all(tasks);
+		const results = await Promise.all(tasks);
+		const channel = results[0];
+		if (!channel) throw new Error("failed to observe channel");
+		const guild = results[1] ?? channel;
 		this.guild = guild;
 		this.channel = channel;
 		return channel;
 	}
 
 	async getUser<K extends User.Field = never>(
-		userId = this.userId,
+		userId = this.userId ?? "",
 		fields: K[] = [],
-	) {
+	): Promise<User> {
 		const { app, platform } = this;
 		if (!fields.length) return {} as User;
 		const user = await app.database.getUser(platform, userId, fields);
-		if (user) return user;
-		const authority = this.resolve(app.koishi.config.autoAuthorize);
+		if (user) return user as unknown as User;
+		const authority = this.resolve(app.koishi.config.autoAuthorize ?? 1);
 		const data = { locales: this.locales, authority, createdAt: new Date() };
 		if (authority) {
 			return app.database.createUser(platform, userId, data);
 		} else {
-			const user = app.model.tables.user.create();
+			const table = app.model.tables["user"];
+			const user = table?.create();
+			if (!user) throw new Error("cannot create detached user");
 			Object.assign(user, { ...data, $detached: true });
 			return user;
 		}
@@ -369,9 +388,13 @@ class KoishiSession<U, G, C> {
 			if (!fieldSet.size) return (this.user = cache as any);
 		}
 
-		if (this.author?.["anonymous"]) {
-			const fallback = this.app.model.tables.user.create();
-			fallback.authority = this.resolve(this.app.koishi.config.autoAuthorize);
+		if ((this.author as { anonymous?: unknown } | undefined)?.anonymous) {
+			const table = this.app.model.tables["user"];
+			const fallback = table?.create();
+			if (!fallback) throw new Error("cannot create anonymous user");
+			fallback.authority = this.resolve(
+				this.app.koishi.config.autoAuthorize ?? 1,
+			);
 			const user = observe(fallback, () => Promise.resolve());
 			return (this.user = user);
 		}
@@ -385,8 +408,12 @@ class KoishiSession<U, G, C> {
 				data,
 				async (diff) => {
 					// https://github.com/koishijs/koishi/issues/1267
-					if (data["$detached"]) return;
-					await this.app.database.setUser(this.platform, userId, diff as any);
+					if ("$detached" in data && data["$detached"]) return;
+					await this.app.database.setUser(
+						this.platform,
+						userId ?? "",
+						diff as any,
+					);
 				},
 				`user ${this.uid}`,
 			);
@@ -406,7 +433,7 @@ class KoishiSession<U, G, C> {
 						h.i18n(
 							{
 								...params,
-								path: this.resolveScope(params.path),
+								path: this.resolveScope(params["path"]),
 							},
 							children,
 						),
@@ -414,7 +441,11 @@ class KoishiSession<U, G, C> {
 				this,
 			);
 		} finally {
-			this.scope = oldScope;
+			if (oldScope === undefined) {
+				delete this.scope;
+			} else {
+				this.scope = oldScope;
+			}
 		}
 	}
 
@@ -436,7 +467,7 @@ class KoishiSession<U, G, C> {
 			...((this.channel as Channel.Observed)?.locales || []),
 			...((this.guild as Channel.Observed)?.locales || []),
 		];
-		if (this.app.koishi.config.i18n.output === "prefer-user") {
+		if (this.app.koishi.config.i18n?.output === "prefer-user") {
 			locales.unshift(...((this.user as User.Observed)?.locales || []));
 		} else {
 			locales.push(...((this.user as User.Observed)?.locales || []));
@@ -448,24 +479,25 @@ class KoishiSession<U, G, C> {
 
 	collect<T extends "user" | "channel">(
 		key: T,
-		argv: Argv,
+		argv: Argv | undefined,
 		fields = new Set<keyof Tables[T]>(),
 	): Set<keyof Tables[T]> {
 		const collect = (argv: Argv) => {
-			argv.session = this;
+			argv.session = this as Session<any, any, any>;
 			if (argv.tokens) {
 				for (const { inters } of argv.tokens) {
 					inters.forEach(collect);
 				}
 			}
-			if (!this.app.$commander.resolveCommand(argv)) return;
+			const command = this.app.$commander.resolveCommand(argv);
+			if (!command) return;
 			(this.app as Context).emit(
 				argv.session,
 				`command/before-attach-${key}` as any,
 				argv,
 				fields,
 			);
-			collectFields(argv, argv.command[`_${key}Fields` as any], fields);
+			collectFields(argv, (command as Dict<any>)[`_${key}Fields`], fields);
 		};
 		if (argv) collect(argv);
 		return fields;
@@ -474,33 +506,41 @@ class KoishiSession<U, G, C> {
 	async execute(argv: string | Argv, next?: true | Next) {
 		if (typeof argv === "string") argv = Argv.parse(argv);
 
-		argv.session = this;
+		argv.session = this as Session<any, any, any>;
 		if (argv.tokens) {
 			for (const arg of argv.tokens) {
 				const { inters } = arg;
 				const output: string[] = [];
 				for (let i = 0; i < inters.length; ++i) {
-					const execution = await this.execute(inters[i], true);
+					const inter = inters[i];
+					if (!inter) continue;
+					const execution = await this.execute(inter, true);
 					const transformed = await this.transform(execution);
 					output.push(transformed.join(""));
 				}
 				for (let i = inters.length - 1; i >= 0; --i) {
-					const { pos } = inters[i];
+					const inter = inters[i];
+					if (!inter) continue;
+					const { pos } = inter;
 					arg.content =
-						arg.content.slice(0, pos) + output[i] + arg.content.slice(pos);
+						arg.content.slice(0, pos) +
+						(output[i] ?? "") +
+						arg.content.slice(pos);
 				}
 				arg.inters = [];
 			}
 			if (!this.app.$commander.resolveCommand(argv)) return [];
 		} else {
-			argv.command ||= this.app.$commander.get(argv.name);
-			if (!argv.command) {
+			const command = argv.command ?? this.app.$commander.get(argv.name ?? "");
+			if (!command) {
 				logger.warn(new Error(`cannot find command ${argv.name}`));
 				return [];
 			}
+			argv.command = command;
 		}
 
 		const { command } = argv;
+		if (!command) return [];
 		if (!command.ctx.filter(this)) return [];
 
 		if (this.app.database) {
@@ -518,43 +558,44 @@ class KoishiSession<U, G, C> {
 			);
 		}
 
-		let shouldEmit = true;
-		if (next === true) {
-			shouldEmit = false;
-			next = undefined as Next;
-		}
+		const shouldEmit = next !== true;
 
 		return this.withScope(`commands.${command.name}.messages`, async () => {
-			const result = await command.execute(argv as Argv, next as Next);
+			const result = await command.execute(
+				argv as Argv,
+				next === true ? undefined : next,
+			);
 			if (!shouldEmit) return h.normalize(result);
 			await this.send(result);
 			return [];
 		});
 	}
 
-	middleware(middleware: Middleware<this>) {
+	middleware(middleware: Middleware<Session<any, any, any>>) {
 		const id = this.fid;
-		return this.app.middleware<this>(async (session, next) => {
+		return this.app.middleware(async (session, next) => {
 			if (id && session.fid !== id) return next();
 			return middleware(session, next);
 		}, true);
 	}
 
-	prompt(timeout?: number): Promise<string>;
+	prompt(timeout?: number): Promise<string | undefined>;
 	prompt<T>(
-		callback: (session: this) => Awaitable<T>,
+		callback: (session: Session<any, any, any>) => Awaitable<T>,
 		options?: PromptOptions,
 	): Promise<T>;
-	prompt(...args: any[]) {
-		const callback: (session: this) => any =
+	prompt(...args: any[]): any {
+		const callback: (session: Session<any, any, any>) => any =
 			typeof args[0] === "function"
 				? args.shift()
 				: (session) => {
 						// Trim leading <at> element
-						const elements = session.elements.slice();
+						const elements = (session.elements ?? []).slice();
+						const first = elements[0];
 						if (
-							elements[0]?.type === "at" &&
-							elements[0].attrs.id === session.selfId
+							first &&
+							first.type === "at" &&
+							first.attrs["id"] === session.selfId
 						) {
 							elements.shift();
 						}
@@ -562,7 +603,7 @@ class KoishiSession<U, G, C> {
 					};
 		const options: PromptOptions =
 			typeof args[0] === "number" ? { timeout: args[0] } : (args[0] ?? {});
-		return new Promise<string>((resolve) => {
+		return new Promise<string | undefined>((resolve) => {
 			const dispose = this.middleware(async (session, next) => {
 				clearTimeout(timer);
 				dispose();
@@ -573,15 +614,16 @@ class KoishiSession<U, G, C> {
 			const timer = setTimeout(() => {
 				dispose();
 				resolve(undefined);
-			}, options.timeout ?? this.app.koishi.config.delay.prompt);
+			}, options.timeout ?? this.app.koishi.config.delay?.prompt);
 		});
 	}
 
-	async suggest(options: SuggestOptions) {
+	async suggest(options: SuggestOptions): Promise<string | undefined> {
 		let { expect, filter, prefix = "" } = options;
 		if (options.actual) {
+			const actual = options.actual;
 			expect = expect.filter((name) => {
-				return name && this.app.i18n.compare(name, options.actual, options);
+				return name && this.app.i18n.compare(name, actual, options);
 			});
 			if (filter) {
 				expect = (
@@ -611,12 +653,13 @@ class KoishiSession<U, G, C> {
 		}
 
 		await this.send(prefix + options.suffix);
-		return this.prompt((session) => {
+		return this.prompt((session): string | undefined => {
 			const { content, atSelf, hasAt } = session.stripped;
-			if (!atSelf && hasAt) return;
+			if (!atSelf && hasAt) return undefined;
 			if (content === "." || content === "。") {
 				return expect[0];
 			}
+			return undefined;
 		}, options);
 	}
 }
