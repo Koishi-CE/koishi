@@ -1,10 +1,22 @@
 {
 	"$schema": "https://biomejs.dev/schemas/2.5.10/schema.json",
+	"vcs": {
+		"enabled": true,
+		"clientKind": "git",
+		"useIgnoreFile": true
+	},
 	"files": {
-		"includes": ["**", "!**/lib", "!**/*.tsbuildinfo"]
+		"includes": [
+			"**",
+			"!**/node_modules",
+			"!**/lib",
+			"!**/dist",
+			"!**/*.tsbuildinfo"
+		]
 	},
 	"linter": {
 		"rules": {
+			"preset": "recommended",
 			"suspicious": {
 				"noAssignInExpressions": "off",
 				"useIterableCallbackReturn": "off",
@@ -12,7 +24,63 @@
 				"noRedeclare": "off",
 				"noThenProperty": "off",
 				"noShadowRestrictedNames": "off"
+			},
+			"correctness": {
+				"noUnresolvedImports": "off"
+			},
+			"complexity": {
+				"useLiteralKeys": "off"
+			},
+			"style": {
+				"useNamingConvention": {
+					"level": "error",
+					"options": {
+						"strictCase": false,
+						"conventions": [
+							{
+								"selector": { "kind": "typeParameter" },
+								"formats": ["PascalCase"]
+							},
+							{
+								"selector": { "kind": "typeMember" },
+								"formats": ["camelCase", "snake_case", "PascalCase"]
+							},
+							{
+								"selector": { "kind": "objectLiteralMember" },
+								"formats": ["camelCase", "snake_case", "CONSTANT_CASE"]
+							}
+						]
+					}
+				}
+			},
+			"nursery": {
+				"noFloatingPromises": "error"
 			}
 		}
-	}
+	},
+	"assist": {
+		"enabled": true,
+		"actions": {
+			"source": {
+				"organizeImports": "on"
+			}
+		}
+	},
+	"overrides": [
+		{
+			"includes": [
+				"**/tests/**",
+				"**/*.{spec,test}.*",
+				"apps/create-koishi-ce/templates/**",
+				"apps/koishi-scripts/template/**"
+			],
+			"linter": {
+				"rules": {
+					"style": {
+						"useNamingConvention": "off"
+					}
+				}
+			}
+		}
+	]
 }
