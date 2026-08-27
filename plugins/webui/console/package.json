@@ -75,6 +75,6 @@
 	},
 	"dependencies": {
 		"@koishi-ce/console": "workspace:*",
-		"open": "^8.4.2"
+		"open": "^11.0.1"
 	}
 }

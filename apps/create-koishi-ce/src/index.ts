@@ -1,16 +1,26 @@
 import { execSync } from "node:child_process";
 import * as fs from "node:fs";
 import { basename, join, relative } from "node:path";
-import axios from "axios";
+import { Readable } from "node:stream";
+import type { ReadableStream as NodeWebReadableStream } from "node:stream/web";
 import getRegistry from "get-registry";
 import kleur from "kleur";
 import prompts from "prompts";
 import { extract } from "tar";
-import which from "which-pm-runs";
+import { whichPMRuns } from "which-pm-runs";
 import parse from "yargs-parser";
 
 let project: string;
 let rootDir: string;
+
+class HttpError extends Error {
+	constructor(
+		public status: number,
+		public statusText: string,
+	) {
+		super(`HTTP ${status} ${statusText}`);
+	}
+}
 
 const { version } = require("../package.json");
 
@@ -101,25 +111,27 @@ async function scaffold() {
 	const template = argv.template || "@koishijs/boilerplate";
 
 	try {
-		const { data: remote } = await axios.get(`${registry}/${template}`);
+		const metaRes = await fetch(`${registry}/${template}`);
+		if (!metaRes.ok) throw new HttpError(metaRes.status, metaRes.statusText);
+		const remote = await metaRes.json();
 		const version = remote["dist-tags"][argv.ref || "latest"];
 		const url = remote.versions[version].dist.tarball;
-		const { data } = await axios.get<NodeJS.ReadableStream>(url, {
-			responseType: "stream",
-		});
+		const tarballRes = await fetch(url);
+		const body = tarballRes.body;
+		if (!tarballRes.ok || !body) {
+			throw new HttpError(tarballRes.status, tarballRes.statusText);
+		}
 
 		await new Promise<void>((resolve, reject) => {
-			const stream = data.pipe(
-				extract({ cwd: rootDir, newer: true, strip: 1 }),
-			);
-			stream.on("finish", resolve);
-			stream.on("error", reject);
+			Readable.fromWeb(body as unknown as NodeWebReadableStream)
+				.pipe(extract({ cwd: rootDir, newer: true, strip: 1 }))
+				.on("finish", resolve)
+				.on("error", reject);
 		});
 	} catch (err) {
-		if (!axios.isAxiosError(err) || !err.response) throw err;
-		const { status, statusText } = err.response;
+		if (!(err instanceof HttpError)) throw err;
 		console.log(
-			`${kleur.red("error")} request failed with status code ${status} ${statusText}`,
+			`${kleur.red("error")} request failed with status code ${err.status} ${err.statusText}`,
 		);
 		process.exit(1);
 	}
@@ -163,7 +175,7 @@ async function install() {
 	// with `-y` option, we don't install dependencies
 	if (argv.yes) return;
 
-	const agent = which()?.name || "npm";
+	const agent = whichPMRuns()?.name || "npm";
 	const yes = await confirm("Install and start it now?");
 	if (yes) {
 		execSync([agent, "install"].join(" "), { stdio: "inherit", cwd: rootDir });

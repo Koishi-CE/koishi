@@ -1,3 +1,5 @@
+import { spawn } from "node:child_process";
+import { promises as fsp, readFileSync } from "node:fs";
 import {} from "@koishi-ce/console";
 import {
 	type Context,
@@ -18,13 +20,11 @@ import Scanner, {
 	type Registry,
 	type RemotePackage,
 } from "@koishi-ce/registry";
-import spawn from "execa";
-import { promises as fsp, readFileSync } from "fs";
 import getRegistry from "get-registry";
 import pMap from "p-map";
 import { resolve } from "path";
 import { compare, satisfies, valid } from "semver";
-import which from "which-pm-runs";
+import { whichPMRuns } from "which-pm-runs";
 import {} from ".";
 
 const logger = new Logger("market");
@@ -102,7 +102,7 @@ class Installer extends Service {
 	private pkgTasks: Dict<
 		Promise<Dict<Pick<RemotePackage, DependencyMetaKey>>>
 	> = {};
-	private agent = which();
+	private agent = whichPMRuns();
 	private manifest: PackageJson;
 	private depTask: Promise<Dict<Dependency>>;
 	private flushData: () => void;
@@ -238,8 +238,12 @@ class Installer extends Service {
 		if (name !== "yarn") args.unshift("install");
 		return new Promise<number>((resolve) => {
 			if (useJson) args.push("--json");
-			const child = spawn(name, args, { cwd: this.cwd });
-			child.on("exit", (code) => resolve(code));
+			// Windows 下 npm/yarn 等是 .cmd 垫片,必须经 shell 解析
+			const child = spawn(name, args, {
+				cwd: this.cwd,
+				shell: process.platform === "win32",
+			});
+			child.on("exit", (code) => resolve(code ?? -1));
 			child.on("error", () => resolve(-1));
 
 			let stderr = "";

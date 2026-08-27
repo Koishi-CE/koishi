@@ -71,16 +71,14 @@
 		"@koishi-ce/client": "workspace:*",
 		"@koishi-ce/market": "workspace:*",
 		"@koishi-ce/plugin-config": "workspace:*",
-		"@types/semver": "^7.5.8",
-		"@types/which-pm-runs": "^1.0.2"
+		"@types/semver": "^7.5.8"
 	},
 	"dependencies": {
 		"@koishi-ce/console": "workspace:*",
 		"@koishi-ce/registry": "workspace:*",
-		"execa": "^5.1.1",
 		"get-registry": "^1.2.0",
-		"p-map": "^4.0.0",
-		"semver": "^7.6.3",
-		"which-pm-runs": "^1.1.0"
+		"p-map": "^7.0.6",
+		"semver": "^7.8.5",
+		"which-pm-runs": "^2.0.0"
 	}
 }

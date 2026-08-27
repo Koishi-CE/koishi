@@ -2,7 +2,7 @@ import { DataService } from "@koishi-ce/console";
 import { type Context, type Dict, Schema, version } from "@koishi-ce/koishi";
 import { helpers } from "envinfo";
 import { readFile } from "fs/promises";
-import which from "which-pm-runs";
+import { whichPMRuns } from "which-pm-runs";
 
 class EnvInfoProvider extends DataService<Dict<Dict<string>>> {
 	private task: Promise<Dict<Dict<string>>>;
@@ -19,7 +19,7 @@ class EnvInfoProvider extends DataService<Dict<Dict<string>>> {
 			helpers.getOSInfo(),
 			helpers.getCPUInfo(),
 		]);
-		const agent = which();
+		const agent = whichPMRuns();
 		const system = { OS, CPU };
 		const binaries = {
 			Node: process.versions.node,

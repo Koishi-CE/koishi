@@ -9,7 +9,12 @@ import { createRequire } from "module";
 import { dirname, extname, resolve } from "path";
 import { load } from "tsconfig-utils";
 import type { ViteDevServer } from "vite";
-import type { PackageJson } from "yakumo";
+
+interface PackageJson {
+	main?: string;
+	module?: string;
+	exports?: string | Record<string, unknown>;
+}
 
 const app = new Koa();
 const router = new Router();

@@ -1,7 +1,7 @@
 import { execSync } from "node:child_process";
 import type { CAC } from "cac";
 import prompts from "prompts";
-import which from "which-pm-runs";
+import { whichPMRuns } from "which-pm-runs";
 
 async function getRepo() {
 	const { name } = await prompts({
@@ -41,7 +41,7 @@ export default function (cli: CAC) {
 			execSync(["git", "clone", repo, `external/${name}`].join(" "), {
 				stdio: "inherit",
 			});
-			const agent = which()?.name || "npm";
+			const agent = whichPMRuns()?.name || "npm";
 			execSync([agent, "exec", "yakumo", "prepare"].join(" "), {
 				stdio: "inherit",
 			});

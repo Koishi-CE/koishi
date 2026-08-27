@@ -52,9 +52,9 @@
 	},
 	"devDependencies": {
 		"@koishi-ce/client": "workspace:*",
-		"ansi_up": "^5.2.1",
+		"ansi_up": "^6.0.6",
 		"@koishi-ce/koishi": "workspace:*",
-		"reggol": "^1.7.1"
+		"reggol": "^2.1.0"
 	},
 	"dependencies": {
 		"@koishi-ce/console": "workspace:*"

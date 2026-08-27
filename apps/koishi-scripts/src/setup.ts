@@ -4,9 +4,8 @@ import type { CAC } from "cac";
 import { copyFile, mkdir, readFile, readJson, writeFile } from "fs-extra";
 import { blue, red } from "kleur";
 import prompts from "prompts";
-import which from "which-pm-runs";
-import type { PackageJson } from "yakumo";
-import { cwd, meta } from ".";
+import { whichPMRuns } from "which-pm-runs";
+import { cwd, meta, type PackageJson } from "./index";
 
 function supports(command: string) {
 	try {
@@ -29,7 +28,7 @@ class Initiator {
 
 	async start(name: string) {
 		await this.init(name);
-		const agent = which()?.name || "npm";
+		const agent = whichPMRuns()?.name || "npm";
 		const args: string[] = agent === "yarn" ? [] : ["install"];
 		execSync([agent, ...args].join(" "), { stdio: "inherit" });
 	}

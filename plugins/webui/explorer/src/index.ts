@@ -3,7 +3,7 @@ import { type Context, type Dict, Schema } from "@koishi-ce/koishi";
 import anymatch, { type Tester } from "anymatch";
 import { detect } from "chardet";
 import type { FSWatcher } from "chokidar";
-import FileType from "file-type";
+import { fileTypeFromBuffer } from "file-type";
 import {
 	mkdir,
 	readdir,
@@ -89,7 +89,7 @@ class Explorer extends DataService<Entry[]> {
 			async (filename, binary) => {
 				filename = join(this.root, filename);
 				const buffer = await readFile(filename);
-				const result = await FileType.fromBuffer(buffer);
+				const result = await fileTypeFromBuffer(buffer);
 				return {
 					base64: buffer.toString("base64"),
 					mime: result?.mime,
