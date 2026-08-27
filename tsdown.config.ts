@@ -1,4 +1,4 @@
-import { defineConfig } from 'tsdown'
+import { defineConfig } from "tsdown";
 
 /**
  * 根级统一构建：一个配置构建所有 node 侧子包（packages / plugins）。
@@ -17,18 +17,22 @@ import { defineConfig } from 'tsdown'
 export default defineConfig({
 	workspace: {
 		include: [
-			'packages/node/*',
-			'plugins/common/*',
-			'plugins/infra/*',
-			'plugins/webui/*',
+			"packages/node/*",
+			"plugins/common/*",
+			"plugins/infra/*",
+			"plugins/webui/*",
 		],
-		exclude: ['plugins/infra/http', 'plugins/infra/proxy-agent', 'plugins/infra/server'],
+		exclude: [
+			"plugins/infra/http",
+			"plugins/infra/proxy-agent",
+			"plugins/infra/server",
+		],
 	},
-	entry: 'src/index.ts',
-	format: 'cjs',
+	entry: "src/index.ts",
+	format: "cjs",
 	dts: true,
-	platform: 'node',
-	outDir: 'lib',
+	platform: "node",
+	outDir: "lib",
 	clean: true,
 	// 各包 main 指向 lib/index.js（无 "type" 字段的 CJS 包），保持默认扩展名
 	fixedExtension: false,
@@ -37,10 +41,21 @@ export default defineConfig({
 		// 声明文件不内联外部包类型，仅保留 import 引用
 		dts: { neverBundle: true },
 	},
-	loader: { '.yml': 'copy' },
+	loader: { ".yml": "copy" },
 	inputOptions: {
 		resolve: {
-			extensions: ['.tsx', '.ts', '.jsx', '.js', '.mjs', '.cjs', '.mts', '.cts', '.json', '.yml'],
+			extensions: [
+				".tsx",
+				".ts",
+				".jsx",
+				".js",
+				".mjs",
+				".cjs",
+				".mts",
+				".cts",
+				".json",
+				".yml",
+			],
 		},
 	},
-})
+});
