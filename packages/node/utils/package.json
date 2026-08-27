@@ -1,37 +1,37 @@
 {
-  "name": "@koishi-ce/utils",
-  "description": "Utilities for Koishi",
-  "version": "7.2.1",
-  "main": "lib/index.cjs",
-  "module": "lib/index.mjs",
-  "typings": "lib/index.d.ts",
-  "files": [
-    "lib",
-    "src"
-  ],
-  "author": "Shigma <shigma10826@gmail.com>",
-  "license": "MIT",
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/Koishi-CE/koishi.git",
-    "directory": "packages/node/utils"
-  },
-  "bugs": {
-    "url": "https://github.com/Koishi-CE/koishi/issues"
-  },
-  "homepage": "https://koishi.chat/api/utils.html",
-  "keywords": [
-    "bot",
-    "chatbot",
-    "koishi",
-    "utilities"
-  ],
-  "devDependencies": {
-    "@sinonjs/fake-timers": "^6.0.1",
-    "@koishi-ce/koishi": "workspace:*"
-  },
-  "dependencies": {
-    "cosmokit": "^1.8.1",
-    "inaba": "^1.1.1"
-  }
+	"name": "@koishi-ce/utils",
+	"description": "Utilities for Koishi",
+	"version": "7.2.1",
+	"main": "lib/index.cjs",
+	"module": "lib/index.mjs",
+	"typings": "lib/index.d.ts",
+	"files": [
+		"lib",
+		"src"
+	],
+	"author": "Shigma <shigma10826@gmail.com>",
+	"license": "MIT",
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/Koishi-CE/koishi.git",
+		"directory": "packages/node/utils"
+	},
+	"bugs": {
+		"url": "https://github.com/Koishi-CE/koishi/issues"
+	},
+	"homepage": "https://koishi.chat/api/utils.html",
+	"keywords": [
+		"bot",
+		"chatbot",
+		"koishi",
+		"utilities"
+	],
+	"devDependencies": {
+		"@sinonjs/fake-timers": "^6.0.1",
+		"@koishi-ce/koishi": "workspace:*"
+	},
+	"dependencies": {
+		"cosmokit": "^1.8.1",
+		"inaba": "^1.1.1"
+	}
 }

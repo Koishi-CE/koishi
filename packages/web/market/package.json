@@ -1,42 +1,42 @@
 {
-  "name": "@koishi-ce/market",
-  "description": "Market UI for Koishi",
-  "version": "4.2.10",
-  "main": "client/index.ts",
-  "files": [
-    "client"
-  ],
-  "author": "Shigma <shigma10826@gmail.com>",
-  "license": "AGPL-3.0",
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/Koishi-CE/koishi.git",
-    "directory": "packages/web/market"
-  },
-  "bugs": {
-    "url": "https://github.com/Koishi-CE/koishi/issues"
-  },
-  "homepage": "https://koishi.chat",
-  "keywords": [
-    "bot",
-    "chatbot",
-    "koishi",
-    "market",
-    "registry",
-    "client",
-    "utilities"
-  ],
-  "devDependencies": {
-    "@koishi-ce/registry": "workspace:*",
-    "@types/spark-md5": "^3.0.4"
-  },
-  "peerDependencies": {
-    "vue": "^3",
-    "vue-i18n": "^9"
-  },
-  "dependencies": {
-    "@koishi-ce/components": "workspace:*",
-    "cosmokit": "^1.8.1",
-    "spark-md5": "^3.0.2"
-  }
+	"name": "@koishi-ce/market",
+	"description": "Market UI for Koishi",
+	"version": "4.2.10",
+	"main": "client/index.ts",
+	"files": [
+		"client"
+	],
+	"author": "Shigma <shigma10826@gmail.com>",
+	"license": "AGPL-3.0",
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/Koishi-CE/koishi.git",
+		"directory": "packages/web/market"
+	},
+	"bugs": {
+		"url": "https://github.com/Koishi-CE/koishi/issues"
+	},
+	"homepage": "https://koishi.chat",
+	"keywords": [
+		"bot",
+		"chatbot",
+		"koishi",
+		"market",
+		"registry",
+		"client",
+		"utilities"
+	],
+	"devDependencies": {
+		"@koishi-ce/registry": "workspace:*",
+		"@types/spark-md5": "^3.0.4"
+	},
+	"peerDependencies": {
+		"vue": "^3",
+		"vue-i18n": "^9"
+	},
+	"dependencies": {
+		"@koishi-ce/components": "workspace:*",
+		"cosmokit": "^1.8.1",
+		"spark-md5": "^3.0.2"
+	}
 }

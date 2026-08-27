@@ -1,59 +1,59 @@
 {
-  "name": "@koishi-ce/plugin-status",
-  "description": "Status view for Koishi",
-  "version": "7.4.10",
-  "main": "lib/index.js",
-  "typings": "lib/index.d.ts",
-  "files": [
-    "lib",
-    "dist",
-    "src"
-  ],
-  "author": "Shigma <shigma10826@gmail.com>",
-  "license": "AGPL-3.0",
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/Koishi-CE/koishi.git",
-    "directory": "plugins/webui/status"
-  },
-  "bugs": {
-    "url": "https://github.com/Koishi-CE/koishi/issues"
-  },
-  "homepage": "https://koishi.chat/plugins/console/status.html",
-  "keywords": [
-    "bot",
-    "chatbot",
-    "koishi",
-    "plugin",
-    "status",
-    "environment",
-    "information"
-  ],
-  "koishi": {
-    "description": {
-      "en": "Display running status and environment information in the console",
-      "zh": "在控制台中显示运行状态和环境信息"
-    },
-    "service": {
-      "required": [
-        "console"
-      ]
-    }
-  },
-  "peerDependencies": {
-    "@koishijs/plugin-console": "^5.30.11",
-    "koishi": "^4.18.11"
-  },
-  "devDependencies": {
-    "@koishi-ce/client": "workspace:*",
-    "@koishi-ce/plugin-analytics": "workspace:*",
-    "@koishi-ce/plugin-config": "workspace:*",
-    "@types/envinfo": "^7.8.3",
-    "@koishi-ce/koishi": "workspace:*"
-  },
-  "dependencies": {
-    "@koishi-ce/console": "workspace:*",
-    "envinfo": "^7.11.1",
-    "which-pm-runs": "^1.1.0"
-  }
+	"name": "@koishi-ce/plugin-status",
+	"description": "Status view for Koishi",
+	"version": "7.4.10",
+	"main": "lib/index.js",
+	"typings": "lib/index.d.ts",
+	"files": [
+		"lib",
+		"dist",
+		"src"
+	],
+	"author": "Shigma <shigma10826@gmail.com>",
+	"license": "AGPL-3.0",
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/Koishi-CE/koishi.git",
+		"directory": "plugins/webui/status"
+	},
+	"bugs": {
+		"url": "https://github.com/Koishi-CE/koishi/issues"
+	},
+	"homepage": "https://koishi.chat/plugins/console/status.html",
+	"keywords": [
+		"bot",
+		"chatbot",
+		"koishi",
+		"plugin",
+		"status",
+		"environment",
+		"information"
+	],
+	"koishi": {
+		"description": {
+			"en": "Display running status and environment information in the console",
+			"zh": "在控制台中显示运行状态和环境信息"
+		},
+		"service": {
+			"required": [
+				"console"
+			]
+		}
+	},
+	"peerDependencies": {
+		"@koishijs/plugin-console": "^5.30.11",
+		"koishi": "^4.18.11"
+	},
+	"devDependencies": {
+		"@koishi-ce/client": "workspace:*",
+		"@koishi-ce/plugin-analytics": "workspace:*",
+		"@koishi-ce/plugin-config": "workspace:*",
+		"@types/envinfo": "^7.8.3",
+		"@koishi-ce/koishi": "workspace:*"
+	},
+	"dependencies": {
+		"@koishi-ce/console": "workspace:*",
+		"envinfo": "^7.11.1",
+		"which-pm-runs": "^1.1.0"
+	}
 }

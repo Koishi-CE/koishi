@@ -1,63 +1,60 @@
 {
-  "name": "@koishi-ce/plugin-notifier",
-  "description": "Notifier service for Koishi",
-  "version": "1.2.1",
-  "main": "lib/index.cjs",
-  "types": "lib/index.d.ts",
-  "exports": {
-    ".": {
-      "types": "./lib/index.d.ts",
-      "import": "./lib/index.mjs",
-      "require": "./lib/index.cjs"
-    },
-    "./package.json": "./package.json"
-  },
-  "files": [
-    "lib",
-    "dist",
-    "src"
-  ],
-  "author": "Shigma <shigma10826@gmail.com>",
-  "license": "AGPL-3.0",
-  "scripts": {
-    "lint": "eslint src --ext .ts"
-  },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/Koishi-CE/koishi.git",
-    "directory": "plugins/webui/notifier"
-  },
-  "bugs": {
-    "url": "https://github.com/Koishi-CE/koishi/issues"
-  },
-  "homepage": "https://koishi.chat/plugins/develop/notifier.html",
-  "keywords": [
-    "bot",
-    "chatbot",
-    "koishi",
-    "plugin",
-    "notifier"
-  ],
-  "koishi": {
-    "public": [
-      "dist"
-    ],
-    "description": {
-      "en": "Notifier service for Koishi",
-      "zh": "Koishi 的通知服务"
-    },
-    "service": {
-      "implements": [
-        "notifier"
-      ]
-    }
-  },
-  "peerDependencies": {
-    "@koishijs/plugin-console": "^5.30.11",
-    "koishi": "^4.18.11"
-  },
-  "devDependencies": {
-    "@koishi-ce/client": "workspace:*",
-    "@koishi-ce/plugin-config": "workspace:*"
-  }
+	"name": "@koishi-ce/plugin-notifier",
+	"description": "Notifier service for Koishi",
+	"version": "1.2.1",
+	"main": "lib/index.cjs",
+	"types": "lib/index.d.ts",
+	"exports": {
+		".": {
+			"types": "./lib/index.d.ts",
+			"import": "./lib/index.mjs",
+			"require": "./lib/index.cjs"
+		},
+		"./package.json": "./package.json"
+	},
+	"files": [
+		"lib",
+		"dist",
+		"src"
+	],
+	"author": "Shigma <shigma10826@gmail.com>",
+	"license": "AGPL-3.0",
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/Koishi-CE/koishi.git",
+		"directory": "plugins/webui/notifier"
+	},
+	"bugs": {
+		"url": "https://github.com/Koishi-CE/koishi/issues"
+	},
+	"homepage": "https://koishi.chat/plugins/develop/notifier.html",
+	"keywords": [
+		"bot",
+		"chatbot",
+		"koishi",
+		"plugin",
+		"notifier"
+	],
+	"koishi": {
+		"public": [
+			"dist"
+		],
+		"description": {
+			"en": "Notifier service for Koishi",
+			"zh": "Koishi 的通知服务"
+		},
+		"service": {
+			"implements": [
+				"notifier"
+			]
+		}
+	},
+	"peerDependencies": {
+		"@koishijs/plugin-console": "^5.30.11",
+		"koishi": "^4.18.11"
+	},
+	"devDependencies": {
+		"@koishi-ce/client": "workspace:*",
+		"@koishi-ce/plugin-config": "workspace:*"
+	}
 }
