@@ -38,5 +38,10 @@
 		"@koishi-ce/components": "workspace:*",
 		"cosmokit": "^1.8.1",
 		"spark-md5": "^3.0.2"
+	},
+	"exports": {
+		".": {
+			"source": "./src/index.ts"
+		}
 	}
 }

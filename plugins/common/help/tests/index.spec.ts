@@ -1,3 +1,4 @@
+import { beforeAll, describe, it } from "bun:test";
 import { App } from "@koishi-ce/koishi";
 import * as help from "@koishi-ce/plugin-help";
 import mock from "@koishi-ce/plugin-mock";
@@ -15,7 +16,7 @@ app.i18n.define("$zh-CN", "commands.help.messages.global-epilog", "EPILOG");
 
 const client = app.mock.client("123", "456");
 
-before(async () => {
+beforeAll(async () => {
 	await app.start();
 	await app.mock.initUser("123", 2);
 	await app.mock.initChannel("456");

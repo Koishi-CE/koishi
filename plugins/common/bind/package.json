@@ -50,5 +50,10 @@
 		"@minatojs/driver-memory": "^3.7.0",
 		"@koishi-ce/koishi": "workspace:*",
 		"minato": "^3.7.0"
+	},
+	"exports": {
+		".": {
+			"source": "./src/index.ts"
+		}
 	}
 }

@@ -6,6 +6,7 @@
 	"types": "lib/index.d.ts",
 	"exports": {
 		".": {
+			"source": "./src/index.ts",
 			"types": "./lib/index.d.ts",
 			"node": {
 				"require": "./lib/node/index.js",

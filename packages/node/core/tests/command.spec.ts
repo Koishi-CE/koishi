@@ -1,17 +1,25 @@
+import {
+	afterAll,
+	afterEach,
+	beforeAll,
+	beforeEach,
+	describe,
+	it,
+} from "bun:test";
 import { mock as jest } from "node:test";
 import { App, type Command, Logger, Next } from "@koishi-ce/koishi";
 import mock from "@koishi-ce/plugin-mock";
 import { expect, use } from "chai";
 import promise from "chai-as-promised";
-import shape from "chai-shape";
 import { inspect } from "util";
+import { shape } from "../../../../scripts/testing/chai-shape";
 
 use(shape);
 use(promise);
 
 const print = jest.fn();
 
-before(() => {
+beforeAll(() => {
 	Logger.levels.base = 1;
 	Logger.targets.push({
 		levels: { base: 0, command: 2 },
@@ -19,7 +27,7 @@ before(() => {
 	});
 });
 
-after(() => {
+afterAll(() => {
 	Logger.levels.base = 2;
 	Logger.targets.pop();
 });

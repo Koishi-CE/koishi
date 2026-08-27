@@ -63,10 +63,16 @@
 		"@types/chai": "^4.3.16",
 		"@types/chai-as-promised": "^7.1.8",
 		"@types/throttle-debounce": "^2.1.0",
-		"chai": "^5.1.1",
-		"chai-as-promised": "^7.1.1"
+		"chai": "^6.2.2",
+		"chai-as-promised": "^8.0.2",
+		"@koishijs/plugin-database-memory": "^3.7.0"
 	},
 	"dependencies": {
 		"throttle-debounce": "^5.0.2"
+	},
+	"exports": {
+		".": {
+			"source": "./src/index.ts"
+		}
 	}
 }

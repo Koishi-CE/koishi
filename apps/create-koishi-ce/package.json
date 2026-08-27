@@ -50,5 +50,10 @@
 		"tar": "^7.5.22",
 		"which-pm-runs": "^2.0.0",
 		"yargs-parser": "^22.0.0"
+	},
+	"exports": {
+		".": {
+			"source": "./src/index.ts"
+		}
 	}
 }

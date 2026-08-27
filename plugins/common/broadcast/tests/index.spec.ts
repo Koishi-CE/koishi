@@ -1,3 +1,4 @@
+import { beforeAll, describe, it } from "bun:test";
 import { mock as jest } from "node:test";
 import { App, Bot, Channel } from "@koishi-ce/koishi";
 import * as broadcast from "@koishi-ce/plugin-broadcast";
@@ -16,7 +17,7 @@ app.plugin(broadcast);
 
 const client = app.mock.client("123");
 
-before(async () => {
+beforeAll(async () => {
 	await app.start();
 	await app.mock.initUser("123", 4);
 	await app.mock.initChannel("111", "114");

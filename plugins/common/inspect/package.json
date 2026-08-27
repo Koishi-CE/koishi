@@ -49,5 +49,10 @@
 	"devDependencies": {
 		"@koishi-ce/plugin-mock": "workspace:*",
 		"@koishi-ce/koishi": "workspace:*"
+	},
+	"exports": {
+		".": {
+			"source": "./src/index.ts"
+		}
 	}
 }

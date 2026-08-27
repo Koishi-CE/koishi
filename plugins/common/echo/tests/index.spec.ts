@@ -1,9 +1,10 @@
+import { beforeAll, describe, it } from "bun:test";
 import { mock as jest } from "node:test";
 import { App, type Bot, h } from "@koishi-ce/koishi";
 import * as echo from "@koishi-ce/plugin-echo";
 import mock from "@koishi-ce/plugin-mock";
 import { expect, use } from "chai";
-import shape from "chai-shape";
+import { shape } from "../../../../scripts/testing/chai-shape";
 
 use(shape);
 
@@ -14,7 +15,7 @@ app.plugin(echo);
 
 const client = app.mock.client("123");
 
-before(() => app.start());
+beforeAll(() => app.start());
 
 describe("@koishi-ce/plugin-echo", () => {
 	it("basic support", async () => {

@@ -1,3 +1,4 @@
+import { beforeAll, describe, it } from "bun:test";
 import { App } from "@koishi-ce/koishi";
 import admin from "@koishi-ce/plugin-admin";
 import mock from "@koishi-ce/plugin-mock";
@@ -16,9 +17,9 @@ app.plugin(admin);
 const client1 = app.mock.client("123", "321");
 const client2 = app.mock.client("123");
 
-before(() => app.start());
+beforeAll(() => app.start());
 
-before(async () => {
+beforeAll(async () => {
 	await app.mock.initUser("123", 4);
 	await app.mock.initUser("456", 3);
 	await app.mock.initUser("789", 4);

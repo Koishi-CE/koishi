@@ -1,3 +1,4 @@
+import { afterAll, afterEach, beforeAll, describe, it } from "bun:test";
 import { App } from "@koishi-ce/koishi";
 import commands from "@koishi-ce/plugin-commands";
 import * as help from "@koishi-ce/plugin-help";
@@ -11,8 +12,8 @@ app.plugin(mock);
 
 const client = app.mock.client("123");
 
-before(() => app.start());
-after(() => app.stop());
+beforeAll(() => app.start());
+afterAll(() => app.stop());
 
 afterEach(() => {
 	for (const command of app.$commander._commandList.slice()) {

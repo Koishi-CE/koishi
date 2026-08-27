@@ -1,3 +1,4 @@
+import { afterAll, beforeAll, beforeEach, describe, it } from "bun:test";
 import { mock as jest, type Mock } from "node:test";
 import {
 	App,
@@ -19,9 +20,9 @@ app.plugin(mock);
 const print = jest.fn();
 const client = app.mock.client("123");
 
-before(() => app.start());
+beforeAll(() => app.start());
 
-before(() => {
+beforeAll(() => {
 	Logger.levels.base = 1;
 	Logger.targets.push({
 		levels: { base: 0, session: 2 },
@@ -29,7 +30,7 @@ before(() => {
 	});
 });
 
-after(() => {
+afterAll(() => {
 	Logger.levels.base = 2;
 	Logger.targets.pop();
 });

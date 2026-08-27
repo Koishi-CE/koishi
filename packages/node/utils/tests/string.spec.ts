@@ -1,3 +1,4 @@
+import { describe, it } from "bun:test";
 import { escapeRegExp, interpolate } from "@koishi-ce/koishi";
 import { expect } from "chai";
 

@@ -27,11 +27,16 @@
 		"utilities"
 	],
 	"devDependencies": {
-		"@sinonjs/fake-timers": "^6.0.1",
+		"@sinonjs/fake-timers": "^15.4.0",
 		"@koishi-ce/koishi": "workspace:*"
 	},
 	"dependencies": {
 		"cosmokit": "^1.8.1",
 		"inaba": "^1.1.1"
+	},
+	"exports": {
+		".": {
+			"source": "./src/index.ts"
+		}
 	}
 }

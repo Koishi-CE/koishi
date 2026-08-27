@@ -1,9 +1,10 @@
+import { afterAll, beforeAll, describe, it } from "bun:test";
 import { App } from "@koishi-ce/koishi";
 import mock from "@koishi-ce/plugin-mock";
 import memory from "@minatojs/driver-memory";
 import { expect, use } from "chai";
 import promise from "chai-as-promised";
-import shape from "chai-shape";
+import { shape } from "../../../../scripts/testing/chai-shape";
 
 use(shape);
 use(promise);
@@ -13,8 +14,8 @@ const app = new App();
 app.plugin(mock);
 app.plugin(memory);
 
-before(() => app.start());
-after(() => app.stop());
+beforeAll(() => app.start());
+afterAll(() => app.stop());
 
 describe("Database API", () => {
 	describe("User Operations", () => {

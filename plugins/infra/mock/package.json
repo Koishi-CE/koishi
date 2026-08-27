@@ -43,5 +43,10 @@
 	"devDependencies": {
 		"@koishi-ce/plugin-server": "workspace:*",
 		"@koishi-ce/koishi": "workspace:*"
+	},
+	"exports": {
+		".": {
+			"source": "./src/index.ts"
+		}
 	}
 }

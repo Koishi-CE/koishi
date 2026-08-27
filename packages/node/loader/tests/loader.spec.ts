@@ -1,3 +1,4 @@
+import { describe, it } from "bun:test";
 import type { Mock } from "node:test";
 import { Context, sleep } from "@koishi-ce/koishi";
 import mock from "@koishi-ce/plugin-mock";

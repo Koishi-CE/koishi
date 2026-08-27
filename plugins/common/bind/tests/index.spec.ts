@@ -1,3 +1,4 @@
+import { afterAll, beforeAll, describe, it } from "bun:test";
 import { Context } from "@koishi-ce/koishi";
 import * as bind from "@koishi-ce/plugin-bind";
 import mock from "@koishi-ce/plugin-mock";
@@ -22,13 +23,13 @@ app
 const client1 = app.mock.client("123", "321");
 const client2 = app.mock.client("456", "654");
 
-before(async () => {
+beforeAll(async () => {
 	await app.start();
 	await app.mock.initUser("123", 1, { name: "foo" });
 	await app.mock.initUser("456", 1, { name: "bar" });
 });
 
-after(() => app.stop());
+afterAll(() => app.stop());
 
 describe("@koishi-ce/plugin-bind", () => {
 	it("create binding", async () => {

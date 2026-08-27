@@ -4,7 +4,10 @@
 	"version": "5.30.11",
 	"main": "client/index.ts",
 	"exports": {
-		".": "./client/index.ts",
+		".": {
+			"source": "./src/index.ts",
+			"default": "./client/index.ts"
+		},
 		"./global": "./client/global.d.ts",
 		"./bin": "./lib/bin.js",
 		"./lib": "./lib/index.js",

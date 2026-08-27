@@ -1,3 +1,4 @@
+import { afterAll, beforeAll, describe, it } from "bun:test";
 import { App } from "@koishi-ce/koishi";
 import mock from "@koishi-ce/plugin-mock";
 
@@ -18,8 +19,8 @@ describe("Command Suggestion", () => {
 		.option("text", "-t <bar>")
 		.action(({ options }) => "fooo" + options.text);
 
-	before(() => app.start());
-	after(() => app.stop());
+	beforeAll(() => app.start());
+	afterAll(() => app.stop());
 
 	it("execute command", async () => {
 		await client1.shouldReply("foo bar", "foobar");
@@ -96,8 +97,8 @@ describe("session.suggest()", () => {
 		return session.execute({ args: [name], name: "find" });
 	});
 
-	before(() => app.start());
-	after(() => app.stop());
+	beforeAll(() => app.start());
+	afterAll(() => app.stop());
 
 	it("no suggestions", async () => {
 		await client.shouldNotReply(".");

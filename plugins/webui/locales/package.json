@@ -60,5 +60,10 @@
 	"dependencies": {
 		"@koishi-ce/console": "workspace:*",
 		"js-yaml": "^5.4.1"
+	},
+	"exports": {
+		".": {
+			"source": "./src/index.ts"
+		}
 	}
 }

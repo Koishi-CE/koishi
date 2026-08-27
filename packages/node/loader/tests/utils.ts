@@ -20,4 +20,10 @@ export default class TestLoader extends Loader {
 	fullReload() {
 		console.info("trigger full reload");
 	}
+
+	// 测试桩未提供真实配置文件,writeConfig 会因 filename 未定义产生
+	// 未处理 rejection(mocha 容忍,bun test 判败),此处按测试意图置空
+	writeConfig() {
+		return Promise.resolve();
+	}
 }

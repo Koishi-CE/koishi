@@ -1,3 +1,4 @@
+import { describe, it } from "bun:test";
 import { Bot, Context } from "@koishi-ce/koishi";
 import { expect } from "chai";
 

@@ -61,5 +61,10 @@
 	},
 	"dependencies": {
 		"@koishi-ce/console": "workspace:*"
+	},
+	"exports": {
+		".": {
+			"source": "./src/index.ts"
+		}
 	}
 }

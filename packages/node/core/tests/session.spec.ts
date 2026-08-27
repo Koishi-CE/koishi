@@ -1,3 +1,4 @@
+import { afterAll, beforeAll, describe, it } from "bun:test";
 import { App, sleep } from "@koishi-ce/koishi";
 import mock from "@koishi-ce/plugin-mock";
 import memory from "@minatojs/driver-memory";
@@ -13,8 +14,8 @@ describe("Session API", () => {
 			.command("exec [command:text]")
 			.action(({ session }, text) => session.execute(text));
 
-		before(() => app.start());
-		after(() => app.stop());
+		beforeAll(() => app.start());
+		afterAll(() => app.stop());
 
 		it("basic support", async () => {
 			await client.shouldReply("echo 0", "0");
@@ -39,8 +40,8 @@ describe("Session API", () => {
 		app.plugin(mock);
 		const client = app.mock.client("123", "456");
 
-		before(() => app.start());
-		after(() => app.stop());
+		beforeAll(() => app.start());
+		afterAll(() => app.stop());
 
 		app.middleware(async (session, next) => {
 			if (session.content !== "prompt") return next();

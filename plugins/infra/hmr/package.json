@@ -50,5 +50,10 @@
 	"dependencies": {
 		"@babel/code-frame": "^8.0.0",
 		"chokidar": "^5.0.0"
+	},
+	"exports": {
+		".": {
+			"source": "./src/index.ts"
+		}
 	}
 }

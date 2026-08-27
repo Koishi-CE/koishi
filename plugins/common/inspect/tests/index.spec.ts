@@ -1,3 +1,4 @@
+import { afterAll, beforeAll, describe, it } from "bun:test";
 import { Context } from "@koishi-ce/koishi";
 import mock from "@koishi-ce/plugin-mock";
 import * as inspect from "../src";
@@ -9,8 +10,8 @@ app.plugin(mock);
 
 const client = app.mock.client("123", "456");
 
-before(() => app.start());
-after(() => app.stop());
+beforeAll(() => app.start());
+afterAll(() => app.stop());
 
 describe("@koishi-ce/plugin-inspect", () => {
 	it("basic support", async () => {

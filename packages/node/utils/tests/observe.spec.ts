@@ -1,3 +1,4 @@
+import { describe, it } from "bun:test";
 import { mock as jest } from "node:test";
 import { type Dict, noop, observe } from "@koishi-ce/koishi";
 import { expect } from "chai";

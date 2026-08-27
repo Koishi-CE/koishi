@@ -15,20 +15,21 @@
 	"scripts": {
 		"lint": "biome check .",
 		"format": "biome format --write .",
-		"typecheck": "tsc --noEmit -p tsconfig.json"
+		"typecheck": "tsc --noEmit -p tsconfig.json",
+		"test": "bun scripts/testing/run-tests.mjs"
 	},
 	"devDependencies": {
 		"@biomejs/biome": "^2.5.10",
-		"@koishijs/plugin-database-memory": "^3.7.0",
 		"@koishi-ce/plugin-help": "workspace:*",
 		"@koishi-ce/plugin-mock": "workspace:*",
-		"@sinonjs/fake-timers": "^6.0.1",
-		"@types/mocha": "^9.1.1",
-		"@types/node": "^25.0.9",
-		"@types/sinonjs__fake-timers": "^6.0.4",
-		"mocha": "^9.2.2",
+		"@sinonjs/fake-timers": "^15.4.0",
+		"@types/node": "^26.4.0",
 		"typescript": "^7.0.2",
 		"yml-register": "^1.2.5",
-		"tsdown": "^0.22.14"
+		"tsdown": "^0.22.14",
+		"chai": "^6.2.2",
+		"chai-as-promised": "^8.0.2",
+		"@koishi-ce/koishi": "workspace:*",
+		"js-yaml": "^5.4.1"
 	}
 }

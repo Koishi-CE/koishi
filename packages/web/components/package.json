@@ -32,5 +32,10 @@
 		"@satorijs/element": "^3.2.0",
 		"cosmokit": "^1.8.1",
 		"schemastery-vue": "^7.3.15"
+	},
+	"exports": {
+		".": {
+			"source": "./src/index.ts"
+		}
 	}
 }

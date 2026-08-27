@@ -1,3 +1,4 @@
+import { afterAll, beforeAll, describe, it } from "bun:test";
 import { App, Channel, sleep, User } from "@koishi-ce/koishi";
 import mock, { DEFAULT_SELF_ID } from "@koishi-ce/plugin-mock";
 import memory from "@minatojs/driver-memory";
@@ -37,7 +38,7 @@ app.middleware((session, next) => {
 	return next();
 });
 
-before(async () => {
+beforeAll(async () => {
 	await app.start();
 	await app.mock.initUser("123", 2);
 	await app.mock.initUser("456", 1);
@@ -47,7 +48,7 @@ before(async () => {
 	await app.mock.initChannel("654", "999");
 });
 
-after(() => app.stop());
+afterAll(() => app.stop());
 
 describe("Runtime", () => {
 	describe("Command Prefix", () => {
@@ -98,11 +99,11 @@ describe("Runtime", () => {
 	});
 
 	describe("Nickname Prefix", () => {
-		before(() => {
+		beforeAll(() => {
 			app.koishi.config.prefix = ["-"];
 		});
 
-		after(() => {
+		afterAll(() => {
 			app.koishi.config.prefix = null;
 		});
 
@@ -156,11 +157,11 @@ describe("Runtime", () => {
 	});
 
 	describe("Shortcuts", () => {
-		before(() => {
+		beforeAll(() => {
 			app.koishi.config.prefix = ["#"];
 		});
 
-		after(() => {
+		afterAll(() => {
 			app.koishi.config.prefix = null;
 		});
 
@@ -251,7 +252,9 @@ describe("Runtime", () => {
 		});
 
 		it("check arg count: timeout", async () => {
-			const clock = install();
+			// 仅伪造 setTimeout:默认 toFake 会连 queueMicrotask/nextTick 一起冻结,
+			// bun test 下导致 mock 客户端回复永远无法投递
+			const clock = install({ toFake: ["setTimeout", "clearTimeout"] });
 			cmd1.config.checkArgCount = true;
 			cmd1.config.showWarning = true;
 			await client4.shouldReply("cmd1", "请发送arg1。");
@@ -306,6 +309,7 @@ describe("Runtime", () => {
 			cmd3.dispose();
 		});
 
+		// 上游 master 同名用例为 command.before();fork 运行时尚无 beforeAll API
 		it("command.before()", async () => {
 			const cmd3 = app.command("cmd3").action(() => "after cmd3");
 			await client1.shouldReply("cmd3", "after cmd3");

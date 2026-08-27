@@ -8,6 +8,7 @@
 	"bin": "bin.js",
 	"exports": {
 		".": {
+			"source": "./src/index.ts",
 			"types": "./lib/index.d.ts",
 			"node": {
 				"import": "./lib/index.mjs",
