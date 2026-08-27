@@ -19,7 +19,7 @@
 import { store, Time, VirtualList } from "@koishi-ce/client";
 import {} from "@koishi-ce/plugin-config";
 import { AnsiUp } from "ansi_up";
-import { type Message, Logger } from "reggol";
+import { Logger, type Message } from "reggol";
 
 // reggol v2 移除了 Logger.Record 类型别名,此处等价替代
 interface LogRecord extends Message {

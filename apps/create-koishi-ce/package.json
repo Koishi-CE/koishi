@@ -24,7 +24,7 @@
 	},
 	"homepage": "https://koishi.chat",
 	"scripts": {
-		"build": "tsc -b"
+		"build": "tsdown"
 	},
 	"keywords": [
 		"bot",

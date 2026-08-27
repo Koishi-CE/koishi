@@ -2,16 +2,12 @@
 	"compilerOptions": {
 		"strict": true,
 		"target": "es2022",
-		"module": "commonjs",
-		"sourceMap": true,
-		"declaration": true,
-		"composite": true,
-		"incremental": true,
+		"module": "esnext",
 		"skipLibCheck": true,
 		"esModuleInterop": true,
-		"moduleResolution": "node",
+		"moduleResolution": "bundler",
 		"rootDir": "src",
-		"outDir": "lib"
+		"noEmit": true
 	},
 	"include": ["src"]
 }

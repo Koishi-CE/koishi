@@ -69,9 +69,9 @@
 		"@koishi-ce/plugin-server": "workspace:*",
 		"@koishijs/plugin-server-proxy": "^1.2.0",
 		"@maikolib/vite-plugin-yaml": "^1.0.1",
-		"@vitejs/plugin-vue": "^5.1.4",
+		"@vitejs/plugin-vue": "^6.0.8",
 		"unocss": "^66.8.1",
-		"vite": "^5.4.10"
+		"vite": "^8.2.2"
 	},
 	"dependencies": {
 		"@koishi-ce/console": "workspace:*",

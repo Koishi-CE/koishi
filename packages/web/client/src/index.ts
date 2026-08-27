@@ -1,16 +1,43 @@
 import yaml from "@maikolib/vite-plugin-yaml";
 import vue from "@vitejs/plugin-vue";
-import { existsSync, promises as fs } from "fs";
-import { resolve } from "path";
+import { existsSync, promises as fs, globSync, readFileSync } from "fs";
+import { dirname, resolve } from "path";
 import type { RollupOutput } from "rollup";
 import * as vite from "vite";
-import type { Context } from "yakumo";
 
-declare module "yakumo" {
-	interface PackageConfig {
-		client?: string;
+// 将全部工作区包名映射到其源码目录,行为对齐根 tsconfig 的 paths 别名。
+// 没有被任何工作区包依赖的插件(如 plugin-logger)不会出现在 node_modules
+// 的链接里,bundler 无法按包名解析,必须显式提供这层映射。
+function collectWorkspaceAliases(): Record<string, string> {
+	const here = dirname(
+		new URL(import.meta.url).pathname.replace(/^\/(\w:)/, "$1"),
+	);
+	const repoRoot = resolve(here, "../../../..");
+	const manifest = JSON.parse(readFileSync(repoRoot + "/package.json", "utf8"));
+	const aliases: Record<string, string> = {};
+	for (const pattern of manifest.workspaces ?? []) {
+		let files: string[] = [];
+		try {
+			files = globSync(`${repoRoot}/${pattern}/package.json`);
+		} catch {}
+		for (const file of files) {
+			const dir = dirname(file).replace(/\\/g, "/");
+			try {
+				const { name } = JSON.parse(readFileSync(file, "utf8"));
+				if (!name) continue;
+				// 控制台前端语境下,裸包名对到浏览器端入口(替代上游 lib 的 browser
+				// 导出条件);`<name>/src` 子路径对到源码目录,供共享代码引用。
+				// 子路径键必须先插入——别名解析按插入序取首个命中项
+				const clientEntry = `${dir}/client/index.ts`;
+				if (existsSync(`${dir}/src`)) aliases[`${name}/src`] = `${dir}/src`;
+				aliases[name] = existsSync(clientEntry) ? clientEntry : `${dir}/src`;
+			} catch {}
+		}
 	}
+	return aliases;
 }
+
+const workspaceAliases = collectWorkspaceAliases();
 
 export async function build(root: string, config: vite.UserConfig = {}) {
 	if (!existsSync(root + "/client")) return;
@@ -76,6 +103,7 @@ export async function build(root: string, config: vite.UserConfig = {}) {
 				},
 				resolve: {
 					alias: {
+						...workspaceAliases,
 						"vue-i18n": "@koishi-ce/client",
 						"@koishi-ce/components": "@koishi-ce/client",
 					},
@@ -176,34 +204,4 @@ export async function createServer(
 			config,
 		),
 	);
-}
-
-export const inject = ["yakumo"];
-
-export function apply(ctx: Context) {
-	ctx.register("client", async () => {
-		const paths = ctx.yakumo.locate(ctx.yakumo.argv._);
-		for (const path of paths) {
-			const meta = ctx.yakumo.workspaces[path];
-			const deps = {
-				...meta.dependencies,
-				...meta.devDependencies,
-				...meta.peerDependencies,
-				...meta.optionalDependencies,
-			};
-			let config: vite.UserConfig = {};
-			if (meta.yakumo?.client) {
-				const filename = resolve(ctx.yakumo.cwd + path, meta.yakumo.client);
-				const exports = (await import(filename)).default;
-				if (typeof exports === "function") {
-					await exports();
-					continue;
-				}
-				config = exports;
-			} else if (!deps["@koishi-ce/client"]) {
-				continue;
-			}
-			await build(ctx.yakumo.cwd + path, config);
-		}
-	});
 }

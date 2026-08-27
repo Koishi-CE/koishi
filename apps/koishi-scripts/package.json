@@ -33,7 +33,7 @@
 		"koishi"
 	],
 	"scripts": {
-		"build": "tsc -b"
+		"build": "tsdown"
 	},
 	"peerDependencies": {
 		"@koishijs/client": "^5.29.2"
