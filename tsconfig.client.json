@@ -1,5 +1,6 @@
 {
 	"$schema": "https://json.schemastore.org/tsconfig",
+	"files": ["packages/web/client/global.d.ts"],
 	"compilerOptions": {
 		"target": "ES2025",
 		"module": "esnext",
@@ -7,10 +8,7 @@
 		"moduleDetection": "force",
 		"lib": ["ES2025", "DOM", "DOM.Iterable"],
 		"jsx": "preserve",
-		"declaration": true,
 		"noEmit": true,
-		"composite": true,
-		"incremental": true,
 		"strict": true,
 		"strictBindCallApply": true,
 		"noUncheckedIndexedAccess": true,
@@ -22,6 +20,6 @@
 		"forceConsistentCasingInFileNames": true,
 		"allowImportingTsExtensions": true,
 		"erasableSyntaxOnly": true,
-		"types": ["@koishi-ce/client/global"]
+		"types": []
 	}
 }

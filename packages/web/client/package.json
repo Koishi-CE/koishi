@@ -8,7 +8,7 @@
 			"source": "./src/index.ts",
 			"default": "./client/index.ts"
 		},
-		"./global": "./client/global.d.ts",
+		"./global": "./global.d.ts",
 		"./bin": "./lib/bin.js",
 		"./lib": "./lib/index.js",
 		"./lib/yakumo": "./lib/yakumo.js",

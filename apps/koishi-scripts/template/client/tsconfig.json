@@ -2,9 +2,12 @@
 	"compilerOptions": {
 		"rootDir": ".",
 		"module": "esnext",
-		"moduleResolution": "node",
+		"moduleResolution": "bundler",
 		"jsx": "preserve",
-		"types": ["@koishijs/client/global"]
+		"noEmit": true,
+		"skipLibCheck": true,
+		"strict": true,
+		"types": ["@koishi-ce/client/global"]
 	},
 	"include": ["."]
 }
