@@ -1,0 +1,18 @@
+commands.bind:
+  description: Bind to account
+  options:
+    remove: Unbind
+  messages:
+    generated-1: |-
+      The Bind command can be used to bind user data across multiple platforms. During the bind process, the original platform's user data is fully preserved, while the target platform's user data is overwritten with the original platform's data.
+      Please make sure that the current platform is your target platform and send the following text to the bot within the original platform using your account within 5 minutes:
+      {0}
+      Once the binding is complete, you can always use "bind -r" to unbind the status.
+    generated-2: |-
+      Token verification successful! The second step will be performed next.
+      Please use your account to send the following text to the bot on the target platform within 5 minutes:
+      {0}
+      Note: The current platform is your original platform, the user data here will overwrite the data from the target platform.
+    success: Account binding has been successful!
+    remove-success: Your account has been successfully unbundled!
+    remove-original: 'Cannot disconnect: This is your original account.'

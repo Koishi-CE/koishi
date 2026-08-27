@@ -1,0 +1,42 @@
+{
+  "name": "@koishijs/market",
+  "description": "Market UI for Koishi",
+  "version": "4.2.10",
+  "main": "client/index.ts",
+  "files": [
+    "client"
+  ],
+  "author": "Shigma <shigma10826@gmail.com>",
+  "license": "AGPL-3.0",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/koishijs/webui.git",
+    "directory": "packages/market"
+  },
+  "bugs": {
+    "url": "https://github.com/koishijs/webui/issues"
+  },
+  "homepage": "https://koishi.chat",
+  "keywords": [
+    "bot",
+    "chatbot",
+    "koishi",
+    "market",
+    "registry",
+    "client",
+    "utilities"
+  ],
+  "devDependencies": {
+    "@koishijs/registry": "^7.0.3",
+    "@types/spark-md5": "^3.0.4"
+  },
+  "peerDependencies": {
+    "vue": "^3",
+    "vue-i18n": "^9"
+  },
+  "dependencies": {
+    "@koishijs/components": "^1.5.22",
+    "cosmokit": "^1.8.1",
+    "spark-md5": "^3.0.2"
+  }
+}

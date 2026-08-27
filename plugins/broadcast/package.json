@@ -1,0 +1,56 @@
+{
+  "name": "@koishijs/plugin-broadcast",
+  "description": "Broadcast messages in Koishi",
+  "version": "1.1.4",
+  "main": "lib/index.js",
+  "typings": "lib/index.d.ts",
+  "files": [
+    "lib",
+    "src"
+  ],
+  "author": "Shigma <shigma10826@gmail.com>",
+  "license": "MIT",
+  "scripts": {
+    "lint": "eslint src --ext .ts"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/koishijs/koishi.git",
+    "directory": "plugins/common/broadcast"
+  },
+  "bugs": {
+    "url": "https://github.com/koishijs/koishi/issues"
+  },
+  "homepage": "https://koishi.chat/plugins/common/broadcast.html",
+  "keywords": [
+    "bot",
+    "chatbot",
+    "koishi",
+    "plugin",
+    "broadcast"
+  ],
+  "koishi": {
+    "category": "tool",
+    "description": {
+      "en": "Broadcast messages",
+      "zh": "发送广播消息"
+    },
+    "service": {
+      "required": [
+        "database"
+      ]
+    },
+    "locales": [
+      "zh"
+    ]
+  },
+  "peerDependencies": {
+    "koishi": "^4.18.11"
+  },
+  "devDependencies": {
+    "@koishijs/plugin-mock": "^2.6.6",
+    "@minatojs/driver-memory": "^3.7.0",
+    "koishi": "^4.18.11",
+    "minato": "^3.7.0"
+  }
+}

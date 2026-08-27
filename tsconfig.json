@@ -1,0 +1,21 @@
+{
+  "extends": "./tsconfig.base",
+  "compilerOptions": {
+    "baseUrl": ".",
+    "paths": {
+      "@koishijs/client/lib": [
+        "packages/client/src",
+      ],
+      "koishi": [
+        "packages/cli/src",
+      ],
+      "@koishijs/plugin-*": [
+        "plugins/*/src",
+      ],
+      "@koishijs/*": [
+        "packages/*/src",
+      ],
+    },
+  },
+  "files": [],
+}

@@ -1,0 +1,10 @@
+- 
+  $description: 管理員設定
+  admin:
+    enabled: 啟用管理員賬號。
+    username: 管理員用戶名。
+    password: 管理員密碼。
+- 
+  $description: 高級設定
+  authTokenExpire: 用戶令牌有效期。
+  loginTokenExpire: 登錄令牌有效期。

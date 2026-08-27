@@ -1,0 +1,22 @@
+commands:
+  help:
+    description: Show help
+    shortcuts:
+      help: <></>
+    options:
+      help: show this message
+      authority: show authority requirements
+      showHidden: show hidden options and commands
+    messages:
+      not-found: Command not found.
+      hint-authority: this minimum authority is marked in parentheses
+      hint-subcommand: those marked with an asterisk have subcommands
+      command-title: 'Command: {0}'
+      command-aliases: 'Aliases: {0}.'
+      command-examples: 'Examples:'
+      command-authority: 'Minimal authority: {0}.'
+      subcommand-prolog: 'Available subcommands{0}:'
+      global-prolog: 'Available commands{0}:'
+      global-epilog: Type "{0}help <command>" to see syntax and examples for a specific command.
+      available-options: 'Available options:'
+      available-options-with-authority: 'Available options (parentheses indicate additional authority requirement):'

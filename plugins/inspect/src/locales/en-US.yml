@@ -1,0 +1,18 @@
+commands:
+  inspect:
+    description: View details of users, channels or messages
+    usage: |-
+      inspect @user
+      inspect #channel
+      inspect
+    messages:
+      invalid: Could not parse arguments.
+      user: 'User ID: {id}'
+      channel: 'Channel ID: {id}'
+      message: |-
+        Platform name: {platform}
+        Message ID: {messageId}
+        Channel ID: {channelId}
+        Guild ID: {guildId}
+        User ID: {userId}
+        Self ID: {selfId}
