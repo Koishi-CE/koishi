@@ -17,7 +17,7 @@ export * from "./client";
 export * from "./entry";
 export * from "./service";
 
-declare module "koishi" {
+declare module "@koishi-ce/koishi" {
 	interface Context {
 		console: Console;
 	}
@@ -42,14 +42,14 @@ export interface EntryData {
 }
 
 export class EntryProvider extends DataService<Dict<EntryData>> {
-	static inject = [];
+	static override inject = [];
 
 	constructor(ctx: Context) {
 		super(ctx, "entry", { immediate: true });
 	}
 
-	async get(forced: boolean, client: Client) {
-		return this.ctx.get("console").get(client);
+	override async get(_forced: boolean, client: Client) {
+		return this.ctx.console.get(client);
 	}
 }
 
@@ -68,13 +68,16 @@ export abstract class Console extends Service {
 			if (typeof key === "symbol") return Reflect.get(target, key, receiver);
 			return this.ctx.get(`console.services.${key}`);
 		},
-		set: (target, key, value, receiver) => {
+		set: (_target, _key, _value, _receiver) => {
 			return false;
 		},
 	});
 
-	constructor(public ctx: Context) {
+	public override ctx: Context;
+
+	constructor(ctx: Context) {
 		super(ctx, "console", true);
+		this.ctx = ctx;
 		ctx.plugin(EntryProvider);
 		ctx.plugin(SchemaProvider);
 		ctx.plugin(PermissionProvider);
@@ -92,11 +95,14 @@ export abstract class Console extends Service {
 	}
 
 	async get(client: Client) {
-		const result = valueMap(this.entries, ({ files, ctx, data }, key) => ({
-			files: this.resolveEntry(files, key),
-			paths: this.ctx.get("loader")?.paths(ctx.scope),
-			data: data?.(client),
-		}));
+		const result = valueMap(this.entries, ({ files, ctx, data }, key) => {
+			const paths = this.ctx.get("loader")?.paths(ctx.scope);
+			return {
+				files: this.resolveEntry(files, key),
+				...(paths !== undefined ? { paths } : {}),
+				data: data?.(client),
+			};
+		});
 		result["_id"] = this.id as any;
 		return result;
 	}

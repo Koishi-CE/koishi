@@ -14,11 +14,14 @@ export class Entry<T = any> {
 	public id = Math.random().toString(36).slice(2);
 	public dispose: () => void;
 
-	constructor(
-		public ctx: Context,
-		public files: Entry.Files,
-		public data: (client: Client) => T,
-	) {
+	public ctx: Context;
+	public files: Entry.Files;
+	public data: ((client: Client) => T) | undefined;
+
+	constructor(ctx: Context, files: Entry.Files, data?: (client: Client) => T) {
+		this.ctx = ctx;
+		this.files = files;
+		this.data = data;
 		ctx.console.entries[this.id] = this;
 		ctx.console.refresh("entry");
 		this.dispose = ctx.collect("entry", () => {
@@ -30,7 +33,7 @@ export class Entry<T = any> {
 	refresh() {
 		this.ctx.console.broadcast("entry-data", async (client: Client) => ({
 			id: this.id,
-			data: await this.data(client),
+			data: await this.data?.(client),
 		}));
 	}
 }

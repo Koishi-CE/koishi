@@ -25,7 +25,7 @@ namespace Event {
 
 let child: ChildProcess;
 
-process.env.KOISHI_SHARED = JSON.stringify({
+process.env["KOISHI_SHARED"] = JSON.stringify({
 	startTime: Date.now(),
 });
 
@@ -54,20 +54,20 @@ function createWorker(options: Dict<any>) {
 	});
 
 	let config: Config;
-	let timer: NodeJS.Timeout;
+	let timer: NodeJS.Timeout | undefined;
 
 	child.on("message", (message: Event) => {
 		if (message.type === "start") {
 			config = message.body;
-			timer =
-				config.heartbeatTimeout &&
-				setTimeout(() => {
-					// eslint-disable-next-line no-console
-					console.log(kleur.red("daemon: heartbeat timeout"));
-					child.kill("SIGKILL");
-				}, config.heartbeatTimeout);
+			timer = config.heartbeatTimeout
+				? setTimeout(() => {
+						// eslint-disable-next-line no-console
+						console.log(kleur.red("daemon: heartbeat timeout"));
+						child.kill("SIGKILL");
+					}, config.heartbeatTimeout)
+				: undefined;
 		} else if (message.type === "shared") {
-			process.env.KOISHI_SHARED = message.body;
+			process.env["KOISHI_SHARED"] = message.body;
 		} else if (message.type === "heartbeat") {
 			if (timer) timer.refresh();
 		}
@@ -89,13 +89,13 @@ function createWorker(options: Dict<any>) {
 		"SIGTERM",
 	];
 
-	function shouldExit(code: number, signal: NodeJS.Signals) {
+	function shouldExit(code: number | null, signal: NodeJS.Signals | null) {
 		// start failed
 		if (!config) return true;
 
 		// exit manually
 		if (code === 0) return true;
-		if (signals.includes(signal)) return true;
+		if (signal !== null && signals.includes(signal)) return true;
 
 		// restart manually
 		if (code === 51) return false;
@@ -139,9 +139,9 @@ export default function (cli: CAC) {
 				process.exit(1);
 			}
 			setEnvArg("KOISHI_LOG_TIME", logTime);
-			process.env.KOISHI_LOG_LEVEL = logLevel || "";
-			process.env.KOISHI_DEBUG = debug || "";
-			process.env.KOISHI_CONFIG_FILE = file || "";
+			process.env["KOISHI_LOG_LEVEL"] = logLevel || "";
+			process.env["KOISHI_DEBUG"] = debug || "";
+			process.env["KOISHI_CONFIG_FILE"] = file || "";
 			createWorker(rest);
 		});
 }

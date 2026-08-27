@@ -17,10 +17,10 @@ for (const key in require.extensions) {
 const initialKeys = Object.getOwnPropertyNames(process.env);
 
 export default class NodeLoader extends Loader {
-	public scope: ns.Scope;
+	public scope!: ns.Scope;
 	public localKeys: string[] = [];
 
-	async init(filename?: string) {
+	override async init(filename?: string) {
 		await super.init(filename);
 		this.scope = ns({
 			namespace: "koishi",
@@ -30,21 +30,21 @@ export default class NodeLoader extends Loader {
 		});
 	}
 
-	migrateEntry(name: string, config: Dict) {
+	override migrateEntry(name: string, config: Dict) {
 		config ??= {};
 		if (
 			["database-mysql", "database-mongo", "database-postgres"].includes(name)
 		) {
-			config.database ??= "koishi";
+			config["database"] ??= "koishi";
 		} else if (name === "database-sqlite") {
-			config.path ??= "data/koishi.db";
+			config["path"] ??= "data/koishi.db";
 		} else {
 			return super.migrateEntry(name, config);
 		}
 		return config;
 	}
 
-	async migrate() {
+	override async migrate() {
 		try {
 			let isDirty = false;
 			const meta = JSON.parse(await fs.readFile("package.json", "utf8"));
@@ -89,7 +89,7 @@ export default class NodeLoader extends Loader {
 				}
 			}
 
-			function setProxyAgent(plugins: Dict) {
+			function setProxyAgent(plugins: Dict): boolean | undefined {
 				for (const [key, value] of Object.entries(plugins)) {
 					const name = key.replace(/^~/, "").split(":")[0];
 					if (name === "proxy-agent") {
@@ -100,17 +100,19 @@ export default class NodeLoader extends Loader {
 						if (result) return result;
 					}
 				}
+				return undefined;
 			}
 
-			const proxyAgent = getProxyAgent(this.config.plugins);
-			if (proxyAgent) setProxyAgent(this.config.plugins);
+			const proxyAgent = getProxyAgent(this.config.plugins ?? {});
+			if (proxyAgent) setProxyAgent(this.config.plugins ?? {});
 
-			if (this.config["port"]) {
-				const { port, host, maxPort, selfUrl } = this.config as any;
-				delete this.config["port"];
-				delete this.config["host"];
-				delete this.config["maxPort"];
-				delete this.config["selfUrl"];
+			const legacy = this.config as Dict;
+			if (legacy["port"]) {
+				const { port, host, maxPort, selfUrl } = legacy;
+				delete legacy["port"];
+				delete legacy["host"];
+				delete legacy["maxPort"];
+				delete legacy["selfUrl"];
 				this.config.plugins = {
 					server: { port, host, maxPort, selfUrl },
 					...this.config.plugins,
@@ -137,14 +139,14 @@ export default class NodeLoader extends Loader {
 		await super.migrate();
 	}
 
-	async readConfig(initial = false) {
+	override async readConfig(initial = false) {
 		// remove local env variables
 		for (const key of this.localKeys) {
 			delete process.env[key];
 		}
 
 		// load env files
-		const parsed = {};
+		const parsed: Dict<string> = {};
 		for (const filename of this.envFiles) {
 			try {
 				const raw = await fs.readFile(filename, "utf8");
@@ -163,21 +165,21 @@ export default class NodeLoader extends Loader {
 		return await super.readConfig(initial);
 	}
 
-	async import(name: string) {
+	override async import(name: string) {
 		try {
 			this.cache[name] ||= this.scope.resolve(name);
 		} catch (err) {
-			logger.error(err.message);
+			logger.error(err instanceof Error ? err.message : err);
 			return;
 		}
 		return require(this.cache[name]);
 	}
 
-	fullReload(code = Loader.exitCode) {
+	override fullReload(code = Loader.exitCode) {
 		const body = JSON.stringify(this.envData);
 		// Workaround a typing issue in @types/node:
 		// https://github.com/DefinitelyTyped/DefinitelyTyped/discussions/74275
-		process.send({ type: "shared", body }, (err: any) => {
+		process.send?.({ type: "shared", body }, (err: any) => {
 			if (err) logger.error("failed to send shared data");
 			logger.info("trigger full reload");
 			process.exit(code);

@@ -8,6 +8,6 @@ registerStartCommand(cli);
 
 const argv = cli.parse();
 
-if (!cli.matchedCommand && !argv.options.help) {
+if (!cli.matchedCommand && !argv.options["help"]) {
 	cli.outputHelp();
 }

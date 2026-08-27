@@ -8,7 +8,7 @@ export class SchemaProvider extends DataService<Dict<Schema>> {
 		ctx.on("internal/schema", () => this.refresh());
 	}
 
-	async get() {
+	override async get() {
 		return this.ctx.schema._data;
 	}
 }

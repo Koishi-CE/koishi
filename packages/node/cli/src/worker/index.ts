@@ -17,15 +17,18 @@ declare module "@koishi-ce/core" {
 	}
 }
 
-Object.assign(Context.Config.Advanced.dict, {
-	timezoneOffset: Schema.number()
-		.description("时区偏移量 (分钟)。")
-		.default(new Date().getTimezoneOffset()),
-	stackTraceLimit: Schema.natural()
-		.description("报错的调用堆栈深度。")
-		.default(10),
-	plugins: Schema.any().hidden(),
-});
+const advancedDict = Context.Config.Advanced.dict;
+if (advancedDict) {
+	Object.assign(advancedDict, {
+		timezoneOffset: Schema.number()
+			.description("时区偏移量 (分钟)。")
+			.default(new Date().getTimezoneOffset()),
+		stackTraceLimit: Schema.natural()
+			.description("报错的调用堆栈深度。")
+			.default(10),
+		plugins: Schema.any().hidden(),
+	});
+}
 
 function handleException(error: any) {
 	new Logger("app").error(error);
@@ -40,7 +43,7 @@ process.on("unhandledRejection", (error) => {
 
 async function start() {
 	const loader = new Loader();
-	await loader.init(process.env.KOISHI_CONFIG_FILE);
+	await loader.init(process.env["KOISHI_CONFIG_FILE"]);
 	const config = await loader.readConfig(true);
 	logger.prepare(config.logger);
 

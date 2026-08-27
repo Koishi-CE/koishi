@@ -8,7 +8,7 @@ export class PermissionProvider extends DataService<string[]> {
 		ctx.on("internal/permission", () => this.refresh());
 	}
 
-	async get() {
+	override async get() {
 		return this.ctx.permissions.list();
 	}
 }

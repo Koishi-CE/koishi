@@ -4,7 +4,7 @@ interface LogLevelConfig {
 	// a little different from @koishi-ce/utils
 	// we don't enforce user to provide a base here
 	base?: number;
-	[K: string]: LogLevel;
+	[k: string]: LogLevel;
 }
 
 type LogLevel = number | LogLevelConfig;
@@ -44,12 +44,15 @@ export function prepare(config: Config = {}) {
 
 	let showTime = config.showTime;
 	if (showTime === true) showTime = "yyyy-MM-dd hh:mm:ss";
-	if (showTime) Logger.targets[0].showTime = showTime;
-	Logger.targets[0].showDiff = config.showDiff;
+	const target = Logger.targets[0];
+	if (target) {
+		if (showTime) target.showTime = showTime;
+		target.showDiff = config.showDiff ?? false;
+	}
 
 	// cli options have higher precedence
-	if (process.env.KOISHI_LOG_LEVEL) {
-		Logger.levels.base = +process.env.KOISHI_LOG_LEVEL;
+	if (process.env["KOISHI_LOG_LEVEL"]) {
+		Logger.levels.base = +process.env["KOISHI_LOG_LEVEL"];
 	}
 
 	function ensureBaseLevel(config: Logger.LevelConfig, base: number) {
@@ -62,11 +65,11 @@ export function prepare(config: Config = {}) {
 
 	ensureBaseLevel(Logger.levels, 2);
 
-	if (process.env.KOISHI_DEBUG) {
-		for (const name of process.env.KOISHI_DEBUG.split(",")) {
+	if (process.env["KOISHI_DEBUG"]) {
+		for (const name of process.env["KOISHI_DEBUG"].split(",")) {
 			new Logger(name).level = Logger.DEBUG;
 		}
 	}
 
-	Logger.targets[0].timestamp = Date.now();
+	if (target) target.timestamp = Date.now();
 }

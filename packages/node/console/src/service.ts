@@ -13,19 +13,26 @@ export abstract class DataService<T = never> extends Service {
 	static filter = false;
 	static inject = ["console"];
 
-	public async get(forced?: boolean, client?: Client): Promise<T> {
+	public async get(_forced?: boolean, _client?: Client): Promise<T> {
 		return null as T;
 	}
 
+	protected override ctx: Context;
+	protected key: keyof Console.Services;
+	public options: DataService.Options = {};
+
 	constructor(
-		protected ctx: Context,
-		protected key: keyof Console.Services,
-		public options: DataService.Options = {},
+		ctx: Context,
+		key: keyof Console.Services,
+		options: DataService.Options = {},
 	) {
 		super(ctx, `console.services.${key}`, options.immediate);
+		this.ctx = ctx;
+		this.key = key;
+		this.options = options;
 	}
 
-	start() {
+	override start() {
 		this.refresh();
 	}
 

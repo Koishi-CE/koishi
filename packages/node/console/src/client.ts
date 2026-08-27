@@ -13,11 +13,18 @@ const logger = new Logger("console");
 export class Client {
 	readonly id: string = Random.id();
 
+	readonly ctx: Context;
+	public socket: Universal.WebSocket;
+	public request?: IncomingMessage;
+
 	constructor(
-		readonly ctx: Context,
-		public socket: Universal.WebSocket,
-		public request?: IncomingMessage,
+		ctx: Context,
+		socket: Universal.WebSocket,
+		request?: IncomingMessage,
 	) {
+		this.ctx = ctx;
+		this.socket = socket;
+		if (request !== undefined) this.request = request;
 		socket.addEventListener("message", this.receive);
 		ctx.on("dispose", () => {
 			socket.removeEventListener("message", this.receive);
@@ -31,7 +38,7 @@ export class Client {
 
 	receive = async (data: Universal.WebSocket.MessageEvent) => {
 		const { type, args, id } = JSON.parse(data.data.toString());
-		const listener = this.ctx.get("console").listeners[type];
+		const listener = this.ctx.console.listeners[type];
 		if (!listener) {
 			logger.info("unknown message:", type, ...args);
 			return this.send({

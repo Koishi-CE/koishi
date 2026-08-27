@@ -7,7 +7,7 @@ import {
 	isNullable,
 	Logger,
 	type Plugin,
-	Universal,
+	type Universal,
 	valueMap,
 	version,
 } from "@koishi-ce/core";
@@ -31,28 +31,14 @@ declare module "@koishi-ce/core" {
 			plugins?: Dict;
 		}
 	}
-
-	interface EnvData {
-		message?: StartMessage;
-		startTime?: number;
-	}
 }
 
-interface StartMessage {
+export interface StartMessage {
 	isDirect?: boolean;
 	channelId?: string;
 	guildId?: string;
 	sid?: string;
 	content: string;
-}
-
-declare module "@cordisjs/core" {
-	// Theoretically, these properties will only appear on `ForkScope`.
-	// We define them directly on `EffectScope` for typing convenience.
-	interface EffectScope<C> {
-		[Loader.kRecord]?: Dict<ForkScope<C>>;
-		key?: string;
-	}
 }
 
 export function unwrapExports(module: any) {
@@ -74,11 +60,21 @@ function separate(source: any, isGroup = false) {
 
 const kUpdate = Symbol("update");
 
+// Theoretically, these properties will only appear on `ForkScope`.
+// We define them directly on the scope type for typing convenience.
+// (Upstream declares them via `declare module '@cordisjs/core'`, which is not
+// resolvable from this package, so a structural sub-interface is used instead.)
+export interface LoaderScope extends EffectScope {
+	[Loader.kRecord]?: Dict<ForkScope>;
+	[kUpdate]?: boolean;
+	key?: string;
+}
+
 const group: Plugin.Object<Context> = {
 	name: "group",
 	reusable: true,
 	apply(ctx, plugins) {
-		ctx.scope[Loader.kRecord] ||= Object.create(null);
+		(ctx.scope as LoaderScope)[Loader.kRecord] ||= Object.create(null);
 
 		for (const name in plugins || {}) {
 			if (name.startsWith("~") || name.startsWith("$")) continue;
@@ -93,7 +89,7 @@ const group: Plugin.Object<Context> = {
 				// update inner plugins
 				for (const key in { ...old, ...neo }) {
 					if (key.startsWith("~") || key.startsWith("$")) continue;
-					const fork = ctx.scope[Loader.kRecord][key];
+					const fork = (ctx.scope as LoaderScope)[Loader.kRecord]?.[key];
 					if (!fork) {
 						ctx.loader.reload(ctx, key, neo[key]);
 					} else if (!(key in neo)) {
@@ -108,7 +104,7 @@ const group: Plugin.Object<Context> = {
 	},
 };
 
-function insertKey(object: {}, temp: {}, rest: string[]) {
+function insertKey(object: Dict<unknown>, temp: Dict<unknown>, rest: string[]) {
 	for (const key of rest) {
 		temp[key] = object[key];
 		delete object[key];
@@ -126,7 +122,7 @@ function rename(object: any, old: string, neo: string, value: any) {
 	insertKey(object, temp, rest);
 }
 
-const writable = {
+const writable: Dict<string> = {
 	".json": "application/json",
 	".yaml": "application/yaml",
 	".yml": "application/yaml",
@@ -139,29 +135,29 @@ export abstract class Loader {
 
 	// process
 	public baseDir = process.cwd();
-	public envData = process.env.KOISHI_SHARED
-		? JSON.parse(process.env.KOISHI_SHARED)
+	public envData = process.env["KOISHI_SHARED"]
+		? JSON.parse(process.env["KOISHI_SHARED"])
 		: { startTime: Date.now() };
 
 	public params = {
 		env: process.env,
 	};
 
-	public app: Context;
-	public config: Context.Config;
-	public entry: Context;
+	public app!: Context;
+	public config!: Context.Config;
+	public entry!: Context;
 	public suspend = false;
 	public writable = false;
-	public mime: string;
-	public filename: string;
-	public envFiles: string[];
+	public mime: string | undefined;
+	public filename!: string;
+	public envFiles!: string[];
 	public names = new Set<string>();
 	public cache: Dict<string> = Object.create(null);
 	public prolog: Logger.Record[] = [];
 
 	private store = new WeakMap<any, string>();
 
-	private _writeTask?: Promise<void>;
+	private _writeTask: Promise<void> | undefined;
 	private _writeSlient = true;
 
 	abstract import(name: string): Promise<any>;
@@ -231,7 +227,7 @@ export abstract class Loader {
 				config[key] = backup[key];
 				continue;
 			}
-			const [prefix] = key.split(":", 1);
+			const [prefix = ""] = key.split(":", 1);
 			const name = prefix.replace(/^~/, "");
 			const value = this.migrateEntry(name, backup[key]) ?? backup[key];
 			let ident = key.slice(prefix.length + 1);
@@ -293,7 +289,7 @@ export abstract class Loader {
 		}));
 	}
 
-	interpolate(source: any) {
+	interpolate(source: any): any {
 		if (typeof source === "string") {
 			return interpolate(source, this.params, /\$\{\{(.+?)\}\}/g);
 		} else if (!source || typeof source !== "object") {
@@ -311,10 +307,11 @@ export abstract class Loader {
 		return plugin;
 	}
 
-	keyFor(plugin: any) {
+	keyFor(plugin: any): string | undefined {
 		const name = this.store.get(this.app.registry.resolve(plugin));
 		if (name)
 			return name.replace(/(koishi-|^@(?:koishijs|koishi-ce)\/)plugin-/, "");
+		return undefined;
 	}
 
 	replace(oldKey: any, newKey: any) {
@@ -338,20 +335,22 @@ export abstract class Loader {
 		return !!this.interpolate(`\${{ ${expr} }}`);
 	}
 
-	private logUpdate(type: string, parent: Context, key: string) {
+	private logUpdate(type: string, _parent: Context, key: string) {
 		this.app.logger("loader").info("%s plugin %c", type, key);
 	}
 
 	async reload(parent: Context, key: string, source: any) {
-		let fork = parent.scope[Loader.kRecord][key];
-		const name = key.split(":", 1)[0];
+		const record = ((parent.scope as LoaderScope)[Loader.kRecord] ??=
+			Object.create(null));
+		let fork: ForkScope | undefined = record[key];
+		const [name = ""] = key.split(":", 1);
 		const [config, meta] = separate(source, name === "group");
 		if (fork) {
 			if (!this.isTruthyLike(meta.$if)) {
 				this.unload(parent, key);
 				return;
 			}
-			fork[kUpdate] = true;
+			(fork as LoaderScope)[kUpdate] = true;
 			fork.update(config);
 		} else {
 			if (!this.isTruthyLike(meta.$if)) return;
@@ -363,8 +362,8 @@ export abstract class Loader {
 				fork = await this.forkPlugin(name, config, ctx);
 			}
 			if (!fork) return;
-			fork.key = key.slice(name.length + 1);
-			parent.scope[Loader.kRecord][key] = fork;
+			(fork as LoaderScope).key = key.slice(name.length + 1);
+			record[key] = fork;
 		}
 		const filter = this.interpolate(meta.$filter);
 		fork.parent.filter = (session) => {
@@ -377,17 +376,18 @@ export abstract class Loader {
 	}
 
 	unload(ctx: Context, key: string) {
-		const fork = ctx.scope[Loader.kRecord][key];
+		const fork = (ctx.scope as LoaderScope)[Loader.kRecord]?.[key];
 		if (fork) fork.dispose();
 	}
 
-	getRefName(fork: ForkScope) {
-		const record = fork.parent.scope[Loader.kRecord];
-		if (!record) return;
+	getRefName(fork: ForkScope): string | undefined {
+		const record = (fork.parent.scope as LoaderScope)[Loader.kRecord];
+		if (!record) return undefined;
 		for (const name in record) {
 			if (record[name] !== fork) continue;
 			return name;
 		}
+		return undefined;
 	}
 
 	/** @deprecated */
@@ -411,12 +411,13 @@ export abstract class Loader {
 
 		// runtime scope
 		if (scope.runtime === scope) {
-			return [].concat(
+			return ([] as string[]).concat(
 				...scope.runtime.children.map((child) => this.paths(child)),
 			);
 		}
 
-		if (scope.key) return [scope.key];
+		const key = (scope as LoaderScope).key;
+		if (key) return [key];
 		return this.paths(scope.parent.scope);
 	}
 
@@ -425,9 +426,9 @@ export abstract class Loader {
 		const app = (this.app = new Context(this.interpolate(this.config)));
 		app.provide("loader", this, true);
 		app.provide("baseDir", this.baseDir, true);
-		app.scope[Loader.kRecord] = Object.create(null);
+		(app.scope as LoaderScope)[Loader.kRecord] = Object.create(null);
 		const fork = await this.reload(app, "group:entry", this.config.plugins);
-		this.entry = fork.ctx;
+		if (fork) this.entry = fork.ctx;
 
 		app.accept((config) => {
 			app.koishi.config = config;
@@ -448,14 +449,15 @@ export abstract class Loader {
 		// write config with `~` prefix
 		app.on("internal/fork", (fork) => {
 			// fork.uid: fork is created
-			// !fork.parent.scope[Loader.kRecord]: fork is not tracked by loader
-			if (fork.uid || !fork.parent.scope[Loader.kRecord]) return;
-			const key = Object.keys(fork.parent.scope[Loader.kRecord]).find((key) => {
-				return fork.parent.scope[Loader.kRecord][key] === fork;
+			const record = (fork.parent.scope as LoaderScope)[Loader.kRecord];
+			// !record: fork is not tracked by loader
+			if (fork.uid || !record) return;
+			const key = Object.keys(record).find((key) => {
+				return record[key] === fork;
 			});
 			if (!key) return;
 			this.logUpdate("unload", fork.parent, key);
-			delete fork.parent.scope[Loader.kRecord][key];
+			delete record[key];
 			// fork is disposed by main scope (e.g. hmr plugin)
 			// normal: ctx.dispose() -> fork / runtime dispose -> delete(plugin)
 			// hmr: delete(plugin) -> runtime dispose -> fork dispose
@@ -475,7 +477,9 @@ export abstract class Loader {
 		});
 
 		app.on("internal/before-update", (fork, config) => {
-			if (fork[kUpdate]) return delete fork[kUpdate];
+			if ((fork as LoaderScope)[kUpdate]) {
+				return delete (fork as LoaderScope)[kUpdate];
+			}
 			const name = this.getRefName(fork);
 			if (!name) return;
 			const { schema } = fork.runtime;
@@ -484,13 +488,15 @@ export abstract class Loader {
 				...(schema ? schema.simplify(config) : config),
 			};
 			this.writeConfig();
+			return undefined;
 		});
 
 		if (this.envData.message) {
 			const { sid, channelId, guildId, content } = this.envData.message;
 			this.envData.message = null;
 			const dispose = app.on("bot-status-updated", (bot) => {
-				if (bot.sid !== sid || bot.status !== Universal.Status.ONLINE) return;
+				if (bot.sid !== sid || bot.status !== (1 satisfies Universal.Status))
+					return;
 				dispose();
 				bot.sendMessage(channelId, content, guildId);
 			});
