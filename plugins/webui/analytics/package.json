@@ -52,9 +52,9 @@
 	"devDependencies": {
 		"@koishijs/assets": "^1.1.2",
 		"@koishi-ce/client": "workspace:*",
-		"echarts": "^5.5.0",
+		"echarts": "^6.1.0",
 		"@koishi-ce/koishi": "workspace:*",
-		"vue-echarts": "^6.6.9"
+		"vue-echarts": "^8.1.0"
 	},
 	"dependencies": {
 		"@koishi-ce/console": "workspace:*"

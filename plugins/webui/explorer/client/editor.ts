@@ -1,5 +1,5 @@
 import * as monaco from "monaco-editor";
-import EditorWorker from "monaco-editor/esm/vs/editor/editor.worker?worker";
+import EditorWorker from "monaco-editor/editor/editor.worker?worker";
 import { shallowRef } from "vue";
 
 // import TsWorker from 'monaco-editor/esm/vs/language/typescript/ts.worker?worker'

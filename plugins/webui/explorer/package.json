@@ -61,7 +61,7 @@
 		"@koishi-ce/plugin-console": "workspace:*",
 		"@types/throttle-debounce": "^2.1.0",
 		"@koishi-ce/koishi": "workspace:*",
-		"monaco-editor": "~0.44.0"
+		"monaco-editor": "~0.56.0"
 	},
 	"dependencies": {
 		"@koishi-ce/console": "workspace:*",
