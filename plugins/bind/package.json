@@ -49,9 +49,9 @@
     "koishi": "^4.18.11"
   },
   "devDependencies": {
-    "@koishijs/plugin-mock": "^2.6.6",
+    "@koishijs/plugin-mock": "workspace:*",
     "@minatojs/driver-memory": "^3.7.0",
-    "koishi": "^4.18.11",
+    "koishi": "workspace:*",
     "minato": "^3.7.0"
   }
 }

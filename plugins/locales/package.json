@@ -54,14 +54,14 @@
     }
   },
   "devDependencies": {
-    "@koishijs/client": "^5.30.11",
-    "@koishijs/plugin-console": "^5.30.11",
-    "@koishijs/plugin-mock": "^2.6.6",
+    "@koishijs/client": "workspace:*",
+    "@koishijs/plugin-console": "workspace:*",
+    "@koishijs/plugin-mock": "workspace:*",
     "@types/js-yaml": "^4.0.9",
-    "koishi": "^4.18.11"
+    "koishi": "workspace:*"
   },
   "dependencies": {
-    "@koishijs/console": "^5.30.11",
+    "@koishijs/console": "workspace:*",
     "js-yaml": "^4.1.0"
   }
 }

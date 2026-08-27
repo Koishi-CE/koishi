@@ -62,11 +62,11 @@
     "koishi": "^4.18.11"
   },
   "devDependencies": {
-    "@koishijs/client": "^5.30.11",
-    "@koishijs/plugin-hmr": "^1.2.9"
+    "@koishijs/client": "workspace:*",
+    "@koishijs/plugin-hmr": "workspace:*"
   },
   "dependencies": {
-    "@koishijs/console": "^5.30.11",
-    "@koishijs/registry": "^7.0.3"
+    "@koishijs/console": "workspace:*",
+    "@koishijs/registry": "workspace:*"
   }
 }

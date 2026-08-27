@@ -26,16 +26,18 @@
     "koishi"
   ],
   "devDependencies": {
+    "@koishijs/plugin-mock": "workspace:*",
     "@minatojs/driver-memory": "^3.7.0",
     "@types/chai": "^4.3.16",
     "@types/chai-as-promised": "^7.1.8",
     "chai": "^5.1.1",
     "chai-as-promised": "^7.1.1",
-    "chai-shape": "^1.1.0"
+    "chai-shape": "^1.1.0",
+    "koishi": "workspace:*"
   },
   "dependencies": {
-    "@koishijs/i18n-utils": "^1.0.1",
-    "@koishijs/utils": "^7.2.1",
+    "@koishijs/i18n-utils": "workspace:*",
+    "@koishijs/utils": "workspace:*",
     "@satorijs/core": "^4.6.0",
     "cordis": "^3.18.1",
     "cosmokit": "^1.8.1",

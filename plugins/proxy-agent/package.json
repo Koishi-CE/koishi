@@ -56,7 +56,7 @@
   },
   "devDependencies": {
     "cordis": "^3.18.1",
-    "koishi": "^4.18.11"
+    "koishi": "workspace:*"
   },
   "dependencies": {
     "@cordisjs/plugin-proxy-agent": "^0.3.3"

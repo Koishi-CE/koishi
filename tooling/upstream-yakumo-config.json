@@ -1,0 +1,26 @@
+{
+  "note": "Per-package yakumo build config extracted from package.json files before removing yakumo. Keep as reference for the future vite/rolldown client build.",
+  "packages": {
+    "koishi": {
+      "tsc": {
+        "ignore": [
+          "@koishijs/plugin-http",
+          "@koishijs/plugin-proxy-agent",
+          "@koishijs/plugin-server"
+        ]
+      }
+    },
+    "@koishijs/client": {
+      "client": "./scripts/client.ts"
+    },
+    "@koishijs/plugin-analytics": {
+      "client": "./build/client.ts"
+    },
+    "@koishijs/plugin-explorer": {
+      "client": "./build/client.ts"
+    },
+    "@koishijs/online": {
+      "client": "./src/build.ts"
+    }
+  }
+}

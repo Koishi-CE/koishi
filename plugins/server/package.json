@@ -52,7 +52,7 @@
   },
   "devDependencies": {
     "cordis": "^3.18.1",
-    "koishi": "^4.18.11"
+    "koishi": "workspace:*"
   },
   "dependencies": {
     "@cordisjs/plugin-server": "^0.2.9"

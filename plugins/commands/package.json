@@ -54,13 +54,15 @@
     }
   },
   "devDependencies": {
-    "@koishijs/client": "^5.30.11",
-    "@koishijs/plugin-config": "^2.8.6",
-    "@koishijs/plugin-console": "^5.30.11",
-    "@koishijs/plugin-locales": "^2.5.3",
-    "@koishijs/plugin-mock": "^2.6.6"
+    "@koishijs/client": "workspace:*",
+    "@koishijs/plugin-config": "workspace:*",
+    "@koishijs/plugin-console": "workspace:*",
+    "@koishijs/plugin-help": "workspace:*",
+    "@koishijs/plugin-locales": "workspace:*",
+    "@koishijs/plugin-mock": "workspace:*",
+    "koishi": "workspace:*"
   },
   "dependencies": {
-    "@koishijs/console": "^5.30.11"
+    "@koishijs/console": "workspace:*"
   }
 }

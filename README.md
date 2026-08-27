@@ -9,8 +9,9 @@ A Bun-first community redistribution of [Koishi](https://koishi.chat) — the Ko
 Early restructuring phase:
 
 - [x] Merge koishi + webui into one Bun-workspace monorepo
-- [ ] `bun install` green across all workspaces
-- [ ] Replace the yarn + yakumo toolchain (build, test, publish)
+- [x] Package management on Bun — `workspace:*` links, `bun.lock`, yakumo removed
+- [ ] Zero-build exports for node packages; vite build for client packages
+- [ ] Test suite runnable on Bun (mocha bootstraps; full run awaits zero-build)
 - [ ] Decide the npm naming/publishing strategy
 
 ## Layout

@@ -27,7 +27,8 @@
     "utilities"
   ],
   "devDependencies": {
-    "@sinonjs/fake-timers": "^6.0.1"
+    "@sinonjs/fake-timers": "^6.0.1",
+    "koishi": "workspace:*"
   },
   "dependencies": {
     "cosmokit": "^1.8.1",
