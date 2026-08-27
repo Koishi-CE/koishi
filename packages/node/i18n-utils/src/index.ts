@@ -3,8 +3,9 @@ import { deduplicate } from "cosmokit";
 
 export type LocaleTree = { [key in string]: LocaleTree };
 
-export namespace LocaleTree {
-	export function from(locales: string[]) {
+// biome-ignore lint/style/useNamingConvention: 值侧与同名类型合并声明,保持上游 API
+export const LocaleTree = {
+	from(locales: string[]) {
 		const tree: LocaleTree = {};
 		for (const locale of locales.filter(Boolean)) {
 			const tokens = locale.split("-");
@@ -15,8 +16,8 @@ export namespace LocaleTree {
 			}
 		}
 		return tree;
-	}
-}
+	},
+};
 
 type LocaleEntry = readonly [string, LocaleEntry[]];
 
@@ -50,18 +51,17 @@ export function fallback(tree: LocaleTree, locales: string[]): string[] {
 		let prefix = "",
 			children = root[1];
 		const tokens = locale ? locale.split("-") : [];
-		for (let i = 0; i < tokens.length; i++) {
-			const token = tokens[i]!;
+		for (const token of tokens) {
 			const current = prefix + token;
-			const index = children.findIndex(([key]) => key === current);
-			if (index < 0) break;
-			const entry = children[index];
+			const entry = children.find(([key]) => key === current);
+			if (!entry) break;
+			const index = children.indexOf(entry);
 			if (index > 0) {
 				children.splice(index, 1);
 				children.unshift(entry);
 			}
 			children = entry[1];
-			prefix = current + "-";
+			prefix = `${current}-`;
 			if (current === locale) {
 				ignored.unshift(entry);
 			}

@@ -30,11 +30,11 @@ function observeObject<T extends object>(
 ): T {
 	const update = notify;
 	if (!notify) {
-		const diff = Object.create(null);
+		const diff: Record<string | symbol, unknown> = Object.create(null);
 		defineProperty(target, "$diff", diff);
 		notify = (key) => {
 			if (untracked(key)) return;
-			diff[key] = target[key];
+			diff[key] = (target as Record<string | symbol, unknown>)[key];
 		};
 	}
 
@@ -46,7 +46,7 @@ function observeObject<T extends object>(
 			return observeProperty(value, update || (() => notify(key)));
 		},
 		set(target, key, value) {
-			const unchanged = target[key] === value;
+			const unchanged = Reflect.get(target, key) === value;
 			const result = Reflect.set(target, key, value);
 			if (unchanged || !result) return result;
 			notify(key);
@@ -64,22 +64,27 @@ function observeObject<T extends object>(
 	return proxy;
 }
 
-const arrayProxyMethods = ["pop", "shift", "splice", "sort"];
+const arrayProxyMethods: Record<string, (...args: any[]) => any> = {
+	pop: Array.prototype.pop,
+	shift: Array.prototype.shift,
+	splice: Array.prototype.splice,
+	sort: Array.prototype.sort,
+};
 
 function observeArray<T>(target: T[], update: () => void) {
-	const proxy: Record<number, T> = {};
+	const proxy: Record<string | symbol, unknown> = {};
 
-	for (const method of arrayProxyMethods) {
-		defineProperty(target, method, function (...args: any[]) {
+	for (const [method, methodFn] of Object.entries(arrayProxyMethods)) {
+		defineProperty(target, method, function (this: T[], ...args: any[]) {
 			update();
-			return Array.prototype[method].apply(this, args);
+			return methodFn.apply(this, args);
 		});
 	}
 
 	return new Proxy(target, {
 		get(target, key) {
 			if (key in proxy) return proxy[key];
-			const value = target[key];
+			const value = Reflect.get(target, key);
 			if (
 				!value ||
 				immutable.includes(typeof value) ||
@@ -93,7 +98,7 @@ function observeArray<T>(target: T[], update: () => void) {
 			if (
 				typeof key !== "symbol" &&
 				!isNaN(key as any) &&
-				target[key] !== value
+				Reflect.get(target, key) !== value
 			)
 				update();
 			return Reflect.set(target, key, value);
@@ -104,9 +109,13 @@ function observeArray<T>(target: T[], update: () => void) {
 function observeDate(target: Date, update: () => void) {
 	for (const method of Object.getOwnPropertyNames(Date.prototype)) {
 		if (method === "valueOf") continue;
-		defineProperty(target, method, function (...args: any[]) {
+		const methodFn = (
+			Date.prototype as unknown as Record<string, (...args: any[]) => any>
+		)[method];
+		if (typeof methodFn !== "function") continue;
+		defineProperty(target, method, function (this: Date, ...args: any[]) {
 			const oldValue = target.valueOf();
-			const result = Date.prototype[method].apply(this, args);
+			const result = methodFn.apply(this, args);
 			if (target.valueOf() !== oldValue) update();
 			return result;
 		});
@@ -133,8 +142,9 @@ export function observe<T extends object, R>(
 ): Observed<T, R>;
 export function observe<T extends object, R>(
 	target: T,
-	...args: [(string | number)?] | [UpdateFunction<T, R>, (string | number)?]
-) {
+	updateOrLabel?: UpdateFunction<T, R> | string | number,
+	_label?: string | number,
+): Observed<T, any> {
 	if (immutable.includes(typeof target)) {
 		throw new Error(`cannot observe immutable type "${typeof target}"`);
 	} else if (!target) {
@@ -147,31 +157,34 @@ export function observe<T extends object, R>(
 	}
 
 	let update: UpdateFunction<T, R> = noop;
-	if (typeof args[0] === "function") update = args.shift() as any;
+	if (typeof updateOrLabel === "function") update = updateOrLabel;
 
-	const observer = observeObject(target, null) as Observed<T>;
+	const observer = observeObject(target) as Observed<T, R>;
 
-	defineProperty(observer, "$update", function $update(this: Observed<T>) {
-		const diff = { ...this.$diff };
-		const fields = Object.keys(diff);
-		if (fields.length) {
+	defineProperty(
+		observer,
+		"$update",
+		function $update(this: Observed<T, R>): R | undefined {
+			const diff = { ...this.$diff };
+			const fields = Object.keys(diff);
+			if (!fields.length) return undefined;
 			for (const key in this.$diff) {
 				delete this.$diff[key];
 			}
 			return update(diff);
-		}
-	});
+		},
+	);
 
 	defineProperty(
 		observer,
 		"$merge",
 		function $merge(this: Observed<T>, value: Partial<T>) {
-			for (const key in value) {
-				if (key in this.$diff) {
+			for (const key in this.$diff) {
+				if (key in value) {
 					throw new Error(`unresolved diff key "${key}"`);
 				}
-				target[key] = value[key];
 			}
+			Object.assign(target, value);
 			return this;
 		},
 	);

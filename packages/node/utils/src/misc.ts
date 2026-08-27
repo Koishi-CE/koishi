@@ -18,18 +18,19 @@ export function defineEnumProperty<T extends object>(
 	value: T[keyof T],
 ) {
 	object[key] = value;
-	object[value as any] = key;
+	(object as Record<string | number, unknown>)[value as string | number] = key;
 }
 
 export function merge<T extends object>(head: T, base: T): T {
+	const target = head as Record<string, any>;
 	Object.entries(base).forEach(([key, value]) => {
-		if (typeof head[key] === "undefined") return (head[key] = value);
+		if (typeof target[key] === "undefined") return (target[key] = value);
 		// prevent prototype attack
-		if (!Object.hasOwn(head, key)) return;
-		if (typeof value === "object" && typeof head[key] === "object") {
-			head[key] = merge(head[key], value);
+		if (!Object.hasOwn(target, key)) return;
+		if (typeof value === "object" && typeof target[key] === "object") {
+			target[key] = merge(target[key], value);
 		} else {
-			head[key] = value;
+			target[key] = value;
 		}
 	});
 	return head;
@@ -47,7 +48,7 @@ export function coerce(val: any) {
 	// resolve error when stack is undefined, e.g. axios error with status code 401
 	const { message, stack } =
 		val instanceof Error && val.stack ? val : new Error(val as any);
-	const lines = stack.split("\n");
+	const lines = stack?.split("\n") ?? [message];
 	const index = lines.findIndex((line) => line.endsWith(message));
 	return lines.slice(index).join("\n");
 }

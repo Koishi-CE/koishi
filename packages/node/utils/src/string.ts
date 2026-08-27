@@ -16,15 +16,15 @@ export function interpolate(
 	context: object,
 	pattern = /\{\{([\s\S]+?)\}\}/g,
 ) {
-	let capture: RegExpExecArray;
+	let capture: RegExpExecArray | null;
 	let result = "",
 		lastIndex = 0;
 	while ((capture = pattern.exec(template))) {
 		if (capture[0] === template) {
-			return evaluate(context, capture[1]);
+			return evaluate(context, capture[1] ?? "");
 		}
 		result += template.slice(lastIndex, capture.index);
-		result += evaluate(context, capture[1]) ?? "";
+		result += evaluate(context, capture[1] ?? "") ?? "";
 		lastIndex = capture.index + capture[0].length;
 	}
 	return result + template.slice(lastIndex);
