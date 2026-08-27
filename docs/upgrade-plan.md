@@ -132,6 +132,23 @@
 
 **peer 语义决策(随本阶段落地):** 跳代后运行时为 cordis 4,上游 koishi 4.18 插件(依赖 cordis 3)与之不兼容的部分需明确边界——peerDeps 保持指向上游名不变,但在 README/UPSTREAM.md 记录「@koishi-ce 运行时基于 cordis 4,兼容面较上游收窄」的事实说明。
 
+### 执行结果(2026-08-27):**被上游阻塞,已实证并回退**
+
+按上表完成全部升版(cordis ^4.0.0-rc.8 / minato ^4.0.1 / @minatojs/driver-memory ^4.0.0 / @cordisjs/plugin-http ^1.5.2 / @cordisjs/plugin-server ^1.7.0)后,类型检查零错误,但运行时测试 14/20 文件失败。根因(实证):
+
+1. **运行时双 cordis 并存**:`@koishi-ce/core` 自身解析到 cordis 4.0.0-rc.8,但其继承链上的 `@satorijs/core@4.6.0`(npm 最新,连 next tag 都没有 cordis 4 线)内部携带 cordis ^3.18.1 —— 同一进程加载两套 DI 容器,服务注入体系互相不可见(`ctx.model.extend` 在 cordis 3 的 Context 上为 undefined),App 启动即崩。
+2. **4.x 线是不可分割集群**:`@cordisjs/plugin-http@1.5.2` 与 `@cordisjs/plugin-server@1.7.0` 均硬依赖 cordis ^4.0.0-rc;没有"部分跳代"的可行组合。
+3. 类型检查通过具有迷惑性:`skipLibCheck` + 两代 cordis 类型结构相似,掩盖了运行时不兼容。
+
+**处置:** 全部回退至 cordis 3 内洽线,测试恢复 20/20。vendored `plugins/infra/server` 维持 @cordisjs/plugin-server ^0.2.9 原状(其重建以 1.x 为前提,随本阶段一并冻结)。
+
+**重启条件(满足其一时重新执行本阶段):**
+- `@satorijs/core` 发布依赖 cordis 4 的版本(哪怕 next/beta tag);
+- 或上游 koishi 官方启动 cordis 4 迁移(fork 随上游同步);
+- 或 fork 决定自建 @satorijs/core fork(工作量大,需单独立项)。
+
+重跑方式:按本节首表恢复版本号 → `bun install` → `bun run test` 观察 `ctx.model` 注入是否恢复 → 处理 vendored server 重建。
+
 ---
 
 ## 测试栈最终形态(决策记录)
