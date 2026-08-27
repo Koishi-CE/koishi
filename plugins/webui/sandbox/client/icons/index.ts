@@ -1,4 +1,4 @@
-import { icons } from '@koishijs/client'
-import Flask from './flask.vue'
+import { icons } from "@koishi-ce/client";
+import Flask from "./flask.vue";
 
-icons.register('activity:flask', Flask)
+icons.register("activity:flask", Flask);

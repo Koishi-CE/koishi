@@ -32,97 +32,100 @@
 </template>
 
 <script lang="ts" setup>
+import { computed, onBeforeUnmount, onMounted, ref, watch } from "vue";
+import { shared } from "./utils";
 
-import { shared } from './utils'
-import { computed, watch, ref, onMounted, onBeforeUnmount } from 'vue'
-
-const scale = ref(1)
-const rotate = ref(0)
-const img = ref<HTMLImageElement>(null)
+const scale = ref(1);
+const rotate = ref(0);
+const img = ref<HTMLImageElement>(null);
 
 const transform = computed(() => {
-  return `scale(${scale.value}) rotate(${rotate.value}deg)`
-})
+	return `scale(${scale.value}) rotate(${rotate.value}deg)`;
+});
 
 const siblings = computed(() => {
-  if (!shared.overlayImage) return
-  const elements = Array.from(document.querySelectorAll<HTMLImageElement>('.chat-image'))
-  const index = elements.indexOf(shared.overlayImage)
-  return {
-    prev: elements[index - 1],
-    next: elements[index + 1],
-  }
-})
+	if (!shared.overlayImage) return;
+	const elements = Array.from(
+		document.querySelectorAll<HTMLImageElement>(".chat-image"),
+	);
+	const index = elements.indexOf(shared.overlayImage);
+	return {
+		prev: elements[index - 1],
+		next: elements[index + 1],
+	};
+});
 
 const defaultScale = computed(() => {
-  const { naturalHeight, naturalWidth } = shared.overlayImage
-  const maxHeight = innerHeight - paddingVertical * 2
-  const maxWidth = innerWidth - paddingHorizontal * 2
-  return Math.min(1, maxHeight / naturalHeight, maxWidth / naturalWidth)
-})
+	const { naturalHeight, naturalWidth } = shared.overlayImage;
+	const maxHeight = innerHeight - paddingVertical * 2;
+	const maxWidth = innerWidth - paddingHorizontal * 2;
+	return Math.min(1, maxHeight / naturalHeight, maxWidth / naturalWidth);
+});
 
-watch(() => shared.overlayImage, (el, origin) => {
-  scale.value = 1
-  rotate.value = 0
-  if (!el) return moveToOrigin(img.value, origin)
-  if (img.value) {
-    img.value.style.transition = '0.3s transform ease'
-    moveToCenter(img.value)
-  }
-})
+watch(
+	() => shared.overlayImage,
+	(el, origin) => {
+		scale.value = 1;
+		rotate.value = 0;
+		if (!el) return moveToOrigin(img.value, origin);
+		if (img.value) {
+			img.value.style.transition = "0.3s transform ease";
+			moveToCenter(img.value);
+		}
+	},
+);
 
 function setImage(el: HTMLImageElement) {
-  if (el === undefined) return
-  shared.overlayImage = el
+	if (el === undefined) return;
+	shared.overlayImage = el;
 }
 
 function moveToOrigin(el: HTMLImageElement, origin = shared.overlayImage) {
-  const { height, width } = origin
-  const { left, top } = origin.getBoundingClientRect()
-  el.style.width = width + 'px'
-  el.style.height = height + 'px'
-  el.style.left = left + 'px'
-  el.style.top = top + 'px'
-  el.style.transition = '0.3s ease'
+	const { height, width } = origin;
+	const { left, top } = origin.getBoundingClientRect();
+	el.style.width = width + "px";
+	el.style.height = height + "px";
+	el.style.left = left + "px";
+	el.style.top = top + "px";
+	el.style.transition = "0.3s ease";
 }
 
-const paddingVertical = 0
-const paddingHorizontal = 0
+const paddingVertical = 0;
+const paddingHorizontal = 0;
 
 function moveToCenter(el: HTMLImageElement) {
-  const { naturalHeight, naturalWidth } = shared.overlayImage
-  const scale = defaultScale.value
-  const width = naturalWidth * scale
-  const height = naturalHeight * scale
-  el.style.width = width + 'px'
-  el.style.height = height + 'px'
-  el.style.left = (innerWidth - width) / 2 + 'px'
-  el.style.top = (innerHeight - height) / 2 + 'px'
+	const { naturalHeight, naturalWidth } = shared.overlayImage;
+	const scale = defaultScale.value;
+	const width = naturalWidth * scale;
+	const height = naturalHeight * scale;
+	el.style.width = width + "px";
+	el.style.height = height + "px";
+	el.style.left = (innerWidth - width) / 2 + "px";
+	el.style.top = (innerHeight - height) / 2 + "px";
 }
 
 onMounted(() => {
-  document.addEventListener('keydown', onKeyDown)
-})
+	document.addEventListener("keydown", onKeyDown);
+});
 
 onBeforeUnmount(() => {
-  document.removeEventListener('keydown', onKeyDown)
-})
+	document.removeEventListener("keydown", onKeyDown);
+});
 
 function onKeyDown(ev: KeyboardEvent) {
-  if (!shared.overlayImage) return
-  ev.preventDefault()
-  if (ev.key === 'ArrowUp' || ev.key === 'ArrowLeft') {
-    setImage(siblings.value.prev)
-  } else if (ev.key === 'ArrowDown' || ev.key === 'ArrowRight') {
-    setImage(siblings.value.next)
-  } else if (ev.key === 'Escape') {
-    setImage(null)
-  } else if (ev.key === 'Enter') {
-    shared.overlayImage.offsetParent.scrollIntoView({ behavior: 'smooth' })
-    setImage(null)
-  }
+	if (!shared.overlayImage) return;
+	ev.preventDefault();
+	if (ev.key === "ArrowUp" || ev.key === "ArrowLeft") {
+		setImage(siblings.value.prev);
+	} else if (ev.key === "ArrowDown" || ev.key === "ArrowRight") {
+		setImage(siblings.value.next);
+	} else if (ev.key === "Escape") {
+		setImage(null);
+	} else if (ev.key === "Enter") {
+		shared.overlayImage.offsetParent.scrollIntoView({ behavior: "smooth" });
+		setImage(null);
+	}
 }
-
 </script>
 
 <style lang="scss">

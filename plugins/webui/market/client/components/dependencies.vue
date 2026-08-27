@@ -34,51 +34,55 @@
 </template>
 
 <script lang="ts" setup>
+import { store, useConfig, useContext } from "@koishi-ce/client";
+import { computed, type WatchStopHandle, watch } from "vue";
+import { hasUpdate } from "../utils";
+import ManualInstall from "./manual.vue";
+import PackageView from "./package.vue";
+import { addManual } from "./utils";
 
-import { computed, watch, WatchStopHandle } from 'vue'
-import { store, useConfig, useContext } from '@koishijs/client'
-import { hasUpdate } from '../utils'
-import { addManual } from './utils'
-import ManualInstall from './manual.vue'
-import PackageView from './package.vue'
-
-const config = useConfig()
+const config = useConfig();
 
 const names = computed(() => {
-  return Object
-    .keys({
-      ...store.dependencies,
-      ...config.value.market.override,
-    })
-    .sort((a, b) => a > b ? 1 : -1)
-})
+	return Object.keys({
+		...store.dependencies,
+		...config.value.market.override,
+	}).sort((a, b) => (a > b ? 1 : -1));
+});
 
-let dispose: WatchStopHandle
-watch(() => store.market?.registry, (registry) => {
-  dispose?.()
-  if (!registry) return
-  dispose = watch(() => config.value.market.override, (object) => {
-    Object.keys(object).forEach(async (name) => {
-      if (store.dependencies[name]) return
-      addManual(name)
-    })
-  }, { immediate: true, deep: true })
-}, { immediate: true })
+let dispose: WatchStopHandle;
+watch(
+	() => store.market?.registry,
+	(registry) => {
+		dispose?.();
+		if (!registry) return;
+		dispose = watch(
+			() => config.value.market.override,
+			(object) => {
+				Object.keys(object).forEach(async (name) => {
+					if (store.dependencies[name]) return;
+					addManual(name);
+				});
+			},
+			{ immediate: true, deep: true },
+		);
+	},
+	{ immediate: true },
+);
 
-const updates = computed(() => names.value.filter(hasUpdate))
+const updates = computed(() => names.value.filter(hasUpdate));
 
-const ctx = useContext()
+const ctx = useContext();
 
-ctx.action('dependencies.upgrade', {
-  disabled: () => !updates.value.length,
-  async action() {
-    for (const name of updates.value) {
-      const versions = store.registry[name]
-      config.value.market.override[name] = Object.keys(versions)[0]
-    }
-  },
-})
-
+ctx.action("dependencies.upgrade", {
+	disabled: () => !updates.value.length,
+	async action() {
+		for (const name of updates.value) {
+			const versions = store.registry[name];
+			config.value.market.override[name] = Object.keys(versions)[0];
+		}
+	},
+});
 </script>
 
 <style lang="scss">

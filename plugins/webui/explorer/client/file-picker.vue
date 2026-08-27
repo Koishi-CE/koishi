@@ -45,131 +45,140 @@
 </template>
 
 <script lang="ts" setup>
-
-import { computed, PropType, ref } from 'vue'
-import { isNullable, Schema, SchemaBase, send, store } from '@koishijs/client'
-import { files, uploading, vFocus } from './store'
-import { Entry } from '@koishijs/plugin-explorer'
-import {} from 'koishi'
+import {
+	isNullable,
+	type Schema,
+	SchemaBase,
+	send,
+	store,
+} from "@koishi-ce/client";
+import {} from "@koishi-ce/koishi";
+import type { Entry } from "@koishi-ce/plugin-explorer";
+import { computed, type PropType, ref } from "vue";
+import { files, uploading, vFocus } from "./store";
 
 const props = defineProps({
-  schema: {} as PropType<Schema>,
-  modelValue: {} as PropType<string>,
-  disabled: {} as PropType<boolean>,
-  prefix: {} as PropType<string>,
-  initial: {} as PropType<{}>,
-})
+	schema: {} as PropType<Schema>,
+	modelValue: {} as PropType<string>,
+	disabled: {} as PropType<boolean>,
+	prefix: {} as PropType<string>,
+	initial: {} as PropType<{}>,
+});
 
-const config = SchemaBase.useModel<string>()
+const config = SchemaBase.useModel<string>();
 
-defineEmits(['update:modelValue'])
+defineEmits(["update:modelValue"]);
 
 const options = computed<Schemastery.Path.Options>(() => ({
-  filters: ['file'],
-  ...props.schema.meta.extra,
-}))
+	filters: ["file"],
+	...props.schema.meta.extra,
+}));
 
-const allowDir = computed(() => options.value.filters.includes('directory'))
-const allowFile = computed(() => options.value.filters.some(x => x !== 'directory'))
+const allowDir = computed(() => options.value.filters.includes("directory"));
+const allowFile = computed(() =>
+	options.value.filters.some((x) => x !== "directory"),
+);
 
 const hint = computed(() => {
-  if (!allowDir.value) {
-    return '选择文件'
-  } else if (allowFile.value) {
-    return '选择目录或文件'
-  } else {
-    return '选择目录'
-  }
-})
+	if (!allowDir.value) {
+		return "选择文件";
+	} else if (allowFile.value) {
+		return "选择目录或文件";
+	} else {
+		return "选择目录";
+	}
+});
 
-const showDialog = ref(false)
-const current = ref('/')
+const showDialog = ref(false);
+const current = ref("/");
 
 const entries = computed(() => {
-  const children = files[current.value.slice(0, -1)]?.children || store?.explorer || []
-  const { filters } = options.value
-  return children.filter((entry) => {
-    if (entry.type === 'directory') return true
-    if (entry.type === 'file' || entry.type === 'symlink') {
-      const index = entry.name.lastIndexOf('.')
-      const ext = index === -1 ? '' : entry.name.slice(index)
-      return filters.some((filter) => {
-        if (filter === 'directory') return false
-        if (filter === 'file') return true
-        if (typeof filter === 'string') {
-          return filter === ext
-        } else {
-          return filter.extensions.includes(ext)
-        }
-      })
-    }
-  })
-})
+	const children =
+		files[current.value.slice(0, -1)]?.children || store?.explorer || [];
+	const { filters } = options.value;
+	return children.filter((entry) => {
+		if (entry.type === "directory") return true;
+		if (entry.type === "file" || entry.type === "symlink") {
+			const index = entry.name.lastIndexOf(".");
+			const ext = index === -1 ? "" : entry.name.slice(index);
+			return filters.some((filter) => {
+				if (filter === "directory") return false;
+				if (filter === "file") return true;
+				if (typeof filter === "string") {
+					return filter === ext;
+				} else {
+					return filter.extensions.includes(ext);
+				}
+			});
+		}
+	});
+});
 
 function handleClick(entry: Entry) {
-  if (entry.filename === current.value) return
-  if (entry.type === 'directory') {
-    current.value = current.value + entry.name + '/'
-  } else {
-    config.value = current.value.slice(1) + entry.name
-    showDialog.value = false
-  }
+	if (entry.filename === current.value) return;
+	if (entry.type === "directory") {
+		current.value = current.value + entry.name + "/";
+	} else {
+		config.value = current.value.slice(1) + entry.name;
+		showDialog.value = false;
+	}
 }
 
 function createFolder() {
-  files[current.value] = {
-    type: 'directory',
-    name: '',
-    filename: current.value,
-    oldValue: '',
-    newValue: '',
-  }
-  const parent = files[current.value.slice(0, -1)]?.children || store?.explorer || []
-  parent.push(files[current.value])
+	files[current.value] = {
+		type: "directory",
+		name: "",
+		filename: current.value,
+		oldValue: "",
+		newValue: "",
+	};
+	const parent =
+		files[current.value.slice(0, -1)]?.children || store?.explorer || [];
+	parent.push(files[current.value]);
 }
 
 function confirmRename() {
-  const entry = files[current.value]
-  if (!entry) return
-  const filename = current.value + entry.name
-  if (filename in files || !entry.name) {
-    cancelRename()
-  } else {
-    files[filename] = entry
-    delete files[current.value]
-    send('explorer/mkdir', filename)
-    entry.filename = filename
-  }
+	const entry = files[current.value];
+	if (!entry) return;
+	const filename = current.value + entry.name;
+	if (filename in files || !entry.name) {
+		cancelRename();
+	} else {
+		files[filename] = entry;
+		delete files[current.value];
+		send("explorer/mkdir", filename);
+		entry.filename = filename;
+	}
 }
 
 function cancelRename() {
-  const entry = files[current.value]
-  if (!entry) return
-  delete files[current.value]
-  const parent = files[current.value.slice(0, -1)]?.children || store?.explorer || []
-  parent.splice(parent.indexOf(entry), 1)
+	const entry = files[current.value];
+	if (!entry) return;
+	delete files[current.value];
+	const parent =
+		files[current.value.slice(0, -1)]?.children || store?.explorer || [];
+	parent.splice(parent.indexOf(entry), 1);
 }
 
 const target = computed(() => {
-  if (isNullable(config.value)) return
-  if (!config.value) return '根目录'
-  const entry = files['/' + config.value]
-  if (!entry) return config.value
-  return (entry.type === 'file' ? '文件：' : '目录：') + entry.name
-})
+	if (isNullable(config.value)) return;
+	if (!config.value) return "根目录";
+	const entry = files["/" + config.value];
+	if (!entry) return config.value;
+	return (entry.type === "file" ? "文件：" : "目录：") + entry.name;
+});
 
 function toPrevious() {
-  const index = current.value.slice(0, -1).lastIndexOf('/')
-  current.value = current.value.slice(0, index + 1)
+	const index = current.value.slice(0, -1).lastIndexOf("/");
+	current.value = current.value.slice(0, index + 1);
 }
 
 function confirm() {
-  showDialog.value = false
-  if (allowDir.value) {
-    config.value = current.value.slice(1, -1)
-  }
+	showDialog.value = false;
+	if (allowDir.value) {
+		config.value = current.value.slice(1, -1);
+	}
 }
-
 </script>
 
 <style lang="scss">

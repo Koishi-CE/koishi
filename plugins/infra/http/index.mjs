@@ -1,1 +1,1 @@
-export * from '@cordisjs/plugin-http'
+export * from "@cordisjs/plugin-http";

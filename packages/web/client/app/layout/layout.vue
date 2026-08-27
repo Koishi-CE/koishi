@@ -43,36 +43,34 @@
 </template>
 
 <script lang="ts" setup>
-
-import { computed, ref, useSlots } from 'vue'
-import { useRoute } from 'vue-router'
-import { LegacyMenuItem, useContext } from '@koishijs/client'
-import LayoutHeader from './header.vue'
-import LayoutMenuItem from './menu-item.vue'
+import { type LegacyMenuItem, useContext } from "@koishi-ce/client";
+import { computed, ref, useSlots } from "vue";
+import { useRoute } from "vue-router";
+import LayoutHeader from "./header.vue";
+import LayoutMenuItem from "./menu-item.vue";
 
 defineProps<{
-  main?: string
-  left?: string
-  right?: string
-  container?: string
-  menu?: string | LegacyMenuItem[]
-  menuData?: any
-}>()
+	main?: string;
+	left?: string;
+	right?: string;
+	container?: string;
+	menu?: string | LegacyMenuItem[];
+	menuData?: any;
+}>();
 
-const slots = useSlots()
-const route = useRoute()
-const ctx = useContext()
+const slots = useSlots();
+const route = useRoute();
+const ctx = useContext();
 
-const isLeftAsideOpen = ref(false)
-const isRightAsideOpen = ref(false)
+const isLeftAsideOpen = ref(false);
+const isRightAsideOpen = ref(false);
 
 const styles = computed(() => ({
-  'has-left-aside': slots.left,
-  'has-right-aside': slots.right,
-  'is-left-aside-open': isLeftAsideOpen.value,
-  'is-right-aside-open': isRightAsideOpen.value,
-}))
-
+	"has-left-aside": slots.left,
+	"has-right-aside": slots.right,
+	"is-left-aside-open": isLeftAsideOpen.value,
+	"is-right-aside-open": isRightAsideOpen.value,
+}));
 </script>
 
 <style lang="scss">

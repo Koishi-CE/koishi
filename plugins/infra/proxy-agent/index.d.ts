@@ -1,1 +1,1 @@
-export * from '@cordisjs/plugin-proxy-agent'
+export * from "@cordisjs/plugin-proxy-agent";

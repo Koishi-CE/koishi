@@ -6,23 +6,22 @@
 </template>
 
 <script lang="ts" setup>
-
-import { computed } from 'vue'
+import { computed } from "vue";
 
 const props = defineProps<{
-  modelValue: any
-}>()
+	modelValue: any;
+}>();
 
-const emit = defineEmits(['update:modelValue'])
+const emit = defineEmits(["update:modelValue"]);
 
 const filter = computed({
-  get: () => props.modelValue?.$filter,
-  set: value => emit('update:modelValue', {
-    ...props.modelValue,
-    $filter: value,
-  }),
-})
-
+	get: () => props.modelValue?.$filter,
+	set: (value) =>
+		emit("update:modelValue", {
+			...props.modelValue,
+			$filter: value,
+		}),
+});
 </script>
 
 <style lang="scss">

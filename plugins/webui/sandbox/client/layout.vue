@@ -47,116 +47,155 @@
 </template>
 
 <script lang="ts" setup>
+import {
+	clone,
+	deepEqual,
+	message,
+	Schema,
+	send,
+	useContext,
+	VirtualList,
+} from "@koishi-ce/client";
+import type { Message } from "@koishi-ce/plugin-sandbox";
+import { ChatInput } from "@satorijs/components-vue";
+import segment from "@satorijs/element";
+import { computed, ref, watch } from "vue";
+import ChatMessage from "./message.vue";
+import { api, channel, config, panelTypes, words } from "./utils";
 
-import { clone, message, send, Schema, VirtualList, deepEqual, useContext } from '@koishijs/client'
-import { ChatInput } from '@satorijs/components-vue'
-import segment from '@satorijs/element'
-import { computed, ref, watch } from 'vue'
-import { Message } from '@koishijs/plugin-sandbox'
-import { api, channel, config, words, panelTypes } from './utils'
-import ChatMessage from './message.vue'
+const ctx = useContext();
 
-const ctx = useContext()
+ctx.action("sandbox.message.delete", {
+	action: ({ sandbox }) => deleteMessage(sandbox.message),
+});
 
-ctx.action('sandbox.message.delete', {
-  action: ({ sandbox }) => deleteMessage(sandbox.message),
-})
-
-ctx.action('sandbox.message.quote', {
-  action: ({ sandbox }) => quote.value = sandbox.message,
-})
+ctx.action("sandbox.message.quote", {
+	action: ({ sandbox }) => (quote.value = sandbox.message),
+});
 
 const schema = Schema.object({
-  authority: Schema.natural().description('权限等级'),
-})
+	authority: Schema.natural().description("权限等级"),
+});
 
 const users = computed(() => {
-  return Object
-    .keys(config.value.messages)
-    .filter(key => key.startsWith('@'))
-    .map((key) => key.slice(1))
-})
+	return Object.keys(config.value.messages)
+		.filter((key) => key.startsWith("@"))
+		.map((key) => key.slice(1));
+});
 
 const userMap = computed(() => {
-  return Object.fromEntries(users.value.map((name) => [name, { name }]))
-})
+	return Object.fromEntries(users.value.map((name) => [name, { name }]));
+});
 
-const length = 10
+const length = 10;
 
 function createUser() {
-  if (users.value.length >= length) {
-    return message.error('可创建的用户数量已达上限。')
-  }
-  let name: string
-  do {
-    name = words[config.value.index++]
-    config.value.index %= length
-  } while (users.value.includes(name))
-  config.value.user = name
-  config.value.messages['@' + name] = []
-  send('sandbox/set-user', config.value.platform, config.value.user, {})
+	if (users.value.length >= length) {
+		return message.error("可创建的用户数量已达上限。");
+	}
+	let name: string;
+	do {
+		name = words[config.value.index++];
+		config.value.index %= length;
+	} while (users.value.includes(name));
+	config.value.user = name;
+	config.value.messages["@" + name] = [];
+	send("sandbox/set-user", config.value.platform, config.value.user, {});
 }
 
 function removeUser(name: string) {
-  const index = users.value.indexOf(name)
-  delete config.value.messages['@' + name]
-  send('sandbox/set-user', config.value.platform, config.value.user, null)
-  if (config.value.user === name) {
-    config.value.user = users.value[index] || ''
-  }
+	const index = users.value.indexOf(name);
+	delete config.value.messages["@" + name];
+	send("sandbox/set-user", config.value.platform, config.value.user, null);
+	if (config.value.user === name) {
+		config.value.user = users.value[index] || "";
+	}
 }
 
-const input = ref('')
-const offset = ref(0)
-const quote = ref<Message>()
+const input = ref("");
+const offset = ref(0);
+const quote = ref<Message>();
 
 function onKeydown(event: KeyboardEvent) {
-  if (event.key === 'ArrowUp') {
-    const list = config.value.messages[channel.value].filter(item => item.user === config.value.user)
-    let index = list.length - offset.value
-    if (list[index - 1]) {
-      offset.value++
-      input.value = segment.unescape(list[index - 1].content)
-    }
-  } else if (event.key === 'ArrowDown') {
-    const list = config.value.messages[channel.value].filter(item => item.user === config.value.user)
-    let index = list.length - offset.value
-    if (list[index + 1]) {
-      offset.value--
-      input.value = segment.unescape(list[index + 1].content)
-    } else if (offset.value) {
-      offset.value = 0
-      input.value = ''
-    }
-  }
+	if (event.key === "ArrowUp") {
+		const list = config.value.messages[channel.value].filter(
+			(item) => item.user === config.value.user,
+		);
+		let index = list.length - offset.value;
+		if (list[index - 1]) {
+			offset.value++;
+			input.value = segment.unescape(list[index - 1].content);
+		}
+	} else if (event.key === "ArrowDown") {
+		const list = config.value.messages[channel.value].filter(
+			(item) => item.user === config.value.user,
+		);
+		let index = list.length - offset.value;
+		if (list[index + 1]) {
+			offset.value--;
+			input.value = segment.unescape(list[index + 1].content);
+		} else if (offset.value) {
+			offset.value = 0;
+			input.value = "";
+		}
+	}
 }
 
-const user = ref()
-const model = ref()
+const user = ref();
+const model = ref();
 
-watch(() => config.value.user, async (value) => {
-  if (!value) return
-  user.value = await send('sandbox/get-user', config.value.platform, config.value.user)
-  model.value = clone(user.value)
-}, { immediate: true })
+watch(
+	() => config.value.user,
+	async (value) => {
+		if (!value) return;
+		user.value = await send(
+			"sandbox/get-user",
+			config.value.platform,
+			config.value.user,
+		);
+		model.value = clone(user.value);
+	},
+	{ immediate: true },
+);
 
-watch(model, async (value) => {
-  if (deepEqual(value, user.value)) return
-  await send('sandbox/set-user', config.value.platform, config.value.user, value)
-  user.value = clone(value)
-}, { deep: true })
+watch(
+	model,
+	async (value) => {
+		if (deepEqual(value, user.value)) return;
+		await send(
+			"sandbox/set-user",
+			config.value.platform,
+			config.value.user,
+			value,
+		);
+		user.value = clone(value);
+	},
+	{ deep: true },
+);
 
 function sendMessage(content: string) {
-  offset.value = 0
-  send('sandbox/send-message', config.value.platform, config.value.user, channel.value, content, quote.value)
-  quote.value = null
+	offset.value = 0;
+	send(
+		"sandbox/send-message",
+		config.value.platform,
+		config.value.user,
+		channel.value,
+		content,
+		quote.value,
+	);
+	quote.value = null;
 }
 
 async function deleteMessage(data: Message) {
-  await send('sandbox/delete-message', data.platform, data.user, data.channel, data.id)
-  api.deleteMessage({ messageId: data.id, channelId: data.channel })
+	await send(
+		"sandbox/delete-message",
+		data.platform,
+		data.user,
+		data.channel,
+		data.id,
+	);
+	api.deleteMessage({ messageId: data.id, channelId: data.channel });
 }
-
 </script>
 
 <style lang="scss">

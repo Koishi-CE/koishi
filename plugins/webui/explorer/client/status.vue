@@ -5,10 +5,8 @@
 </template>
 
 <script lang="ts" setup>
+import { useRoute } from "vue-router";
+import { language } from "./editor";
 
-import { useRoute } from 'vue-router'
-import { language } from './editor'
-
-const route = useRoute()
-
+const route = useRoute();
 </script>

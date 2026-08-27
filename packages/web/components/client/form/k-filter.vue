@@ -19,64 +19,66 @@
 </template>
 
 <script lang="ts" setup>
-
-import { computed } from 'vue'
-import KFilterExpr from './k-filter-expr.vue'
+import { computed } from "vue";
+import KFilterExpr from "./k-filter-expr.vue";
 
 const props = defineProps<{
-  modelValue: any
-  disabled?: boolean
-  options?: any
-}>()
+	modelValue: any;
+	disabled?: boolean;
+	options?: any;
+}>();
 
-const emit = defineEmits(['update:modelValue'])
+const emit = defineEmits(["update:modelValue"]);
 
 const invalid = computed(() => {
-  const outer = extract(props.modelValue, '$or')
-  if (!outer) return true
-  for (const layer of outer) {
-    const inner = extract(layer, '$and')
-    if (!inner) return true
-  }
-})
+	const outer = extract(props.modelValue, "$or");
+	if (!outer) return true;
+	for (const layer of outer) {
+		const inner = extract(layer, "$and");
+		if (!inner) return true;
+	}
+});
 
 function extract(value: any, type: string) {
-  if (!value) {
-    return []
-  } else if (Array.isArray(value[type])) {
-    return value[type]
-  } else {
-    return [value]
-  }
+	if (!value) {
+		return [];
+	} else if (Array.isArray(value[type])) {
+		return value[type];
+	} else {
+		return [value];
+	}
 }
 
 function format(values: any, type: string) {
-  values = values.filter(Boolean)
-  if (!values.length) {
-    return
-  } else if (values.length === 1) {
-    return values[0]
-  } else {
-    return { [type]: values }
-  }
+	values = values.filter(Boolean);
+	if (!values.length) {
+		return;
+	} else if (values.length === 1) {
+		return values[0];
+	} else {
+		return { [type]: values };
+	}
 }
 
-function update(expr: any, innerKey: string | number, outerKey: string | number) {
-  const outer = extract(props.modelValue, '$or').slice()
-  const inner = extract(outer[outerKey], '$and').slice()
-  inner[innerKey] = expr
-  outer[outerKey] = format(inner, '$and')
-  emit('update:modelValue', format(outer, '$or'))
+function update(
+	expr: any,
+	innerKey: string | number,
+	outerKey: string | number,
+) {
+	const outer = extract(props.modelValue, "$or").slice();
+	const inner = extract(outer[outerKey], "$and").slice();
+	inner[innerKey] = expr;
+	outer[outerKey] = format(inner, "$and");
+	emit("update:modelValue", format(outer, "$or"));
 }
 
 function remove(innerKey: string | number, outerKey: string | number) {
-  const outer = extract(props.modelValue, '$or').slice()
-  const inner = extract(outer[outerKey], '$and').slice()
-  inner[innerKey] = undefined
-  outer[outerKey] = format(inner, '$and')
-  emit('update:modelValue', format(outer, '$or'))
+	const outer = extract(props.modelValue, "$or").slice();
+	const inner = extract(outer[outerKey], "$and").slice();
+	inner[innerKey] = undefined;
+	outer[outerKey] = format(inner, "$and");
+	emit("update:modelValue", format(outer, "$or"));
 }
-
 </script>
 
 <style lang="scss">

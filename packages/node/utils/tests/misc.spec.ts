@@ -1,19 +1,25 @@
-import { expect } from 'chai'
-import { coerce, enumKeys, assertProperty } from 'koishi'
+import { describe, it } from "bun:test";
+import { assertProperty, coerce, enumKeys } from "@koishi-ce/koishi";
+import { expect } from "chai";
 
-describe('Miscellaneous', () => {
-  it('coerce', () => {
-    expect(coerce('foo')).to.match(/^Error: foo/)
-    expect(coerce(new Error('foo'))).to.match(/^Error: foo/)
-  })
+describe("Miscellaneous", () => {
+	it("coerce", () => {
+		expect(coerce("foo")).to.match(/^Error: foo/);
+		expect(coerce(new Error("foo"))).to.match(/^Error: foo/);
+	});
 
-  it('enumKeys', () => {
-    enum Foo { bar, baz }
-    expect(enumKeys(Foo)).to.deep.equal(['bar', 'baz'])
-  })
+	it("enumKeys", () => {
+		enum Foo {
+			bar,
+			baz,
+		}
+		expect(enumKeys(Foo)).to.deep.equal(["bar", "baz"]);
+	});
 
-  it('assertProperty', () => {
-    expect(assertProperty({ foo: 'bar' }, 'foo')).to.equal('bar')
-    expect(() => assertProperty({}, 'foo' as never)).to.throw('missing configuration "foo"')
-  })
-})
+	it("assertProperty", () => {
+		expect(assertProperty({ foo: "bar" }, "foo")).to.equal("bar");
+		expect(() => assertProperty({}, "foo" as never)).to.throw(
+			'missing configuration "foo"',
+		);
+	});
+});

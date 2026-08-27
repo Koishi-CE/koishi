@@ -1,32 +1,45 @@
 {
-  "name": "koishi-bun",
-  "version": "1.0.0",
-  "type": "module",
-  "private": true,
-  "workspaces": [
-    "packages/node/*",
-    "packages/web/*",
-    "plugins/common/*",
-    "plugins/infra/*",
-    "plugins/webui/*",
-    "apps/*",
-    "tooling/*"
-  ],
-  "scripts": {
-    "lint": "biome check .",
-    "format": "biome format --write ."
-  },
-  "devDependencies": {
-    "@biomejs/biome": "^2.0.0",
-    "@koishijs/plugin-database-memory": "^3.7.0",
-    "@koishijs/plugin-help": "workspace:*",
-    "@koishijs/plugin-mock": "workspace:*",
-    "@sinonjs/fake-timers": "^6.0.1",
-    "@types/mocha": "^9.1.1",
-    "@types/node": "^25.0.9",
-    "@types/sinonjs__fake-timers": "^6.0.4",
-    "mocha": "^9.2.2",
-    "typescript": "^5.6.2",
-    "yml-register": "^1.2.5"
-  }
+	"name": "koishi",
+	"version": "1.0.0",
+	"type": "module",
+	"private": true,
+	"workspaces": [
+		"packages/node/*",
+		"packages/web/*",
+		"plugins/common/*",
+		"plugins/infra/*",
+		"plugins/webui/*",
+		"apps/*",
+		"tooling/*"
+	],
+	"scripts": {
+		"check": "bun run lint && bun run lint:client && bun run typecheck",
+		"lint": "biome check .",
+		"lint:client": "eslint \"apps/online/app/**/*.vue\" \"apps/koishi-scripts/template/client/**/*.vue\" \"packages/web/*/client/**/*.vue\" \"plugins/webui/*/client/**/*.vue\"",
+		"format": "biome format --write .",
+		"typecheck": "bun run ts7 --noEmit -p tsconfig.json",
+		"typecheck:legacy": "tsc6 --noEmit -p tsconfig.json",
+		"ts7": "node node_modules/@typescript/native/bin/tsc",
+		"build": "tsdown",
+		"test": "bun scripts/testing/run-tests.mjs"
+	},
+	"devDependencies": {
+		"@biomejs/biome": "^2.5.10",
+		"@koishi-ce/koishi": "workspace:*",
+		"@koishi-ce/plugin-help": "workspace:*",
+		"@koishi-ce/plugin-mock": "workspace:*",
+		"@sinonjs/fake-timers": "^15.4.0",
+		"@types/node": "^26.4.0",
+		"@typescript-eslint/parser": "^8.68.0",
+		"@typescript/native": "npm:typescript@7.0.2",
+		"chai": "^6.2.2",
+		"chai-as-promised": "^8.0.2",
+		"eslint": "^10.9.1",
+		"eslint-plugin-vue": "^10.10.0",
+		"js-yaml": "^5.4.1",
+		"tsdown": "^0.22.14",
+		"typescript": "npm:@typescript/typescript6@6.0.2",
+		"vue-eslint-parser": "^10.4.1",
+		"yml-register": "^1.2.5"
+	}
 }

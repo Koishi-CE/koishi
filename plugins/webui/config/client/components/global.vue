@@ -3,21 +3,19 @@
 </template>
 
 <script lang="ts" setup>
-
-import { store } from '@koishijs/client'
-import { computed } from 'vue'
-import { Tree } from './utils'
+import { store } from "@koishi-ce/client";
+import { computed } from "vue";
+import type { Tree } from "./utils";
 
 const props = defineProps<{
-  current: Tree
-  modelValue: any
-}>()
+	current: Tree;
+	modelValue: any;
+}>();
 
-const emit = defineEmits(['update:modelValue'])
+const emit = defineEmits(["update:modelValue"]);
 
 const config = computed({
-  get: () => props.modelValue,
-  set: value => emit('update:modelValue', value),
-})
-
+	get: () => props.modelValue,
+	set: (value) => emit("update:modelValue", value),
+});
 </script>

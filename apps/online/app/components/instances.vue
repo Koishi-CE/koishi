@@ -17,17 +17,15 @@
 </template>
 
 <script lang="ts" setup>
-
-import Instance from './instance.vue'
-import { computed } from 'vue'
-import { activate, data, instances } from '../utils'
+import { computed } from "vue";
+import { activate, data, instances } from "../utils";
+import Instance from "./instance.vue";
 
 const inactive = computed(() => {
-  return Object.entries(instances.value)
-    .filter(([id]) => id !== data.value.current)
-    .sort(([, a], [, b]) => b.lastVisit - a.lastVisit)
-})
-
+	return Object.entries(instances.value)
+		.filter(([id]) => id !== data.value.current)
+		.sort(([, a], [, b]) => b.lastVisit - a.lastVisit);
+});
 </script>
 
 <style lang="scss">

@@ -63,85 +63,89 @@
 </template>
 
 <script lang="ts" setup>
+import { useI18nText } from "@koishi-ce/components";
+import { badges, getUsers, resolveCategory, validate } from "@koishi-ce/market";
+import type { SearchObject } from "@koishi-ce/registry";
+import * as md5 from "spark-md5";
+import { computed, inject } from "vue";
+import { useI18n } from "vue-i18n";
+import MarketIcon from "../icons";
+import zhCN from "../locales/zh-CN.yml";
+import { kConfig } from "../utils";
 
-import { computed, inject } from 'vue'
-import { SearchObject } from '@koishijs/registry'
-import { useI18nText } from '@koishijs/components'
-import { badges, getUsers, resolveCategory, validate } from '@koishijs/market'
-import { kConfig } from '../utils'
-import { useI18n } from 'vue-i18n'
-import zhCN from '../locales/zh-CN.yml'
-import MarketIcon from '../icons'
-import * as md5 from 'spark-md5'
-
-defineEmits(['query'])
+defineEmits(["query"]);
 
 const props = defineProps<{
-  data: SearchObject
-  gravatar?: string
-}>()
+	data: SearchObject;
+	gravatar?: string;
+}>();
 
-const config = inject(kConfig, {})
+const config = inject(kConfig, {});
 
-const tt = useI18nText()
+const tt = useI18nText();
 
 const homepage = computed(() => {
-  const { homepage, repository } = props.data.package.links
-  if (homepage) return homepage
-  if (repository) return repository.replace(/^git\+/, '').replace(/\.git$/, '')
-})
+	const { homepage, repository } = props.data.package.links;
+	if (homepage) return homepage;
+	if (repository) return repository.replace(/^git\+/, "").replace(/\.git$/, "");
+});
 
 const badge = computed(() => {
-  for (const type in badges) {
-    if (badges[type].hidden?.(config, 'card')) continue
-    if (validate(props.data, badges[type].query)) return { type, ...badges[type] }
-  }
-})
+	for (const type in badges) {
+		if (badges[type].hidden?.(config, "card")) continue;
+		if (validate(props.data, badges[type].query))
+			return { type, ...badges[type] };
+	}
+});
 
 function getAvatar(email: string) {
-  return (props.gravatar || 'https://s.gravatar.com')
-    + '/avatar/'
-    + (email ? (md5 as unknown as typeof import('spark-md5')).hash(email.toLowerCase()) : '')
-    + '.png?d=mp'
+	return (
+		(props.gravatar || "https://s.gravatar.com") +
+		"/avatar/" +
+		(email
+			? (md5 as unknown as typeof import("spark-md5")).hash(email.toLowerCase())
+			: "") +
+		".png?d=mp"
+	);
 }
 
 function formatValue(value: number) {
-  return value >= 100 ? +value.toFixed() : +value.toFixed(1)
+	return value >= 100 ? +value.toFixed() : +value.toFixed(1);
 }
 
 function formatSize(value: number) {
-  if (value >= (1 << 20) * 1000) {
-    return formatValue(value / (1 << 30)) + ' GB'
-  } else if (value >= (1 << 10) * 1000) {
-    return formatValue(value / (1 << 20)) + ' MB'
-  } else {
-    return formatValue(value / (1 << 10)) + ' KB'
-  }
+	if (value >= (1 << 20) * 1000) {
+		return formatValue(value / (1 << 30)) + " GB";
+	} else if (value >= (1 << 10) * 1000) {
+		return formatValue(value / (1 << 20)) + " MB";
+	} else {
+		return formatValue(value / (1 << 10)) + " KB";
+	}
 }
 
 const { t, setLocaleMessage } = useI18n({
-  messages: {
-    'zh-CN': zhCN,
-  },
-})
+	messages: {
+		"zh-CN": zhCN,
+	},
+});
 
 function timeAgo(time: string) {
-  const now = new Date()
-  const input = new Date(time)
-  const diff = now.getTime() - input.getTime()
-  if (diff < 30000) return t('time.just-now')
-  if (diff < 3600000) return t('time.minutes-ago', [Math.floor(diff / 60000)])
-  if (diff < 86400000) return t('time.hours-ago', [Math.floor(diff / 3600000)])
-  if (diff < 604800000) return t('time.days-ago', [Math.floor(diff / 86400000)])
-  return input.toLocaleDateString()
+	const now = new Date();
+	const input = new Date(time);
+	const diff = now.getTime() - input.getTime();
+	if (diff < 30000) return t("time.just-now");
+	if (diff < 3600000) return t("time.minutes-ago", [Math.floor(diff / 60000)]);
+	if (diff < 86400000) return t("time.hours-ago", [Math.floor(diff / 3600000)]);
+	if (diff < 604800000)
+		return t("time.days-ago", [Math.floor(diff / 86400000)]);
+	return input.toLocaleDateString();
 }
 
 if (import.meta.hot) {
-  import.meta.hot.accept('../locales/zh-CN.yml', (module) => {
-    setLocaleMessage('zh-CN', module.default)
-  })
+	import.meta.hot.accept("../locales/zh-CN.yml", (module) => {
+		setLocaleMessage("zh-CN", module.default);
+	});
 }
-
 </script>
 
 <style lang="scss" scoped>

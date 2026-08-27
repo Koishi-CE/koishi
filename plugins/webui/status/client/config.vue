@@ -10,19 +10,17 @@
 </template>
 
 <script setup lang="ts">
+import { store } from "@koishi-ce/client";
+import { computed, inject } from "vue";
+import BotPreview from "./bots/preview.vue";
 
-import { store } from '@koishijs/client'
-import { inject, computed } from 'vue'
-import BotPreview from './bots/preview.vue'
-
-const current: any = inject('manager.settings.current')
+const current: any = inject("manager.settings.current");
 
 const bots = computed(() => {
-  return Object.values(store.status?.bots || {}).filter(bot => {
-    return bot.paths?.includes(current.value.path)
-  })
-})
-
+	return Object.values(store.status?.bots || {}).filter((bot) => {
+		return bot.paths?.includes(current.value.path);
+	});
+});
 </script>
 
 <style scoped lang="scss">

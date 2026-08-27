@@ -12,11 +12,9 @@
 </template>
 
 <script setup lang="ts">
-
-import LoadBar from './load-bar.vue'
-import { store } from '@koishijs/client'
-import { percentage } from './utils'
-
+import { store } from "@koishi-ce/client";
+import LoadBar from "./load-bar.vue";
+import { percentage } from "./utils";
 </script>
 
 <style lang="scss" scoped>

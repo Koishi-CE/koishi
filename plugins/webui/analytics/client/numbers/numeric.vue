@@ -13,12 +13,10 @@
 </template>
 
 <script lang="ts" setup>
-
 defineProps<{
-  title: string
-  icon: string
-}>()
-
+	title: string;
+	icon: string;
+}>();
 </script>
 
 <style lang="scss">

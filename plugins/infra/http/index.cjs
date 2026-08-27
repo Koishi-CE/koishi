@@ -1,1 +1,1 @@
-module.exports = require('@cordisjs/plugin-http')
+module.exports = require("@cordisjs/plugin-http");

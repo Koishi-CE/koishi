@@ -1,6 +1,6 @@
 # NOTICE
 
-**koishi-bun** is a community redistribution of the [Koishi](https://koishi.chat) chatbot framework. It is not affiliated with, endorsed by, or maintained by the Koishijs organization.
+**koishi** is a community redistribution of the [Koishi](https://koishi.chat) chatbot framework. It is not affiliated with, endorsed by, or maintained by the Koishijs organization.
 
 This repository is a derivative work combining code from two upstream repositories, restructured into a single monorepo. Per-directory provenance and licensing:
 
@@ -9,9 +9,9 @@ This repository is a derivative work combining code from two upstream repositori
 | `packages/node/{core,loader,utils,i18n-utils,cli}` | [koishijs/koishi](https://github.com/koishijs/koishi) `packages/*` | MIT — [LICENSE](./LICENSE) |
 | `plugins/infra/{http,server,hmr,mock,proxy-agent}` | [koishijs/koishi](https://github.com/koishijs/koishi) `plugins/*` | MIT — [LICENSE](./LICENSE) |
 | `plugins/common/{bind,broadcast,callme,echo,help,inspect}` | [koishijs/koishi](https://github.com/koishijs/koishi) `plugins/common/*` | MIT — [LICENSE](./LICENSE) |
-| `packages/web/{client,components,market}` | [koishijs/webui](https://github.com/koishijs/webui) `packages/*` | AGPL-3.0 — [LICENSES/webui-AGPL-3.0](./LICENSES/webui-AGPL-3.0) |
-| `plugins/webui/{actions,admin,analytics,auth,commands,config,console,explorer,insight,locales,logger,market,notifier,oobe,sandbox,status}` | [koishijs/webui](https://github.com/koishijs/webui) `plugins/*` | AGPL-3.0 — [LICENSES/webui-AGPL-3.0](./LICENSES/webui-AGPL-3.0) |
-| `apps/online` | [koishijs/webui](https://github.com/koishijs/webui) `packages/online` | AGPL-3.0 — [LICENSES/webui-AGPL-3.0](./LICENSES/webui-AGPL-3.0) |
+| `packages/web/{client,components,market}` | [koishijs/webui](https://github.com/koishijs/webui) `packages/*` | AGPL-3.0 — [LICENSES/webui-AGPL-3.0](./LICENSES/webui-AGPL-3.0.txt) |
+| `plugins/webui/{actions,admin,analytics,auth,commands,config,console,explorer,insight,locales,logger,market,notifier,oobe,sandbox,status}` | [koishijs/webui](https://github.com/koishijs/webui) `plugins/*` | AGPL-3.0 — [LICENSES/webui-AGPL-3.0](./LICENSES/webui-AGPL-3.0.txt) |
+| `apps/online` | [koishijs/webui](https://github.com/koishijs/webui) `packages/online` | AGPL-3.0 — [LICENSES/webui-AGPL-3.0](./LICENSES/webui-AGPL-3.0.txt) |
 | `packages/node/console`, `apps/registry` | [koishijs/webui](https://github.com/koishijs/webui) | MIT (declared in the upstream package.json of each package) |
 
 Copyright (c) 2019-present Shigma and Koishijs contributors.

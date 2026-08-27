@@ -68,121 +68,121 @@
 </template>
 
 <script lang="ts" setup>
+import { type Dict, send, store } from "@koishi-ce/client";
+import { useDebounceFn } from "@vueuse/core";
+import { computed, provide, ref, watch } from "vue";
+import { useRoute, useRouter } from "vue-router";
 
-import { useRoute, useRouter } from 'vue-router'
-import { Dict, send, store } from '@koishijs/client'
-import { computed, ref, watch, provide } from 'vue'
-import { useDebounceFn } from '@vueuse/core'
+const route = useRoute();
+const router = useRouter();
 
-const route = useRoute()
-const router = useRouter()
-
-const displayLocales = ref(['zh-CN', 'en-US'])
-const tree = ref(null)
-const keyword = ref('')
+const displayLocales = ref(["zh-CN", "en-US"]);
+const tree = ref(null);
+const keyword = ref("");
 
 watch(keyword, (val) => {
-  tree.value.filter(val)
-})
+	tree.value.filter(val);
+});
 
 const active = computed<string>({
-  get() {
-    const name = route.path.slice(9).replace(/\//g, '.')
-    return name in data.value.map ? name : ''
-  },
-  set(name) {
-    if (!(name in data.value.map)) name = ''
-    router.replace('/locales/' + name.replace(/\./g, '/'))
-  },
-})
+	get() {
+		const name = route.path.slice(9).replace(/\//g, ".");
+		return name in data.value.map ? name : "";
+	},
+	set(name) {
+		if (!(name in data.value.map)) name = "";
+		router.replace("/locales/" + name.replace(/\./g, "/"));
+	},
+});
 
-provide('locale:prefix', active)
+provide("locale:prefix", active);
 
 function filterNode(value: string, data: Tree) {
-  return data.label.toLowerCase().includes(keyword.value.toLowerCase())
+	return data.label.toLowerCase().includes(keyword.value.toLowerCase());
 }
 
 function getClass(tree: Tree) {
-  const words: string[] = []
-  if (tree.id === active.value) words.push('is-active')
-  return words.join(' ')
+	const words: string[] = [];
+	if (tree.id === active.value) words.push("is-active");
+	return words.join(" ");
 }
 
 function handleClick(tree: Tree) {
-  active.value = tree.id
+	active.value = tree.id;
 }
 
 const paths = computed(() => {
-  const result = {}
-  for (const locale in store.locales) {
-    Object.assign(result, store.locales[locale])
-  }
-  return Object.keys(result).filter(path => !path.includes('._') && !path.includes('@'))
-})
+	const result = {};
+	for (const locale in store.locales) {
+		Object.assign(result, store.locales[locale]);
+	}
+	return Object.keys(result).filter(
+		(path) => !path.includes("._") && !path.includes("@"),
+	);
+});
 
 interface Tree {
-  id: string
-  label: string
-  children?: Tree[]
+	id: string;
+	label: string;
+	children?: Tree[];
 }
 
 function sortTree(trees: Tree[]) {
-  trees.sort((a, b) => a.label.localeCompare(b.label))
-  for (const tree of trees) {
-    if (tree.children) sortTree(tree.children)
-  }
+	trees.sort((a, b) => a.label.localeCompare(b.label));
+	for (const tree of trees) {
+		if (tree.children) sortTree(tree.children);
+	}
 }
 
 const data = computed(() => {
-  const data: Tree[] = []
-  const map: Dict<string[]> = {}
-  for (const path of paths.value) {
-    const parts = path.split('.')
-    if (parts.length < 2 || path.includes('$')) continue
-    let children = data
-    let depth = Math.min(parts.length - 1, 2)
-    for (let i = parts.length - 1; i >= depth; i--) {
-      if (paths.value.includes(parts.slice(0, i).join('.') + '.$')) {
-        depth = i
-        break
-      }
-    }
-    for (let i = 0; i < depth; i++) {
-      const label = parts[i]
-      const id = parts.slice(0, i + 1).join('.')
-      let child = children.find(item => item.id === id)
-      if (!child) {
-        child = { id, label }
-        children.push(child)
-        map[id] = []
-      }
-      children = child.children ??= []
-    }
-    map[parts.slice(0, depth).join('.')].push(parts.slice(depth).join('.'))
-  }
-  sortTree(data)
-  return { data, map }
-})
+	const data: Tree[] = [];
+	const map: Dict<string[]> = {};
+	for (const path of paths.value) {
+		const parts = path.split(".");
+		if (parts.length < 2 || path.includes("$")) continue;
+		let children = data;
+		let depth = Math.min(parts.length - 1, 2);
+		for (let i = parts.length - 1; i >= depth; i--) {
+			if (paths.value.includes(parts.slice(0, i).join(".") + ".$")) {
+				depth = i;
+				break;
+			}
+		}
+		for (let i = 0; i < depth; i++) {
+			const label = parts[i];
+			const id = parts.slice(0, i + 1).join(".");
+			let child = children.find((item) => item.id === id);
+			if (!child) {
+				child = { id, label };
+				children.push(child);
+				map[id] = [];
+			}
+			children = child.children ??= [];
+		}
+		map[parts.slice(0, depth).join(".")].push(parts.slice(depth).join("."));
+	}
+	sortTree(data);
+	return { data, map };
+});
 
 const update = useDebounceFn(() => {
-  const result = {}
-  for (const locale in store.locales) {
-    if (!locale.startsWith('$')) continue
-    result[locale.slice(1)] = store.locales[locale]
-  }
-  send('l10n', result)
-}, 1000)
+	const result = {};
+	for (const locale in store.locales) {
+		if (!locale.startsWith("$")) continue;
+		result[locale.slice(1)] = store.locales[locale];
+	}
+	send("l10n", result);
+}, 1000);
 
 function handleUpdate(locale: string, path: string, value: string) {
-  const root = store.locales['$' + locale] ??= {}
-  if (value) {
-    root[`${active.value}.${path}`] = value
-  } else {
-    root[`${active.value}.${path}`] = null
-  }
-  update()
+	const root = (store.locales["$" + locale] ??= {});
+	if (value) {
+		root[`${active.value}.${path}`] = value;
+	} else {
+		root[`${active.value}.${path}`] = null;
+	}
+	update();
 }
-
 </script>
 
 <style lang="scss">

@@ -86,122 +86,157 @@
 </template>
 
 <script setup lang="ts">
+import {
+	clone,
+	type Dict,
+	deepEqual,
+	pick,
+	type Schema,
+	send,
+	store,
+	useContext,
+	useRpc,
+	valueMap,
+} from "@koishi-ce/client";
+import type { Argv, Command } from "@koishi-ce/koishi";
+import { watchDebounced } from "@vueuse/core";
+import { computed, nextTick, ref, watch } from "vue";
+import type { CommandData, CommandState } from "../lib";
+import { createSchema } from "./utils";
 
-import { ref, watch, computed, nextTick } from 'vue'
-import { watchDebounced } from '@vueuse/core'
-import { Schema, Dict, valueMap, clone, store, send, pick, useContext, deepEqual, useRpc } from '@koishijs/client'
-import { createSchema } from './utils'
-import { CommandData, CommandState } from '../lib'
-import type { Argv, Command } from 'koishi'
-
-const ctx = useContext()
-const data = useRpc<Dict<CommandData>>()
+const ctx = useContext();
+const data = useRpc<Dict<CommandData>>();
 
 const props = defineProps<{
-  command: CommandData
-}>()
+	command: CommandData;
+}>();
 
 const schema = ref<{
-  config: Schema
-  options: Dict<Schema>
-}>()
+	config: Schema;
+	options: Dict<Schema>;
+}>();
 
-const inputEl = ref()
-const inputName = ref('')
-const inputSource = ref('')
-const target = ref<string>(null)
-const current = ref<CommandState>()
+const inputEl = ref();
+const inputName = ref("");
+const inputSource = ref("");
+const target = ref<string>(null);
+const current = ref<CommandState>();
 
 const showAliasDialog = computed({
-  get: () => typeof target.value === 'string',
-  set: () => target.value = null,
-})
+	get: () => typeof target.value === "string",
+	set: () => (target.value = null),
+});
 
-watch(() => props.command, (value) => {
-  if (!value) return
-  const { initial, override } = value
-  schema.value = {
-    config: createSchema('command', initial.config),
-    options: valueMap(initial.options, (_, key) => createSchema('command-option', initial.options[key])),
-  }
-  current.value = clone(override)
-}, { immediate: true })
+watch(
+	() => props.command,
+	(value) => {
+		if (!value) return;
+		const { initial, override } = value;
+		schema.value = {
+			config: createSchema("command", initial.config),
+			options: valueMap(initial.options, (_, key) =>
+				createSchema("command-option", initial.options[key]),
+			),
+		};
+		current.value = clone(override);
+	},
+	{ immediate: true },
+);
 
-ctx.action('command.update', {
-  disabled: () => deepEqual(
-    pick(current.value, ['config', 'options']),
-    pick(props.command.override, ['config', 'options']),
-  ),
-  action: () => send('command/update', props.command.name, pick(current.value, ['config', 'options'])),
-})
+ctx.action("command.update", {
+	disabled: () =>
+		deepEqual(
+			pick(current.value, ["config", "options"]),
+			pick(props.command.override, ["config", "options"]),
+		),
+	action: () =>
+		send(
+			"command/update",
+			props.command.name,
+			pick(current.value, ["config", "options"]),
+		),
+});
 
 function setDefault(name: string) {
-  const item = current.value.aliases[name]
-  current.value.aliases = {
-    [name]: item,
-    ...current.value.aliases,
-  }
-  send('command/aliases', props.command.name, current.value.aliases)
+	const item = current.value.aliases[name];
+	current.value.aliases = {
+		[name]: item,
+		...current.value.aliases,
+	};
+	send("command/aliases", props.command.name, current.value.aliases);
 }
 
 function deleteAlias(name: string) {
-  if (props.command.initial.aliases[name]) {
-    current.value.aliases[name].filter = false
-  } else {
-    delete current.value.aliases[name]
-  }
-  send('command/aliases', props.command.name, current.value.aliases)
+	if (props.command.initial.aliases[name]) {
+		current.value.aliases[name].filter = false;
+	} else {
+		delete current.value.aliases[name];
+	}
+	send("command/aliases", props.command.name, current.value.aliases);
 }
 
 function recoverAlias(name: string) {
-  current.value.aliases[name] = props.command.initial.aliases[name]
-  send('command/aliases', props.command.name, current.value.aliases)
+	current.value.aliases[name] = props.command.initial.aliases[name];
+	send("command/aliases", props.command.name, current.value.aliases);
 }
 
 function stringify(alias: Command.Alias) {
-  return [
-    ...alias?.args || [],
-    ...Object.entries(alias?.options || {}).map(([key, value]) => {
-      return value === true ? `--${key}` : `--${key}=${value}`
-    }),
-  ].join(' ')
+	return [
+		...(alias?.args || []),
+		...Object.entries(alias?.options || {}).map(([key, value]) => {
+			return value === true ? `--${key}` : `--${key}=${value}`;
+		}),
+	].join(" ");
 }
 
 async function handleOpen() {
-  // https://github.com/element-plus/element-plus/issues/15250
-  await nextTick()
-  inputEl.value?.focus()
+	// https://github.com/element-plus/element-plus/issues/15250
+	await nextTick();
+	inputEl.value?.focus();
 }
 
 const aliases = computed(() => {
-  return Object.values(data.value).flatMap(command => command.override.aliases)
-})
+	return Object.values(data.value).flatMap(
+		(command) => command.override.aliases,
+	);
+});
 
 const invalidName = computed(() => {
-  return !inputName.value || !!aliases.value[inputName.value]
-})
+	return !inputName.value || !!aliases.value[inputName.value];
+});
 
-const parsed = ref<Argv>({})
+const parsed = ref<Argv>({});
 
-watchDebounced(inputSource, async (value) => {
-  if (!value.trim()) return
-  parsed.value = await send('command/parse', props.command.name, inputSource.value)
-}, { debounce: 500 })
+watchDebounced(
+	inputSource,
+	async (value) => {
+		if (!value.trim()) return;
+		parsed.value = await send(
+			"command/parse",
+			props.command.name,
+			inputSource.value,
+		);
+	},
+	{ debounce: 500 },
+);
 
 async function onEnter() {
-  if (invalidName.value) return
-  if (inputSource.value.trim()) {
-    const alias = await send('command/parse', props.command.name, inputSource.value)
-    if (alias.error) return
-    current.value.aliases[inputName.value] = alias
-  } else {
-    current.value.aliases[inputName.value] = {}
-  }
-  await send('command/aliases', props.command.name, current.value.aliases)
-  showAliasDialog.value = false
-  inputSource.value = ''
+	if (invalidName.value) return;
+	if (inputSource.value.trim()) {
+		const alias = await send(
+			"command/parse",
+			props.command.name,
+			inputSource.value,
+		);
+		if (alias.error) return;
+		current.value.aliases[inputName.value] = alias;
+	} else {
+		current.value.aliases[inputName.value] = {};
+	}
+	await send("command/aliases", props.command.name, current.value.aliases);
+	showAliasDialog.value = false;
+	inputSource.value = "";
 }
-
 </script>
 
 <style lang="scss" scoped>

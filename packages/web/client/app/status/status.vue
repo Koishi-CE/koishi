@@ -14,11 +14,9 @@
 </template>
 
 <script lang="ts" setup>
-
 defineOptions({
-  inheritAttrs: false,
-})
-
+	inheritAttrs: false,
+});
 </script>
 
 <style lang="scss" scoped>

@@ -11,19 +11,17 @@
 </template>
 
 <script lang="ts" setup>
+import { store } from "@koishi-ce/client";
+import { computed } from "vue";
+import { useRoute } from "vue-router";
+import ActivityBar from "./activity/index.vue";
+import MenuList from "./menu/index.vue";
+import StatusBar from "./status.vue";
 
-import { store } from '@koishijs/client'
-import { computed } from 'vue'
-import { useRoute } from 'vue-router'
-import ActivityBar from './activity/index.vue'
-import StatusBar from './status.vue'
-import MenuList from './menu/index.vue'
-
-const route = useRoute()
+const route = useRoute();
 
 const loaded = computed(() => {
-  if (!route.meta.activity?.fields) return true
-  return route.meta.activity.fields.every((key) => store[key])
-})
-
+	if (!route.meta.activity?.fields) return true;
+	return route.meta.activity.fields.every((key) => store[key]);
+});
 </script>

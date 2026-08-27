@@ -12,24 +12,22 @@
 </template>
 
 <script lang="ts" setup>
-
-import { computed } from 'vue'
+import { computed } from "vue";
 
 const props = defineProps({
-  placement: String,
-  modelValue: {},
-  name: { type: String, default: 'question-empty' },
-})
+	placement: String,
+	modelValue: {},
+	name: { type: String, default: "question-empty" },
+});
 
-const emit = defineEmits(['update:modelValue'])
+const emit = defineEmits(["update:modelValue"]);
 
-const pointer = computed(() => props.modelValue !== undefined)
+const pointer = computed(() => props.modelValue !== undefined);
 
 function onClick() {
-  if (!pointer.value) return
-  emit('update:modelValue', !props.modelValue)
+	if (!pointer.value) return;
+	emit("update:modelValue", !props.modelValue);
 }
-
 </script>
 
 <style lang="scss">

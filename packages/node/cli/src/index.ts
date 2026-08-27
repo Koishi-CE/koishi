@@ -1,8 +1,7 @@
 // This file is only intended for users who do not use CLI.
 
-import Loader from '@koishijs/loader'
+import Loader from "@koishi-ce/loader";
 
-export { Loader }
-
-export * from '@koishijs/core'
-export * from '@koishijs/loader'
+export * from "@koishi-ce/core";
+export * from "@koishi-ce/loader";
+export { Loader };

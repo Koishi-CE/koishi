@@ -29,69 +29,71 @@
 </template>
 
 <script lang="ts" setup>
+import { type Activity, useConfig, useMenu } from "@koishi-ce/client";
+import type { Placement } from "element-plus";
+import { computed, ref, watch } from "vue";
+import { useRoute } from "vue-router";
+import ActivityButton from "./button.vue";
 
-import { computed, ref } from 'vue'
-import { useRoute } from 'vue-router'
-import { Activity, useConfig, useMenu } from '@koishijs/client'
-import { Placement } from 'element-plus'
-import ActivityButton from './button.vue'
-import { watch } from 'vue'
-
-const route = useRoute()
+const route = useRoute();
 
 const props = defineProps<{
-  children: Activity[]
-  placement: Placement
-}>()
+	children: Activity[];
+	placement: Placement;
+}>();
 
 const isActive = computed(() => {
-  return Object.values(props.children).some(child => route.meta?.activity?.id === child.id)
-})
+	return Object.values(props.children).some(
+		(child) => route.meta?.activity?.id === child.id,
+	);
+});
 
-const hasDragOver = ref(false)
+const hasDragOver = ref(false);
 
-const trigger = useMenu('theme.activity')
+const trigger = useMenu("theme.activity");
 
-const hoverIndex = ref(0)
+const hoverIndex = ref(0);
 
-watch(() => props.children, () => {
-  hoverIndex.value = 0
-})
+watch(
+	() => props.children,
+	() => {
+		hoverIndex.value = 0;
+	},
+);
 
 function handleDragEnter(event: DragEvent) {
-  hasDragOver.value = true
+	hasDragOver.value = true;
 }
 
 function handleDragLeave(event: DragEvent) {
-  hasDragOver.value = false
+	hasDragOver.value = false;
 }
 
-const config = useConfig()
+const config = useConfig();
 
 function handleDrop(event: DragEvent) {
-  hasDragOver.value = false
-  const text = event.dataTransfer.getData('text/plain')
-  if (!text.startsWith('activity:')) return
-  const id = text.slice(9)
-  const target = props.children[0].id
-  if (target === id) return
-  event.preventDefault()
+	hasDragOver.value = false;
+	const text = event.dataTransfer.getData("text/plain");
+	if (!text.startsWith("activity:")) return;
+	const id = text.slice(9);
+	const target = props.children[0].id;
+	if (target === id) return;
+	event.preventDefault();
 
-  const override = (config.value.activities ??= {})[id] ??= {}
-  if (override.parent === target) {
-    delete override.parent
-    ;(config.value.activities[target] ??= {}).parent = id
-    for (const key in config.value.activities) {
-      const override = config.value.activities[key]
-      if (override?.parent === target) {
-        override.parent = id
-      }
-    }
-  } else {
-    override.parent = target
-  }
+	const override = ((config.value.activities ??= {})[id] ??= {});
+	if (override.parent === target) {
+		delete override.parent;
+		(config.value.activities[target] ??= {}).parent = id;
+		for (const key in config.value.activities) {
+			const override = config.value.activities[key];
+			if (override?.parent === target) {
+				override.parent = id;
+			}
+		}
+	} else {
+		override.parent = target;
+	}
 }
-
 </script>
 
 <style lang="scss">

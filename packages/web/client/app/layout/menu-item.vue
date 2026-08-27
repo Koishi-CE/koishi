@@ -7,40 +7,40 @@
 </template>
 
 <script lang="ts" setup>
-
-import { MaybeGetter, useContext } from '@koishijs/client'
-import { computed } from 'vue'
+import { type MaybeGetter, useContext } from "@koishi-ce/client";
+import { computed } from "vue";
 
 const props = defineProps<{
-  item: any
-  menuKey?: string
-  menuData?: any
-}>()
+	item: any;
+	menuKey?: string;
+	menuData?: any;
+}>();
 
-const ctx = useContext()
+const ctx = useContext();
 
 const hidden = computed(() => {
-  if (!props.item.hidden) return false
-  return toValue(props.item.hidden)
-})
+	if (!props.item.hidden) return false;
+	return toValue(props.item.hidden);
+});
 
 const disabled = computed(() => {
-  if (!props.item.action) return true
-  if (!props.item.disabled) return false
-  return toValue(props.item.disabled)
-})
+	if (!props.item.action) return true;
+	if (!props.item.disabled) return false;
+	return toValue(props.item.disabled);
+});
 
-const scope = computed(() => ctx.$action.createScope({
-  [props.menuKey]: props.menuData,
-}))
+const scope = computed(() =>
+	ctx.$action.createScope({
+		[props.menuKey]: props.menuData,
+	}),
+);
 
 function toValue<T>(getter: MaybeGetter<T>): T {
-  if (typeof getter !== 'function') return getter
-  return (getter as any)(scope.value)
+	if (typeof getter !== "function") return getter;
+	return (getter as any)(scope.value);
 }
 
 function trigger() {
-  return props.item.action(scope.value)
+	return props.item.action(scope.value);
 }
-
 </script>

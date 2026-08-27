@@ -1,40 +1,45 @@
 {
-  "name": "@koishijs/registry",
-  "description": "Scan Package Manager for Koishi Plugins",
-  "version": "7.0.3",
-  "main": "lib/index.js",
-  "typings": "lib/index.d.ts",
-  "files": [
-    "lib",
-    "src"
-  ],
-  "author": "Shigma <shigma10826@gmail.com>",
-  "license": "MIT",
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/koishijs/webui.git",
-    "directory": "packages/registry"
-  },
-  "bugs": {
-    "url": "https://github.com/koishijs/webui/issues"
-  },
-  "homepage": "https://koishi.chat",
-  "keywords": [
-    "bot",
-    "chatbot",
-    "koishi",
-    "market",
-    "registry",
-    "npm",
-    "package",
-    "search"
-  ],
-  "devDependencies": {
-    "@types/semver": "^7.5.8"
-  },
-  "dependencies": {
-    "cosmokit": "^1.8.1",
-    "p-map": "^4.0.0",
-    "semver": "^7.6.3"
-  }
+	"name": "@koishi-ce/registry",
+	"description": "Scan Package Manager for Koishi Plugins",
+	"version": "7.0.3",
+	"main": "lib/index.js",
+	"typings": "lib/index.d.ts",
+	"files": [
+		"lib",
+		"src"
+	],
+	"author": "Shigma <shigma10826@gmail.com>",
+	"license": "MIT",
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/Koishi-CE/koishi.git",
+		"directory": "apps/registry"
+	},
+	"bugs": {
+		"url": "https://github.com/Koishi-CE/koishi/issues"
+	},
+	"homepage": "https://koishi.chat",
+	"keywords": [
+		"bot",
+		"chatbot",
+		"koishi",
+		"market",
+		"registry",
+		"npm",
+		"package",
+		"search"
+	],
+	"devDependencies": {
+		"@types/semver": "^7.5.8"
+	},
+	"dependencies": {
+		"cosmokit": "^1.8.1",
+		"p-map": "^7.0.6",
+		"semver": "^7.8.5"
+	},
+	"exports": {
+		".": {
+			"source": "./src/index.ts"
+		}
+	}
 }

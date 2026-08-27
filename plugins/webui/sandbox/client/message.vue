@@ -14,17 +14,15 @@
 </template>
 
 <script lang="ts" setup>
-
-import { Message } from '@koishijs/plugin-sandbox'
-import { useMenu } from '@koishijs/client'
-import { MessageContent } from '@satorijs/components-vue'
+import { useMenu } from "@koishi-ce/client";
+import type { Message } from "@koishi-ce/plugin-sandbox";
+import { MessageContent } from "@satorijs/components-vue";
 
 defineProps<{
-  data: Message
-}>()
+	data: Message;
+}>();
 
-const trigger = useMenu('sandbox.message')
-
+const trigger = useMenu("sandbox.message");
 </script>
 
 <style lang="scss" scoped>

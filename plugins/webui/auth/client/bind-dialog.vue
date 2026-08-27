@@ -5,10 +5,8 @@
 </template>
 
 <script lang="ts" setup>
-
-import { showLoginDialog } from './utils'
-import LoginForm from './login-form.vue'
-
+import LoginForm from "./login-form.vue";
+import { showLoginDialog } from "./utils";
 </script>
 
 <style lang="scss">

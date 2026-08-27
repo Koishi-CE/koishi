@@ -53,50 +53,48 @@
 </template>
 
 <script lang="ts" setup>
+import { send, store } from "@koishi-ce/client";
+import type { UserLogin } from "@koishi-ce/plugin-auth";
+import { ref } from "vue";
+import { useRouter } from "vue-router";
+import { shared, showLoginDialog } from "./utils";
 
-import { ref } from 'vue'
-import { useRouter } from 'vue-router'
-import { shared, showLoginDialog } from './utils'
-import { send, store } from '@koishijs/client'
-import { UserLogin } from '@koishijs/plugin-auth'
+const error = ref<string>();
+const user = ref<UserLogin>();
+const showPassword = ref<boolean>(false);
 
-const error = ref<string>()
-const user = ref<UserLogin>()
-const showPassword = ref<boolean>(false)
-
-let timestamp = 0
+let timestamp = 0;
 async function loginWithAccount() {
-  const now = Date.now()
-  if (now < timestamp) return
-  const { platform, userId } = shared.value
-  if (!platform || !userId) return
-  timestamp = now + 1000
-  try {
-    user.value = await send('login/platform', platform, userId)
-  } catch (e) {
-    error.value = e.message
-  }
+	const now = Date.now();
+	if (now < timestamp) return;
+	const { platform, userId } = shared.value;
+	if (!platform || !userId) return;
+	timestamp = now + 1000;
+	try {
+		user.value = await send("login/platform", platform, userId);
+	} catch (e) {
+		error.value = e.message;
+	}
 }
 
 async function loginWithPassword() {
-  const { name, password } = shared.value
-  try {
-    await send('login/password', name, password)
-  } catch (e) {
-    error.value = e.message
-  }
+	const { name, password } = shared.value;
+	try {
+		await send("login/password", name, password);
+	} catch (e) {
+		error.value = e.message;
+	}
 }
 
-const router = useRouter()
+const router = useRouter();
 
 function goBack() {
-  if (store.user) {
-    showLoginDialog.value = false
-  } else {
-    router.back()
-  }
+	if (store.user) {
+		showLoginDialog.value = false;
+	} else {
+		router.back();
+	}
 }
-
 </script>
 
 <style lang="scss">

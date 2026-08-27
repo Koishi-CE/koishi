@@ -14,12 +14,10 @@
 </template>
 
 <script lang="ts" setup>
-
 defineProps<{
-  title?: string
-  scrollbar?: boolean
-}>()
-
+	title?: string;
+	scrollbar?: boolean;
+}>();
 </script>
 
 <style lang="scss">

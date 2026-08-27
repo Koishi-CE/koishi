@@ -46,125 +46,136 @@
 </template>
 
 <script lang="ts" setup>
+import { type Dict, send, useContext, useRpc } from "@koishi-ce/client";
+import type { CommandData } from "@koishi-ce/plugin-commands";
+import {} from "@koishi-ce/plugin-config";
+import {} from "@koishi-ce/plugin-locales";
+import { computed, nextTick, onActivated, ref, watch } from "vue";
+import { useRoute, useRouter } from "vue-router";
+import Command from "./command.vue";
 
-import { Dict, send, useRpc, useContext } from '@koishijs/client'
-import { useRoute, useRouter } from 'vue-router'
-import { computed, nextTick, onActivated, ref, watch } from 'vue'
-import { CommandData } from '@koishijs/plugin-commands'
-import {} from '@koishijs/plugin-locales'
-import {} from '@koishijs/plugin-config'
-import Command from './command.vue'
+const route = useRoute();
+const router = useRouter();
+const ctx = useContext();
 
-const route = useRoute()
-const router = useRouter()
-const ctx = useContext()
+const data = useRpc<Dict<CommandData>>();
 
-const data = useRpc<Dict<CommandData>>()
-
-const inputEl = ref()
-const inputText = ref('')
-const treeEl = ref(null)
-const keyword = ref('')
-const root = ref<{ $el: HTMLElement }>(null)
+const inputEl = ref();
+const inputText = ref("");
+const treeEl = ref(null);
+const keyword = ref("");
+const root = ref<{ $el: HTMLElement }>(null);
 
 const treeData = computed(() => {
-  const topLevel = { ...data.value }
-  for (const name in data.value) {
-    for (const name2 of data.value[name].children) {
-      delete topLevel[name2]
-    }
-  }
-  function traverse(names: string[]) {
-    return names.sort().map((name) => {
-      const command = data.value[name]
-      return { ...command, children: traverse(command.children) }
-    })
-  }
-  return traverse(Object.keys(topLevel))
-})
+	const topLevel = { ...data.value };
+	for (const name in data.value) {
+		for (const name2 of data.value[name].children) {
+			delete topLevel[name2];
+		}
+	}
+	function traverse(names: string[]) {
+		return names.sort().map((name) => {
+			const command = data.value[name];
+			return { ...command, children: traverse(command.children) };
+		});
+	}
+	return traverse(Object.keys(topLevel));
+});
 
-const showCreateDialog = ref(false)
+const showCreateDialog = ref(false);
 
 async function handleOpen() {
-  // https://github.com/element-plus/element-plus/issues/15250
-  await nextTick()
-  inputEl.value?.focus()
+	// https://github.com/element-plus/element-plus/issues/15250
+	await nextTick();
+	inputEl.value?.focus();
 }
 
 watch(keyword, (val) => {
-  treeEl.value.filter(val)
-})
+	treeEl.value.filter(val);
+});
 
 const active = computed<string>({
-  get() {
-    const name = route.path.slice(10).replace(/\//g, '.')
-    return name in data.value ? name : ''
-  },
-  set(name) {
-    if (!(name in data.value)) name = ''
-    router.replace('/commands/' + name.replace(/\./g, '/'))
-  },
-})
+	get() {
+		const name = route.path.slice(10).replace(/\//g, ".");
+		return name in data.value ? name : "";
+	},
+	set(name) {
+		if (!(name in data.value)) name = "";
+		router.replace("/commands/" + name.replace(/\./g, "/"));
+	},
+});
 
 interface Node {
-  label: string
-  data: CommandData
-  parent: Node
-  expanded: boolean
-  isLeaf: boolean
-  childNodes: Node[]
+	label: string;
+	data: CommandData;
+	parent: Node;
+	expanded: boolean;
+	isLeaf: boolean;
+	childNodes: Node[];
 }
 
 function getClass(data: CommandData) {
-  const words: string[] = []
-  if (data.name === active.value) words.push('is-active')
-  return words.join(' ')
+	const words: string[] = [];
+	if (data.name === active.value) words.push("is-active");
+	return words.join(" ");
 }
 
 function filterNode(value: string, data: CommandData) {
-  return data.name.toLowerCase().includes(keyword.value.toLowerCase())
+	return data.name.toLowerCase().includes(keyword.value.toLowerCase());
 }
 
 function allowDrag(node: Node) {
-  return !node.data.name.includes('.')
+	return !node.data.name.includes(".");
 }
 
-function allowDrop(source: Node, target: Node, type: 'inner' | 'prev' | 'next') {
-  return source.parent !== (type === 'inner' ? target : target.parent)
+function allowDrop(
+	source: Node,
+	target: Node,
+	type: "inner" | "prev" | "next",
+) {
+	return source.parent !== (type === "inner" ? target : target.parent);
 }
 
 function handleClick(data: CommandData) {
-  active.value = data.name
+	active.value = data.name;
 }
 
-function handleDrop(source: Node, target: Node, position: 'before' | 'after' | 'inner', event: DragEvent) {
-  const parent = position === 'inner' ? target : target.parent
-  send('command/teleport', source.data.name, parent.data.name)
+function handleDrop(
+	source: Node,
+	target: Node,
+	position: "before" | "after" | "inner",
+	event: DragEvent,
+) {
+	const parent = position === "inner" ? target : target.parent;
+	send("command/teleport", source.data.name, parent.data.name);
 }
 
 async function onEnter() {
-  await send('command/create', inputText.value)
-  inputText.value = ''
-  showCreateDialog.value = false
+	await send("command/create", inputText.value);
+	inputText.value = "";
+	showCreateDialog.value = false;
 }
 
 onActivated(async () => {
-  const container = root.value.$el
-  await nextTick()
-  const element = container.querySelector('.el-tree-node.is-active') as HTMLElement
-  if (!element) return
-  root.value['setScrollTop'](element.offsetTop - (container.offsetHeight - element.offsetHeight) / 2)
-})
+	const container = root.value.$el;
+	await nextTick();
+	const element = container.querySelector(
+		".el-tree-node.is-active",
+	) as HTMLElement;
+	if (!element) return;
+	root.value["setScrollTop"](
+		element.offsetTop - (container.offsetHeight - element.offsetHeight) / 2,
+	);
+});
 
-ctx.action('command.create', {
-  action: () => showCreateDialog.value = true,
-})
+ctx.action("command.create", {
+	action: () => (showCreateDialog.value = true),
+});
 
-ctx.action('command.remove', {
-  disabled: () => !data.value[active.value]?.create,
-  action: () => send('command/remove', data.value[active.value].name),
-})
-
+ctx.action("command.remove", {
+	disabled: () => !data.value[active.value]?.create,
+	action: () => send("command/remove", data.value[active.value].name),
+});
 </script>
 
 <style lang="scss">

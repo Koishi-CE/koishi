@@ -1,7 +1,7 @@
-import { Context, Schema } from 'koishi'
+import { type Context, Schema } from "@koishi-ce/koishi";
 
-export interface Config {}
+export type Config = {};
 
-export const Config: Schema<Config> = Schema.object({})
+export const Config: Schema<Config> = Schema.object({});
 
 export function apply(ctx: Context, config: Config) {}

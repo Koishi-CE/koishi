@@ -73,168 +73,204 @@
 </template>
 
 <script setup lang="ts">
+import {
+	clone,
+	message,
+	Schema,
+	send,
+	store,
+	useContext,
+} from "@koishi-ce/client";
+import { computed, nextTick, ref, watch } from "vue";
+import { useRoute, useRouter } from "vue-router";
+import GlobalSettings from "./global.vue";
+import GroupSettings from "./group.vue";
+import PluginSettings from "./plugin.vue";
+import type TreeView from "./tree.vue";
+import {
+	current,
+	dialogFork,
+	dialogSelect,
+	getFullName,
+	hasCoreDeps,
+	plugins,
+	removeItem,
+	type Tree,
+} from "./utils";
 
-import { computed, ref, watch, nextTick } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
-import { clone, message, send, store, useContext, Schema } from '@koishijs/client'
-import { Tree, getFullName, hasCoreDeps, current, plugins, removeItem, dialogSelect, dialogFork } from './utils'
-import GlobalSettings from './global.vue'
-import GroupSettings from './group.vue'
-import TreeView from './tree.vue'
-import PluginSettings from './plugin.vue'
-
-const route = useRoute()
-const router = useRouter()
+const route = useRoute();
+const router = useRouter();
 
 const path = computed<string>({
-  get() {
-    const name = route.path.slice(9)
-    return name in plugins.value.paths ? name : ''
-  },
-  set(name) {
-    if (!(name in plugins.value.paths)) name = ''
-    router.replace('/plugins/' + name)
-  },
-})
+	get() {
+		const name = route.path.slice(9);
+		return name in plugins.value.paths ? name : "";
+	},
+	set(name) {
+		if (!(name in plugins.value.paths)) name = "";
+		router.replace("/plugins/" + name);
+	},
+});
 
-const config = ref()
-const input = ref('')
-const inputEl = ref()
-const tree = ref<InstanceType<typeof TreeView>>()
+const config = ref();
+const input = ref("");
+const inputEl = ref();
+const tree = ref<InstanceType<typeof TreeView>>();
 
 async function handleOpen() {
-  // https://github.com/element-plus/element-plus/issues/15250
-  await nextTick()
-  inputEl.value?.focus()
+	// https://github.com/element-plus/element-plus/issues/15250
+	await nextTick();
+	inputEl.value?.focus();
 }
 
-const remove = ref<Tree>()
-const showRemove = ref(false)
-const rename = ref<Tree>()
-const showRename = ref(false)
-const groupCreate = ref<string>(null)
+const remove = ref<Tree>();
+const showRemove = ref(false);
+const rename = ref<Tree>();
+const showRename = ref(false);
+const groupCreate = ref<string>(null);
 
 watch(remove, (value) => {
-  if (value) showRemove.value = true
-})
+	if (value) showRemove.value = true;
+});
 
 watch(rename, (value) => {
-  if (value) showRename.value = true
-})
+	if (value) showRename.value = true;
+});
 
-watch(() => plugins.value.paths[path.value], (value) => {
-  current.value = value
-  config.value = clone(value.config)
-}, { immediate: true })
+watch(
+	() => plugins.value.paths[path.value],
+	(value) => {
+		current.value = value;
+		config.value = clone(value.config);
+	},
+	{ immediate: true },
+);
 
-const ctx = useContext()
+const ctx = useContext();
 
-ctx.define('config.tree', current)
+ctx.define("config.tree", current);
 
-ctx.action('config.tree.add-plugin', {
-  hidden: ({ config }) => config.tree.path && !config.tree.children,
-  action: ({ config }) => dialogSelect.value = config.tree,
-})
+ctx.action("config.tree.add-plugin", {
+	hidden: ({ config }) => config.tree.path && !config.tree.children,
+	action: ({ config }) => (dialogSelect.value = config.tree),
+});
 
-ctx.action('config.tree.add-group', {
-  hidden: ({ config }) => config.tree.path && !config.tree.children,
-  action: ({ config }) => {
-    groupCreate.value = config.tree.path
-  },
-})
+ctx.action("config.tree.add-group", {
+	hidden: ({ config }) => config.tree.path && !config.tree.children,
+	action: ({ config }) => {
+		groupCreate.value = config.tree.path;
+	},
+});
 
 function createGroup($label: string) {
-  const ident = Math.random().toString(36).slice(2, 8)
-  send(`manager/reload`, groupCreate.value, `group:${ident}`, { $label })
-  router.replace('/plugins/' + ident)
-  groupCreate.value = null
+	const ident = Math.random().toString(36).slice(2, 8);
+	send(`manager/reload`, groupCreate.value, `group:${ident}`, { $label });
+	router.replace("/plugins/" + ident);
+	groupCreate.value = null;
 }
 
-ctx.action('config.tree.clone', {
-  hidden: ({ config }) => !config.tree.path || !!config.tree.children,
-  action: async ({ config }) => {
-    const children = config.tree.parent.path
-      ? config.tree.parent.children
-      : plugins.value.data.slice(1)
-    const index = children.findIndex(tree => tree.path === config.tree.path)
-    const ident = Math.random().toString(36).slice(2, 8)
-    send('manager/unload', config.tree.parent?.path ?? '', `${config.tree.name}:${ident}`, config.tree.config, index + 1)
-    router.replace(`/plugins/${ident}`)
-  },
-})
+ctx.action("config.tree.clone", {
+	hidden: ({ config }) => !config.tree.path || !!config.tree.children,
+	action: async ({ config }) => {
+		const children = config.tree.parent.path
+			? config.tree.parent.children
+			: plugins.value.data.slice(1);
+		const index = children.findIndex((tree) => tree.path === config.tree.path);
+		const ident = Math.random().toString(36).slice(2, 8);
+		send(
+			"manager/unload",
+			config.tree.parent?.path ?? "",
+			`${config.tree.name}:${ident}`,
+			config.tree.config,
+			index + 1,
+		);
+		router.replace(`/plugins/${ident}`);
+	},
+});
 
-ctx.action('config.tree.manage', {
-  hidden: ({ config }) => !config.tree.path || !!config.tree.children,
-  action: async ({ config }) => {
-    dialogFork.value = config.tree.name
-  },
-})
+ctx.action("config.tree.manage", {
+	hidden: ({ config }) => !config.tree.path || !!config.tree.children,
+	action: async ({ config }) => {
+		dialogFork.value = config.tree.name;
+	},
+});
 
-ctx.action('config.tree.rename', {
-  disabled: ({ config }) => !config.tree.path,
-  action: ({ config }) => {
-    input.value = config.tree.label || (config.tree.name === 'group' ? config.tree.path : config.tree.name)
-    rename.value = config.tree
-  },
-})
+ctx.action("config.tree.rename", {
+	disabled: ({ config }) => !config.tree.path,
+	action: ({ config }) => {
+		input.value =
+			config.tree.label ||
+			(config.tree.name === "group" ? config.tree.path : config.tree.name);
+		rename.value = config.tree;
+	},
+});
 
-ctx.action('config.tree.remove', {
-  disabled: ({ config }) => !config.tree.path || hasCoreDeps(config.tree),
-  action: ({ config }) => remove.value = config.tree,
-})
+ctx.action("config.tree.remove", {
+	disabled: ({ config }) => !config.tree.path || hasCoreDeps(config.tree),
+	action: ({ config }) => (remove.value = config.tree),
+});
 
 function checkConfig(name: string) {
-  let schema = store.packages[getFullName(name)]?.runtime.schema
-  if (!schema) return true
-  try {
-    (new Schema(schema))(config.value)
-    return true
-  } catch {
-    message.error('当前配置项不满足约束，请检查配置！')
-    return false
-  }
+	let schema = store.packages[getFullName(name)]?.runtime.schema;
+	if (!schema) return true;
+	try {
+		new Schema(schema)(config.value);
+		return true;
+	} catch {
+		message.error("当前配置项不满足约束，请检查配置！");
+		return false;
+	}
 }
 
-ctx.action('config.tree.save', {
-  shortcut: 'ctrl+s',
-  disabled: (scope) => !scope?.config?.tree || !['config'].includes(router.currentRoute.value?.meta?.activity.id),
-  action: async ({ config: { tree } }) => {
-    const { disabled, path } = tree
-    if (!disabled && !checkConfig(tree.name)) return
-    if (!path) return send('manager/app-reload', config.value)
-    try {
-      await execute(tree, disabled ? 'unload' : 'reload')
-      message.success(disabled ? '配置已保存。' : '配置已重载。')
-    } catch (error) {
-      message.error('操作失败，请检查日志！')
-    }
-  },
-})
+ctx.action("config.tree.save", {
+	shortcut: "ctrl+s",
+	disabled: (scope) =>
+		!scope?.config?.tree ||
+		!["config"].includes(router.currentRoute.value?.meta?.activity.id),
+	action: async ({ config: { tree } }) => {
+		const { disabled, path } = tree;
+		if (!disabled && !checkConfig(tree.name)) return;
+		if (!path) return send("manager/app-reload", config.value);
+		try {
+			await execute(tree, disabled ? "unload" : "reload");
+			message.success(disabled ? "配置已保存。" : "配置已重载。");
+		} catch (error) {
+			message.error("操作失败，请检查日志！");
+		}
+	},
+});
 
-ctx.action('config.tree.toggle', {
-  disabled: ({ config }) => !config.tree.path || hasCoreDeps(config.tree),
-  action: async ({ config: { tree } }) => {
-    const { disabled, name } = tree
-    if (disabled && !checkConfig(tree.name)) return
-    try {
-      await execute(tree, disabled ? 'reload' : 'unload')
-      message.success((name === 'group' ? '分组' : '插件') + (disabled ? '已启用。' : '已停用。'))
-    } catch (error) {
-      message.error('操作失败，请检查日志！')
-    }
-  },
-})
+ctx.action("config.tree.toggle", {
+	disabled: ({ config }) => !config.tree.path || hasCoreDeps(config.tree),
+	action: async ({ config: { tree } }) => {
+		const { disabled, name } = tree;
+		if (disabled && !checkConfig(tree.name)) return;
+		try {
+			await execute(tree, disabled ? "reload" : "unload");
+			message.success(
+				(name === "group" ? "分组" : "插件") +
+					(disabled ? "已启用。" : "已停用。"),
+			);
+		} catch (error) {
+			message.error("操作失败，请检查日志！");
+		}
+	},
+});
 
-async function execute(tree: Tree, event: 'unload' | 'reload') {
-  await send(`manager/${event}`, tree.parent?.path ?? '', tree.id, config.value)
+async function execute(tree: Tree, event: "unload" | "reload") {
+	await send(
+		`manager/${event}`,
+		tree.parent?.path ?? "",
+		tree.id,
+		config.value,
+	);
 }
 
 function renameItem(tree: Tree, name: string) {
-  showRename.value = false
-  tree.label = name
-  send('manager/meta', tree.path, { $label: name || null })
+	showRename.value = false;
+	tree.label = name;
+	send("manager/meta", tree.path, { $label: name || null });
 }
-
 </script>
 
 <style lang="scss">

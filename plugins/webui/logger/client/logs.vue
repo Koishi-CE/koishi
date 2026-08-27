@@ -16,45 +16,56 @@
 </template>
 
 <script lang="ts" setup>
+import { store, Time, VirtualList } from "@koishi-ce/client";
+import {} from "@koishi-ce/plugin-config";
+import { AnsiUp } from "ansi_up";
+import { Logger, type Message } from "reggol";
 
-import { Time, store, VirtualList } from '@koishijs/client'
-import {} from '@koishijs/plugin-config'
-import Logger from 'reggol'
-import ansi from 'ansi_up'
+// reggol v2 移除了 Logger.Record 类型别名,此处等价替代
+interface LogRecord extends Message {
+	id: number;
+	timestamp: number;
+	content: string;
+}
 
 const props = defineProps<{
-  logs: Logger.Record[],
-  showLink?: boolean,
-  maxHeight?: string,
-}>()
+	logs: LogRecord[];
+	showLink?: boolean;
+	maxHeight?: string;
+}>();
 
 // this package does not have consistent exports in different environments
-const converter = new (ansi['default'] || ansi)()
+const converter = new AnsiUp();
 
-function renderColor(code: number, value: any, decoration = '') {
-  return `\u001b[3${code < 8 ? code : '8;5;' + code}${decoration}m${value}\u001b[0m`
+function renderColor(code: number, value: any, decoration = "") {
+	return `\u001b[3${code < 8 ? code : "8;5;" + code}${decoration}m${value}\u001b[0m`;
 }
 
-const showTime = 'yyyy-MM-dd hh:mm:ss'
+const showTime = "yyyy-MM-dd hh:mm:ss";
 
-function isStart(record: Logger.Record & { index: number }) {
-  return record.index && props.logs[record.index - 1].id > record.id && record.name === 'app'
+function isStart(record: LogRecord & { index: number }) {
+	return (
+		record.index &&
+		props.logs[record.index - 1].id > record.id &&
+		record.name === "app"
+	);
 }
 
-function renderLine(record: Logger.Record) {
-  const prefix = `[${record.type[0].toUpperCase()}]`
-  const space = ' '
-  let indent = 3 + space.length, output = ''
-  indent += showTime.length + space.length
-  output += renderColor(8, Time.template(showTime, new Date(record.timestamp))) + space
-  const code = Logger.code(record.name, { colors: 3 })
-  const label = renderColor(code, record.name, ';1')
-  const padLength = label.length - record.name.length
-  output += prefix + space + label.padEnd(padLength) + space
-  output += record.content.replace(/\n/g, '\n' + ' '.repeat(indent))
-  return converter.ansi_to_html(output)
+function renderLine(record: LogRecord) {
+	const prefix = `[${record.type[0].toUpperCase()}]`;
+	const space = " ";
+	let indent = 3 + space.length,
+		output = "";
+	indent += showTime.length + space.length;
+	output +=
+		renderColor(8, Time.template(showTime, new Date(record.timestamp))) + space;
+	const code = Logger.code(record.name, { colors: 3 });
+	const label = renderColor(code, record.name, ";1");
+	const padLength = label.length - record.name.length;
+	output += prefix + space + label.padEnd(padLength) + space;
+	output += record.content.replace(/\n/g, "\n" + " ".repeat(indent));
+	return converter.ansi_to_html(output);
 }
-
 </script>
 
 <style lang="scss" scoped>

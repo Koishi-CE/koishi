@@ -12,25 +12,23 @@
 </template>
 
 <script lang="ts" setup>
-
-import { ref } from 'vue'
-import { Activity } from '@koishijs/client'
+import type { Activity } from "@koishi-ce/client";
+import { ref } from "vue";
 
 const props = defineProps<{
-  data: Activity
-}>()
+	data: Activity;
+}>();
 
-const isDragging = ref(false)
+const isDragging = ref(false);
 
 function handleDragStart(event: DragEvent) {
-  isDragging.value = true
-  event.dataTransfer.setData('text/plain', 'activity:' + props.data.id)
+	isDragging.value = true;
+	event.dataTransfer.setData("text/plain", "activity:" + props.data.id);
 }
 
 function handleDragEnd(event: DragEvent) {
-  isDragging.value = false
+	isDragging.value = false;
 }
-
 </script>
 
 <style lang="scss" scoped>

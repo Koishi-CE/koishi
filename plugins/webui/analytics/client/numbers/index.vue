@@ -23,21 +23,19 @@
 </template>
 
 <script setup lang="ts">
+import { store } from "@koishi-ce/client";
+import {} from "@koishi-ce/plugin-analytics/src";
+import { computed, provide } from "vue";
+import Numeric from "./numeric.vue";
 
-import { provide, computed } from 'vue'
-import { store } from '@koishijs/client'
-import {} from '@koishijs/plugin-analytics/src'
-import Numeric from './numeric.vue'
-
-provide('component:analytic-number', Numeric)
+provide("component:analytic-number", Numeric);
 
 const recentDau = computed(() => {
-  const data = store.analytics.dauHistory.slice(1)
-  const historyLength = store.analytics.dauHistory.length - 1
-  if (!historyLength) return 0
-  return data.reduce((a, b) => a + b, 0) / Math.min(data.length, historyLength)
-})
-
+	const data = store.analytics.dauHistory.slice(1);
+	const historyLength = store.analytics.dauHistory.length - 1;
+	if (!historyLength) return 0;
+	return data.reduce((a, b) => a + b, 0) / Math.min(data.length, historyLength);
+});
 </script>
 
 <style lang="scss" scoped>

@@ -1,65 +1,67 @@
 {
-  "name": "@koishijs/plugin-logger",
-  "description": "Dump log files for Koishi",
-  "version": "2.6.9",
-  "main": "lib/index.js",
-  "typings": "lib/index.d.ts",
-  "files": [
-    "lib",
-    "dist",
-    "src"
-  ],
-  "author": "Shigma <shigma10826@gmail.com>",
-  "license": "AGPL-3.0",
-  "scripts": {
-    "lint": "eslint src --ext .ts"
-  },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/koishijs/webui.git",
-    "directory": "plugins/logger"
-  },
-  "bugs": {
-    "url": "https://github.com/koishijs/webui/issues"
-  },
-  "homepage": "https://koishi.chat/plugins/console/logger.html",
-  "keywords": [
-    "bot",
-    "chatbot",
-    "koishi",
-    "plugin",
-    "logs"
-  ],
-  "koishi": {
-    "public": [
-      "dist"
-    ],
-    "description": {
-      "en": "Dump log files and show them in the console",
-      "zh": "保存日志文件并在控制台中显示"
-    },
-    "service": {
-      "optional": [
-        "console"
-      ]
-    }
-  },
-  "peerDependencies": {
-    "@koishijs/plugin-console": "^5.30.11",
-    "koishi": "^4.18.11"
-  },
-  "peerDependenciesMeta": {
-    "@koishijs/plugin-console": {
-      "optional": true
-    }
-  },
-  "devDependencies": {
-    "@koishijs/client": "workspace:*",
-    "ansi_up": "^5.2.1",
-    "koishi": "workspace:*",
-    "reggol": "^1.7.1"
-  },
-  "dependencies": {
-    "@koishijs/console": "workspace:*"
-  }
+	"name": "@koishi-ce/plugin-logger",
+	"description": "Dump log files for Koishi",
+	"version": "2.6.9",
+	"main": "lib/index.js",
+	"typings": "lib/index.d.ts",
+	"files": [
+		"lib",
+		"dist",
+		"src"
+	],
+	"author": "Shigma <shigma10826@gmail.com>",
+	"license": "AGPL-3.0",
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/Koishi-CE/koishi.git",
+		"directory": "plugins/webui/logger"
+	},
+	"bugs": {
+		"url": "https://github.com/Koishi-CE/koishi/issues"
+	},
+	"homepage": "https://koishi.chat/plugins/console/logger.html",
+	"keywords": [
+		"bot",
+		"chatbot",
+		"koishi",
+		"plugin",
+		"logs"
+	],
+	"koishi": {
+		"public": [
+			"dist"
+		],
+		"description": {
+			"en": "Dump log files and show them in the console",
+			"zh": "保存日志文件并在控制台中显示"
+		},
+		"service": {
+			"optional": [
+				"console"
+			]
+		}
+	},
+	"peerDependencies": {
+		"@koishijs/plugin-console": "^5.30.11",
+		"koishi": "^4.18.11"
+	},
+	"peerDependenciesMeta": {
+		"@koishijs/plugin-console": {
+			"optional": true
+		}
+	},
+	"devDependencies": {
+		"@koishi-ce/client": "workspace:*",
+		"ansi_up": "^6.0.6",
+		"@koishi-ce/koishi": "workspace:*",
+		"reggol": "^2.1.0"
+	},
+	"dependencies": {
+		"@koishi-ce/console": "workspace:*"
+	},
+	"exports": {
+		".": {
+			"source": "./src/index.ts"
+		}
+	}
 }

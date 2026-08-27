@@ -11,37 +11,35 @@
 </template>
 
 <script lang="ts" setup>
+import { type MaybeGetter, type MenuItem, useContext } from "@koishi-ce/client";
+import { computed } from "vue";
 
-import { MaybeGetter, MenuItem, useContext } from '@koishijs/client'
-import { computed } from 'vue'
+const props = defineProps<MenuItem & { prefix: string }>();
 
-const props = defineProps<MenuItem & { prefix: string }>()
-
-const ctx = useContext()
+const ctx = useContext();
 
 const item = computed(() => {
-  let id = props.id.replace(/^!/, '')
-  if (id.startsWith('.')) id = props.prefix + id
-  return ctx.internal.actions[id]
-})
+	let id = props.id.replace(/^!/, "");
+	if (id.startsWith(".")) id = props.prefix + id;
+	return ctx.internal.actions[id];
+});
 
 const hidden = computed(() => {
-  if (!item.value) return true
-  if (!item.value.hidden) return false
-  return toValue(item.value.hidden)
-})
+	if (!item.value) return true;
+	if (!item.value.hidden) return false;
+	return toValue(item.value.hidden);
+});
 
 const disabled = computed(() => {
-  if (!item.value) return true
-  if (!item.value.disabled) return false
-  return toValue(item.value.disabled)
-})
+	if (!item.value) return true;
+	if (!item.value.disabled) return false;
+	return toValue(item.value.disabled);
+});
 
-const icon = computed(() => toValue(props.icon))
+const icon = computed(() => toValue(props.icon));
 
 function toValue<T>(getter: MaybeGetter<T>): T {
-  if (typeof getter !== 'function') return getter
-  return (getter as any)(ctx.$action.createScope())
+	if (typeof getter !== "function") return getter;
+	return (getter as any)(ctx.$action.createScope());
 }
-
 </script>

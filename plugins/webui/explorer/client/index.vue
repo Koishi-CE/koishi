@@ -78,311 +78,349 @@
 </template>
 
 <script lang="ts" setup>
+import {
+	Binary,
+	send,
+	store,
+	useColorMode,
+	useContext,
+	useMenu,
+} from "@koishi-ce/client";
+import type { Entry } from "@koishi-ce/plugin-explorer";
+import { useElementSize } from "@vueuse/core";
+import * as monaco from "monaco-editor";
+import { computed, nextTick, onActivated, ref, watch } from "vue";
+import { useRoute, useRouter } from "vue-router";
+import { model } from "./editor";
+import { files, type TreeEntry, uploading, vFocus } from "./store";
 
-import { ref, computed, watch, onActivated, nextTick } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
-import { useElementSize } from '@vueuse/core'
-import { Binary, send, store, useColorMode, useContext, useMenu } from '@koishijs/client'
-import { Entry } from '@koishijs/plugin-explorer'
-import { files, TreeEntry, uploading, vFocus } from './store'
-import { model } from './editor'
-import * as monaco from 'monaco-editor'
+const ctx = useContext();
+const route = useRoute();
+const router = useRouter();
+const keyword = ref("");
+const tree = ref(null);
+const root = ref<{ $el: HTMLElement }>(null);
+const editor = ref(null);
+const renaming = ref<string>(null);
+const data = ref<TreeEntry[]>([]);
+const removing = ref<string>(null);
 
-const ctx = useContext()
-const route = useRoute()
-const router = useRouter()
-const keyword = ref('')
-const tree = ref(null)
-const root = ref<{ $el: HTMLElement }>(null)
-const editor = ref(null)
-const renaming = ref<string>(null)
-const data = ref<TreeEntry[]>([])
-const removing = ref<string>(null)
+const trigger = useMenu("explorer.tree");
 
-const trigger = useMenu('explorer.tree')
+ctx.action("explorer.save", {
+	shortcut: "ctrl+s",
+	disabled: () =>
+		files[active.value]?.newValue === files[active.value]?.oldValue ||
+		!["files"].includes(router.currentRoute.value?.meta?.activity.id),
+	action: async () => {
+		const content = files[active.value].newValue;
+		await send("explorer/write", active.value, content);
+		files[active.value].oldValue = content;
+	},
+});
 
-ctx.action('explorer.save', {
-  shortcut: 'ctrl+s',
-  disabled: () => files[active.value]?.newValue === files[active.value]?.oldValue || !['files'].includes(router.currentRoute.value?.meta?.activity.id),
-  action: async () => {
-    const content = files[active.value].newValue
-    await send('explorer/write', active.value, content)
-    files[active.value].oldValue = content
-  },
-})
+ctx.action("explorer.refresh", {
+	shortcut: "ctrl+r",
+	disabled: () =>
+		!["files"].includes(router.currentRoute.value?.meta?.activity.id),
+	action: () => send("explorer/refresh"),
+});
 
-ctx.action('explorer.refresh', {
-  shortcut: 'ctrl+r',
-  disabled: () => !['files'].includes(router.currentRoute.value?.meta?.activity.id),
-  action: () => send('explorer/refresh'),
-})
+ctx.action("explorer.tree.create-file", {
+	disabled: ({ explorer }) => explorer.tree.type !== "directory",
+	action: ({ explorer }) => createEntry(explorer.tree, "file"),
+});
 
-ctx.action('explorer.tree.create-file', {
-  disabled: ({ explorer }) => explorer.tree.type !== 'directory',
-  action: ({ explorer }) => createEntry(explorer.tree, 'file'),
-})
+ctx.action("explorer.tree.create-directory", {
+	disabled: ({ explorer }) => explorer.tree.type !== "directory",
+	action: ({ explorer }) => createEntry(explorer.tree, "directory"),
+});
 
-ctx.action('explorer.tree.create-directory', {
-  disabled: ({ explorer }) => explorer.tree.type !== 'directory',
-  action: ({ explorer }) => createEntry(explorer.tree, 'directory'),
-})
+ctx.action("explorer.tree.upload", {
+	disabled: ({ explorer }) => explorer.tree.type !== "directory",
+	action: ({ explorer }) => (uploading.value = explorer.tree.filename + "/"),
+});
 
-ctx.action('explorer.tree.upload', {
-  disabled: ({ explorer }) => explorer.tree.type !== 'directory',
-  action: ({ explorer }) => uploading.value = explorer.tree.filename + '/',
-})
+ctx.action("explorer.tree.download", {
+	disabled: ({ explorer }) => explorer.tree.type === "directory",
+	action: ({ explorer }) => downloadFile(explorer.tree.filename),
+});
 
-ctx.action('explorer.tree.download', {
-  disabled: ({ explorer }) => explorer.tree.type === 'directory',
-  action: ({ explorer }) => downloadFile(explorer.tree.filename),
-})
+ctx.action("explorer.tree.remove", {
+	disabled: ({ explorer }) => !explorer.tree.filename,
+	action: ({ explorer }) => initRemove(explorer.tree),
+});
 
-ctx.action('explorer.tree.remove', {
-  disabled: ({ explorer }) => !explorer.tree.filename,
-  action: ({ explorer }) => initRemove(explorer.tree),
-})
-
-ctx.action('explorer.tree.rename', {
-  disabled: ({ explorer }) => !explorer.tree.filename,
-  action: ({ explorer }) => {
-    cancelRename()
-    renaming.value = explorer.tree.filename
-  },
-})
+ctx.action("explorer.tree.rename", {
+	disabled: ({ explorer }) => !explorer.tree.filename,
+	action: ({ explorer }) => {
+		cancelRename();
+		renaming.value = explorer.tree.filename;
+	},
+});
 
 const showRemoving = computed({
-  get: () => !!removing.value,
-  set: (v) => removing.value = null,
-})
+	get: () => !!removing.value,
+	set: (v) => (removing.value = null),
+});
 
 function* getExpanded(tree: TreeEntry[]) {
-  for (const item of tree) {
-    if (item.expanded) yield item.filename
-    if (item.children) yield* getExpanded(item.children)
-  }
+	for (const item of tree) {
+		if (item.expanded) yield item.filename;
+		if (item.children) yield* getExpanded(item.children);
+	}
 }
 
-const expandedKeys = computed(() => [...getExpanded(data.value)])
+const expandedKeys = computed(() => [...getExpanded(data.value)]);
 
 function merge(base: TreeEntry[], head: Entry[]) {
-  return head?.map((entry) => {
-    const old = base.find(old => old.type === entry.type && old.name === entry.name)
-    if (old) {
-      return { ...old, ...entry, children: merge(old.children, entry.children) }
-    } else {
-      return entry
-    }
-  })
+	return head?.map((entry) => {
+		const old = base.find(
+			(old) => old.type === entry.type && old.name === entry.name,
+		);
+		if (old) {
+			return {
+				...old,
+				...entry,
+				children: merge(old.children, entry.children),
+			};
+		} else {
+			return entry;
+		}
+	});
 }
 
-watch(() => store.explorer, (value) => {
-  data.value = merge(data.value, value) || []
-}, { immediate: true })
+watch(
+	() => store.explorer,
+	(value) => {
+		data.value = merge(data.value, value) || [];
+	},
+	{ immediate: true },
+);
 
-let instance: monaco.editor.IStandaloneCodeEditor = null
+let instance: monaco.editor.IStandaloneCodeEditor = null;
 
 watch(keyword, (val) => {
-  tree.value.filter(val)
-})
+	tree.value.filter(val);
+});
 
-const mode = useColorMode()
+const mode = useColorMode();
 
 watch(editor, () => {
-  if (!editor.value) return instance = null
-  instance = monaco.editor.create(editor.value, {
-    model,
-    theme: 'vs-' + mode.value,
-    tabSize: 2,
-  })
-})
+	if (!editor.value) return (instance = null);
+	instance = monaco.editor.create(editor.value, {
+		model,
+		theme: "vs-" + mode.value,
+		tabSize: 2,
+	});
+});
 
-const { width, height } = useElementSize(editor)
+const { width, height } = useElementSize(editor);
 
 watch([width, height], () => {
-  instance?.layout()
-})
+	instance?.layout();
+});
 
 watch(mode, () => {
-  monaco.editor.setTheme('vs-' + mode.value)
-})
+	monaco.editor.setTheme("vs-" + mode.value);
+});
 
 const active = computed<string>({
-  get() {
-    const name = route.path.slice(6)
-    return name in files ? name : ''
-  },
-  set(name) {
-    if (!(name in files)) name = ''
-    router.replace('/files' + name)
-  },
-})
+	get() {
+		const name = route.path.slice(6);
+		return name in files ? name : "";
+	},
+	set(name) {
+		if (!(name in files)) name = "";
+		router.replace("/files" + name);
+	},
+});
 
 function getClass(data: TreeEntry) {
-  const words: string[] = []
-  if (data.name === active.value) words.push('is-active')
-  return words.join(' ')
+	const words: string[] = [];
+	if (data.name === active.value) words.push("is-active");
+	return words.join(" ");
 }
 
 function filterNode(value: string, data: TreeEntry) {
-  return data.name.toLowerCase().includes(keyword.value.toLowerCase())
+	return data.name.toLowerCase().includes(keyword.value.toLowerCase());
 }
 
-function createEntry(entry: TreeEntry, type: 'file' | 'symlink' | 'directory') {
-  cancelRename()
-  renaming.value = entry.filename + '/'
-  files[renaming.value] = {
-    type,
-    name: '',
-    filename: renaming.value,
-    oldValue: '',
-    newValue: '',
-  }
-  entry.expanded = true
-  entry.children.push(files[renaming.value])
+function createEntry(entry: TreeEntry, type: "file" | "symlink" | "directory") {
+	cancelRename();
+	renaming.value = entry.filename + "/";
+	files[renaming.value] = {
+		type,
+		name: "",
+		filename: renaming.value,
+		oldValue: "",
+		newValue: "",
+	};
+	entry.expanded = true;
+	entry.children.push(files[renaming.value]);
 }
 
 function confirmRename(entry: TreeEntry) {
-  const segments = entry.filename.split(/\//g)
-  const name = segments.pop()
-  segments.push(entry.name)
-  const filename = segments.join('/')
-  if (filename in files || !entry.name) {
-    if (name) {
-      entry.name = name
-    } else {
-      delete files[entry.filename]
-      const parent = files[segments.slice(0, -1).join('/')]?.children || data.value
-      parent.splice(parent.indexOf(entry), 1)
-    }
-  } else if (entry.filename !== filename) {
-    files[filename] = entry
-    delete files[entry.filename]
-    if (name) {
-      send('explorer/rename', entry.filename, filename)
-      active.value = filename
-    } else if (entry.type === 'file') {
-      send('explorer/write', filename, '')
-      active.value = filename
-    } else {
-      send('explorer/mkdir', filename)
-    }
-    entry.filename = filename
-  }
-  renaming.value = null
+	const segments = entry.filename.split(/\//g);
+	const name = segments.pop();
+	segments.push(entry.name);
+	const filename = segments.join("/");
+	if (filename in files || !entry.name) {
+		if (name) {
+			entry.name = name;
+		} else {
+			delete files[entry.filename];
+			const parent =
+				files[segments.slice(0, -1).join("/")]?.children || data.value;
+			parent.splice(parent.indexOf(entry), 1);
+		}
+	} else if (entry.filename !== filename) {
+		files[filename] = entry;
+		delete files[entry.filename];
+		if (name) {
+			send("explorer/rename", entry.filename, filename);
+			active.value = filename;
+		} else if (entry.type === "file") {
+			send("explorer/write", filename, "");
+			active.value = filename;
+		} else {
+			send("explorer/mkdir", filename);
+		}
+		entry.filename = filename;
+	}
+	renaming.value = null;
 }
 
 function cancelRename() {
-  if (!renaming.value) return
-  const entry = files[renaming.value]
-  const segments = entry.filename.split(/\//g)
-  const name = segments.pop()
-  segments.push(entry.name)
-  if (name) {
-    entry.name = name
-  } else {
-    delete files[entry.filename]
-    const parent = files[segments.slice(0, -1).join('/')]?.children || data.value
-    parent.splice(parent.indexOf(entry), 1)
-  }
-  renaming.value = null
+	if (!renaming.value) return;
+	const entry = files[renaming.value];
+	const segments = entry.filename.split(/\//g);
+	const name = segments.pop();
+	segments.push(entry.name);
+	if (name) {
+		entry.name = name;
+	} else {
+		delete files[entry.filename];
+		const parent =
+			files[segments.slice(0, -1).join("/")]?.children || data.value;
+		parent.splice(parent.indexOf(entry), 1);
+	}
+	renaming.value = null;
 }
 
 interface Node {
-  label: string
-  data: TreeEntry
-  parent: Node
-  expanded: boolean
-  isLeaf: boolean
-  childNodes: Node[]
+	label: string;
+	data: TreeEntry;
+	parent: Node;
+	expanded: boolean;
+	isLeaf: boolean;
+	childNodes: Node[];
 }
 
 function allowDrag(node: Node) {
-  return false
+	return false;
 }
 
-function allowDrop(source: Node, target: Node, type: 'inner' | 'prev' | 'next') {
-  return false
+function allowDrop(
+	source: Node,
+	target: Node,
+	type: "inner" | "prev" | "next",
+) {
+	return false;
 }
 
 function getLanguage(filename: string) {
-  const index = filename.lastIndexOf('.')
-  const extension = index === -1 ? '' : filename.slice(index)
-  for (const language of monaco.languages.getLanguages()) {
-    if (language.extensions?.includes(extension)) return language.id
-  }
-  return 'plaintext'
+	const index = filename.lastIndexOf(".");
+	const extension = index === -1 ? "" : filename.slice(index);
+	for (const language of monaco.languages.getLanguages()) {
+		if (language.extensions?.includes(extension)) return language.id;
+	}
+	return "plaintext";
 }
 
-watch(() => files[active.value], async (entry) => {
-  if (!entry || entry.type === 'directory') return
-  if (typeof entry.oldValue !== 'string') {
-    entry.loading = send('explorer/read', entry.filename)
-    const { base64, mime } = await entry.loading
-    entry.loading = null
-    entry.mime = mime
-    if (mime) {
-      entry.oldValue = entry.newValue = `data:${mime};base64,${base64}`
-    } else {
-      entry.oldValue = entry.newValue = new TextDecoder().decode(Binary.fromBase64(base64))
-    }
-  }
-  model.setValue(entry.newValue)
-  monaco.editor.setModelLanguage(model, getLanguage(entry.filename))
-}, { immediate: true })
+watch(
+	() => files[active.value],
+	async (entry) => {
+		if (!entry || entry.type === "directory") return;
+		if (typeof entry.oldValue !== "string") {
+			entry.loading = send("explorer/read", entry.filename);
+			const { base64, mime } = await entry.loading;
+			entry.loading = null;
+			entry.mime = mime;
+			if (mime) {
+				entry.oldValue = entry.newValue = `data:${mime};base64,${base64}`;
+			} else {
+				entry.oldValue = entry.newValue = new TextDecoder().decode(
+					Binary.fromBase64(base64),
+				);
+			}
+		}
+		model.setValue(entry.newValue);
+		monaco.editor.setModelLanguage(model, getLanguage(entry.filename));
+	},
+	{ immediate: true },
+);
 
 model.onDidChangeContent((e) => {
-  const entry = files[active.value]
-  if (!entry) return
-  entry.newValue = model.getValue()
-})
+	const entry = files[active.value];
+	if (!entry) return;
+	entry.newValue = model.getValue();
+});
 
 async function handleClick(data: TreeEntry) {
-  if (data.type === 'directory') return
-  active.value = data.filename
+	if (data.type === "directory") return;
+	active.value = data.filename;
 }
 
 const rootEntry = computed<TreeEntry>(() => ({
-  name: '',
-  filename: '',
-  type: 'directory',
-  children: data.value,
-}))
+	name: "",
+	filename: "",
+	type: "directory",
+	children: data.value,
+}));
 
 function handleExpand(entry: TreeEntry) {
-  entry.expanded = true
+	entry.expanded = true;
 }
 
 function handleCollapse(entry: TreeEntry) {
-  entry.expanded = false
+	entry.expanded = false;
 }
 
-function handleDrop(source: Node, target: Node, position: 'before' | 'after' | 'inner', event: DragEvent) {
-}
+function handleDrop(
+	source: Node,
+	target: Node,
+	position: "before" | "after" | "inner",
+	event: DragEvent,
+) {}
 
 function initRemove(entry: TreeEntry) {
-  cancelRename()
-  removing.value = entry.filename + (entry.type === 'directory' ? '/' : '')
+	cancelRename();
+	removing.value = entry.filename + (entry.type === "directory" ? "/" : "");
 }
 
 onActivated(async () => {
-  const container = root.value.$el
-  await nextTick()
-  const element = container.querySelector('.el-tree-node.is-active') as HTMLElement
-  if (!element) return
-  root.value['setScrollTop'](element.offsetTop - (container.offsetHeight - element.offsetHeight) / 2)
-})
+	const container = root.value.$el;
+	await nextTick();
+	const element = container.querySelector(
+		".el-tree-node.is-active",
+	) as HTMLElement;
+	if (!element) return;
+	root.value["setScrollTop"](
+		element.offsetTop - (container.offsetHeight - element.offsetHeight) / 2,
+	);
+});
 
 async function downloadFile(filename: string) {
-  const { base64 } = await send('explorer/read', filename)
-  const blob = new Blob([Binary.fromBase64(base64)])
-  const url = URL.createObjectURL(blob)
-  const a = document.createElement("a")
-  a.href = url
-  a.download = filename
-  a.click()
-  URL.revokeObjectURL(url)
+	const { base64 } = await send("explorer/read", filename);
+	const blob = new Blob([Binary.fromBase64(base64)]);
+	const url = URL.createObjectURL(blob);
+	const a = document.createElement("a");
+	a.href = url;
+	a.download = filename;
+	a.click();
+	URL.revokeObjectURL(url);
 }
-
 </script>
 
 <style lang="scss" scoped>

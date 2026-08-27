@@ -16,27 +16,25 @@
 </template>
 
 <script lang="ts" setup>
+import { message, send, store, useConfig } from "@koishi-ce/client";
+import { shared, showSyncDialog } from "./utils";
 
-import { message, send, store, useConfig } from '@koishijs/client'
-import { shared, showSyncDialog } from './utils'
+const config = useConfig();
 
-const config = useConfig()
-
-async function setMode(value?: 'upload' | 'download') {
-  shared.value.sync = !!value
-  showSyncDialog.value = false
-  if (!value) return
-  if (value === 'download') {
-    config.value = store.user.config
-    return
-  }
-  try {
-    await send('user/update', { config: config.value })
-  } catch (e) {
-    message.error(e.message)
-  }
+async function setMode(value?: "upload" | "download") {
+	shared.value.sync = !!value;
+	showSyncDialog.value = false;
+	if (!value) return;
+	if (value === "download") {
+		config.value = store.user.config;
+		return;
+	}
+	try {
+		await send("user/update", { config: config.value });
+	} catch (e) {
+		message.error(e.message);
+	}
 }
-
 </script>
 
 <style lang="scss" scoped>

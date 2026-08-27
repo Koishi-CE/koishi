@@ -1,18 +1,27 @@
 {
-  "compilerOptions": {
-    "target": "es2022",
-    "module": "esnext",
-    "declaration": true,
-    "jsx": "preserve",
-    "noEmit": true,
-    "composite": true,
-    "incremental": true,
-    "skipLibCheck": true,
-    "esModuleInterop": true,
-    "moduleResolution": "node",
-    "strictBindCallApply": true,
-    "types": [
-      "@koishijs/client/global",
-    ],
-  },
+	"$schema": "https://json.schemastore.org/tsconfig",
+	"compilerOptions": {
+		"target": "ES2025",
+		"module": "esnext",
+		"moduleResolution": "bundler",
+		"moduleDetection": "force",
+		"lib": ["ES2025", "DOM", "DOM.Iterable"],
+		"jsx": "preserve",
+		"declaration": true,
+		"noEmit": true,
+		"composite": true,
+		"incremental": true,
+		"strict": true,
+		"strictBindCallApply": true,
+		"noUncheckedIndexedAccess": true,
+		"exactOptionalPropertyTypes": true,
+		"verbatimModuleSyntax": true,
+		"isolatedModules": true,
+		"esModuleInterop": true,
+		"skipLibCheck": true,
+		"forceConsistentCasingInFileNames": true,
+		"allowImportingTsExtensions": true,
+		"erasableSyntaxOnly": true,
+		"types": ["@koishi-ce/client/global"]
+	}
 }

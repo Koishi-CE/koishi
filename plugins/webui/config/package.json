@@ -1,72 +1,73 @@
 {
-  "name": "@koishijs/plugin-config",
-  "description": "Manage your bots and plugins with console",
-  "version": "2.8.6",
-  "main": "lib/node/index.js",
-  "types": "lib/index.d.ts",
-  "exports": {
-    ".": {
-      "types": "./lib/index.d.ts",
-      "node": "./lib/node/index.js",
-      "browser": "./lib/browser/index.mjs"
-    },
-    "./shared": {
-      "require": "./lib/shared/index.js",
-      "import": "./lib/shared/index.mjs"
-    },
-    "./src/*": "./src/*",
-    "./package.json": "./package.json"
-  },
-  "files": [
-    "lib",
-    "dist",
-    "src"
-  ],
-  "author": "Shigma <shigma10826@gmail.com>",
-  "license": "AGPL-3.0",
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/koishijs/webui.git",
-    "directory": "plugins/config"
-  },
-  "bugs": {
-    "url": "https://github.com/koishijs/webui/issues"
-  },
-  "homepage": "https://koishi.chat/plugins/console/config.html",
-  "keywords": [
-    "bot",
-    "chatbot",
-    "koishi",
-    "plugin",
-    "config",
-    "manager",
-    "server"
-  ],
-  "koishi": {
-    "public": [
-      "dist"
-    ],
-    "description": {
-      "en": "Configure your plugins with console",
-      "zh": "使用控制台查看、配置你的插件"
-    },
-    "service": {
-      "required": [
-        "console"
-      ]
-    }
-  },
-  "peerDependencies": {
-    "@koishijs/loader": "^4.6.11",
-    "@koishijs/plugin-console": "^5.30.11",
-    "koishi": "^4.18.11"
-  },
-  "devDependencies": {
-    "@koishijs/client": "workspace:*",
-    "@koishijs/plugin-hmr": "workspace:*"
-  },
-  "dependencies": {
-    "@koishijs/console": "workspace:*",
-    "@koishijs/registry": "workspace:*"
-  }
+	"name": "@koishi-ce/plugin-config",
+	"description": "Manage your bots and plugins with console",
+	"version": "2.8.6",
+	"main": "lib/node/index.js",
+	"types": "lib/index.d.ts",
+	"exports": {
+		".": {
+			"source": "./src/index.ts",
+			"types": "./lib/index.d.ts",
+			"node": "./lib/node/index.js",
+			"browser": "./lib/browser/index.mjs"
+		},
+		"./shared": {
+			"require": "./lib/shared/index.js",
+			"import": "./lib/shared/index.mjs"
+		},
+		"./src/*": "./src/*",
+		"./package.json": "./package.json"
+	},
+	"files": [
+		"lib",
+		"dist",
+		"src"
+	],
+	"author": "Shigma <shigma10826@gmail.com>",
+	"license": "AGPL-3.0",
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/Koishi-CE/koishi.git",
+		"directory": "plugins/webui/config"
+	},
+	"bugs": {
+		"url": "https://github.com/Koishi-CE/koishi/issues"
+	},
+	"homepage": "https://koishi.chat/plugins/console/config.html",
+	"keywords": [
+		"bot",
+		"chatbot",
+		"koishi",
+		"plugin",
+		"config",
+		"manager",
+		"server"
+	],
+	"koishi": {
+		"public": [
+			"dist"
+		],
+		"description": {
+			"en": "Configure your plugins with console",
+			"zh": "使用控制台查看、配置你的插件"
+		},
+		"service": {
+			"required": [
+				"console"
+			]
+		}
+	},
+	"peerDependencies": {
+		"@koishijs/loader": "^4.6.11",
+		"@koishijs/plugin-console": "^5.30.11",
+		"koishi": "^4.18.11"
+	},
+	"devDependencies": {
+		"@koishi-ce/client": "workspace:*",
+		"@koishi-ce/plugin-hmr": "workspace:*"
+	},
+	"dependencies": {
+		"@koishi-ce/console": "workspace:*",
+		"@koishi-ce/registry": "workspace:*"
+	}
 }

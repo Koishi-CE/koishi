@@ -1,18 +1,18 @@
-import { Context } from '@koishijs/client'
-import {} from '@koishijs/plugin-analytics/src'
-import Charts from './charts'
-import Home from './home.vue'
-import './icons'
+import type { Context } from "@koishi-ce/client";
+import {} from "@koishi-ce/plugin-analytics/src";
+import Charts from "./charts";
+import Home from "./home.vue";
+import "./icons";
 
-import 'virtual:uno.css'
+import "virtual:uno.css";
 
 export default (ctx: Context) => {
-  // ctx.app.provide('ecTheme', 'koishi-dark')
-  ctx.plugin(Charts)
+	// ctx.app.provide('ecTheme', 'koishi-dark')
+	ctx.plugin(Charts);
 
-  ctx.slot({
-    type: 'home',
-    component: Home,
-    order: 0,
-  })
-}
+	ctx.slot({
+		type: "home",
+		component: Home,
+		order: 0,
+	});
+};

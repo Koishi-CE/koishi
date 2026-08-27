@@ -1,82 +1,82 @@
-import { Context, Dict } from 'koishi'
-import {} from '@koishijs/plugin-server'
-import { Socket } from 'net'
-import { IncomingMessage, ServerResponse } from 'http'
+import type { Context, Dict } from "@koishi-ce/koishi";
+import {} from "@koishi-ce/plugin-server";
+import { IncomingMessage, ServerResponse } from "http";
+import { Socket } from "net";
 
 export namespace Webhook {
-  export interface Response {
-    code: number
-    body: string
-    headers: Dict<any>
-  }
+	export interface Response {
+		code: number;
+		body: string;
+		headers: Dict<any>;
+	}
 }
 
 export class Webhook {
-  static inject = ['server']
+	static inject = ["server"];
 
-  constructor(public ctx: Context) {}
+	constructor(public ctx: Context) {}
 
-  async head(path: string, headers?: Dict<any>) {
-    const res = await this.receive('HEAD', path, headers, '')
-    return res.headers
-  }
+	async head(path: string, headers?: Dict<any>) {
+		const res = await this.receive("HEAD", path, headers, "");
+		return res.headers;
+	}
 
-  async get(path: string, headers?: Dict<any>) {
-    return this.receive('GET', path, headers, '')
-  }
+	async get(path: string, headers?: Dict<any>) {
+		return this.receive("GET", path, headers, "");
+	}
 
-  async delete(path: string, headers?: Dict<any>) {
-    return this.receive('DELETE', path, headers, '')
-  }
+	async delete(path: string, headers?: Dict<any>) {
+		return this.receive("DELETE", path, headers, "");
+	}
 
-  async post(path: string, body: any, headers?: Dict<any>) {
-    return this.receive('POST', path, headers, body)
-  }
+	async post(path: string, body: any, headers?: Dict<any>) {
+		return this.receive("POST", path, headers, body);
+	}
 
-  async put(path: string, body: any, headers?: Dict<any>) {
-    return this.receive('PUT', path, headers, body)
-  }
+	async put(path: string, body: any, headers?: Dict<any>) {
+		return this.receive("PUT", path, headers, body);
+	}
 
-  async patch(path: string, body: any, headers?: Dict<any>) {
-    return this.receive('PATCH', path, headers, body)
-  }
+	async patch(path: string, body: any, headers?: Dict<any>) {
+		return this.receive("PATCH", path, headers, body);
+	}
 
-  receive(method: string, path: string, headers: Dict<any>, body: any) {
-    const socket = new Socket()
-    const req = new IncomingMessage(socket)
-    req.url = path
-    req.method = method
+	receive(method: string, path: string, headers: Dict<any>, body: any) {
+		const socket = new Socket();
+		const req = new IncomingMessage(socket);
+		req.url = path;
+		req.method = method;
 
-    // prepare request headers
-    Object.assign(req.headers, headers)
-    if (typeof body === 'string') {
-      req.headers['content-type'] = 'text/plain'
-    } else if (Buffer.isBuffer(body)) {
-      req.headers['content-type'] = 'application/octet-stream'
-    } else {
-      body = JSON.stringify(body)
-      req.headers['content-type'] = 'application/json'
-    }
-    req.headers['content-length'] = '' + body.length
+		// prepare request headers
+		Object.assign(req.headers, headers);
+		if (typeof body === "string") {
+			req.headers["content-type"] = "text/plain";
+		} else if (Buffer.isBuffer(body)) {
+			req.headers["content-type"] = "application/octet-stream";
+		} else {
+			body = JSON.stringify(body);
+			req.headers["content-type"] = "application/json";
+		}
+		req.headers["content-length"] = "" + body.length;
 
-    // send request body
-    return new Promise<Webhook.Response>((resolve) => {
-      const res = new ServerResponse(req)
-      let body = ''
-      res.write = (chunk: any) => {
-        body += chunk
-        return true
-      }
-      res.end = (callback: () => void) => {
-        const code = res.statusCode
-        const headers = res.getHeaders()
-        resolve({ code, body, headers })
-        if (typeof callback === 'function') callback()
-        return res
-      }
-      this.ctx.server._http.emit('request', req, res)
-      req.emit('data', body)
-      req.emit('end')
-    })
-  }
+		// send request body
+		return new Promise<Webhook.Response>((resolve) => {
+			const res = new ServerResponse(req);
+			let body = "";
+			res.write = (chunk: any) => {
+				body += chunk;
+				return true;
+			};
+			res.end = (callback: () => void) => {
+				const code = res.statusCode;
+				const headers = res.getHeaders();
+				resolve({ code, body, headers });
+				if (typeof callback === "function") callback();
+				return res;
+			};
+			this.ctx.server._http.emit("request", req, res);
+			req.emit("data", body);
+			req.emit("end");
+		});
+	}
 }

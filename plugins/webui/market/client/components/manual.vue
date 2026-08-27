@@ -17,38 +17,36 @@
 </template>
 
 <script lang="ts" setup>
+import { store, useConfig } from "@koishi-ce/client";
+import type { Registry } from "@koishi-ce/registry";
+import { useDebounceFn } from "@vueuse/core";
+import { computed, ref, watch } from "vue";
+import { addManual, showManual } from "./utils";
 
-import { computed, ref, watch } from 'vue'
-import type { Registry } from '@koishijs/registry'
-import { store, useConfig } from '@koishijs/client'
-import { useDebounceFn } from '@vueuse/core'
-import { showManual, addManual } from './utils'
-
-const config = useConfig()
-const invalid = computed(() => false)
-const name = ref('')
-const remote = ref<Registry>()
+const config = useConfig();
+const invalid = computed(() => false);
+const name = ref("");
+const remote = ref<Registry>();
 
 const fetchRemote = useDebounceFn(async (name2: string) => {
-  try {
-    const data = await addManual(name2)
-    if (name2 === name.value) remote.value = data
-  } catch {}
-}, 500)
+	try {
+		const data = await addManual(name2);
+		if (name2 === name.value) remote.value = data;
+	} catch {}
+}, 500);
 
 watch(name, (name2) => {
-  if (name2 !== remote.value?.name) remote.value = null
-  if (!name2) return remote.value = null
-  fetchRemote(name2)
-})
+	if (name2 !== remote.value?.name) remote.value = null;
+	if (!name2) return (remote.value = null);
+	fetchRemote(name2);
+});
 
 function onEnter() {
-  if (!remote.value) return
-  const { name } = remote.value
-  config.value.market.override[name] = remote.value['dist-tags'].latest
-  showManual.value = false
+	if (!remote.value) return;
+	const { name } = remote.value;
+	config.value.market.override[name] = remote.value["dist-tags"].latest;
+	showManual.value = false;
 }
-
 </script>
 
 <style lang="scss">

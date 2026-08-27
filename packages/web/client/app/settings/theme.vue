@@ -25,36 +25,34 @@
 </template>
 
 <script setup lang="ts">
-
-import { PropType, computed } from 'vue'
-import { useContext, useI18nText } from '@koishijs/client'
-import { Schema, SchemaBase } from '@koishijs/components'
+import { useContext, useI18nText } from "@koishi-ce/client";
+import { type Schema, SchemaBase } from "@koishi-ce/components";
+import { computed, type PropType } from "vue";
 
 defineProps({
-  schema: {} as PropType<Schema>,
-  modelValue: {} as PropType<any[]>,
-  disabled: {} as PropType<boolean>,
-  prefix: {} as PropType<string>,
-  initial: {} as PropType<{}>,
-})
+	schema: {} as PropType<Schema>,
+	modelValue: {} as PropType<any[]>,
+	disabled: {} as PropType<boolean>,
+	prefix: {} as PropType<string>,
+	initial: {} as PropType<{}>,
+});
 
-const emit = defineEmits(['update:modelValue'])
+const emit = defineEmits(["update:modelValue"]);
 
-const ctx = useContext()
+const ctx = useContext();
 
-const tt = useI18nText()
+const tt = useI18nText();
 
-const config = SchemaBase.useModel()
+const config = SchemaBase.useModel();
 
 const model = computed({
-  get() {
-    return tt(ctx.internal.themes[config.value]?.name)
-  },
-  set(value) {
-    emit('update:modelValue', value)
-  },
-})
-
+	get() {
+		return tt(ctx.internal.themes[config.value]?.name);
+	},
+	set(value) {
+		emit("update:modelValue", value);
+	},
+});
 </script>
 
 <style lang="scss">

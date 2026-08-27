@@ -10,26 +10,28 @@
 </template>
 
 <script setup lang="ts">
+import { store } from "@koishi-ce/client";
+import { computed, inject, type WritableComputedRef } from "vue";
+import { useRouter } from "vue-router";
+import { active } from "../utils";
 
-import { computed, inject, WritableComputedRef } from 'vue'
-import { useRouter } from 'vue-router'
-import { store } from '@koishijs/client'
-import { active } from '../utils'
+const router = useRouter();
 
-const router = useRouter()
-
-const current = inject<WritableComputedRef<any>>('manager.settings.current')
+const current = inject<WritableComputedRef<any>>("manager.settings.current");
 
 const fullname = computed(() => {
-  const { name } = current.value
-  const candidates = name.startsWith('@')
-    ? [name.replace(/\//, '/koishi-plugin-')]
-    : [`@koishijs/plugin-${name}`, `koishi-plugin-${name}`]
-  return candidates.find(name => name in store.market.data)
-})
+	const { name } = current.value;
+	const candidates = name.startsWith("@")
+		? [name.replace(/\//, "/koishi-plugin-")]
+		: [
+				`@koishi-ce/plugin-${name}`,
+				`@koishijs/plugin-${name}`,
+				`koishi-plugin-${name}`,
+			];
+	return candidates.find((name) => name in store.market.data);
+});
 
 function gotoMarket() {
-  router.push('/market?keyword=' + current.value.name)
+	router.push("/market?keyword=" + current.value.name);
 }
-
 </script>

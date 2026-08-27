@@ -35,64 +35,67 @@
 </template>
 
 <script lang="ts" setup>
-
-import { send, store } from '@koishijs/client'
-import { shared, showLoginDialog } from './utils'
-import { computed, ref } from 'vue'
-import { message, Schema } from '@koishijs/client'
-import { UserUpdate } from '@koishijs/plugin-auth'
+import { message, Schema, send, store } from "@koishi-ce/client";
+import type { UserUpdate } from "@koishi-ce/plugin-auth";
+import { computed, ref } from "vue";
+import { shared, showLoginDialog } from "./utils";
 
 const types = {
-  platform: '平台账户',
-  password: '用户密码',
-}
+	platform: "平台账户",
+	password: "用户密码",
+};
 
-const diff = ref<UserUpdate>({})
+const diff = ref<UserUpdate>({});
 
 const schema = computed(() => {
-  const result: Schema<UserUpdate> = Schema.object({
-    name: Schema.string().description('用户名').default(shared.value.name),
-    password: Schema.string().role('secret').description('密码').default(shared.value.password),
-  }).description('基本资料')
-  return result
-})
+	const result: Schema<UserUpdate> = Schema.object({
+		name: Schema.string().description("用户名").default(shared.value.name),
+		password: Schema.string()
+			.role("secret")
+			.description("密码")
+			.default(shared.value.password),
+	}).description("基本资料");
+	return result;
+});
 
 async function logout() {
-  store.user = null
-  delete shared.value.id
-  delete shared.value.token
-  delete shared.value.expiredAt
-  return send('user/logout')
+	store.user = null;
+	delete shared.value.id;
+	delete shared.value.token;
+	delete shared.value.expiredAt;
+	return send("user/logout");
 }
 
 async function update() {
-  try {
-    await send('user/update', diff.value)
-    message.success('修改成功！')
-    Object.assign(shared.value, diff.value)
-    Object.assign(store.user, diff.value)
-    diff.value = {}
-  } catch (e) {
-    message.error(e.message)
-  }
+	try {
+		await send("user/update", diff.value);
+		message.success("修改成功！");
+		Object.assign(shared.value, diff.value);
+		Object.assign(store.user, diff.value);
+		diff.value = {};
+	} catch (e) {
+		message.error(e.message);
+	}
 }
 
 const original = computed(() => {
-  return store.user?.bindings.filter(item => store.user.id === item.bid)
-})
+	return store.user?.bindings.filter((item) => store.user.id === item.bid);
+});
 
-const menu = computed(() => [{
-  icon: 'check',
-  label: '应用更改',
-  disabled: !diff.value || !Object.keys(diff.value).length,
-  action: update,
-}, {
-  type: 'danger',
-  icon: 'sign-out',
-  label: '退出登录',
-  action: logout,
-}])
-
+const menu = computed(() => [
+	{
+		icon: "check",
+		label: "应用更改",
+		disabled: !diff.value || !Object.keys(diff.value).length,
+		action: update,
+	},
+	{
+		type: "danger",
+		icon: "sign-out",
+		label: "退出登录",
+		action: logout,
+	},
+]);
 </script>
 
 <style lang="scss">

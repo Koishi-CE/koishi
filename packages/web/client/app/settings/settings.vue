@@ -28,44 +28,44 @@
 </template>
 
 <script lang="ts" setup>
+import { useConfig, useContext } from "@koishi-ce/client";
+import { computed } from "vue";
+import { useRoute, useRouter } from "vue-router";
 
-import { useRoute, useRouter } from 'vue-router'
-import { computed } from 'vue'
-import { useConfig, useContext } from '@koishijs/client'
+const route = useRoute();
+const router = useRouter();
 
-const route = useRoute()
-const router = useRouter()
-
-const config = useConfig(true)
-const ctx = useContext()
+const config = useConfig(true);
+const ctx = useContext();
 
 interface Tree {
-  id: string
-  label: string
-  children?: Tree[]
+	id: string;
+	label: string;
+	children?: Tree[];
 }
 
-const data = computed(() => Object.entries(ctx.internal.settings).map<Tree>(([id, [{ title }]]) => ({
-  id,
-  label: title,
-})))
+const data = computed(() =>
+	Object.entries(ctx.internal.settings).map<Tree>(([id, [{ title }]]) => ({
+		id,
+		label: title,
+	})),
+);
 
 function handleClick(tree: Tree) {
-  if (tree.children) return
-  path.value = tree.id
+	if (tree.children) return;
+	path.value = tree.id;
 }
 
 const path = computed({
-  get() {
-    const name = route.params.name?.toString()
-    return name in ctx.internal.settings ? name : ''
-  },
-  set(value) {
-    if (!(value in ctx.internal.settings)) value = ''
-    router.replace('/settings/' + value)
-  },
-})
-
+	get() {
+		const name = route.params.name?.toString();
+		return name in ctx.internal.settings ? name : "";
+	},
+	set(value) {
+		if (!(value in ctx.internal.settings)) value = "";
+		router.replace("/settings/" + value);
+	},
+});
 </script>
 
 <style lang="scss">

@@ -22,27 +22,25 @@
 </template>
 
 <script lang="ts" setup>
-
-import { useI18n } from 'vue-i18n'
-import zhCN from './welcome.zh-CN.yml'
-import enUS from './welcome.en-US.yml'
+import { useI18n } from "vue-i18n";
+import enUS from "./welcome.en-US.yml";
+import zhCN from "./welcome.zh-CN.yml";
 
 const { t, setLocaleMessage } = useI18n({
-  messages: {
-    'zh-CN': zhCN,
-    'en-US': enUS,
-  },
-})
+	messages: {
+		"zh-CN": zhCN,
+		"en-US": enUS,
+	},
+});
 
 if (import.meta.hot) {
-  import.meta.hot.accept('./welcome.zh-CN.yml', (module) => {
-    setLocaleMessage('zh-CN', module.default)
-  })
-  import.meta.hot.accept('./welcome.en-US.yml', (module) => {
-    setLocaleMessage('en-US', module.default)
-  })
+	import.meta.hot.accept("./welcome.zh-CN.yml", (module) => {
+		setLocaleMessage("zh-CN", module.default);
+	});
+	import.meta.hot.accept("./welcome.en-US.yml", (module) => {
+		setLocaleMessage("en-US", module.default);
+	});
 }
-
 </script>
 
 <style lang="scss">

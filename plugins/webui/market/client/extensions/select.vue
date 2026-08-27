@@ -17,21 +17,24 @@
 </template>
 
 <script setup lang="ts">
+import { store } from "@koishi-ce/client";
+import {
+	categories,
+	MarketIcon,
+	resolveCategory,
+	useMarketI18n,
+} from "@koishi-ce/market";
+import type { PackageProvider } from "@koishi-ce/plugin-config";
+import { provide, ref } from "vue";
 
-import { store } from '@koishijs/client'
-import { categories, MarketIcon, useMarketI18n, resolveCategory } from '@koishijs/market'
-import { PackageProvider } from '@koishijs/plugin-config'
-import { provide, ref } from 'vue'
+const extended = ["all", "other", ...categories];
 
-const extended = ['all', 'other', ...categories]
+const { t } = useMarketI18n();
 
-const { t } = useMarketI18n()
+const active = ref("all");
 
-const active = ref('all')
-
-provide('plugin-select-filter', ({ name, manifest }: PackageProvider.Data) => {
-  const category = store.market.data[name]?.category || manifest?.category
-  return active.value === 'all' || resolveCategory(category) === active.value
-})
-
+provide("plugin-select-filter", ({ name, manifest }: PackageProvider.Data) => {
+	const category = store.market.data[name]?.category || manifest?.category;
+	return active.value === "all" || resolveCategory(category) === active.value;
+});
 </script>

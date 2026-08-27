@@ -8,22 +8,20 @@
 </template>
 
 <script lang="ts" setup>
-
-import { computed } from 'vue'
+import { computed } from "vue";
 
 const props = defineProps<{
-  data: object
-  modelValue?: string
-  filter?: (item: any) => boolean
-}>()
+	data: object;
+	modelValue?: string;
+	filter?: (item: any) => boolean;
+}>();
 
-const emits = defineEmits(['update:modelValue'])
+const emits = defineEmits(["update:modelValue"]);
 
 const model = computed({
-  get: () => props.modelValue,
-  set: val => emits('update:modelValue', val),
-})
-
+	get: () => props.modelValue,
+	set: (val) => emits("update:modelValue", val),
+});
 </script>
 
 <style lang="scss">

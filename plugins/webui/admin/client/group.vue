@@ -102,148 +102,167 @@
 </template>
 
 <script lang="ts" setup>
+import { message, send, store, useRpc } from "@koishi-ce/client";
+import type Admin from "@koishi-ce/plugin-admin/src";
+import {} from "@koishi-ce/plugin-locales";
+import { debounce } from "throttle-debounce";
+import { computed, ref } from "vue";
+import { useRoute, useRouter } from "vue-router";
+import PermissionName from "./name.vue";
 
-import { message, send, store, useRpc } from '@koishijs/client'
-import type Admin from '@koishijs/plugin-admin/src'
-import { useRoute, useRouter } from 'vue-router'
-import { computed, ref } from 'vue'
-import {} from '@koishijs/plugin-locales'
-import { debounce } from 'throttle-debounce'
-import PermissionName from './name.vue'
+const data = useRpc<Admin.Data>();
 
-const data = useRpc<Admin.Data>()
+const route = useRoute();
+const router = useRouter();
 
-const route = useRoute()
-const router = useRouter()
-
-const showCreateDialog = ref(false)
-const showUserDialog = ref(false)
-const platform = ref('')
-const account = ref('')
-const keyword = ref('')
-const createType = ref<'group' | 'track'>('group')
-const createInput = ref('')
-const invalid = computed(() => !createInput.value)
-const permission = ref<string>()
-const root = ref<{ $el: HTMLElement }>(null)
+const showCreateDialog = ref(false);
+const showUserDialog = ref(false);
+const platform = ref("");
+const account = ref("");
+const keyword = ref("");
+const createType = ref<"group" | "track">("group");
+const createInput = ref("");
+const invalid = computed(() => !createInput.value);
+const permission = ref<string>();
+const root = ref<{ $el: HTMLElement }>(null);
 
 interface Active {
-  type?: 'group' | 'track'
-  id?: string
+	type?: "group" | "track";
+	id?: string;
 }
 
 const active = computed<Active>(() => {
-  if (route.path.startsWith('/admin/group/')) {
-    const id = route.path.slice(13)
-    if (id in data.value.group) {
-      return { type: 'group', id }
-    }
-  } else if (route.path.startsWith('/admin/track/')) {
-    const id = route.path.slice(13)
-    if (id in data.value.track) {
-      return { type: 'track', id }
-    }
-  }
-  return {}
-})
+	if (route.path.startsWith("/admin/group/")) {
+		const id = route.path.slice(13);
+		if (id in data.value.group) {
+			return { type: "group", id };
+		}
+	} else if (route.path.startsWith("/admin/track/")) {
+		const id = route.path.slice(13);
+		if (id in data.value.track) {
+			return { type: "track", id };
+		}
+	}
+	return {};
+});
 
 const activeGroup = computed<string>({
-  get() {
-    if (active.value.type !== 'group') return ''
-    return active.value.id
-  },
-  set(id) {
-    if (!(id in data.value.group)) id = ''
-    router.replace('/admin/group/' + id)
-  },
-})
+	get() {
+		if (active.value.type !== "group") return "";
+		return active.value.id;
+	},
+	set(id) {
+		if (!(id in data.value.group)) id = "";
+		router.replace("/admin/group/" + id);
+	},
+});
 
 const activeTrack = computed<string>({
-  get() {
-    if (active.value.type !== 'track') return ''
-    return active.value.id
-  },
-  set(id) {
-    if (!(id in data.value.track)) id = ''
-    router.replace('/admin/track/' + id)
-  },
-})
+	get() {
+		if (active.value.type !== "track") return "";
+		return active.value.id;
+	},
+	set(id) {
+		if (!(id in data.value.track)) id = "";
+		router.replace("/admin/track/" + id);
+	},
+});
 
 const permissions = computed(() => {
-  return data.value[active.value.type][active.value.id].permissions
-})
+	return data.value[active.value.type][active.value.id].permissions;
+});
 
-const renameItem = debounce(1000, (type: 'group' | 'track', id: number, name: string) => {
-  send(`admin/rename-${type}`, id, name)
-})
+const renameItem = debounce(
+	1000,
+	(type: "group" | "track", id: number, name: string) => {
+		send(`admin/rename-${type}`, id, name);
+	},
+);
 
 const renameInput = computed<string>({
-  get() {
-    return data.value[active.value.type][active.value.id].name
-  },
-  set(value) {
-    data.value[active.value.type][active.value.id].name = value
-    renameItem(active.value.type, +active.value.id, value)
-  },
-})
+	get() {
+		return data.value[active.value.type][active.value.id].name;
+	},
+	set(value) {
+		data.value[active.value.type][active.value.id].name = value;
+		renameItem(active.value.type, +active.value.id, value);
+	},
+});
 
 async function createItem() {
-  showCreateDialog.value = false
-  const id = await send(`admin/create-${createType.value}`, createInput.value)
-  router.replace(`/admin/${createType.value}/` + id)
-  createInput.value = ''
+	showCreateDialog.value = false;
+	const id = await send(`admin/create-${createType.value}`, createInput.value);
+	router.replace(`/admin/${createType.value}/` + id);
+	createInput.value = "";
 }
 
 async function deleteItem() {
-  await send(`admin/delete-${active.value.type}`, +active.value.id)
-  router.replace('/admin/')
+	await send(`admin/delete-${active.value.type}`, +active.value.id);
+	router.replace("/admin/");
 }
 
 async function addPermission() {
-  const { permissions } = data.value[active.value.type][active.value.id]
-  permissions.push(permission.value)
-  permission.value = null
-  await send(`admin/update-${active.value.type}`, +active.value.id, permissions)
+	const { permissions } = data.value[active.value.type][active.value.id];
+	permissions.push(permission.value);
+	permission.value = null;
+	await send(
+		`admin/update-${active.value.type}`,
+		+active.value.id,
+		permissions,
+	);
 }
 
 async function removePermission(index: number) {
-  const { permissions } = data.value[active.value.type][active.value.id]
-  permissions.splice(index, 1)
-  await send(`admin/update-${active.value.type}`, +active.value.id, permissions)
+	const { permissions } = data.value[active.value.type][active.value.id];
+	permissions.splice(index, 1);
+	await send(
+		`admin/update-${active.value.type}`,
+		+active.value.id,
+		permissions,
+	);
 }
 
 async function addUser() {
-  try {
-    await send('admin/add-user', +activeGroup.value, platform.value, account.value)
-    message.success('操作成功')
-  } catch (err) {
-    console.error(err)
-    message.error('操作失败')
-  }
-  showUserDialog.value = false
+	try {
+		await send(
+			"admin/add-user",
+			+activeGroup.value,
+			platform.value,
+			account.value,
+		);
+		message.success("操作成功");
+	} catch (err) {
+		console.error(err);
+		message.error("操作失败");
+	}
+	showUserDialog.value = false;
 }
 
 async function removeUser() {
-  try {
-    await send('admin/remove-user', +activeGroup.value, platform.value, account.value)
-    message.success('操作成功')
-  } catch (err) {
-    console.error(err)
-    message.error('操作失败')
-  }
-  showUserDialog.value = false
+	try {
+		await send(
+			"admin/remove-user",
+			+activeGroup.value,
+			platform.value,
+			account.value,
+		);
+		message.success("操作成功");
+	} catch (err) {
+		console.error(err);
+		message.error("操作失败");
+	}
+	showUserDialog.value = false;
 }
 
 function getLink(name: string) {
-  if (name.startsWith('group:')) {
-    return `/admin/group/${name.slice(6)}`
-  } else if (name.startsWith('track:')) {
-    return `/admin/track/${name.slice(6)}`
-  } else if (name.startsWith('command:')) {
-    return `/commands/${name.slice(8).replace(/\./g, '/')}`
-  }
+	if (name.startsWith("group:")) {
+		return `/admin/group/${name.slice(6)}`;
+	} else if (name.startsWith("track:")) {
+		return `/admin/track/${name.slice(6)}`;
+	} else if (name.startsWith("command:")) {
+		return `/commands/${name.slice(8).replace(/\./g, "/")}`;
+	}
 }
-
 </script>
 
 <style lang="scss">
