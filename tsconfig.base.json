@@ -6,7 +6,7 @@
 		"moduleResolution": "bundler",
 		"moduleDetection": "force",
 		"lib": ["ES2025"],
-		"types": ["node", "yml-register/types"],
+		"types": ["node", "bun-types"],
 		"jsx": "react-jsx",
 		"jsxImportSource": "@satorijs/element",
 		"strict": true,
