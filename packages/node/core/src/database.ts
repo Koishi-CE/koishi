@@ -1,4 +1,4 @@
-import * as utils from '@koishijs/utils'
+import * as utils from '@koishi-ce/utils'
 import { Dict, MaybeArray } from 'cosmokit'
 import { Driver, FlatKeys, FlatPick, Update } from 'minato'
 import * as minato from 'minato'

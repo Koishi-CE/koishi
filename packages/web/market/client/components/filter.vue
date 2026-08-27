@@ -57,7 +57,7 @@
 
 import { computed, inject, ref, watch } from 'vue'
 import { Badge, badges, kConfig, validate, comparators, categories, resolveCategory, useMarketI18n } from '../utils'
-import { SearchObject } from '@koishijs/registry'
+import { SearchObject } from '@koishi-ce/registry'
 import MarketIcon from '../icons'
 
 const props = defineProps<{

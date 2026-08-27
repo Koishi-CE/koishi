@@ -1,9 +1,9 @@
-import { Context, Dict, EffectScope, ForkScope, interpolate, isNullable, Logger, Plugin, Universal, valueMap, version } from '@koishijs/core'
+import { Context, Dict, EffectScope, ForkScope, interpolate, isNullable, Logger, Plugin, Universal, valueMap, version } from '@koishi-ce/core'
 import { constants, promises as fs } from 'fs'
 import * as yaml from 'js-yaml'
 import * as path from 'path'
 
-declare module '@koishijs/core' {
+declare module '@koishi-ce/core' {
   interface Events {
     'config'(): void
     'exit'(signal: NodeJS.Signals): Promise<void>
@@ -294,7 +294,7 @@ export abstract class Loader {
 
   keyFor(plugin: any) {
     const name = this.store.get(this.app.registry.resolve(plugin))
-    if (name) return name.replace(/(koishi-|^@koishijs\/)plugin-/, '')
+    if (name) return name.replace(/(koishi-|^@(?:koishijs|koishi-ce)\/)plugin-/, '')
   }
 
   replace(oldKey: any, newKey: any) {

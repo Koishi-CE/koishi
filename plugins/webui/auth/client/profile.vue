@@ -36,11 +36,11 @@
 
 <script lang="ts" setup>
 
-import { send, store } from '@koishijs/client'
+import { send, store } from '@koishi-ce/client'
 import { shared, showLoginDialog } from './utils'
 import { computed, ref } from 'vue'
-import { message, Schema } from '@koishijs/client'
-import { UserUpdate } from '@koishijs/plugin-auth'
+import { message, Schema } from '@koishi-ce/client'
+import { UserUpdate } from '@koishi-ce/plugin-auth'
 
 const types = {
   platform: '平台账户',

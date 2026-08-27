@@ -1,4 +1,4 @@
-import { observe, noop, Dict } from 'koishi'
+import { observe, noop, Dict } from '@koishi-ce/koishi'
 import { expect } from 'chai'
 import { mock as jest } from 'node:test'
 

@@ -1,4 +1,4 @@
-import { observe } from '@koishijs/utils'
+import { observe } from '@koishi-ce/utils'
 import { Awaitable, isNullable, makeArray } from 'cosmokit'
 import { Fragment, h, Logger, Universal } from '@satorijs/core'
 import { Eval, executeEval, isEvalExpr } from 'minato'

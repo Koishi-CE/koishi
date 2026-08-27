@@ -103,11 +103,11 @@
 
 <script lang="ts" setup>
 
-import { message, send, store, useRpc } from '@koishijs/client'
-import type Admin from '@koishijs/plugin-admin/src'
+import { message, send, store, useRpc } from '@koishi-ce/client'
+import type Admin from '@koishi-ce/plugin-admin/src'
 import { useRoute, useRouter } from 'vue-router'
 import { computed, ref } from 'vue'
-import {} from '@koishijs/plugin-locales'
+import {} from '@koishi-ce/plugin-locales'
 import { debounce } from 'throttle-debounce'
 import PermissionName from './name.vue'
 

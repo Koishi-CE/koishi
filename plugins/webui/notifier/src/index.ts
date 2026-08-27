@@ -1,5 +1,5 @@
-import { Context, Dict, h, isNullable, remove, Schema, Service } from 'koishi'
-import type { Entry } from '@koishijs/plugin-console'
+import { Context, Dict, h, isNullable, remove, Schema, Service } from '@koishi-ce/koishi'
+import type { Entry } from '@koishi-ce/plugin-console'
 import { resolve } from 'path'
 
 declare module 'koishi' {
@@ -8,7 +8,7 @@ declare module 'koishi' {
   }
 }
 
-declare module '@koishijs/console' {
+declare module '@koishi-ce/console' {
   interface Events {
     'notifier/button'(id: string): void
   }

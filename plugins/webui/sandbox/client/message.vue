@@ -15,8 +15,8 @@
 
 <script lang="ts" setup>
 
-import { Message } from '@koishijs/plugin-sandbox'
-import { useMenu } from '@koishijs/client'
+import { Message } from '@koishi-ce/plugin-sandbox'
+import { useMenu } from '@koishi-ce/client'
 import { MessageContent } from '@satorijs/components-vue'
 
 defineProps<{

@@ -1,4 +1,4 @@
-import { Logger } from 'koishi'
+import { Logger } from '@koishi-ce/koishi'
 import { BuildFailure } from 'esbuild'
 import { codeFrameColumns } from '@babel/code-frame'
 import { readFileSync } from 'fs'

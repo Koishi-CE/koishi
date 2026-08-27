@@ -1,4 +1,4 @@
-import { Context, h, Schema } from 'koishi'
+import { Context, h, Schema } from '@koishi-ce/koishi'
 import zhCN from './locales/zh-CN.yml'
 
 export const name = 'inspect'

@@ -1,5 +1,5 @@
 {
-  "name": "koishi",
+  "name": "@koishi-ce/koishi",
   "description": "Cross-Platform Chatbot Framework Made with Love",
   "version": "4.18.11",
   "main": "lib/index.cjs",
@@ -30,10 +30,11 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/koishijs/koishi.git"
+    "url": "git+https://github.com/Koishi-CE/koishi.git",
+    "directory": "packages/node/cli"
   },
   "bugs": {
-    "url": "https://github.com/koishijs/koishi/issues"
+    "url": "https://github.com/Koishi-CE/koishi/issues"
   },
   "homepage": "https://koishi.chat",
   "keywords": [
@@ -48,6 +49,7 @@
     "property": "koishi",
     "ecosystem": {
       "pattern": [
+        "@koishi-ce/plugin-*",
         "@koishijs/plugin-*",
         "koishi-plugin-*"
       ]
@@ -59,12 +61,12 @@
     }
   },
   "dependencies": {
-    "@koishijs/core": "workspace:*",
-    "@koishijs/loader": "workspace:*",
-    "@koishijs/plugin-http": "workspace:*",
-    "@koishijs/plugin-proxy-agent": "workspace:*",
-    "@koishijs/plugin-server": "workspace:*",
-    "@koishijs/utils": "workspace:*",
+    "@koishi-ce/core": "workspace:*",
+    "@koishi-ce/loader": "workspace:*",
+    "@koishi-ce/plugin-http": "workspace:*",
+    "@koishi-ce/plugin-proxy-agent": "workspace:*",
+    "@koishi-ce/plugin-server": "workspace:*",
+    "@koishi-ce/utils": "workspace:*",
     "@satorijs/core": "^4.6.0",
     "cac": "^6.7.14",
     "kleur": "^4.1.5"

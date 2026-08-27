@@ -1,9 +1,9 @@
-import { App, Command, Logger, Next } from 'koishi'
+import { App, Command, Logger, Next } from '@koishi-ce/koishi'
 import { inspect } from 'util'
 import { expect, use } from 'chai'
 import shape from 'chai-shape'
 import promise from 'chai-as-promised'
-import mock from '@koishijs/plugin-mock'
+import mock from '@koishi-ce/plugin-mock'
 import { mock as jest } from 'node:test'
 
 use(shape)

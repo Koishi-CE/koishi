@@ -1,5 +1,5 @@
-import { Context } from '@koishijs/client'
-import {} from '@koishijs/plugin-explorer/src'
+import { Context } from '@koishi-ce/client'
+import {} from '@koishi-ce/plugin-explorer/src'
 import FilePicker from './file-picker.vue'
 import Layout from './index.vue'
 import Status from './status.vue'

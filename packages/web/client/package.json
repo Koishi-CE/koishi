@@ -1,5 +1,5 @@
 {
-  "name": "@koishijs/client",
+  "name": "@koishi-ce/client",
   "description": "Koishi Console Client",
   "version": "5.30.11",
   "main": "client/index.ts",
@@ -27,11 +27,11 @@
   "license": "AGPL-3.0",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/koishijs/webui.git",
-    "directory": "packages/client"
+    "url": "git+https://github.com/Koishi-CE/koishi.git",
+    "directory": "packages/web/client"
   },
   "bugs": {
-    "url": "https://github.com/koishijs/webui/issues"
+    "url": "https://github.com/Koishi-CE/koishi/issues"
   },
   "homepage": "https://koishi.chat",
   "keywords": [
@@ -44,7 +44,7 @@
     "build"
   ],
   "dependencies": {
-    "@koishijs/components": "workspace:*",
+    "@koishi-ce/components": "workspace:*",
     "@maikolib/vite-plugin-yaml": "^1.0.1",
     "@satorijs/protocol": "^1.7.0",
     "@vitejs/plugin-vue": "^5.1.4",

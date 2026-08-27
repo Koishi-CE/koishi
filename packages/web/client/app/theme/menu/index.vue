@@ -6,7 +6,7 @@
 
 <script lang="ts" setup>
 
-import { useContext } from '@koishijs/client'
+import { useContext } from '@koishi-ce/client'
 import { useEventListener } from '@vueuse/core'
 import KMenu from './menu.vue'
 

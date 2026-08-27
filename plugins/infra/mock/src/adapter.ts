@@ -1,4 +1,4 @@
-import { Adapter, Bot, Channel, Context, Universal, User } from 'koishi'
+import { Adapter, Bot, Channel, Context, Universal, User } from '@koishi-ce/koishi'
 import { MessageClient, MockMessageEncoder } from './client'
 import { Webhook } from './webhook'
 

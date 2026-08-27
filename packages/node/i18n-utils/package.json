@@ -1,5 +1,5 @@
 {
-  "name": "@koishijs/i18n-utils",
+  "name": "@koishi-ce/i18n-utils",
   "description": "I18n Utilities for Koishi",
   "version": "1.0.1",
   "main": "lib/index.cjs",
@@ -13,11 +13,11 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/koishijs/koishi.git",
-    "directory": "packages/i18n-utils"
+    "url": "git+https://github.com/Koishi-CE/koishi.git",
+    "directory": "packages/node/i18n-utils"
   },
   "bugs": {
-    "url": "https://github.com/koishijs/koishi/issues"
+    "url": "https://github.com/Koishi-CE/koishi/issues"
   },
   "homepage": "https://koishi.chat/api/utils.html",
   "keywords": [

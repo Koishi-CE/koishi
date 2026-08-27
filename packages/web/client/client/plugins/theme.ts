@@ -1,5 +1,5 @@
 import { Dict } from 'cosmokit'
-import { Schema } from '@koishijs/components'
+import { Schema } from '@koishi-ce/components'
 import { Context } from '../context'
 import { Component, computed, markRaw, reactive, watchEffect } from 'vue'
 import { useConfig } from './setting'

@@ -1,4 +1,4 @@
-import { Context } from '@koishijs/client'
+import { Context } from '@koishi-ce/client'
 import Status from './status.vue'
 import Loading from './loading.vue'
 

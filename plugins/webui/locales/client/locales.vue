@@ -70,7 +70,7 @@
 <script lang="ts" setup>
 
 import { useRoute, useRouter } from 'vue-router'
-import { Dict, send, store } from '@koishijs/client'
+import { Dict, send, store } from '@koishi-ce/client'
 import { computed, ref, watch, provide } from 'vue'
 import { useDebounceFn } from '@vueuse/core'
 

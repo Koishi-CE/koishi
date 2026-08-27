@@ -11,7 +11,7 @@
 
 <script setup lang="ts">
 
-import { store } from '@koishijs/client'
+import { store } from '@koishi-ce/client'
 import { inject, computed } from 'vue'
 import BotPreview from './bots/preview.vue'
 

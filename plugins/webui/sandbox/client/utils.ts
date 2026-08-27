@@ -1,10 +1,10 @@
-import { receive, send, useStorage } from '@koishijs/client'
-import type { Message } from '@koishijs/plugin-sandbox'
+import { receive, send, useStorage } from '@koishi-ce/client'
+import type { Message } from '@koishi-ce/plugin-sandbox'
 import type { RemovableRef } from '@vueuse/core'
-import type { Dict } from 'koishi'
+import type { Dict } from '@koishi-ce/koishi'
 import { computed } from 'vue'
 
-declare module '@koishijs/client' {
+declare module '@koishi-ce/client' {
   interface ActionContext {
     'sandbox.message': Message
   }

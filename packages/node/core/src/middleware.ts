@@ -1,4 +1,4 @@
-import { coerce, makeArray, Random } from '@koishijs/utils'
+import { coerce, makeArray, Random } from '@koishi-ce/utils'
 import { Awaitable, defineProperty, Dict, Time } from 'cosmokit'
 import { EventOptions, Fragment, h, Hook } from '@satorijs/core'
 import { Session } from './session'

@@ -1,8 +1,8 @@
 import { ref } from 'vue'
-import { useStorage } from '@koishijs/client'
-import { LoginToken } from '@koishijs/plugin-auth'
+import { useStorage } from '@koishi-ce/client'
+import { LoginToken } from '@koishi-ce/plugin-auth'
 
-declare module '@koishijs/client' {
+declare module '@koishi-ce/client' {
   interface Config {
     sync?: boolean
   }

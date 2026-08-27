@@ -1,7 +1,7 @@
 import install from './components'
 import { Context } from './context'
 
-declare module '@koishijs/plugin-console' {
+declare module '@koishi-ce/plugin-console' {
   export interface ClientConfig {
     unsupported?: string[]
   }

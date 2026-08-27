@@ -1,4 +1,4 @@
-import { Context, Schema } from '@koishijs/core'
+import { Context, Schema } from '@koishi-ce/core'
 
 export interface Config {
   autoRestart?: boolean

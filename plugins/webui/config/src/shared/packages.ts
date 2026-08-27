@@ -1,16 +1,16 @@
-import { Context, Dict, Logger, MainScope, Plugin, Schema } from 'koishi'
+import { Context, Dict, Logger, MainScope, Plugin, Schema } from '@koishi-ce/koishi'
 import { ScopeStatus } from 'cordis'
-import { DataService } from '@koishijs/console'
-import { PackageJson, SearchObject, SearchResult } from '@koishijs/registry'
-import {} from '@koishijs/plugin-hmr'
+import { DataService } from '@koishi-ce/console'
+import { PackageJson, SearchObject, SearchResult } from '@koishi-ce/registry'
+import {} from '@koishi-ce/plugin-hmr'
 
-declare module '@koishijs/loader' {
+declare module '@koishi-ce/loader' {
   interface Loader {
     market: SearchResult
   }
 }
 
-declare module '@koishijs/console' {
+declare module '@koishi-ce/console' {
   interface Events {
     'config/request-runtime'(name: string): void
   }

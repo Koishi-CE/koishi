@@ -1,5 +1,5 @@
 import assert from 'assert'
-import { clone, Context, Dict, h, hyphenate, isNullable, MessageEncoder, Universal } from 'koishi'
+import { clone, Context, Dict, h, hyphenate, isNullable, MessageEncoder, Universal } from '@koishi-ce/koishi'
 import { format } from 'util'
 import { MockBot } from './adapter'
 

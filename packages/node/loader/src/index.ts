@@ -1,4 +1,4 @@
-import { Dict, Logger } from '@koishijs/core'
+import { Dict, Logger } from '@koishi-ce/core'
 import { promises as fs } from 'fs'
 import * as dotenv from 'dotenv'
 import ns from 'ns-require'
@@ -25,7 +25,7 @@ export default class NodeLoader extends Loader {
     this.scope = ns({
       namespace: 'koishi',
       prefix: 'plugin',
-      official: 'koishijs',
+      official: 'koishi-ce',
       dirname: this.baseDir,
     })
   }
@@ -55,22 +55,22 @@ export default class NodeLoader extends Loader {
         isDirty = true
       }
 
-      if (!meta.dependencies['@koishijs/plugin-http']) {
+      if (!meta.dependencies['@koishi-ce/plugin-http']) {
         const { request = {} } = this.config as any
         delete this.config['request']
         this.config.plugins = {
           http: request,
           ...this.config.plugins,
         }
-        addDep('@koishijs/plugin-http')
+        addDep('@koishi-ce/plugin-http')
       }
 
-      if (!meta.dependencies['@koishijs/plugin-proxy-agent']) {
+      if (!meta.dependencies['@koishi-ce/plugin-proxy-agent']) {
         this.config.plugins = {
           'proxy-agent': {},
           ...this.config.plugins,
         }
-        addDep('@koishijs/plugin-proxy-agent')
+        addDep('@koishi-ce/plugin-proxy-agent')
       }
 
       function getProxyAgent(plugins: Dict) {
@@ -113,7 +113,7 @@ export default class NodeLoader extends Loader {
           server: { port, host, maxPort, selfUrl },
           ...this.config.plugins,
         }
-        addDep('@koishijs/plugin-server')
+        addDep('@koishi-ce/plugin-server')
       }
 
       if (isDirty) {

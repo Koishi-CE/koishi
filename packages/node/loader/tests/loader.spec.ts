@@ -1,10 +1,10 @@
 import { expect } from 'chai'
-import { Context, sleep } from 'koishi'
+import { Context, sleep } from '@koishi-ce/koishi'
 import { Mock } from 'node:test'
-import mock from '@koishijs/plugin-mock'
+import mock from '@koishi-ce/plugin-mock'
 import Loader from './utils'
 
-describe('@koishijs/loader', () => {
+describe('@koishi-ce/loader', () => {
   const loader = new Loader()
   loader.writable = true
 

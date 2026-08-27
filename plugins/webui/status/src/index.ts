@@ -1,6 +1,6 @@
-import { Context, Schema } from 'koishi'
+import { Context, Schema } from '@koishi-ce/koishi'
 import { resolve } from 'path'
-import {} from '@koishijs/console'
+import {} from '@koishi-ce/console'
 import EnvInfoProvider from './envinfo'
 import ProfileProvider from './profile'
 
@@ -13,7 +13,7 @@ declare module 'koishi' {
   }
 }
 
-declare module '@koishijs/console' {
+declare module '@koishi-ce/console' {
   namespace Console {
     interface Services {
       envinfo: EnvInfoProvider

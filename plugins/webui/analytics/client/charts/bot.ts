@@ -1,4 +1,4 @@
-import { Context } from '@koishijs/client'
+import { Context } from '@koishi-ce/client'
 import { createChart, Tooltip } from './utils'
 
 export default (ctx: Context) => {

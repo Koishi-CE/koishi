@@ -1,4 +1,4 @@
-import { Bot, Context } from 'koishi'
+import { Bot, Context } from '@koishi-ce/koishi'
 import { expect } from 'chai'
 
 const app = new Context()

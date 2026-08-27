@@ -2,7 +2,7 @@ import { ref, shallowRef, watch } from 'vue'
 import { RemovableRef, useLocalStorage } from '@vueuse/core'
 import { dump, load } from 'js-yaml'
 import { promises as fs } from 'fs'
-import { Dict, global, provideStorage } from '@koishijs/client'
+import { Dict, global, provideStorage } from '@koishi-ce/client'
 import loader from './loader'
 
 globalThis.fs = fs

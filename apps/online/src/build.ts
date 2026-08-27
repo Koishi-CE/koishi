@@ -30,7 +30,7 @@ const cwd = resolve(__dirname, '../../..')
 const dist = cwd + '/apps/online/dist'
 
 const builtins = [
-  '@koishijs/core',
+  '@koishi-ce/core',
   '@satorijs/core',
   '@satorijs/elements',
   'cordis',
@@ -92,8 +92,8 @@ export async function build(root: string, config: vite.UserConfig = {}) {
         'vue': root + '/vue.js',
         'vue-router': root + '/vue-router.js',
         '@vueuse/core': root + '/vueuse.js',
-        '@koishijs/client/app': '@koishijs/client/app',
-        '@koishijs/client': root + '/client.js',
+        '@koishi-ce/client/app': '@koishi-ce/client/app',
+        '@koishi-ce/client': root + '/client.js',
         ...Object.fromEntries(builtins.map((id) => [id, toExternal(id)])),
       },
     },

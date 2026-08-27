@@ -1,4 +1,4 @@
-import { SearchObject, User } from '@koishijs/registry'
+import { SearchObject, User } from '@koishi-ce/registry'
 import { InjectionKey } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { Dict } from 'cosmokit'

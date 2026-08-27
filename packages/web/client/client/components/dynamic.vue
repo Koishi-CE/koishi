@@ -32,7 +32,7 @@
 
 import { computed, PropType } from 'vue'
 import { store } from '../data'
-import { Schema, SchemaBase } from '@koishijs/components'
+import { Schema, SchemaBase } from '@koishi-ce/components'
 
 const props = defineProps({
   schema: {} as PropType<Schema>,

@@ -36,7 +36,7 @@
 <script lang="ts" setup>
 
 import { computed, watch, WatchStopHandle } from 'vue'
-import { store, useConfig, useContext } from '@koishijs/client'
+import { store, useConfig, useContext } from '@koishi-ce/client'
 import { hasUpdate } from '../utils'
 import { addManual } from './utils'
 import ManualInstall from './manual.vue'

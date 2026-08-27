@@ -1,5 +1,5 @@
 {
-  "name": "@koishijs/plugin-admin",
+  "name": "@koishi-ce/plugin-admin",
   "description": "Permission Manager for Koishi",
   "version": "2.0.0",
   "main": "lib/index.js",
@@ -16,11 +16,11 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/koishijs/webui.git",
-    "directory": "plugins/admin"
+    "url": "git+https://github.com/Koishi-CE/koishi.git",
+    "directory": "plugins/webui/admin"
   },
   "bugs": {
-    "url": "https://github.com/koishijs/webui/issues"
+    "url": "https://github.com/Koishi-CE/koishi/issues"
   },
   "homepage": "https://koishi.chat/plugins/console/admin.html",
   "keywords": [
@@ -59,10 +59,10 @@
     }
   },
   "devDependencies": {
-    "@koishijs/client": "workspace:*",
-    "@koishijs/plugin-console": "workspace:*",
-    "@koishijs/plugin-locales": "workspace:*",
-    "@koishijs/plugin-mock": "workspace:*",
+    "@koishi-ce/client": "workspace:*",
+    "@koishi-ce/plugin-console": "workspace:*",
+    "@koishi-ce/plugin-locales": "workspace:*",
+    "@koishi-ce/plugin-mock": "workspace:*",
     "@types/chai": "^4.3.16",
     "@types/chai-as-promised": "^7.1.8",
     "@types/throttle-debounce": "^2.1.0",

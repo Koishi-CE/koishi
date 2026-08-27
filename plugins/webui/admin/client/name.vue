@@ -12,8 +12,8 @@
 
 <script setup lang="ts">
 
-import { store, useRpc } from '@koishijs/client'
-import type Admin from '@koishijs/plugin-admin/src'
+import { store, useRpc } from '@koishi-ce/client'
+import type Admin from '@koishi-ce/plugin-admin/src'
 
 defineProps({
   id: String,

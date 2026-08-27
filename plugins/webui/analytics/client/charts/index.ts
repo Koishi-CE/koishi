@@ -1,4 +1,4 @@
-import { Context } from '@koishijs/client'
+import { Context } from '@koishi-ce/client'
 import CommandChart from './command'
 import BotChart from './bot'
 import HistoryChart from './history'

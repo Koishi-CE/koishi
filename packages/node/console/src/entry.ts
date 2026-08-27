@@ -1,4 +1,4 @@
-import { Context } from 'koishi'
+import { Context } from '@koishi-ce/koishi'
 import { Client } from '.'
 
 export namespace Entry {

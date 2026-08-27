@@ -1,5 +1,5 @@
 {
-  "name": "@koishijs/components",
+  "name": "@koishi-ce/components",
   "description": "Client components for Koishi",
   "version": "1.5.22",
   "main": "client/index.ts",
@@ -11,11 +11,11 @@
   "license": "AGPL-3.0",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/koishijs/webui.git",
-    "directory": "packages/components"
+    "url": "git+https://github.com/Koishi-CE/koishi.git",
+    "directory": "packages/web/components"
   },
   "bugs": {
-    "url": "https://github.com/koishijs/webui/issues"
+    "url": "https://github.com/Koishi-CE/koishi/issues"
   },
   "homepage": "https://koishi.chat",
   "keywords": [

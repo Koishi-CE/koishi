@@ -1,6 +1,6 @@
-import { App, Bot, h } from 'koishi'
-import * as echo from '@koishijs/plugin-echo'
-import mock from '@koishijs/plugin-mock'
+import { App, Bot, h } from '@koishi-ce/koishi'
+import * as echo from '@koishi-ce/plugin-echo'
+import mock from '@koishi-ce/plugin-mock'
 import { mock as jest } from 'node:test'
 import { expect, use } from 'chai'
 import shape from 'chai-shape'
@@ -16,7 +16,7 @@ const client = app.mock.client('123')
 
 before(() => app.start())
 
-describe('@koishijs/plugin-echo', () => {
+describe('@koishi-ce/plugin-echo', () => {
   it('basic support', async () => {
     await client.shouldReply('echo', '请输入要发送的文本。')
     await client.shouldReply('echo foo', 'foo')

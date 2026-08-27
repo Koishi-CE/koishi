@@ -1,5 +1,5 @@
 {
-  "name": "@koishijs/online",
+  "name": "@koishi-ce/online",
   "description": "Koishi Online Loader",
   "version": "1.0.0",
   "files": [
@@ -9,11 +9,11 @@
   "license": "AGPL-3.0",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/koishijs/webui.git",
-    "directory": "packages/online"
+    "url": "git+https://github.com/Koishi-CE/koishi.git",
+    "directory": "apps/online"
   },
   "bugs": {
-    "url": "https://github.com/koishijs/webui/issues"
+    "url": "https://github.com/Koishi-CE/koishi/issues"
   },
   "homepage": "https://koishi.online",
   "keywords": [
@@ -31,7 +31,7 @@
     "@cordiverse/os": "^1.0.2",
     "@cordiverse/path": "^1.0.0",
     "@cordiverse/url": "^1.0.3",
-    "@koishijs/client": "workspace:*",
-    "@koishijs/loader": "workspace:*"
+    "@koishi-ce/client": "workspace:*",
+    "@koishi-ce/loader": "workspace:*"
   }
 }

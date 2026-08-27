@@ -1,4 +1,4 @@
-import { connect, global, icons, root } from '@koishijs/client'
+import { connect, global, icons, root } from '@koishi-ce/client'
 import IconDocs from './icons/docs.vue'
 import IconForum from './icons/forum.vue'
 import IconInstances from './icons/apps.vue'
@@ -6,7 +6,7 @@ import IconShare from './icons/share.vue'
 import Home from './components/home.vue'
 import Instances from './components/apps.vue'
 import ClientWebSocket from './socket'
-import '@koishijs/client/app'
+import '@koishi-ce/client/app'
 
 icons.register('activity:docs', IconDocs)
 icons.register('activity:forum', IconForum)

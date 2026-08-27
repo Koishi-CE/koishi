@@ -1,5 +1,5 @@
-import { App } from 'koishi'
-import mock from '@koishijs/plugin-mock'
+import { App } from '@koishi-ce/koishi'
+import mock from '@koishi-ce/plugin-mock'
 
 describe('Command Suggestion', () => {
   const app = new App({ prefix: '/', minSimilarity: 0.64 })

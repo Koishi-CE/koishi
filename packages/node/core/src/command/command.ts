@@ -1,5 +1,5 @@
 import { Awaitable, camelize, Dict, isNullable, remove } from 'cosmokit'
-import { coerce } from '@koishijs/utils'
+import { coerce } from '@koishi-ce/utils'
 import { Fragment, Logger, Schema, Universal } from '@satorijs/core'
 import { Argv } from './parser'
 import { Next, SessionError } from '../middleware'

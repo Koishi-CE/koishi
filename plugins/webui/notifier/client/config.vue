@@ -7,8 +7,8 @@
 <script setup lang="ts">
 
 import segment from '@satorijs/element'
-import { useRpc, send } from '@koishijs/client'
-import type NotifierService from '@koishijs/plugin-notifier/src'
+import { useRpc, send } from '@koishi-ce/client'
+import type NotifierService from '@koishi-ce/plugin-notifier/src'
 import { h, inject, computed, resolveComponent, FunctionalComponent } from 'vue'
 
 const current: any = inject('manager.settings.current')

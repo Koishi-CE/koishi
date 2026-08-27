@@ -1,6 +1,6 @@
 import { defineComponent, h, watch } from 'vue'
-import { Context, Dict, global, receive, router, Schema, send, store, useConfig } from '@koishijs/client'
-import type {} from '@koishijs/plugin-market'
+import { Context, Dict, global, receive, router, Schema, send, store, useConfig } from '@koishi-ce/client'
+import type {} from '@koishi-ce/plugin-market'
 import { showConfirm, showManual } from './components/utils'
 import extensions from './extensions'
 import Dependencies from './components/dependencies.vue'
@@ -12,7 +12,7 @@ import './icons'
 
 import 'virtual:uno.css'
 
-declare module '@koishijs/client' {
+declare module '@koishi-ce/client' {
   interface Config {
     market: MarketConfig
   }

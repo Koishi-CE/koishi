@@ -27,8 +27,8 @@
 <script setup lang="ts">
 
 import { PropType, computed } from 'vue'
-import { useContext, useI18nText } from '@koishijs/client'
-import { Schema, SchemaBase } from '@koishijs/components'
+import { useContext, useI18nText } from '@koishi-ce/client'
+import { Schema, SchemaBase } from '@koishi-ce/components'
 
 defineProps({
   schema: {} as PropType<Schema>,

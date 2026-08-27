@@ -1,5 +1,5 @@
-import { $, Context, deepEqual, Dict, Logger, pick, Query, Row, Schema, Session, Time, Universal } from 'koishi'
-import { DataService } from '@koishijs/console'
+import { $, Context, deepEqual, Dict, Logger, pick, Query, Row, Schema, Session, Time, Universal } from '@koishi-ce/koishi'
+import { DataService } from '@koishi-ce/console'
 import { resolve } from 'path'
 
 declare module 'koishi' {
@@ -9,7 +9,7 @@ declare module 'koishi' {
   }
 }
 
-declare module '@koishijs/console' {
+declare module '@koishi-ce/console' {
   namespace Console {
     interface Services {
       analytics: Analytics

@@ -13,7 +13,7 @@
 
 import { computed, inject } from 'vue'
 import { CommandData } from '../lib'
-import { Dict, useRpc } from '@koishijs/client'
+import { Dict, useRpc } from '@koishi-ce/client'
 
 const current: any = inject('manager.settings.current')
 

@@ -89,10 +89,10 @@
 
 import { ref, watch, computed, nextTick } from 'vue'
 import { watchDebounced } from '@vueuse/core'
-import { Schema, Dict, valueMap, clone, store, send, pick, useContext, deepEqual, useRpc } from '@koishijs/client'
+import { Schema, Dict, valueMap, clone, store, send, pick, useContext, deepEqual, useRpc } from '@koishi-ce/client'
 import { createSchema } from './utils'
 import { CommandData, CommandState } from '../lib'
-import type { Argv, Command } from 'koishi'
+import type { Argv, Command } from '@koishi-ce/koishi'
 
 const ctx = useContext()
 const data = useRpc<Dict<CommandData>>()

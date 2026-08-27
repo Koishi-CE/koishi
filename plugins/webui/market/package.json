@@ -1,5 +1,5 @@
 {
-  "name": "@koishijs/plugin-market",
+  "name": "@koishi-ce/plugin-market",
   "description": "Manage your bots and plugins with console",
   "version": "2.11.11",
   "main": "lib/node/index.js",
@@ -25,11 +25,11 @@
   "license": "AGPL-3.0",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/koishijs/webui.git",
-    "directory": "plugins/market"
+    "url": "git+https://github.com/Koishi-CE/koishi.git",
+    "directory": "plugins/webui/market"
   },
   "bugs": {
-    "url": "https://github.com/koishijs/webui/issues"
+    "url": "https://github.com/Koishi-CE/koishi/issues"
   },
   "homepage": "https://koishi.chat/plugins/console/market.html",
   "keywords": [
@@ -68,15 +68,15 @@
     }
   },
   "devDependencies": {
-    "@koishijs/client": "workspace:*",
-    "@koishijs/market": "workspace:*",
-    "@koishijs/plugin-config": "workspace:*",
+    "@koishi-ce/client": "workspace:*",
+    "@koishi-ce/market": "workspace:*",
+    "@koishi-ce/plugin-config": "workspace:*",
     "@types/semver": "^7.5.8",
     "@types/which-pm-runs": "^1.0.2"
   },
   "dependencies": {
-    "@koishijs/console": "workspace:*",
-    "@koishijs/registry": "workspace:*",
+    "@koishi-ce/console": "workspace:*",
+    "@koishi-ce/registry": "workspace:*",
     "execa": "^5.1.1",
     "get-registry": "^1.2.0",
     "ns-require": "^1.1.4",

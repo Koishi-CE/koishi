@@ -1,5 +1,5 @@
 {
-  "name": "@koishijs/plugin-status",
+  "name": "@koishi-ce/plugin-status",
   "description": "Status view for Koishi",
   "version": "7.4.10",
   "main": "lib/index.js",
@@ -13,11 +13,11 @@
   "license": "AGPL-3.0",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/koishijs/webui.git",
-    "directory": "plugins/status"
+    "url": "git+https://github.com/Koishi-CE/koishi.git",
+    "directory": "plugins/webui/status"
   },
   "bugs": {
-    "url": "https://github.com/koishijs/webui/issues"
+    "url": "https://github.com/Koishi-CE/koishi/issues"
   },
   "homepage": "https://koishi.chat/plugins/console/status.html",
   "keywords": [
@@ -45,14 +45,14 @@
     "koishi": "^4.18.11"
   },
   "devDependencies": {
-    "@koishijs/client": "workspace:*",
-    "@koishijs/plugin-analytics": "workspace:*",
-    "@koishijs/plugin-config": "workspace:*",
+    "@koishi-ce/client": "workspace:*",
+    "@koishi-ce/plugin-analytics": "workspace:*",
+    "@koishi-ce/plugin-config": "workspace:*",
     "@types/envinfo": "^7.8.3",
-    "koishi": "workspace:*"
+    "@koishi-ce/koishi": "workspace:*"
   },
   "dependencies": {
-    "@koishijs/console": "workspace:*",
+    "@koishi-ce/console": "workspace:*",
     "envinfo": "^7.11.1",
     "which-pm-runs": "^1.1.0"
   }

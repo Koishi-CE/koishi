@@ -1,5 +1,5 @@
 {
-  "name": "@koishijs/plugin-analytics",
+  "name": "@koishi-ce/plugin-analytics",
   "description": "Show statistics for Koishi application",
   "version": "2.0.6",
   "main": "lib/index.js",
@@ -13,11 +13,11 @@
   "license": "AGPL-3.0",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/koishijs/webui.git",
-    "directory": "plugins/analytics"
+    "url": "git+https://github.com/Koishi-CE/koishi.git",
+    "directory": "plugins/webui/analytics"
   },
   "bugs": {
-    "url": "https://github.com/koishijs/webui/issues"
+    "url": "https://github.com/Koishi-CE/koishi/issues"
   },
   "homepage": "https://koishi.chat/plugins/console/analytics.html",
   "keywords": [
@@ -51,12 +51,12 @@
   },
   "devDependencies": {
     "@koishijs/assets": "^1.1.2",
-    "@koishijs/client": "workspace:*",
+    "@koishi-ce/client": "workspace:*",
     "echarts": "^5.5.0",
-    "koishi": "workspace:*",
+    "@koishi-ce/koishi": "workspace:*",
     "vue-echarts": "^6.6.9"
   },
   "dependencies": {
-    "@koishijs/console": "workspace:*"
+    "@koishi-ce/console": "workspace:*"
   }
 }

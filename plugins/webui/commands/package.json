@@ -1,5 +1,5 @@
 {
-  "name": "@koishijs/plugin-commands",
+  "name": "@koishi-ce/plugin-commands",
   "description": "Override Command Config for Koishi",
   "version": "3.5.5",
   "main": "lib/index.js",
@@ -16,11 +16,11 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/koishijs/webui.git",
-    "directory": "plugins/commands"
+    "url": "git+https://github.com/Koishi-CE/koishi.git",
+    "directory": "plugins/webui/commands"
   },
   "bugs": {
-    "url": "https://github.com/koishijs/webui/issues"
+    "url": "https://github.com/Koishi-CE/koishi/issues"
   },
   "homepage": "https://koishi.chat/plugins/console/commands.html",
   "keywords": [
@@ -54,15 +54,15 @@
     }
   },
   "devDependencies": {
-    "@koishijs/client": "workspace:*",
-    "@koishijs/plugin-config": "workspace:*",
-    "@koishijs/plugin-console": "workspace:*",
-    "@koishijs/plugin-help": "workspace:*",
-    "@koishijs/plugin-locales": "workspace:*",
-    "@koishijs/plugin-mock": "workspace:*",
-    "koishi": "workspace:*"
+    "@koishi-ce/client": "workspace:*",
+    "@koishi-ce/plugin-config": "workspace:*",
+    "@koishi-ce/plugin-console": "workspace:*",
+    "@koishi-ce/plugin-help": "workspace:*",
+    "@koishi-ce/plugin-locales": "workspace:*",
+    "@koishi-ce/plugin-mock": "workspace:*",
+    "@koishi-ce/koishi": "workspace:*"
   },
   "dependencies": {
-    "@koishijs/console": "workspace:*"
+    "@koishi-ce/console": "workspace:*"
   }
 }

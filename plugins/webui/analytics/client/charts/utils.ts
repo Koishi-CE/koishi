@@ -1,5 +1,5 @@
 import { defineAsyncComponent, defineComponent, h, ref, resolveComponent } from 'vue'
-import { Store, store } from '@koishijs/client'
+import { Store, store } from '@koishi-ce/client'
 import type * as echarts from 'echarts'
 import './index.scss'
 

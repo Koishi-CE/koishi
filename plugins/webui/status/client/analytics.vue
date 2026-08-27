@@ -9,8 +9,8 @@
 <script setup lang="ts">
 
 import { computed, inject } from 'vue'
-import { store } from '@koishijs/client'
-import {} from '@koishijs/plugin-analytics/src'
+import { store } from '@koishi-ce/client'
+import {} from '@koishi-ce/plugin-analytics/src'
 
 const AnalyticNumber = inject('component:analytic-number')
 

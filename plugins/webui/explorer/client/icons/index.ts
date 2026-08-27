@@ -1,4 +1,4 @@
-import { icons } from '@koishijs/client'
+import { icons } from '@koishi-ce/client'
 import Activity from './activity.vue'
 import Directory from './directory.vue'
 import DirectoryCreate from './directory-create.vue'

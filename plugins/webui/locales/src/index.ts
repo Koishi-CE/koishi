@@ -1,10 +1,10 @@
-import { Context, Dict, I18n, Logger, Schema } from 'koishi'
-import {} from '@koishijs/plugin-console'
+import { Context, Dict, I18n, Logger, Schema } from '@koishi-ce/koishi'
+import {} from '@koishi-ce/plugin-console'
 import { mkdir, readdir, readFile, writeFile } from 'fs/promises'
 import { resolve } from 'path'
 import { dump, load } from 'js-yaml'
 
-declare module '@koishijs/console' {
+declare module '@koishi-ce/console' {
   interface Events {
     'l10n'(data: Dict<I18n.Store>): void
   }

@@ -1,5 +1,5 @@
-import { DataService } from '@koishijs/console'
-import { Context, Dict } from 'koishi'
+import { DataService } from '@koishi-ce/console'
+import { Context, Dict } from '@koishi-ce/koishi'
 
 export class ServiceProvider extends DataService<Dict<number>> {
   constructor(ctx: Context) {

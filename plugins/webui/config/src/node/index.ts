@@ -1,4 +1,4 @@
-import { Context, Schema } from 'koishi'
+import { Context, Schema } from '@koishi-ce/koishi'
 import { resolve } from 'path'
 import { PackageProvider } from './packages'
 import { ConfigWriter, ServiceProvider } from '../shared'
@@ -14,7 +14,7 @@ export const Config: Schema<Config> = Schema.object({})
 
 export function apply(ctx: Context, config: Config) {
   if (!ctx.loader?.writable) {
-    return ctx.logger('app').warn('@koishijs/plugin-config is only available for json/yaml config file')
+    return ctx.logger('app').warn('@koishi-ce/plugin-config is only available for json/yaml config file')
   }
 
   ctx.plugin(PackageProvider)

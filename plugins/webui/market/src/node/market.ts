@@ -1,5 +1,5 @@
-import { Context, Dict, HTTP, Schema, Time } from 'koishi'
-import Scanner, { SearchObject, SearchResult } from '@koishijs/registry'
+import { Context, Dict, HTTP, Schema, Time } from '@koishi-ce/koishi'
+import Scanner, { SearchObject, SearchResult } from '@koishi-ce/registry'
 import { MarketProvider as BaseMarketProvider } from '../shared'
 
 class MarketProvider extends BaseMarketProvider {

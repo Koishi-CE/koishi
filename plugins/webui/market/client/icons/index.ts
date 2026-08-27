@@ -1,4 +1,4 @@
-import { icons } from '@koishijs/client'
+import { icons } from '@koishi-ce/client'
 
 import NavDeps from './activity/deps.vue'
 import NavMarket from './activity/market.vue'

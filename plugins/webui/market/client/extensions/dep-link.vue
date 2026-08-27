@@ -8,8 +8,8 @@
 
 <script lang="ts" setup>
 
-import { store } from '@koishijs/client'
-import {} from '@koishijs/plugin-config'
+import { store } from '@koishi-ce/client'
+import {} from '@koishi-ce/plugin-config'
 import { active } from '../utils'
 
 defineProps<{

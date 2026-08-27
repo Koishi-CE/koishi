@@ -4,7 +4,7 @@
 
 <script lang="ts" setup>
 
-import { store } from '@koishijs/client'
+import { store } from '@koishi-ce/client'
 import { computed } from 'vue'
 import { Tree } from './utils'
 

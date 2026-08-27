@@ -1,5 +1,5 @@
 {
-  "name": "koishi-bun",
+  "name": "koishi",
   "version": "1.0.0",
   "type": "module",
   "private": true,
@@ -19,8 +19,8 @@
   "devDependencies": {
     "@biomejs/biome": "^2.0.0",
     "@koishijs/plugin-database-memory": "^3.7.0",
-    "@koishijs/plugin-help": "workspace:*",
-    "@koishijs/plugin-mock": "workspace:*",
+    "@koishi-ce/plugin-help": "workspace:*",
+    "@koishi-ce/plugin-mock": "workspace:*",
     "@sinonjs/fake-timers": "^6.0.1",
     "@types/mocha": "^9.1.1",
     "@types/node": "^25.0.9",

@@ -1,4 +1,4 @@
-import { Awaitable, Context, Dict, Service, Universal, valueMap } from 'koishi'
+import { Awaitable, Context, Dict, Service, Universal, valueMap } from '@koishi-ce/koishi'
 import { DataService } from './service'
 import { SchemaProvider } from './schema'
 import { PermissionProvider } from './permission'

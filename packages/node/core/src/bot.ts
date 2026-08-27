@@ -1,4 +1,4 @@
-import { sleep } from '@koishijs/utils'
+import { sleep } from '@koishi-ce/utils'
 import { defineProperty, Dict } from 'cosmokit'
 import { Adapter, Bot, Fragment } from '@satorijs/core'
 import { Context } from './context'

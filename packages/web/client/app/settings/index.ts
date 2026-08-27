@@ -1,4 +1,4 @@
-import { Context } from '@koishijs/client'
+import { Context } from '@koishi-ce/client'
 import Settings from './settings.vue'
 import Theme from './theme.vue'
 

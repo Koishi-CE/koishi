@@ -21,7 +21,7 @@
 
 import { computed, provide } from 'vue'
 import { useWindowSize } from '@vueuse/core'
-import { Activity, useConfig, useContext, useMenu } from '@koishijs/client'
+import { Activity, useConfig, useContext, useMenu } from '@koishi-ce/client'
 import ActivityItem from './item.vue'
 import ActivitySeparator from './separator.vue'
 

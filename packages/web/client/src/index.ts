@@ -43,7 +43,7 @@ export async function build(root: string, config: vite.UserConfig = {}) {
           'vue',
           'vue-router',
           '@vueuse/core',
-          '@koishijs/client',
+          '@koishi-ce/client',
         ],
         output: {
           format: 'iife',
@@ -70,8 +70,8 @@ export async function build(root: string, config: vite.UserConfig = {}) {
     },
     resolve: {
       alias: {
-        'vue-i18n': '@koishijs/client',
-        '@koishijs/components': '@koishijs/client',
+        'vue-i18n': '@koishi-ce/client',
+        '@koishi-ce/components': '@koishi-ce/client',
       },
     },
     define: {
@@ -129,7 +129,7 @@ export async function createServer(baseDir: string, config?: vite.InlineConfig) 
       dedupe: ['vue', 'vue-demi', 'vue-router', 'element-plus', '@vueuse/core', '@popperjs/core', 'marked', 'xss'],
       alias: {
         // for backward compatibility
-        '../client.js': '@koishijs/client',
+        '../client.js': '@koishi-ce/client',
         '../vue.js': 'vue',
         '../vue-router.js': 'vue-router',
         '../vueuse.js': '@vueuse/core',
@@ -176,7 +176,7 @@ export function apply(ctx: Context) {
           continue
         }
         config = exports
-      } else if (!deps['@koishijs/client']) {
+      } else if (!deps['@koishi-ce/client']) {
         continue
       }
       await build(ctx.yakumo.cwd + path, config)

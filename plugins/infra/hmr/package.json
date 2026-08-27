@@ -1,5 +1,5 @@
 {
-  "name": "@koishijs/plugin-hmr",
+  "name": "@koishi-ce/plugin-hmr",
   "description": "Hot Module Replacement Plugin for Koishi",
   "version": "1.2.9",
   "main": "lib/index.js",
@@ -15,11 +15,11 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/koishijs/koishi.git",
-    "directory": "plugins/hmr"
+    "url": "git+https://github.com/Koishi-CE/koishi.git",
+    "directory": "plugins/infra/hmr"
   },
   "bugs": {
-    "url": "https://github.com/koishijs/koishi/issues"
+    "url": "https://github.com/Koishi-CE/koishi/issues"
   },
   "homepage": "https://koishi.chat/plugins/develop/hmr.html",
   "keywords": [
@@ -48,7 +48,7 @@
   "devDependencies": {
     "@types/babel__code-frame": "^7.0.6",
     "esbuild": "^0.27.2",
-    "koishi": "workspace:*"
+    "@koishi-ce/koishi": "workspace:*"
   },
   "dependencies": {
     "@babel/code-frame": "^7.27.1",

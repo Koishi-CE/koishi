@@ -39,7 +39,7 @@
 <script lang="ts" setup>
 
 import { onMounted, ref, computed, watch, reactive } from 'vue'
-import { store } from '@koishijs/client'
+import { store } from '@koishi-ce/client'
 import { useTooltip, getEventPoint } from './tooltip'
 import { useElementSize, useEventListener, watchThrottled } from '@vueuse/core'
 import { Node, Link } from './utils'

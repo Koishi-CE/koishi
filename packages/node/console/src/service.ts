@@ -1,4 +1,4 @@
-import { Context, Service } from 'koishi'
+import { Context, Service } from '@koishi-ce/koishi'
 import Console, { Client } from '.'
 
 export namespace DataService {

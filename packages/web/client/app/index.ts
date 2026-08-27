@@ -1,4 +1,4 @@
-import { connect, global, root } from '@koishijs/client'
+import { connect, global, root } from '@koishi-ce/client'
 import home from './home'
 import layout from './layout'
 import settings from './settings'

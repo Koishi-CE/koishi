@@ -1,6 +1,6 @@
-import { Context, router, send, Service } from '@koishijs/client'
+import { Context, router, send, Service } from '@koishi-ce/client'
 import { defineComponent, h, resolveComponent } from 'vue'
-import type {} from '@koishijs/plugin-config'
+import type {} from '@koishi-ce/plugin-config'
 import { dialogFork, plugins, type } from './components/utils'
 import Settings from './components/index.vue'
 import Forks from './components/forks.vue'
@@ -12,7 +12,7 @@ import './icons'
 
 export * from './components/utils'
 
-declare module '@koishijs/client' {
+declare module '@koishi-ce/client' {
   interface Context {
     configWriter: ConfigWriter
   }

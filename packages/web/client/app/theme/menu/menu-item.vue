@@ -12,7 +12,7 @@
 
 <script lang="ts" setup>
 
-import { MaybeGetter, MenuItem, useContext } from '@koishijs/client'
+import { MaybeGetter, MenuItem, useContext } from '@koishi-ce/client'
 import { computed } from 'vue'
 
 const props = defineProps<MenuItem & { prefix: string }>()

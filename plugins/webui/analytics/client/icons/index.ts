@@ -1,4 +1,4 @@
-import { icons } from '@koishijs/client'
+import { icons } from '@koishi-ce/client'
 import Guild from './guild.vue'
 import Heart from './heart.vue'
 import History from './history.vue'

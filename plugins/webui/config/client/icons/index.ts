@@ -1,4 +1,4 @@
-import { icons } from '@koishijs/client'
+import { icons } from '@koishi-ce/client'
 
 import AddGroup from './add-group.vue'
 import AddPlugin from './add-plugin.vue'

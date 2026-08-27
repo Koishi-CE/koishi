@@ -20,7 +20,7 @@
 <script lang="ts" setup>
 
 import { computed, PropType } from 'vue'
-import { store } from '@koishijs/client'
+import { store } from '@koishi-ce/client'
 import type { CascaderOption } from 'element-plus'
 import SchemaBase, { Schema } from 'schemastery-vue'
 

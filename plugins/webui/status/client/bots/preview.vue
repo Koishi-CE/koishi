@@ -24,8 +24,8 @@
 
 <script lang="ts" setup>
 
-import { Universal, withProxy } from '@koishijs/client'
-import type { ProfileProvider } from '@koishijs/plugin-status/src'
+import { Universal, withProxy } from '@koishi-ce/client'
+import type { ProfileProvider } from '@koishi-ce/plugin-status/src'
 import { getStatus } from './utils'
 import StatusLight from './light.vue'
 

@@ -1,6 +1,6 @@
-import { Bot, Context, Dict, Schema, Time, Universal } from 'koishi'
+import { Bot, Context, Dict, Schema, Time, Universal } from '@koishi-ce/koishi'
 import { cpus, freemem, totalmem } from 'os'
-import { DataService } from '@koishijs/console'
+import { DataService } from '@koishi-ce/console'
 import zhCN from './locales/zh-CN.yml'
 
 declare module 'koishi' {

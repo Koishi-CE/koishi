@@ -1,5 +1,5 @@
 import { camelCase, Dict, paramCase } from 'cosmokit'
-import { escapeRegExp } from '@koishijs/utils'
+import { escapeRegExp } from '@koishi-ce/utils'
 import { h } from '@satorijs/core'
 import { Command } from './command'
 import { Channel, User } from '../database'

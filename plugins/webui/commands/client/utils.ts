@@ -1,4 +1,4 @@
-import { Schema, store } from '@koishijs/client'
+import { Schema, store } from '@koishi-ce/client'
 
 export function assignSchema(schema: Schema, value: any) {
   if (['intersect', 'union'].includes(schema.type)) {

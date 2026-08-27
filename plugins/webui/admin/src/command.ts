@@ -1,4 +1,4 @@
-import { Argv, Channel, Command, Context, difference, Extend, observe, User } from 'koishi'
+import { Argv, Channel, Command, Context, difference, Extend, observe, User } from '@koishi-ce/koishi'
 
 declare module 'koishi' {
   namespace Command {

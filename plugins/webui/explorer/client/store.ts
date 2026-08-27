@@ -1,8 +1,8 @@
-import { Dict, store } from '@koishijs/client'
+import { Dict, store } from '@koishi-ce/client'
 import { Directive, reactive, ref, watch } from 'vue'
-import { Entry } from '@koishijs/plugin-explorer'
+import { Entry } from '@koishi-ce/plugin-explorer'
 
-declare module '@koishijs/client' {
+declare module '@koishi-ce/client' {
   interface ActionContext {
     'explorer.tree': TreeEntry
   }

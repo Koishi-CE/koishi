@@ -1,4 +1,4 @@
-import { coerce, Context, Logger, Random, Universal } from 'koishi'
+import { coerce, Context, Logger, Random, Universal } from '@koishi-ce/koishi'
 import { DataService } from './service'
 import { IncomingMessage } from 'http'
 

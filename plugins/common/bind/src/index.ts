@@ -1,4 +1,4 @@
-import { Context, Dict, Random, Schema, Session, Time } from 'koishi'
+import { Context, Dict, Random, Schema, Session, Time } from '@koishi-ce/koishi'
 import zhCN from './locales/zh-CN.yml'
 import enUS from './locales/en-US.yml'
 

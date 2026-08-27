@@ -37,10 +37,10 @@
 
 <script lang="ts" setup>
 
-import { global, send, store } from '@koishijs/client'
+import { global, send, store } from '@koishi-ce/client'
 import { computed, inject, ComputedRef } from 'vue'
 import { hasUpdate } from '../utils'
-import type {} from '@koishijs/plugin-config'
+import type {} from '@koishi-ce/plugin-config'
 
 const name = inject<ComputedRef<string>>('plugin:name')
 

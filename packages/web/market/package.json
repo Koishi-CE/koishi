@@ -1,5 +1,5 @@
 {
-  "name": "@koishijs/market",
+  "name": "@koishi-ce/market",
   "description": "Market UI for Koishi",
   "version": "4.2.10",
   "main": "client/index.ts",
@@ -10,11 +10,11 @@
   "license": "AGPL-3.0",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/koishijs/webui.git",
-    "directory": "packages/market"
+    "url": "git+https://github.com/Koishi-CE/koishi.git",
+    "directory": "packages/web/market"
   },
   "bugs": {
-    "url": "https://github.com/koishijs/webui/issues"
+    "url": "https://github.com/Koishi-CE/koishi/issues"
   },
   "homepage": "https://koishi.chat",
   "keywords": [
@@ -27,7 +27,7 @@
     "utilities"
   ],
   "devDependencies": {
-    "@koishijs/registry": "workspace:*",
+    "@koishi-ce/registry": "workspace:*",
     "@types/spark-md5": "^3.0.4"
   },
   "peerDependencies": {
@@ -35,7 +35,7 @@
     "vue-i18n": "^9"
   },
   "dependencies": {
-    "@koishijs/components": "workspace:*",
+    "@koishi-ce/components": "workspace:*",
     "cosmokit": "^1.8.1",
     "spark-md5": "^3.0.2"
   }

@@ -1,4 +1,4 @@
-import { Context } from 'koishi'
+import { Context } from '@koishi-ce/koishi'
 import { DataService } from './service'
 
 export class PermissionProvider extends DataService<string[]> {

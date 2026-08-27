@@ -46,7 +46,7 @@
 
 import { computed, ref, useSlots } from 'vue'
 import { useRoute } from 'vue-router'
-import { LegacyMenuItem, useContext } from '@koishijs/client'
+import { LegacyMenuItem, useContext } from '@koishi-ce/client'
 import LayoutHeader from './header.vue'
 import LayoutMenuItem from './menu-item.vue'
 

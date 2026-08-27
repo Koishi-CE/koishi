@@ -1,4 +1,4 @@
-import { Context, Schema } from 'koishi'
+import { Context, Schema } from '@koishi-ce/koishi'
 import MarketProvider from './market'
 
 export * from './market'

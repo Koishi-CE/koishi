@@ -42,7 +42,7 @@
 <script setup lang="ts">
 
 import { computed } from 'vue'
-import { store, send, router } from '@koishijs/client'
+import { store, send, router } from '@koishi-ce/client'
 import { dialogFork, plugins, getStatus, removeItem, Tree } from './utils'
 
 const shortname = computed(() => dialogFork.value?.replace(/(koishi-|^@koishijs\/)plugin-/, ''))

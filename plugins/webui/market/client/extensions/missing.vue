@@ -13,7 +13,7 @@
 
 import { computed, inject, WritableComputedRef } from 'vue'
 import { useRouter } from 'vue-router'
-import { store } from '@koishijs/client'
+import { store } from '@koishi-ce/client'
 import { active } from '../utils'
 
 const router = useRouter()
@@ -24,7 +24,7 @@ const fullname = computed(() => {
   const { name } = current.value
   const candidates = name.startsWith('@')
     ? [name.replace(/\//, '/koishi-plugin-')]
-    : [`@koishijs/plugin-${name}`, `koishi-plugin-${name}`]
+    : [`@koishi-ce/plugin-${name}`, `@koishijs/plugin-${name}`, `koishi-plugin-${name}`]
   return candidates.find(name => name in store.market.data)
 })
 

@@ -42,7 +42,7 @@
 <script lang="ts" setup>
 
 import { computed, ref } from 'vue'
-import { store, useContext, useConfig } from '@koishijs/client'
+import { store, useContext, useConfig } from '@koishi-ce/client'
 import { showConfirm, install } from './utils'
 
 const ctx = useContext()

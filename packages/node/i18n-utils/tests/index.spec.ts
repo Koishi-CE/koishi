@@ -1,7 +1,7 @@
 import { expect } from 'chai'
 import { LocaleTree, fallback } from '../src'
 
-describe('@koishijs/i18n-utils', () => {
+describe('@koishi-ce/i18n-utils', () => {
   it('locale tree', () => {
     expect(LocaleTree.from(['zh-CN', 'zh-TW', 'en-US', 'en-GB'])).to.deep.equal({
       'zh': { 'zh-CN': {}, 'zh-TW': {} },

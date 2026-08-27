@@ -1,5 +1,5 @@
 {
-  "name": "@koishijs/plugin-insight",
+  "name": "@koishi-ce/plugin-insight",
   "description": "Show plugin dependency graph for Koishi",
   "version": "3.5.2",
   "main": "lib/index.cjs",
@@ -24,11 +24,11 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/koishijs/webui.git",
-    "directory": "plugins/insight"
+    "url": "git+https://github.com/Koishi-CE/koishi.git",
+    "directory": "plugins/webui/insight"
   },
   "bugs": {
-    "url": "https://github.com/koishijs/webui/issues"
+    "url": "https://github.com/Koishi-CE/koishi/issues"
   },
   "homepage": "https://koishi.chat/plugins/console/insight.html",
   "keywords": [
@@ -57,13 +57,13 @@
     "koishi": "^4.18.11"
   },
   "devDependencies": {
-    "@koishijs/client": "workspace:*",
-    "@koishijs/plugin-console": "workspace:*",
+    "@koishi-ce/client": "workspace:*",
+    "@koishi-ce/plugin-console": "workspace:*",
     "@types/d3-force": "^3.0.9",
     "d3-force": "^3.0.0",
-    "koishi": "workspace:*"
+    "@koishi-ce/koishi": "workspace:*"
   },
   "dependencies": {
-    "@koishijs/console": "workspace:*"
+    "@koishi-ce/console": "workspace:*"
   }
 }

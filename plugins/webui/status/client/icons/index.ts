@@ -1,4 +1,4 @@
-import { icons } from '@koishijs/client'
+import { icons } from '@koishi-ce/client'
 import ArrowUp from './arrow-up.vue'
 import ArrowDown from './arrow-down.vue'
 import Platform from './platform.vue'

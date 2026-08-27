@@ -1,11 +1,11 @@
-import { Context, Dict, Logger, Schema, Time } from '@koishijs/core'
-import Loader from '@koishijs/loader'
+import { Context, Dict, Logger, Schema, Time } from '@koishi-ce/core'
+import Loader from '@koishi-ce/loader'
 import * as daemon from './daemon'
 import * as logger from './logger'
 
-export * from 'koishi'
+export * from '@koishi-ce/koishi'
 
-declare module '@koishijs/core' {
+declare module '@koishi-ce/core' {
   namespace Context {
     interface Config {
       plugins?: Dict

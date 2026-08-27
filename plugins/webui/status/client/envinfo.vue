@@ -14,7 +14,7 @@
 
 <script lang="ts" setup>
 
-import { capitalize, message, store } from '@koishijs/client'
+import { capitalize, message, store } from '@koishi-ce/client'
 import { copyToClipboard } from './utils'
 
 async function copyInfo() {

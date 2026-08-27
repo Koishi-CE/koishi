@@ -1,4 +1,4 @@
-import { Context, Dict, Plugin } from 'koishi'
+import { Context, Dict, Plugin } from '@koishi-ce/koishi'
 import { Loader } from '../src'
 import { mock as jest } from 'node:test'
 

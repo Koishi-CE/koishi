@@ -1,4 +1,4 @@
-import { Context, deepEqual, icons, message, pick, router, Schema, send, store, useConfig } from '@koishijs/client'
+import { Context, deepEqual, icons, message, pick, router, Schema, send, store, useConfig } from '@koishi-ce/client'
 import { defineComponent, h, resolveComponent, watch } from 'vue'
 import { shared, showLoginDialog, showSyncDialog } from './utils'
 import Login from './login.vue'

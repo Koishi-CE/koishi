@@ -1,5 +1,5 @@
 {
-  "name": "@koishijs/plugin-logger",
+  "name": "@koishi-ce/plugin-logger",
   "description": "Dump log files for Koishi",
   "version": "2.6.9",
   "main": "lib/index.js",
@@ -16,11 +16,11 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/koishijs/webui.git",
-    "directory": "plugins/logger"
+    "url": "git+https://github.com/Koishi-CE/koishi.git",
+    "directory": "plugins/webui/logger"
   },
   "bugs": {
-    "url": "https://github.com/koishijs/webui/issues"
+    "url": "https://github.com/Koishi-CE/koishi/issues"
   },
   "homepage": "https://koishi.chat/plugins/console/logger.html",
   "keywords": [
@@ -54,12 +54,12 @@
     }
   },
   "devDependencies": {
-    "@koishijs/client": "workspace:*",
+    "@koishi-ce/client": "workspace:*",
     "ansi_up": "^5.2.1",
-    "koishi": "workspace:*",
+    "@koishi-ce/koishi": "workspace:*",
     "reggol": "^1.7.1"
   },
   "dependencies": {
-    "@koishijs/console": "workspace:*"
+    "@koishi-ce/console": "workspace:*"
   }
 }

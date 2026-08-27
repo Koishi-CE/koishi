@@ -1,8 +1,8 @@
-import { coerce, Context, Dict, ForkScope, Logger, MainScope, makeArray, Plugin, Schema } from 'koishi'
+import { coerce, Context, Dict, ForkScope, Logger, MainScope, makeArray, Plugin, Schema } from '@koishi-ce/koishi'
 import { FSWatcher, watch, WatchOptions } from 'chokidar'
 import { relative, resolve } from 'path'
 import { createRequire } from 'module'
-import { Loader, unwrapExports } from '@koishijs/loader'
+import { Loader, unwrapExports } from '@koishi-ce/loader'
 import { handleError } from './error'
 
 declare module 'koishi' {
@@ -42,7 +42,7 @@ class Watcher {
 
   private base: string
   private watcher: FSWatcher
-  private require = createRequire(require.resolve('@koishijs/loader/package.json'))
+  private require = createRequire(require.resolve('@koishi-ce/loader/package.json'))
 
   /**
    * changes from externals E will always trigger a full reload

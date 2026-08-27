@@ -1,5 +1,5 @@
-import { Context, message } from '@koishijs/client'
-import {} from '@koishijs/plugin-notifier/src'
+import { Context, message } from '@koishi-ce/client'
+import {} from '@koishi-ce/plugin-notifier/src'
 import Config from './config.vue'
 
 import 'virtual:uno.css'
@@ -9,7 +9,7 @@ interface NotifierMessage {
   type: 'success' | 'warning' | 'error' | 'primary'
 }
 
-declare module '@koishijs/client' {
+declare module '@koishi-ce/client' {
   interface Events<C> {
     'notifier/message'(this: C, payload: NotifierMessage): void
   }

@@ -25,9 +25,9 @@
 
 <script lang="ts" setup>
 
-import { Dict, store } from '@koishijs/client'
+import { Dict, store } from '@koishi-ce/client'
 import { computed, inject, ComputedRef } from 'vue'
-import { EnvInfo } from '@koishijs/plugin-config/client'
+import { EnvInfo } from '@koishi-ce/plugin-config/client'
 import KDepLink from './dep-link.vue'
 
 const env = inject<ComputedRef<EnvInfo>>('plugin:env')

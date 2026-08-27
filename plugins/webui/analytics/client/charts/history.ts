@@ -1,4 +1,4 @@
-import { Context } from '@koishijs/client'
+import { Context } from '@koishi-ce/client'
 import { createChart, Tooltip } from './utils'
 
 const week = '日一二三四五六'

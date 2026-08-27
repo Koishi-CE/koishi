@@ -1,6 +1,6 @@
 import { App } from 'vue'
 import Markdown from 'marked-vue'
-import components, { SchemaBase } from '@koishijs/components'
+import components, { SchemaBase } from '@koishi-ce/components'
 import Element, { ElLoading, ElMessage, ElMessageBox } from 'element-plus'
 
 import { store } from '../data'
@@ -25,7 +25,7 @@ export * from './link'
 export * from './slot'
 
 export * from 'vue-i18n'
-export * from '@koishijs/components'
+export * from '@koishi-ce/components'
 
 export { icons, ChatImage }
 

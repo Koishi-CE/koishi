@@ -1,4 +1,4 @@
-import { Context, router, useConfig } from '@koishijs/client'
+import { Context, router, useConfig } from '@koishi-ce/client'
 import App from './index.vue'
 
 export default function (ctx: Context) {

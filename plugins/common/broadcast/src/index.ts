@@ -1,4 +1,4 @@
-import { Channel, Context, Schema } from 'koishi'
+import { Channel, Context, Schema } from '@koishi-ce/koishi'
 import zhCN from './locales/zh-CN.yml'
 
 export interface Config {}

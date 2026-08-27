@@ -11,7 +11,7 @@ Snapshot started from:
 
 | This repo | Upstream |
 | --- | --- |
-| `packages/node/cli` | koishi `packages/koishi` (npm package name stays `koishi`) |
+| `packages/node/cli` | koishi `packages/koishi` (renamed to `@koishi-ce/koishi`) |
 | `packages/node/{core,loader,utils,i18n-utils}` | koishi `packages/*` (unchanged) |
 | `packages/node/console` | webui `packages/console` |
 | `packages/web/{client,components,market}` | webui `packages/*` |
@@ -24,7 +24,7 @@ Snapshot started from:
 | `LICENSES/webui-AGPL-3.0` | webui `LICENSE` |
 | root `package.json`, `tsconfig.json`, `yakumo.yml` | rewritten (merged from both repo roots) |
 
-Local regrouping (upstream packages are flat `packages/*` / `plugins/*`): `packages/node` and `packages/web` split by runtime, `plugins/{common,infra,webui}` split by origin/role. npm package names are unchanged, so sync by mapping the upstream package name to its directory here via the table above.
+Local regrouping (upstream packages are flat `packages/*` / `plugins/*`): `packages/node` and `packages/web` split by runtime, `plugins/{common,infra,webui}` split by origin/role. Upstream package names map here to the `@koishi-ce` scope (`@koishijs/X` → `@koishi-ce/X`, `koishi` → `@koishi-ce/koishi`); dependencies on packages outside this monorepo keep their upstream names, and `peerDependencies` still target the published upstream runtime. Sync by mapping the upstream package name to its directory here via the table above.
 
 Everything else at the repo root (README, NOTICE, biome.json, ...) is new.
 

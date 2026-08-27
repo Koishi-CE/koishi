@@ -114,7 +114,7 @@
 <script lang="ts" setup>
 
 import { computed, ref, watch, reactive } from 'vue'
-import { Dict, global, send, store, useContext, useConfig } from '@koishijs/client'
+import { Dict, global, send, store, useContext, useConfig } from '@koishi-ce/client'
 import { analyzeVersions, install, PeerInfo, ResultType } from './utils'
 import { active } from '../utils'
 import { parse } from 'semver'

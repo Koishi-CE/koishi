@@ -1,7 +1,7 @@
 // @ts-ignore
 import { version } from '../package.json'
 
-export * from '@koishijs/utils'
+export * from '@koishi-ce/utils'
 export * from 'minato'
 export * from './context'
 export * from './database'

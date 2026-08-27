@@ -3,12 +3,12 @@
   "configVersion": 1,
   "workspaces": {
     "": {
-      "name": "koishi-bun",
+      "name": "koishi",
       "devDependencies": {
         "@biomejs/biome": "^2.0.0",
+        "@koishi-ce/plugin-help": "workspace:*",
+        "@koishi-ce/plugin-mock": "workspace:*",
         "@koishijs/plugin-database-memory": "^3.7.0",
-        "@koishijs/plugin-help": "workspace:*",
-        "@koishijs/plugin-mock": "workspace:*",
         "@sinonjs/fake-timers": "^6.0.1",
         "@types/mocha": "^9.1.1",
         "@types/node": "^25.0.9",
@@ -19,7 +19,7 @@
       },
     },
     "apps/online": {
-      "name": "@koishijs/online",
+      "name": "@koishi-ce/online",
       "version": "1.0.0",
       "devDependencies": {
         "@cordiverse/dns": "^1.0.1",
@@ -27,12 +27,12 @@
         "@cordiverse/os": "^1.0.2",
         "@cordiverse/path": "^1.0.0",
         "@cordiverse/url": "^1.0.3",
-        "@koishijs/client": "workspace:*",
-        "@koishijs/loader": "workspace:*",
+        "@koishi-ce/client": "workspace:*",
+        "@koishi-ce/loader": "workspace:*",
       },
     },
     "apps/registry": {
-      "name": "@koishijs/registry",
+      "name": "@koishi-ce/registry",
       "version": "7.0.3",
       "dependencies": {
         "cosmokit": "^1.8.1",
@@ -43,99 +43,35 @@
         "@types/semver": "^7.5.8",
       },
     },
-    "packages/cli": {
-      "name": "koishi",
-      "version": "4.18.11",
-      "bin": "bin.js",
-      "dependencies": {
-        "@koishijs/core": "workspace:*",
-        "@koishijs/loader": "workspace:*",
-        "@koishijs/plugin-http": "workspace:*",
-        "@koishijs/plugin-proxy-agent": "workspace:*",
-        "@koishijs/plugin-server": "workspace:*",
-        "@koishijs/utils": "workspace:*",
-        "@satorijs/core": "^4.6.0",
-        "cac": "^6.7.14",
-        "kleur": "^4.1.5",
-      },
-    },
-    "packages/core": {
-      "name": "@koishijs/core",
-      "version": "4.18.11",
-      "dependencies": {
-        "@koishijs/i18n-utils": "workspace:*",
-        "@koishijs/utils": "workspace:*",
-        "@satorijs/core": "^4.6.0",
-        "cordis": "^3.18.1",
-        "cosmokit": "^1.8.1",
-        "fastest-levenshtein": "^1.0.16",
-        "minato": "^3.7.0",
-      },
-      "devDependencies": {
-        "@koishijs/plugin-mock": "workspace:*",
-        "@minatojs/driver-memory": "^3.7.0",
-        "@types/chai": "^4.3.16",
-        "@types/chai-as-promised": "^7.1.8",
-        "chai": "^5.1.1",
-        "chai-as-promised": "^7.1.1",
-        "chai-shape": "^1.1.0",
-        "koishi": "workspace:*",
-      },
-    },
-    "packages/i18n-utils": {
-      "name": "@koishijs/i18n-utils",
-      "version": "1.0.1",
-      "dependencies": {
-        "cosmokit": "^1.8.1",
-      },
-    },
-    "packages/loader": {
-      "name": "@koishijs/loader",
-      "version": "4.6.11",
-      "dependencies": {
-        "dotenv": "^16.4.5",
-        "js-yaml": "^4.1.0",
-        "ns-require": "^1.1.4",
-      },
-      "devDependencies": {
-        "@koishijs/core": "workspace:*",
-        "@koishijs/plugin-mock": "workspace:*",
-        "@types/js-yaml": "^4.0.9",
-        "koishi": "workspace:*",
-      },
-      "peerDependencies": {
-        "@koishijs/core": "4.18.11",
-      },
-    },
     "packages/node/cli": {
-      "name": "koishi",
+      "name": "@koishi-ce/koishi",
       "version": "4.18.11",
       "bin": "bin.js",
       "dependencies": {
-        "@koishijs/core": "workspace:*",
-        "@koishijs/loader": "workspace:*",
-        "@koishijs/plugin-http": "workspace:*",
-        "@koishijs/plugin-proxy-agent": "workspace:*",
-        "@koishijs/plugin-server": "workspace:*",
-        "@koishijs/utils": "workspace:*",
+        "@koishi-ce/core": "workspace:*",
+        "@koishi-ce/loader": "workspace:*",
+        "@koishi-ce/plugin-http": "workspace:*",
+        "@koishi-ce/plugin-proxy-agent": "workspace:*",
+        "@koishi-ce/plugin-server": "workspace:*",
+        "@koishi-ce/utils": "workspace:*",
         "@satorijs/core": "^4.6.0",
         "cac": "^6.7.14",
         "kleur": "^4.1.5",
       },
     },
     "packages/node/console": {
-      "name": "@koishijs/console",
+      "name": "@koishi-ce/console",
       "version": "5.30.11",
       "peerDependencies": {
         "koishi": "^4.18.11",
       },
     },
     "packages/node/core": {
-      "name": "@koishijs/core",
+      "name": "@koishi-ce/core",
       "version": "4.18.11",
       "dependencies": {
-        "@koishijs/i18n-utils": "workspace:*",
-        "@koishijs/utils": "workspace:*",
+        "@koishi-ce/i18n-utils": "workspace:*",
+        "@koishi-ce/utils": "workspace:*",
         "@satorijs/core": "^4.6.0",
         "cordis": "^3.18.1",
         "cosmokit": "^1.8.1",
@@ -143,25 +79,25 @@
         "minato": "^3.7.0",
       },
       "devDependencies": {
-        "@koishijs/plugin-mock": "workspace:*",
+        "@koishi-ce/koishi": "workspace:*",
+        "@koishi-ce/plugin-mock": "workspace:*",
         "@minatojs/driver-memory": "^3.7.0",
         "@types/chai": "^4.3.16",
         "@types/chai-as-promised": "^7.1.8",
         "chai": "^5.1.1",
         "chai-as-promised": "^7.1.1",
         "chai-shape": "^1.1.0",
-        "koishi": "workspace:*",
       },
     },
     "packages/node/i18n-utils": {
-      "name": "@koishijs/i18n-utils",
+      "name": "@koishi-ce/i18n-utils",
       "version": "1.0.1",
       "dependencies": {
         "cosmokit": "^1.8.1",
       },
     },
     "packages/node/loader": {
-      "name": "@koishijs/loader",
+      "name": "@koishi-ce/loader",
       "version": "4.6.11",
       "dependencies": {
         "dotenv": "^16.4.5",
@@ -169,47 +105,35 @@
         "ns-require": "^1.1.4",
       },
       "devDependencies": {
-        "@koishijs/core": "workspace:*",
-        "@koishijs/plugin-mock": "workspace:*",
+        "@koishi-ce/core": "workspace:*",
+        "@koishi-ce/koishi": "workspace:*",
+        "@koishi-ce/plugin-mock": "workspace:*",
         "@types/js-yaml": "^4.0.9",
-        "koishi": "workspace:*",
       },
       "peerDependencies": {
         "@koishijs/core": "4.18.11",
       },
     },
     "packages/node/utils": {
-      "name": "@koishijs/utils",
+      "name": "@koishi-ce/utils",
       "version": "7.2.1",
       "dependencies": {
         "cosmokit": "^1.8.1",
         "inaba": "^1.1.1",
       },
       "devDependencies": {
+        "@koishi-ce/koishi": "workspace:*",
         "@sinonjs/fake-timers": "^6.0.1",
-        "koishi": "workspace:*",
-      },
-    },
-    "packages/utils": {
-      "name": "@koishijs/utils",
-      "version": "7.2.1",
-      "dependencies": {
-        "cosmokit": "^1.8.1",
-        "inaba": "^1.1.1",
-      },
-      "devDependencies": {
-        "@sinonjs/fake-timers": "^6.0.1",
-        "koishi": "workspace:*",
       },
     },
     "packages/web/client": {
-      "name": "@koishijs/client",
+      "name": "@koishi-ce/client",
       "version": "5.30.11",
       "bin": {
         "koishi-console": "bin.js",
       },
       "dependencies": {
-        "@koishijs/components": "workspace:*",
+        "@koishi-ce/components": "workspace:*",
         "@maikolib/vite-plugin-yaml": "^1.0.1",
         "@satorijs/protocol": "^1.7.0",
         "@vitejs/plugin-vue": "^5.1.4",
@@ -229,7 +153,7 @@
       },
     },
     "packages/web/components": {
-      "name": "@koishijs/components",
+      "name": "@koishi-ce/components",
       "version": "1.5.22",
       "dependencies": {
         "@satorijs/element": "^3.2.0",
@@ -241,15 +165,15 @@
       },
     },
     "packages/web/market": {
-      "name": "@koishijs/market",
+      "name": "@koishi-ce/market",
       "version": "4.2.10",
       "dependencies": {
-        "@koishijs/components": "workspace:*",
+        "@koishi-ce/components": "workspace:*",
         "cosmokit": "^1.8.1",
         "spark-md5": "^3.0.2",
       },
       "devDependencies": {
-        "@koishijs/registry": "workspace:*",
+        "@koishi-ce/registry": "workspace:*",
         "@types/spark-md5": "^3.0.4",
       },
       "peerDependencies": {
@@ -258,12 +182,12 @@
       },
     },
     "plugins/common/bind": {
-      "name": "@koishijs/plugin-bind",
+      "name": "@koishi-ce/plugin-bind",
       "version": "1.5.1",
       "devDependencies": {
-        "@koishijs/plugin-mock": "workspace:*",
+        "@koishi-ce/koishi": "workspace:*",
+        "@koishi-ce/plugin-mock": "workspace:*",
         "@minatojs/driver-memory": "^3.7.0",
-        "koishi": "workspace:*",
         "minato": "^3.7.0",
       },
       "peerDependencies": {
@@ -271,12 +195,12 @@
       },
     },
     "plugins/common/broadcast": {
-      "name": "@koishijs/plugin-broadcast",
+      "name": "@koishi-ce/plugin-broadcast",
       "version": "1.1.4",
       "devDependencies": {
-        "@koishijs/plugin-mock": "workspace:*",
+        "@koishi-ce/koishi": "workspace:*",
+        "@koishi-ce/plugin-mock": "workspace:*",
         "@minatojs/driver-memory": "^3.7.0",
-        "koishi": "workspace:*",
         "minato": "^3.7.0",
       },
       "peerDependencies": {
@@ -284,34 +208,34 @@
       },
     },
     "plugins/common/callme": {
-      "name": "@koishijs/plugin-callme",
+      "name": "@koishi-ce/plugin-callme",
       "version": "1.3.4",
       "devDependencies": {
-        "@koishijs/plugin-mock": "workspace:*",
-        "koishi": "workspace:*",
+        "@koishi-ce/koishi": "workspace:*",
+        "@koishi-ce/plugin-mock": "workspace:*",
       },
       "peerDependencies": {
         "koishi": "^4.18.11",
       },
     },
     "plugins/common/echo": {
-      "name": "@koishijs/plugin-echo",
+      "name": "@koishi-ce/plugin-echo",
       "version": "2.2.5",
       "devDependencies": {
-        "@koishijs/plugin-mock": "workspace:*",
-        "koishi": "workspace:*",
+        "@koishi-ce/koishi": "workspace:*",
+        "@koishi-ce/plugin-mock": "workspace:*",
       },
       "peerDependencies": {
         "koishi": "^4.18.11",
       },
     },
     "plugins/common/help": {
-      "name": "@koishijs/plugin-help",
+      "name": "@koishi-ce/plugin-help",
       "version": "2.4.6",
       "devDependencies": {
-        "@koishijs/plugin-mock": "workspace:*",
+        "@koishi-ce/koishi": "workspace:*",
+        "@koishi-ce/plugin-mock": "workspace:*",
         "@minatojs/driver-memory": "^3.7.0",
-        "koishi": "workspace:*",
         "minato": "^3.7.0",
       },
       "peerDependencies": {
@@ -319,40 +243,27 @@
       },
     },
     "plugins/common/inspect": {
-      "name": "@koishijs/plugin-inspect",
+      "name": "@koishi-ce/plugin-inspect",
       "version": "1.1.7",
       "devDependencies": {
-        "@koishijs/plugin-mock": "workspace:*",
-        "koishi": "workspace:*",
-      },
-      "peerDependencies": {
-        "koishi": "^4.18.11",
-      },
-    },
-    "plugins/http": {
-      "name": "@koishijs/plugin-http",
-      "version": "0.6.3",
-      "dependencies": {
-        "@cordisjs/plugin-http": "^0.6.3",
-      },
-      "devDependencies": {
-        "koishi": "workspace:*",
+        "@koishi-ce/koishi": "workspace:*",
+        "@koishi-ce/plugin-mock": "workspace:*",
       },
       "peerDependencies": {
         "koishi": "^4.18.11",
       },
     },
     "plugins/infra/hmr": {
-      "name": "@koishijs/plugin-hmr",
+      "name": "@koishi-ce/plugin-hmr",
       "version": "1.2.9",
       "dependencies": {
         "@babel/code-frame": "^7.27.1",
         "chokidar": "^3.6.0",
       },
       "devDependencies": {
+        "@koishi-ce/koishi": "workspace:*",
         "@types/babel__code-frame": "^7.0.6",
         "esbuild": "^0.27.2",
-        "koishi": "workspace:*",
       },
       "peerDependencies": {
         "@koishijs/loader": "^4.6.11",
@@ -360,104 +271,65 @@
       },
     },
     "plugins/infra/http": {
-      "name": "@koishijs/plugin-http",
+      "name": "@koishi-ce/plugin-http",
       "version": "0.6.3",
       "dependencies": {
         "@cordisjs/plugin-http": "^0.6.3",
       },
       "devDependencies": {
-        "koishi": "workspace:*",
+        "@koishi-ce/koishi": "workspace:*",
       },
       "peerDependencies": {
         "koishi": "^4.18.11",
       },
     },
     "plugins/infra/mock": {
-      "name": "@koishijs/plugin-mock",
+      "name": "@koishi-ce/plugin-mock",
       "version": "2.6.6",
       "devDependencies": {
-        "@koishijs/plugin-server": "workspace:*",
-        "koishi": "workspace:*",
+        "@koishi-ce/koishi": "workspace:*",
+        "@koishi-ce/plugin-server": "workspace:*",
       },
       "peerDependencies": {
         "koishi": "^4.18.11",
       },
     },
     "plugins/infra/proxy-agent": {
-      "name": "@koishijs/plugin-proxy-agent",
+      "name": "@koishi-ce/plugin-proxy-agent",
       "version": "0.3.3",
       "dependencies": {
         "@cordisjs/plugin-proxy-agent": "^0.3.3",
       },
       "devDependencies": {
+        "@koishi-ce/koishi": "workspace:*",
         "cordis": "^3.18.1",
-        "koishi": "workspace:*",
       },
       "peerDependencies": {
         "koishi": "^4.18.11",
       },
     },
     "plugins/infra/server": {
-      "name": "@koishijs/plugin-server",
+      "name": "@koishi-ce/plugin-server",
       "version": "3.2.9",
       "dependencies": {
         "@cordisjs/plugin-server": "^0.2.9",
       },
       "devDependencies": {
+        "@koishi-ce/koishi": "workspace:*",
         "cordis": "^3.18.1",
-        "koishi": "workspace:*",
-      },
-      "peerDependencies": {
-        "koishi": "^4.18.11",
-      },
-    },
-    "plugins/mock": {
-      "name": "@koishijs/plugin-mock",
-      "version": "2.6.6",
-      "devDependencies": {
-        "@koishijs/plugin-server": "workspace:*",
-        "koishi": "workspace:*",
-      },
-      "peerDependencies": {
-        "koishi": "^4.18.11",
-      },
-    },
-    "plugins/proxy-agent": {
-      "name": "@koishijs/plugin-proxy-agent",
-      "version": "0.3.3",
-      "dependencies": {
-        "@cordisjs/plugin-proxy-agent": "^0.3.3",
-      },
-      "devDependencies": {
-        "cordis": "^3.18.1",
-        "koishi": "workspace:*",
-      },
-      "peerDependencies": {
-        "koishi": "^4.18.11",
-      },
-    },
-    "plugins/server": {
-      "name": "@koishijs/plugin-server",
-      "version": "3.2.9",
-      "dependencies": {
-        "@cordisjs/plugin-server": "^0.2.9",
-      },
-      "devDependencies": {
-        "cordis": "^3.18.1",
-        "koishi": "workspace:*",
       },
       "peerDependencies": {
         "koishi": "^4.18.11",
       },
     },
     "plugins/webui/actions": {
-      "name": "@koishijs/plugin-actions",
+      "name": "@koishi-ce/plugin-actions",
       "version": "0.0.2",
       "dependencies": {
-        "@koishijs/console": "workspace:*",
+        "@koishi-ce/console": "workspace:*",
       },
       "devDependencies": {
-        "@koishijs/client": "workspace:*",
+        "@koishi-ce/client": "workspace:*",
       },
       "peerDependencies": {
         "@koishijs/plugin-console": "^5.30.11",
@@ -465,16 +337,16 @@
       },
     },
     "plugins/webui/admin": {
-      "name": "@koishijs/plugin-admin",
+      "name": "@koishi-ce/plugin-admin",
       "version": "2.0.0",
       "dependencies": {
         "throttle-debounce": "^3.0.1",
       },
       "devDependencies": {
-        "@koishijs/client": "workspace:*",
-        "@koishijs/plugin-console": "workspace:*",
-        "@koishijs/plugin-locales": "workspace:*",
-        "@koishijs/plugin-mock": "workspace:*",
+        "@koishi-ce/client": "workspace:*",
+        "@koishi-ce/plugin-console": "workspace:*",
+        "@koishi-ce/plugin-locales": "workspace:*",
+        "@koishi-ce/plugin-mock": "workspace:*",
         "@types/chai": "^4.3.16",
         "@types/chai-as-promised": "^7.1.8",
         "@types/throttle-debounce": "^2.1.0",
@@ -490,16 +362,16 @@
       ],
     },
     "plugins/webui/analytics": {
-      "name": "@koishijs/plugin-analytics",
+      "name": "@koishi-ce/plugin-analytics",
       "version": "2.0.6",
       "dependencies": {
-        "@koishijs/console": "workspace:*",
+        "@koishi-ce/console": "workspace:*",
       },
       "devDependencies": {
+        "@koishi-ce/client": "workspace:*",
+        "@koishi-ce/koishi": "workspace:*",
         "@koishijs/assets": "^1.1.2",
-        "@koishijs/client": "workspace:*",
         "echarts": "^5.5.0",
-        "koishi": "workspace:*",
         "vue-echarts": "^6.6.9",
       },
       "peerDependencies": {
@@ -508,13 +380,13 @@
       },
     },
     "plugins/webui/auth": {
-      "name": "@koishijs/plugin-auth",
+      "name": "@koishi-ce/plugin-auth",
       "version": "4.1.7",
       "dependencies": {
-        "@koishijs/console": "workspace:*",
+        "@koishi-ce/console": "workspace:*",
       },
       "devDependencies": {
-        "@koishijs/client": "workspace:*",
+        "@koishi-ce/client": "workspace:*",
       },
       "peerDependencies": {
         "@koishijs/plugin-console": "^5.30.11",
@@ -522,19 +394,19 @@
       },
     },
     "plugins/webui/commands": {
-      "name": "@koishijs/plugin-commands",
+      "name": "@koishi-ce/plugin-commands",
       "version": "3.5.5",
       "dependencies": {
-        "@koishijs/console": "workspace:*",
+        "@koishi-ce/console": "workspace:*",
       },
       "devDependencies": {
-        "@koishijs/client": "workspace:*",
-        "@koishijs/plugin-config": "workspace:*",
-        "@koishijs/plugin-console": "workspace:*",
-        "@koishijs/plugin-help": "workspace:*",
-        "@koishijs/plugin-locales": "workspace:*",
-        "@koishijs/plugin-mock": "workspace:*",
-        "koishi": "workspace:*",
+        "@koishi-ce/client": "workspace:*",
+        "@koishi-ce/koishi": "workspace:*",
+        "@koishi-ce/plugin-config": "workspace:*",
+        "@koishi-ce/plugin-console": "workspace:*",
+        "@koishi-ce/plugin-help": "workspace:*",
+        "@koishi-ce/plugin-locales": "workspace:*",
+        "@koishi-ce/plugin-mock": "workspace:*",
       },
       "peerDependencies": {
         "@koishijs/plugin-console": "^5.30.11",
@@ -545,15 +417,15 @@
       ],
     },
     "plugins/webui/config": {
-      "name": "@koishijs/plugin-config",
+      "name": "@koishi-ce/plugin-config",
       "version": "2.8.6",
       "dependencies": {
-        "@koishijs/console": "workspace:*",
-        "@koishijs/registry": "workspace:*",
+        "@koishi-ce/console": "workspace:*",
+        "@koishi-ce/registry": "workspace:*",
       },
       "devDependencies": {
-        "@koishijs/client": "workspace:*",
-        "@koishijs/plugin-hmr": "workspace:*",
+        "@koishi-ce/client": "workspace:*",
+        "@koishi-ce/plugin-hmr": "workspace:*",
       },
       "peerDependencies": {
         "@koishijs/loader": "^4.6.11",
@@ -562,18 +434,18 @@
       },
     },
     "plugins/webui/console": {
-      "name": "@koishijs/plugin-console",
+      "name": "@koishi-ce/plugin-console",
       "version": "5.30.11",
       "dependencies": {
-        "@koishijs/console": "workspace:*",
+        "@koishi-ce/console": "workspace:*",
         "open": "^8.4.2",
         "uuid": "^8.3.2",
         "ws": "^8.16.0",
       },
       "devDependencies": {
-        "@koishijs/client": "workspace:*",
-        "@koishijs/loader": "workspace:*",
-        "@koishijs/plugin-server": "workspace:*",
+        "@koishi-ce/client": "workspace:*",
+        "@koishi-ce/loader": "workspace:*",
+        "@koishi-ce/plugin-server": "workspace:*",
         "@koishijs/plugin-server-proxy": "^1.2.0",
         "@maikolib/vite-plugin-yaml": "^1.0.1",
         "@types/uuid": "^8.3.4",
@@ -590,10 +462,10 @@
       ],
     },
     "plugins/webui/explorer": {
-      "name": "@koishijs/plugin-explorer",
+      "name": "@koishi-ce/plugin-explorer",
       "version": "1.5.5",
       "dependencies": {
-        "@koishijs/console": "workspace:*",
+        "@koishi-ce/console": "workspace:*",
         "anymatch": "^3.1.3",
         "chardet": "^2.0.0",
         "chokidar": "^3.6.0",
@@ -601,10 +473,10 @@
         "throttle-debounce": "^3.0.1",
       },
       "devDependencies": {
-        "@koishijs/client": "workspace:*",
-        "@koishijs/plugin-console": "workspace:*",
+        "@koishi-ce/client": "workspace:*",
+        "@koishi-ce/koishi": "workspace:*",
+        "@koishi-ce/plugin-console": "workspace:*",
         "@types/throttle-debounce": "^2.1.0",
-        "koishi": "workspace:*",
         "monaco-editor": "~0.44.0",
       },
       "peerDependencies": {
@@ -613,17 +485,17 @@
       },
     },
     "plugins/webui/insight": {
-      "name": "@koishijs/plugin-insight",
+      "name": "@koishi-ce/plugin-insight",
       "version": "3.5.2",
       "dependencies": {
-        "@koishijs/console": "workspace:*",
+        "@koishi-ce/console": "workspace:*",
       },
       "devDependencies": {
-        "@koishijs/client": "workspace:*",
-        "@koishijs/plugin-console": "workspace:*",
+        "@koishi-ce/client": "workspace:*",
+        "@koishi-ce/koishi": "workspace:*",
+        "@koishi-ce/plugin-console": "workspace:*",
         "@types/d3-force": "^3.0.9",
         "d3-force": "^3.0.0",
-        "koishi": "workspace:*",
       },
       "peerDependencies": {
         "@koishijs/plugin-console": "^5.30.11",
@@ -631,18 +503,18 @@
       },
     },
     "plugins/webui/locales": {
-      "name": "@koishijs/plugin-locales",
+      "name": "@koishi-ce/plugin-locales",
       "version": "2.5.3",
       "dependencies": {
-        "@koishijs/console": "workspace:*",
+        "@koishi-ce/console": "workspace:*",
         "js-yaml": "^4.1.0",
       },
       "devDependencies": {
-        "@koishijs/client": "workspace:*",
-        "@koishijs/plugin-console": "workspace:*",
-        "@koishijs/plugin-mock": "workspace:*",
+        "@koishi-ce/client": "workspace:*",
+        "@koishi-ce/koishi": "workspace:*",
+        "@koishi-ce/plugin-console": "workspace:*",
+        "@koishi-ce/plugin-mock": "workspace:*",
         "@types/js-yaml": "^4.0.9",
-        "koishi": "workspace:*",
       },
       "peerDependencies": {
         "@koishijs/plugin-console": "^5.30.11",
@@ -653,15 +525,15 @@
       ],
     },
     "plugins/webui/logger": {
-      "name": "@koishijs/plugin-logger",
+      "name": "@koishi-ce/plugin-logger",
       "version": "2.6.9",
       "dependencies": {
-        "@koishijs/console": "workspace:*",
+        "@koishi-ce/console": "workspace:*",
       },
       "devDependencies": {
-        "@koishijs/client": "workspace:*",
+        "@koishi-ce/client": "workspace:*",
+        "@koishi-ce/koishi": "workspace:*",
         "ansi_up": "^5.2.1",
-        "koishi": "workspace:*",
         "reggol": "^1.7.1",
       },
       "peerDependencies": {
@@ -673,11 +545,11 @@
       ],
     },
     "plugins/webui/market": {
-      "name": "@koishijs/plugin-market",
+      "name": "@koishi-ce/plugin-market",
       "version": "2.11.11",
       "dependencies": {
-        "@koishijs/console": "workspace:*",
-        "@koishijs/registry": "workspace:*",
+        "@koishi-ce/console": "workspace:*",
+        "@koishi-ce/registry": "workspace:*",
         "execa": "^5.1.1",
         "get-registry": "^1.2.0",
         "ns-require": "^1.1.4",
@@ -686,9 +558,9 @@
         "which-pm-runs": "^1.1.0",
       },
       "devDependencies": {
-        "@koishijs/client": "workspace:*",
-        "@koishijs/market": "workspace:*",
-        "@koishijs/plugin-config": "workspace:*",
+        "@koishi-ce/client": "workspace:*",
+        "@koishi-ce/market": "workspace:*",
+        "@koishi-ce/plugin-config": "workspace:*",
         "@types/semver": "^7.5.8",
         "@types/which-pm-runs": "^1.0.2",
       },
@@ -701,11 +573,11 @@
       ],
     },
     "plugins/webui/notifier": {
-      "name": "@koishijs/plugin-notifier",
+      "name": "@koishi-ce/plugin-notifier",
       "version": "1.2.1",
       "devDependencies": {
-        "@koishijs/client": "workspace:*",
-        "@koishijs/plugin-config": "workspace:*",
+        "@koishi-ce/client": "workspace:*",
+        "@koishi-ce/plugin-config": "workspace:*",
       },
       "peerDependencies": {
         "@koishijs/plugin-console": "^5.30.11",
@@ -713,13 +585,13 @@
       },
     },
     "plugins/webui/oobe": {
-      "name": "@koishijs/plugin-oobe",
+      "name": "@koishi-ce/plugin-oobe",
       "version": "0.0.2",
       "dependencies": {
-        "@koishijs/console": "workspace:*",
+        "@koishi-ce/console": "workspace:*",
       },
       "devDependencies": {
-        "@koishijs/client": "workspace:*",
+        "@koishi-ce/client": "workspace:*",
       },
       "peerDependencies": {
         "@koishijs/plugin-console": "^5.30.11",
@@ -727,15 +599,15 @@
       },
     },
     "plugins/webui/sandbox": {
-      "name": "@koishijs/plugin-sandbox",
+      "name": "@koishi-ce/plugin-sandbox",
       "version": "3.4.2",
       "dependencies": {
-        "@koishijs/console": "workspace:*",
+        "@koishi-ce/console": "workspace:*",
       },
       "devDependencies": {
-        "@koishijs/client": "workspace:*",
-        "@koishijs/plugin-console": "workspace:*",
-        "@koishijs/plugin-server": "workspace:*",
+        "@koishi-ce/client": "workspace:*",
+        "@koishi-ce/plugin-console": "workspace:*",
+        "@koishi-ce/plugin-server": "workspace:*",
         "@satorijs/components-vue": "^0.7.8",
       },
       "peerDependencies": {
@@ -744,19 +616,19 @@
       },
     },
     "plugins/webui/status": {
-      "name": "@koishijs/plugin-status",
+      "name": "@koishi-ce/plugin-status",
       "version": "7.4.10",
       "dependencies": {
-        "@koishijs/console": "workspace:*",
+        "@koishi-ce/console": "workspace:*",
         "envinfo": "^7.11.1",
         "which-pm-runs": "^1.1.0",
       },
       "devDependencies": {
-        "@koishijs/client": "workspace:*",
-        "@koishijs/plugin-analytics": "workspace:*",
-        "@koishijs/plugin-config": "workspace:*",
+        "@koishi-ce/client": "workspace:*",
+        "@koishi-ce/koishi": "workspace:*",
+        "@koishi-ce/plugin-analytics": "workspace:*",
+        "@koishi-ce/plugin-config": "workspace:*",
         "@types/envinfo": "^7.8.3",
-        "koishi": "workspace:*",
       },
       "peerDependencies": {
         "@koishijs/plugin-console": "^5.30.11",
@@ -911,85 +783,105 @@
 
     "@koa/router": ["@koa/router@10.1.1", "", { "dependencies": { "debug": "^4.1.1", "http-errors": "^1.7.3", "koa-compose": "^4.1.0", "methods": "^1.1.2", "path-to-regexp": "^6.1.0" } }, "sha512-ORNjq5z4EmQPriKbR0ER3k4Gh7YGNhWDL7JBW+8wXDrHLbWYKYSJaOJ9aN06npF5tbTxe2JBOsurpJDAvjiXKw=="],
 
+    "@koishi-ce/client": ["@koishi-ce/client@workspace:packages/web/client"],
+
+    "@koishi-ce/components": ["@koishi-ce/components@workspace:packages/web/components"],
+
+    "@koishi-ce/console": ["@koishi-ce/console@workspace:packages/node/console"],
+
+    "@koishi-ce/core": ["@koishi-ce/core@workspace:packages/node/core"],
+
+    "@koishi-ce/i18n-utils": ["@koishi-ce/i18n-utils@workspace:packages/node/i18n-utils"],
+
+    "@koishi-ce/koishi": ["@koishi-ce/koishi@workspace:packages/node/cli"],
+
+    "@koishi-ce/loader": ["@koishi-ce/loader@workspace:packages/node/loader"],
+
+    "@koishi-ce/market": ["@koishi-ce/market@workspace:packages/web/market"],
+
+    "@koishi-ce/online": ["@koishi-ce/online@workspace:apps/online"],
+
+    "@koishi-ce/plugin-actions": ["@koishi-ce/plugin-actions@workspace:plugins/webui/actions"],
+
+    "@koishi-ce/plugin-admin": ["@koishi-ce/plugin-admin@workspace:plugins/webui/admin"],
+
+    "@koishi-ce/plugin-analytics": ["@koishi-ce/plugin-analytics@workspace:plugins/webui/analytics"],
+
+    "@koishi-ce/plugin-auth": ["@koishi-ce/plugin-auth@workspace:plugins/webui/auth"],
+
+    "@koishi-ce/plugin-bind": ["@koishi-ce/plugin-bind@workspace:plugins/common/bind"],
+
+    "@koishi-ce/plugin-broadcast": ["@koishi-ce/plugin-broadcast@workspace:plugins/common/broadcast"],
+
+    "@koishi-ce/plugin-callme": ["@koishi-ce/plugin-callme@workspace:plugins/common/callme"],
+
+    "@koishi-ce/plugin-commands": ["@koishi-ce/plugin-commands@workspace:plugins/webui/commands"],
+
+    "@koishi-ce/plugin-config": ["@koishi-ce/plugin-config@workspace:plugins/webui/config"],
+
+    "@koishi-ce/plugin-console": ["@koishi-ce/plugin-console@workspace:plugins/webui/console"],
+
+    "@koishi-ce/plugin-echo": ["@koishi-ce/plugin-echo@workspace:plugins/common/echo"],
+
+    "@koishi-ce/plugin-explorer": ["@koishi-ce/plugin-explorer@workspace:plugins/webui/explorer"],
+
+    "@koishi-ce/plugin-help": ["@koishi-ce/plugin-help@workspace:plugins/common/help"],
+
+    "@koishi-ce/plugin-hmr": ["@koishi-ce/plugin-hmr@workspace:plugins/infra/hmr"],
+
+    "@koishi-ce/plugin-http": ["@koishi-ce/plugin-http@workspace:plugins/infra/http"],
+
+    "@koishi-ce/plugin-insight": ["@koishi-ce/plugin-insight@workspace:plugins/webui/insight"],
+
+    "@koishi-ce/plugin-inspect": ["@koishi-ce/plugin-inspect@workspace:plugins/common/inspect"],
+
+    "@koishi-ce/plugin-locales": ["@koishi-ce/plugin-locales@workspace:plugins/webui/locales"],
+
+    "@koishi-ce/plugin-logger": ["@koishi-ce/plugin-logger@workspace:plugins/webui/logger"],
+
+    "@koishi-ce/plugin-market": ["@koishi-ce/plugin-market@workspace:plugins/webui/market"],
+
+    "@koishi-ce/plugin-mock": ["@koishi-ce/plugin-mock@workspace:plugins/infra/mock"],
+
+    "@koishi-ce/plugin-notifier": ["@koishi-ce/plugin-notifier@workspace:plugins/webui/notifier"],
+
+    "@koishi-ce/plugin-oobe": ["@koishi-ce/plugin-oobe@workspace:plugins/webui/oobe"],
+
+    "@koishi-ce/plugin-proxy-agent": ["@koishi-ce/plugin-proxy-agent@workspace:plugins/infra/proxy-agent"],
+
+    "@koishi-ce/plugin-sandbox": ["@koishi-ce/plugin-sandbox@workspace:plugins/webui/sandbox"],
+
+    "@koishi-ce/plugin-server": ["@koishi-ce/plugin-server@workspace:plugins/infra/server"],
+
+    "@koishi-ce/plugin-status": ["@koishi-ce/plugin-status@workspace:plugins/webui/status"],
+
+    "@koishi-ce/registry": ["@koishi-ce/registry@workspace:apps/registry"],
+
+    "@koishi-ce/utils": ["@koishi-ce/utils@workspace:packages/node/utils"],
+
     "@koishijs/assets": ["@koishijs/assets@1.1.2", "", { "dependencies": { "file-type": "^16.5.4" }, "peerDependencies": { "koishi": "^4.17.7" } }, "sha512-3sH+F551ku8MMJ7ZuGMQqTh4znxb4QnFTt2c/SBExjAT7XgMUIN+nwzTuYNjjs/xqdZOqz9B45ky2GJa5/Yqmw=="],
 
-    "@koishijs/client": ["@koishijs/client@workspace:packages/web/client"],
+    "@koishijs/console": ["@koishijs/console@5.30.11", "", { "peerDependencies": { "koishi": "^4.18.9" } }, "sha512-F/NpSBmFUGcLTTwHLOt3OOaqMFD53aeoJL83Nwq4ZmudEpVQAA/uJusflvXadjf61HjHCu+DQArkPj0HGG7dhA=="],
 
-    "@koishijs/components": ["@koishijs/components@workspace:packages/web/components"],
+    "@koishijs/core": ["@koishijs/core@4.18.11", "", { "dependencies": { "@koishijs/i18n-utils": "^1.0.1", "@koishijs/utils": "^7.2.1", "@satorijs/core": "^4.6.0", "cordis": "^3.18.1", "cosmokit": "^1.8.1", "fastest-levenshtein": "^1.0.16", "minato": "^3.7.0" } }, "sha512-qzc1A14Y5C04a3/yDyz+xaQ90Uz9TeUUvScQuhOiuJNGKg9HUeFKqoNN/2IX5/vgAHauxJJi6eJcN2ZrLt4HeA=="],
 
-    "@koishijs/console": ["@koishijs/console@workspace:packages/node/console"],
+    "@koishijs/i18n-utils": ["@koishijs/i18n-utils@1.0.1", "", { "dependencies": { "cosmokit": "^1.5.2" } }, "sha512-N58UAnhMMtqS4+VGW5IwJ6U9xwXZpzrcPaJrdEBzUJ4yBKKrkHfG1ck9tvQ99SnzxhZGGcBa/SKWnHQf/omrvg=="],
 
-    "@koishijs/core": ["@koishijs/core@workspace:packages/node/core"],
+    "@koishijs/loader": ["@koishijs/loader@4.6.11", "", { "dependencies": { "dotenv": "^16.4.5", "js-yaml": "^4.1.0", "ns-require": "^1.1.4" }, "peerDependencies": { "@koishijs/core": "4.18.11" } }, "sha512-0cJyHwtnFjtOx7jgIXOSuVjDriL12rv8CXsqSw+aqQyt0iuD8ChDqfwhiOFRsuVvq89ZS9PhxmZ0l+YqQ5ZrPg=="],
 
-    "@koishijs/i18n-utils": ["@koishijs/i18n-utils@workspace:packages/node/i18n-utils"],
-
-    "@koishijs/loader": ["@koishijs/loader@workspace:packages/node/loader"],
-
-    "@koishijs/market": ["@koishijs/market@workspace:packages/web/market"],
-
-    "@koishijs/online": ["@koishijs/online@workspace:apps/online"],
-
-    "@koishijs/plugin-actions": ["@koishijs/plugin-actions@workspace:plugins/webui/actions"],
-
-    "@koishijs/plugin-admin": ["@koishijs/plugin-admin@workspace:plugins/webui/admin"],
-
-    "@koishijs/plugin-analytics": ["@koishijs/plugin-analytics@workspace:plugins/webui/analytics"],
-
-    "@koishijs/plugin-auth": ["@koishijs/plugin-auth@workspace:plugins/webui/auth"],
-
-    "@koishijs/plugin-bind": ["@koishijs/plugin-bind@workspace:plugins/common/bind"],
-
-    "@koishijs/plugin-broadcast": ["@koishijs/plugin-broadcast@workspace:plugins/common/broadcast"],
-
-    "@koishijs/plugin-callme": ["@koishijs/plugin-callme@workspace:plugins/common/callme"],
-
-    "@koishijs/plugin-commands": ["@koishijs/plugin-commands@workspace:plugins/webui/commands"],
-
-    "@koishijs/plugin-config": ["@koishijs/plugin-config@workspace:plugins/webui/config"],
-
-    "@koishijs/plugin-console": ["@koishijs/plugin-console@workspace:plugins/webui/console"],
+    "@koishijs/plugin-console": ["@koishijs/plugin-console@5.30.11", "", { "dependencies": { "@koishijs/console": "^5.30.11", "open": "^8.4.2", "uuid": "^8.3.2", "ws": "^8.16.0" }, "peerDependencies": { "@koishijs/client": "^5.30.11", "koishi": "^4.18.9" }, "optionalPeers": ["@koishijs/client"] }, "sha512-K8CpYU4C+vfrX9VhFndS5jmJ9EqLxUYf7KKsM2RNxxQJ1NMk/hLyLQ82HPIY36lbyIbZsA0Mgxl6WIuewZKgQA=="],
 
     "@koishijs/plugin-database-memory": ["@koishijs/plugin-database-memory@3.7.0", "", { "dependencies": { "@minatojs/driver-memory": "^3.7.0" }, "peerDependencies": { "koishi": "^4.18.10" } }, "sha512-Yt7c95nFt/1UtgK7NrXZpCDGybVhPA+wVbThIW2EGckGZcmosefyekhfxr5minpTr0kcW1X6lfk93dZkPNbXtg=="],
 
-    "@koishijs/plugin-echo": ["@koishijs/plugin-echo@workspace:plugins/common/echo"],
+    "@koishijs/plugin-http": ["@koishijs/plugin-http@0.6.3", "", { "dependencies": { "@cordisjs/plugin-http": "^0.6.3" }, "peerDependencies": { "koishi": "^4.18.0" } }, "sha512-alw51yjc6bykgZD2EsbTn03Yjwp9Mkidb1BsQn25SDwaBQqla0bZAVivFxNW1J60lneP9uymu3EUnPspvBuxog=="],
 
-    "@koishijs/plugin-explorer": ["@koishijs/plugin-explorer@workspace:plugins/webui/explorer"],
+    "@koishijs/plugin-proxy-agent": ["@koishijs/plugin-proxy-agent@0.3.3", "", { "dependencies": { "@cordisjs/plugin-proxy-agent": "^0.3.3" }, "peerDependencies": { "koishi": "^4.17.9" } }, "sha512-pOpsHNVn3RVpPwdQjHNBRFsuq02sAS5NRVSuWWSHBPwIQ+QWu5232Au9RVH/DHBvx6XLWOm+WePMo4gRaxsVgg=="],
 
-    "@koishijs/plugin-help": ["@koishijs/plugin-help@workspace:plugins/common/help"],
-
-    "@koishijs/plugin-hmr": ["@koishijs/plugin-hmr@workspace:plugins/infra/hmr"],
-
-    "@koishijs/plugin-http": ["@koishijs/plugin-http@workspace:plugins/infra/http"],
-
-    "@koishijs/plugin-insight": ["@koishijs/plugin-insight@workspace:plugins/webui/insight"],
-
-    "@koishijs/plugin-inspect": ["@koishijs/plugin-inspect@workspace:plugins/common/inspect"],
-
-    "@koishijs/plugin-locales": ["@koishijs/plugin-locales@workspace:plugins/webui/locales"],
-
-    "@koishijs/plugin-logger": ["@koishijs/plugin-logger@workspace:plugins/webui/logger"],
-
-    "@koishijs/plugin-market": ["@koishijs/plugin-market@workspace:plugins/webui/market"],
-
-    "@koishijs/plugin-mock": ["@koishijs/plugin-mock@workspace:plugins/infra/mock"],
-
-    "@koishijs/plugin-notifier": ["@koishijs/plugin-notifier@workspace:plugins/webui/notifier"],
-
-    "@koishijs/plugin-oobe": ["@koishijs/plugin-oobe@workspace:plugins/webui/oobe"],
-
-    "@koishijs/plugin-proxy-agent": ["@koishijs/plugin-proxy-agent@workspace:plugins/infra/proxy-agent"],
-
-    "@koishijs/plugin-sandbox": ["@koishijs/plugin-sandbox@workspace:plugins/webui/sandbox"],
-
-    "@koishijs/plugin-server": ["@koishijs/plugin-server@workspace:plugins/infra/server"],
+    "@koishijs/plugin-server": ["@koishijs/plugin-server@3.2.9", "", { "dependencies": { "@cordisjs/plugin-server": "^0.2.9" }, "peerDependencies": { "koishi": "^4.18.11" } }, "sha512-LP7Y36Y73d1DjZ4U7rDwsb4/hSBhPIPMBSS3xt4gcmbe5VZLdFHJsRewbXdIzuiYjBN1v+Ft/h+ejrM7liVNLg=="],
 
     "@koishijs/plugin-server-proxy": ["@koishijs/plugin-server-proxy@1.2.0", "", { "dependencies": { "@cordisjs/plugin-server-proxy": "^0.2.0" }, "peerDependencies": { "koishi": "^4.17.6" } }, "sha512-X0eCxDe1rTLAuVV0jnkV6MqKtl+1M6/MUTgS3rrg/BqEFyz34bo08vPOIABrYjSBgLAwdbx1UNBnS9HaUXPKaQ=="],
 
-    "@koishijs/plugin-status": ["@koishijs/plugin-status@workspace:plugins/webui/status"],
-
-    "@koishijs/registry": ["@koishijs/registry@workspace:apps/registry"],
-
-    "@koishijs/utils": ["@koishijs/utils@workspace:packages/node/utils"],
+    "@koishijs/utils": ["@koishijs/utils@7.3.2", "", { "dependencies": { "cosmokit": "^1.7.2", "inaba": "^1.1.1" } }, "sha512-x9kEB/nM6l+Uqtnaqqf/FyuOxcT7snp+zu0oTEgV8Z7aZ7eBfuf3Ac1CTAlaiyGPW1aOgXMUg7WL44yVIfRlOw=="],
 
     "@maikolib/vite-plugin-yaml": ["@maikolib/vite-plugin-yaml@1.1.1", "", { "dependencies": { "@rollup/pluginutils": "5.1.0", "js-yaml": "4.1.0", "tosource": "2.0.0-alpha.3" }, "peerDependencies": { "vite": "^3.2.7 || ^4.0.5 || >=5.0.5" } }, "sha512-+MLv4kJ1lYq+iXT9PN6FGxoE8apv7CSsNVrntXiXJ2DtcUpGpApO35/qtAyMXRJmNuRKCx0rOdC/MUkrmojOHw=="],
 
@@ -1573,7 +1465,7 @@
 
     "koa-convert": ["koa-convert@2.0.0", "", { "dependencies": { "co": "^4.6.0", "koa-compose": "^4.1.0" } }, "sha512-asOvN6bFlSnxewce2e/DK3p4tltyfC4VM7ZwuTuepI7dEQVcvpyFuBcEARu1+Hxg8DIwytce2n7jrZtRlPrARA=="],
 
-    "koishi": ["koishi@workspace:packages/node/cli"],
+    "koishi": ["koishi@4.18.11", "", { "dependencies": { "@koishijs/core": "4.18.11", "@koishijs/loader": "4.6.11", "@koishijs/plugin-http": "^0.6.3", "@koishijs/plugin-proxy-agent": "^0.3.3", "@koishijs/plugin-server": "^3.2.9", "@koishijs/utils": "^7.2.1", "@satorijs/core": "^4.6.0", "cac": "^6.7.14", "kleur": "^4.1.5" }, "bin": "bin.js" }, "sha512-WPpPFb5G/bChcV+cKF4EU3o5kmdQHc0Wg9nWP2/QT4dTzADSIYOmgwssO706fo97tfGF8Xa716CINHTzAPbXlg=="],
 
     "kolorist": ["kolorist@1.8.0", "", {}, "sha512-Y+60/zizpJ3HRH8DCss+q95yr6145JXZo46OTpFvDZWLfRCE4qChOyk1b26nMaNpfHHgxagk9dXT5OP0Tfe+dQ=="],
 

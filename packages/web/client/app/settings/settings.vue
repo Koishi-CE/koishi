@@ -31,7 +31,7 @@
 
 import { useRoute, useRouter } from 'vue-router'
 import { computed } from 'vue'
-import { useConfig, useContext } from '@koishijs/client'
+import { useConfig, useContext } from '@koishi-ce/client'
 
 const route = useRoute()
 const router = useRouter()

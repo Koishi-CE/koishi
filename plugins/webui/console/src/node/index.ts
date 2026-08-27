@@ -1,6 +1,6 @@
-import { Context, Dict, h, makeArray, noop, Schema, Time } from 'koishi'
-import { WebSocketLayer } from '@koishijs/plugin-server'
-import { Console, Entry } from '@koishijs/console'
+import { Context, Dict, h, makeArray, noop, Schema, Time } from '@koishi-ce/koishi'
+import { WebSocketLayer } from '@koishi-ce/plugin-server'
+import { Console, Entry } from '@koishi-ce/console'
 import { FileSystemServeOptions, ViteDevServer } from 'vite'
 import { extname, resolve } from 'path'
 import { createReadStream, existsSync, promises as fs, Stats } from 'fs'
@@ -15,7 +15,7 @@ declare module 'koishi' {
   }
 }
 
-export * from '@koishijs/console'
+export * from '@koishi-ce/console'
 
 export interface ClientConfig {
   devMode: boolean
@@ -35,7 +35,7 @@ class NodeConsole extends Console {
   static inject = { required: ['server'], optional: ['console'] }
   // static inject = ['server']
 
-  // workaround for edge case (collision with @koishijs/plugin-config)
+  // workaround for edge case (collision with @koishi-ce/plugin-config)
   private _config: NodeConsole.Config
 
   public vite: ViteDevServer
@@ -61,7 +61,7 @@ class NodeConsole extends Console {
     const base = import.meta.url || pathToFileURL(__filename).href
     const require = createRequire(base)
     this.root = config.devMode
-      ? resolve(require.resolve('@koishijs/client/package.json'), '../app')
+      ? resolve(require.resolve('@koishi-ce/client/package.json'), '../app')
       : fileURLToPath(new URL('../../dist', base))
   }
 
@@ -187,7 +187,7 @@ class NodeConsole extends Console {
         'vue': '../vue.js',
         'vue-router': '../vue-router.js',
         '@vueuse/core': '../vueuse.js',
-        '@koishijs/client': '../client.js',
+        '@koishi-ce/client': '../client.js',
       }[path] ?? path) + quote + ';'
       source = source.slice(cap.index + stmt.length)
     }
@@ -211,7 +211,7 @@ class NodeConsole extends Console {
 
   private async createVite() {
     const { cacheDir, dev } = this.config
-    const { createServer } = require('@koishijs/client/lib') as typeof import('@koishijs/client/lib')
+    const { createServer } = require('@koishi-ce/client/lib') as typeof import('@koishi-ce/client/lib')
 
     this.vite = await createServer(this.ctx.baseDir, {
       cacheDir: resolve(this.ctx.baseDir, cacheDir),

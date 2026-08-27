@@ -4,22 +4,22 @@
     "koishi": {
       "tsc": {
         "ignore": [
-          "@koishijs/plugin-http",
-          "@koishijs/plugin-proxy-agent",
-          "@koishijs/plugin-server"
+          "@koishi-ce/plugin-http",
+          "@koishi-ce/plugin-proxy-agent",
+          "@koishi-ce/plugin-server"
         ]
       }
     },
-    "@koishijs/client": {
+    "@koishi-ce/client": {
       "client": "./scripts/client.ts"
     },
-    "@koishijs/plugin-analytics": {
+    "@koishi-ce/plugin-analytics": {
       "client": "./build/client.ts"
     },
-    "@koishijs/plugin-explorer": {
+    "@koishi-ce/plugin-explorer": {
       "client": "./build/client.ts"
     },
-    "@koishijs/online": {
+    "@koishi-ce/online": {
       "client": "./src/build.ts"
     }
   }

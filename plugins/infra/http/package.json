@@ -1,5 +1,5 @@
 {
-  "name": "@koishijs/plugin-http",
+  "name": "@koishi-ce/plugin-http",
   "description": "HTTP and WebSocket client for Koishi",
   "version": "0.6.3",
   "type": "module",
@@ -51,7 +51,7 @@
     "koishi": "^4.18.11"
   },
   "devDependencies": {
-    "koishi": "workspace:*"
+    "@koishi-ce/koishi": "workspace:*"
   },
   "dependencies": {
     "@cordisjs/plugin-http": "^0.6.3"

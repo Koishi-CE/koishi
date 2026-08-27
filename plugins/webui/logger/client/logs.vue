@@ -17,8 +17,8 @@
 
 <script lang="ts" setup>
 
-import { Time, store, VirtualList } from '@koishijs/client'
-import {} from '@koishijs/plugin-config'
+import { Time, store, VirtualList } from '@koishi-ce/client'
+import {} from '@koishi-ce/plugin-config'
 import Logger from 'reggol'
 import ansi from 'ansi_up'
 

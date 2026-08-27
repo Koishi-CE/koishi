@@ -15,7 +15,7 @@
 
 <script lang="ts" setup>
 
-import { global, socket } from '@koishijs/client'
+import { global, socket } from '@koishi-ce/client'
 import Welcome from './welcome.vue'
 
 </script>

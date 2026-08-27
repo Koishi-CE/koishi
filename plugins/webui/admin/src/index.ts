@@ -1,5 +1,5 @@
-import { $, Context, Dict, remove, Schema, Service } from 'koishi'
-import type { Entry } from '@koishijs/console'
+import { $, Context, Dict, remove, Schema, Service } from '@koishi-ce/koishi'
+import type { Entry } from '@koishi-ce/console'
 import { resolve } from 'path'
 import command from './command'
 import zhCN from './locales/zh-CN.yml'
@@ -17,7 +17,7 @@ declare module 'koishi' {
   }
 }
 
-declare module '@koishijs/console' {
+declare module '@koishi-ce/console' {
   interface Events {
     'admin/create-track'(name: string): Promise<number>
     'admin/rename-track'(id: number, name: string): Promise<void>

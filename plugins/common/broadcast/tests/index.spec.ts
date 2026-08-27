@@ -1,7 +1,7 @@
-import { App, Bot, Channel } from 'koishi'
-import * as broadcast from '@koishijs/plugin-broadcast'
+import { App, Bot, Channel } from '@koishi-ce/koishi'
+import * as broadcast from '@koishi-ce/plugin-broadcast'
 import memory from '@minatojs/driver-memory'
-import mock from '@koishijs/plugin-mock'
+import mock from '@koishi-ce/plugin-mock'
 import { mock as jest } from 'node:test'
 import { expect } from 'chai'
 
@@ -25,7 +25,7 @@ before(async () => {
   await app.mock.initChannel('444', '810')
 })
 
-describe('@koishijs/plugin-broadcast', () => {
+describe('@koishi-ce/plugin-broadcast', () => {
   it('basic support', async () => {
     const send1 = jest.method(app.bots.find(bot => bot.selfId === '514')!, 'sendMessage')
     const send2 = jest.method(app.bots.find(bot => bot.selfId === '114')!, 'sendMessage')

@@ -1,6 +1,6 @@
 # NOTICE
 
-**koishi-bun** is a community redistribution of the [Koishi](https://koishi.chat) chatbot framework. It is not affiliated with, endorsed by, or maintained by the Koishijs organization.
+**koishi** is a community redistribution of the [Koishi](https://koishi.chat) chatbot framework. It is not affiliated with, endorsed by, or maintained by the Koishijs organization.
 
 This repository is a derivative work combining code from two upstream repositories, restructured into a single monorepo. Per-directory provenance and licensing:
 

@@ -1,6 +1,6 @@
-import { Context, Dict } from 'koishi'
-import { DataService } from '@koishijs/console'
-import { DependencyMetaKey, RemotePackage } from '@koishijs/registry'
+import { Context, Dict } from '@koishi-ce/koishi'
+import { DataService } from '@koishi-ce/console'
+import { DependencyMetaKey, RemotePackage } from '@koishi-ce/registry'
 import { Dependency } from './installer'
 
 class DependencyProvider extends DataService<Dict<Dependency>> {

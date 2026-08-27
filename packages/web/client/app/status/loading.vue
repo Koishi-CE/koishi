@@ -8,7 +8,7 @@
 
 <script lang="ts" setup>
 
-import { store, useContext } from '@koishijs/client'
+import { store, useContext } from '@koishi-ce/client'
 import { computed } from 'vue'
 
 const ctx = useContext()

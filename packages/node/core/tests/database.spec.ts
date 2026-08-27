@@ -1,6 +1,6 @@
-import { App } from 'koishi'
+import { App } from '@koishi-ce/koishi'
 import { expect, use } from 'chai'
-import mock from '@koishijs/plugin-mock'
+import mock from '@koishi-ce/plugin-mock'
 import memory from '@minatojs/driver-memory'
 import shape from 'chai-shape'
 import promise from 'chai-as-promised'

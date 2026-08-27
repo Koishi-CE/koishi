@@ -25,8 +25,8 @@
 <script setup lang="ts">
 
 import { provide, computed } from 'vue'
-import { store } from '@koishijs/client'
-import {} from '@koishijs/plugin-analytics/src'
+import { store } from '@koishi-ce/client'
+import {} from '@koishi-ce/plugin-analytics/src'
 import Numeric from './numeric.vue'
 
 provide('component:analytic-number', Numeric)

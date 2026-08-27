@@ -1,7 +1,7 @@
-import { Context, defineProperty, Logger, Schema } from '@koishijs/core'
+import { Context, defineProperty, Logger, Schema } from '@koishi-ce/core'
 
 interface LogLevelConfig {
-  // a little different from @koishijs/utils
+  // a little different from @koishi-ce/utils
   // we don't enforce user to provide a base here
   base?: number
   [K: string]: LogLevel

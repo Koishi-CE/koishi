@@ -1,5 +1,5 @@
-import { Context, Schema } from '@koishijs/client'
-import {} from '@koishijs/plugin-status/src'
+import { Context, Schema } from '@koishi-ce/client'
+import {} from '@koishi-ce/plugin-status/src'
 import Bots from './bots'
 import Load from './load'
 import Analytics from './analytics.vue'
@@ -9,7 +9,7 @@ import './icons'
 
 import 'virtual:uno.css'
 
-declare module '@koishijs/client' {
+declare module '@koishi-ce/client' {
   interface Config {
     mergeThreshold: number
   }

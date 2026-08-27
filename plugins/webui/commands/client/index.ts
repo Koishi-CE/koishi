@@ -1,5 +1,5 @@
-import { Context, icons } from '@koishijs/client'
-import {} from '@koishijs/plugin-commands'
+import { Context, icons } from '@koishi-ce/client'
+import {} from '@koishi-ce/plugin-commands'
 import Activity from './icons/activity.vue'
 import Check from './icons/check.vue'
 import TrashCan from './icons/trash-can.vue'

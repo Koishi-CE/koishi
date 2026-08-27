@@ -47,10 +47,10 @@
 <script lang="ts" setup>
 
 import { computed, PropType, ref } from 'vue'
-import { isNullable, Schema, SchemaBase, send, store } from '@koishijs/client'
+import { isNullable, Schema, SchemaBase, send, store } from '@koishi-ce/client'
 import { files, uploading, vFocus } from './store'
-import { Entry } from '@koishijs/plugin-explorer'
-import {} from 'koishi'
+import { Entry } from '@koishi-ce/plugin-explorer'
+import {} from '@koishi-ce/koishi'
 
 const props = defineProps({
   schema: {} as PropType<Schema>,

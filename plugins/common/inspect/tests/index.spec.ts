@@ -1,6 +1,6 @@
-import { Context } from 'koishi'
+import { Context } from '@koishi-ce/koishi'
 import * as inspect from '../src'
-import mock from '@koishijs/plugin-mock'
+import mock from '@koishi-ce/plugin-mock'
 
 const app = new Context()
 
@@ -12,7 +12,7 @@ const client = app.mock.client('123', '456')
 before(() => app.start())
 after(() => app.stop())
 
-describe('@koishijs/plugin-inspect', () => {
+describe('@koishi-ce/plugin-inspect', () => {
   it('basic support', async () => {
     await client.shouldReply('inspect', new RegExp([
       '平台名：mock',

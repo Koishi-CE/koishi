@@ -41,7 +41,7 @@
 <script lang="ts" setup>
 
 import { computed, inject, ref, watch } from 'vue'
-import { SearchObject } from '@koishijs/registry'
+import { SearchObject } from '@koishi-ce/registry'
 import { getSorted, getFiltered, hasFilter, kConfig } from '../utils'
 import MarketPackage from './package.vue'
 

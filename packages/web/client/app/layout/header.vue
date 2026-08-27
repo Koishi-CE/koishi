@@ -32,7 +32,7 @@
 <script lang="ts" setup>
 
 import { useRoute } from 'vue-router'
-import { useMenu } from '@koishijs/client'
+import { useMenu } from '@koishi-ce/client'
 
 const props = defineProps<{
   isLeftAsideOpen: boolean

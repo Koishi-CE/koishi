@@ -1,4 +1,4 @@
-import { Dict, hyphenate, isInteger } from '@koishijs/utils'
+import { Dict, hyphenate, isInteger } from '@koishi-ce/utils'
 import { ChildProcess, fork } from 'child_process'
 import { resolve } from 'path'
 import { CAC } from 'cac'

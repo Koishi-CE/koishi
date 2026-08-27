@@ -1,5 +1,5 @@
 {
-  "name": "@koishijs/registry",
+  "name": "@koishi-ce/registry",
   "description": "Scan Package Manager for Koishi Plugins",
   "version": "7.0.3",
   "main": "lib/index.js",
@@ -12,11 +12,11 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/koishijs/webui.git",
-    "directory": "packages/registry"
+    "url": "git+https://github.com/Koishi-CE/koishi.git",
+    "directory": "apps/registry"
   },
   "bugs": {
-    "url": "https://github.com/koishijs/webui/issues"
+    "url": "https://github.com/Koishi-CE/koishi/issues"
   },
   "homepage": "https://koishi.chat",
   "keywords": [

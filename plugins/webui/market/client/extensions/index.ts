@@ -1,4 +1,4 @@
-import { Context, store } from '@koishijs/client'
+import { Context, store } from '@koishi-ce/client'
 import Dependency from './dependency.vue'
 import Missing from './missing.vue'
 import Select from './select.vue'

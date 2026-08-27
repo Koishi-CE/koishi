@@ -1,4 +1,4 @@
-import { Schema, SchemaBase } from '@koishijs/components'
+import { Schema, SchemaBase } from '@koishi-ce/components'
 import { RemovableRef, useLocalStorage } from '@vueuse/core'
 import { Context } from '../context'
 import { insert, Ordered, Service } from '../utils'

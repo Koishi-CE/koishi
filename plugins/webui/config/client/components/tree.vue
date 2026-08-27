@@ -40,7 +40,7 @@
 import { ref, onActivated, nextTick, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import type { ElScrollbar, ElTree } from 'element-plus'
-import { send, useMenu } from '@koishijs/client'
+import { send, useMenu } from '@koishi-ce/client'
 import { Tree, getStatus, plugins, getFullName } from './utils'
 
 const props = defineProps<{

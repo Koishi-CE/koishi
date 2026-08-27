@@ -1,5 +1,5 @@
 import { expect } from 'chai'
-import { coerce, enumKeys, assertProperty } from 'koishi'
+import { coerce, enumKeys, assertProperty } from '@koishi-ce/koishi'
 
 describe('Miscellaneous', () => {
   it('coerce', () => {

@@ -31,7 +31,7 @@
 
 import { activate, data, instances, remove, Instance, flush, shareLink } from '../utils'
 import { computed } from 'vue'
-import { message } from '@koishijs/client'
+import { message } from '@koishi-ce/client'
 
 const props = defineProps<{ id: string } & Instance>()
 

@@ -1,5 +1,5 @@
-import { App, sleep } from 'koishi'
-import mock from '@koishijs/plugin-mock'
+import { App, sleep } from '@koishi-ce/koishi'
+import mock from '@koishi-ce/plugin-mock'
 import memory from '@minatojs/driver-memory'
 
 describe('Session API', () => {

@@ -1,6 +1,6 @@
-import { $, Context, Dict, Random, Schema, Universal, User } from 'koishi'
-import { Client, DataService } from '@koishijs/console'
-import {} from '@koishijs/plugin-server'
+import { $, Context, Dict, Random, Schema, Universal, User } from '@koishi-ce/koishi'
+import { Client, DataService } from '@koishi-ce/console'
+import {} from '@koishi-ce/plugin-server'
 import { extname, resolve } from 'path'
 import { SandboxBot } from './bot'
 import zhCN from './locales/zh-CN.yml'
@@ -13,7 +13,7 @@ declare module 'koishi' {
   }
 }
 
-declare module '@koishijs/console' {
+declare module '@koishi-ce/console' {
   namespace Console {
     interface Services {
       sandbox: SandboxService

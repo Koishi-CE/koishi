@@ -48,11 +48,11 @@
 
 <script lang="ts" setup>
 
-import { clone, message, send, Schema, VirtualList, deepEqual, useContext } from '@koishijs/client'
+import { clone, message, send, Schema, VirtualList, deepEqual, useContext } from '@koishi-ce/client'
 import { ChatInput } from '@satorijs/components-vue'
 import segment from '@satorijs/element'
 import { computed, ref, watch } from 'vue'
-import { Message } from '@koishijs/plugin-sandbox'
+import { Message } from '@koishi-ce/plugin-sandbox'
 import { api, channel, config, words, panelTypes } from './utils'
 import ChatMessage from './message.vue'
 

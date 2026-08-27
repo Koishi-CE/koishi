@@ -47,7 +47,7 @@ export class LocalScanner {
         const base2 = base + '/' + name
         const files = await readdir(base2).catch(() => [])
         for (const name2 of files) {
-          if (name === '@koishijs' && name2.startsWith('plugin-') || name2.startsWith('koishi-plugin-')) {
+          if ((name === '@koishi-ce' || name === '@koishijs') && name2.startsWith('plugin-') || name2.startsWith('koishi-plugin-')) {
             this.cache[name + '/' + name2] ||= this.loadPackage(name + '/' + name2)
           }
         }

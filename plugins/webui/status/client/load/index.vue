@@ -14,7 +14,7 @@
 <script setup lang="ts">
 
 import LoadBar from './load-bar.vue'
-import { store } from '@koishijs/client'
+import { store } from '@koishi-ce/client'
 import { percentage } from './utils'
 
 </script>

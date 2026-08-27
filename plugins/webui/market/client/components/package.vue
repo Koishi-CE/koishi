@@ -35,7 +35,7 @@
 <script lang="ts" setup>
 
 import { computed } from 'vue'
-import { store, isNullable, useConfig } from '@koishijs/client'
+import { store, isNullable, useConfig } from '@koishi-ce/client'
 import { active, hasUpdate } from '../utils'
 import { analyzeVersions } from './utils'
 

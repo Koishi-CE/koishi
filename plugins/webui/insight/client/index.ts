@@ -1,5 +1,5 @@
-import { Context } from '@koishijs/client'
-import {} from '@koishijs/plugin-insight'
+import { Context } from '@koishi-ce/client'
+import {} from '@koishi-ce/plugin-insight'
 import Graph from './index.vue'
 import './icons'
 

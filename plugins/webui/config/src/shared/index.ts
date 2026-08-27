@@ -2,7 +2,7 @@ import { PackageProvider } from './packages'
 import { ServiceProvider } from './services'
 import { ConfigWriter } from './writer'
 
-declare module '@koishijs/console' {
+declare module '@koishi-ce/console' {
   namespace Console {
     interface Services {
       packages: PackageProvider

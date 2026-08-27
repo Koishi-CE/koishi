@@ -29,7 +29,7 @@
 <script setup lang="ts">
 
 import { computed } from 'vue'
-import { store, router, Dict, useConfig } from '@koishijs/client'
+import { store, router, Dict, useConfig } from '@koishi-ce/client'
 import { getStatus } from './utils'
 import BotPreview from './preview.vue'
 import StatusLight from './light.vue'

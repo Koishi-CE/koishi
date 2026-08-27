@@ -1,4 +1,4 @@
-import { Context, Dict, Schema } from 'koishi'
+import { Context, Dict, Schema } from '@koishi-ce/koishi'
 import { DataService } from './service'
 
 export class SchemaProvider extends DataService<Dict<Schema>> {

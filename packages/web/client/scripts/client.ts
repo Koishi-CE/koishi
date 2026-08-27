@@ -60,7 +60,7 @@ export async function build(root: string, config: vite.UserConfig = {}, isClient
         'vue': root + '/vue.js',
         'vue-router': root + '/vue-router.js',
         '@vueuse/core': root + '/vueuse.js',
-        '@koishijs/client': root + '/client.js',
+        '@koishi-ce/client': root + '/client.js',
         ...isClient ? {
           'vue-i18n': findModulePath('vue-i18n') + '/dist/vue-i18n.esm-browser.prod.js',
           '@intlify/core-base': findModulePath('@intlify/core-base') + '/dist/core-base.esm-browser.prod.js',

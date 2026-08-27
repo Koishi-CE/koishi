@@ -1,5 +1,5 @@
-import type { Context, Universal } from 'koishi'
-import { Dict } from '@koishijs/client'
+import type { Context, Universal } from '@koishi-ce/koishi'
+import { Dict } from '@koishi-ce/client'
 import { initialize } from './utils'
 import loader from './loader'
 

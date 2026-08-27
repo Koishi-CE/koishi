@@ -9,7 +9,7 @@ const router = new Router()
 app.use(router.routes())
 app.use(router.allowedMethods())
 
-const root = resolve(require.resolve('@koishijs/online/package.json'), '../dist')
+const root = resolve(require.resolve('@koishi-ce/online/package.json'), '../dist')
 
 router.get('(/.+)*', async (ctx, next) => {
   let filename = root + ctx.path

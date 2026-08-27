@@ -19,8 +19,8 @@
 <script lang="ts" setup>
 
 import { computed, ref, watch } from 'vue'
-import type { Registry } from '@koishijs/registry'
-import { store, useConfig } from '@koishijs/client'
+import type { Registry } from '@koishi-ce/registry'
+import { store, useConfig } from '@koishi-ce/client'
 import { useDebounceFn } from '@vueuse/core'
 import { showManual, addManual } from './utils'
 

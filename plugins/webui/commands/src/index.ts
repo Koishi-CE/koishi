@@ -1,9 +1,9 @@
-import { Argv, clone, Command, Context, deepEqual, Dict, filterKeys, mapValues, remove, Schema } from 'koishi'
+import { Argv, clone, Command, Context, deepEqual, Dict, filterKeys, mapValues, remove, Schema } from '@koishi-ce/koishi'
 import CommandExtension from './command'
 import { resolve } from 'path'
-import { Entry } from '@koishijs/console'
+import { Entry } from '@koishi-ce/console'
 
-declare module '@koishijs/console' {
+declare module '@koishi-ce/console' {
   interface Events {
     'command/create'(name: string): void
     'command/remove'(name: string): void

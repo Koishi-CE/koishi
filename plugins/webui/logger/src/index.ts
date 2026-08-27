@@ -1,11 +1,11 @@
-import { Context, Dict, Logger, remove, Schema, Time } from 'koishi'
-import { DataService } from '@koishijs/plugin-console'
+import { Context, Dict, Logger, remove, Schema, Time } from '@koishi-ce/koishi'
+import { DataService } from '@koishi-ce/plugin-console'
 import { resolve } from 'path'
 import { mkdir, readdir, rm } from 'fs/promises'
 import { FileWriter } from './file'
 import zhCN from './locales/zh-CN.yml'
 
-declare module '@koishijs/console' {
+declare module '@koishi-ce/console' {
   namespace Console {
     interface Services {
       logs: DataService<Logger.Record[]>

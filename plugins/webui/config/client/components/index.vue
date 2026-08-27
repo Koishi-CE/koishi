@@ -76,7 +76,7 @@
 
 import { computed, ref, watch, nextTick } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { clone, message, send, store, useContext, Schema } from '@koishijs/client'
+import { clone, message, send, store, useContext, Schema } from '@koishi-ce/client'
 import { Tree, getFullName, hasCoreDeps, current, plugins, removeItem, dialogSelect, dialogFork } from './utils'
 import GlobalSettings from './global.vue'
 import GroupSettings from './group.vue'

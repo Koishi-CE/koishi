@@ -1,6 +1,6 @@
-import { App } from 'koishi'
-import * as help from '@koishijs/plugin-help'
-import mock from '@koishijs/plugin-mock'
+import { App } from '@koishi-ce/koishi'
+import * as help from '@koishi-ce/plugin-help'
+import mock from '@koishi-ce/plugin-mock'
 import memory from '@minatojs/driver-memory'
 
 const app = new App({
@@ -23,7 +23,7 @@ before(async () => {
 
 let message: string
 
-describe('@koishijs/plugin-help', () => {
+describe('@koishi-ce/plugin-help', () => {
   it('basic support', async () => {
     await client.shouldReply('help', message = [
       '当前可用的指令有：',

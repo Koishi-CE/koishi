@@ -47,12 +47,12 @@
 
 <script lang="ts" setup>
 
-import { Dict, send, useRpc, useContext } from '@koishijs/client'
+import { Dict, send, useRpc, useContext } from '@koishi-ce/client'
 import { useRoute, useRouter } from 'vue-router'
 import { computed, nextTick, onActivated, ref, watch } from 'vue'
-import { CommandData } from '@koishijs/plugin-commands'
-import {} from '@koishijs/plugin-locales'
-import {} from '@koishijs/plugin-config'
+import { CommandData } from '@koishi-ce/plugin-commands'
+import {} from '@koishi-ce/plugin-locales'
+import {} from '@koishi-ce/plugin-config'
 import Command from './command.vue'
 
 const route = useRoute()

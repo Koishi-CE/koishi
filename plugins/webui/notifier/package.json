@@ -1,5 +1,5 @@
 {
-  "name": "@koishijs/plugin-notifier",
+  "name": "@koishi-ce/plugin-notifier",
   "description": "Notifier service for Koishi",
   "version": "1.2.1",
   "main": "lib/index.cjs",
@@ -24,11 +24,11 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/koishijs/webui.git",
-    "directory": "plugins/notifier"
+    "url": "git+https://github.com/Koishi-CE/koishi.git",
+    "directory": "plugins/webui/notifier"
   },
   "bugs": {
-    "url": "https://github.com/koishijs/webui/issues"
+    "url": "https://github.com/Koishi-CE/koishi/issues"
   },
   "homepage": "https://koishi.chat/plugins/develop/notifier.html",
   "keywords": [
@@ -57,7 +57,7 @@
     "koishi": "^4.18.11"
   },
   "devDependencies": {
-    "@koishijs/client": "workspace:*",
-    "@koishijs/plugin-config": "workspace:*"
+    "@koishi-ce/client": "workspace:*",
+    "@koishi-ce/plugin-config": "workspace:*"
   }
 }

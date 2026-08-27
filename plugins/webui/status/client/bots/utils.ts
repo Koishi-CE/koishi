@@ -1,4 +1,4 @@
-import { Universal } from '@koishijs/client'
+import { Universal } from '@koishi-ce/client'
 
 export function getStatus(status: Universal.Status) {
   switch (status) {

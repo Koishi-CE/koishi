@@ -1,5 +1,5 @@
-import { Awaitable, Dict, loading, message, send, socket, store, valueMap } from '@koishijs/client'
-import type { Registry } from '@koishijs/registry'
+import { Awaitable, Dict, loading, message, send, socket, store, valueMap } from '@koishi-ce/client'
+import type { Registry } from '@koishi-ce/registry'
 import { compare, satisfies } from 'semver'
 import { reactive, ref, watch } from 'vue'
 import { active } from '../utils'

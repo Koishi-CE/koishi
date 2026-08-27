@@ -1,4 +1,4 @@
-import { Context, h, RuntimeError, Schema, Session } from 'koishi'
+import { Context, h, RuntimeError, Schema, Session } from '@koishi-ce/koishi'
 import zhCN from './locales/zh-CN.yml'
 
 declare module 'koishi' {

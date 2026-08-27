@@ -1,8 +1,8 @@
-import { DataService } from '@koishijs/console'
-import { Context, Logger, remove } from 'koishi'
-import { Loader } from '@koishijs/loader'
+import { DataService } from '@koishi-ce/console'
+import { Context, Logger, remove } from '@koishi-ce/koishi'
+import { Loader } from '@koishi-ce/loader'
 
-declare module '@koishijs/console' {
+declare module '@koishi-ce/console' {
   interface Events {
     'manager/app-reload'(config: any): void
     'manager/teleport'(source: string, key: string, target: string, index: number): void

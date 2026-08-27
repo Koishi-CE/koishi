@@ -12,7 +12,7 @@
 
 <script lang="ts" setup>
 
-import { store } from '@koishijs/client'
+import { store } from '@koishi-ce/client'
 import { computed } from 'vue'
 import { useRoute } from 'vue-router'
 import ActivityBar from './activity/index.vue'

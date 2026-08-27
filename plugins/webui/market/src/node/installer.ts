@@ -1,10 +1,10 @@
-import { Context, defineProperty, Dict, HTTP, Logger, pick, Schema, Service, Time, valueMap } from 'koishi'
-import Scanner, { DependencyMetaKey, PackageJson, Registry, RemotePackage } from '@koishijs/registry'
+import { Context, defineProperty, Dict, HTTP, Logger, pick, Schema, Service, Time, valueMap } from '@koishi-ce/koishi'
+import Scanner, { DependencyMetaKey, PackageJson, Registry, RemotePackage } from '@koishi-ce/registry'
 import { resolve } from 'path'
 import { promises as fsp, readFileSync } from 'fs'
 import { compare, satisfies, valid } from 'semver'
-import {} from '@koishijs/console'
-import {} from '@koishijs/loader'
+import {} from '@koishi-ce/console'
+import {} from '@koishi-ce/loader'
 import getRegistry from 'get-registry'
 import which from 'which-pm-runs'
 import spawn from 'execa'
@@ -100,13 +100,14 @@ class Installer extends Service {
   }
 
   resolveName(name: string) {
+    if (name.startsWith('@koishi-ce/plugin-')) return [name]
     if (name.startsWith('@koishijs/plugin-')) return [name]
     if (name.match(/(^|\/)koishi-plugin-/)) return [name]
     if (name[0] === '@') {
       const [left, right] = name.split('/')
       return [`${left}/koishi-plugin-${right}`]
     } else {
-      return [`@koishijs/plugin-${name}`, `koishi-plugin-${name}`]
+      return [`@koishi-ce/plugin-${name}`, `@koishijs/plugin-${name}`, `koishi-plugin-${name}`]
     }
   }
 

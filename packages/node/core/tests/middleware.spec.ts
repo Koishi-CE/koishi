@@ -1,6 +1,6 @@
-import { App, SessionError, Middleware, sleep, noop, Logger, Next } from 'koishi'
+import { App, SessionError, Middleware, sleep, noop, Logger, Next } from '@koishi-ce/koishi'
 import { expect } from 'chai'
-import mock from '@koishijs/plugin-mock'
+import mock from '@koishi-ce/plugin-mock'
 import { mock as jest, Mock } from 'node:test'
 
 type NextCallback = Extract<Next.Callback, (...args: any[]) => any>

@@ -1,5 +1,5 @@
 {
-  "name": "@koishijs/plugin-bind",
+  "name": "@koishi-ce/plugin-bind",
   "description": "Bind User Accounts Across Platforms in Koishi",
   "version": "1.5.1",
   "main": "lib/index.js",
@@ -15,11 +15,11 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/koishijs/koishi.git",
+    "url": "git+https://github.com/Koishi-CE/koishi.git",
     "directory": "plugins/common/bind"
   },
   "bugs": {
-    "url": "https://github.com/koishijs/koishi/issues"
+    "url": "https://github.com/Koishi-CE/koishi/issues"
   },
   "homepage": "https://koishi.chat/plugins/common/bind.html",
   "keywords": [
@@ -49,9 +49,9 @@
     "koishi": "^4.18.11"
   },
   "devDependencies": {
-    "@koishijs/plugin-mock": "workspace:*",
+    "@koishi-ce/plugin-mock": "workspace:*",
     "@minatojs/driver-memory": "^3.7.0",
-    "koishi": "workspace:*",
+    "@koishi-ce/koishi": "workspace:*",
     "minato": "^3.7.0"
   }
 }

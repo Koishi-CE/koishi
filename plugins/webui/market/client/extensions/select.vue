@@ -18,9 +18,9 @@
 
 <script setup lang="ts">
 
-import { store } from '@koishijs/client'
-import { categories, MarketIcon, useMarketI18n, resolveCategory } from '@koishijs/market'
-import { PackageProvider } from '@koishijs/plugin-config'
+import { store } from '@koishi-ce/client'
+import { categories, MarketIcon, useMarketI18n, resolveCategory } from '@koishi-ce/market'
+import { PackageProvider } from '@koishi-ce/plugin-config'
 import { provide, ref } from 'vue'
 
 const extended = ['all', 'other', ...categories]

@@ -1,7 +1,7 @@
-import { App } from 'koishi'
-import mock from '@koishijs/plugin-mock'
-import * as help from '@koishijs/plugin-help'
-import commands from '@koishijs/plugin-commands'
+import { App } from '@koishi-ce/koishi'
+import mock from '@koishi-ce/plugin-mock'
+import * as help from '@koishi-ce/plugin-help'
+import commands from '@koishi-ce/plugin-commands'
 import { expect } from 'chai'
 
 const app = new App()
@@ -22,7 +22,7 @@ afterEach(() => {
   app.registry.delete(commands)
 })
 
-describe('@koishijs/plugin-commands', () => {
+describe('@koishi-ce/plugin-commands', () => {
   describe('basic usage', () => {
     it('dispose command', async () => {
       const cmd = app.command('bar').action(() => 'test')

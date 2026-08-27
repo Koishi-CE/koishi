@@ -1,4 +1,4 @@
-import { Command, Context } from 'koishi'
+import { Command, Context } from '@koishi-ce/koishi'
 import { expect, use } from 'chai'
 import shape from 'chai-shape'
 

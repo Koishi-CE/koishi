@@ -1,4 +1,4 @@
-import { Context } from '@koishijs/client'
+import { Context } from '@koishi-ce/client'
 import Home from './home.vue'
 
 export default function (ctx: Context) {

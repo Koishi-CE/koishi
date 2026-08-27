@@ -27,9 +27,9 @@
 
 <script lang="ts" setup>
 
-import { router, send, store, useI18nText } from '@koishijs/client'
+import { router, send, store, useI18nText } from '@koishi-ce/client'
 import { computed, inject, nextTick, ref, watch } from 'vue'
-import { PackageProvider } from '@koishijs/plugin-config'
+import { PackageProvider } from '@koishi-ce/plugin-config'
 import { dialogSelect } from './utils'
 
 const tt = useI18nText()

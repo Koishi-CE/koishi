@@ -1,5 +1,5 @@
 {
-  "name": "@koishijs/plugin-oobe",
+  "name": "@koishi-ce/plugin-oobe",
   "description": "Out-Of-the-Box Experience for Koishi",
   "version": "0.0.2",
   "main": "lib/index.cjs",
@@ -24,11 +24,11 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/koishijs/webui.git",
-    "directory": "plugins/oobe"
+    "url": "git+https://github.com/Koishi-CE/koishi.git",
+    "directory": "plugins/webui/oobe"
   },
   "bugs": {
-    "url": "https://github.com/koishijs/webui/issues"
+    "url": "https://github.com/Koishi-CE/koishi/issues"
   },
   "homepage": "https://koishi.chat/plugins/console/oobe.html",
   "keywords": [
@@ -57,9 +57,9 @@
     "koishi": "^4.18.11"
   },
   "devDependencies": {
-    "@koishijs/client": "workspace:*"
+    "@koishi-ce/client": "workspace:*"
   },
   "dependencies": {
-    "@koishijs/console": "workspace:*"
+    "@koishi-ce/console": "workspace:*"
   }
 }

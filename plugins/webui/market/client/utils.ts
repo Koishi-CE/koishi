@@ -1,5 +1,5 @@
 import { ref } from 'vue'
-import { store } from '@koishijs/client'
+import { store } from '@koishi-ce/client'
 import { gt } from 'semver'
 
 export const active = ref('')

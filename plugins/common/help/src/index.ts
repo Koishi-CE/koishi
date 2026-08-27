@@ -1,4 +1,4 @@
-import { Argv, Command, Computed, Context, FieldCollector, h, Schema, Session } from 'koishi'
+import { Argv, Command, Computed, Context, FieldCollector, h, Schema, Session } from '@koishi-ce/koishi'
 import zhCN from './locales/zh-CN.yml'
 import enUS from './locales/en-US.yml'
 

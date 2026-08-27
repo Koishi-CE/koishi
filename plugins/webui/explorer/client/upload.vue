@@ -13,7 +13,7 @@
 
 import { computed } from 'vue'
 import { useEventListener } from '@vueuse/core'
-import { Binary, send } from '@koishijs/client'
+import { Binary, send } from '@koishi-ce/client'
 import { uploading } from './store'
 
 const showUploading = computed({

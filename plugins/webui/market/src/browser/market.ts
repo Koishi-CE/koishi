@@ -1,5 +1,5 @@
 import { MarketProvider as BaseMarketProvider } from '../shared'
-import {} from '@koishijs/plugin-config'
+import {} from '@koishi-ce/plugin-config'
 
 export default class MarketProvider extends BaseMarketProvider {
   async collect() {

@@ -32,7 +32,7 @@
 
 import { computed, ref } from 'vue'
 import { useRoute } from 'vue-router'
-import { Activity, useConfig, useMenu } from '@koishijs/client'
+import { Activity, useConfig, useMenu } from '@koishi-ce/client'
 import { Placement } from 'element-plus'
 import ActivityButton from './button.vue'
 import { watch } from 'vue'

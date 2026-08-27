@@ -14,7 +14,7 @@
 <script lang="ts" setup>
 
 import { ref } from 'vue'
-import { Activity } from '@koishijs/client'
+import { Activity } from '@koishi-ce/client'
 
 const props = defineProps<{
   data: Activity

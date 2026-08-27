@@ -1,4 +1,4 @@
-import { Context, Dict, h, MessageEncoder, Random } from 'koishi'
+import { Context, Dict, h, MessageEncoder, Random } from '@koishi-ce/koishi'
 import { SandboxBot } from './bot'
 
 export class SandboxMessenger<C extends Context = Context> extends MessageEncoder<C, SandboxBot<C>> {

@@ -50,11 +50,11 @@
 
 <script setup lang="ts">
 
-import { router, store, global, useConfig } from '@koishijs/client'
+import { router, store, global, useConfig } from '@koishi-ce/client'
 import { computed, provide, ref, watch } from 'vue'
 import { active } from '../utils'
-import { getSorted, kConfig, MarketFilter, MarketList, MarketSearch } from '@koishijs/market'
-import { SearchObject } from '@koishijs/registry'
+import { getSorted, kConfig, MarketFilter, MarketList, MarketSearch } from '@koishi-ce/market'
+import { SearchObject } from '@koishi-ce/registry'
 
 function installed(data: SearchObject) {
   if (store.packages) {

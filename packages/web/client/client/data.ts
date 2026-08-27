@@ -1,5 +1,5 @@
-import type { ClientConfig, Console, DataService, Events } from '@koishijs/plugin-console'
-import type { Promisify, Universal } from 'koishi'
+import type { ClientConfig, Console, DataService, Events } from '@koishi-ce/plugin-console'
+import type { Promisify, Universal } from '@koishi-ce/koishi'
 import { markRaw, reactive, ref } from 'vue'
 import { Context } from './context'
 

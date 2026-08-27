@@ -1,5 +1,5 @@
-import { Client } from '@koishijs/console'
-import { Bot, Context, Time, Universal } from 'koishi'
+import { Client } from '@koishi-ce/console'
+import { Bot, Context, Time, Universal } from '@koishi-ce/koishi'
 import { SandboxMessenger } from './message'
 
 export namespace SandboxBot {

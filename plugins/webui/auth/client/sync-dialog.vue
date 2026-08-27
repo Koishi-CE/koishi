@@ -17,7 +17,7 @@
 
 <script lang="ts" setup>
 
-import { message, send, store, useConfig } from '@koishijs/client'
+import { message, send, store, useConfig } from '@koishi-ce/client'
 import { shared, showSyncDialog } from './utils'
 
 const config = useConfig()

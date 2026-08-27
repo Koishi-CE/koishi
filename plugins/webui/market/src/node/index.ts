@@ -1,5 +1,5 @@
-import { Context, Dict, pick, Schema } from 'koishi'
-import { DependencyMetaKey, RemotePackage } from '@koishijs/registry'
+import { Context, Dict, pick, Schema } from '@koishi-ce/koishi'
+import { DependencyMetaKey, RemotePackage } from '@koishi-ce/registry'
 import { gt } from 'semver'
 import { resolve } from 'path'
 import { DependencyProvider, RegistryProvider } from './deps'
@@ -16,7 +16,7 @@ declare module 'koishi' {
   }
 }
 
-declare module '@koishijs/console' {
+declare module '@koishi-ce/console' {
   namespace Console {
     interface Services {
       dependencies: DependencyProvider
@@ -67,7 +67,7 @@ export const Config: Schema<Config> = Schema.object({
 
 export function apply(ctx: Context, config: Config) {
   if (!ctx.loader?.writable) {
-    return ctx.logger('app').warn('@koishijs/plugin-market is only available for json/yaml config file')
+    return ctx.logger('app').warn('@koishi-ce/plugin-market is only available for json/yaml config file')
   }
 
   ctx.plugin(Installer, config.registry)

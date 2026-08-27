@@ -95,7 +95,7 @@
 
 <script lang="ts" setup>
 
-import { store, send, useContext } from '@koishijs/client'
+import { store, send, useContext } from '@koishi-ce/client'
 import { computed, provide, watch } from 'vue'
 import { envMap, name, plugins, dialogFork, Tree } from './utils'
 import KModifier from './modifier.vue'

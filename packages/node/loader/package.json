@@ -1,5 +1,5 @@
 {
-  "name": "@koishijs/loader",
+  "name": "@koishi-ce/loader",
   "description": "Config Loader for Koishi",
   "version": "4.6.11",
   "main": "lib/index.js",
@@ -30,11 +30,11 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/koishijs/koishi.git",
-    "directory": "packages/loader"
+    "url": "git+https://github.com/Koishi-CE/koishi.git",
+    "directory": "packages/node/loader"
   },
   "bugs": {
-    "url": "https://github.com/koishijs/koishi/issues"
+    "url": "https://github.com/Koishi-CE/koishi/issues"
   },
   "homepage": "https://koishi.chat/api/utils.html",
   "keywords": [
@@ -48,10 +48,10 @@
     "@koishijs/core": "4.18.11"
   },
   "devDependencies": {
-    "@koishijs/core": "workspace:*",
-    "@koishijs/plugin-mock": "workspace:*",
+    "@koishi-ce/core": "workspace:*",
+    "@koishi-ce/plugin-mock": "workspace:*",
     "@types/js-yaml": "^4.0.9",
-    "koishi": "workspace:*"
+    "@koishi-ce/koishi": "workspace:*"
   },
   "dependencies": {
     "dotenv": "^16.4.5",

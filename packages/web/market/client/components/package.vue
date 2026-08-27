@@ -65,9 +65,9 @@
 <script lang="ts" setup>
 
 import { computed, inject } from 'vue'
-import { SearchObject } from '@koishijs/registry'
-import { useI18nText } from '@koishijs/components'
-import { badges, getUsers, resolveCategory, validate } from '@koishijs/market'
+import { SearchObject } from '@koishi-ce/registry'
+import { useI18nText } from '@koishi-ce/components'
+import { badges, getUsers, resolveCategory, validate } from '@koishi-ce/market'
 import { kConfig } from '../utils'
 import { useI18n } from 'vue-i18n'
 import zhCN from '../locales/zh-CN.yml'

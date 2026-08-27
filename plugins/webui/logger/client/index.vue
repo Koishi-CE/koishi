@@ -6,7 +6,7 @@
 
 <script lang="ts" setup>
 
-import { store } from '@koishijs/client'
+import { store } from '@koishi-ce/client'
 import Logs from './logs.vue'
 
 </script>

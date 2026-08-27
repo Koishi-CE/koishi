@@ -1,5 +1,5 @@
-import { Context, Dict, Schema, version } from 'koishi'
-import { DataService } from '@koishijs/console'
+import { Context, Dict, Schema, version } from '@koishi-ce/koishi'
+import { DataService } from '@koishi-ce/console'
 import { readFile } from 'fs/promises'
 import { helpers } from 'envinfo'
 import which from 'which-pm-runs'
@@ -28,7 +28,7 @@ class EnvInfoProvider extends DataService<Dict<Dict<string>>> {
       binaries[agent.name] = agent.version
     }
     // do not use `require` directly to avoid caching
-    const metapath = require.resolve('@koishijs/console/package.json')
+    const metapath = require.resolve('@koishi-ce/console/package.json')
     const meta = await readFile(metapath, 'utf8').then(JSON.parse)
     const koishi = {
       Core: version,

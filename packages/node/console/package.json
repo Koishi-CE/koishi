@@ -1,5 +1,5 @@
 {
-  "name": "@koishijs/console",
+  "name": "@koishi-ce/console",
   "description": "Console Service for Koishi",
   "version": "5.30.11",
   "main": "lib/index.js",
@@ -13,11 +13,11 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/koishijs/webui.git",
-    "directory": "packages/console"
+    "url": "git+https://github.com/Koishi-CE/koishi.git",
+    "directory": "packages/node/console"
   },
   "bugs": {
-    "url": "https://github.com/koishijs/webui/issues"
+    "url": "https://github.com/Koishi-CE/koishi/issues"
   },
   "homepage": "https://koishi.chat/plugins/console/",
   "keywords": [

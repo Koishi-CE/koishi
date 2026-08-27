@@ -1,5 +1,5 @@
-import { Context } from '@koishijs/client'
-import {} from '@koishijs/plugin-analytics/src'
+import { Context } from '@koishi-ce/client'
+import {} from '@koishi-ce/plugin-analytics/src'
 import Charts from './charts'
 import Home from './home.vue'
 import './icons'

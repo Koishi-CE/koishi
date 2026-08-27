@@ -1,5 +1,5 @@
-import { Context, icons } from '@koishijs/client'
-import {} from '@koishijs/plugin-locales'
+import { Context, icons } from '@koishi-ce/client'
+import {} from '@koishi-ce/plugin-locales'
 import Locales from './locales.vue'
 import Activity from './icons/activity.vue'
 import Globe from './icons/globe.vue'

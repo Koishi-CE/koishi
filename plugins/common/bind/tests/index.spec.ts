@@ -1,7 +1,7 @@
-import { Context } from 'koishi'
-import * as bind from '@koishijs/plugin-bind'
+import { Context } from '@koishi-ce/koishi'
+import * as bind from '@koishi-ce/plugin-bind'
 import memory from '@minatojs/driver-memory'
-import mock from '@koishijs/plugin-mock'
+import mock from '@koishi-ce/plugin-mock'
 
 const app = new Context()
 
@@ -27,7 +27,7 @@ before(async () => {
 
 after(() => app.stop())
 
-describe('@koishijs/plugin-bind', () => {
+describe('@koishi-ce/plugin-bind', () => {
   it('create binding', async () => {
     await client1.shouldReply('name', 'foo')
     await client2.shouldReply('name', 'bar')

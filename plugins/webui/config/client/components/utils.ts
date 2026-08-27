@@ -1,6 +1,6 @@
-import { Dict } from 'koishi'
+import { Dict } from '@koishi-ce/koishi'
 import { computed, ref } from 'vue'
-import { router, ScopeStatus, send, store } from '@koishijs/client'
+import { router, ScopeStatus, send, store } from '@koishi-ce/client'
 
 interface DepInfo {
   required: boolean
@@ -22,13 +22,16 @@ export const dialogFork = ref<string>()
 export const dialogSelect = ref<Tree>()
 
 export const coreDeps = [
-  '@koishijs/plugin-console',
-  '@koishijs/plugin-config',
-  '@koishijs/plugin-server',
+  '@koishi-ce/plugin-console',
+  '@koishi-ce/plugin-config',
+  '@koishi-ce/plugin-server',
 ]
 
 export function hasCoreDeps(tree: Tree) {
-  if (coreDeps.includes('@koishijs/plugin-' + tree.name)) return true
+  if (tree.name && (
+    coreDeps.includes('@koishi-ce/plugin-' + tree.name)
+    || coreDeps.includes('@koishijs/plugin-' + tree.name)
+  )) return true
   if (tree.children) return tree.children.some(hasCoreDeps)
 }
 
@@ -45,7 +48,7 @@ function getEnvInfo(name: string) {
 
   // check peer dependencies
   for (const name in local.package.peerDependencies ?? {}) {
-    if (!name.includes('@koishijs/plugin-') && !name.includes('koishi-plugin-')) continue
+    if (!name.includes('@koishi-ce/plugin-') && !name.includes('@koishijs/plugin-') && !name.includes('koishi-plugin-')) continue
     if (coreDeps.includes(name)) continue
     const required = !local.package.peerDependenciesMeta?.[name]?.optional
     const active = !!store.packages[name]?.runtime?.id
@@ -89,7 +92,7 @@ export const envMap = computed(() => {
     .map(name => [name, getEnvInfo(name)]))
 })
 
-declare module '@koishijs/client' {
+declare module '@koishi-ce/client' {
   interface ActionContext {
     'config.tree': Tree
   }

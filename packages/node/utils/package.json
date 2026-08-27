@@ -1,5 +1,5 @@
 {
-  "name": "@koishijs/utils",
+  "name": "@koishi-ce/utils",
   "description": "Utilities for Koishi",
   "version": "7.2.1",
   "main": "lib/index.cjs",
@@ -13,11 +13,11 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/koishijs/koishi.git",
-    "directory": "packages/utils"
+    "url": "git+https://github.com/Koishi-CE/koishi.git",
+    "directory": "packages/node/utils"
   },
   "bugs": {
-    "url": "https://github.com/koishijs/koishi/issues"
+    "url": "https://github.com/Koishi-CE/koishi/issues"
   },
   "homepage": "https://koishi.chat/api/utils.html",
   "keywords": [
@@ -28,7 +28,7 @@
   ],
   "devDependencies": {
     "@sinonjs/fake-timers": "^6.0.1",
-    "koishi": "workspace:*"
+    "@koishi-ce/koishi": "workspace:*"
   },
   "dependencies": {
     "cosmokit": "^1.8.1",

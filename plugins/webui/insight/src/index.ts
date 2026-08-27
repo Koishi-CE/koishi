@@ -1,9 +1,9 @@
-import { camelize, capitalize, Context, EffectScope, ForkScope, Plugin, Schema, ScopeStatus } from 'koishi'
-import { DataService } from '@koishijs/console'
+import { camelize, capitalize, Context, EffectScope, ForkScope, Plugin, Schema, ScopeStatus } from '@koishi-ce/koishi'
+import { DataService } from '@koishi-ce/console'
 import { resolve } from 'path'
-import {} from '@koishijs/loader'
+import {} from '@koishi-ce/loader'
 
-declare module '@koishijs/console' {
+declare module '@koishi-ce/console' {
   namespace Console {
     interface Services {
       insight: Insight

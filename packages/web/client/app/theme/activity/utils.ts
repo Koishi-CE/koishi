@@ -1,6 +1,6 @@
-import { Activity, Dict } from '@koishijs/client'
+import { Activity, Dict } from '@koishi-ce/client'
 
-declare module '@koishijs/client' {
+declare module '@koishi-ce/client' {
   interface ActionContext {
     'theme.activity': Activity
   }

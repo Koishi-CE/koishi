@@ -13,7 +13,7 @@
     "moduleResolution": "node",
     "strictBindCallApply": true,
     "types": [
-      "@koishijs/client/global",
+      "@koishi-ce/client/global",
     ],
   },
   "include": [

@@ -1,6 +1,6 @@
 import { distance } from 'fastest-levenshtein'
 import { Dict, isNullable } from 'cosmokit'
-import { fallback, LocaleTree } from '@koishijs/i18n-utils'
+import { fallback, LocaleTree } from '@koishi-ce/i18n-utils'
 import { h, Logger, Schema } from '@satorijs/core'
 import { Context } from './context'
 import zhCN from './locales/zh-CN.yml'

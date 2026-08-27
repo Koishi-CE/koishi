@@ -1,4 +1,4 @@
-import { interpolate, escapeRegExp } from 'koishi'
+import { interpolate, escapeRegExp } from '@koishi-ce/koishi'
 import { expect } from 'chai'
 
 describe('String Manipulations', () => {

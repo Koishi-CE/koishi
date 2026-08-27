@@ -2,8 +2,8 @@ import { createReadStream, Stats } from 'fs'
 import { readFile, stat } from 'fs/promises'
 import { dirname, extname, resolve } from 'path'
 import { ViteDevServer } from 'vite'
-import { LocalScanner } from '@koishijs/registry'
-import { noop } from '@koishijs/utils'
+import { LocalScanner } from '@koishi-ce/registry'
+import { noop } from '@koishi-ce/utils'
 import { load } from 'tsconfig-utils'
 import { createRequire } from 'module'
 import { PackageJson } from 'yakumo'
@@ -18,7 +18,7 @@ app.use(router.routes())
 app.use(router.allowedMethods())
 
 const uiPath = ''
-const root = resolve(require.resolve('@koishijs/online/package.json'), '../app')
+const root = resolve(require.resolve('@koishi-ce/online/package.json'), '../app')
 
 let vite: ViteDevServer
 
@@ -160,15 +160,15 @@ async function createVite() {
       dedupe: ['vue', 'vue-demi', 'vue-router', 'element-plus', '@vueuse/core', '@popperjs/core'],
       alias: {
         ...require.resolve('@root/koishi/package.json') ? {
-          '@koishijs/core': '@koishijs/core/src/index.ts',
-          '@koishijs/loader': '@koishijs/loader/src/shared.ts',
+          '@koishi-ce/core': '@koishi-ce/core/src/index.ts',
+          '@koishi-ce/loader': '@koishi-ce/loader/src/shared.ts',
         } : {},
         ...require.resolve('@root/minato/package.json') ? {
           '@minatojs/driver-sqlite': '@minatojs/driver-sqlite/src/index.ts',
           '@minatojs/sql-utils': '@minatojs/sql-utils/src/index.ts',
           'minato': 'minato/src/index.ts',
         } : {},
-        '@koishijs/plugin-console': '@koishijs/plugin-console/src/browser/index.ts',
+        '@koishi-ce/plugin-console': '@koishi-ce/plugin-console/src/browser/index.ts',
         'chokidar': '@koishijs/fs/src/index.ts',
         'dns/promises': '@koishijs/dns/src/promises.ts',
         'dns': '@koishijs/dns/src/index.ts',

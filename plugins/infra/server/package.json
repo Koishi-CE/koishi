@@ -1,5 +1,5 @@
 {
-  "name": "@koishijs/plugin-server",
+  "name": "@koishi-ce/plugin-server",
   "description": "Server service for Koishi",
   "version": "3.2.9",
   "type": "module",
@@ -20,11 +20,11 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/koishijs/koishi.git",
-    "directory": "plugins/server"
+    "url": "git+https://github.com/Koishi-CE/koishi.git",
+    "directory": "plugins/infra/server"
   },
   "bugs": {
-    "url": "https://github.com/koishijs/koishi/issues"
+    "url": "https://github.com/Koishi-CE/koishi/issues"
   },
   "homepage": "https://koishi.chat/plugins/develop/server.html",
   "keywords": [
@@ -52,7 +52,7 @@
   },
   "devDependencies": {
     "cordis": "^3.18.1",
-    "koishi": "workspace:*"
+    "@koishi-ce/koishi": "workspace:*"
   },
   "dependencies": {
     "@cordisjs/plugin-server": "^0.2.9"

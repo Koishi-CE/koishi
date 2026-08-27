@@ -1,5 +1,5 @@
-import { Context, Dict } from 'koishi'
-import {} from '@koishijs/plugin-server'
+import { Context, Dict } from '@koishi-ce/koishi'
+import {} from '@koishi-ce/plugin-server'
 import { Socket } from 'net'
 import { IncomingMessage, ServerResponse } from 'http'
 

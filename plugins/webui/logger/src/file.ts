@@ -1,5 +1,5 @@
 import { FileHandle, open } from 'fs/promises'
-import { Logger } from 'koishi'
+import { Logger } from '@koishi-ce/koishi'
 import { Buffer } from 'buffer'
 
 export class FileWriter {

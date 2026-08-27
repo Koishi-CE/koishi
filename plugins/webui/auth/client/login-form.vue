@@ -57,8 +57,8 @@
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { shared, showLoginDialog } from './utils'
-import { send, store } from '@koishijs/client'
-import { UserLogin } from '@koishijs/plugin-auth'
+import { send, store } from '@koishi-ce/client'
+import { UserLogin } from '@koishi-ce/plugin-auth'
 
 const error = ref<string>()
 const user = ref<UserLogin>()

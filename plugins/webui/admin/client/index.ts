@@ -1,5 +1,5 @@
-import { Context, icons } from '@koishijs/client'
-import {} from '@koishijs/plugin-admin'
+import { Context, icons } from '@koishi-ce/client'
+import {} from '@koishi-ce/plugin-admin'
 import Activity from './icons/activity.vue'
 import TrashCan from './icons/trash-can.vue'
 import UserGroup from './group.vue'

@@ -1,11 +1,11 @@
-import { SearchResult } from '@koishijs/registry'
-import { Loader } from '@koishijs/loader'
-import { global } from '@koishijs/client'
-import { Logger } from '@koishijs/core'
+import { SearchResult } from '@koishi-ce/registry'
+import { Loader } from '@koishi-ce/loader'
+import { global } from '@koishi-ce/client'
+import { Logger } from '@koishi-ce/core'
 import { Buffer } from 'buffer'
 import process from 'process'
 
-export * from '@koishijs/loader'
+export * from '@koishi-ce/loader'
 
 if (process.env.NODE_ENV !== 'development') {
   globalThis.process = process
