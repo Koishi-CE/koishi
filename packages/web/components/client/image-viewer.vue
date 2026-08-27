@@ -23,48 +23,49 @@
 </template>
 
 <script lang="ts" setup>
-
-import { computed, watch, ref } from 'vue'
-import { useResizeObserver } from '@vueuse/core'
+import { useResizeObserver } from "@vueuse/core";
+import { computed, ref, watch } from "vue";
 
 const props = defineProps<{
-  src?: string
-}>()
+	src?: string;
+}>();
 
-const scale = ref(1)
-const rotate = ref(0)
-const img = ref<HTMLImageElement>(null)
-const container = ref<HTMLDivElement>(null)
+const scale = ref(1);
+const rotate = ref(0);
+const img = ref<HTMLImageElement>(null);
+const container = ref<HTMLDivElement>(null);
 
 const transform = computed(() => {
-  return `scale(${scale.value}) rotate(${rotate.value}deg)`
-})
+	return `scale(${scale.value}) rotate(${rotate.value}deg)`;
+});
 
-watch(() => props.src, (el) => {
-  scale.value = 1
-  rotate.value = 0
-})
+watch(
+	() => props.src,
+	(el) => {
+		scale.value = 1;
+		rotate.value = 0;
+	},
+);
 
-watch(img, moveToCenter)
+watch(img, moveToCenter);
 
 useResizeObserver(container, () => {
-  moveToCenter(img.value)
-})
+	moveToCenter(img.value);
+});
 
 function moveToCenter(el: HTMLImageElement) {
-  if (!el) return
-  const { naturalHeight, naturalWidth } = el
-  const maxHeight = container.value.clientHeight
-  const maxWidth = container.value.clientWidth
-  const scale = Math.min(1, maxHeight / naturalHeight, maxWidth / naturalWidth)
-  const width = naturalWidth * scale
-  const height = naturalHeight * scale
-  el.style.width = width + 'px'
-  el.style.height = height + 'px'
-  el.style.left = (maxWidth - width) / 2 + 'px'
-  el.style.top = (maxHeight - height) / 2 + 'px'
+	if (!el) return;
+	const { naturalHeight, naturalWidth } = el;
+	const maxHeight = container.value.clientHeight;
+	const maxWidth = container.value.clientWidth;
+	const scale = Math.min(1, maxHeight / naturalHeight, maxWidth / naturalWidth);
+	const width = naturalWidth * scale;
+	const height = naturalHeight * scale;
+	el.style.width = width + "px";
+	el.style.height = height + "px";
+	el.style.left = (maxWidth - width) / 2 + "px";
+	el.style.top = (maxHeight - height) / 2 + "px";
 }
-
 </script>
 
 <style lang="scss">

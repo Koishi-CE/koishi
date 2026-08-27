@@ -10,21 +10,19 @@
 </template>
 
 <script lang="ts" setup>
+import { type Dict, useRpc } from "@koishi-ce/client";
+import { computed, inject } from "vue";
+import type { CommandData } from "../lib";
 
-import { computed, inject } from 'vue'
-import { CommandData } from '../lib'
-import { Dict, useRpc } from '@koishi-ce/client'
+const current: any = inject("manager.settings.current");
 
-const current: any = inject('manager.settings.current')
-
-const data = useRpc<Dict<CommandData>>()
+const data = useRpc<Dict<CommandData>>();
 
 const list = computed(() => {
-  return Object.values(data.value)
-    .filter(item => item.paths.includes(current.value.path))
-    .sort((a, b) => a.name.localeCompare(b.name))
-})
-
+	return Object.values(data.value)
+		.filter((item) => item.paths.includes(current.value.path))
+		.sort((a, b) => a.name.localeCompare(b.name));
+});
 </script>
 
 <style lang="scss" scoped>

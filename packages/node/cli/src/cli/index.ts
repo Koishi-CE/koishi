@@ -1,13 +1,13 @@
-import registerStartCommand from './start'
-import { cac } from 'cac'
+import { cac } from "cac";
+import registerStartCommand from "./start";
 
-const { version } = require('../../package.json')
-const cli = cac('koishi').help().version(version)
+const { version } = require("../../package.json");
+const cli = cac("koishi").help().version(version);
 
-registerStartCommand(cli)
+registerStartCommand(cli);
 
-const argv = cli.parse()
+const argv = cli.parse();
 
 if (!cli.matchedCommand && !argv.options.help) {
-  cli.outputHelp()
+	cli.outputHelp();
 }

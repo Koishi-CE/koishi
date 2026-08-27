@@ -8,32 +8,30 @@
 </template>
 
 <script lang="ts" setup>
+import { type ActiveMenu, useContext } from "@koishi-ce/client";
+import { ref } from "vue";
+import MenuItem from "./menu-item.vue";
 
-import { ref } from 'vue'
-import { useContext, ActiveMenu } from '@koishi-ce/client'
-import MenuItem from './menu-item.vue'
+const props = defineProps<ActiveMenu>();
 
-const props = defineProps<ActiveMenu>()
+const ctx = useContext();
 
-const ctx = useContext()
-
-const el = ref<HTMLElement>()
+const el = ref<HTMLElement>();
 
 const getStyle = () => {
-  if (!el.value) return { visibility: 'hidden' }
-  const { height, width } = el.value.getBoundingClientRect()
-  const style: any = {}
-  if (props.relative.right + width > window.innerWidth) {
-    style.right = `${window.innerWidth - props.relative.left}px`
-  } else {
-    style.left = `${props.relative.right}px`
-  }
-  if (props.relative.bottom + height > window.innerHeight) {
-    style.bottom = `0px`
-  } else {
-    style.top = `${props.relative.bottom}px`
-  }
-  return style
-}
-
+	if (!el.value) return { visibility: "hidden" };
+	const { height, width } = el.value.getBoundingClientRect();
+	const style: any = {};
+	if (props.relative.right + width > window.innerWidth) {
+		style.right = `${window.innerWidth - props.relative.left}px`;
+	} else {
+		style.left = `${props.relative.right}px`;
+	}
+	if (props.relative.bottom + height > window.innerHeight) {
+		style.bottom = `0px`;
+	} else {
+		style.top = `${props.relative.bottom}px`;
+	}
+	return style;
+};
 </script>

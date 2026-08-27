@@ -13,18 +13,23 @@
 </template>
 
 <script lang="ts" setup>
-
-import { capitalize, message, store } from '@koishi-ce/client'
-import { copyToClipboard } from './utils'
+import { capitalize, message, store } from "@koishi-ce/client";
+import { copyToClipboard } from "./utils";
 
 async function copyInfo() {
-  const text = Object.entries(store.envinfo).map(([key, data]) => {
-    return `${capitalize(key)}:\n` + Object.entries(data).map(([key, value]) => `    ${key}: ${value}`).join('\n')
-  }).join('\n\n')
-  await copyToClipboard(text)
-  message.success('已复制环境信息！')
+	const text = Object.entries(store.envinfo)
+		.map(([key, data]) => {
+			return (
+				`${capitalize(key)}:\n` +
+				Object.entries(data)
+					.map(([key, value]) => `    ${key}: ${value}`)
+					.join("\n")
+			);
+		})
+		.join("\n\n");
+	await copyToClipboard(text);
+	message.success("已复制环境信息！");
 }
-
 </script>
 
 <style lang="scss" scoped>

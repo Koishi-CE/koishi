@@ -94,41 +94,48 @@
 </template>
 
 <script lang="ts" setup>
-
-import { store, send, useContext } from '@koishi-ce/client'
-import { computed, provide, watch } from 'vue'
-import { envMap, name, plugins, dialogFork, Tree } from './utils'
-import KModifier from './modifier.vue'
+import { send, store, useContext } from "@koishi-ce/client";
+import { computed, provide, watch } from "vue";
+import KModifier from "./modifier.vue";
+import { dialogFork, envMap, name, plugins, type Tree } from "./utils";
 
 const props = defineProps<{
-  current: Tree
-  modelValue: any
-}>()
+	current: Tree;
+	modelValue: any;
+}>();
 
-const emit = defineEmits(['update:modelValue'])
+const emit = defineEmits(["update:modelValue"]);
 
-const ctx = useContext()
+const ctx = useContext();
 
 const config = computed({
-  get: () => props.modelValue,
-  set: value => emit('update:modelValue', value),
-})
+	get: () => props.modelValue,
+	set: (value) => emit("update:modelValue", value),
+});
 
-const env = computed(() => envMap.value[name.value])
-const local = computed(() => store.packages[name.value])
-const hint = computed(() => local.value.workspace ? '请检查插件源代码。' : '请联系插件作者并反馈此问题。')
+const env = computed(() => envMap.value[name.value]);
+const local = computed(() => store.packages[name.value]);
+const hint = computed(() =>
+	local.value.workspace ? "请检查插件源代码。" : "请联系插件作者并反馈此问题。",
+);
 
-watch(local, (value) => {
-  if (!value || value.runtime) return
-  send('config/request-runtime', value.name)
-}, { immediate: true })
+watch(
+	local,
+	(value) => {
+		if (!value || value.runtime) return;
+		send("config/request-runtime", value.name);
+	},
+	{ immediate: true },
+);
 
-provide('plugin:name', name)
-provide('plugin:env', env)
-provide('manager.settings.local', local)
-provide('manager.settings.config', config)
-provide('manager.settings.current', computed(() => props.current))
-
+provide("plugin:name", name);
+provide("plugin:env", env);
+provide("manager.settings.local", local);
+provide("manager.settings.config", config);
+provide(
+	"manager.settings.current",
+	computed(() => props.current),
+);
 </script>
 
 <style lang="scss">

@@ -7,19 +7,30 @@
 </template>
 
 <script setup lang="ts">
+import { store } from "@koishi-ce/client";
+import {} from "@koishi-ce/plugin-analytics/src";
+import { computed, inject } from "vue";
 
-import { computed, inject } from 'vue'
-import { store } from '@koishi-ce/client'
-import {} from '@koishi-ce/plugin-analytics/src'
-
-const AnalyticNumber = inject('component:analytic-number')
+const AnalyticNumber = inject("component:analytic-number");
 
 const current = computed(() => {
-  return Object.values(store.status.bots).reduce((acc, bot) => acc + bot.messageReceived, 0) / 60
-})
+	return (
+		Object.values(store.status.bots).reduce(
+			(acc, bot) => acc + bot.messageReceived,
+			0,
+		) / 60
+	);
+});
 
 const recent = computed(() => {
-  return Object.values(store.analytics.messageByDate).slice(-7).reduce((acc, value) => acc + value.receive, 0) / 7 / 24 / 60 / 60
-})
-
+	return (
+		Object.values(store.analytics.messageByDate)
+			.slice(-7)
+			.reduce((acc, value) => acc + value.receive, 0) /
+		7 /
+		24 /
+		60 /
+		60
+	);
+});
 </script>

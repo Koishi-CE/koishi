@@ -8,14 +8,12 @@
 </template>
 
 <script lang="ts" setup>
-
-defineEmits(['update:modelValue'])
+defineEmits(["update:modelValue"]);
 
 defineProps<{
-  label: string
-  modelValue: string
-}>()
-
+	label: string;
+	modelValue: string;
+}>();
 </script>
 
 <style lang="scss">

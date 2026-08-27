@@ -1,69 +1,81 @@
-import { Comment, defineComponent, Directive, Fragment, h, Ref, ref, Text, VNode, watch, withDirectives } from 'vue'
+import {
+	Comment,
+	type Directive,
+	defineComponent,
+	Fragment,
+	h,
+	type Ref,
+	ref,
+	Text,
+	type VNode,
+	watch,
+	withDirectives,
+} from "vue";
 
 export const useRefDirective = (ref: Ref): Directive<Element> => ({
-  mounted(el) {
-    ref.value = el
-  },
-  updated(el) {
-    ref.value = el
-  },
-  beforeUnmount() {
-    ref.value = null
-  },
-})
+	mounted(el) {
+		ref.value = el;
+	},
+	updated(el) {
+		ref.value = el;
+	},
+	beforeUnmount() {
+		ref.value = null;
+	},
+});
 
 function findFirstLegitChild(node: VNode[]): VNode {
-  if (!node) return null
-  for (const child of node) {
-    if (typeof child === 'object') {
-      switch (child.type) {
-        case Comment:
-          continue
-        case Text:
-          break
-        case Fragment:
-          return findFirstLegitChild(child.children as VNode[])
-        default:
-          if (typeof child.type === 'string') return child
-          return child
-      }
-    }
-    return h('span', child)
-  }
+	if (!node) return null;
+	for (const child of node) {
+		if (typeof child === "object") {
+			switch (child.type) {
+				case Comment:
+					continue;
+				case Text:
+					break;
+				case Fragment:
+					return findFirstLegitChild(child.children as VNode[]);
+				default:
+					if (typeof child.type === "string") return child;
+					return child;
+			}
+		}
+		return h("span", child);
+	}
 }
 
 const VirtualItem = defineComponent({
-  props: {
-    class: {},
-  },
+	props: {
+		class: {},
+	},
 
-  emits: ['resize'],
+	emits: ["resize"],
 
-  setup(props, { attrs, slots, emit }) {
-    let resizeObserver: ResizeObserver
-    const root = ref<HTMLElement>()
+	setup(props, { attrs, slots, emit }) {
+		let resizeObserver: ResizeObserver;
+		const root = ref<HTMLElement>();
 
-    watch(root, (value) => {
-      resizeObserver?.disconnect()
-      if (!value) return
+		watch(root, (value) => {
+			resizeObserver?.disconnect();
+			if (!value) return;
 
-      resizeObserver = new ResizeObserver(dispatchSizeChange)
-      resizeObserver.observe(value)
-    })
+			resizeObserver = new ResizeObserver(dispatchSizeChange);
+			resizeObserver.observe(value);
+		});
 
-    function dispatchSizeChange() {
-      if (!root.value) return
-      const marginTop = +(getComputedStyle(root.value).marginTop.slice(0, -2))
-      emit('resize', root.value.offsetHeight + marginTop)
-    }
+		function dispatchSizeChange() {
+			if (!root.value) return;
+			const marginTop = +getComputedStyle(root.value).marginTop.slice(0, -2);
+			emit("resize", root.value.offsetHeight + marginTop);
+		}
 
-    const directive = useRefDirective(root)
+		const directive = useRefDirective(root);
 
-    return () => {
-      const head = findFirstLegitChild(slots.default?.(attrs))
-      return withDirectives(head, [[directive]])
-    }
-  },
-})
+		return () => {
+			const head = findFirstLegitChild(slots.default?.(attrs));
+			return withDirectives(head, [[directive]]);
+		};
+	},
+});
 
-export default VirtualItem
+export default VirtualItem;

@@ -40,35 +40,35 @@
 </template>
 
 <script lang="ts" setup>
+import { store, useConfig, useContext } from "@koishi-ce/client";
+import { computed, ref } from "vue";
+import { install, showConfirm } from "./utils";
 
-import { computed, ref } from 'vue'
-import { store, useContext, useConfig } from '@koishi-ce/client'
-import { showConfirm, install } from './utils'
+const ctx = useContext();
+const config = useConfig();
 
-const ctx = useContext()
-const config = useConfig()
-
-const removeConfig = ref(config.value.market?.removeConfig)
+const removeConfig = ref(config.value.market?.removeConfig);
 
 function clear() {
-  showConfirm.value = false
-  config.value.market.override = {}
+	showConfirm.value = false;
+	config.value.market.override = {};
 }
 
 const hasRemove = computed(() => {
-  return Object.values(config.value.market.override).some(version => !version)
-})
+	return Object.values(config.value.market.override).some(
+		(version) => !version,
+	);
+});
 
 function confirm() {
-  showConfirm.value = false
-  return install(config.value.market.override, async () => {
-    for (const [name, value] of Object.entries(config.value.market.override)) {
-      if (!value || store.dependencies?.[name]?.resolved) continue
-      ctx.configWriter?.ensure(name, true)
-    }
-  })
+	showConfirm.value = false;
+	return install(config.value.market.override, async () => {
+		for (const [name, value] of Object.entries(config.value.market.override)) {
+			if (!value || store.dependencies?.[name]?.resolved) continue;
+			ctx.configWriter?.ensure(name, true);
+		}
+	});
 }
-
 </script>
 
 <style lang="scss">

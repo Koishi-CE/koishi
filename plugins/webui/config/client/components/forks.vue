@@ -40,38 +40,38 @@
 </template>
 
 <script setup lang="ts">
+import { router, send, store } from "@koishi-ce/client";
+import { computed } from "vue";
+import { dialogFork, getStatus, plugins, removeItem, type Tree } from "./utils";
 
-import { computed } from 'vue'
-import { store, send, router } from '@koishi-ce/client'
-import { dialogFork, plugins, getStatus, removeItem, Tree } from './utils'
-
-const shortname = computed(() => dialogFork.value?.replace(/(koishi-|^@koishijs\/)plugin-/, ''))
-const local = computed(() => store.packages?.[dialogFork.value])
+const shortname = computed(() =>
+	dialogFork.value?.replace(/(koishi-|^@koishijs\/)plugin-/, ""),
+);
+const local = computed(() => store.packages?.[dialogFork.value]);
 
 function getLabel(tree: Tree) {
-  return `${tree.label ? `${tree.label} ` : ''}[${tree.path}]`
+	return `${tree.label ? `${tree.label} ` : ""}[${tree.path}]`;
 }
 
 function getFullPath(tree: Tree) {
-  const path = [getLabel(tree)]
-  while (tree.parent) {
-    tree = tree.parent
-    path.unshift(getLabel(tree))
-  }
-  path.shift()
-  return path.join(' > ')
+	const path = [getLabel(tree)];
+	while (tree.parent) {
+		tree = tree.parent;
+		path.unshift(getLabel(tree));
+	}
+	path.shift();
+	return path.join(" > ");
 }
 
 async function configure(key?: string) {
-  const target = shortname.value
-  if (!key) {
-    key = Math.random().toString(36).slice(2, 8)
-    send('manager/unload', '', target + ':' + key, {})
-  }
-  await router.push('/plugins/' + key)
-  dialogFork.value = null
+	const target = shortname.value;
+	if (!key) {
+		key = Math.random().toString(36).slice(2, 8);
+		send("manager/unload", "", target + ":" + key, {});
+	}
+	await router.push("/plugins/" + key);
+	dialogFork.value = null;
 }
-
 </script>
 
 <style lang="scss">

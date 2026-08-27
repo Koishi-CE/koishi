@@ -1,26 +1,26 @@
 {
-  "note": "Per-package yakumo build config extracted from package.json files before removing yakumo. Keep as reference for the future vite/rolldown client build.",
-  "packages": {
-    "koishi": {
-      "tsc": {
-        "ignore": [
-          "@koishi-ce/plugin-http",
-          "@koishi-ce/plugin-proxy-agent",
-          "@koishi-ce/plugin-server"
-        ]
-      }
-    },
-    "@koishi-ce/client": {
-      "client": "./scripts/client.ts"
-    },
-    "@koishi-ce/plugin-analytics": {
-      "client": "./build/client.ts"
-    },
-    "@koishi-ce/plugin-explorer": {
-      "client": "./build/client.ts"
-    },
-    "@koishi-ce/online": {
-      "client": "./src/build.ts"
-    }
-  }
+	"note": "Per-package yakumo build config extracted from package.json files before removing yakumo. Keep as reference for the future vite/rolldown client build.",
+	"packages": {
+		"koishi": {
+			"tsc": {
+				"ignore": [
+					"@koishi-ce/plugin-http",
+					"@koishi-ce/plugin-proxy-agent",
+					"@koishi-ce/plugin-server"
+				]
+			}
+		},
+		"@koishi-ce/client": {
+			"client": "./scripts/client.ts"
+		},
+		"@koishi-ce/plugin-analytics": {
+			"client": "./build/client.ts"
+		},
+		"@koishi-ce/plugin-explorer": {
+			"client": "./build/client.ts"
+		},
+		"@koishi-ce/online": {
+			"client": "./src/build.ts"
+		}
+	}
 }

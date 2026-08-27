@@ -23,24 +23,22 @@
 </template>
 
 <script lang="ts" setup>
-
-import { Universal, withProxy } from '@koishi-ce/client'
-import type { ProfileProvider } from '@koishi-ce/plugin-status/src'
-import { getStatus } from './utils'
-import StatusLight from './light.vue'
+import { Universal, withProxy } from "@koishi-ce/client";
+import type { ProfileProvider } from "@koishi-ce/plugin-status/src";
+import StatusLight from "./light.vue";
+import { getStatus } from "./utils";
 
 const statusNames: Record<Universal.Status, string> = {
-  [Universal.Status.ONLINE]: '运行中',
-  [Universal.Status.OFFLINE]: '离线',
-  [Universal.Status.CONNECT]: '正在连接',
-  [Universal.Status.RECONNECT]: '正在重连',
-  [Universal.Status.DISCONNECT]: '正在断开',
-}
+	[Universal.Status.ONLINE]: "运行中",
+	[Universal.Status.OFFLINE]: "离线",
+	[Universal.Status.CONNECT]: "正在连接",
+	[Universal.Status.RECONNECT]: "正在重连",
+	[Universal.Status.DISCONNECT]: "正在断开",
+};
 
 defineProps<{
-  data: ProfileProvider.BotData
-}>()
-
+	data: ProfileProvider.BotData;
+}>();
 </script>
 
 <style scoped lang="scss">

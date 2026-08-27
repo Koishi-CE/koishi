@@ -1,13 +1,11 @@
 {
-  "extends": "../../../tsconfig.base",
-  "compilerOptions": {
-    "rootDir": "src",
-    "outDir": "lib",
-    "paths": {
-      "koishi": ["./src"],
-    },
-  },
-  "include": [
-    "src",
-  ],
+	"extends": "../../../tsconfig.base",
+	"compilerOptions": {
+		"rootDir": "src",
+		"outDir": "lib",
+		"paths": {
+			"koishi": ["./src"]
+		}
+	},
+	"include": ["src"]
 }

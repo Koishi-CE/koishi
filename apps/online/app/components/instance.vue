@@ -28,27 +28,33 @@
 </template>
 
 <script lang="ts" setup>
+import { message } from "@koishi-ce/client";
+import { computed } from "vue";
+import {
+	activate,
+	data,
+	flush,
+	type Instance,
+	instances,
+	remove,
+	shareLink,
+} from "../utils";
 
-import { activate, data, instances, remove, Instance, flush, shareLink } from '../utils'
-import { computed } from 'vue'
-import { message } from '@koishi-ce/client'
-
-const props = defineProps<{ id: string } & Instance>()
+const props = defineProps<{ id: string } & Instance>();
 
 const model = computed({
-  get: () => props.name,
-  set: (value) => {
-    instances.value[props.id].name = value
-    flush()
-  },
-})
+	get: () => props.name,
+	set: (value) => {
+		instances.value[props.id].name = value;
+		flush();
+	},
+});
 
 async function share(id: string) {
-  const link = await shareLink(id)
-  await navigator.clipboard.writeText(link)
-  message.success('已复制分享链接')
+	const link = await shareLink(id);
+	await navigator.clipboard.writeText(link);
+	message.success("已复制分享链接");
 }
-
 </script>
 
 <style lang="scss" scoped>

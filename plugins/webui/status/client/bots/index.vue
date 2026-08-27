@@ -27,33 +27,38 @@
 </template>
 
 <script setup lang="ts">
+import { type Dict, router, store, useConfig } from "@koishi-ce/client";
+import { computed } from "vue";
+import StatusLight from "./light.vue";
+import BotPreview from "./preview.vue";
+import { getStatus } from "./utils";
 
-import { computed } from 'vue'
-import { store, router, Dict, useConfig } from '@koishi-ce/client'
-import { getStatus } from './utils'
-import BotPreview from './preview.vue'
-import StatusLight from './light.vue'
-
-const config = useConfig()
+const config = useConfig();
 
 const statusMap = computed(() => {
-  const map: Dict<number> = {}
-  for (const bot of Object.values(store.status.bots)) {
-    const key = getStatus(bot.status)
-    map[key] = (map[key] || 0) + 1
-  }
-  return Object.fromEntries(Object.entries(map)
-    .sort((a, b) => a[0].localeCompare(b[0])))
-})
+	const map: Dict<number> = {};
+	for (const bot of Object.values(store.status.bots)) {
+		const key = getStatus(bot.status);
+		map[key] = (map[key] || 0) + 1;
+	}
+	return Object.fromEntries(
+		Object.entries(map).sort((a, b) => a[0].localeCompare(b[0])),
+	);
+});
 
 const sent = computed(() => {
-  return Object.values(store.status.bots).reduce((acc, bot) => acc + bot.messageSent, 0)
-})
+	return Object.values(store.status.bots).reduce(
+		(acc, bot) => acc + bot.messageSent,
+		0,
+	);
+});
 
 const received = computed(() => {
-  return Object.values(store.status.bots).reduce((acc, bot) => acc + bot.messageReceived, 0)
-})
-
+	return Object.values(store.status.bots).reduce(
+		(acc, bot) => acc + bot.messageReceived,
+		0,
+	);
+});
 </script>
 
 <style lang="scss" scoped>

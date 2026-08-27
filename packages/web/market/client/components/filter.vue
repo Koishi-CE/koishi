@@ -54,92 +54,106 @@
 </template>
 
 <script lang="ts" setup>
-
-import { computed, inject, ref, watch } from 'vue'
-import { Badge, badges, kConfig, validate, comparators, categories, resolveCategory, useMarketI18n } from '../utils'
-import { SearchObject } from '@koishi-ce/registry'
-import MarketIcon from '../icons'
+import type { SearchObject } from "@koishi-ce/registry";
+import { computed, inject, ref, watch } from "vue";
+import MarketIcon from "../icons";
+import {
+	type Badge,
+	badges,
+	categories,
+	comparators,
+	kConfig,
+	resolveCategory,
+	useMarketI18n,
+	validate,
+} from "../utils";
 
 const props = defineProps<{
-  modelValue: string[]
-  data?: SearchObject[]
-}>()
+	modelValue: string[];
+	data?: SearchObject[];
+}>();
 
-const emit = defineEmits(['update:modelValue'])
+const emit = defineEmits(["update:modelValue"]);
 
-const { t } = useMarketI18n()
+const { t } = useMarketI18n();
 
-const config = inject(kConfig, {})
+const config = inject(kConfig, {});
 
-const words = ref<string[]>()
+const words = ref<string[]>();
 
-watch(() => props.modelValue, (value) => {
-  words.value = value.slice()
-}, { immediate: true, deep: true })
+watch(
+	() => props.modelValue,
+	(value) => {
+		words.value = value.slice();
+	},
+	{ immediate: true, deep: true },
+);
 
 const activeSort = computed<string[]>(() => {
-  let word = words.value.find(w => w.startsWith('sort:'))
-  if (!word) return ['default', 'desc']
-  word = word.slice(5)
-  if (word.endsWith('-desc')) {
-    return [word.slice(0, -5), 'desc']
-  } else if (word.endsWith('-asc')) {
-    return [word.slice(0, -4), 'asc']
-  } else {
-    return [word, 'desc']
-  }
-})
+	let word = words.value.find((w) => w.startsWith("sort:"));
+	if (!word) return ["default", "desc"];
+	word = word.slice(5);
+	if (word.endsWith("-desc")) {
+		return [word.slice(0, -5), "desc"];
+	} else if (word.endsWith("-asc")) {
+		return [word.slice(0, -4), "asc"];
+	} else {
+		return [word, "desc"];
+	}
+});
 
 function addWord(word: string) {
-  if (!words.value[words.value.length - 1]) {
-    words.value.pop()
-  }
-  words.value.push(word, '')
+	if (!words.value[words.value.length - 1]) {
+		words.value.pop();
+	}
+	words.value.push(word, "");
 }
 
 function toggleSort(word: string, event: MouseEvent) {
-  const index = words.value.findIndex(x => x.startsWith('sort:'))
-  if (index === -1) {
-    if (word === 'sort:default') {
-      addWord('sort:default-asc')
-    } else {
-      addWord(word)
-    }
-  } else if (words.value[index] === word || words.value[index] === word + '-desc') {
-    words.value[index] = word + '-asc'
-  } else if (words.value[index] === word + '-asc') {
-    words.value[index] = word
-  } else {
-    words.value[index] = word
-  }
-  emit('update:modelValue', words.value)
+	const index = words.value.findIndex((x) => x.startsWith("sort:"));
+	if (index === -1) {
+		if (word === "sort:default") {
+			addWord("sort:default-asc");
+		} else {
+			addWord(word);
+		}
+	} else if (
+		words.value[index] === word ||
+		words.value[index] === word + "-desc"
+	) {
+		words.value[index] = word + "-asc";
+	} else if (words.value[index] === word + "-asc") {
+		words.value[index] = word;
+	} else {
+		words.value[index] = word;
+	}
+	emit("update:modelValue", words.value);
 }
 
 function toggleCategory(word: string, event: MouseEvent) {
-  const index = words.value.findIndex(x => x.startsWith('category:'))
-  if (index === -1) {
-    addWord(word)
-  } else if (words[index] === word) {
-    words.value.splice(index, 1)
-  } else {
-    words.value[index] = word
-  }
-  emit('update:modelValue', words.value)
+	const index = words.value.findIndex((x) => x.startsWith("category:"));
+	if (index === -1) {
+		addWord(word);
+	} else if (words[index] === word) {
+		words.value.splice(index, 1);
+	} else {
+		words.value[index] = word;
+	}
+	emit("update:modelValue", words.value);
 }
 
 function toggleQuery(item: Badge, event: MouseEvent) {
-  const { query, negate } = item
-  const index = words.value.findIndex(x => x === query || x === negate)
-  if (index === -1) {
-    addWord(query)
-  } else if (words.value[index] === query) {
-    words.value[index] = negate
-  } else {
-    words.value.splice(index, 1)
-  }
-  emit('update:modelValue', words.value)
+	const { query, negate } = item;
+	const index = words.value.findIndex((x) => x === query || x === negate);
+	if (index === -1) {
+		addWord(query);
+	} else if (words.value[index] === query) {
+		words.value[index] = negate;
+	} else {
+		words.value.splice(index, 1);
+	}
+	emit("update:modelValue", words.value);
 }
-
 </script>
 
 <style lang="scss" scoped>

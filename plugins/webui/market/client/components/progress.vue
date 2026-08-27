@@ -7,22 +7,20 @@
 </template>
 
 <script lang="ts" setup>
+import { store, useContext } from "@koishi-ce/client";
+import { computed } from "vue";
 
-import { store, useContext } from '@koishi-ce/client'
-import { computed } from 'vue'
-
-const ctx = useContext()
+const ctx = useContext();
 
 const isLoading = computed(() => {
-  if (ctx.bail('activity', ctx.$router.pages['market'])) return false
-  return !store.market || store.market.total > store.market.progress
-})
+	if (ctx.bail("activity", ctx.$router.pages["market"])) return false;
+	return !store.market || store.market.total > store.market.progress;
+});
 
 const percentage = computed(() => {
-  if (!store.market) return 50
-  return 100 * store.market.progress / store.market.total
-})
-
+	if (!store.market) return 50;
+	return (100 * store.market.progress) / store.market.total;
+});
 </script>
 
 <style lang="scss">

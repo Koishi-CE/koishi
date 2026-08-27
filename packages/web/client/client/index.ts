@@ -1,42 +1,42 @@
-import install from './components'
-import { Context } from './context'
+import install from "./components";
+import { Context } from "./context";
 
-declare module '@koishi-ce/plugin-console' {
-  export interface ClientConfig {
-    unsupported?: string[]
-  }
+declare module "@koishi-ce/plugin-console" {
+	export interface ClientConfig {
+		unsupported?: string[];
+	}
 }
 
-export * as Satori from '@satorijs/protocol'
-export * as Universal from '@satorijs/protocol'
-export * from './plugins/action'
-export * from './plugins/i18n'
-export * from './plugins/loader'
-export * from './plugins/router'
-export * from './plugins/setting'
-export * from './plugins/theme'
-export * from './components'
-export * from './context'
-export * from './data'
-export { Service } from './utils'
-export { ScopeStatus } from 'cordis'
+export * as Satori from "@satorijs/protocol";
+export * as Universal from "@satorijs/protocol";
+export { ScopeStatus } from "cordis";
+export * from "./components";
+export * from "./context";
+export * from "./data";
+export * from "./plugins/action";
+export * from "./plugins/i18n";
+export * from "./plugins/loader";
+export * from "./plugins/router";
+export * from "./plugins/setting";
+export * from "./plugins/theme";
+export { Service } from "./utils";
 
-export default install
+export default install;
 
-export interface ActionContext {}
+export type ActionContext = {};
 
 export interface Config {
-  locale?: string
+	locale?: string;
 }
 
-export const root = new Context()
+export const root = new Context();
 
-root.app.use(install)
+root.app.use(install);
 
-root.on('activity', data => !data)
-
-/** @deprecated use `useRouter()` */
-export const router = root.$router.router
+root.on("activity", (data) => !data);
 
 /** @deprecated use `useRouter()` */
-export const activities = root.$router.pages
+export const router = root.$router.router;
+
+/** @deprecated use `useRouter()` */
+export const activities = root.$router.pages;

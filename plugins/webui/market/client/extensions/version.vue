@@ -36,19 +36,17 @@
 </template>
 
 <script lang="ts" setup>
+import { global, send, store } from "@koishi-ce/client";
+import type {} from "@koishi-ce/plugin-config";
+import { type ComputedRef, computed, inject } from "vue";
+import { hasUpdate } from "../utils";
 
-import { global, send, store } from '@koishi-ce/client'
-import { computed, inject, ComputedRef } from 'vue'
-import { hasUpdate } from '../utils'
-import type {} from '@koishi-ce/plugin-config'
+const name = inject<ComputedRef<string>>("plugin:name");
 
-const name = inject<ComputedRef<string>>('plugin:name')
-
-const local = computed(() => store.packages?.[name.value])
-const object = computed(() => store.market.data?.[name.value])
-const dep = computed(() => store.dependencies?.[name.value])
-const versions = computed(() => store.registry?.[name.value])
-
+const local = computed(() => store.packages?.[name.value]);
+const object = computed(() => store.market.data?.[name.value]);
+const dep = computed(() => store.dependencies?.[name.value]);
+const versions = computed(() => store.registry?.[name.value]);
 </script>
 
 <style lang="scss" scoped>

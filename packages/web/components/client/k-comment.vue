@@ -8,23 +8,25 @@
 </template>
 
 <script lang="ts" setup>
-
-import { computed } from 'vue'
+import { computed } from "vue";
 
 const props = defineProps({
-  type: { type: String, default: 'primary' },
-  title: { type: String, required: false },
-})
+	type: { type: String, default: "primary" },
+	title: { type: String, required: false },
+});
 
 const icon = computed(() => {
-  switch (props.type) {
-    case 'success': return 'check-full'
-    case 'error': return 'times-full'
-    case 'warning': return 'exclamation-full'
-    default: return 'info-full'
-  }
-})
-
+	switch (props.type) {
+		case "success":
+			return "check-full";
+		case "error":
+			return "times-full";
+		case "warning":
+			return "exclamation-full";
+		default:
+			return "info-full";
+	}
+});
 </script>
 
 <style lang="scss" scoped>

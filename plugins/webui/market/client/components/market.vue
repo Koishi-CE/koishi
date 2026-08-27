@@ -49,80 +49,92 @@
 </template>
 
 <script setup lang="ts">
-
-import { router, store, global, useConfig } from '@koishi-ce/client'
-import { computed, provide, ref, watch } from 'vue'
-import { active } from '../utils'
-import { getSorted, kConfig, MarketFilter, MarketList, MarketSearch } from '@koishi-ce/market'
-import { SearchObject } from '@koishi-ce/registry'
+import { global, router, store, useConfig } from "@koishi-ce/client";
+import {
+	getSorted,
+	kConfig,
+	MarketFilter,
+	MarketList,
+	MarketSearch,
+} from "@koishi-ce/market";
+import type { SearchObject } from "@koishi-ce/registry";
+import { computed, provide, ref, watch } from "vue";
+import { active } from "../utils";
 
 function installed(data: SearchObject) {
-  if (store.packages) {
-    return !!store.packages[data.package.name]
-  } else {
-    return !!store.dependencies?.[data.package.name]
-  }
+	if (store.packages) {
+		return !!store.packages[data.package.name];
+	} else {
+		return !!store.dependencies?.[data.package.name];
+	}
 }
 
 provide(kConfig, {
-  installed: global.static ? undefined : installed,
-})
+	installed: global.static ? undefined : installed,
+});
 
-const root = ref()
-const config = useConfig()
+const root = ref();
+const config = useConfig();
 
-const words = ref<string[]>([''])
+const words = ref<string[]>([""]);
 
-const prompt = computed(() => words.value.filter(w => w).join(' '))
+const prompt = computed(() => words.value.filter((w) => w).join(" "));
 
-const data = computed(() => Object.values(store.market?.data || {}))
+const data = computed(() => Object.values(store.market?.data || {}));
 
-watch(router.currentRoute, (value) => {
-  if (value.path !== '/market') return
-  const { keyword } = value.query
-  if (keyword === prompt.value) return
-  words.value = Array.isArray(keyword) ? keyword : (keyword || '').split(' ')
-  words.value = words.value.map(w => w.toLowerCase())
-  if (words.value[words.value.length - 1]) words.value.push('')
-}, { immediate: true, deep: true })
+watch(
+	router.currentRoute,
+	(value) => {
+		if (value.path !== "/market") return;
+		const { keyword } = value.query;
+		if (keyword === prompt.value) return;
+		words.value = Array.isArray(keyword) ? keyword : (keyword || "").split(" ");
+		words.value = words.value.map((w) => w.toLowerCase());
+		if (words.value[words.value.length - 1]) words.value.push("");
+	},
+	{ immediate: true, deep: true },
+);
 
-watch(prompt, (value) => {
-  const { keyword: _, ...rest } = router.currentRoute.value.query
-  if (value) {
-    router.replace({ query: { keyword: value, ...rest } })
-  } else {
-    router.replace({ query: rest })
-  }
-}, { deep: true })
+watch(
+	prompt,
+	(value) => {
+		const { keyword: _, ...rest } = router.currentRoute.value.query;
+		if (value) {
+			router.replace({ query: { keyword: value, ...rest } });
+		} else {
+			router.replace({ query: rest });
+		}
+	},
+	{ deep: true },
+);
 
 function getType(data: SearchObject) {
-  if (global.static) return 'primary'
-  const version = config.value.market.override[data.package.name]
-  if (installed(data)) {
-    if (version === '') return 'danger'
-    if (version) return 'warning'
-    return 'success'
-  }
-  if (version) return 'warning'
-  return 'primary'
+	if (global.static) return "primary";
+	const version = config.value.market.override[data.package.name];
+	if (installed(data)) {
+		if (version === "") return "danger";
+		if (version) return "warning";
+		return "success";
+	}
+	if (version) return "warning";
+	return "primary";
 }
 
 function getText(data: SearchObject) {
-  if (global.static) return '配置'
-  const version = config.value.market.override[data.package.name]
-  if (installed(data)) {
-    if (version === '') return '等待移除'
-    if (version) return '等待更新'
-    return '修改'
-  }
-  if (version) return '等待安装'
-  return '添加'
+	if (global.static) return "配置";
+	const version = config.value.market.override[data.package.name];
+	if (installed(data)) {
+		if (version === "") return "等待移除";
+		if (version) return "等待更新";
+		return "修改";
+	}
+	if (version) return "等待安装";
+	return "添加";
 }
 
 function scrollToTop() {
-  root.value?.scrollTo(0, 0)
+	root.value?.scrollTo(0, 0);
 }
-
 </script>
 
 <style lang="scss">

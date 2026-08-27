@@ -1,60 +1,69 @@
-import { Context, h, RuntimeError, Schema, Session } from '@koishi-ce/koishi'
-import zhCN from './locales/zh-CN.yml'
+import {
+	type Context,
+	h,
+	RuntimeError,
+	Schema,
+	type Session,
+} from "@koishi-ce/koishi";
+import zhCN from "./locales/zh-CN.yml";
 
-declare module 'koishi' {
-  interface Events {
-    'common/callme'(name: string, session: Session): string | void
-  }
+declare module "koishi" {
+	interface Events {
+		"common/callme"(name: string, session: Session): string | void;
+	}
 }
 
-export interface Config {}
+export type Config = {};
 
-export const name = 'callme'
-export const inject = ['database']
-export const Config: Schema<Config> = Schema.object({})
+export const name = "callme";
+export const inject = ["database"];
+export const Config: Schema<Config> = Schema.object({});
 
 export function apply(ctx: Context) {
-  ctx.i18n.define('zh-CN', zhCN)
+	ctx.i18n.define("zh-CN", zhCN);
 
-  ctx.command('callme [name:text]')
-    .userFields(['id', 'name'])
-    .alias('nn')
-    .shortcut('叫我', { prefix: true, fuzzy: true })
-    .action(async ({ session }, name) => {
-      const { user } = session
-      if (!name) {
-        if (user.name) {
-          return session.text('.current', [session.username])
-        } else {
-          return session.text('.unnamed')
-        }
-      }
+	ctx
+		.command("callme [name:text]")
+		.userFields(["id", "name"])
+		.alias("nn")
+		.shortcut("叫我", { prefix: true, fuzzy: true })
+		.action(async ({ session }, name) => {
+			const { user } = session;
+			if (!name) {
+				if (user.name) {
+					return session.text(".current", [session.username]);
+				} else {
+					return session.text(".unnamed");
+				}
+			}
 
-      name = h.transform(name, {
-        text: true,
-        default: false,
-      }).trim()
+			name = h
+				.transform(name, {
+					text: true,
+					default: false,
+				})
+				.trim();
 
-      if (name === user.name) {
-        return session.text('.unchanged')
-      } else if (!name) {
-        return session.text('.empty')
-      }
+			if (name === user.name) {
+				return session.text(".unchanged");
+			} else if (!name) {
+				return session.text(".empty");
+			}
 
-      const result = ctx.bail('common/callme', name, session)
-      if (result) return result
+			const result = ctx.bail("common/callme", name, session);
+			if (result) return result;
 
-      try {
-        user.name = name
-        await user.$update()
-        return session.text('.updated', [session.username])
-      } catch (error) {
-        if (RuntimeError.check(error, 'duplicate-entry')) {
-          return session.text('.duplicate')
-        } else {
-          ctx.logger('common').warn(error)
-          return session.text('.failed')
-        }
-      }
-    })
+			try {
+				user.name = name;
+				await user.$update();
+				return session.text(".updated", [session.username]);
+			} catch (error) {
+				if (RuntimeError.check(error, "duplicate-entry")) {
+					return session.text(".duplicate");
+				} else {
+					ctx.logger("common").warn(error);
+					return session.text(".failed");
+				}
+			}
+		});
 }

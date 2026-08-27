@@ -26,38 +26,49 @@
 </template>
 
 <script lang="ts" setup>
+import { router, send, store, useI18nText } from "@koishi-ce/client";
+import type { PackageProvider } from "@koishi-ce/plugin-config";
+import { computed, inject, nextTick, ref, watch } from "vue";
+import { dialogSelect } from "./utils";
 
-import { router, send, store, useI18nText } from '@koishi-ce/client'
-import { computed, inject, nextTick, ref, watch } from 'vue'
-import { PackageProvider } from '@koishi-ce/plugin-config'
-import { dialogSelect } from './utils'
+const tt = useI18nText();
 
-const tt = useI18nText()
+const keyword = ref("");
+const input = ref();
 
-const keyword = ref('')
-const input = ref()
+const filter = inject(
+	"plugin-select-filter",
+	(data: PackageProvider.Data) => true,
+);
 
-const filter = inject('plugin-select-filter', (data: PackageProvider.Data) => true)
-
-const packages = computed(() => Object.values(store.packages).filter(({ name, shortname }) => {
-  return name && shortname.includes(keyword.value.toLowerCase()) && filter(store.packages[name])
-}))
+const packages = computed(() =>
+	Object.values(store.packages).filter(({ name, shortname }) => {
+		return (
+			name &&
+			shortname.includes(keyword.value.toLowerCase()) &&
+			filter(store.packages[name])
+		);
+	}),
+);
 
 function configure(shortname: string) {
-  const path = dialogSelect.value.path
-  const ident = Math.random().toString(36).slice(2, 8)
-  dialogSelect.value = null
-  keyword.value = ''
-  send('manager/unload', path, shortname + ':' + ident, {})
-  router.push('/plugins/' + ident)
+	const path = dialogSelect.value.path;
+	const ident = Math.random().toString(36).slice(2, 8);
+	dialogSelect.value = null;
+	keyword.value = "";
+	send("manager/unload", path, shortname + ":" + ident, {});
+	router.push("/plugins/" + ident);
 }
 
-watch(dialogSelect, async (value) => {
-  if (!value) return
-  await nextTick()
-  await input.value.focus()
-}, { flush: 'post' })
-
+watch(
+	dialogSelect,
+	async (value) => {
+		if (!value) return;
+		await nextTick();
+		await input.value.focus();
+	},
+	{ flush: "post" },
+);
 </script>
 
 <style lang="scss">

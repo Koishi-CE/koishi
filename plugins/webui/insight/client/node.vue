@@ -28,14 +28,12 @@
 </template>
 
 <script lang="ts" setup>
-
-import { Node } from './utils'
+import type { Node } from "./utils";
 
 defineProps<{
-  node: Node,
-  isActive: boolean,
-}>()
-
+	node: Node;
+	isActive: boolean;
+}>();
 </script>
 
 <style lang="scss" scoped>

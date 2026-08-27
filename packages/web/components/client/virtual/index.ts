@@ -1,8 +1,8 @@
-import { App } from 'vue'
-import VirtualList from './list.vue'
+import type { App } from "vue";
+import VirtualList from "./list.vue";
 
-export { VirtualList }
+export { VirtualList };
 
 export default function (app: App) {
-  app.component('virtual-list', VirtualList)
+	app.component("virtual-list", VirtualList);
 }

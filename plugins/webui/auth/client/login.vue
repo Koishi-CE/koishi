@@ -7,9 +7,7 @@
 </template>
 
 <script lang="ts" setup>
-
-import LoginForm from './login-form.vue'
-
+import LoginForm from "./login-form.vue";
 </script>
 
 <style lang="scss">

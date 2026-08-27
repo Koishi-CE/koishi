@@ -8,11 +8,9 @@
 </template>
 
 <script lang="ts" setup>
+import { type ComputedRef, inject } from "vue";
 
-import { inject, ComputedRef } from 'vue'
-
-const active = inject<ComputedRef<string>>('locale:prefix')
-
+const active = inject<ComputedRef<string>>("locale:prefix");
 </script>
 
 <style lang="scss" scoped>

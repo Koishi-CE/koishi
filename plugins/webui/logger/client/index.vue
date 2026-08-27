@@ -5,8 +5,6 @@
 </template>
 
 <script lang="ts" setup>
-
-import { store } from '@koishi-ce/client'
-import Logs from './logs.vue'
-
+import { store } from "@koishi-ce/client";
+import Logs from "./logs.vue";
 </script>

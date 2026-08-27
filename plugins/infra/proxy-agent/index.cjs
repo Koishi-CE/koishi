@@ -1,1 +1,1 @@
-module.exports = require('@cordisjs/plugin-proxy-agent')
+module.exports = require("@cordisjs/plugin-proxy-agent");

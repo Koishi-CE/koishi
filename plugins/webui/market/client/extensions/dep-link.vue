@@ -7,13 +7,11 @@
 </template>
 
 <script lang="ts" setup>
-
-import { store } from '@koishi-ce/client'
-import {} from '@koishi-ce/plugin-config'
-import { active } from '../utils'
+import { store } from "@koishi-ce/client";
+import {} from "@koishi-ce/plugin-config";
+import { active } from "../utils";
 
 defineProps<{
-  name: string
-}>()
-
+	name: string;
+}>();
 </script>

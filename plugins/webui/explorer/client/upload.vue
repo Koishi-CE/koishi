@@ -10,45 +10,52 @@
 </template>
 
 <script lang="ts" setup>
-
-import { computed } from 'vue'
-import { useEventListener } from '@vueuse/core'
-import { Binary, send } from '@koishi-ce/client'
-import { uploading } from './store'
+import { Binary, send } from "@koishi-ce/client";
+import { useEventListener } from "@vueuse/core";
+import { computed } from "vue";
+import { uploading } from "./store";
 
 const showUploading = computed({
-  get: () => !!uploading.value,
-  set: (v) => uploading.value = null,
-})
+	get: () => !!uploading.value,
+	set: (v) => (uploading.value = null),
+});
 
 function handleDataTransfer(event: Event, transfer: DataTransfer) {
-  const prefix = uploading.value
-  for (const item of transfer.items) {
-    if (item.kind !== 'file') continue
-    event.preventDefault()
-    const file = item.getAsFile()
-    const reader = new FileReader()
-    reader.addEventListener('load', function () {
-      send('explorer/write', prefix + file.name, Binary.toBase64(reader.result as ArrayBuffer), true)
-    }, false)
-    reader.readAsArrayBuffer(file)
-  }
-  uploading.value = null
+	const prefix = uploading.value;
+	for (const item of transfer.items) {
+		if (item.kind !== "file") continue;
+		event.preventDefault();
+		const file = item.getAsFile();
+		const reader = new FileReader();
+		reader.addEventListener(
+			"load",
+			() => {
+				send(
+					"explorer/write",
+					prefix + file.name,
+					Binary.toBase64(reader.result as ArrayBuffer),
+					true,
+				);
+			},
+			false,
+		);
+		reader.readAsArrayBuffer(file);
+	}
+	uploading.value = null;
 }
 
-useEventListener('drop', (event: DragEvent) => {
-  if (!uploading.value) return
-  handleDataTransfer(event, event.dataTransfer)
-})
+useEventListener("drop", (event: DragEvent) => {
+	if (!uploading.value) return;
+	handleDataTransfer(event, event.dataTransfer);
+});
 
-useEventListener('paste', (event: ClipboardEvent) => {
-  if (!uploading.value) return
-  handleDataTransfer(event, event.clipboardData)
-})
+useEventListener("paste", (event: ClipboardEvent) => {
+	if (!uploading.value) return;
+	handleDataTransfer(event, event.clipboardData);
+});
 
-useEventListener('dragover', (event: DragEvent) => {
-  if (!uploading.value) return
-  event.preventDefault()
-})
-
+useEventListener("dragover", (event: DragEvent) => {
+	if (!uploading.value) return;
+	event.preventDefault();
+});
 </script>

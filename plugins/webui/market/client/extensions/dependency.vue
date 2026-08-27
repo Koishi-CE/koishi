@@ -24,31 +24,30 @@
 </template>
 
 <script lang="ts" setup>
+import { type Dict, store } from "@koishi-ce/client";
+import type { EnvInfo } from "@koishi-ce/plugin-config/client";
+import { type ComputedRef, computed, inject } from "vue";
+import KDepLink from "./dep-link.vue";
 
-import { Dict, store } from '@koishi-ce/client'
-import { computed, inject, ComputedRef } from 'vue'
-import { EnvInfo } from '@koishi-ce/plugin-config/client'
-import KDepLink from './dep-link.vue'
+const env = inject<ComputedRef<EnvInfo>>("plugin:env");
 
-const env = inject<ComputedRef<EnvInfo>>('plugin:env')
+const getImplements = (name: string) =>
+	({
+		...store.market.data?.[name],
+		...store.packages[name],
+	}).manifest?.service.implements ?? [];
 
-const getImplements = (name: string) => ({
-  ...store.market.data?.[name],
-  ...store.packages[name],
-}.manifest?.service.implements ?? [])
-
-const getAvailable = (name: string) => Object
-  .values(store.market.data ?? {})
-  .filter(data => getImplements(data.package.name).includes(name))
-  .map(data => data.package.name)
+const getAvailable = (name: string) =>
+	Object.values(store.market.data ?? {})
+		.filter((data) => getImplements(data.package.name).includes(name))
+		.map((data) => data.package.name);
 
 const available = computed(() => {
-  const available: Dict<string[]> = {}
-  for (const name in env.value.using) {
-    available[name] = getAvailable(name)
-  }
-  return available
-})
-
+	const available: Dict<string[]> = {};
+	for (const name in env.value.using) {
+		available[name] = getAvailable(name);
+	}
+	return available;
+});
 </script>
 

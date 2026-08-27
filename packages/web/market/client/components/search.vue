@@ -25,86 +25,88 @@
 </template>
 
 <script lang="ts" setup>
-
-import { computed, ref, watch } from 'vue'
-import { validateWord } from '../utils'
-import { useI18n } from 'vue-i18n'
-import { useDebounceFn } from '@vueuse/core'
-import zhCN from '../locales/zh-CN.yml'
-import MarketIcon from '../icons'
+import { useDebounceFn } from "@vueuse/core";
+import { computed, ref, watch } from "vue";
+import { useI18n } from "vue-i18n";
+import MarketIcon from "../icons";
+import zhCN from "../locales/zh-CN.yml";
+import { validateWord } from "../utils";
 
 const props = defineProps<{
-  modelValue: string[]
-  placeholder?: string
-}>()
+	modelValue: string[];
+	placeholder?: string;
+}>();
 
-const emit = defineEmits(['update:modelValue'])
+const emit = defineEmits(["update:modelValue"]);
 
-const input = ref<HTMLInputElement>()
-const words = ref<string[]>()
+const input = ref<HTMLInputElement>();
+const words = ref<string[]>();
 
-watch(() => props.modelValue, (value) => {
-  words.value = value.slice()
-}, { immediate: true, deep: true })
+watch(
+	() => props.modelValue,
+	(value) => {
+		words.value = value.slice();
+	},
+	{ immediate: true, deep: true },
+);
 
 const update = useDebounceFn(() => {
-  emit('update:modelValue', words.value)
-}, 100)
+	emit("update:modelValue", words.value);
+}, 100);
 
 const lastWord = computed({
-  get: () => words.value[words.value.length - 1],
-  set: (value) => {
-    words.value[words.value.length - 1] = value.toLowerCase()
-    update()
-  },
-})
+	get: () => words.value[words.value.length - 1],
+	set: (value) => {
+		words.value[words.value.length - 1] = value.toLowerCase();
+		update();
+	},
+});
 
 function onClickWord(index: number) {
-  words.value.splice(index, 1)
-  emit('update:modelValue', words.value)
-  input.value?.focus()
+	words.value.splice(index, 1);
+	emit("update:modelValue", words.value);
+	input.value?.focus();
 }
 
 function onEnter() {
-  const last = words.value[words.value.length - 1]
-  if (!last) return
-  if (words.value.slice(0, -1).includes(last)) {
-    words.value.pop()
-  }
-  words.value.push('')
-  emit('update:modelValue', words.value)
+	const last = words.value[words.value.length - 1];
+	if (!last) return;
+	if (words.value.slice(0, -1).includes(last)) {
+		words.value.pop();
+	}
+	words.value.push("");
+	emit("update:modelValue", words.value);
 }
 
 function onEscape(event: KeyboardEvent) {
-  words.value[words.value.length - 1] = ''
-  emit('update:modelValue', words.value)
+	words.value[words.value.length - 1] = "";
+	emit("update:modelValue", words.value);
 }
 
 function onBackspace(event: KeyboardEvent) {
-  if (words.value[words.value.length - 1] === '' && words.value.length > 1) {
-    event.preventDefault()
-    words.value.splice(words.value.length - 2, 1)
-    emit('update:modelValue', words.value)
-  }
+	if (words.value[words.value.length - 1] === "" && words.value.length > 1) {
+		event.preventDefault();
+		words.value.splice(words.value.length - 2, 1);
+		emit("update:modelValue", words.value);
+	}
 }
 
 function onClear() {
-  words.value = ['']
-  emit('update:modelValue', words.value)
+	words.value = [""];
+	emit("update:modelValue", words.value);
 }
 
 const { t, setLocaleMessage } = useI18n({
-  messages: {
-    'zh-CN': zhCN,
-  },
-})
+	messages: {
+		"zh-CN": zhCN,
+	},
+});
 
 if (import.meta.hot) {
-  import.meta.hot.accept('../locales/zh-CN.yml', (module) => {
-    setLocaleMessage('zh-CN', module.default)
-  })
+	import.meta.hot.accept("../locales/zh-CN.yml", (module) => {
+		setLocaleMessage("zh-CN", module.default);
+	});
 }
-
 </script>
 
 <style lang="scss" scoped>

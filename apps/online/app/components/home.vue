@@ -54,9 +54,7 @@
 </template>
 
 <script lang="ts" setup>
-
-import { global, socket } from '@koishi-ce/client'
-
+import { global, socket } from "@koishi-ce/client";
 </script>
 
 <style lang="scss" scoped>

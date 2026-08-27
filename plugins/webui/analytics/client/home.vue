@@ -4,9 +4,7 @@
 </template>
 
 <script lang="ts" setup>
-
-import NumberGrid from './numbers/index.vue'
-
+import NumberGrid from "./numbers/index.vue";
 </script>
 
 <style lang="scss">

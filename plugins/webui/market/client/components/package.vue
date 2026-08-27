@@ -33,49 +33,50 @@
 </template>
 
 <script lang="ts" setup>
-
-import { computed } from 'vue'
-import { store, isNullable, useConfig } from '@koishi-ce/client'
-import { active, hasUpdate } from '../utils'
-import { analyzeVersions } from './utils'
+import { isNullable, store, useConfig } from "@koishi-ce/client";
+import { computed } from "vue";
+import { active, hasUpdate } from "../utils";
+import { analyzeVersions } from "./utils";
 
 const props = defineProps({
-  name: String,
-})
+	name: String,
+});
 
-const config = useConfig()
+const config = useConfig();
 
-const dep = computed(() => store.dependencies?.[props.name])
+const dep = computed(() => store.dependencies?.[props.name]);
 
 const compare = computed(() => {
-  const result = hasUpdate(props.name)
-  if (isNullable(result)) return
-  return result ? '可更新' : '最新'
-})
+	const result = hasUpdate(props.name);
+	if (isNullable(result)) return;
+	return result ? "可更新" : "最新";
+});
 
 const version = computed({
-  get() {
-    const value = config.value.market.override[props.name]
-    if (dep.value?.resolved === value) {
-      return
-    } else {
-      return value === '' ? '移除依赖' : value
-    }
-  },
-  set(value) {
-    if (dep.value?.resolved === value || !value && !dep.value) {
-      delete config.value.market.override[props.name]
-    } else {
-      config.value.market.override[props.name] = value
-    }
-  },
-})
+	get() {
+		const value = config.value.market.override[props.name];
+		if (dep.value?.resolved === value) {
+			return;
+		} else {
+			return value === "" ? "移除依赖" : value;
+		}
+	},
+	set(value) {
+		if (dep.value?.resolved === value || (!value && !dep.value)) {
+			delete config.value.market.override[props.name];
+		} else {
+			config.value.market.override[props.name] = value;
+		}
+	},
+});
 
 const data = computed(() => {
-  if (dep.value?.workspace || dep.value?.invalid) return
-  return analyzeVersions(props.name, (name) => config.value.market.override[name])
-})
-
+	if (dep.value?.workspace || dep.value?.invalid) return;
+	return analyzeVersions(
+		props.name,
+		(name) => config.value.market.override[name],
+	);
+});
 </script>
 
 <style lang="scss" scoped>

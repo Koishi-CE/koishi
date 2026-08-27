@@ -1,14 +1,14 @@
-import { Context } from '@koishi-ce/koishi'
-import { DataService } from './service'
+import type { Context } from "@koishi-ce/koishi";
+import { DataService } from "./service";
 
 export class PermissionProvider extends DataService<string[]> {
-  constructor(ctx: Context) {
-    super(ctx, 'permissions', { immediate: true })
+	constructor(ctx: Context) {
+		super(ctx, "permissions", { immediate: true });
 
-    ctx.on('internal/permission', () => this.refresh())
-  }
+		ctx.on("internal/permission", () => this.refresh());
+	}
 
-  async get() {
-    return this.ctx.permissions.list()
-  }
+	async get() {
+		return this.ctx.permissions.list();
+	}
 }

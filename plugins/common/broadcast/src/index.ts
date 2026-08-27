@@ -1,31 +1,37 @@
-import { Channel, Context, Schema } from '@koishi-ce/koishi'
-import zhCN from './locales/zh-CN.yml'
+import { Channel, type Context, Schema } from "@koishi-ce/koishi";
+import zhCN from "./locales/zh-CN.yml";
 
-export interface Config {}
+export type Config = {};
 
-export const name = 'broadcast'
-export const inject = ['database']
-export const Config: Schema<Config> = Schema.object({})
+export const name = "broadcast";
+export const inject = ["database"];
+export const Config: Schema<Config> = Schema.object({});
 
 export function apply(ctx: Context) {
-  ctx.i18n.define('zh-CN', zhCN)
+	ctx.i18n.define("zh-CN", zhCN);
 
-  ctx.command('broadcast <message:text>', { authority: 4 })
-    .option('forced', '-f')
-    .option('only', '-o')
-    .action(async ({ options, session }, message) => {
-      if (!message) return session.text('.expect-text')
-      if (!options.only) {
-        await ctx.broadcast(message, options.forced)
-        return
-      }
+	ctx
+		.command("broadcast <message:text>", { authority: 4 })
+		.option("forced", "-f")
+		.option("only", "-o")
+		.action(async ({ options, session }, message) => {
+			if (!message) return session.text(".expect-text");
+			if (!options.only) {
+				await ctx.broadcast(message, options.forced);
+				return;
+			}
 
-      const fields: ('id' | 'flag')[] = ['id']
-      if (!options.forced) fields.push('flag')
-      let channels = await ctx.database.getAssignedChannels(fields, { [session.platform]: [session.selfId] })
-      if (!options.forced) {
-        channels = channels.filter(g => !(g.flag & Channel.Flag.silent))
-      }
-      await session.bot.broadcast(channels.map(channel => channel.id), message)
-    })
+			const fields: ("id" | "flag")[] = ["id"];
+			if (!options.forced) fields.push("flag");
+			let channels = await ctx.database.getAssignedChannels(fields, {
+				[session.platform]: [session.selfId],
+			});
+			if (!options.forced) {
+				channels = channels.filter((g) => !(g.flag & Channel.Flag.silent));
+			}
+			await session.bot.broadcast(
+				channels.map((channel) => channel.id),
+				message,
+			);
+		});
 }

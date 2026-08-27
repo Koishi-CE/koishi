@@ -29,26 +29,24 @@
 </template>
 
 <script setup lang="ts">
-
-import { computed, PropType } from 'vue'
-import { store } from '../data'
-import { Schema, SchemaBase } from '@koishi-ce/components'
+import { Schema, SchemaBase } from "@koishi-ce/components";
+import { computed, type PropType } from "vue";
+import { store } from "../data";
 
 const props = defineProps({
-  schema: {} as PropType<Schema>,
-  modelValue: {} as PropType<any>,
-  disabled: {} as PropType<boolean>,
-  prefix: {} as PropType<string>,
-  initial: {} as PropType<any>,
-  extra: {} as PropType<any>,
-})
+	schema: {} as PropType<Schema>,
+	modelValue: {} as PropType<any>,
+	disabled: {} as PropType<boolean>,
+	prefix: {} as PropType<string>,
+	initial: {} as PropType<any>,
+	extra: {} as PropType<any>,
+});
 
-defineEmits(['update:modelValue'])
+defineEmits(["update:modelValue"]);
 
 const inner = computed(() => {
-  const hydrated = store.schema?.[props.schema?.meta.extra?.name]
-  return hydrated && new Schema(hydrated)
-})
-
+	const hydrated = store.schema?.[props.schema?.meta.extra?.name];
+	return hydrated && new Schema(hydrated);
+});
 </script>
 

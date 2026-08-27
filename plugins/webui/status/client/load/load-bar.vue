@@ -15,32 +15,30 @@
 </template>
 
 <script lang="ts" setup>
+import type { LoadRate } from "@koishi-ce/plugin-status/src";
+import { computed } from "vue";
 
-import type { LoadRate } from '@koishi-ce/plugin-status/src'
-import { computed } from 'vue'
-
-const props = defineProps<{ rate: LoadRate, title: string }>()
+const props = defineProps<{ rate: LoadRate; title: string }>();
 
 function percentage(value: number, digits = 1) {
-  return +(value * 100).toFixed(digits) + '%'
+	return +(value * 100).toFixed(digits) + "%";
 }
 
-const types = ['used', 'app', 'free'] as const
+const types = ["used", "app", "free"] as const;
 
 const distribution = computed(() => [
-  props.rate[1] - props.rate[0],
-  props.rate[0],
-  1 - props.rate[1],
-])
+	props.rate[1] - props.rate[0],
+	props.rate[0],
+	1 - props.rate[1],
+]);
 
 const maxIndex = computed(() => {
-  return distribution.value.findIndex(value => value >= 0.5)
-})
+	return distribution.value.findIndex((value) => value >= 0.5);
+});
 
 const caption = computed(() => {
-  return `${percentage(props.rate[0], 1)} / ${percentage(props.rate[1], 1)}`
-})
-
+	return `${percentage(props.rate[0], 1)} / ${percentage(props.rate[1], 1)}`;
+});
 </script>
 
 <style lang="scss" scoped>

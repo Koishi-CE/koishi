@@ -1,51 +1,54 @@
-import type { Context, Universal } from '@koishi-ce/koishi'
-import { Dict } from '@koishi-ce/client'
-import { initialize } from './utils'
-import loader from './loader'
+import type { Dict } from "@koishi-ce/client";
+import type { Context, Universal } from "@koishi-ce/koishi";
+import loader from "./loader";
+import { initialize } from "./utils";
 
 class StubWebSocket implements Universal.WebSocket {
-  remote: StubWebSocket
-  listeners: Dict<Set<Universal.WebSocket.EventListener>> = {}
+	remote: StubWebSocket;
+	listeners: Dict<Set<Universal.WebSocket.EventListener>> = {};
 
-  addEventListener(type: any, listener: (event: any) => void) {
-    (this.listeners[type] ||= new Set()).add(listener)
-  }
+	addEventListener(type: any, listener: (event: any) => void) {
+		if (!this.listeners[type]) this.listeners[type] = new Set();
+		this.listeners[type].add(listener);
+	}
 
-  removeEventListener(type: any, listener: (event: any) => void) {
-    this.listeners[type]?.delete(listener)
-  }
+	removeEventListener(type: any, listener: (event: any) => void) {
+		this.listeners[type]?.delete(listener);
+	}
 
-  dispatchEvent(event: any) {
-    this.listeners[event.type]?.forEach(fn => fn(event))
-    return true
-  }
+	dispatchEvent(event: any) {
+		this.listeners[event.type]?.forEach((fn) => {
+			fn(event);
+		});
+		return true;
+	}
 
-  send(data: string) {
-    this.remote.dispatchEvent({ type: 'message', target: this, data })
-  }
+	send(data: string) {
+		this.remote.dispatchEvent({ type: "message", target: this, data });
+	}
 
-  close() {}
+	close() {}
 }
 
 class ServerWebSocket extends StubWebSocket {
-  app: Context
+	app: Context;
 
-  constructor(public remote: StubWebSocket) {
-    super()
-    this.start()
-  }
+	constructor(public remote: StubWebSocket) {
+		super();
+		this.start();
+	}
 
-  private async start() {
-    loader[Symbol.for('koishi.socket')] = this
-    await initialize()
-  }
+	private async start() {
+		loader[Symbol.for("koishi.socket")] = this;
+		await initialize();
+	}
 }
 
 export default class ClientWebSocket extends StubWebSocket {
-  remote = new ServerWebSocket(this)
+	remote = new ServerWebSocket(this);
 
-  constructor() {
-    super()
-    setTimeout(() => this.dispatchEvent({ type: 'open', target: this }), 0)
-  }
+	constructor() {
+		super();
+		setTimeout(() => this.dispatchEvent({ type: "open", target: this }), 0);
+	}
 }

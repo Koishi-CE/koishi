@@ -81,73 +81,92 @@
 </template>
 
 <script lang="ts" setup>
-
-import { computed, PropType } from 'vue'
-import { clone } from 'cosmokit'
-import { Schema, IconArrowDown, IconArrowUp, IconBranch, IconDelete, IconInsertAfter, IconInsertBefore, useI18nText } from 'schemastery-vue'
-import KFilterButton from './k-filter-button.vue'
+import { clone } from "cosmokit";
+import {
+	IconArrowDown,
+	IconArrowUp,
+	IconBranch,
+	IconDelete,
+	IconInsertAfter,
+	IconInsertBefore,
+	type Schema,
+	useI18nText,
+} from "schemastery-vue";
+import { computed, type PropType } from "vue";
+import KFilterButton from "./k-filter-button.vue";
 
 const props = defineProps({
-  schema: {} as PropType<Schema>,
-  modelValue: {} as PropType<any>,
-  disabled: {} as PropType<boolean>,
-  prefix: {} as PropType<string>,
-  initial: {} as PropType<any>,
-  extra: {} as PropType<any>,
-})
+	schema: {} as PropType<Schema>,
+	modelValue: {} as PropType<any>,
+	disabled: {} as PropType<boolean>,
+	prefix: {} as PropType<string>,
+	initial: {} as PropType<any>,
+	extra: {} as PropType<any>,
+});
 
-const emit = defineEmits(['update:modelValue'])
+const emit = defineEmits(["update:modelValue"]);
 
-const tt = useI18nText()
+const tt = useI18nText();
 
 const isSwitch = computed(() => {
-  return props.schema?.meta.role === 'computed' && props.modelValue?.$switch
-})
+	return props.schema?.meta.role === "computed" && props.modelValue?.$switch;
+});
 
 const actions = {
-  up(index: number) {
-    const branches = props.modelValue.$switch.branches.slice()
-    branches.splice(index - 1, 0, ...branches.splice(index, 1))
-    emit('update:modelValue', { $switch: { ...props.modelValue.$switch, branches } })
-  },
-  down(index: number) {
-    const branches = props.modelValue.$switch.branches.slice()
-    branches.splice(index + 1, 0, ...branches.splice(index, 1))
-    emit('update:modelValue', { $switch: { ...props.modelValue.$switch, branches } })
-  },
-  delete(index: number) {
-    const branches = props.modelValue.$switch.branches.slice()
-    if (branches.length > 1) {
-      branches.splice(index, 1)
-      emit('update:modelValue', { $switch: { ...props.modelValue.$switch, branches } })
-    } else {
-      emit('update:modelValue', props.modelValue.$switch['default'])
-    }
-  },
-  update(index: number, key: string, value: any) {
-    const branches = props.modelValue.$switch.branches.slice()
-    branches[index] = { ...branches[index], [key]: value }
-    emit('update:modelValue', { $switch: { ...props.modelValue.$switch, branches } })
-  },
-  insert(index: number = props.modelValue?.$switch?.branches.length) {
-    if (props.modelValue?.$switch) {
-      const branches = props.modelValue.$switch.branches.slice()
-      branches.splice(index, 0, { case: null, then: null })
-      emit('update:modelValue', { $switch: { ...props.modelValue.$switch, branches } })
-    } else {
-      emit('update:modelValue', {
-        $switch: {
-          branches: [{ case: null, then: null }],
-          default: clone(props.modelValue),
-        },
-      })
-    }
-  },
-  default(value: any) {
-    emit('update:modelValue', { $switch: { ...props.modelValue.$switch, default: value } })
-  },
-}
-
+	up(index: number) {
+		const branches = props.modelValue.$switch.branches.slice();
+		branches.splice(index - 1, 0, ...branches.splice(index, 1));
+		emit("update:modelValue", {
+			$switch: { ...props.modelValue.$switch, branches },
+		});
+	},
+	down(index: number) {
+		const branches = props.modelValue.$switch.branches.slice();
+		branches.splice(index + 1, 0, ...branches.splice(index, 1));
+		emit("update:modelValue", {
+			$switch: { ...props.modelValue.$switch, branches },
+		});
+	},
+	delete(index: number) {
+		const branches = props.modelValue.$switch.branches.slice();
+		if (branches.length > 1) {
+			branches.splice(index, 1);
+			emit("update:modelValue", {
+				$switch: { ...props.modelValue.$switch, branches },
+			});
+		} else {
+			emit("update:modelValue", props.modelValue.$switch["default"]);
+		}
+	},
+	update(index: number, key: string, value: any) {
+		const branches = props.modelValue.$switch.branches.slice();
+		branches[index] = { ...branches[index], [key]: value };
+		emit("update:modelValue", {
+			$switch: { ...props.modelValue.$switch, branches },
+		});
+	},
+	insert(index: number = props.modelValue?.$switch?.branches.length) {
+		if (props.modelValue?.$switch) {
+			const branches = props.modelValue.$switch.branches.slice();
+			branches.splice(index, 0, { case: null, then: null });
+			emit("update:modelValue", {
+				$switch: { ...props.modelValue.$switch, branches },
+			});
+		} else {
+			emit("update:modelValue", {
+				$switch: {
+					branches: [{ case: null, then: null }],
+					default: clone(props.modelValue),
+				},
+			});
+		}
+	},
+	default(value: any) {
+		emit("update:modelValue", {
+			$switch: { ...props.modelValue.$switch, default: value },
+		});
+	},
+};
 </script>
 
 <style lang="scss">

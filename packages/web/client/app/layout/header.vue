@@ -30,23 +30,21 @@
 </template>
 
 <script lang="ts" setup>
-
-import { useRoute } from 'vue-router'
-import { useMenu } from '@koishi-ce/client'
+import { useMenu } from "@koishi-ce/client";
+import { useRoute } from "vue-router";
 
 const props = defineProps<{
-  isLeftAsideOpen: boolean
-  isRightAsideOpen: boolean
-  menuKey?: string
-  menuData?: any
-}>()
+	isLeftAsideOpen: boolean;
+	isRightAsideOpen: boolean;
+	menuKey?: string;
+	menuData?: any;
+}>();
 
-const trigger = useMenu(props.menuKey as any)
+const trigger = useMenu(props.menuKey as any);
 
-defineEmits(['update:isLeftAsideOpen', 'update:isRightAsideOpen'])
+defineEmits(["update:isLeftAsideOpen", "update:isRightAsideOpen"]);
 
-const route = useRoute()
-
+const route = useRoute();
 </script>
 
 <style lang="scss">

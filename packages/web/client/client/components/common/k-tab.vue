@@ -8,14 +8,12 @@
 </template>
 
 <script lang="ts" setup>
-
 defineProps<{
-  data: Record<string | number, string>
-  modelValue: string | number
-}>()
+	data: Record<string | number, string>;
+	modelValue: string | number;
+}>();
 
-defineEmits(['update:modelValue'])
-
+defineEmits(["update:modelValue"]);
 </script>
 
 <style lang="scss">

@@ -11,14 +11,12 @@
 </template>
 
 <script setup lang="ts">
-
-import { store, useRpc } from '@koishi-ce/client'
-import type Admin from '@koishi-ce/plugin-admin/src'
+import { store, useRpc } from "@koishi-ce/client";
+import type Admin from "@koishi-ce/plugin-admin/src";
 
 defineProps({
-  id: String,
-})
+	id: String,
+});
 
-const data = useRpc<Admin.Data>()
-
+const data = useRpc<Admin.Data>();
 </script>
