@@ -1,7 +1,9 @@
+#!/usr/bin/env bun
+
 import { cac } from "cac";
+import { version } from "../../package.json" with { type: "json" };
 import registerStartCommand from "./start";
 
-const { version } = require("../../package.json");
 const cli = cac("koishi").help().version(version);
 
 registerStartCommand(cli);

@@ -9,6 +9,19 @@ interface LogLevelConfig {
 
 type LogLevel = number | LogLevelConfig;
 
+function normalizeLevels(
+	config: LogLevelConfig,
+	base: number,
+): Logger.LevelConfig {
+	const result: Logger.LevelConfig = { base: config.base ?? base };
+	for (const [name, level] of Object.entries(config)) {
+		if (name === "base") continue;
+		result[name] =
+			typeof level === "number" ? level : normalizeLevels(level, result.base);
+	}
+	return result;
+}
+
 export interface Config {
 	levels?: LogLevel;
 	showDiff?: boolean;
@@ -37,7 +50,7 @@ export function prepare(config: Config = {}) {
 	const { levels } = config;
 	// configurate logger levels
 	if (typeof levels === "object") {
-		Logger.levels = levels as any;
+		Logger.levels = normalizeLevels(levels, 2);
 	} else if (typeof levels === "number") {
 		Logger.levels.base = levels;
 	}

@@ -30,7 +30,7 @@ if (advancedDict) {
 	});
 }
 
-function handleException(error: any) {
+function handleException(error: unknown) {
 	new Logger("app").error(error);
 	process.exit(1);
 }

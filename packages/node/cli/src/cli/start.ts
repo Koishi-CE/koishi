@@ -1,11 +1,11 @@
-import { type Dict, hyphenate, isInteger } from "@koishi-ce/utils";
+import { hyphenate, isInteger } from "@koishi-ce/utils";
 import type { CAC } from "cac";
-import { type ChildProcess, fork } from "child_process";
 import kleur from "kleur";
-import { resolve } from "path";
 import type { Config } from "../worker/daemon";
 
 type Event = Event.Start | Event.Env | Event.Heartbeat;
+type WorkerOption = boolean | string | string[] | undefined;
+type WorkerOptions = Record<string, WorkerOption> & { "--"?: string[] };
 
 namespace Event {
 	export interface Start {
@@ -23,7 +23,7 @@ namespace Event {
 	}
 }
 
-let child: ChildProcess;
+let child: Bun.Subprocess;
 
 process.env["KOISHI_SHARED"] = JSON.stringify({
 	startTime: Date.now(),
@@ -33,30 +33,27 @@ function toArg(key: string) {
 	return key.length === 1 ? `-${key}` : `--${hyphenate(key)}`;
 }
 
-function createWorker(options: Dict<any>) {
+function createWorker(options: WorkerOptions) {
 	const execArgv = Object.entries(options).flatMap<string>(([key, value]) => {
 		if (key === "--") return [];
 		key = toArg(key);
 		if (value === true) {
 			return [key];
 		} else if (value === false) {
-			return ["--no-" + key.slice(2)];
+			return [`--no-${key.slice(2)}`];
 		} else if (Array.isArray(value)) {
 			return value.flatMap((value) => [key, value]);
 		} else {
-			return [key, value];
+			return [key, String(value)];
 		}
 	});
-	execArgv.push(...options["--"]);
+	execArgv.push(...(options["--"] ?? []));
 
-	child = fork(resolve(__dirname, "../worker"), [], {
-		execArgv,
-	});
+	const worker = `${import.meta.dir}/../worker/index.mjs`;
 
 	let config: Config;
-	let timer: NodeJS.Timeout | undefined;
-
-	child.on("message", (message: Event) => {
+	let timer: ReturnType<typeof setTimeout> | undefined;
+	const handleMessage = (message: Event) => {
 		if (message.type === "start") {
 			config = message.body;
 			timer = config.heartbeatTimeout
@@ -68,34 +65,37 @@ function createWorker(options: Dict<any>) {
 				: undefined;
 		} else if (message.type === "shared") {
 			process.env["KOISHI_SHARED"] = message.body;
-		} else if (message.type === "heartbeat") {
-			if (timer) timer.refresh();
+		} else if (
+			message.type === "heartbeat" &&
+			timer &&
+			config.heartbeatTimeout
+		) {
+			clearTimeout(timer);
+			timer = setTimeout(() => {
+				// eslint-disable-next-line no-console
+				console.log(kleur.red("daemon: heartbeat timeout"));
+				child.kill("SIGKILL");
+			}, config.heartbeatTimeout);
 		}
+	};
+
+	child = Bun.spawn([process.execPath, worker, ...execArgv], {
+		ipc: handleMessage,
+		onExit: (_, code, signal) => {
+			if (shouldExit(code, signal)) {
+				process.exit(code ?? 1);
+			}
+			createWorker(options);
+		},
 	});
 
-	// https://nodejs.org/api/process.html#signal-events
-	// https://learn.microsoft.com/en-us/cpp/c-runtime-library/reference/signal
-	const signals: NodeJS.Signals[] = [
-		"SIGABRT",
-		"SIGBREAK",
-		"SIGBUS",
-		"SIGFPE",
-		"SIGHUP",
-		"SIGILL",
-		"SIGINT",
-		"SIGKILL",
-		"SIGSEGV",
-		"SIGSTOP",
-		"SIGTERM",
-	];
-
-	function shouldExit(code: number | null, signal: NodeJS.Signals | null) {
+	function shouldExit(code: number | null, signal: number | null) {
 		// start failed
 		if (!config) return true;
 
 		// exit manually
 		if (code === 0) return true;
-		if (signal !== null && signals.includes(signal)) return true;
+		if (signal !== null) return true;
 
 		// restart manually
 		if (code === 51) return false;
@@ -104,13 +104,6 @@ function createWorker(options: Dict<any>) {
 		// fallback to autoRestart
 		return !config.autoRestart;
 	}
-
-	child.on("exit", (code, signal) => {
-		if (shouldExit(code, signal)) {
-			process.exit(code);
-		}
-		createWorker(options);
-	});
 }
 
 function setEnvArg(name: string, value: string | boolean) {
