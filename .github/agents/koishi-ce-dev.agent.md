@@ -1,6 +1,6 @@
 ---
 description: "用于：在本仓库（Koishi-CE/koishi）进行开发——修复类型错误、改代码、跑门禁、构建、测试、上游同步、git 提交等开发任务"
-name: "koishi-ce 开发"
+name: "Koishi-CE开发"
 user-invocable: true
 ---
 # Koishi-CE 开发
