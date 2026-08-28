@@ -59,6 +59,8 @@ function findFirstLegitChild(
 		}
 		return h("span", child);
 	}
+	// 数组耗尽仍未命中真实子节点（noImplicitReturns）
+	return undefined;
 }
 
 const VirtualItem = defineComponent({
@@ -68,7 +70,7 @@ const VirtualItem = defineComponent({
 
 	emits: ["resize"],
 
-	setup(props, { attrs, slots, emit }) {
+	setup(_props, { attrs, slots, emit }) {
 		let resizeObserver: ResizeObserver;
 		const root = ref<HTMLElement>();
 
@@ -91,7 +93,7 @@ const VirtualItem = defineComponent({
 		const directive = useRefDirective(root);
 
 		return () => {
-			const head = findFirstLegitChild(slots.default?.(attrs));
+			const head = findFirstLegitChild(slots["default"]?.(attrs));
 			return withDirectives(head!, [[directive]]);
 		};
 	},

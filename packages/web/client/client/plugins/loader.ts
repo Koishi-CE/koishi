@@ -129,6 +129,8 @@ export default class LoaderService extends Service {
 									if (!url.endsWith(ext)) continue;
 									return loaders[ext]?.(scope.ctx, url);
 								}
+								// 无匹配后缀的入口文件：显式跳过（noImplicitReturns）
+								return undefined;
 							}),
 						);
 						task.finally(() => {

@@ -26,7 +26,7 @@ const KActivityLink = defineComponent({
 						activity?.path.replace(/:.+/, "")) as string,
 				},
 				{
-					default: () => slots.default?.() ?? activity?.name,
+					default: () => slots["default"]?.() ?? activity?.name,
 				},
 			);
 		};

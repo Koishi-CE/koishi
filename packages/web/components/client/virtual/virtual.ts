@@ -68,7 +68,7 @@ export default class Virtual {
 	/** 数据源变化后同步 uid 列表，并清掉已消失项的尺寸记录（保留 header/footer） */
 	updateUids(uids: string[]) {
 		this.param.uids = uids;
-		this.sizes.forEach((v, key) => {
+		this.sizes.forEach((_v, key) => {
 			if (!uids.includes(key) && key !== "header" && key !== "footer")
 				this.sizes.delete(key);
 		});

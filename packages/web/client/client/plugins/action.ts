@@ -238,6 +238,8 @@ function createScope(
 			if (Object.keys(scope).some((k) => k.startsWith(_prefix))) {
 				return createScope(scope, key + ".");
 			}
+			// 完全未命中：显式返回 undefined（noImplicitReturns）
+			return undefined;
 		},
 	}) as Flatten<ActionContext>;
 }

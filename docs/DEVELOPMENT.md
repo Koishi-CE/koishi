@@ -52,7 +52,9 @@ cd apps/online          && bun run build   # koishi.online 网站（src/build.ts
 2. **`lint:client`（eslint）**：只查 `.vue` 文件（biome 不解析 .vue），与 biome 零重叠；核心规则 `vue/no-undef-components`（忽略 `^K`、`^el-`、`^router-` 全局组件）。不做类型感知。
 3. **`typecheck`（TS7 逐项目）**：`scripts/typecheck.mjs` 递归扫描 packages / plugins / apps 下**所有** `tsconfig.json`，用 worker 池并行跑 `@typescript/native/bin/tsc --noEmit`。⚠️ **不读 .gitignore**——gitignored 的 `plugins/webui/market/` 也会被检查；仅排除 `apps/koishi-scripts/template/`。
 
-**类型检查现状（进行中，2026-08-28）**：严格模式错误清理已完成 `packages/node/*` 六包（0 错误）。存量错误集中在：webui 插件各 `client/tsconfig.json`、`packages/web/{client,components}`、`apps/online`、部分插件 `src/`、以及 gitignored 的 market。**最低纪律：改哪个包，保证该包所在 project 不新增错误；`packages/node/*` 保持 0。**
+**类型检查现状（进行中，2026-08-29）**：严格模式错误清理已完成 `packages/node/*` 六包（0 错误）与 `packages/web/{client,components}` 的三个浏览器侧项目（`app`、`client/client`、`components/client`——已对齐 `tsconfig.base` 全部严格项并清零）。存量错误集中在：webui 插件各 `client/tsconfig.json`、部分插件 `src/`、以及 gitignored 的 market。**最低纪律：改哪个包，保证该包所在 project 不新增错误；`packages/node/*` 保持 0。**
+
+**`.vue` 的类型检查现状（2026-08-29 评估）**：tsc 侧经 `packages/web/client/global.d.ts` 把 `*.vue` 声明为不透明 `Component`，SFC 的 script / template **不进入 tsc 程序**——错误实际由构建期 vite（compiler-sfc，含 defineProps 类型解析）暴露，故前端构建是 `.vue` 的实际类型门禁。引入 vue-tsc 做全量 SFC 检查的成本：需要经典 TS 5.x 运行时（与本仓 TS7-native 策略冲突、形成第二套类型真相）+ 全部约 90 个 `.vue` 的独立检查遍，当前**结论是不引入**；待 Volar 工具链支持 TS7 后再评估。若把 web 三项目的严格项（`noPropertyAccessFromIndexSignature` 等 9 项）直接推到 `tsconfig.client` 全体客户端项目，模拟实测新增约 91 个错误（其中 84 个在 gitignored 的 market、7 个在受追踪插件 client），应配合 market 对齐逐步推进。
 
 **测试现状**：自有用例 = 20 个 `*.spec.ts` / 145 个用例，全通过（约 1 秒；mocha 已移除，Phase 4 迁移完成，见 [upgrade-plan.md](./upgrade-plan.md)）。⚠️ **裸 `bun test`（仓库根）当前会挂起**——bun test 的发现规则包含 `*.test.ts`，会把 gitignored 的 market 的 vitest 用例卷进来并在 `i18n.test.ts` 处挂死；全量跑用带过滤参数的命令（见 §2），或按包定向。market 对齐完成、用例迁为 `*.spec.ts` 后此坑消除。
 

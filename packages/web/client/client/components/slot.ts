@@ -41,9 +41,9 @@ export const KSlot = defineComponent({
 			// internal：模板内以 k-slot-item 声明的节点，order 取其 props
 			const internal = props.single
 				? []
-				: [...(slots.default?.() || [])]
+				: [...(slots["default"]?.() || [])]
 						.filter((node) => node.type === KSlotItem)
-						.map((node) => ({ node, order: node.props?.order || 0 }));
+						.map((node) => ({ node, order: node.props?.["order"] || 0 }));
 			// external：ctx.slot() 注册的视图，disabled 的不渲染
 			const external = [...(ctx.$router.views[props.name!] || [])]
 				.filter((item) => !item.disabled?.())
@@ -57,7 +57,7 @@ export const KSlot = defineComponent({
 			);
 			if (props.single) {
 				// 无外部视图时回退到模板默认内容
-				return children[0]?.node || slots.default?.();
+				return children[0]?.node || slots["default"]?.();
 			}
 			return children.map((item) => item.node);
 		};
@@ -69,8 +69,8 @@ const KSlotItem = defineComponent({
 	props: {
 		order: Number,
 	},
-	setup(props, { slots }) {
-		return () => slots.default?.();
+	setup(_props, { slots }) {
+		return () => slots["default"]?.();
 	},
 });
 
