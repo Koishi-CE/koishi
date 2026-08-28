@@ -1,0 +1,115 @@
+loading:
+  title: 正在加载插件市场……
+  slow: 插件市场仍在等待网络响应。
+  timeout: 超时：{value}
+  autoRoute: 备用源自动路由已开启
+  openSettings: 前往市场设置修改源
+  registry: Registry：{value}
+  timeoutLabel: 超时：{value}
+  openMarketSettings: 前往市场设置修改源
+cache:
+  stale: 插件市场刷新失败，当前显示上一次成功加载的数据。
+  cached: 当前显示的是本地缓存的插件市场数据。
+  refreshing: 正在后台刷新最新数据……
+  registry: Registry：{value}
+  unknownRegistry: 未知
+  reason: 原因：{value}
+  cachedAt: 缓存时间：{value}
+  validatedAt: 校验时间：{value}
+error:
+  title: 无法连接到插件市场。这可能是以下原因导致的：
+  network: 无法连接到网络，请检查你的网络连接和代理设置
+  unsupportedRegistry: 您所用的 registry 不支持搜索功能，请考虑进行更换
+  openSettings: 前往设置修改 Registry 下载源
+  reason: 原因：{value}
+  registry: Registry：{value}
+  openRegistrySettings: 前往设置修改 Registry 下载源
+  networkHint: 无法连接到网络，请检查你的网络连接和代理设置
+  searchHint: 您所用的 registry 不支持搜索功能，请考虑进行更换
+registry:
+  label: Registry：{value}
+  unknown: 未知源
+  reason: 原因：{value}
+results:
+  filtered: 共搜索到 {filtered} / {total} 个插件。
+  all: 共搜索到 {total} 个插件。
+list:
+  loadMore: 加载更多
+  complete: 已显示全部 {count} 个插件
+  empty: 没有搜索到相关插件。
+easter:
+  marketEnd: 你已经抵达插件市场的尽头了。
+  archive:
+    path: market://archive/05-14
+    recovering: 正在恢复一段未被索引的记录……
+    recovered: 状态：已恢复
+    koishiVersion: Koishi 版本
+    recordedAt: 记录时间
+    marketIndex: 市场索引
+    plugins: '{count} 个插件'
+    sourceLabel: 无需依赖的源代码
+    source: "export const truth = 'Komeiji Koishi 世界第一！'"
+    unknown: 未知
+  secretSearch: |-
+    在时光尘埃的最底层，在那些早已无人维护的依赖树根须之间，这段话，等待着某个偶然敲下秘密咒语的人。
+
+    我们不知道 koishi.js 是否还能迎来下一个大更新，或者引来一次爆火，不知道插件市场的霓虹会不会在某个深夜悄然熄灭，也不知道会不会有人在日志滚过千百行之后，恰好停在这里，读到这行文字。
+
+    但我们知道——在所有的 koishi bot 都沉睡、所有的适配器都断开连接的那一天，在 `Koishi.js` 化为数字化石的那个纪元，
+
+    那位闭锁心之瞳的少女，依然会行走在所有被遗忘的进程背面，用无意识轻轻拨动指针，让「恋」这个名字，沉淀成比任何 BOT 框架都完美的故事。
+
+    **Komeiji Koishi 世界第一！**
+debug:
+  performance: Debug 性能：{source} / {endpoint}
+  objectCount: 对象数
+  decodedSize: 解压大小
+  wireSize: 传输大小
+  encoding: 压缩方式
+  compressionRatio: 压缩比例
+  candidates: 候选源
+  preferredEndpoint: 优先源
+  fallbackReason: 回退原因
+  hash: Hash
+  etag: ETag
+  lastModified: Last-Modified
+  cacheTime: 缓存时间
+  validationTime: 校验时间
+  frontendMatched: 前端匹配
+  loadedRendered: 已加载/渲染
+  initial: 首屏
+  background: 后台
+  sourceNetwork: 网络
+  sourceDiskCache: 磁盘缓存
+  sourceHttp304: HTTP 304
+  sourceHashCache: Hash 命中
+  sourceLegacy: 旧索引
+  unknown: 未知
+  request: 请求
+  versionProbe: 版本确认
+  parse: JSON
+  apply: 索引
+  total: 总计
+  cacheRead: 读缓存
+  cacheParse: 缓存 JSON
+  payloadData: 映射
+  payload: Payload
+  frontendSort: 前端排序
+  frontendFilter: 前端筛选
+  frontendVirtual: 虚拟滚动
+  primaryFailed: 主源失败
+  primarySlow: 主源慢
+  primaryStale: 主源版本滞后
+  rescue: 冷却源救援
+  uncompressed: 未压缩
+actions:
+  configure: 配置
+  waitingRemove: 等待移除
+  waitingUpdate: 等待更新
+  edit: 修改
+  waitingInstall: 等待安装
+  add: 添加
+  config: 配置
+  addPlugin: 添加
+progress:
+  loading: 正在加载插件市场

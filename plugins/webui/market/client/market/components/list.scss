@@ -1,0 +1,50 @@
+.package-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(336px, 1fr));
+  gap: var(--card-margin);
+  justify-items: center;
+  flex: 1 0 auto;
+}
+
+@media (max-width: 420px) {
+  .package-list {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+.market-list-header {
+  display: block;
+}
+
+.virtual-spacer {
+  grid-column: 1 / -1;
+  width: 100%;
+  pointer-events: none;
+}
+
+.k-empty {
+  flex: 1 0 auto;
+}
+
+.load-more, .load-complete {
+  margin: var(--card-margin) 0;
+  display: flex;
+  justify-content: center;
+  color: var(--el-text-color-secondary);
+  font-size: 14px;
+}
+
+.market-end-easter {
+  flex-direction: column;
+  align-items: center;
+  gap: 0.4rem;
+  min-height: 4rem;
+  padding: 0.75rem 1rem;
+  text-align: center;
+}
+
+.market-end-easter__icon {
+  width: 2rem;
+  height: 2rem;
+  color: color-mix(in srgb, var(--k-color-primary) 76%, var(--el-text-color-primary));
+}

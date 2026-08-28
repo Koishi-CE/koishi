@@ -1,0 +1,118 @@
+{
+	"name": "@koishi-ce/plugin-marketn",
+	"description": "Next-generation Koishi plugin market and dependency management center",
+	"version": "3.0.0",
+	"main": "lib/index.js",
+	"types": "lib/index.d.ts",
+	"exports": {
+		".": {
+			"source": "./src/index.ts",
+			"types": "./lib/index.d.ts",
+			"node": "./lib/index.js"
+		},
+		"./shared": {
+			"source": "./src/shared/index.ts"
+		},
+		"./package.json": "./package.json"
+	},
+	"files": [
+		"lib",
+		"dist",
+		"src",
+		"client"
+	],
+	"author": "Oppenheymu <oppenheymu@gmail.com>",
+	"contributors": [
+		"qinfeng365"
+	],
+	"license": "AGPL-3.0",
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/Koishi-CE/koishi.git",
+		"directory": "plugins/webui/market"
+	},
+	"bugs": {
+		"url": "https://github.com/Koishi-CE/koishi/issues"
+	},
+	"homepage": "https://koishi.chat",
+	"keywords": [
+		"bot",
+		"chatbot",
+		"koishi",
+		"plugin",
+		"market",
+		"manager",
+		"server"
+	],
+	"koishi": {
+		"public": [
+			"dist"
+		],
+		"description": {
+			"en": "Next-generation Koishi plugin market and dependency management center",
+			"zh": "下一代 Koishi 插件市场与依赖管理中心"
+		},
+		"service": {
+			"optional": [
+				"console"
+			],
+			"implements": [
+				"installer"
+			]
+		}
+	},
+	"peerDependencies": {
+		"@koishijs/plugin-config": "^2.8.6",
+		"@koishijs/plugin-console": "^5.30.11",
+		"koishi": "^4.18.11",
+		"vue-i18n": "^9.10.2",
+		"vue-router": "^4.4.5"
+	},
+	"peerDependenciesMeta": {
+		"@koishijs/plugin-config": {
+			"optional": true
+		},
+		"@koishijs/plugin-console": {
+			"optional": true
+		},
+		"vue-i18n": {
+			"optional": true
+		},
+		"vue-router": {
+			"optional": true
+		}
+	},
+	"devDependencies": {
+		"@koishi-ce/client": "workspace:*",
+		"@koishi-ce/plugin-config": "workspace:*",
+		"@maikolib/vite-plugin-yaml": "^1.1.1-0",
+		"@types/node": "^26.1.2",
+		"@types/semver": "^7.5.8",
+		"@vueuse/core": "^14.4.0",
+		"@vitejs/plugin-vue": "^6.0.8",
+		"@vitest/coverage-v8": "4.1.11",
+		"js-yaml": "^4.1.0",
+		"sass-embedded": "^1.102.0",
+		"unocss": "^66.8.0",
+		"vite": "^8.2.1",
+		"vitest": "^4.1.10",
+		"vue": "^3.5.12"
+	},
+	"dependencies": {
+		"@koishi-ce/components": "workspace:*",
+		"@koishi-ce/console": "workspace:*",
+		"@koishi-ce/registry": "workspace:*",
+		"@noble/hashes": "^2.3.0",
+		"cosmokit": "^1.8.1",
+		"execa": "^10.0.1",
+		"get-registry": "^1.2.0",
+		"lottie-web": "^5.13.0",
+		"p-map": "^7.0.6",
+		"package-manager-detector": "^1.8.0",
+		"private-ip": "^3.0.2",
+		"semver": "^7.8.5",
+		"strip-ansi": "^7.2.0",
+		"tar": "^7.5.22",
+		"zod": "^4.4.3"
+	}
+}

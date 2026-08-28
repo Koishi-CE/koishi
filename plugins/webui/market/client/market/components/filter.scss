@@ -1,0 +1,208 @@
+.market-filter-item {
+  display: flex;
+  margin: 2px 0;
+  padding: 0 0.5rem;
+  color: var(--k-text-normal);
+  transition: color 0.2s, background-color 0.2s;
+  align-items: center;
+  z-index: 2;
+  height: 28px;
+  border-radius: 8px;
+  cursor: pointer;
+
+  &:hover {
+    color: var(--k-text-dark);
+    background-color: var(--k-hover-bg, rgba(128, 128, 128, 0.08));
+  }
+
+  &.active {
+    color: var(--k-color-primary);
+    background-color: color-mix(in srgb, var(--k-color-primary) 10%, transparent);
+    font-weight: 600;
+
+    &.verified, &.newborn {
+      color: var(--k-color-success);
+      background-color: color-mix(in srgb, var(--k-color-success) 10%, transparent);
+    }
+    &.preview, &.portable {
+      color: var(--k-color-warning);
+      background-color: color-mix(in srgb, var(--k-color-warning) 10%, transparent);
+    }
+    &.insecure {
+      color: var(--k-color-danger);
+      background-color: color-mix(in srgb, var(--k-color-danger) 10%, transparent);
+    }
+  }
+
+  &.disabled {
+    opacity: 0.5;
+    text-decoration: line-through 2px;
+  }
+
+  .icon {
+    display: inline-flex;
+    width: 1.75rem;
+    height: 1rem;
+    margin-right: 2px;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+  }
+
+  &:not(.active) .order {
+    display: none;
+  }
+
+  .order {
+    display: inline-flex;
+    width: 1.75rem;
+    height: 1rem;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+  }
+
+  :deep(.market-icon) {
+    display: block;
+    width: 1.125rem;
+    height: 1rem;
+    max-width: 1.125rem;
+    max-height: 1rem;
+    min-width: 0;
+    flex: 0 0 auto;
+    line-height: 1;
+  }
+
+  .text, .count {
+    line-height: 20px;
+    font-size: 13.5px;
+    font-weight: 500;
+  }
+
+  .count {
+    margin-right: 2px;
+    font-size: 12px;
+    opacity: 0.7;
+  }
+
+  .spacer {
+    flex: 1;
+  }
+}
+
+.market-date-filter {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  padding: 0.2rem 0.5rem 0;
+}
+
+.market-filter-advanced {
+  .market-filter-title {
+    cursor: pointer;
+    user-select: none;
+    border-radius: 8px;
+
+    &:hover {
+      background-color: var(--k-hover-bg, rgba(128, 128, 128, 0.08));
+    }
+  }
+
+  summary {
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+    list-style: none;
+
+    &::-webkit-details-marker {
+      display: none;
+    }
+
+    &::before {
+      content: '';
+      width: 0;
+      height: 0;
+      border-top: 4px solid transparent;
+      border-bottom: 4px solid transparent;
+      border-left: 5px solid currentColor;
+      opacity: 0.55;
+      transition: transform 0.18s ease;
+    }
+  }
+
+  &[open] summary::before {
+    transform: rotate(90deg);
+  }
+}
+
+.market-advanced-count {
+  min-width: 1.15rem;
+  height: 1.15rem;
+  padding: 0 0.25rem;
+  border-radius: 999px;
+  box-sizing: border-box;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--k-color-primary);
+  background: color-mix(in srgb, var(--k-color-primary) 12%, transparent);
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.market-date-row {
+  display: grid;
+  grid-template-columns: minmax(4.5rem, max-content) minmax(0, 1fr);
+  align-items: center;
+  gap: 0.45rem;
+  min-width: 0;
+  color: var(--k-text-normal);
+  font-size: 12.5px;
+
+  span {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    opacity: 0.78;
+  }
+
+  input {
+    min-width: 0;
+    width: 100%;
+    height: 28px;
+    padding: 0 0.45rem;
+    box-sizing: border-box;
+    border-radius: 8px;
+    border: 1px solid var(--k-color-border);
+    color: var(--k-text-normal);
+    background: var(--k-card-bg);
+    font: inherit;
+    outline: none;
+    color-scheme: light dark;
+    transition: border-color 0.2s ease, background-color 0.2s ease, box-shadow 0.2s ease;
+
+    &:focus {
+      border-color: var(--k-color-primary);
+      box-shadow: 0 0 0 2px color-mix(in srgb, var(--k-color-primary) 14%, transparent);
+    }
+  }
+}
+
+.market-date-clear {
+  height: 28px;
+  margin-top: 0.1rem;
+  padding: 0 0.65rem;
+  border-radius: 8px;
+  border: 1px solid var(--k-color-border);
+  color: var(--k-text-normal);
+  background: var(--k-card-bg);
+  font-size: 12.5px;
+  cursor: pointer;
+  transition: color 0.2s ease, border-color 0.2s ease, background-color 0.2s ease;
+
+  &:hover {
+    color: var(--k-color-primary);
+    border-color: var(--k-color-primary);
+    background: color-mix(in srgb, var(--k-color-primary) 8%, var(--k-card-bg));
+  }
+}

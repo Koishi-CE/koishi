@@ -1,0 +1,72 @@
+.koishi-eye-splash {
+  position: relative;
+  pointer-events: none;
+}
+
+.koishi-eye-splash__canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.koishi-eye-splash__canvas {
+  opacity: 0;
+  transition: opacity 0.25s ease;
+
+  &.is-ready {
+    opacity: 1;
+  }
+
+  svg {
+    width: 100% !important;
+    height: 100% !important;
+  }
+
+  .t8-oob-splash-data-a {
+    stroke: color-mix(in srgb, var(--el-text-color-primary) 90%, var(--k-color-primary));
+    filter: drop-shadow(0 0 2px color-mix(in srgb, var(--el-text-color-primary) 22%, transparent));
+  }
+
+  .t8-oob-splash-data-b {
+    stroke: color-mix(in srgb, var(--el-text-color-primary) 90%, var(--k-color-primary));
+    filter: drop-shadow(0 0 3px color-mix(in srgb, var(--el-text-color-primary) 24%, transparent));
+    transition: filter 0.18s ease;
+  }
+
+  .t8-oob-splash-data-a,
+  .t8-oob-splash-data-b {
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+
+  &.is-complete .t8-oob-splash-data-b {
+    filter: drop-shadow(0 0 6px color-mix(in srgb, var(--k-color-primary) 32%, transparent));
+  }
+
+  &.is-extinguishing .t8-oob-splash-data-b {
+    filter: drop-shadow(0 0 2px color-mix(in srgb, var(--el-text-color-primary) 18%, transparent));
+  }
+}
+
+.koishi-eye-splash__nodes {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+.koishi-eye-splash__node {
+  fill: color-mix(in srgb, var(--k-color-primary) 58%, var(--el-text-color-primary));
+  opacity: 0;
+  transform-box: fill-box;
+  transform-origin: center;
+  filter: drop-shadow(0 0 6px color-mix(in srgb, var(--k-color-primary) 38%, transparent));
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .koishi-eye-splash__canvas {
+    transition: none;
+  }
+}
