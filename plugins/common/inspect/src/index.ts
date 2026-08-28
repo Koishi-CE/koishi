@@ -13,6 +13,7 @@ export function apply(ctx: Context) {
 	ctx
 		.command("inspect", { captureQuote: false })
 		.action(({ session }, target) => {
+			if (!session) return;
 			if (session.quote) {
 				return session.text(".message", {
 					platform: session.platform,
@@ -25,7 +26,9 @@ export function apply(ctx: Context) {
 			}
 
 			if (target) {
-				const { type, attrs } = h.parse(target)[0];
+				const element = h.parse(target)[0];
+				if (!element) return session.text(".invalid");
+				const { type, attrs } = element;
 				if (type === "at") {
 					return session.text(".user", attrs);
 				} else if (type === "sharp") {

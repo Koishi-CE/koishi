@@ -9,13 +9,13 @@ import {
 	type Plugin,
 	Schema,
 } from "@koishi-ce/koishi";
-import { Loader, unwrapExports } from "@koishi-ce/loader";
-import { type FSWatcher, type WatchOptions, watch } from "chokidar";
-import { createRequire } from "module";
-import { relative, resolve } from "path";
+import { Loader, type LoaderScope, unwrapExports } from "@koishi-ce/loader";
+import { type ChokidarOptions, type FSWatcher, watch } from "chokidar";
+import { createRequire } from "node:module";
+import { relative, resolve } from "node:path";
 import { handleError } from "./error";
 
-declare module "koishi" {
+declare module "@koishi-ce/koishi" {
 	interface Context {
 		watcher: Watcher;
 	}
@@ -43,20 +43,37 @@ function loadDependencies(filename: string, ignored: Set<string>) {
 		dependencies.add(filename);
 		children.forEach(traverse);
 	}
-	traverse(require.cache[filename]);
+	const module = require.cache[filename];
+	if (module) traverse(module);
 	return dependencies;
 }
 
 interface Reload {
 	filename: string;
-	children: Map<ForkScope, string>;
+	children: Map<ForkScope, string | undefined>;
 }
 
 class Watcher {
 	static inject = ["loader"];
 
+	// erasableSyntaxOnly 不允许 namespace 内运行时值,Config 移为类静态属性
+	static Config: Schema<Watcher.Config> = Schema.object({
+		base: Schema.string(),
+		root: Schema.union([
+			Schema.array(String).role("table"),
+			Schema.transform(String, (value) => [value]),
+		]).default(["."]),
+		ignored: Schema.union([
+			Schema.array(String).role("table"),
+			Schema.transform(String, (value) => [value]),
+		]).default(["**/node_modules/**", "**/.git/**", "**/logs/**"]),
+		debounce: Schema.natural().role("ms").default(100),
+	}).i18n({
+		"zh-CN": require("./locales/zh-CN"),
+	});
+
 	private base: string;
-	private watcher: FSWatcher;
+	private watcher!: FSWatcher;
 	private require = createRequire(
 		require.resolve("@koishi-ce/loader/package.json"),
 	);
@@ -66,7 +83,7 @@ class Watcher {
 	 *
 	 * - root R -> external E -> none of plugin Q
 	 */
-	private externals: Set<string>;
+	private externals!: Set<string>;
 
 	/**
 	 * files X that should be reloaded
@@ -74,7 +91,7 @@ class Watcher {
 	 * - including all stashed files S
 	 * - some plugin P -> file X -> some change C
 	 */
-	private accepted: Set<string>;
+	private accepted!: Set<string>;
 
 	/**
 	 * files X that should not be reloaded
@@ -82,17 +99,19 @@ class Watcher {
 	 * - including all externals E
 	 * - some change C -> file X -> none of change D
 	 */
-	private declined: Set<string>;
+	private declined!: Set<string>;
 
 	/** stashed changes */
 	private stashed = new Set<string>();
 
 	private logger: Logger;
 
-	constructor(
-		private ctx: Context,
-		private config: Watcher.Config,
-	) {
+	private ctx: Context;
+	private config: Watcher.Config;
+
+	constructor(ctx: Context, config: Watcher.Config) {
+		this.ctx = ctx;
+		this.config = config;
 		this.base = resolve(ctx.baseDir, config.base || "");
 		this.logger = ctx.logger("hmr");
 		ctx.provide("watcher", this);
@@ -108,7 +127,7 @@ class Watcher {
 	start() {
 		const { loader } = this.ctx;
 		const { root, ignored } = this.config;
-		this.watcher = watch(root, {
+		this.watcher = watch(root ?? ["."], {
 			...this.config,
 			cwd: this.base,
 			ignored: makeArray(ignored),
@@ -121,7 +140,7 @@ class Watcher {
 		);
 		const triggerLocalReload = this.ctx.debounce(
 			() => this.triggerLocalReload(),
-			this.config.debounce,
+			this.config.debounce ?? 0,
 		);
 
 		this.watcher.on("change", async (path) => {
@@ -166,7 +185,9 @@ class Watcher {
 		this.declined = new Set(this.externals);
 
 		this.stashed.forEach((filename) => {
-			const { children } = require.cache[filename];
+			const module = require.cache[filename];
+			if (!module) return;
+			const { children } = module;
 			for (const { filename } of children) {
 				if (
 					this.accepted.has(filename) ||
@@ -183,7 +204,16 @@ class Watcher {
 				hasUpdate = false;
 			while (index < pending.length) {
 				const filename = pending[index];
-				const { children } = require.cache[filename];
+				if (filename === undefined) {
+					index++;
+					continue;
+				}
+				const module = require.cache[filename];
+				if (!module) {
+					index++;
+					continue;
+				}
+				const { children } = module;
 				let isDeclined = true,
 					isAccepted = false;
 				for (const { filename } of children) {
@@ -233,7 +263,7 @@ class Watcher {
 		this.analyzeChanges();
 
 		/** plugins pending classification */
-		const pending = new Map<string, [Plugin, MainScope]>();
+		const pending = new Map<string, [Plugin, MainScope | undefined]>();
 
 		/** plugins that should be reloaded */
 		const reloads = new Map<Plugin, Reload>();
@@ -242,6 +272,7 @@ class Watcher {
 		// that is, reloading them will not cause any other reloads
 		for (const filename of Object.values(this.ctx.loader.cache)) {
 			const module = require.cache[filename];
+			if (!module) continue;
 			const plugin = unwrapExports(module.exports);
 			if (!plugin || this.declined.has(filename)) continue;
 			const runtime = this.ctx.registry.get(plugin);
@@ -267,6 +298,7 @@ class Watcher {
 				const queued = [runtime];
 				while (queued.length) {
 					const runtime = queued.shift();
+					if (!runtime) continue;
 					if (visited.has(runtime)) continue;
 					visited.add(runtime);
 					if (reloads.has(plugin)) {
@@ -278,7 +310,7 @@ class Watcher {
 					}
 				}
 				if (!isMarked) {
-					const children = new Map<ForkScope, string>();
+					const children = new Map<ForkScope, string | undefined>();
 					reloads.set(plugin, { filename, children });
 					for (const state of runtime.children) {
 						children.set(state, this.ctx.loader.getRefName(state));
@@ -293,7 +325,8 @@ class Watcher {
 		// and delete module cache before re-require
 		const backup: Dict<NodeJS.Module> = {};
 		for (const filename of this.accepted) {
-			backup[filename] = require.cache[filename];
+			const module = require.cache[filename];
+			if (module) backup[filename] = module;
 			delete require.cache[filename];
 		}
 
@@ -305,7 +338,7 @@ class Watcher {
 		}
 
 		// attempt to load entry files
-		const attempts = {};
+		const attempts: Dict<any> = {};
 		try {
 			for (const [, { filename }] of reloads) {
 				attempts[filename] = unwrapExports(this.require(filename));
@@ -337,8 +370,14 @@ class Watcher {
 				try {
 					for (const [state, name] of children) {
 						const fork = state.parent.plugin(attempts[filename], state.config);
-						fork.key = state.key;
-						if (name) state.parent.scope[Loader.kRecord][name] = fork;
+						const key = (state as LoaderScope).key;
+						if (key !== undefined) (fork as LoaderScope).key = key;
+						if (name) {
+							const record = ((state.parent.scope as LoaderScope)[
+								Loader.kRecord
+							] ??= Object.create(null));
+							record[name] = fork;
+						}
 					}
 					this.logger.info("reload plugin at %c", path);
 				} catch (err) {
@@ -357,8 +396,14 @@ class Watcher {
 					this.ctx.registry.delete(attempts[filename]);
 					for (const [state, name] of children) {
 						const fork = state.parent.plugin(plugin, state.config);
-						fork.key = state.key;
-						if (name) state.parent.scope[Loader.kRecord][name] = fork;
+						const key = (state as LoaderScope).key;
+						if (key !== undefined) (fork as LoaderScope).key = key;
+						if (name) {
+							const record = ((state.parent.scope as LoaderScope)[
+								Loader.kRecord
+							] ??= Object.create(null));
+							record[name] = fork;
+						}
 					}
 				} catch (err) {
 					this.logger.warn(err);
@@ -372,28 +417,14 @@ class Watcher {
 	}
 }
 
+// erasableSyntaxOnly:纯类型 namespace(运行时值 Config 由类静态属性承载)
 namespace Watcher {
-	export interface Config extends WatchOptions {
+	export interface Config extends ChokidarOptions {
 		base?: string;
 		root?: string[];
 		debounce?: number;
 		ignored?: string[];
 	}
-
-	export const Config: Schema<Config> = Schema.object({
-		base: Schema.string(),
-		root: Schema.union([
-			Schema.array(String).role("table"),
-			Schema.transform(String, (value) => [value]),
-		]).default(["."]),
-		ignored: Schema.union([
-			Schema.array(String).role("table"),
-			Schema.transform(String, (value) => [value]),
-		]).default(["**/node_modules/**", "**/.git/**", "**/logs/**"]),
-		debounce: Schema.natural().role("ms").default(100),
-	}).i18n({
-		"zh-CN": require("./locales/zh-CN"),
-	});
 }
 
 export default Watcher;

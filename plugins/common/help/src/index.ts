@@ -11,7 +11,7 @@ import {
 import enUS from "./locales/en-US.yml";
 import zhCN from "./locales/zh-CN.yml";
 
-declare module "koishi" {
+declare module "@koishi-ce/koishi" {
 	interface Events {
 		"help/command"(
 			output: string[],
@@ -38,7 +38,7 @@ declare module "koishi" {
 	}
 
 	namespace Argv {
-		interface OptionConfig {
+		interface OptionConfig<T extends Argv.Type = Argv.Type> {
 			/** hide option */
 			hidden?: Computed<boolean>;
 			/** localization params */
@@ -118,15 +118,19 @@ export function apply(ctx: Context, config: Config) {
 		ctx.on("command-added", enableHelp);
 	}
 
-	ctx.before("command/execute", (argv) => {
-		const { command, options, session } = argv;
-		if (options["help"] && command._options.help) {
-			return executeHelp(session, command.name);
-		}
+	ctx.before(
+		"command/execute",
+		(argv: Argv<never, never, any[], { help?: boolean }>) => {
+			const { command, options, session } = argv;
+			if (!command || !session || !options) return;
+			if (options["help"] && command._options["help"]) {
+				return executeHelp(session, command.name);
+			}
 
-		if (command["_actions"].length) return;
-		return executeHelp(session, command.name);
-	});
+			if (command["_actions"].length) return;
+			return executeHelp(session, command.name);
+		},
+	);
 
 	const $ = ctx.$commander;
 	function findCommand(target: string, session: Session<never, never>) {
@@ -140,26 +144,28 @@ export function apply(ctx: Context, config: Config) {
 			.filter((item) => item.command?.match(session));
 		const perfect = data.filter((item) => item.similarity === 1);
 		if (!perfect.length) return data;
-		return perfect[0].command;
+		return perfect[0]?.command;
 	}
 
 	const createCollector =
 		<T extends "user" | "channel">(key: T): FieldCollector<T> =>
 		(argv, fields) => {
-			const {
-				args: [target],
-				session,
-			} = argv;
+			const { args, session } = argv;
+			const [target] = args ?? [];
+			if (!session) return;
 			const result = findCommand(target, session);
 			if (!Array.isArray(result)) {
-				session.collect(
-					key,
-					{ ...argv, command: result, args: [], options: { help: true } },
-					fields,
-				);
+				if (result) {
+					session.collect(
+						key,
+						{ ...argv, command: result, args: [], options: { help: true } },
+						fields,
+					);
+				}
 				return;
 			}
 			for (const { command } of result) {
+				if (!command) continue;
 				session.collect(
 					key,
 					{ ...argv, command, args: [], options: { help: true } },
@@ -190,6 +196,7 @@ export function apply(ctx: Context, config: Config) {
 				return ctx.permissions.test(`command:${command.name}`, session, cache);
 			},
 		});
+		if (!name) return;
 		return $.resolve(name, session);
 	}
 
@@ -200,9 +207,10 @@ export function apply(ctx: Context, config: Config) {
 		.channelFields(createCollector("channel"))
 		.option("showHidden", "-H")
 		.action(async ({ session, options }, target) => {
+			if (!session || !options) return;
 			if (!target) {
 				const prefix =
-					session.resolve(session.app.koishi.config.prefix)[0] ?? "";
+					session.resolve(session.app.koishi.config.prefix)?.[0] ?? "";
 				const commands = $._commandList.filter((cmd) => cmd.parent === null);
 				const output = await formatCommands(
 					".global-prolog",
@@ -272,7 +280,7 @@ async function formatCommands(
 	children.sort((a, b) => (a.displayName > b.displayName ? 1 : -1));
 	if (!children.length) return [];
 
-	const prefix = session.resolve(session.app.koishi.config.prefix)[0] ?? "";
+	const prefix = session.resolve(session.app.koishi.config.prefix)?.[0] ?? "";
 	const output = children.map(({ name, displayName, config }) => {
 		let output = "    " + prefix + displayName.replace(/\./g, " ");
 		output +=
@@ -291,7 +299,9 @@ function getOptionVisibility(
 	option: Argv.OptionConfig,
 	session: Session<"authority">,
 ) {
-	if (session.user && option.authority > session.user.authority) return false;
+	if (session.user && (option.authority ?? 0) > session.user.authority) {
+		return false;
+	}
 	return !session.resolve(option.hidden);
 }
 
@@ -322,9 +332,11 @@ function getOptions(
 			output.push("    " + line);
 		}
 
-		if (!("value" in option)) pushOption(option, option.name);
+		if (!("value" in option)) pushOption(option, option.name ?? "");
 		for (const value in option.variants) {
-			pushOption(option.variants[value], `${option.name}.${value}`);
+			const variant = option.variants[value];
+			if (!variant) continue;
+			pushOption(variant, `${option.name}.${value}`);
 		}
 	});
 

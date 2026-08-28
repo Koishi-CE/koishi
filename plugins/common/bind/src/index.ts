@@ -34,8 +34,10 @@ export function apply(ctx: Context, config: Config = {}) {
 	const { generateToken = () => `${prefix}` + Random.id(6, 10) } = config;
 
 	function generate(session: Session, phase: number) {
+		const { userId } = session;
+		if (!userId) return;
 		const token = generateToken();
-		tokens[token] = [session.platform, session.userId, phase];
+		tokens[token] = [session.platform, userId, phase];
 		ctx.setTimeout(() => delete tokens[token], 5 * Time.minute);
 		return token;
 	}
@@ -49,14 +51,17 @@ export function apply(ctx: Context, config: Config = {}) {
 		.userFields(["id"])
 		.option("remove", "-r")
 		.action(async ({ session, options }) => {
+			if (!session || !options) return;
 			if (options.remove) {
-				const { platform, userId: pid } = session;
+				const { platform, userId: pid, user } = session;
+				if (!pid || !user) return;
 				const bindings = await ctx.database.get("binding", {
-					aid: session.user.id,
+					aid: user.id,
 				});
 				const binding = bindings.find(
 					(item) => item.platform === platform && item.pid === pid,
 				);
+				if (!binding) return;
 				if (binding.aid !== binding.bid) {
 					// restore the original binding
 					await bind(binding.bid, platform, pid);
@@ -85,6 +90,8 @@ export function apply(ctx: Context, config: Config = {}) {
 		const token = session.stripped.content;
 		const data = tokens[token];
 		if (!data) return next();
+		const { userId } = session;
+		if (!userId) return next();
 		if (data[0] === session.platform && data[1] === session.userId) {
 			return session.text(
 				"commands.bind.messages.self-" + (data[2] < 0 ? "2" : "1"),
@@ -97,14 +104,14 @@ export function apply(ctx: Context, config: Config = {}) {
 				{ platform: data[0], pid: data[1] },
 				["aid"],
 			);
-			await bind(binding.aid, session.platform, session.userId);
+			if (!binding) return;
+			await bind(binding.aid, session.platform, userId);
 			return session.text("commands.bind.messages.success");
 		} else {
-			const user = await ctx.database.getUser(
-				session.platform,
-				session.userId,
-				["id", "authority"],
-			);
+			const user = await ctx.database.getUser(session.platform, userId, [
+				"id",
+				"authority",
+			]);
 			if (!user.authority) return session.text("internal.low-authority");
 			if (data[2]) {
 				const token = generate(session, -1);

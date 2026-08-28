@@ -13,7 +13,7 @@ export type Config = {};
 export const name = "echo";
 export const Config: Schema<Config> = Schema.object({});
 
-export function apply(ctx: Context, config: Config) {
+export function apply(ctx: Context, _config: Config) {
 	ctx.i18n.define("zh-CN", zhCN);
 
 	ctx
@@ -24,6 +24,7 @@ export function apply(ctx: Context, config: Config) {
 		.option("channel", "-c [channel:channel]", { authority: 3 })
 		.option("guild", "-g [guild:string]", { authority: 3 })
 		.action(async ({ options, session }, message) => {
+			if (!session || !options) return;
 			if (!message) return session.text(".expect-text");
 
 			// use Array to prevent unescape
