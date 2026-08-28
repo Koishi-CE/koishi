@@ -1,8 +1,24 @@
+/**
+ * 会话数据装配层：频道与用户数据的获取、创建与观察缓存。
+ *
+ * getXxx 只做一次性查询（记录不存在时按 autoAssign / autoAuthorize
+ * 配置决定是否入库创建）；observeXxx 在此之上包装 observe 观察对象，
+ * 修改会在事件循环收尾时自动 diff 写回数据库（见 middleware/index.ts）。
+ * 未入库的"游离"数据带 $detached 标记，写回前被拦截。
+ */
 import { observe } from "@koishi-ce/utils";
 import type { Channel, User } from "../database";
 import { SessionMessaging } from "./messaging";
+
 /** 会话数据装配层：频道与用户数据的获取、创建与观察缓存 */
 export class SessionObservable extends SessionMessaging {
+	/**
+	 * 查询频道记录。
+	 *
+	 * 不要字段时返回仅含标识信息的轻量对象（不查库）；
+	 * 记录不存在时：开了 autoAssign 则入库创建并指派给本机器人，
+	 * 否则返回带 `$detached` 标记的游离对象（修改不会落库）。
+	 */
 	override async getChannel<K extends Channel.Field = never>(
 		id = this.channelId ?? "",
 		fields: K[] = [],
@@ -21,6 +37,7 @@ export class SessionObservable extends SessionMessaging {
 				createdAt: new Date(),
 			});
 		} else {
+			// 游离频道：仅存在于内存，写回会被 $detached 守卫拦截
 			const table = app.model.tables["channel"];
 			const channel = table?.create();
 			if (!channel) throw new Error("cannot create detached channel");
@@ -29,6 +46,10 @@ export class SessionObservable extends SessionMessaging {
 		}
 	}
 
+	/**
+	 * 内部工具：观察单个 channelId（不区分频道/群），
+	 * 包装为可观察对象并在 diff 时写回数据库。
+	 */
 	async _observeChannelLike<K extends Channel.Field = never>(
 		channelId: string,
 		fields: Iterable<K> = [],
@@ -41,6 +62,7 @@ export class SessionObservable extends SessionMessaging {
 		const cache = observe(
 			data,
 			async (diff) => {
+				// 游离频道不入库（写回前拦截），见上游 issue #1267：
 				// https://github.com/koishijs/koishi/issues/1267
 				if ("$detached" in data && data["$detached"]) return;
 				await this.app.database.setChannel(platform, channelId, diff as any);
@@ -50,6 +72,12 @@ export class SessionObservable extends SessionMessaging {
 		return cache;
 	}
 
+	/**
+	 * 观察频道数据。
+	 *
+	 * 群聊场景下频道 ID 与群 ID 不同，需要同时观察两者：
+	 * channel 挂 this.channel，guild 挂 this.guild（两者均含群级设置）。
+	 */
 	override async observeChannel<T extends Channel.Field = never>(
 		fields: Iterable<T>,
 	): Promise<Channel.Observed<T>> {
@@ -66,6 +94,13 @@ export class SessionObservable extends SessionMessaging {
 		return channel;
 	}
 
+	/**
+	 * 查询用户记录。
+	 *
+	 * 不要字段时返回空对象（不查库）；记录不存在时：
+	 * autoAuthorize > 0 则以该初始等级入库创建（继承会话语言 locales），
+	 * 否则返回带 `$detached` 标记的游离对象。
+	 */
 	override async getUser<K extends User.Field = never>(
 		userId = this.userId ?? "",
 		fields: K[] = [],
@@ -79,6 +114,7 @@ export class SessionObservable extends SessionMessaging {
 		if (authority) {
 			return app.database.createUser(platform, userId, data);
 		} else {
+			// 游离用户：仅存在于内存，写回会被 $detached 守卫拦截
 			const table = app.model.tables["user"];
 			const user = table?.create();
 			if (!user) throw new Error("cannot create detached user");
@@ -87,12 +123,19 @@ export class SessionObservable extends SessionMessaging {
 		}
 	}
 
+	/**
+	 * 观察用户数据。
+	 *
+	 * 已有缓存时只补查缺失字段并 `$merge` 合并；匿名消息不入库，
+	 * 用内存临时对象充当（写回为空操作）。diff 写回同样带 $detached 守卫。
+	 */
 	override async observeUser<T extends User.Field = never>(
 		fields: Iterable<T>,
 	): Promise<User.Observed<T>> {
 		const fieldSet = new Set<User.Field>(fields);
 		const { userId } = this;
 
+		// 缓存命中：剔除已有字段，若全都有则直接复用现有观察对象
 		let cache = this.user;
 		if (cache) {
 			for (const key in cache) {
@@ -101,6 +144,7 @@ export class SessionObservable extends SessionMessaging {
 			if (!fieldSet.size) return (this.user = cache as any);
 		}
 
+		// 匿名用户：不落库，用模型默认值构造临时观察对象
 		if ((this.author as { anonymous?: unknown } | undefined)?.anonymous) {
 			const table = this.app.model.tables["user"];
 			const fallback = table?.create();
@@ -115,11 +159,13 @@ export class SessionObservable extends SessionMessaging {
 		const data = await this.getUser(userId, [...fieldSet]);
 		cache = this.user;
 		if (cache) {
+			// 观察期间被并发创建过：合并本次查到的数据
 			cache.$merge(data);
 		} else {
 			cache = observe(
 				data,
 				async (diff) => {
+					// 游离用户不入库（写回前拦截），见上游 issue #1267：
 					// https://github.com/koishijs/koishi/issues/1267
 					if ("$detached" in data && data["$detached"]) return;
 					await this.app.database.setUser(
