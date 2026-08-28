@@ -6,14 +6,15 @@ import {
 	type MainScope,
 	type Plugin,
 	type Schema,
+	type ScopeStatus,
 } from "@koishi-ce/koishi";
+import type { LoaderScope } from "@koishi-ce/loader";
 import {} from "@koishi-ce/plugin-hmr";
 import type {
 	PackageJson,
 	SearchObject,
 	SearchResult,
 } from "@koishi-ce/registry";
-import type { ScopeStatus } from "cordis";
 
 declare module "@koishi-ce/loader" {
 	interface Loader {
@@ -35,8 +36,11 @@ export abstract class PackageProvider extends DataService<
 	cache: Dict<PackageProvider.RuntimeData> = {};
 	debouncedRefresh: () => void;
 
-	constructor(public ctx: Context) {
+	override ctx: Context;
+
+	constructor(ctx: Context) {
 		super(ctx, "packages", { authority: 4 });
+		this.ctx = ctx;
 
 		this.debouncedRefresh = ctx.debounce(() => this.refresh(false), 0);
 		ctx.on("internal/runtime", (scope) => this.update(scope.runtime.plugin));
@@ -63,27 +67,34 @@ export abstract class PackageProvider extends DataService<
 
 	async update(plugin: Plugin) {
 		const name = this.ctx.loader.keyFor(plugin);
-		if (!this.cache[name]) return;
+		if (!name || !this.cache[name]) return;
 		this.cache[name] = await this.parseExports(name);
 		this.debouncedRefresh();
 	}
 
 	parseRuntime(state: MainScope, result: PackageProvider.RuntimeData) {
-		result.id = state.runtime.uid;
+		// 已销毁的 runtime(uid 为 null)不展示 id
+		if (state.runtime.uid !== null) {
+			result.id = state.runtime.uid;
+		}
 		result.forkable = state.runtime.isForkable;
-		result.forks = Object.fromEntries(
-			state.children
-				.filter((fork) => fork.key)
-				.map((fork) => [fork.key, { status: fork.status }]),
-		);
+		// fork 的 key 由 loader 写入(cordis 的 ForkScope 类型上没有该属性)
+		const forks: Dict<{ status?: ScopeStatus }> = {};
+		for (const fork of state.children) {
+			const key = (fork as LoaderScope).key;
+			if (!key) continue;
+			forks[key] = { status: fork.status };
+		}
+		result.forks = forks;
 	}
 
-	async get(forced = false) {
+	override async get(forced = false) {
 		const objects = (await this.collect(forced)).slice();
 		for (const object of objects) {
 			object.name = object.package?.name || "";
-			if (!this.cache[object.shortname]) continue;
-			object.runtime = this.cache[object.shortname];
+			const cached = this.cache[object.shortname];
+			if (!cached) continue;
+			object.runtime = cached;
 		}
 
 		// add app config

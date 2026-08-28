@@ -1,6 +1,6 @@
 import { DataService } from "@koishi-ce/console";
 import { type Context, Logger, remove } from "@koishi-ce/koishi";
-import { Loader } from "@koishi-ce/loader";
+import { Loader, type LoaderScope } from "@koishi-ce/loader";
 
 declare module "@koishi-ce/console" {
 	interface Events {
@@ -25,7 +25,11 @@ declare module "@koishi-ce/console" {
 
 const logger = new Logger("loader");
 
-function insertKey(object: {}, temp: {}, rest: string[]) {
+function insertKey(
+	object: Record<string, any>,
+	temp: Record<string, any>,
+	rest: string[],
+) {
 	for (const key of rest) {
 		temp[key] = object[key];
 		delete object[key];
@@ -43,7 +47,7 @@ function rename(object: any, old: string, neo: string, value: any) {
 	insertKey(object, temp, rest);
 }
 
-function dropKey(plugins: {}, name: string) {
+function dropKey(plugins: Record<string, any>, name: string) {
 	if (!(name in plugins)) {
 		name = "~" + name;
 	}
@@ -78,7 +82,9 @@ export class ConfigWriter extends DataService<Context.Config> {
 				`manager/${key}`,
 				async (...args: any[]) => {
 					try {
-						await this[key].apply(this, args);
+						// 五个方法签名各异,统一视为泛化调用目标后 apply
+						const action = this[key] as (...args: unknown[]) => Promise<void>;
+						await action.apply(this, args);
 					} catch (error) {
 						logger.error(error);
 						throw new Error("failed");
@@ -96,7 +102,7 @@ export class ConfigWriter extends DataService<Context.Config> {
 		for (const key in plugins) {
 			if (key.startsWith("$")) continue;
 			const value = plugins[key];
-			const name = key.split(":", 1)[0].replace(/^~/, "");
+			const name = (key.split(":", 1)[0] ?? "").replace(/^~/, "");
 
 			if (!this.loader.isTruthyLike(value?.$if)) {
 				// $if-disabled plugins should not be displayed
@@ -106,7 +112,7 @@ export class ConfigWriter extends DataService<Context.Config> {
 			}
 
 			// handle plugin groups
-			const fork = ctx.scope[Loader.kRecord][key];
+			const fork = (ctx.scope as LoaderScope)[Loader.kRecord]?.[key];
 			if (!fork) continue;
 			if (name === "group") {
 				result[key] = this.getGroup(value, fork.ctx);
@@ -115,7 +121,7 @@ export class ConfigWriter extends DataService<Context.Config> {
 		return result;
 	}
 
-	async get() {
+	override async get() {
 		const result: Context.Config = { ...this.loader.config };
 		result.plugins = this.getGroup(result.plugins, this.loader.entry);
 		return result;
@@ -125,7 +131,9 @@ export class ConfigWriter extends DataService<Context.Config> {
 		delete config.$paths;
 		const plugins = this.loader.config.plugins;
 		this.loader.config = config;
-		this.loader.config.plugins = plugins;
+		// exactOptionalPropertyTypes 禁止向可选属性显式赋 undefined,
+		// 用 Object.assign 保持"以旧 plugins(含 undefined)整体覆盖"的原语义
+		Object.assign(this.loader.config, { plugins });
 		await this.loader.writeConfig();
 		this.loader.fullReload();
 	}
@@ -134,9 +142,11 @@ export class ConfigWriter extends DataService<Context.Config> {
 		if (!ident) return this.loader.entry.scope;
 		for (const main of this.ctx.registry.values()) {
 			for (const fork of main.children) {
-				if (fork.key === ident) return fork;
+				// fork 的 key 由 loader 写入(ForkScope 类型上没有该属性)
+				if ((fork as LoaderScope).key === ident) return fork;
 			}
 		}
+		return;
 	}
 
 	private resolveConfig(
@@ -144,7 +154,7 @@ export class ConfigWriter extends DataService<Context.Config> {
 		config = this.loader.config.plugins,
 	): [any, string] {
 		for (const key in config) {
-			const [name] = key.split(":", 1);
+			const name = key.split(":", 1)[0] ?? "";
 			if (key.slice(name.length + 1) === ident) return [config, key];
 			if (name === "group" || name === "~group") {
 				try {
@@ -170,6 +180,7 @@ export class ConfigWriter extends DataService<Context.Config> {
 
 	async reload(parent: string, key: string, config: any) {
 		const scope = this.resolveFork(parent);
+		if (!scope) throw new Error("plugin not found");
 		await this.loader.reload(scope.ctx, key, config);
 		rename(scope.config, key, key, config);
 		await this.loader.writeConfig();
@@ -177,6 +188,7 @@ export class ConfigWriter extends DataService<Context.Config> {
 
 	async unload(parent: string, key: string, config = {}, index?: number) {
 		const scope = this.resolveFork(parent);
+		if (!scope) throw new Error("plugin not found");
 		this.loader.unload(scope.ctx, key);
 		if (index) {
 			const rest = Object.keys(scope.config).slice(index);
@@ -189,29 +201,37 @@ export class ConfigWriter extends DataService<Context.Config> {
 
 	async remove(parent: string, key: string) {
 		const scope = this.resolveFork(parent);
+		if (!scope) throw new Error("plugin not found");
 		this.loader.unload(scope.ctx, key);
-		delete scope.config[key];
-		delete scope.config["~" + key];
+		const config = scope.config as Record<string, any>;
+		delete config[key];
+		delete config["~" + key];
 		await this.loader.writeConfig();
 	}
 
 	async teleport(source: string, key: string, target: string, index: number) {
 		const parentS = this.resolveFork(source);
 		const parentT = this.resolveFork(target);
+		if (!parentS || !parentT) throw new Error("plugin not found");
 
 		// teleport fork
-		const fork = parentS?.[Loader.kRecord]?.[key];
+		const fork = (parentS as LoaderScope)[Loader.kRecord]?.[key];
 		if (fork && parentS !== parentT) {
-			delete parentS[Loader.kRecord][key];
-			parentT[Loader.kRecord][key] = fork;
+			const sourceRecord = ((parentS as LoaderScope)[Loader.kRecord] ??=
+				Object.create(null));
+			delete sourceRecord[key];
+			const targetRecord = ((parentT as LoaderScope)[Loader.kRecord] ??=
+				Object.create(null));
+			targetRecord[key] = fork;
 			remove(parentS.disposables, fork.dispose);
 			parentT.disposables.push(fork.dispose);
 			fork.parent = parentT.ctx;
 			Object.setPrototypeOf(fork.ctx, parentT.ctx);
 			fork.ctx.emit("internal/fork", fork);
+			// scope 实例是转发到 config 的 Proxy,用 Reflect.get 保持原读取语义
 			if (
 				Object.keys(fork.runtime.inject).some(
-					(name) => parentS[name] !== parentT[name],
+					(name) => Reflect.get(parentS, name) !== Reflect.get(parentT, name),
 				)
 			) {
 				fork.restart();

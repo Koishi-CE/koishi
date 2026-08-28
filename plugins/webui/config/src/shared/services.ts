@@ -7,7 +7,7 @@ export class ServiceProvider extends DataService<Dict<number>> {
 		ctx.on("internal/service", () => this.refresh());
 	}
 
-	async get() {
+	override async get() {
 		const services = {} as Dict<number>;
 		const attach = (internal: Context[typeof Context.internal]) => {
 			if (!internal) return;
@@ -22,7 +22,10 @@ export class ServiceProvider extends DataService<Dict<number>> {
 				)?.value;
 				if (!ctx) continue;
 				const name = key.replace(/^__/, "").replace(/__$/, "");
-				services[name] = ctx.scope.uid;
+				// 已销毁的 scope(uid 为 null)不参与统计
+				if (ctx.scope.uid !== null) {
+					services[name] = ctx.scope.uid;
+				}
 			}
 		};
 		attach(this.ctx.root[Context.internal]);

@@ -63,7 +63,7 @@ export default class ConfigWriter extends Service {
 		ctx.menu("config.tree", [
 			{
 				id: "config.tree.toggle",
-				type: ({ config }) => (config.tree?.disabled ? "" : type.value),
+				type: ({ config }) => (config.tree?.disabled ? "" : (type.value ?? "")),
 				icon: ({ config }) => (config.tree?.disabled ? "play" : "stop"),
 				label: ({ config }) =>
 					(config.tree?.disabled ? "启用" : "停用") +
@@ -121,7 +121,7 @@ export default class ConfigWriter extends Service {
 		const forks = plugins.value.forks[shortname];
 		if (!forks?.length) {
 			const key = Math.random().toString(36).slice(2, 8);
-			send("manager/unload", "", shortname + ":" + key, {});
+			void send("manager/unload", "", shortname + ":" + key, {});
 			if (!passive) router.push("/plugins/" + key);
 		} else if (forks.length === 1) {
 			if (!passive) router.push("/plugins/" + forks[0]);
@@ -133,9 +133,10 @@ export default class ConfigWriter extends Service {
 	remove(name: string) {
 		const shortname = name.replace(/(koishi-|^@koishijs\/)plugin-/, "");
 		const forks = plugins.value.forks[shortname];
-		for (const id of forks) {
+		for (const id of forks ?? []) {
 			const tree = plugins.value.paths[id];
-			send("manager/remove", tree.parent?.path ?? "", tree.id);
+			if (!tree) continue;
+			void send("manager/remove", tree.parent?.path ?? "", tree.id);
 		}
 	}
 

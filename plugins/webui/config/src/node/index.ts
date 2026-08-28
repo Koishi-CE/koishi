@@ -12,7 +12,7 @@ export type Config = {};
 
 export const Config: Schema<Config> = Schema.object({});
 
-export function apply(ctx: Context, config: Config) {
+export function apply(ctx: Context) {
 	if (!ctx.loader?.writable) {
 		return ctx
 			.logger("app")

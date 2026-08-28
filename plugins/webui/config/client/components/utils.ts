@@ -1,5 +1,6 @@
 import { router, ScopeStatus, send, store } from "@koishi-ce/client";
-import type { Dict } from "@koishi-ce/koishi";
+import type { Context, Dict } from "@koishi-ce/koishi";
+import type { PackageProvider } from "@koishi-ce/plugin-config";
 import { computed, ref } from "vue";
 
 interface DepInfo {
@@ -16,6 +17,39 @@ export interface EnvInfo {
 	using: Dict<DepInfo>;
 	peer: Dict<PeerInfo>;
 	warning?: boolean;
+}
+
+// 浏览器端 tsconfig 无 paths,@koishi-ce/plugin-console 解析不到真实模块,
+// store 的键与 send 的事件类型均来自 packages/web/client/client/shims.d.ts 的
+// 手写环境声明;这里按同名环境声明合并补齐本插件的服务与事件,与服务端
+// src/shared/index.ts、src/shared/writer.ts 对 "@koishi-ce/console" 的声明一一对应
+declare module "@koishi-ce/plugin-console" {
+	interface Events {
+		"manager/app-reload"(config: any): void;
+		"manager/teleport"(
+			source: string,
+			key: string,
+			target: string,
+			index: number,
+		): void;
+		"manager/reload"(parent: string, key: string, config: any): void;
+		"manager/unload"(
+			parent: string,
+			key: string,
+			config: any,
+			index?: number,
+		): void;
+		"manager/remove"(parent: string, key: string): void;
+		"manager/meta"(ident: string, config: any): void;
+	}
+
+	namespace Console {
+		export interface Services {
+			packages: DataService<Dict<PackageProvider.Data>>;
+			services: DataService<Dict<number>>;
+			config: DataService<Context.Config>;
+		}
+	}
 }
 
 export const dialogFork = ref<string>();
@@ -44,9 +78,11 @@ function getEnvInfo(name: string) {
 		result.using[name] = { required };
 	}
 
-	const local = store.packages[name];
 	const result: EnvInfo = { impl: [], using: {}, peer: {} };
 	const services = new Set<string>();
+	const packages = store.packages;
+	const local = packages?.[name];
+	if (!packages || !local) return result;
 
 	// check peer dependencies
 	for (const name in local.package.peerDependencies ?? {}) {
@@ -58,10 +94,9 @@ function getEnvInfo(name: string) {
 			continue;
 		if (coreDeps.includes(name)) continue;
 		const required = !local.package.peerDependenciesMeta?.[name]?.optional;
-		const active = !!store.packages[name]?.runtime?.id;
+		const active = !!packages[name]?.runtime?.id;
 		result.peer[name] = { required, active };
-		for (const service of store.packages[name]?.manifest?.service.implements ??
-			[]) {
+		for (const service of packages[name]?.manifest?.service.implements ?? []) {
 			services.add(service);
 		}
 	}
@@ -95,7 +130,7 @@ function getEnvInfo(name: string) {
 
 export const envMap = computed(() => {
 	return Object.fromEntries(
-		Object.keys(store.packages)
+		Object.keys(store.packages ?? {})
 			.filter((x) => x)
 			.map((name) => [name, getEnvInfo(name)]),
 	);
@@ -125,11 +160,11 @@ export function getFullName(shortname: string) {
 	if (shortname.includes("/")) {
 		const [left, right] = shortname.split("/");
 		return [`${left}/koishi-plugin-${right}`].find(
-			(name) => name in store.packages,
+			(name) => name in (store.packages || {}),
 		);
 	}
 	return [`@koishijs/plugin-${shortname}`, `koishi-plugin-${shortname}`].find(
-		(name) => name in store.packages,
+		(name) => name in (store.packages || {}),
 	);
 }
 
@@ -139,14 +174,14 @@ export const name = computed(() => {
 });
 
 export const type = computed(() => {
-	const env = envMap.value[name.value];
+	const env = envMap.value[name.value ?? ""];
 	if (!env) return;
-	if (env.warning && current.value.disabled) return "warning";
+	if (env.warning && current.value?.disabled) return "warning";
 	for (const name in env.using) {
-		if (name in store.services || {}) {
+		if (name in (store.services || {})) {
 			if (env.impl.includes(name)) return "warning";
 		} else {
-			if (env.using[name].required) return "warning";
+			if (env.using[name]?.required) return "warning";
 		}
 	}
 });
@@ -161,7 +196,7 @@ function getTree(parent: Tree, plugins: any): Tree[] {
 			node.disabled = true;
 			key = key.slice(1);
 		}
-		node.name = key.split(":", 1)[0];
+		node.name = key.split(":", 1)[0] ?? "";
 		node.id = key;
 		node.path = key.slice(node.name.length + 1);
 		node.label = config?.$label;
@@ -188,7 +223,7 @@ export const plugins = computed(() => {
 	const paths: Dict<Tree> = {
 		"": root,
 	};
-	for (const node of getTree(root, store.config.plugins)) {
+	for (const node of getTree(root, store.config?.plugins)) {
 		data.push(node);
 		traverse(node);
 	}
@@ -196,8 +231,7 @@ export const plugins = computed(() => {
 		if (!tree.config?.$collapsed && tree.children) {
 			expanded.push(tree.path);
 		}
-		forks[tree.name] ||= [];
-		forks[tree.name].push(tree.path);
+		(forks[tree.name] ||= []).push(tree.path);
 		paths[tree.path] = tree;
 		tree.children?.forEach(traverse);
 	}
@@ -206,7 +240,7 @@ export const plugins = computed(() => {
 
 export function getStatus(tree: Tree) {
 	switch (
-		store.packages?.[getFullName(tree.name)]?.runtime?.forks?.[tree.path]
+		store.packages?.[getFullName(tree.name) ?? ""]?.runtime?.forks?.[tree.path]
 			?.status
 	) {
 		case ScopeStatus.PENDING:
@@ -225,6 +259,6 @@ export function getStatus(tree: Tree) {
 }
 
 export async function removeItem(tree: Tree) {
-	send("manager/remove", tree.parent?.path ?? "", tree.id);
+	void send("manager/remove", tree.parent?.path ?? "", tree.id);
 	await router.replace("/plugins/" + tree.parent!.path);
 }
