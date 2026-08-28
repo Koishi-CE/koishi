@@ -12,10 +12,15 @@
  * utils.ts 借助它完成实例的初始化与应用创建。
  */
 import { global } from "@koishi-ce/client";
-import { Logger } from "@koishi-ce/core";
-import { Loader } from "@koishi-ce/loader";
+import { type Context, Logger } from "@koishi-ce/core";
+import { type SharedData, extensions, Loader } from "@koishi-ce/loader";
 import type { SearchResult } from "@koishi-ce/registry";
 import { Buffer } from "buffer";
+// biome-ignore lint/style/useNodejsImportProtocol: 构建期经 online 的 resolve.alias 改写到 @cordiverse/fs 垫片，bare 名是匹配前提
+import { promises as fs } from "fs";
+import { dump, load } from "js-yaml";
+// biome-ignore lint/style/useNodejsImportProtocol: 构建期经 online 的 resolve.alias 改写到 @cordiverse/path 垫片，bare 名是匹配前提
+import * as path from "path";
 import process from "process";
 
 export * from "@koishi-ce/loader";
@@ -39,8 +44,9 @@ class BrowserLoader extends Loader {
 	// loader 机制（如 koishi.socket）会在运行时向实例挂载 symbol 键
 	[key: symbol]: unknown;
 
-	public envData: any = {};
-	public config: any = { plugins: {} };
+	// 浏览器无 KOISHI_SHARED 透传，envData 从空表开始
+	public override envData: SharedData = {};
+	public override config: Context.Config = { plugins: {} };
 	// 由 init() -> prepare() 异步回填
 	public market!: SearchResult;
 
@@ -95,6 +101,64 @@ class BrowserLoader extends Loader {
 	/** 整站重载回调：Node loader 中会重启进程，浏览器侧仅打印日志占位。 */
 	fullReload() {
 		console.info("trigger full reload");
+	}
+
+	// —— 平台缝隙的浏览器实现：文件走 @cordiverse/fs 垫片（VFS），
+	// yaml 走 js-yaml（构建期外置为注册表在线模块）——
+
+	/** 判断路径是否为已存在的文件（缺失或异常一律按非文件处理） */
+	private async isFile(candidate: string) {
+		try {
+			return (await fs.stat(candidate)).isFile();
+		} catch {
+			return false;
+		}
+	}
+
+	/** 定位配置文件（koishi.config.* 优先于 koishi.*）；VFS 中一律视为可写 */
+	protected async locateConfig(baseDir: string, filename?: string) {
+		if (filename) {
+			filename = path.resolve(baseDir, filename);
+			if (await this.isFile(filename)) {
+				const ext = path.extname(filename);
+				if (!extensions.has(ext)) {
+					throw new Error(`extension "${ext}" not supported`);
+				}
+				return {
+					baseDir: path.dirname(filename),
+					filename,
+					writable: true,
+				};
+			}
+			baseDir = filename;
+		}
+		for (const basename of ["koishi.config", "koishi"]) {
+			for (const ext of extensions) {
+				const candidate = path.resolve(baseDir, basename + ext);
+				if (await this.isFile(candidate)) {
+					return { baseDir, filename: candidate, writable: true };
+				}
+			}
+		}
+		throw new Error("config file not found");
+	}
+
+	/** 读取并解析配置文件（VFS 中的 koishi.yml 等，按扩展名选 yaml/json） */
+	protected async parseConfig(filename: string) {
+		const source = await fs.readFile(filename, "utf8");
+		return path.extname(filename) === ".json"
+			? JSON.parse(source)
+			: load(source);
+	}
+
+	/** 序列化并原子写回配置文件（VFS 内先写临时文件再改名） */
+	protected async saveConfig(filename: string, config: unknown) {
+		const content =
+			path.extname(filename) === ".json"
+				? JSON.stringify(config, null, 2)
+				: dump(config);
+		await fs.writeFile(`${filename}.tmp`, content);
+		await fs.rename(`${filename}.tmp`, filename);
 	}
 }
 

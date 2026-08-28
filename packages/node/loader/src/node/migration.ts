@@ -4,10 +4,13 @@
  */
 
 import { type Dict, Logger } from "@koishi-ce/core";
-import { promises as fs } from "fs";
-import { createRequire } from "module";
 
 const logger = new Logger("app");
+
+/** package.json 的最小结构（迁移只关心依赖表） */
+interface PackageManifest {
+	dependencies?: Dict<string | undefined>;
+}
 
 /**
  * 配置文件级迁移：把历史上的内置功能改写为插件形式。
@@ -16,19 +19,22 @@ const logger = new Logger("app");
  * 顶层的 port/host/maxPort/selfUrl → server 插件。
  * 同时把新增插件的依赖写入 package.json（失败仅告警，不阻断启动）。
  *
- * 注：package.json 按进程工作目录读写（保持历史行为）。
+ * 注：package.json 按进程工作目录读写（保持历史行为）；
+ * 依赖版本取自 koishi 元包的依赖表（按 loader 自身位置解析）。
  */
-export async function migrateManifest(config: Dict) {
+export async function migrateManifest(config: Dict<unknown>) {
 	try {
 		let isDirty = false;
-		const meta = JSON.parse(await fs.readFile("package.json", "utf8"));
-		const require = createRequire(__filename);
-		const deps = require("koishi/package.json").dependencies;
+		const meta = (await Bun.file("package.json").json()) as PackageManifest;
+		const manifest = Bun.resolveSync("koishi/package.json", import.meta.dir);
+		const deps = ((await Bun.file(manifest).json()) as PackageManifest)
+			.dependencies;
 
-		meta.dependencies ||= {};
+		meta.dependencies ??= {};
+		const dependencies = meta.dependencies;
 		/** 登记一个依赖并标记 package.json 已变更 */
 		function addDep(name: string) {
-			meta.dependencies[name] = deps[name];
+			dependencies[name] = deps?.[name];
 			isDirty = true;
 		}
 
@@ -38,7 +44,7 @@ export async function migrateManifest(config: Dict) {
 			delete config["request"];
 			config["plugins"] = {
 				http: request,
-				...config["plugins"],
+				...(config["plugins"] as Record<string, unknown>),
 			};
 			addDep("@koishi-ce/plugin-http");
 		}
@@ -47,35 +53,37 @@ export async function migrateManifest(config: Dict) {
 		if (!meta.dependencies["@koishi-ce/plugin-proxy-agent"]) {
 			config["plugins"] = {
 				"proxy-agent": {},
-				...config["plugins"],
+				...(config["plugins"] as Record<string, unknown>),
 			};
 			addDep("@koishi-ce/plugin-proxy-agent");
 		}
 
 		/** 从插件表（含嵌套 group）中提取 http 插件的 proxyAgent 配置并移除 */
-		function getProxyAgent(plugins: Dict) {
+		function getProxyAgent(plugins: Dict<unknown>): unknown {
 			for (const [key, value] of Object.entries(plugins)) {
 				const name = key.replace(/^~/, "").split(":")[0];
-				let result: any;
+				let result: unknown;
 				if (name === "http") {
-					result = value?.proxyAgent;
-					delete value.proxyAgent;
+					const config = value as Dict<unknown> | null | undefined;
+					result = config?.["proxyAgent"];
+					delete config?.["proxyAgent"];
 				} else if (name === "group") {
-					result = getProxyAgent(value);
+					result = getProxyAgent((value ?? {}) as Dict<unknown>);
 				}
 				if (result) return result;
 			}
+			return undefined;
 		}
 
 		/** 将提取到的 proxyAgent 写回 proxy-agent 插件配置 */
-		function setProxyAgent(plugins: Dict): boolean | undefined {
+		function setProxyAgent(plugins: Dict<unknown>): boolean | undefined {
 			for (const [key, value] of Object.entries(plugins)) {
 				const name = key.replace(/^~/, "").split(":")[0];
 				if (name === "proxy-agent") {
-					plugins[key] = { ...value, proxyAgent };
+					plugins[key] = { ...(value as Dict<unknown>), proxyAgent };
 					return true;
 				} else if (name === "group") {
-					const result = setProxyAgent(value);
+					const result = setProxyAgent((value ?? {}) as Dict<unknown>);
 					if (result) return result;
 				}
 			}
@@ -83,20 +91,21 @@ export async function migrateManifest(config: Dict) {
 		}
 
 		// http.proxyAgent 迁移为 proxy-agent 插件的配置
-		const proxyAgent = getProxyAgent(config["plugins"] ?? {});
-		if (proxyAgent) setProxyAgent(config["plugins"] ?? {});
+		const proxyAgent = getProxyAgent(
+			(config["plugins"] ?? {}) as Dict<unknown>,
+		);
+		if (proxyAgent) setProxyAgent(config["plugins"] as Dict<unknown>);
 
 		// 旧的服务器顶层配置（端口等）改写为 server 插件
-		const legacy = config;
-		if (legacy["port"]) {
-			const { port, host, maxPort, selfUrl } = legacy;
-			delete legacy["port"];
-			delete legacy["host"];
-			delete legacy["maxPort"];
-			delete legacy["selfUrl"];
+		if (config["port"]) {
+			const { port, host, maxPort, selfUrl } = config;
+			delete config["port"];
+			delete config["host"];
+			delete config["maxPort"];
+			delete config["selfUrl"];
 			config["plugins"] = {
 				server: { port, host, maxPort, selfUrl },
-				...config["plugins"],
+				...(config["plugins"] as Record<string, unknown>),
 			};
 			addDep("@koishi-ce/plugin-server");
 		}
@@ -108,7 +117,7 @@ export async function migrateManifest(config: Dict) {
 					a.localeCompare(b),
 				),
 			);
-			await fs.writeFile("package.json", `${JSON.stringify(meta, null, 2)}\n`);
+			await Bun.write("package.json", `${JSON.stringify(meta, null, 2)}\n`);
 		}
 	} catch (error) {
 		logger.warn("failed to migrate manifest");

@@ -1,47 +1,71 @@
 /**
- * NodeLoader：Loader 的 Node 环境实现。
+ * NodeLoader：Loader 的 Bun/Node 环境实现。
  *
- * 相比基类，它补充了三块能力：
- * - 借助 ns-require 解析 `koishi-plugin-*` 插件的实际路径并以 require() 加载；
- * - 读取 .env / .env.local 并注入 process.env（记录注入键避免污染宿主环境，
- *   实现见 env.ts）；
+ * 相比基类，它补充了四块能力：
+ * - 借助 Bun.resolveSync 解析 `koishi-plugin-*` 插件的实际路径并以
+ *   require 加载（Bun 的 require 可直接加载 ESM/TS，解析规则见 resolve.ts）；
+ * - 读取 .env / .env.local 并注入 process.env（记录注入键避免污染宿主
+ *   环境，实现见 env.ts）；
+ * - 配置文件的平台 I/O（定位 / 解析 / 原子写回，见 config-file.ts）；
  * - 历史配置迁移：把旧版内置功能（request、代理、服务器端口等）
  *   改写为对应插件的形式，并同步维护 package.json 依赖表（实现见 migration.ts）。
  *
- * 与运行环境无关的抽象基类见 base.ts，公共出口见 shared.ts。
+ * 与运行环境无关的抽象基类见 base/，公共出口见 shared.ts。
  */
 
+import { resolve } from "node:path";
 import { type Dict, Logger } from "@koishi-ce/core";
-import ns from "ns-require";
-import Loader from "./base";
+import Loader from "../base";
+import type { ResolvedConfigFile } from "../base/config-file";
+import { locateConfig, parseConfig, saveConfig } from "./config-file";
 import { injectEnv, parseEnvFiles, revertEnv } from "./env";
 import { migrateManifest } from "./migration";
+import { resolvePlugin } from "./resolve";
 
-export { Loader } from "./base";
-export type { LoaderScope, StartMessage } from "./types";
-export { unwrapExports } from "./utils";
+export { Loader } from "../base";
+export type { LoaderScope, SharedData, StartMessage } from "../base/types";
+export { unwrapExports } from "../base/utils";
 
 const logger = new Logger("app");
 
-// eslint-disable-next-line n/no-deprecated-api
+// 把 Bun require 登记的脚本扩展名（.js / .ts / .mts 等）并入受支持集合，
+// 使脚本文件也能作为配置文件显式传入
 for (const key in require.extensions) {
 	Loader.extensions.add(key);
 }
 
 export default class NodeLoader extends Loader {
-	/** ns-require 的命名空间解析器，负责插件名到模块路径的解析 */
-	public scope!: ns.Scope;
 	/** 由 env 文件注入 process.env 的键（重读配置前先撤销） */
 	public localKeys: string[] = [];
 
 	override async init(filename?: string) {
 		await super.init(filename);
-		this.scope = ns({
-			namespace: "koishi",
-			prefix: "plugin",
-			official: "koishi-ce",
-			dirname: this.baseDir,
-		});
+		this.envFiles = [
+			resolve(this.baseDir, ".env"),
+			resolve(this.baseDir, ".env.local"),
+		];
+	}
+
+	protected override locateConfig(
+		baseDir: string,
+		filename?: string,
+	): Promise<ResolvedConfigFile> {
+		return locateConfig(baseDir, filename);
+	}
+
+	protected override parseConfig(
+		filename: string,
+		mime: string | undefined,
+	): Promise<unknown> {
+		return parseConfig(filename, mime);
+	}
+
+	protected override saveConfig(
+		filename: string,
+		config: Dict<unknown>,
+		mime: string | undefined,
+	): Promise<void> {
+		return saveConfig(filename, config, mime);
 	}
 
 	/**
@@ -50,7 +74,7 @@ export default class NodeLoader extends Loader {
 	 * - sqlite：补默认数据库路径 data/koishi.db。
 	 * 其余交给基类处理。
 	 */
-	override migrateEntry(name: string, config: Dict) {
+	override migrateEntry(name: string, config: Dict<unknown> | undefined) {
 		config ??= {};
 		if (
 			["database-mysql", "database-mongo", "database-postgres"].includes(name)
@@ -65,7 +89,7 @@ export default class NodeLoader extends Loader {
 	}
 
 	override async migrate() {
-		await migrateManifest(this.config as Dict);
+		await migrateManifest(this.config as unknown as Dict<unknown>);
 		await super.migrate();
 	}
 
@@ -85,17 +109,20 @@ export default class NodeLoader extends Loader {
 	}
 
 	/**
-	 * 按名称导入插件：ns-require 解析出模块路径（结果缓存），
-	 * 再以 require() 加载 CJS 产物；解析失败仅记录错误并返回 undefined。
+	 * 按名称导入插件：先解析出模块绝对路径（结果缓存），再以 require
+	 * 加载——Bun 的 require 可直接加载 ESM / TS 产物，且模块进入
+	 * require.cache，hmr 插件的模块图分析与缓存失效据此工作。
+	 * 解析失败仅记录错误并返回 undefined。
 	 */
 	override async import(name: string) {
+		let filename: string;
 		try {
-			this.cache[name] ||= this.scope.resolve(name);
+			filename = this.cache[name] ??= resolvePlugin(name, this.baseDir);
 		} catch (err) {
 			logger.error(err instanceof Error ? err.message : err);
 			return;
 		}
-		return require(this.cache[name]);
+		return require(filename);
 	}
 
 	/**
@@ -104,9 +131,7 @@ export default class NodeLoader extends Loader {
 	 */
 	override fullReload(code = Loader.exitCode) {
 		const body = JSON.stringify(this.envData);
-		// 规避 @types/node 的类型问题：
-		// https://github.com/DefinitelyTyped/DefinitelyTyped/discussions/74275
-		process.send?.({ type: "shared", body }, (err: any) => {
+		process.send?.({ type: "shared", body }, (err) => {
 			if (err) logger.error("failed to send shared data");
 			logger.info("trigger full reload");
 			process.exit(code);

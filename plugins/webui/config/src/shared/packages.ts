@@ -156,11 +156,23 @@ export abstract class PackageProvider extends DataService<
 	 */
 	async parseExports(name: string) {
 		try {
-			const exports = await this.ctx.loader.resolve(name);
+			// 插件本体之外的附加导出（配置面板消费的元信息）
+			type Extras = {
+				Config?: Schema;
+				schema?: Schema;
+				usage?: string;
+				filter?: boolean;
+				using?: string[] | { required?: string[]; optional?: string[] };
+				inject?: string[] | { required?: string[]; optional?: string[] };
+			};
+			const exports = (await this.ctx.loader.resolve(name)) as
+				| (Plugin & Extras)
+				| undefined;
 			const result: PackageProvider.RuntimeData = {};
-			result.schema = exports?.Config || exports?.schema;
-			result.usage = exports?.usage;
-			result.filter = exports?.filter;
+			const schema = exports?.Config || exports?.schema;
+			if (schema) result.schema = schema;
+			if (exports?.usage) result.usage = exports.usage;
+			if (exports?.filter !== undefined) result.filter = exports.filter;
 			// using 与 inject 是新旧两种声明注入服务的方式
 			const inject = exports?.using || exports?.inject || [];
 			if (Array.isArray(inject)) {
@@ -174,7 +186,7 @@ export abstract class PackageProvider extends DataService<
 			// 确保 result 可以被 JSON 序列化（schema 中可能混入不可序列化的值）
 			JSON.stringify(result);
 
-			const runtime = this.ctx.registry.get(exports);
+			const runtime = exports ? this.ctx.registry.get(exports) : undefined;
 			if (runtime) this.parseRuntime(runtime, result);
 			return result;
 		} catch (error) {

@@ -1,24 +1,86 @@
 /**
  * env 文件支持：解析 .env / .env.local 并注入 process.env。
  *
+ * 解析器为 dotenv 格式的自实现子集（替代 dotenv 依赖）：支持注释、
+ * 可选 export 前缀、单/双引号值（双引号处理 \n \r \t 等常见转义，
+ * 引号值可跨行，如证书内容）、无引号值的行内注释剥离。
+ *
  * 记录注入的键（localKeys），在重读配置前先撤销，避免污染宿主环境；
  * 进程启动时即已存在的环境变量键永远不会被 env 文件覆盖。
  */
 
 import type { Dict } from "@koishi-ce/core";
-import * as dotenv from "dotenv";
-import { promises as fs } from "fs";
 
 /** 进程启动时即已存在的环境变量键（env 文件不得覆盖这些键） */
 const initialKeys = Object.getOwnPropertyNames(process.env);
+
+/** 找到带引号值的闭合引号位置（跳过转义字符），未闭合返回 -1 */
+function findQuoteClose(raw: string, quote: string): number {
+	for (let index = 1; index < raw.length; index++) {
+		if (raw[index] === "\\") {
+			index++;
+		} else if (raw[index] === quote) {
+			return index;
+		}
+	}
+	return -1;
+}
+
+/** 去掉首尾引号并按引号类型处理转义 */
+function unquote(raw: string, quote: string): string {
+	const body = raw.slice(1, -1);
+	if (quote === "'") {
+		// 单引号：字面值，仅还原转义的引号本身
+		return body.replace(/\\'/g, "'");
+	}
+	// 双引号：还原常见转义序列
+	return body
+		.replace(/\\n/g, "\n")
+		.replace(/\\r/g, "\r")
+		.replace(/\\t/g, "\t")
+		.replace(/\\"/g, '"')
+		.replace(/\\\\/g, "\\");
+}
+
+/**
+ * 解析 dotenv 格式的 env 文件文本为键值表。
+ * 无法识别的行（缺失分隔符等）静默跳过。
+ */
+export function parseEnv(source: string): Dict<string> {
+	const result: Dict<string> = {};
+	const lines = source.split(/\r?\n/);
+	for (let index = 0; index < lines.length; index++) {
+		let line = (lines[index] ?? "").trim();
+		// 空行与注释行跳过；支持可选的 export 前缀
+		if (!line || line.startsWith("#")) continue;
+		line = line.replace(/^export\s+/, "");
+		const assignment = /^([\w.-]+)\s*[=:]\s*(.*)$/.exec(line);
+		if (!assignment) continue;
+		const [, key = "", rest = ""] = assignment;
+		const quote = rest[0];
+		if (quote === '"' || quote === "'") {
+			// 带引号的值可能跨行（如证书），持续读入直到引号闭合
+			let raw = rest;
+			let close = findQuoteClose(raw, quote);
+			while (close < 0 && index + 1 < lines.length) {
+				raw += `\n${lines[++index] ?? ""}`;
+				close = findQuoteClose(raw, quote);
+			}
+			result[key] = close < 0 ? raw : unquote(raw.slice(0, close + 1), quote);
+		} else {
+			// 无引号值：剥离行内注释（# 前需有空白）与首尾空白
+			result[key] = rest.replace(/\s+#.*$/, "").trim();
+		}
+	}
+	return result;
+}
 
 /** 读取并合并全部 env 文件（后者覆盖前者），文件缺失时静默跳过 */
 export async function parseEnvFiles(filenames: readonly string[]) {
 	const parsed: Dict<string> = {};
 	for (const filename of filenames) {
 		try {
-			const raw = await fs.readFile(filename, "utf8");
-			Object.assign(parsed, dotenv.parse(raw));
+			Object.assign(parsed, parseEnv(await Bun.file(filename).text()));
 		} catch {}
 	}
 	return parsed;

@@ -6,9 +6,11 @@ import type { Dict } from "@koishi-ce/core";
 
 /**
  * 解包模块导出：优先取 default 导出（兼容 CJS/ESM 与转译产物的形态差异）。
+ * 动态模块的导出形态无法静态约束，统一以 unknown 返回，由调用方按需收窄。
  */
-export function unwrapExports(module: any) {
-	return module?.default || module;
+export function unwrapExports(module: unknown): unknown {
+	const record = module as { default?: unknown } | null | undefined;
+	return record?.default || module;
 }
 
 /**
@@ -19,17 +21,22 @@ export function unwrapExports(module: any) {
  * @param isGroup 组插件配置保持原对象作为配置体（其内部的 `$` 键随配置整体传递）
  * @returns 二元组 [配置体, 元属性表]
  */
-export function separate(source: any, isGroup = false) {
-	const config: any = {},
-		meta: any = {};
-	for (const [key, value] of Object.entries(source || {})) {
+export function separate(
+	source: unknown,
+	isGroup = false,
+): [Dict<unknown>, Dict<unknown>] {
+	const config: Dict<unknown> = {};
+	const meta: Dict<unknown> = {};
+	for (const [key, value] of Object.entries(
+		(source ?? {}) as Record<string, unknown>,
+	)) {
 		if (key.startsWith("$")) {
 			meta[key] = value;
 		} else {
 			config[key] = value;
 		}
 	}
-	return [isGroup ? source : config, meta];
+	return [isGroup ? ((source ?? {}) as Dict<unknown>) : config, meta];
 }
 
 /**
@@ -48,11 +55,16 @@ function insertKey(object: Dict<unknown>, temp: Dict<unknown>, rest: string[]) {
  * 在对象中把 old 键（含 `~` 前缀形态）就地改名为 neo，并保持键的先后顺序。
  * 用于插件卸载时把配置键加上 `~` 前缀（保留配置以便恢复）。
  */
-export function rename(object: any, old: string, neo: string, value: any) {
+export function rename(
+	object: Dict<unknown>,
+	old: string,
+	neo: string,
+	value: unknown,
+) {
 	const keys = Object.keys(object);
 	const index = keys.findIndex((key) => key === old || key === `~${old}`);
 	const rest = index < 0 ? [] : keys.slice(index + 1);
-	const temp = { [neo]: value };
+	const temp: Dict<unknown> = { [neo]: value };
 	delete object[old];
 	delete object[`~${old}`];
 	insertKey(object, temp, rest);

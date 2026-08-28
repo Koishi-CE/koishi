@@ -6,7 +6,7 @@
  */
 
 import type { Dict, EffectScope, ForkScope } from "@koishi-ce/core";
-import type { Loader } from "./base";
+import type { Loader } from "./index";
 
 // 通过模块合并向全局类型注入 loader 服务、相关事件与配置项
 declare module "@koishi-ce/core" {
@@ -44,6 +44,16 @@ export interface StartMessage {
 	sid?: string;
 	/** 要发送的消息内容 */
 	content: string;
+}
+
+/** 跨重启共享的数据（KOISHI_SHARED 环境变量透传） */
+export interface SharedData {
+	/** 上次启动时间 */
+	startTime?: number;
+	/** 待发送的启动消息（发送或重启后清空） */
+	message?: StartMessage | null;
+	/** 控制台记录的已连接客户端数（console 插件维护） */
+	clientCount?: number;
 }
 
 /** 作用域上记录"插件引用 -> fork"映射的符号键（全局注册，跨 Realm 共享） */

@@ -7,7 +7,7 @@
  */
 
 import type { Context, Universal } from "@koishi-ce/core";
-import type { Loader } from "./base";
+import type { Loader } from "./index";
 import { kRecord, kUpdate, type LoaderScope } from "./types";
 import { rename, separate } from "./utils";
 
@@ -96,6 +96,7 @@ export function handleStartMessage(loader: Loader, app: Context) {
 		if (bot.sid !== sid || bot.status !== (1 satisfies Universal.Status))
 			return;
 		dispose();
+		if (channelId === undefined) return;
 		bot.sendMessage(channelId, content, guildId);
 	});
 }

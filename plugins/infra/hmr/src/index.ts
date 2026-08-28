@@ -303,7 +303,8 @@ class Watcher {
 		for (const filename of Object.values(this.ctx.loader.cache)) {
 			const module = require.cache[filename];
 			if (!module) continue;
-			const plugin = unwrapExports(module.exports);
+			// loader 的 unwrapExports 返回 unknown（导出形态动态），此处收窄为插件
+			const plugin = unwrapExports(module.exports) as Plugin | undefined;
 			if (!plugin || this.declined.has(filename)) continue;
 			const runtime = this.ctx.registry.get(plugin);
 			pending.set(filename, [plugin, runtime]);
