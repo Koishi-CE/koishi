@@ -6,7 +6,6 @@ import {
 	type Universal,
 	valueMap,
 } from "@koishi-ce/koishi";
-import type { IncomingMessage } from "http";
 import { Client } from "./client";
 import { Entry } from "./entry";
 import { PermissionProvider } from "./permission";
@@ -32,16 +31,26 @@ declare module "@koishi-ce/koishi" {
 }
 
 export interface Listener extends DataService.Options {
-	callback(this: Client, ...args: any[]): Awaitable<any>;
+	callback(this: Client, ...args: unknown[]): Awaitable<unknown>;
 }
 
 export interface EntryData {
 	files: string[];
 	paths?: string[];
-	data: () => any;
+	data: unknown;
 }
 
-export class EntryProvider extends DataService<Dict<EntryData>> {
+interface EntryResponseData {
+	files: string[];
+	paths?: string[];
+	data: unknown;
+}
+
+type EntryResponse = Record<string, EntryResponseData | string>;
+type ServiceValue<K extends keyof Console.Services> =
+	Console.Services[K] extends DataService<infer T> ? T : never;
+
+export class EntryProvider extends DataService<EntryResponse> {
 	static override inject = [];
 
 	constructor(ctx: Context) {
@@ -84,8 +93,8 @@ export abstract class Console extends Service {
 		this.addListener("ping", () => "pong");
 	}
 
-	protected accept(socket: Universal.WebSocket, request?: IncomingMessage) {
-		const client = new Client(this.ctx, socket, request);
+	protected accept(socket: Universal.WebSocket) {
+		const client = new Client(this.ctx, socket);
 		socket.addEventListener("close", () => {
 			delete this.clients[client.id];
 			this.ctx.emit("console/connection", client);
@@ -95,16 +104,17 @@ export abstract class Console extends Service {
 	}
 
 	async get(client: Client) {
-		const result = valueMap(this.entries, ({ files, ctx, data }, key) => {
-			const paths = this.ctx.get("loader")?.paths(ctx.scope);
-			return {
-				files: this.resolveEntry(files, key),
-				...(paths !== undefined ? { paths } : {}),
-				data: data?.(client),
-			};
-		});
-		result["_id"] = this.id as any;
-		return result;
+		return {
+			...valueMap(this.entries, ({ files, ctx, data }, key) => {
+				const paths = this.ctx.get("loader")?.paths(ctx.scope);
+				return {
+					files: this.resolveEntry(files, key),
+					...(paths !== undefined ? { paths } : {}),
+					data: data?.(client),
+				};
+			}),
+			_id: this.id,
+		};
 	}
 
 	protected abstract resolveEntry(files: Entry.Files, key: string): string[];
@@ -121,7 +131,11 @@ export abstract class Console extends Service {
 		this.listeners[event] = { callback, ...options };
 	}
 
-	async broadcast(type: string, body: any, options: DataService.Options = {}) {
+	async broadcast(
+		type: string,
+		body: unknown,
+		options: DataService.Options = {},
+	) {
 		const handles = Object.values(this.clients);
 		if (!handles.length) return;
 		await Promise.all(
@@ -138,11 +152,11 @@ export abstract class Console extends Service {
 		return this.ctx.get(`console.services.${type}`)?.refresh();
 	}
 
-	patch<K extends keyof Console.Services>(
-		type: K,
-		value: Console.Services[K] extends DataService<infer T> ? T : never,
-	) {
-		return this.ctx.get(`console.services.${type}`)?.patch(value as any);
+	patch<K extends keyof Console.Services>(type: K, value: ServiceValue<K>) {
+		const service = this.ctx.get(`console.services.${type}`) as
+			| { patch(value: ServiceValue<K>): void }
+			| undefined;
+		return service?.patch(value);
 	}
 }
 

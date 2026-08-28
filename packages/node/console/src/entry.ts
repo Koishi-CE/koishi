@@ -10,7 +10,7 @@ export namespace Entry {
 	}
 }
 
-export class Entry<T = any> {
+export class Entry<T = unknown> {
 	public id = Math.random().toString(36).slice(2);
 	public dispose: () => void;
 
@@ -24,9 +24,11 @@ export class Entry<T = any> {
 		this.data = data;
 		ctx.console.entries[this.id] = this;
 		ctx.console.refresh("entry");
-		this.dispose = ctx.collect("entry", () => {
-			delete this.ctx.console.entries[this.id];
-			ctx.console.refresh("entry");
+		this.dispose = ctx.effect(() => {
+			return () => {
+				delete this.ctx.console.entries[this.id];
+				ctx.console.refresh("entry");
+			};
 		});
 	}
 

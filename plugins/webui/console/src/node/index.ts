@@ -55,13 +55,10 @@ class NodeConsole extends Console {
 		this.ctx = ctx;
 		this.config = config;
 
-		this.layer = ctx.server.ws(
-			config.apiPath ?? "/status",
-			(socket, request) => {
-				// @types/ws does not provide typings for `dispatchEvent`
-				this.accept(socket as any, request);
-			},
-		);
+		this.layer = ctx.server.ws(config.apiPath ?? "/status", (socket) => {
+			// @types/ws does not provide typings for `dispatchEvent`
+			this.accept(socket as any);
+		});
 
 		ctx.on("console/connection", () => {
 			const loader = ctx.get("loader");

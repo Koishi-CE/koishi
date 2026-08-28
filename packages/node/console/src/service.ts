@@ -33,7 +33,7 @@ export abstract class DataService<T = never> extends Service {
 	}
 
 	override start() {
-		this.refresh();
+		void this.refresh();
 	}
 
 	async refresh(forced = true) {

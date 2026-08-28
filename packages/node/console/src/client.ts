@@ -5,7 +5,6 @@ import {
 	Random,
 	type Universal,
 } from "@koishi-ce/koishi";
-import type { IncomingMessage } from "http";
 import type { DataService } from "./service";
 
 const logger = new Logger("console");
@@ -15,16 +14,10 @@ export class Client {
 
 	readonly ctx: Context;
 	public socket: Universal.WebSocket;
-	public request?: IncomingMessage;
 
-	constructor(
-		ctx: Context,
-		socket: Universal.WebSocket,
-		request?: IncomingMessage,
-	) {
+	constructor(ctx: Context, socket: Universal.WebSocket) {
 		this.ctx = ctx;
 		this.socket = socket;
-		if (request !== undefined) this.request = request;
 		socket.addEventListener("message", this.receive);
 		ctx.on("dispose", () => {
 			socket.removeEventListener("message", this.receive);
@@ -32,7 +25,7 @@ export class Client {
 		this.refresh();
 	}
 
-	send(payload: any) {
+	send(payload: unknown) {
 		this.socket.send(JSON.stringify(payload));
 	}
 
