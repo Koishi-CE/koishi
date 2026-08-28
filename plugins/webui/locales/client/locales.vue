@@ -171,7 +171,7 @@ const update = useDebounceFn(() => {
 		if (!locale.startsWith("$")) continue;
 		result[locale.slice(1)] = store.locales[locale];
 	}
-	send("l10n", result);
+	void send("l10n", result);
 }, 1000);
 
 function handleUpdate(locale: string, path: string, value: string) {
