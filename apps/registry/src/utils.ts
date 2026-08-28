@@ -1,62 +1,76 @@
 import type { Dict } from "cosmokit";
 import type { Manifest, PackageJson } from "./types";
 
-interface Ensure<T> {
+// 与 `Ensure` 常量同名：接口占据类型空间，常量占据值空间，二者合并声明
+export interface Ensure<T> {
 	(value: any): T | undefined;
 	(value: any, fallback: T): T;
 }
 
-export namespace Ensure {
-	export const array: Ensure<string[]> = (value: any, fallback?: any) => {
-		if (!Array.isArray(value)) return fallback;
-		return value.filter((x) => typeof x === "string");
+const ensureArray: Ensure<string[]> = (value: any, fallback?: any) => {
+	if (!Array.isArray(value)) return fallback;
+	return value.filter((x) => typeof x === "string");
+};
+
+const ensureDict: Ensure<Dict<string>> = (value: any, fallback?: any) => {
+	if (typeof value !== "object" || value === null) return fallback;
+	return Object.entries(value).reduce<Dict<string>>((dict, [key, value]) => {
+		if (typeof value === "string") dict[key] = value;
+		return dict;
+	}, {});
+};
+
+// https://github.com/microsoft/TypeScript/issues/15713#issuecomment-499474386
+const primitive =
+	<T>(type: string): Ensure<T> =>
+	(value: any, fallback?: T) => {
+		if (typeof value !== type) return fallback;
+		return value;
 	};
 
-	export const dict: Ensure<Dict<string>> = (value: any, fallback?: any) => {
-		if (typeof value !== "object" || value === null) return fallback;
-		return Object.entries(value).reduce<Dict<string>>((dict, [key, value]) => {
-			if (typeof value === "string") dict[key] = value;
-			return dict;
-		}, {});
-	};
+export const Ensure = {
+	array: ensureArray,
+	dict: ensureDict,
+	boolean: primitive<boolean>("boolean"),
+	number: primitive<number>("number"),
+	string: primitive<string>("string"),
+};
 
-	// https://github.com/microsoft/TypeScript/issues/15713#issuecomment-499474386
-	const primitive =
-		<T>(type: string): Ensure<T> =>
-		(value: any, fallback?: T) => {
-			if (typeof value !== type) return fallback;
-			return value;
-		};
-
-	export const boolean = primitive<boolean>("boolean");
-	export const number = primitive<number>("number");
-	export const string = primitive<string>("string");
+// exactOptionalPropertyTypes：仅在值存在时写入可选属性
+function assignIfDefined<T, K extends keyof T>(
+	target: T,
+	key: K,
+	value: T[K] | undefined,
+) {
+	if (value !== undefined) target[key] = value;
 }
 
 export function conclude(meta: PackageJson) {
+	const koishi = meta.koishi;
 	const manifest: Manifest = {
-		hidden: Ensure.boolean(meta.koishi?.hidden),
-		preview: Ensure.boolean(meta.koishi?.preview),
-		insecure: Ensure.boolean(meta.koishi?.insecure),
-		browser: Ensure.boolean(meta.koishi?.browser),
-		category: Ensure.string(meta.koishi?.category),
-		public: Ensure.array(meta.koishi?.public),
 		description:
-			Ensure.dict(meta.koishi?.description) ||
-			Ensure.string(meta.description, ""),
-		locales: Ensure.array(meta.koishi?.locales, []),
+			Ensure.dict(koishi?.description) || Ensure.string(meta.description, ""),
+		locales: Ensure.array(koishi?.locales, []),
 		service: {
-			required: Ensure.array(meta.koishi?.service?.required, []),
-			optional: Ensure.array(meta.koishi?.service?.optional, []),
-			implements: Ensure.array(meta.koishi?.service?.implements, []),
+			required: Ensure.array(koishi?.service?.required, []),
+			optional: Ensure.array(koishi?.service?.optional, []),
+			implements: Ensure.array(koishi?.service?.implements, []),
 		},
 	};
+	assignIfDefined(manifest, "hidden", Ensure.boolean(koishi?.hidden));
+	assignIfDefined(manifest, "preview", Ensure.boolean(koishi?.preview));
+	assignIfDefined(manifest, "insecure", Ensure.boolean(koishi?.insecure));
+	assignIfDefined(manifest, "browser", Ensure.boolean(koishi?.browser));
+	assignIfDefined(manifest, "category", Ensure.string(koishi?.category));
+	assignIfDefined(manifest, "public", Ensure.array(koishi?.public));
 
 	if (typeof manifest.description === "string") {
 		manifest.description = manifest.description.slice(0, 1024);
 	} else if (manifest.description) {
-		for (const key in manifest.description) {
-			manifest.description[key] = manifest.description[key].slice(0, 1024);
+		const dict = manifest.description;
+		for (const key in dict) {
+			const text = dict[key];
+			if (text !== undefined) dict[key] = text.slice(0, 1024);
 		}
 	}
 
@@ -73,6 +87,8 @@ export function conclude(meta: PackageJson) {
 		} else if (keyword.startsWith("locale:")) {
 			manifest.locales.push(keyword.slice(7));
 		}
+		// 含 ":" 的关键词在被消费后一律从 keywords 中剔除
+		return false;
 	});
 
 	return manifest;

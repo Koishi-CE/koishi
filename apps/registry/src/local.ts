@@ -1,6 +1,6 @@
 /// <reference types="@types/node" />
 
-import { type Dict, defineProperty, pick } from "cosmokit";
+import { type Dict, defineProperty, isNonNullable, pick } from "cosmokit";
 import { readdir, readFile } from "fs/promises";
 import { dirname } from "path";
 import type { PackageJson, SearchObject, SearchResult } from "./types";
@@ -9,16 +9,20 @@ import { conclude } from "./utils";
 export interface LocalScanner extends SearchResult {}
 
 export class LocalScanner {
-	private cache: Dict<Promise<SearchObject>>;
-	private task: Promise<SearchObject[]>;
+	private cache!: Dict<Promise<SearchObject | undefined>>;
+	private task?: Promise<SearchObject[]>;
 
-	constructor(public baseDir: string) {
+	// erasableSyntaxOnly：参数属性需拆为显式字段声明
+	public baseDir: string;
+
+	constructor(baseDir: string) {
+		this.baseDir = baseDir;
 		defineProperty(this, "cache", {});
 	}
 
-	onError(reason: any, name: string) {}
+	onError(_reason: unknown, _name: string) {}
 
-	async _collect() {
+	async _collect(): Promise<SearchObject[]> {
 		this.cache = {};
 		let root = this.baseDir;
 		const tasks: Promise<void>[] = [];
@@ -29,7 +33,9 @@ export class LocalScanner {
 			root = parent;
 		}
 		await Promise.all(tasks);
-		return Promise.all(Object.values(this.cache));
+		// 加载失败的包（onError 已记录）不混入 undefined 元素
+		const objects = await Promise.all(Object.values(this.cache));
+		return objects.filter(isNonNullable);
 	}
 
 	async collect(forced = false) {
@@ -61,11 +67,12 @@ export class LocalScanner {
 		}
 	}
 
-	private async loadPackage(name: string) {
+	private async loadPackage(name: string): Promise<SearchObject | undefined> {
 		try {
 			return await this.parsePackage(name);
 		} catch (error) {
 			this.onError(error, name);
+			return undefined;
 		}
 	}
 

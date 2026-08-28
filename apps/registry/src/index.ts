@@ -55,9 +55,11 @@ export default interface Scanner extends SearchResult {
 export default class Scanner {
 	private cache!: Dict<SearchObject>;
 
-	constructor(
-		public request: <T>(url: string, config?: RequestConfig) => Promise<T>,
-	) {
+	// erasableSyntaxOnly：参数属性需拆为显式字段声明
+	public request: <T>(url: string, config?: RequestConfig) => Promise<T>;
+
+	constructor(request: <T>(url: string, config?: RequestConfig) => Promise<T>) {
+		this.request = request;
 		defineProperty(this, "progress", 0);
 		defineProperty(this, "cache", {});
 	}
@@ -68,7 +70,7 @@ export default class Scanner {
 			`/-/v1/search?text=koishi+plugin&size=${step}&from=${offset}`,
 			{ timeout },
 		);
-		this.version = result.version;
+		if (result.version !== undefined) this.version = result.version;
 		for (const object of result.objects) {
 			this.cache[object.package.name] = object;
 		}
@@ -109,12 +111,14 @@ export default class Scanner {
 	static isCompatible(
 		range: string,
 		remote: Pick<RemotePackage, "peerDependencies">,
-	) {
+	): boolean {
 		const { peerDependencies = {} } = remote;
 		const declaredVersion = peerDependencies["koishi"];
 		try {
-			return declaredVersion && intersects(range, declaredVersion);
-		} catch {}
+			return !!declaredVersion && intersects(range, declaredVersion);
+		} catch {
+			return false;
+		}
 	}
 
 	public async process(
@@ -135,17 +139,21 @@ export default class Scanner {
 		const versions = compatible.filter((item) => !item.deprecated);
 		if (!versions.length) return;
 
-		const latest = registry.versions[versions[0].version];
+		const first = versions[0];
+		if (!first) return;
+		const latest = registry.versions[first.version];
+		if (!latest) return;
 		const manifest = conclude(latest);
 		const times = compatible.map((item) => registry.time[item.version]).sort();
 
 		object.shortname = name.replace(/(koishi-|^@koishijs\/)plugin-/, "");
 		object.verified = official;
 		object.manifest = manifest;
-		object.insecure = manifest.insecure;
-		object.category = manifest.category;
-		object.createdAt = times[0];
-		object.updatedAt = times[times.length - 1];
+		if (manifest.insecure !== undefined) object.insecure = manifest.insecure;
+		if (manifest.category !== undefined) object.category = manifest.category;
+		// compatible 非空保证 times 非空
+		object.createdAt = times[0]!;
+		object.updatedAt = times[times.length - 1]!;
 		object.package.contributors ??= latest.author ? [latest.author] : [];
 		object.package.keywords = (latest.keywords ?? [])
 			.map((keyword) => keyword.toLowerCase())
@@ -180,19 +188,24 @@ export default class Scanner {
 				try {
 					const versions = await this.process(object, version, onRegistry);
 					if (versions) {
+						// biome-ignore lint/nursery/noFloatingPromises: 已 await，nursery 规则对回调调用的误报
 						await onSuccess?.(object, versions);
 						return versions;
 					} else {
 						object.ignored = true;
+						// biome-ignore lint/nursery/noFloatingPromises: 已 await，nursery 规则对回调调用的误报
 						await onSkipped?.(name);
 					}
 				} catch (error) {
 					object.ignored = true;
+					// biome-ignore lint/nursery/noFloatingPromises: 已 await，nursery 规则对回调调用的误报
 					await onFailure?.(name, error);
 				} finally {
 					this.progress += 1;
 					after?.(object);
 				}
+				// 未产出 versions 的对象在此返回 undefined，由下方 filter 剔除
+				return;
 			},
 			{ concurrency },
 		);
