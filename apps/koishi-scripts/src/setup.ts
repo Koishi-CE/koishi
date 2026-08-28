@@ -1,3 +1,12 @@
+/**
+ * `koishi-scripts setup` 子命令：按内置模板初始化一个新插件项目，
+ * 产物落在宿主项目的 external/ 目录下。支持三种形态：
+ * - 普通单包插件（默认）；
+ * - monorepo 插件集合（--monorepo，额外生成仓库根配置与 paths 映射）；
+ * - 带控制台前端扩展的插件（--console，追加 client/ 目录并补充
+ *   @koishijs/client 与 @koishijs/plugin-console 依赖声明）。
+ * 模板源文件位于本包 template/ 目录（面向终端用户，独立于仓库其余部分）。
+ */
 import { execSync } from "node:child_process";
 import { resolve } from "node:path";
 import type { CAC } from "cac";
@@ -7,6 +16,7 @@ import prompts from "prompts";
 import { whichPMRuns } from "which-pm-runs";
 import { cwd, meta, type PackageJson } from "./index";
 
+/** 静默执行命令探测其是否可用（如 `git --version`），失败即视为不可用 */
 function supports(command: string) {
 	try {
 		execSync(command, { stdio: "ignore" });
@@ -16,16 +26,29 @@ function supports(command: string) {
 	}
 }
 
+/**
+ * 插件项目初始化器：负责名称规范化、目录规划与全部模板文件的生成。
+ * 一次 setup 对应一个 Initiator 实例。
+ */
 class Initiator {
+	/** 插件短名（去掉 koishi-plugin- 前缀与作用域后的名字） */
 	name!: string;
+	/** 插件描述（交互式询问得到） */
 	desc!: string;
+	/** 插件完整包名（含 koishi-plugin- 前缀，可带 @scope/ 作用域） */
 	fullname!: string;
+	/** monorepo 形态下的仓库根目录；非 monorepo 时保持未赋值 */
 	monorepo!: string;
+	/** 插件包目录（package.json 所在处） */
 	target!: string;
+	/** 模板源目录（本包发布时的 template/，下划线开头的文件为点文件模板） */
 	source = resolve(__dirname, "../template");
 
 	constructor(private options: Options) {}
 
+	/**
+	 * 初始化入口：完成名称校验与文件生成后，用当前包管理器安装依赖。
+	 */
 	async start(name: string) {
 		await this.init(name);
 		const agent = whichPMRuns()?.name || "npm";
@@ -33,6 +56,12 @@ class Initiator {
 		execSync([agent, ...args].join(" "), { stdio: "inherit" });
 	}
 
+	/**
+	 * 名称规范化与目录规划：
+	 * - 小写化、下划线转连字符，非法字符直接报错退出；
+	 * - 自动补全 / 去重 koishi-plugin- 前缀；
+	 * - 依据 --monorepo 决定 target（monorepo 下位于 external/<name>/packages/<name>）。
+	 */
 	async init(name: string) {
 		name ||= await this.getName();
 		const oldName = name;
@@ -68,6 +97,7 @@ class Initiator {
 		await this.write();
 	}
 
+	/** 交互式询问插件名（未通过参数提供时触发） */
 	async getName() {
 		const { name } = await prompts({
 			type: "text",
@@ -77,6 +107,7 @@ class Initiator {
 		return name.trim() as string;
 	}
 
+	/** 交互式询问插件描述 */
 	async getDesc() {
 		const { desc } = await prompts({
 			type: "text",
@@ -86,6 +117,7 @@ class Initiator {
 		return desc as string;
 	}
 
+	/** 创建目标目录并并行生成全部模板文件，最后按需初始化 git */
 	async write() {
 		await mkdir(this.target, { recursive: true });
 		await Promise.all([
@@ -98,6 +130,12 @@ class Initiator {
 		await this.initGit();
 	}
 
+	/**
+	 * 生成 package.json：monorepo 形态额外写一份仓库根清单（devDependencies
+	 * 直接继承宿主项目）；插件包本体则按 --console 补充 @koishijs/client
+	 * （devDependencies）与 @koishijs/plugin-console（peerDependencies），
+	 * koishi 的 peer 版本号取自宿主项目，保证生成的插件与宿主生态兼容。
+	 */
 	async writeManifest() {
 		if (this.monorepo) {
 			const source: Partial<PackageJson> = await readJson(
@@ -147,6 +185,11 @@ class Initiator {
 		);
 	}
 
+	/**
+	 * 生成 tsconfig：monorepo 形态写仓库根 tsconfig.base.json + 根
+	 * tsconfig.json（含 koishi-plugin-* 的 paths 映射）+ 子包 tsconfig.json
+	 * 三份；单包形态只写一份（继承模板的 base 配置）。
+	 */
 	async writeTsConfig() {
 		const source = await readJson(`${this.source}/tsconfig.base.json`, "utf8");
 		if (this.monorepo) {
@@ -201,6 +244,10 @@ class Initiator {
 		}
 	}
 
+	/**
+	 * 生成插件入口 src/index.ts：--console 用 console 模板（前端扩展），
+	 * 否则用 default 模板（服务端插件），并把 {{name}} 占位符替换为短名。
+	 */
 	async writeIndex() {
 		await mkdir(`${this.target}/src`);
 		const filename = `/src/index.${this.options.console ? "console" : "default"}.ts`;
@@ -211,6 +258,7 @@ class Initiator {
 		);
 	}
 
+	/** 生成 readme.md：替换 {{name}} / {{desc}} 占位符 */
 	async writeReadme() {
 		const source = await readFile(`${this.source}/readme.md`, "utf8");
 		await writeFile(
@@ -221,9 +269,14 @@ class Initiator {
 		);
 	}
 
+	/**
+	 * 生成控制台前端扩展目录 client/（仅 --console 形态）：
+	 * 入口 index.ts、示例页面 page.vue 与独立 tsconfig。
+	 */
 	async writeClient() {
 		if (!this.options.console) return;
 		await mkdir(`${this.target}/client`);
+		// 三个文件互不依赖，并行拷贝
 		await Promise.all([
 			copyFile(
 				`${this.source}/client/index.ts`,
@@ -240,8 +293,13 @@ class Initiator {
 		]);
 	}
 
+	/**
+	 * 初始化 git 仓库：先拷贝编辑器/git 配置（模板中下划线开头的文件
+	 * 重命名为点文件），再 init + add + 首次提交；--no-git 时跳过。
+	 */
 	async initGit() {
 		if (!this.options.git || !supports("git --version")) return;
+		// 三份配置文件互不依赖，并行拷贝
 		await Promise.all([
 			copyFile(`${this.source}/_editorconfig`, `${this.target}/.editorconfig`),
 			copyFile(
@@ -259,12 +317,17 @@ class Initiator {
 	}
 }
 
+/** setup 命令的选项：--monorepo 生成插件集合，--console 附带前端扩展，--no-git 跳过 git 初始化 */
 interface Options {
 	monorepo?: boolean;
 	console?: boolean;
 	git?: boolean;
 }
 
+/**
+ * 向 CAC 实例注册 setup 命令（create / init / new 均为其别名），
+ * 行为全部委托给 Initiator。
+ */
 export default function (cli: CAC) {
 	cli
 		.command("setup [name]", "initialize a new plugin")

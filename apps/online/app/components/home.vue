@@ -1,5 +1,7 @@
 <template>
+  <!-- 欢迎页：三态展示——浏览器不受支持 / 已连接（正文）/ 连接建立中 -->
   <k-layout :main="`darker page-home${socket ? '' : ' loading'}`">
+    <!-- 浏览器不受支持：直接展示提示文案 -->
     <k-card v-if="global.unsupported">
       <p v-for="(line, index) in global.unsupported" :key="index">{{ line }}</p>
     </k-card>
@@ -47,6 +49,7 @@
         </div>
       </k-content>
     </el-scrollbar>
+    <!-- 连接尚未建立时的加载提示 -->
     <div v-else>
       <k-card class="connect">正在初始化 Koishi Online 运行环境……</k-card>
     </div>
@@ -54,6 +57,9 @@
 </template>
 
 <script lang="ts" setup>
+// 欢迎页组件：介绍 k-on! 与 Koishi，引导用户前往沙盒聊天与插件市场。
+// global.socket（连接状态）与 global.unsupported（浏览器兼容性检测结果）
+// 均来自 @koishi-ce/client 的全局状态。
 import { global, socket } from "@koishi-ce/client";
 </script>
 

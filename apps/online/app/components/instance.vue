@@ -1,14 +1,17 @@
 <template>
+  <!-- 单个实例卡片：头部为可编辑的实例名称，底部为操作按钮组 -->
   <k-card class="instance">
     <template #header>
       <input v-model="model"/>
     </template>
     <template #footer>
+      <!-- 当前实例：仅展示运行中状态，不可操作 -->
       <template v-if="data.current === id">
         <el-button disabled>
           运行中
         </el-button>
       </template>
+      <!-- 非当前实例：可切换、可删除 -->
       <template v-else>
         <el-button @click="activate(id, $event)">
           <k-icon name="start"></k-icon>
@@ -28,6 +31,7 @@
 </template>
 
 <script lang="ts" setup>
+// 实例卡片组件：被 instances.vue 复用，props 为实例 id 与 Instance 元数据。
 import { message } from "@koishi-ce/client";
 import { computed } from "vue";
 import {
@@ -42,6 +46,7 @@ import {
 
 const props = defineProps<{ id: string } & Instance>();
 
+// 名称输入框的双向绑定：写入即更新索引条目并落盘
 const model = computed({
 	get: () => props.name,
 	set: (value) => {
@@ -50,6 +55,7 @@ const model = computed({
 	},
 });
 
+/** 生成该实例的分享链接并复制到剪贴板。 */
 async function share(id: string) {
 	const link = await shareLink(id);
 	await navigator.clipboard.writeText(link);
