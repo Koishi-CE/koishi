@@ -1,15 +1,9 @@
-import {
-	type Context,
-	type Dict,
-	h,
-	MessageEncoder,
-	Random,
-} from "@koishi-ce/koishi";
+import { type Dict, h, MessageEncoder, Random } from "@koishi-ce/koishi";
 import type { SandboxBot } from "./bot";
 
-export class SandboxMessenger<
-	C extends Context = Context,
-> extends MessageEncoder<C, SandboxBot<C>> {
+// 不携带类型参数：上游 Bot 的静态 MessageEncoder 签名以默认 Context 的 Bot 为参数，
+// 若以 koishi Context 或 SandboxBot 为类型参数会产生构造参数逆变冲突（TS2417），见 mock 包同款处理
+export class SandboxMessenger extends MessageEncoder {
 	private buffer = "";
 
 	private rules: Dict<h.Transformer> = Object.fromEntries(
@@ -17,7 +11,7 @@ export class SandboxMessenger<
 			return [
 				type,
 				async (attrs) => {
-					const src = attrs.src || attrs.url;
+					const src = attrs["src"] || attrs["url"];
 					const type1 = type === "image" ? "img" : type;
 					if (src.startsWith("file:")) {
 						return h(type1, {
@@ -34,9 +28,11 @@ export class SandboxMessenger<
 	async flush() {
 		if (!this.buffer.trim()) return;
 		const content = await h.transformAsync(this.buffer.trim(), this.rules);
-		const session = this.bot.session(this.session.event);
+		// 本编码器经 SandboxBot.MessageEncoder 挂载，运行时 this.bot 必为 SandboxBot
+		const bot = this.bot as SandboxBot;
+		const session = bot.session(this.session.event);
 		session.messageId = Random.id();
-		this.bot.client.send({
+		bot.client.send({
 			type: "sandbox/message",
 			body: {
 				content,
@@ -46,7 +42,8 @@ export class SandboxMessenger<
 				platform: session.platform,
 			},
 		});
-		this.results.push(session.event.message);
+		// messageId 访问器（defineAccessor）赋值时会确保 event.message 已创建
+		this.results.push(session.event.message!);
 		this.buffer = "";
 	}
 

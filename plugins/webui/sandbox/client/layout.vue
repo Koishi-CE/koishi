@@ -100,13 +100,13 @@ function createUser() {
 	} while (users.value.includes(name));
 	config.value.user = name;
 	config.value.messages["@" + name] = [];
-	send("sandbox/set-user", config.value.platform, config.value.user, {});
+	void send("sandbox/set-user", config.value.platform, config.value.user, {});
 }
 
 function removeUser(name: string) {
 	const index = users.value.indexOf(name);
 	delete config.value.messages["@" + name];
-	send("sandbox/set-user", config.value.platform, config.value.user, null);
+	void send("sandbox/set-user", config.value.platform, config.value.user, null);
 	if (config.value.user === name) {
 		config.value.user = users.value[index] || "";
 	}
@@ -162,6 +162,7 @@ watch(
 	model,
 	async (value) => {
 		if (deepEqual(value, user.value)) return;
+		// biome-ignore lint/nursery/noFloatingPromises: 已在 async 回调中 await，nursery 规则对 .vue 内 send 调用的误报
 		await send(
 			"sandbox/set-user",
 			config.value.platform,
@@ -175,7 +176,7 @@ watch(
 
 function sendMessage(content: string) {
 	offset.value = 0;
-	send(
+	void send(
 		"sandbox/send-message",
 		config.value.platform,
 		config.value.user,
@@ -187,6 +188,7 @@ function sendMessage(content: string) {
 }
 
 async function deleteMessage(data: Message) {
+	// biome-ignore lint/nursery/noFloatingPromises: 已在 async 函数中 await，nursery 规则对 .vue 内 send 调用的误报
 	await send(
 		"sandbox/delete-message",
 		data.platform,

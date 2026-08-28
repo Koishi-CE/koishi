@@ -5,7 +5,7 @@ import {
 	type Dict,
 	Random,
 	Schema,
-	Universal,
+	type Universal,
 	type User,
 } from "@koishi-ce/koishi";
 import {} from "@koishi-ce/plugin-server";
@@ -15,7 +15,8 @@ import { fileURLToPath } from "url";
 import { SandboxBot } from "./bot";
 import zhCN from "./locales/zh-CN.yml";
 
-declare module "koishi" {
+// 模块增强必须指向本仓库的 @koishi-ce/koishi（上游包名 "koishi" 在此无法解析）
+declare module "@koishi-ce/koishi" {
 	interface Events {
 		"sandbox/response"(nonce: string, data: any): void;
 	}
@@ -49,7 +50,7 @@ declare module "@koishi-ce/console" {
 			this: Client,
 			platform: string,
 			pid: string,
-		): Promise<User>;
+		): Promise<User | undefined>;
 		"sandbox/set-user"(
 			this: Client,
 			platform: string,
@@ -89,13 +90,13 @@ export const Config: Schema<Config> = Schema.object({
 });
 
 class SandboxService extends DataService<Dict<number>> {
-	static inject = ["database"];
+	static override inject = ["database"];
 
 	constructor(ctx: Context) {
 		super(ctx, "sandbox");
 	}
 
-	async get() {
+	override async get() {
 		const data = await this.ctx.database
 			.select("binding")
 			.groupBy("platform", {
@@ -112,16 +113,13 @@ export function apply(ctx: Context, config: Config) {
 	ctx.plugin(SandboxService);
 
 	ctx.console.addEntry(
-		process.env.KOISHI_BASE
+		process.env["KOISHI_BASE"]
 			? [
-					process.env.KOISHI_BASE + "/dist/index.js",
-					process.env.KOISHI_BASE + "/dist/style.css",
+					process.env["KOISHI_BASE"] + "/dist/index.js",
+					process.env["KOISHI_BASE"] + "/dist/style.css",
 				]
-			: process.env.KOISHI_ENV === "browser"
-				? [
-						// @ts-expect-error
-						import.meta.url.replace(/\/src\/[^/]+$/, "/client/index.ts"),
-					]
+			: process.env["KOISHI_ENV"] === "browser"
+				? [import.meta.url.replace(/\/src\/[^/]+$/, "/client/index.ts")]
 				: {
 						dev: resolve(__dirname, "../client/index.ts"),
 						prod: resolve(__dirname, "../dist"),
@@ -132,17 +130,21 @@ export function apply(ctx: Context, config: Config) {
 
 	const createEvent = (userId: string, channelId: string) => {
 		const isDirect = channelId === "@" + userId;
-		return {
+		// exactOptionalPropertyTypes 下可选属性不能显式携带 undefined，guild 按需附加
+		const event: Partial<Universal.Event> = {
 			user: { id: userId, name: userId },
 			channel: {
 				id: channelId,
+				// Universal.Channel.Type 是 ambient const enum（verbatimModuleSyntax 下禁止取值），
+				// 用等价字面量 + satisfies 校验（1 = DIRECT，0 = TEXT）
 				type: isDirect
-					? Universal.Channel.Type.DIRECT
-					: Universal.Channel.Type.TEXT,
+					? (1 satisfies Universal.Channel.Type)
+					: (0 satisfies Universal.Channel.Type),
 			},
-			guild: isDirect ? undefined : { id: channelId },
 			timestamp: Date.now(),
 		};
+		if (!isDirect) event.guild = { id: channelId };
+		return event;
 	};
 
 	const ensureBot = (platform: string, client: Client) => {
@@ -165,10 +167,12 @@ export function apply(ctx: Context, config: Config) {
 			const session = bot.session(createEvent(userId, channel));
 			session.type = "message";
 			session.messageId = id;
-			session.quote = quote && {
-				content: quote.content,
-				id: quote.id,
-			};
+			if (quote) {
+				session.quote = {
+					content: quote.content,
+					id: quote.id,
+				};
+			}
 			session.content = content;
 			bot.dispatch(session);
 		},
@@ -262,6 +266,8 @@ export function apply(ctx: Context, config: Config) {
 	if (config.fileServer.enabled) {
 		ctx.server.get("/sandbox/:url(file:.+)", async (koa) => {
 			const { url } = koa.params;
+			// 路由参数 :url(file:.+) 必然存在，此守卫仅为收窄类型
+			if (!url) return;
 			koa.type = extname(url);
 			koa.body = createReadStream(fileURLToPath(url));
 		});
@@ -273,6 +279,7 @@ export function apply(ctx: Context, config: Config) {
 		.intersect((session) => session.platform.startsWith("sandbox:"))
 		.command("clear")
 		.action(({ session }) => {
+			if (!session) return;
 			(session.bot as SandboxBot).client.send({
 				type: "sandbox/clear",
 			});

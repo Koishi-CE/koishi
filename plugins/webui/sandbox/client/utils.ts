@@ -10,6 +10,15 @@ declare module "@koishi-ce/client" {
 	}
 }
 
+// 浏览器侧协议事件的类型增强：send() 的类型来自 @koishi-ce/client 内置的
+// "@koishi-ce/plugin-console" 手写垫片（见 packages/web/client/client/shims.d.ts），
+// 与服务端 src/index.ts 对 "@koishi-ce/console" 的增强一一对应
+declare module "@koishi-ce/plugin-console" {
+	interface Events {
+		"sandbox/response"(nonce: string, data?: unknown): void;
+	}
+}
+
 export const panelTypes = {
 	private: "私聊模式",
 	guild: "群聊模式",
@@ -50,35 +59,48 @@ receive("sandbox/clear", () => {
 	config.value.messages[channel.value] = [];
 });
 
+// 各方法载荷形状与服务端 SandboxBot 的同名 request 调用对应
 export const api = {
-	deleteMessage({ messageId, channelId }) {
+	deleteMessage({
+		messageId,
+		channelId,
+	}: {
+		messageId: string;
+		channelId: string;
+	}) {
 		const messages = config.value.messages[channelId];
 		if (!messages) return;
 		config.value.messages[channelId] = messages.filter(
 			(msg) => msg.id !== messageId,
 		);
 	},
-	getMessage({ messageId, channelId }) {
+	getMessage({
+		messageId,
+		channelId,
+	}: {
+		messageId: string;
+		channelId: string;
+	}) {
 		return config.value.messages[channelId]?.find(
 			(msg) => msg.id === messageId,
 		);
 	},
-	getChannel({ channelId, guildId }) {
+	getChannel(_data: { channelId: string; guildId?: string }) {
 		return { channelId: "#" };
 	},
-	getChannelList({ guildId }) {
+	getChannelList(_data: { guildId: string }) {
 		return { data: { channelId: "#" } };
 	},
-	getGuild({ guildId }) {
+	getGuild(_data: { guildId: string }) {
 		return { guildId: "#" };
 	},
 	getGuildList() {
 		return { data: { guildId: "#" } };
 	},
-	getGuildMember({ guildId, userId }) {
+	getGuildMember({ userId }: { guildId: string; userId: string }) {
 		return { userId, username: userId };
 	},
-	getGuildMemberList({ guildId }) {
+	getGuildMemberList(_data: { guildId: string }) {
 		const data = Object.keys(config.value.messages)
 			.filter((id) => id.startsWith("@"))
 			.map((key) => {
@@ -89,10 +111,15 @@ export const api = {
 	},
 };
 
-receive("sandbox/request", ({ method, nonce, data }) => {
-	const result = api[method]?.(data);
-	send("sandbox/response", nonce, result);
-});
+receive<{ method: string; nonce: string; data: unknown }>(
+	"sandbox/request",
+	({ method, nonce, data }) => {
+		// 方法名与载荷形状由服务端 SandboxBot.request 动态约定，按统一签名分发
+		const handler = (api as Record<string, (data: unknown) => unknown>)[method];
+		const result = handler?.(data);
+		void send("sandbox/response", nonce, result);
+	},
+);
 
 export const words = [
 	"Alice",
