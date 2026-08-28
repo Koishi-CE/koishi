@@ -135,8 +135,8 @@ class NotifierService extends Service {
 			this.entry = ctx.console.addEntry(
 				process.env["KOISHI_BASE"]
 					? [
-							process.env["KOISHI_BASE"] + "/dist/index.js",
-							process.env["KOISHI_BASE"] + "/dist/style.css",
+							`${process.env["KOISHI_BASE"]}/dist/index.js`,
+							`${process.env["KOISHI_BASE"]}/dist/style.css`,
 						]
 					: process.env["KOISHI_ENV"] === "browser"
 						? [import.meta.url.replace(/\/src\/[^/]+$/, "/client/index.ts")]

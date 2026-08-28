@@ -29,7 +29,7 @@ export class FileWriter {
 		if (!this.temp.length) return;
 		this.task = this.task.then(async (handle) => {
 			const content = Buffer.from(
-				this.temp.map((record) => JSON.stringify(record) + "\n").join(""),
+				this.temp.map((record) => `${JSON.stringify(record)}\n`).join(""),
 			);
 			this.data.push(...this.temp);
 			this.temp = [];

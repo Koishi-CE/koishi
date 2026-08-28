@@ -57,7 +57,7 @@ export class SandboxBot<C extends Context = Context> extends Bot<
 	): Promise<Universal.Channel> {
 		// Universal.Channel.Type 是 ambient const enum（verbatimModuleSyntax 下禁止取值），
 		// 用等价字面量 + satisfies 校验（1 = DIRECT）
-		return { id: "@" + userId, type: 1 satisfies Universal.Channel.Type };
+		return { id: `@${userId}`, type: 1 satisfies Universal.Channel.Type };
 	}
 
 	override async deleteMessage(channelId: string, messageId: string) {
