@@ -6,7 +6,8 @@ import {
 	hyphenate,
 	isNullable,
 	MessageEncoder,
-	Universal,
+	type Session,
+	type Universal,
 } from "@koishi-ce/koishi";
 import assert from "assert";
 import { format } from "util";
@@ -21,13 +22,18 @@ const RECEIVED_NTH_NOTHING =
 const RECEIVED_NTH_OTHERWISE =
 	'expected "%s" to be replied with %s at index %s but received "%s"';
 
-export class MockMessageEncoder extends MessageEncoder<Context, MockBot> {
+// 不携带类型参数：上游 Bot 的静态 MessageEncoder 签名以无参 Bot 为参数，
+// 若以 MockBot 为类型参数会产生构造参数逆变冲突（TS2417）；本类不使用 this.bot
+export class MockMessageEncoder extends MessageEncoder {
 	private buffer = "";
 
 	async flush() {
 		this.buffer = this.buffer.trim();
 		if (!this.buffer) return;
-		this.options.session?.["client"]?.flush(this.buffer);
+		// options.session 的静态类型是 satori Session，运行时实为 koishi Session
+		// （core 的 Session.send 会执行 options.session = this），其上挂载有 mock 的 client
+		const session = this.options.session as Session | undefined;
+		session?.client?.flush(this.buffer);
 		this.buffer = "";
 	}
 
@@ -38,7 +44,7 @@ export class MockMessageEncoder extends MessageEncoder<Context, MockBot> {
 			await this.render(children);
 			await this.flush();
 		} else if (type === "text") {
-			this.buffer += attrs.content;
+			this.buffer += attrs["content"];
 		} else if (type === "p") {
 			if (!this.buffer.endsWith("\n")) this.buffer += "\n";
 			await this.render(children);
@@ -79,14 +85,18 @@ export class MessageClient {
 	public app: Context;
 	public event: Universal.Event;
 
+	// erasableSyntaxOnly 禁止构造器参数属性，改为显式字段声明 + 赋值
+	public bot: MockBot;
+	public userId: string;
+	public channelId: string | undefined;
+
 	private replies: string[] = [];
 	private hooks: Dict<Hook> = {};
 
-	constructor(
-		public bot: MockBot,
-		public userId: string,
-		public channelId?: string,
-	) {
+	constructor(bot: MockBot, userId: string, channelId?: string) {
+		this.bot = bot;
+		this.userId = userId;
+		this.channelId = channelId;
 		this.app = bot.ctx.root;
 		this.event = {
 			platform: "mock",
@@ -97,11 +107,14 @@ export class MessageClient {
 
 		if (channelId) {
 			this.event.guild = { id: channelId };
-			this.event.channel = { id: channelId, type: Universal.Channel.Type.TEXT };
+			this.event.channel = {
+				id: channelId,
+				type: 0 satisfies Universal.Channel.Type,
+			};
 		} else {
 			this.event.channel = {
 				id: "private:" + userId,
-				type: Universal.Channel.Type.DIRECT,
+				type: 1 satisfies Universal.Channel.Type,
 			};
 		}
 
@@ -121,10 +134,11 @@ export class MessageClient {
 		if (buffer) this.replies.push(buffer);
 		for (const id in this.hooks) {
 			const hook = this.hooks[id];
-			if (!hook.resolve || (buffer && this.replies.length < hook.count))
+			if (!hook?.resolve || (buffer && this.replies.length < hook.count))
 				continue;
 			hook.resolve(this.replies);
-			hook.resolve = undefined;
+			// exactOptionalPropertyTypes 下可选属性不能显式赋 undefined，用 delete 等价清除
+			delete hook.resolve;
 			hook.count = Infinity;
 			this.replies = [];
 		}
@@ -132,23 +146,31 @@ export class MessageClient {
 
 	async receive(content: string, count = Infinity) {
 		const result = await new Promise<string[]>((resolve) => {
-			let quote: Universal.Message;
+			let quote: Universal.Message | undefined;
 			let elements = h.parse(content);
-			if (elements[0]?.type === "quote") {
-				const { attrs, children } = elements.shift();
+			const quoteElement = elements[0];
+			if (quoteElement?.type === "quote") {
+				elements.shift();
 				quote = {
-					id: attrs.id,
-					messageId: attrs.id,
-					elements: children,
-					content: children.join(""),
+					id: quoteElement.attrs["id"],
+					messageId: quoteElement.attrs["id"],
+					elements: quoteElement.children,
+					content: quoteElement.children.join(""),
 				};
 				content = elements.join("").trimStart();
 				elements = h.parse(content);
 			}
+			// exactOptionalPropertyTypes 下可选属性 quote 不能显式携带 undefined，按需附加
+			const message: Universal.Message = {
+				id: ++counter + "",
+				content,
+				elements,
+			};
+			if (quote) message.quote = quote;
 			const id = this.bot.receive(
 				{
 					...clone(this.event),
-					message: { id: ++counter + "", content, elements, quote },
+					message,
 				},
 				this,
 			);
@@ -191,8 +213,7 @@ export class MessageClient {
 		}
 
 		const result = await this.receive(message);
-		for (const index in reply) {
-			const expected = reply[index];
+		for (const [index, expected] of reply.entries()) {
 			const actual = result[index];
 			assert.ok(actual, format(RECEIVED_NTH_NOTHING, message, index));
 			assert.ok(

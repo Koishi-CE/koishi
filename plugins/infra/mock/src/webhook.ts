@@ -14,7 +14,12 @@ export namespace Webhook {
 export class Webhook {
 	static inject = ["server"];
 
-	constructor(public ctx: Context) {}
+	// erasableSyntaxOnly 禁止构造器参数属性，改为显式字段声明 + 赋值
+	public ctx: Context;
+
+	constructor(ctx: Context) {
+		this.ctx = ctx;
+	}
 
 	async head(path: string, headers?: Dict<any>) {
 		const res = await this.receive("HEAD", path, headers, "");
@@ -41,7 +46,8 @@ export class Webhook {
 		return this.receive("PATCH", path, headers, body);
 	}
 
-	receive(method: string, path: string, headers: Dict<any>, body: any) {
+	// headers 可选传入，未传（undefined）时由默认值兜底，行为与原先一致
+	receive(method: string, path: string, headers: Dict<any> = {}, body: any) {
 		const socket = new Socket();
 		const req = new IncomingMessage(socket);
 		req.url = path;
