@@ -1,11 +1,15 @@
-import type * as utils from "@koishi-ce/utils";
-import type { Fragment, Universal } from "@satorijs/core";
+import type { Fragment } from "@satorijs/core";
 import type { Dict, MaybeArray } from "cosmokit";
 import type { Driver, FlatKeys, FlatPick, Update } from "minato";
 import * as minato from "minato";
-import { Context } from "./context";
+import { Context } from "../context";
+import { broadcastDatabase } from "./broadcast";
+import { registerModels } from "./models";
+import type { Channel, Tables, Types, User } from "./tables";
 
-declare module "./context" {
+export * from "./tables";
+
+declare module "../context" {
 	interface Context {
 		[minato.Types]: Types;
 		[minato.Tables]: Tables;
@@ -61,79 +65,6 @@ declare module "./context" {
 	}
 }
 
-export interface Types extends minato.Types {}
-
-export interface Tables extends minato.Tables {
-	user: User;
-	binding: Binding;
-	channel: Channel;
-}
-
-export interface User {
-	id: number;
-	name: string;
-	/** @deprecated */
-	flag: number;
-	authority: number;
-	locales: string[];
-	permissions: string[];
-	createdAt: Date;
-}
-
-export namespace User {
-	export type Flag = 1;
-
-	export type Field = keyof User;
-	export type Observed<K extends Field = Field> = utils.Observed<
-		Pick<User, K>,
-		Promise<void>
-	>;
-}
-
-// erasableSyntaxOnly 禁止 enum;与同名 namespace 合并声明,保持 User.Flag API
-export const User = {
-	Flag: {
-		ignore: 1,
-	},
-};
-
-export interface Binding {
-	aid: number;
-	bid: number;
-	pid: string;
-	platform: string;
-}
-
-export interface Channel {
-	id: string;
-	platform: string;
-	/** @deprecated */
-	flag: number;
-	assignee: string;
-	guildId: string;
-	locales: string[];
-	permissions: string[];
-	createdAt: Date;
-}
-
-export namespace Channel {
-	export type Flag = 1 | 4;
-
-	export type Field = keyof Channel;
-	export type Observed<K extends Field = Field> = utils.Observed<
-		Pick<Channel, K>,
-		Promise<void>
-	>;
-}
-
-// erasableSyntaxOnly 禁止 enum;与同名 namespace 合并声明,保持 Channel.Flag API
-export const Channel = {
-	Flag: {
-		ignore: 1,
-		silent: 4,
-	},
-};
-
 interface KoishiDatabase extends minato.Database<Tables, Types, Context> {}
 
 class KoishiDatabase {
@@ -154,51 +85,7 @@ class KoishiDatabase {
 
 		ctx.mixin("database", ["broadcast"] as never[]);
 
-		ctx.model.extend(
-			"user",
-			{
-				id: "unsigned(8)",
-				name: { type: "string", length: 255 },
-				flag: "unsigned(8)",
-				authority: "unsigned(4)",
-				locales: "list(255)",
-				permissions: "list",
-				createdAt: "timestamp",
-			},
-			{
-				autoInc: true,
-			},
-		);
-
-		ctx.model.extend(
-			"binding",
-			{
-				aid: "unsigned(8)",
-				bid: "unsigned(8)",
-				pid: "string(255)",
-				platform: "string(255)",
-			},
-			{
-				primary: ["pid", "platform"],
-			},
-		);
-
-		ctx.model.extend(
-			"channel",
-			{
-				id: "string(255)",
-				platform: "string(255)",
-				flag: "unsigned(8)",
-				assignee: "string(255)",
-				guildId: "string(255)",
-				locales: "list(255)",
-				permissions: "list",
-				createdAt: "timestamp",
-			},
-			{
-				primary: ["id", "platform"],
-			},
-		);
+		registerModels(ctx);
 
 		ctx.on("login-added", ({ platform }) => {
 			const table = ctx.model.tables["user"];
@@ -301,62 +188,10 @@ class KoishiDatabase {
 		return this.create("channel", { platform, id, ...data });
 	}
 
-	async broadcast(
+	broadcast(
 		...args: [Fragment, boolean?] | [readonly string[], Fragment, boolean?]
 	) {
-		let channels: string[] | undefined;
-		let platforms: string[] | undefined;
-		if (Array.isArray(args[0])) {
-			channels = args.shift() as string[];
-			platforms = channels.map((c) => c.split(":")[0] ?? c);
-		}
-		const [content, forced] = args as [Fragment, boolean];
-		if (!content) return [];
-
-		const selfIdMap = this.getSelfIds(platforms);
-		const data = await this.getAssignedChannels(
-			["id", "assignee", "flag", "platform", "guildId", "locales"],
-			selfIdMap,
-		);
-		const assignMap: Dict<Dict<Pick<Channel, "id" | "guildId" | "locales">[]>> =
-			{};
-		for (const channel of data) {
-			const { platform, id, assignee, flag } = channel;
-			if (channels) {
-				const index = channels?.indexOf(`${platform}:${id}`);
-				if (index < 0) continue;
-				channels.splice(index, 1);
-			}
-			if (!forced && flag & Channel.Flag.silent) continue;
-			((assignMap[platform] ||= {})[assignee] ||= []).push(channel);
-		}
-
-		if (channels?.length) {
-			this.ctx
-				.logger("app")
-				.warn("broadcast", "channel not found: ", channels.join(", "));
-		}
-
-		return (
-			await Promise.all(
-				this.ctx.bots.map((bot) => {
-					const targets = bot.platform
-						? assignMap[bot.platform]?.[bot.selfId]
-						: undefined;
-					if (!targets) return Promise.resolve([]);
-					const sessions = targets.map(({ id, guildId, locales }) => {
-						const session = bot.session({
-							type: "message",
-							channel: { id, type: 0 satisfies Universal.Channel.Type },
-							guild: { id: guildId },
-						});
-						session.locales = locales;
-						return session;
-					});
-					return bot.broadcast(sessions, content);
-				}),
-			)
-		).flat(1);
+		return broadcastDatabase(this, ...args);
 	}
 }
 
