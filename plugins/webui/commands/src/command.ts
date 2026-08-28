@@ -21,6 +21,7 @@ export default function (ctx: Context, manager: CommandManager) {
 		.option("parent", "-p [name]")
 		.option("parent", "-P, --no-parent", { value: "" })
 		.action(async ({ options, session }, name) => {
+			if (!options || !session) return;
 			if (options.create) manager.create(name);
 			if (!ctx.$commander.resolve(name)) {
 				return session.text(".not-found");

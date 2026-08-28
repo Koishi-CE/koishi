@@ -40,8 +40,10 @@ const Override: Schema<Override> = Schema.object({
 		Schema.dict(
 			Schema.union([
 				Schema.object({
-					args: Schema.array(null).default(null),
-					options: Schema.dict(null).default(null),
+					// 内层 Schema.from(null) 运行时等价于 Schema.any()，显式写出以获得正确类型；
+					// .default(null) 的空值占位超出 schemastery 类型定义，用精确断言放宽
+					args: Schema.array(Schema.any()).default(null as never),
+					options: Schema.dict(Schema.any()).default(null as never),
 					filter: Schema.any(),
 				}),
 				Schema.transform(false, () => ({ filter: false })),
@@ -51,7 +53,7 @@ const Override: Schema<Override> = Schema.object({
 			return Object.fromEntries(aliases.map((name) => [name, {}]));
 		}),
 	]),
-	options: Schema.dict(null).default(null),
+	options: Schema.dict(Schema.any()).default(null as never),
 	config: Schema.any(),
 });
 
@@ -63,9 +65,9 @@ export interface CommandState {
 
 export interface Snapshot {
 	create?: boolean;
-	pending?: string;
+	pending?: string | null;
 	command: Command;
-	parent: Command;
+	parent: Command | null;
 	initial: CommandState;
 	override: CommandState;
 }
@@ -97,28 +99,33 @@ export class CommandManager {
 		Schema.dict(Config).hidden();
 
 	private _tasks: Dict<() => void> = Object.create(null);
-	private _cache: Dict<CommandData>;
-	private entry: Entry<Dict<CommandData>>;
+	private _cache: Dict<CommandData> | null = null;
+	private entry: Entry<Dict<CommandData>> | undefined;
 	private refresh: () => void;
+
+	// erasableSyntaxOnly 禁用参数属性，改为显式字段并在构造器赋值
+	private ctx: Context;
+	private config: Dict<Config>;
 
 	public snapshots: Dict<Snapshot> = Object.create(null);
 
-	constructor(
-		private ctx: Context,
-		private config: Dict<Config>,
-	) {
+	constructor(ctx: Context, config: Dict<Config>) {
+		this.ctx = ctx;
+		this.config = config;
 		this.refresh = this.ctx.debounce(() => {
 			this._cache = null;
 			this.entry?.refresh();
 		}, 0);
 
 		for (const key in config) {
+			const value = config[key];
+			if (!value) continue;
 			const command = ctx.$commander.get(key);
 			if (command) {
-				this.accept(command, config[key]);
-			} else if (config[key].create) {
+				this.accept(command, value);
+			} else if (value.create) {
 				const command = ctx.command(key);
-				this.accept(command, config[key]);
+				this.accept(command, value);
 			}
 		}
 
@@ -126,10 +133,12 @@ export class CommandManager {
 		// because the command may not be fully initialized at this moment.
 		ctx.on("command-added", async (cmd) => {
 			this.init(cmd);
-			for (const { command, pending } of Object.values(this.snapshots)) {
+			for (const snapshot of Object.values(this.snapshots)) {
+				const { command, pending } = snapshot;
+				if (!pending) continue;
 				const parent = this.ctx.$commander.get(pending);
-				if (!parent || !pending) continue;
-				this.snapshots[command.name].pending = null;
+				if (!parent) continue;
+				snapshot.pending = null;
 				this._teleport(command, parent);
 			}
 			this.refresh();
@@ -155,11 +164,12 @@ export class CommandManager {
 			"dispose",
 			() => {
 				this._tasks = Object.create(null);
-				for (const key in this.snapshots) {
-					const { command, parent, initial } = this.snapshots[key];
+				for (const { command, parent, initial } of Object.values(
+					this.snapshots,
+				)) {
 					command.config = initial.config;
 					// initial aliases cannot include false values
-					command._aliases = initial.aliases as any;
+					command._aliases = initial.aliases;
 					Object.assign(command._options, initial.options);
 					this._teleport(command, parent);
 				}
@@ -173,15 +183,17 @@ export class CommandManager {
 	}
 
 	init(command: Command) {
-		if (!this.config[command.name]) return;
+		const config = this.config[command.name];
+		if (!config) return;
 		this._tasks[command.name] ||= this.ctx.setTimeout(() => {
 			delete this._tasks[command.name];
-			this.accept(command, this.config[command.name], true);
+			this.accept(command, config, true);
 		}, 0);
 	}
 
 	ensure(name: string, create?: boolean, patch?: boolean) {
-		const command = this.ctx.$commander.get(name);
+		// 调用方均保证该名称的指令存在（缺失时行为与原先一致，运行时抛错）
+		const command = this.ctx.$commander.get(name)!;
 		const snapshot = this.snapshots[command.name];
 		if (patch && snapshot) {
 			// Aliases and options may be modified by other plugins.
@@ -189,15 +201,17 @@ export class CommandManager {
 				return snapshot.initial.options[key] || clone(option);
 			});
 			for (const key of Object.keys(command._aliases)) {
+				const alias = command._aliases[key];
+				if (!alias) continue;
 				if (snapshot.initial.aliases[key]) continue;
 				if (snapshot.override.aliases[key]) continue;
-				snapshot.initial.aliases[key] = command._aliases[key];
+				snapshot.initial.aliases[key] = alias;
 			}
 			snapshot.override.aliases = command._aliases;
 			return snapshot;
 		}
 		return (this.snapshots[command.name] ||= {
-			create,
+			...(create !== undefined ? { create } : {}),
 			command,
 			parent: command.parent,
 			initial: {
@@ -213,7 +227,7 @@ export class CommandManager {
 		});
 	}
 
-	_teleport(command: Command, parent: Command = null) {
+	_teleport(command: Command, parent: Command | null = null) {
 		if (command.parent === parent) return;
 		if (command.parent) {
 			remove(command.parent.children, command);
@@ -222,30 +236,33 @@ export class CommandManager {
 	}
 
 	teleport(command: Command, name: string, write = false) {
-		this.snapshots[command.name].pending = null;
+		// 调用前均已通过 ensure 建立快照
+		const snapshot = this.snapshots[command.name]!;
+		snapshot.pending = null;
 		const parent = this.ctx.$commander.get(name);
 		if (name && !parent) {
-			this.snapshots[command.name].pending = name;
+			snapshot.pending = name;
 		} else {
 			this._teleport(command, parent);
 		}
 
 		if (write) {
-			this.config[command.name] ||= {};
-			this.config[command.name].name = `${name || ""}/${command.displayName}`;
+			const config = (this.config[command.name] ||= {});
+			config.name = `${name || ""}/${command.displayName}`;
 			this.write(command);
 		}
 	}
 
 	alias(command: Command, aliases: Dict<Command.Alias>, write = false) {
-		const { initial, override } = this.snapshots[command.name];
+		// 调用前均已通过 ensure 建立快照
+		const snapshot = this.snapshots[command.name]!;
+		const { initial, override } = snapshot;
 		command._aliases = override.aliases = aliases;
 
 		if (write) {
-			this.config[command.name] ||= {};
-			this.config[command.name].name =
-				`${command.parent?.name || ""}/${command.displayName}`;
-			this.config[command.name].aliases = filterKeys(aliases, (key, value) => {
+			const config = (this.config[command.name] ||= {});
+			config.name = `${command.parent?.name || ""}/${command.displayName}`;
+			config.aliases = filterKeys(aliases, (key, value) => {
 				return !deepEqual(initial.aliases[key], value, true);
 			});
 			this.write(command);
@@ -257,7 +274,9 @@ export class CommandManager {
 		data: Pick<CommandState, "config" | "options">,
 		write = false,
 	) {
-		const { initial, override } = this.snapshots[command.name];
+		// 调用前均已通过 ensure 建立快照
+		const snapshot = this.snapshots[command.name]!;
+		const { initial, override } = snapshot;
 		override.config = data.config || {};
 		override.options = data.options || {};
 		command.config = Object.assign({ ...initial.config }, override.config);
@@ -265,15 +284,15 @@ export class CommandManager {
 			const option = initial.options[key];
 			if (!option) continue;
 			command._options[key] = Object.assign(
-				{ ...initial.options[key] },
+				{ ...option },
 				override.options[key],
 			);
 		}
 
 		if (write) {
-			this.config[command.name] ||= {};
-			this.config[command.name].config = override.config;
-			this.config[command.name].options = override.options;
+			const config = (this.config[command.name] ||= {});
+			config.config = override.config;
+			config.options = override.options;
 			this.write(command);
 		}
 	}
@@ -287,14 +306,15 @@ export class CommandManager {
 
 	remove(name: string) {
 		const snapshot = this.snapshots[name];
+		if (!snapshot) return;
 		const commands = snapshot.command.children.slice();
 		delete this.snapshots[name];
 		delete this.config[name];
 		for (const child of commands) {
-			const { parent } = this.snapshots[child.name];
+			const parent = this.snapshots[child.name]?.parent ?? null;
 			this._teleport(child, parent);
-			this.config[child.name].name =
-				`${parent?.name || ""}/${child.displayName}`;
+			const config = (this.config[child.name] ??= {});
+			config.name = `${parent?.name || ""}/${child.displayName}`;
 		}
 		snapshot.command.dispose();
 		this.write(...commands);
@@ -312,7 +332,7 @@ export class CommandManager {
 		// teleport to new parent
 		let name = override.name;
 		if (name?.includes("/")) {
-			const [parent, child] = name.split("/");
+			const [parent = "", child] = name.split("/");
 			name = child;
 			this.teleport(target, parent);
 		}
@@ -330,7 +350,8 @@ export class CommandManager {
 	write(...commands: Command[]) {
 		for (const command of commands) {
 			const snapshot = this.ensure(command.name);
-			const override = this.config[command.name];
+			// 正常调用路径均已先写入配置项；缺失时（原先会抛错）补空对象以继续流程
+			const override = (this.config[command.name] ??= {});
 
 			// config
 			if (override.config && !Object.keys(override.config).length) {
@@ -357,7 +378,7 @@ export class CommandManager {
 			if (override.name) {
 				const initial = (snapshot.parent?.name || "") + "/" + command.name;
 				if (override.name === initial || override.name === command.name) {
-					delete this.config[command.name].name;
+					delete override.name;
 				}
 			}
 
@@ -375,16 +396,13 @@ export class CommandManager {
 			ctx.on("dispose", () => (this.entry = undefined));
 
 			this.entry = ctx.console.addEntry(
-				process.env.KOISHI_BASE
+				process.env["KOISHI_BASE"]
 					? [
-							process.env.KOISHI_BASE + "/dist/index.js",
-							process.env.KOISHI_BASE + "/dist/style.css",
+							process.env["KOISHI_BASE"] + "/dist/index.js",
+							process.env["KOISHI_BASE"] + "/dist/style.css",
 						]
-					: process.env.KOISHI_ENV === "browser"
-						? [
-								// @ts-expect-error
-								import.meta.url.replace(/\/src\/[^/]+$/, "/client/index.ts"),
-							]
+					: process.env["KOISHI_ENV"] === "browser"
+						? [import.meta.url.replace(/\/src\/[^/]+$/, "/client/index.ts")]
 						: {
 								dev: resolve(__dirname, "../client/index.ts"),
 								prod: resolve(__dirname, "../dist"),
@@ -397,7 +415,7 @@ export class CommandManager {
 								{
 									name: command.name,
 									children: command.children.map((child) => child.name),
-									create: this.snapshots[command.name]?.create,
+									create: this.snapshots[command.name]?.create ?? false,
 									initial: this.snapshots[command.name]?.initial || {
 										aliases: command._aliases,
 										config: command.config,
@@ -405,7 +423,8 @@ export class CommandManager {
 									},
 									override: this.snapshots[command.name]?.override || {
 										aliases: command._aliases,
-										config: null,
+										// 无覆盖配置时以 null 占位（客户端按可空读取）
+										config: null as never,
 										options: {},
 									},
 									paths: this.ctx.get("loader")?.paths(command.ctx.scope) || [],
@@ -465,7 +484,8 @@ export class CommandManager {
 			);
 
 			ctx.console.addListener("command/parse", (name, source) => {
-				const command = this.ctx.$commander.get(name);
+				// 客户端仅对已存在的指令发起解析请求
+				const command = this.ctx.$commander.get(name)!;
 				return command.parse(source);
 			});
 		});

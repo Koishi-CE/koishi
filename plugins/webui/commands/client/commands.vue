@@ -147,10 +147,11 @@ function handleDrop(
 	event: DragEvent,
 ) {
 	const parent = position === "inner" ? target : target.parent;
-	send("command/teleport", source.data.name, parent.data.name);
+	void send("command/teleport", source.data.name, parent.data.name);
 }
 
 async function onEnter() {
+	// biome-ignore lint/nursery/noFloatingPromises: 已在 async 回调中 await，nursery 规则对 .vue 内 send 调用的误报
 	await send("command/create", inputText.value);
 	inputText.value = "";
 	showCreateDialog.value = false;

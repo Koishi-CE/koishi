@@ -1,20 +1,23 @@
 import { Schema, store } from "@koishi-ce/client";
 
 export function assignSchema(schema: Schema, value: any) {
-	if (["intersect", "union"].includes(schema.type)) {
-		for (const item of schema.list) {
+	if (schema.type === "intersect" || schema.type === "union") {
+		for (const item of schema.list ?? []) {
 			assignSchema(item, value);
 		}
-	} else if (schema.type === "object") {
+	} else if (schema.type === "object" && schema.dict) {
+		const { dict } = schema;
 		for (const key in value) {
-			if (!schema.dict[key]) continue;
-			schema.dict[key] = schema.dict[key].default(value[key]);
+			const item = dict[key];
+			if (!item) continue;
+			dict[key] = item.default(value[key]);
 		}
 	}
 }
 
 export function createSchema(name: string, value: any) {
-	const result = new Schema(store.schema[name]);
+	// store 中缺失时回退到空对象，与 new Schema(undefined) 的运行时行为一致（空 schema）
+	const result = new Schema(store.schema?.[name] ?? {});
 	if (!value) return result;
 	assignSchema(result, value);
 	return result;

@@ -163,7 +163,7 @@ function setDefault(name: string) {
 		[name]: item,
 		...current.value.aliases,
 	};
-	send("command/aliases", props.command.name, current.value.aliases);
+	void send("command/aliases", props.command.name, current.value.aliases);
 }
 
 function deleteAlias(name: string) {
@@ -172,12 +172,12 @@ function deleteAlias(name: string) {
 	} else {
 		delete current.value.aliases[name];
 	}
-	send("command/aliases", props.command.name, current.value.aliases);
+	void send("command/aliases", props.command.name, current.value.aliases);
 }
 
 function recoverAlias(name: string) {
 	current.value.aliases[name] = props.command.initial.aliases[name];
-	send("command/aliases", props.command.name, current.value.aliases);
+	void send("command/aliases", props.command.name, current.value.aliases);
 }
 
 function stringify(alias: Command.Alias) {
@@ -233,6 +233,7 @@ async function onEnter() {
 	} else {
 		current.value.aliases[inputName.value] = {};
 	}
+	// biome-ignore lint/nursery/noFloatingPromises: 已在 async 回调中 await，nursery 规则对 .vue 内 send 调用的误报
 	await send("command/aliases", props.command.name, current.value.aliases);
 	showAliasDialog.value = false;
 	inputSource.value = "";
