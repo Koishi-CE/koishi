@@ -40,20 +40,22 @@ function getSourceId(child: ForkScope) {
 }
 
 class Insight extends DataService<Insight.Payload> {
+	// 配置 schema 的值侧由类静态承载(erasableSyntaxOnly 不允许 namespace 内运行时值),
+	// 类型侧见下方 namespace Insight 的 Config
+	// biome-ignore lint/style/useNamingConvention: 插件 Schema 约定为 PascalCase 的 Config 静态属性
+	static Config: Schema<Insight.Config> = Schema.object({});
+
 	constructor(ctx: Context) {
 		super(ctx, "insight");
 
 		ctx.console.addEntry(
-			process.env.KOISHI_BASE
+			process.env["KOISHI_BASE"]
 				? [
-						process.env.KOISHI_BASE + "/dist/index.js",
-						process.env.KOISHI_BASE + "/dist/style.css",
+						process.env["KOISHI_BASE"] + "/dist/index.js",
+						process.env["KOISHI_BASE"] + "/dist/style.css",
 					]
-				: process.env.KOISHI_ENV === "browser"
-					? [
-							// @ts-expect-error
-							import.meta.url.replace(/\/src\/[^/]+$/, "/client/index.ts"),
-						]
+				: process.env["KOISHI_ENV"] === "browser"
+					? [import.meta.url.replace(/\/src\/[^/]+$/, "/client/index.ts")]
 					: {
 							dev: resolve(__dirname, "../client/index.ts"),
 							prod: resolve(__dirname, "../dist"),
@@ -67,7 +69,7 @@ class Insight extends DataService<Insight.Payload> {
 		ctx.on("internal/status", update);
 	}
 
-	async get() {
+	override async get() {
 		const nodes: Insight.Node[] = [];
 		const edges: Insight.Link[] = [];
 
@@ -102,37 +104,44 @@ class Insight extends DataService<Insight.Payload> {
 			// 3. non-reusable plugins
 			//    will be displayed as A -> M -> S, B -> M -> S
 
-			function isActive(state: EffectScope) {
+			function isActive(_state: EffectScope) {
 				// exclude plugins that don't work due to missing dependencies
-				// return runtime.using.every(name => state.ctx[name])
+				// return runtime.using.every(name => _state.ctx[name])
 				return true;
 			}
 
 			const name = getName(runtime.plugin);
 
 			function addNode(state: EffectScope) {
-				const { uid, key, disposables, status } = state;
+				const { uid, disposables, status } = state;
+				// 已销毁的 scope 的 uid 会被置为 null,不生成节点
+				if (uid == null) return;
 				const weight = disposables.length;
 				const isGroup = name === "Group";
 				const isRoot = uid === 0;
-				const node = {
+				const node: Insight.Node = {
 					uid,
 					name,
 					weight,
 					status,
 					isGroup,
 					isRoot,
-					services: services[uid],
 				};
+				// 当前版本 cordis 的 scope 已无 key 字段,保留动态属性探测以兼容旧数据
+				const key = "key" in state ? state.key : undefined;
 				if (key) node.name += ` [${key}]`;
+				const bound = services[uid];
+				if (bound) node.services = bound;
 				nodes.push(node);
 			}
 
 			function addEdge(
 				type: "dashed" | "solid",
-				source: number,
-				target: number,
+				source: number | null,
+				target: number | null,
 			) {
+				// 已销毁的 scope(uid 为 null)不参与连线
+				if (source == null || target == null) return;
 				edges.push({ type, source, target });
 			}
 
@@ -169,7 +178,8 @@ class Insight extends DataService<Insight.Payload> {
 						addDeps(fork);
 					}
 				} else {
-					nodes[nodes.length - 1].weight += fork.disposables.length;
+					const last = nodes[nodes.length - 1];
+					if (last) last.weight += fork.disposables.length;
 					addEdge("solid", getSourceId(fork), runtime.uid);
 				}
 			}
@@ -202,8 +212,6 @@ namespace Insight {
 	}
 
 	export type Config = {};
-
-	export const Config: Schema<Config> = Schema.object({});
 }
 
 export default Insight;

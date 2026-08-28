@@ -7,12 +7,13 @@ export interface Pointer {
 }
 
 export function getEventPoint(event: MouseEvent | TouchEvent): Pointer {
-	return event.type.startsWith("touch")
-		? [
-				...(event as TouchEvent).targetTouches,
-				...(event as TouchEvent).changedTouches,
-			][0]
-		: (event as MouseEvent);
+	if (!event.type.startsWith("touch")) return event as MouseEvent;
+	const touch = [
+		...(event as TouchEvent).targetTouches,
+		...(event as TouchEvent).changedTouches,
+	][0];
+	// 触摸事件理论上必有触点;空列表时回退事件自身,避免调用处解引用崩溃
+	return touch ?? (event as MouseEvent);
 }
 
 export function useTooltip() {
@@ -20,8 +21,9 @@ export function useTooltip() {
 
 	const active = ref(false);
 	const inactive = ref(true);
-	const left = ref(0);
-	const top = ref(0);
+	// null 表示"无定位"(display: none),与 number 区分开
+	const left = ref<number | null>(0);
+	const top = ref<number | null>(0);
 
 	const style = computed<StyleValue>(() => {
 		if (!left.value || !top.value) {

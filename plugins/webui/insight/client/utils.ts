@@ -14,8 +14,10 @@ export interface Link
 	target: Node;
 }
 
-export namespace constants {
-	export const arrowLength = 10;
-	export const arrowOffset = 10;
-	export const arrowAngle = Math.PI / 6;
-}
+// erasableSyntaxOnly 不允许 namespace 内运行时值;改为 as const 对象,
+// 保持 constants.arrowLength 等访问面不变
+export const constants = {
+	arrowLength: 10,
+	arrowOffset: 10,
+	arrowAngle: Math.PI / 6,
+} as const;
