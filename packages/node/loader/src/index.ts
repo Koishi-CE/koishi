@@ -3,19 +3,23 @@
  *
  * 相比基类，它补充了三块能力：
  * - 借助 ns-require 解析 `koishi-plugin-*` 插件的实际路径并以 require() 加载；
- * - 读取 .env / .env.local 并注入 process.env（记录注入键避免污染宿主环境）；
+ * - 读取 .env / .env.local 并注入 process.env（记录注入键避免污染宿主环境，
+ *   实现见 env.ts）；
  * - 历史配置迁移：把旧版内置功能（request、代理、服务器端口等）
- *   改写为对应插件的形式，并同步维护 package.json 依赖表。
+ *   改写为对应插件的形式，并同步维护 package.json 依赖表（实现见 migration.ts）。
+ *
+ * 与运行环境无关的抽象基类见 base.ts，公共出口见 shared.ts。
  */
 
 import { type Dict, Logger } from "@koishi-ce/core";
-import * as dotenv from "dotenv";
-import { promises as fs } from "fs";
-import { createRequire } from "module";
 import ns from "ns-require";
-import Loader from "./shared";
+import Loader from "./base";
+import { injectEnv, parseEnvFiles, revertEnv } from "./env";
+import { migrateManifest } from "./migration";
 
-export * from "./shared";
+export { Loader } from "./base";
+export type { LoaderScope, StartMessage } from "./types";
+export { unwrapExports } from "./utils";
 
 const logger = new Logger("app");
 
@@ -23,9 +27,6 @@ const logger = new Logger("app");
 for (const key in require.extensions) {
 	Loader.extensions.add(key);
 }
-
-/** 进程启动时即已存在的环境变量键（env 文件不得覆盖这些键） */
-const initialKeys = Object.getOwnPropertyNames(process.env);
 
 export default class NodeLoader extends Loader {
 	/** ns-require 的命名空间解析器，负责插件名到模块路径的解析 */
@@ -63,113 +64,8 @@ export default class NodeLoader extends Loader {
 		return config;
 	}
 
-	/**
-	 * 配置文件级迁移：把历史上的内置功能改写为插件形式。
-	 *
-	 * 迁移项：request 配置 → http 插件；内置代理 → proxy-agent 插件；
-	 * 顶层的 port/host/maxPort/selfUrl → server 插件。
-	 * 同时把新增插件的依赖写入 package.json（失败仅告警，不阻断启动）。
-	 */
 	override async migrate() {
-		try {
-			let isDirty = false;
-			const meta = JSON.parse(await fs.readFile("package.json", "utf8"));
-			const require = createRequire(__filename);
-			const deps = require("koishi/package.json").dependencies;
-
-			meta.dependencies ||= {};
-			/** 登记一个依赖并标记 package.json 已变更 */
-			function addDep(name: string) {
-				meta.dependencies[name] = deps[name];
-				isDirty = true;
-			}
-
-			// 旧的全局 request 配置改写为 http 插件
-			if (!meta.dependencies["@koishi-ce/plugin-http"]) {
-				const { request = {} } = this.config as any;
-				delete this.config["request"];
-				this.config.plugins = {
-					http: request,
-					...this.config.plugins,
-				};
-				addDep("@koishi-ce/plugin-http");
-			}
-
-			// 补挂 proxy-agent 插件（旧版代理能力已拆分为插件）
-			if (!meta.dependencies["@koishi-ce/plugin-proxy-agent"]) {
-				this.config.plugins = {
-					"proxy-agent": {},
-					...this.config.plugins,
-				};
-				addDep("@koishi-ce/plugin-proxy-agent");
-			}
-
-			/** 从插件表（含嵌套 group）中提取 http 插件的 proxyAgent 配置并移除 */
-			function getProxyAgent(plugins: Dict) {
-				for (const [key, value] of Object.entries(plugins)) {
-					const name = key.replace(/^~/, "").split(":")[0];
-					let result: any;
-					if (name === "http") {
-						result = value?.proxyAgent;
-						delete value.proxyAgent;
-					} else if (name === "group") {
-						result = getProxyAgent(value);
-					}
-					if (result) return result;
-				}
-			}
-
-			/** 将提取到的 proxyAgent 写回 proxy-agent 插件配置 */
-			function setProxyAgent(plugins: Dict): boolean | undefined {
-				for (const [key, value] of Object.entries(plugins)) {
-					const name = key.replace(/^~/, "").split(":")[0];
-					if (name === "proxy-agent") {
-						plugins[key] = { ...value, proxyAgent };
-						return true;
-					} else if (name === "group") {
-						const result = setProxyAgent(value);
-						if (result) return result;
-					}
-				}
-				return undefined;
-			}
-
-			// http.proxyAgent 迁移为 proxy-agent 插件的配置
-			const proxyAgent = getProxyAgent(this.config.plugins ?? {});
-			if (proxyAgent) setProxyAgent(this.config.plugins ?? {});
-
-			// 旧的服务器顶层配置（端口等）改写为 server 插件
-			const legacy = this.config as Dict;
-			if (legacy["port"]) {
-				const { port, host, maxPort, selfUrl } = legacy;
-				delete legacy["port"];
-				delete legacy["host"];
-				delete legacy["maxPort"];
-				delete legacy["selfUrl"];
-				this.config.plugins = {
-					server: { port, host, maxPort, selfUrl },
-					...this.config.plugins,
-				};
-				addDep("@koishi-ce/plugin-server");
-			}
-
-			// 有变更则按字典序重排依赖并回写 package.json
-			if (isDirty) {
-				meta.dependencies = Object.fromEntries(
-					Object.entries(meta.dependencies).sort(([a], [b]) =>
-						a.localeCompare(b),
-					),
-				);
-				await fs.writeFile(
-					"package.json",
-					JSON.stringify(meta, null, 2) + "\n",
-				);
-			}
-		} catch (error) {
-			logger.warn("failed to migrate manifest");
-			logger.warn(error);
-		}
-
+		await migrateManifest(this.config as Dict);
 		await super.migrate();
 	}
 
@@ -179,26 +75,11 @@ export default class NodeLoader extends Loader {
 	 */
 	override async readConfig(initial = false) {
 		// 先撤销上一轮由 env 文件注入的变量
-		for (const key of this.localKeys) {
-			delete process.env[key];
-		}
+		revertEnv(this.localKeys);
 
-		// 解析各 env 文件（后者覆盖前者）
-		const parsed: Dict<string> = {};
-		for (const filename of this.envFiles) {
-			try {
-				const raw = await fs.readFile(filename, "utf8");
-				Object.assign(parsed, dotenv.parse(raw));
-			} catch {}
-		}
-
-		// 注入 env 文件变量，记录注入的键以便下轮撤销
-		this.localKeys = [];
-		for (const key in parsed) {
-			if (initialKeys.includes(key)) continue;
-			process.env[key] = parsed[key];
-			this.localKeys.push(key);
-		}
+		// 解析各 env 文件（后者覆盖前者）并注入，记录注入的键以便下轮撤销
+		const parsed = await parseEnvFiles(this.envFiles);
+		this.localKeys = injectEnv(parsed);
 
 		return await super.readConfig(initial);
 	}
