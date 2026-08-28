@@ -108,78 +108,99 @@
  * 记录来源优先 props.record,缺则用 fetchBundleRecord 拉取。
  */
 
-import { computed, reactive, ref, watch } from 'vue'
-import { message, router, send, store, useConfig, useContext } from '@koishi-ce/client'
-import { getBundleGroupIdent } from '../../../src/shared/bundle-idents'
-import type { PluginBundleRecord } from '../../../src/shared/bundle'
+import { computed, reactive, ref, watch } from "vue";
 import {
-  fetchBundleRecord,
-  getBundleMemberConfigState,
-  install,
-  pendingBundleUninstalls,
-  type BundleRecordView,
-  type BundleMemberCleanupTarget,
-} from '../../shared/operations'
-import { getBulkMode, getPendingOverrides, getWritableBundleRecords, patchMarketNextData } from '../../shared/plugin-config'
-import { useMarketNextI18n } from '../../shared/i18n'
+	message,
+	router,
+	send,
+	store,
+	useConfig,
+	useContext,
+} from "@koishi-ce/client";
+import { getBundleGroupIdent } from "../../../src/shared/bundle-idents";
+import type { PluginBundleRecord } from "../../../src/shared/bundle";
+import {
+	fetchBundleRecord,
+	getBundleMemberConfigState,
+	install,
+	pendingBundleUninstalls,
+	type BundleRecordView,
+	type BundleMemberCleanupTarget,
+} from "../../shared/operations";
+import {
+	getBulkMode,
+	getPendingOverrides,
+	getWritableBundleRecords,
+	patchMarketNextData,
+} from "../../shared/plugin-config";
+import { useMarketNextI18n } from "../../shared/i18n";
 
 /** 成员级卸载策略:config=仅清组内配置,dependency=卸载依赖(含清配置),keep=保留不动。 */
-type MemberAction = 'config' | 'dependency' | 'keep'
+type MemberAction = "config" | "dependency" | "keep";
 
 /** 宿主运行所必需的依赖,禁止从这里卸载。 */
-const protectedDeps = new Set(['@koishijs/plugin-console', '@koishi-ce/plugin-config', '@koishijs/plugin-server'])
+const protectedDeps = new Set([
+	"@koishijs/plugin-console",
+	"@koishi-ce/plugin-config",
+	"@koishijs/plugin-server",
+]);
 
 const props = defineProps<{
-  modelValue: boolean
-  packageName?: string
-  record?: BundleRecordView | PluginBundleRecord
-  title?: string
-  redirectToPlugins?: boolean
-}>()
+	modelValue: boolean;
+	packageName?: string;
+	record?: BundleRecordView | PluginBundleRecord;
+	title?: string;
+	redirectToPlugins?: boolean;
+}>();
 
 const emit = defineEmits<{
-  'update:modelValue': [value: boolean]
-  done: []
-}>()
+	"update:modelValue": [value: boolean];
+	done: [];
+}>();
 
-const config = useConfig()
-const { t } = useMarketNextI18n()
+const config = useConfig();
+const { t } = useMarketNextI18n();
 
 /** 批量操作:一键设置所有成员策略,不可行者自动降级(卸载→清配置/保留)。 */
 function setAllActions(action: MemberAction) {
-  for (const row of memberRows.value) {
-    if (action === 'dependency') {
-      memberActions[row.package] = row.canRemoveDependency ? 'dependency' : (row.hasGroupConfig ? 'config' : 'keep')
-    } else if (action === 'config') {
-      memberActions[row.package] = row.hasGroupConfig ? 'config' : 'keep'
-    } else {
-      memberActions[row.package] = 'keep'
-    }
-  }
+	for (const row of memberRows.value) {
+		if (action === "dependency") {
+			memberActions[row.package] = row.canRemoveDependency
+				? "dependency"
+				: row.hasGroupConfig
+					? "config"
+					: "keep";
+		} else if (action === "config") {
+			memberActions[row.package] = row.hasGroupConfig ? "config" : "keep";
+		} else {
+			memberActions[row.package] = "keep";
+		}
+	}
 }
-const ctx = useContext()
+const ctx = useContext();
 /** 记录拉取中/卸载执行中标记。 */
-const loadingRecord = ref(false)
-const uninstalling = ref(false)
+const loadingRecord = ref(false);
+const uninstalling = ref(false);
 /** props.record 缺失时通过 fetchBundleRecord 拉到的远端记录。 */
-const remoteRecord = ref<BundleRecordView>()
+const remoteRecord = ref<BundleRecordView>();
 /** 各成员当前选择的策略,key 为成员包名。 */
-const memberActions = reactive<Record<string, MemberAction>>({})
+const memberActions = reactive<Record<string, MemberAction>>({});
 
 /** 目标合包包名(props 缺省时为空串,模板据此展示兜底提示)。 */
-const packageName = computed(() => props.packageName || '')
+const packageName = computed(() => props.packageName || "");
 /** v-model 开关的读写代理。 */
 const visible = computed({
-  get: () => props.modelValue,
-  set: value => emit('update:modelValue', value),
-})
+	get: () => props.modelValue,
+	set: (value) => emit("update:modelValue", value),
+});
 
 /** 生效的合包记录视图:props.record 带成员时优先,其次远端记录,最后原样返回。 */
 const recordView = computed(() => {
-  if (props.record?.members?.length) return props.record
-  if (remoteRecord.value?.package === packageName.value) return remoteRecord.value
-  return props.record
-})
+	if (props.record?.members?.length) return props.record;
+	if (remoteRecord.value?.package === packageName.value)
+		return remoteRecord.value;
+	return props.record;
+});
 
 /**
  * 成员展示行:在记录成员之上叠加本地现状——是否已装、是否 workspace、
@@ -187,100 +208,130 @@ const recordView = computed(() => {
  * 组外还有配置的都不可卸载)。
  */
 const memberRows = computed(() => {
-  const groupKey = recordView.value?.groupKey || (packageName.value ? `group:${getBundleGroupIdent(packageName.value)}` : undefined)
-  return (recordView.value?.members ?? []).map((member) => {
-    const dep = store.dependencies?.[member.package]
-    const state = getBundleMemberConfigState(ctx, member, groupKey)
-    const installed = !!dep
-    const blocked = !!dep?.workspace || !!dep?.invalid || protectedDeps.has(member.package)
-    const hasExternalConfig = !!state.external.length
-    return {
-      ...member,
-      installed,
-      workspace: !!dep?.workspace,
-      hasGroupConfig: !!state.group.length,
-      hasExternalConfig,
-      canRemoveDependency: installed && !blocked && !hasExternalConfig,
-    }
-  })
-})
+	const groupKey =
+		recordView.value?.groupKey ||
+		(packageName.value
+			? `group:${getBundleGroupIdent(packageName.value)}`
+			: undefined);
+	return (recordView.value?.members ?? []).map((member) => {
+		const dep = store.dependencies?.[member.package];
+		const state = getBundleMemberConfigState(ctx, member, groupKey);
+		const installed = !!dep;
+		const blocked =
+			!!dep?.workspace || !!dep?.invalid || protectedDeps.has(member.package);
+		const hasExternalConfig = !!state.external.length;
+		return {
+			...member,
+			installed,
+			workspace: !!dep?.workspace,
+			hasGroupConfig: !!state.group.length,
+			hasExternalConfig,
+			canRemoveDependency: installed && !blocked && !hasExternalConfig,
+		};
+	});
+});
 
 /** 策略为"卸载依赖"且确实可卸载的成员。 */
-const dependencyRemovalMembers = computed(() => memberRows.value
-  .filter(row => memberActions[row.package] === 'dependency' && row.canRemoveDependency))
+const dependencyRemovalMembers = computed(() =>
+	memberRows.value.filter(
+		(row) =>
+			memberActions[row.package] === "dependency" && row.canRemoveDependency,
+	),
+);
 /** 策略为"卸载依赖"或"仅清配置"且组内有配置的成员(配置清理目标)。 */
-const configCleanupMembers = computed(() => memberRows.value
-  .filter(row => memberActions[row.package] === 'dependency' || memberActions[row.package] === 'config')
-  .filter(row => row.hasGroupConfig))
+const configCleanupMembers = computed(() =>
+	memberRows.value
+		.filter(
+			(row) =>
+				memberActions[row.package] === "dependency" ||
+				memberActions[row.package] === "config",
+		)
+		.filter((row) => row.hasGroupConfig),
+);
 /** 底部摘要的三项计数;keepCount 按"未被前两类触及"的成员去重统计。 */
-const dependencyRemovalCount = computed(() => dependencyRemovalMembers.value.length)
-const configCleanupCount = computed(() => configCleanupMembers.value.length)
-const keepCount = computed(() => Math.max(0, memberRows.value.length - new Set([
-  ...dependencyRemovalMembers.value.map(row => row.package),
-  ...configCleanupMembers.value.map(row => row.package),
-]).size))
+const dependencyRemovalCount = computed(
+	() => dependencyRemovalMembers.value.length,
+);
+const configCleanupCount = computed(() => configCleanupMembers.value.length);
+const keepCount = computed(() =>
+	Math.max(
+		0,
+		memberRows.value.length -
+			new Set([
+				...dependencyRemovalMembers.value.map((row) => row.package),
+				...configCleanupMembers.value.map((row) => row.package),
+			]).size,
+	),
+);
 
 /** 每次打开时清空远端记录并重新拉取,再按新行数据重置策略。 */
-watch(visible, async (value) => {
-  if (!value) return
-  remoteRecord.value = undefined
-  await loadRecord()
-  resetActions()
-}, { immediate: true })
+watch(
+	visible,
+	async (value) => {
+		if (!value) return;
+		remoteRecord.value = undefined;
+		await loadRecord();
+		resetActions();
+	},
+	{ immediate: true },
+);
 
 /** 成员行数据变化(store 刷新等)时,只给新出现的行补默认策略、清掉消失的行。 */
 watch(memberRows, () => {
-  if (visible.value) resetActions(false)
-})
+	if (visible.value) resetActions(false);
+});
 
 /** props.record 缺失时向服务端拉取合包记录(fetchBundleRecord 带本地回退)。 */
 async function loadRecord() {
-  const name = packageName.value
-  if (!name || props.record?.members?.length) return
-  loadingRecord.value = true
-  try {
-    const record = await fetchBundleRecord(name)
-    if (record) remoteRecord.value = record
-  } catch (error) {
-    console.warn(error)
-    message.warning(t('bundle.messages.recordFailed'))
-  } finally {
-    loadingRecord.value = false
-  }
+	const name = packageName.value;
+	if (!name || props.record?.members?.length) return;
+	loadingRecord.value = true;
+	try {
+		const record = await fetchBundleRecord(name);
+		if (record) remoteRecord.value = record;
+	} catch (error) {
+		console.warn(error);
+		message.warning(t("bundle.messages.recordFailed"));
+	} finally {
+		loadingRecord.value = false;
+	}
 }
 
 /** 重置成员策略:force 全量重置;非 force 时保留用户已手动改过的行。 */
 function resetActions(force = true) {
-  const seen = new Set<string>()
-  for (const row of memberRows.value) {
-    seen.add(row.package)
-    if (!force && memberActions[row.package]) continue
-    memberActions[row.package] = getDefaultAction(row)
-  }
-  for (const key of Object.keys(memberActions)) {
-    if (!seen.has(key)) delete memberActions[key]
-  }
+	const seen = new Set<string>();
+	for (const row of memberRows.value) {
+		seen.add(row.package);
+		if (!force && memberActions[row.package]) continue;
+		memberActions[row.package] = getDefaultAction(row);
+	}
+	for (const key of Object.keys(memberActions)) {
+		if (!seen.has(key)) delete memberActions[key];
+	}
 }
 
 /** 成员默认策略:组外有配置则不卸载;因合包新装的默认卸载;组内有配置默认清理;否则保留。 */
-function getDefaultAction(row: (typeof memberRows.value)[number]): MemberAction {
-  if (row.hasExternalConfig) return row.hasGroupConfig ? 'config' : 'keep'
-  if (row.canRemoveDependency && row.installedByBundle === true) return 'dependency'
-  if (row.hasGroupConfig) return 'config'
-  return 'keep'
+function getDefaultAction(
+	row: (typeof memberRows.value)[number],
+): MemberAction {
+	if (row.hasExternalConfig) return row.hasGroupConfig ? "config" : "keep";
+	if (row.canRemoveDependency && row.installedByBundle === true)
+		return "dependency";
+	if (row.hasGroupConfig) return "config";
+	return "keep";
 }
 
 /** 取批量模式共享的待应用覆盖清单(marketData.override)。 */
 function ensureOverride() {
-  return getPendingOverrides()
+	return getPendingOverrides();
 }
 
 /** 组装配置清理目标列表(成员包名 + 插件键,供 remove-bundle-configs 定位)。 */
 function getCleanupTargets(): BundleMemberCleanupTarget[] {
-  return configCleanupMembers.value.map(member => ({
-    package: member.package,
-    plugin: member.plugin,
-  }))
+	return configCleanupMembers.value.map((member) => ({
+		package: member.package,
+		plugin: member.plugin,
+	}));
 }
 
 /**
@@ -290,57 +341,68 @@ function getCleanupTargets(): BundleMemberCleanupTarget[] {
  * 删除合包持久化记录、按需跳转插件页并 emit done。
  */
 async function uninstallBundle() {
-  const name = packageName.value
-  if (!name || uninstalling.value) return
-  const members = dependencyRemovalMembers.value.map(member => member.package)
-  const configs = getCleanupTargets()
-  const override = {
-    [name]: '',
-    ...Object.fromEntries(members.map(name => [name, ''])),
-  }
+	const name = packageName.value;
+	if (!name || uninstalling.value) return;
+	const members = dependencyRemovalMembers.value.map(
+		(member) => member.package,
+	);
+	const configs = getCleanupTargets();
+	const override = {
+		[name]: "",
+		...Object.fromEntries(members.map((name) => [name, ""])),
+	};
 
-  if (getBulkMode(config.value)) {
-    const overrides = ensureOverride()
-    Object.assign(overrides, override)
-    void patchMarketNextData({ override: { ...overrides } })
-    pendingBundleUninstalls.value[name] = {
-      members,
-      cleanup: !!configs.length,
-      configs,
-    }
-    visible.value = false
-    message.success(t('bundle.messages.stagedUninstall', { members: members.length, configs: configs.length }))
-    return
-  }
+	if (getBulkMode(config.value)) {
+		const overrides = ensureOverride();
+		Object.assign(overrides, override);
+		void patchMarketNextData({ override: { ...overrides } });
+		pendingBundleUninstalls.value[name] = {
+			members,
+			cleanup: !!configs.length,
+			configs,
+		};
+		visible.value = false;
+		message.success(
+			t("bundle.messages.stagedUninstall", {
+				members: members.length,
+				configs: configs.length,
+			}),
+		);
+		return;
+	}
 
-  visible.value = false
-  uninstalling.value = true
-  try {
-    await install(override, async () => {
-      if (configs.length) {
-        await send('market/remove-bundle-configs', {
-          package: name,
-          members: configs,
-          removeEmptyGroup: true,
-        })
-      }
-      const records = getWritableBundleRecords(config.value)
-      delete records[name]
-      const saved = await patchMarketNextData({ bundleRecords: records })
-      if (!saved) message.warning(t('bundle.messages.recordSaveFailed'))
-      if (props.redirectToPlugins) await router.replace('/plugins')
-      emit('done')
-    }, undefined, {
-      loadingText: t('bundle.messages.uninstalling'),
-      successText: t('bundle.messages.uninstalled'),
-      errorText: t('bundle.messages.uninstallFailed'),
-      timeoutText: t('bundle.messages.uninstallTimeout'),
-    })
-  } finally {
-    uninstalling.value = false
-  }
+	visible.value = false;
+	uninstalling.value = true;
+	try {
+		await install(
+			override,
+			async () => {
+				if (configs.length) {
+					await send("market/remove-bundle-configs", {
+						package: name,
+						members: configs,
+						removeEmptyGroup: true,
+					});
+				}
+				const records = getWritableBundleRecords(config.value);
+				delete records[name];
+				const saved = await patchMarketNextData({ bundleRecords: records });
+				if (!saved) message.warning(t("bundle.messages.recordSaveFailed"));
+				if (props.redirectToPlugins) await router.replace("/plugins");
+				emit("done");
+			},
+			undefined,
+			{
+				loadingText: t("bundle.messages.uninstalling"),
+				successText: t("bundle.messages.uninstalled"),
+				errorText: t("bundle.messages.uninstallFailed"),
+				timeoutText: t("bundle.messages.uninstallTimeout"),
+			},
+		);
+	} finally {
+		uninstalling.value = false;
+	}
 }
-
 </script>
 
 <style lang="scss" scoped src="./index.scss"></style>

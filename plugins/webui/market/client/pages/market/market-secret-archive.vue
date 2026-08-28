@@ -72,42 +72,46 @@
  * 版本、市场条数、触发时间三个 props)。
  */
 
-import { computed, ref } from 'vue'
-import { useMarketNextI18n } from '../../shared/i18n'
-import KoishiEyeSplash from './koishi-eye-splash.vue'
+import { computed, ref } from "vue";
+import { useMarketNextI18n } from "../../shared/i18n";
+import KoishiEyeSplash from "./koishi-eye-splash.vue";
 
 const props = defineProps<{
-  /** 当前 Koishi 版本(可能取不到,缺省显示"未知")。 */
-  koishiVersion?: string,
-  /** 市场条目总数。 */
-  marketCount: number,
-  /** 档案触发时间(父级在命中彩蛋时生成)。 */
-  recordedAt: string,
-}>()
+	/** 当前 Koishi 版本(可能取不到,缺省显示"未知")。 */
+	koishiVersion?: string;
+	/** 市场条目总数。 */
+	marketCount: number;
+	/** 档案触发时间(父级在命中彩蛋时生成)。 */
+	recordedAt: string;
+}>();
 
-const { t, locale } = useMarketNextI18n()
+const { t, locale } = useMarketNextI18n();
 /** 动画 ready(第 287 帧):档案标题切"已恢复"。 */
-const ready = ref(false)
+const ready = ref(false);
 /** 动画 complete(第 543 帧):允许正文揭示(is-copy-ready)。 */
-const copyReady = ref(false)
+const copyReady = ref(false);
 
 /** 彩蛋文案按空行拆分后的全部段落(去空白段)。 */
-const blocks = computed(() => t('marketPage.easter.secretSearch')
-  .split(/\r?\n\s*\r?\n/)
-  .map(block => block.trim())
-  .filter(Boolean))
+const blocks = computed(() =>
+	t("marketPage.easter.secretSearch")
+		.split(/\r?\n\s*\r?\n/)
+		.map((block) => block.trim())
+		.filter(Boolean),
+);
 
 /** 正文段落:除最后一段以外的全部段。 */
-const paragraphs = computed(() => blocks.value.slice(0, -1))
+const paragraphs = computed(() => blocks.value.slice(0, -1));
 
 /** 宣言:最后一段,剥掉整体加粗的 ** 标记后纯文本展示。 */
 const declaration = computed(() => {
-  const value = blocks.value.at(-1) || ''
-  return value.replace(/^\*\*(.*)\*\*$/s, '$1')
-})
+	const value = blocks.value.at(-1) || "";
+	return value.replace(/^\*\*(.*)\*\*$/s, "$1");
+});
 
 /** 市场条数的千分位本地化展示。 */
-const formattedMarketCount = computed(() => props.marketCount.toLocaleString(locale.value))
+const formattedMarketCount = computed(() =>
+	props.marketCount.toLocaleString(locale.value),
+);
 </script>
 
 <style lang="scss" src="./market-secret-archive.scss"></style>

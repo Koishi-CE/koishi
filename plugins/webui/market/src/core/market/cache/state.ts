@@ -20,18 +20,18 @@ import { buildCacheMeta } from "./persistence.js";
  * hash/size 等统计字段同样尽量保留上一轮(细节见 buildCacheMeta)。
  */
 export function applyEndpointResult(
-    result: EndpointResult,
-    entries: Dict<CacheEntry>,
-    meta: CacheMeta | undefined,
+	result: EndpointResult,
+	entries: Dict<CacheEntry>,
+	meta: CacheMeta | undefined,
 ): { meta: CacheMeta; entry: CacheEntry } {
-    const cached = entries[result.endpoint];
-    const sameEndpoint = meta?.endpoint === result.endpoint;
-    const nextMeta = buildCacheMeta(result, cached, meta, sameEndpoint);
-    const entry: CacheEntry = {
-        ...nextMeta,
-        result: result.result,
-    };
-    return { meta: nextMeta, entry };
+	const cached = entries[result.endpoint];
+	const sameEndpoint = meta?.endpoint === result.endpoint;
+	const nextMeta = buildCacheMeta(result, cached, meta, sameEndpoint);
+	const entry: CacheEntry = {
+		...nextMeta,
+		result: result.result,
+	};
+	return { meta: nextMeta, entry };
 }
 
 /**
@@ -39,14 +39,15 @@ export function applyEndpointResult(
  * 条目缺失时退回当前生效 meta(端点一致才有条件值)。
  */
 export function buildConditionalHeaders(
-    entries: Dict<CacheEntry>,
-    meta: CacheMeta | undefined,
-    endpoint: string,
+	entries: Dict<CacheEntry>,
+	meta: CacheMeta | undefined,
+	endpoint: string,
 ): Dict<string> {
-    const entry = entries[endpoint] || (meta?.endpoint === endpoint ? meta : undefined);
-    if (!entry) return {};
-    const headers: Dict<string> = {};
-    if (entry.etag) headers["if-none-match"] = entry.etag;
-    if (entry.lastModified) headers["if-modified-since"] = entry.lastModified;
-    return headers;
+	const entry =
+		entries[endpoint] || (meta?.endpoint === endpoint ? meta : undefined);
+	if (!entry) return {};
+	const headers: Dict<string> = {};
+	if (entry.etag) headers["if-none-match"] = entry.etag;
+	if (entry.lastModified) headers["if-modified-since"] = entry.lastModified;
+	return headers;
 }

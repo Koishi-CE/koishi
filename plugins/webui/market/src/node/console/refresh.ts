@@ -11,17 +11,27 @@ import type { Context } from "@koishi-ce/koishi";
 
 /** 可刷新的 console 通道名(对应各 DataService 键与宿主服务)。 */
 export type ConsoleRefreshChannel =
-    | "dependencies"
-    | "registry"
-    | "registryStatus"
-    | "packages"
-    | "config"
-    | "market";
+	| "dependencies"
+	| "registry"
+	| "registryStatus"
+	| "packages"
+	| "config"
+	| "market";
 
 /** 安装类操作的固定刷新集:依赖、registry 缓存、插件列表、koishi.yml 配置。 */
-export const INSTALL_REFRESH_CHANNELS = ["dependencies", "registry", "packages", "config"] as const;
+export const INSTALL_REFRESH_CHANNELS = [
+	"dependencies",
+	"registry",
+	"packages",
+	"config",
+] as const;
 
 /** 并行刷新指定通道(console 服务不存在时静默跳过,如宿主未装控制台)。 */
-export function refreshConsole(ctx: Context, channels: readonly ConsoleRefreshChannel[]) {
-    return Promise.all(channels.map((channel) => ctx.get("console")?.refresh(channel)));
+export function refreshConsole(
+	ctx: Context,
+	channels: readonly ConsoleRefreshChannel[],
+) {
+	return Promise.all(
+		channels.map((channel) => ctx.get("console")?.refresh(channel)),
+	);
 }

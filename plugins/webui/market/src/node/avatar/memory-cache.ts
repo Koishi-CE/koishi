@@ -20,18 +20,21 @@ import { Time } from "@koishi-ce/koishi";
 
 /** 头像抓取/缓存命中的统一返回结构。 */
 export interface AvatarFetchResult {
-    /** base64 编码的图片内容 */
-    data: string;
-    /** Content-Type(本模块只接受 image/* 前缀) */
-    type: string;
-    /** 命中缓存时为 true */
-    cached?: boolean;
-    /** 预留字段:当前实现不填充,磁盘条目的 key 存在 AvatarDiskCacheEntry 上 */
-    key?: string;
+	/** base64 编码的图片内容 */
+	data: string;
+	/** Content-Type(本模块只接受 image/* 前缀) */
+	type: string;
+	/** 命中缓存时为 true */
+	cached?: boolean;
+	/** 预留字段:当前实现不填充,磁盘条目的 key 存在 AvatarDiskCacheEntry 上 */
+	key?: string;
 }
 
 /** 内存缓存:key = 归一化缓存键,value = 抓取结果 + 过期时间戳(avatar 模块内共享)。 */
-export const avatarCache = new Map<string, AvatarFetchResult & { expiresAt: number }>();
+export const avatarCache = new Map<
+	string,
+	AvatarFetchResult & { expiresAt: number }
+>();
 /** 缓存有效期(内存与磁盘共用同一 TTL):7 天。 */
 export const AVATAR_CACHE_TTL = Time.day * 7;
 /** 对外暴露的清扫间隔(1 小时),供 index.ts / 宿主注册定时清扫。 */
@@ -41,28 +44,28 @@ export const AVATAR_MAX_ENTRIES = 512;
 
 /** 清扫内存缓存:先删过期条目,再按插入顺序逐出最旧的直至回到上限。 */
 export function cleanupAvatarCache() {
-    const now = Date.now();
-    for (const [key, entry] of avatarCache) {
-        if (entry.expiresAt <= now) avatarCache.delete(key);
-    }
-    while (avatarCache.size > AVATAR_MAX_ENTRIES) {
-        const key = avatarCache.keys().next().value;
-        if (!key) break;
-        avatarCache.delete(key);
-    }
+	const now = Date.now();
+	for (const [key, entry] of avatarCache) {
+		if (entry.expiresAt <= now) avatarCache.delete(key);
+	}
+	while (avatarCache.size > AVATAR_MAX_ENTRIES) {
+		const key = avatarCache.keys().next().value;
+		if (!key) break;
+		avatarCache.delete(key);
+	}
 }
 
 /** 清空内存缓存(测试与手动清理用,不碰磁盘)。 */
 export function clearAvatarMemoryCache() {
-    avatarCache.clear();
+	avatarCache.clear();
 }
 
 /** 读内存缓存条目(含 expiresAt,是否过期由调用方判断)。 */
 export function getAvatarMemoryCache(key: string) {
-    return avatarCache.get(key);
+	return avatarCache.get(key);
 }
 
 /** 写入内存缓存条目,按 TTL 附加过期时间。 */
 export function cacheAvatarMemory(key: string, result: AvatarFetchResult) {
-    avatarCache.set(key, { ...result, expiresAt: Date.now() + AVATAR_CACHE_TTL });
+	avatarCache.set(key, { ...result, expiresAt: Date.now() + AVATAR_CACHE_TTL });
 }

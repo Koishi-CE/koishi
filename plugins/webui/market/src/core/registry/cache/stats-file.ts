@@ -14,43 +14,45 @@ import type { RegistryReason } from "../errors.js";
 
 /** 路由统计的持久化条目(比内存态少了运行时字段)。 */
 export interface PersistedRegistryStats {
-    /** 收敛到 [-6, 3] 的路由分数 */
-    score: number;
-    successes?: number | undefined;
-    failures?: number | undefined;
-    consecutiveFailures?: number | undefined;
-    /** EWMA 平均延迟(ms) */
-    averageElapsed?: number | undefined;
-    lastSuccess?: number | undefined;
-    lastFailure?: number | undefined;
-    lastFailureReason?: RegistryReason | undefined;
-    contentEncoding?: string | undefined;
+	/** 收敛到 [-6, 3] 的路由分数 */
+	score: number;
+	successes?: number | undefined;
+	failures?: number | undefined;
+	consecutiveFailures?: number | undefined;
+	/** EWMA 平均延迟(ms) */
+	averageElapsed?: number | undefined;
+	lastSuccess?: number | undefined;
+	lastFailure?: number | undefined;
+	lastFailureReason?: RegistryReason | undefined;
+	contentEncoding?: string | undefined;
 }
 
 /** 路由统计文件结构(version 1)。 */
 export interface RegistryStatsStore {
-    version: 1;
-    stats: Dict<PersistedRegistryStats>;
-    savedAt: number;
+	version: 1;
+	stats: Dict<PersistedRegistryStats>;
+	savedAt: number;
 }
 
 /** 写盘视图：分数收敛到 [-6, 3]。 */
-export function serializeRegistryStats(book: RouteStatsBook): Dict<PersistedRegistryStats> {
-    const stats: Dict<PersistedRegistryStats> = {};
-    for (const [endpoint, value] of Object.entries(book.stats)) {
-        if (!value) continue;
-        stats[endpoint] = {
-            score: clamp(value.score, -6, 3),
-            successes: value.successes,
-            failures: value.failures,
-            consecutiveFailures: value.consecutiveFailures,
-            averageElapsed: value.averageElapsed,
-            lastSuccess: value.lastSuccess,
-            lastFailure: value.lastFailure,
-            lastFailureReason: value.lastFailureReason as RegistryReason | undefined,
-        };
-    }
-    return stats;
+export function serializeRegistryStats(
+	book: RouteStatsBook,
+): Dict<PersistedRegistryStats> {
+	const stats: Dict<PersistedRegistryStats> = {};
+	for (const [endpoint, value] of Object.entries(book.stats)) {
+		if (!value) continue;
+		stats[endpoint] = {
+			score: clamp(value.score, -6, 3),
+			successes: value.successes,
+			failures: value.failures,
+			consecutiveFailures: value.consecutiveFailures,
+			averageElapsed: value.averageElapsed,
+			lastSuccess: value.lastSuccess,
+			lastFailure: value.lastFailure,
+			lastFailureReason: value.lastFailureReason as RegistryReason | undefined,
+		};
+	}
+	return stats;
 }
 
 /**
@@ -58,18 +60,20 @@ export function serializeRegistryStats(book: RouteStatsBook): Dict<PersistedRegi
  * 成块移植自旧 Installer.loadRouteStats。
  */
 export function restoreRegistryStats(
-    book: RouteStatsBook,
-    store: RegistryStatsStore | undefined,
-    log?: (message: string) => void,
+	book: RouteStatsBook,
+	store: RegistryStatsStore | undefined,
+	log?: (message: string) => void,
 ) {
-    if (!store?.stats || store.version !== 1) return;
-    // 超过 30 天的学习数据视为过时,全部丢弃
-    if (Date.now() - store.savedAt > 30 * DAY) return;
-    for (const [endpoint, stats] of Object.entries(store.stats)) {
-        if (!stats) continue;
-        book.stats[endpoint] = restoreRegistryStat(stats);
-    }
-    log?.(`npm registry route stats restored from disk: ${Object.keys(store.stats).join(", ")}`);
+	if (!store?.stats || store.version !== 1) return;
+	// 超过 30 天的学习数据视为过时,全部丢弃
+	if (Date.now() - store.savedAt > 30 * DAY) return;
+	for (const [endpoint, stats] of Object.entries(store.stats)) {
+		if (!stats) continue;
+		book.stats[endpoint] = restoreRegistryStat(stats);
+	}
+	log?.(
+		`npm registry route stats restored from disk: ${Object.keys(store.stats).join(", ")}`,
+	);
 }
 
 /**
@@ -78,22 +82,24 @@ export function restoreRegistryStats(
  * 上限 12、保留连续失败),在"不至于重蹈覆辙"与"不冤枉端点"间取衡。
  */
 function restoreRegistryStat(stats: PersistedRegistryStats): RouteStats {
-    const successes = Math.max(0, Number(stats.successes) || 0);
-    const failures = Math.max(0, Number(stats.failures) || 0);
-    const hasRecentSuccess =
-        Number(stats.lastSuccess) && Date.now() - Number(stats.lastSuccess) < DAY;
-    return {
-        score: hasRecentSuccess ? clamp(stats.score, -1, 3) : clamp(stats.score, -4, 3),
-        successes,
-        failures: hasRecentSuccess
-            ? Math.min(failures, Math.max(2, Math.ceil(successes / 2)))
-            : Math.min(failures, 12),
-        consecutiveFailures: hasRecentSuccess
-            ? 0
-            : Math.max(0, Number(stats.consecutiveFailures) || 0),
-        averageElapsed: stats.averageElapsed,
-        lastSuccess: stats.lastSuccess,
-        lastFailure: stats.lastFailure,
-        lastFailureReason: stats.lastFailureReason,
-    };
+	const successes = Math.max(0, Number(stats.successes) || 0);
+	const failures = Math.max(0, Number(stats.failures) || 0);
+	const hasRecentSuccess =
+		Number(stats.lastSuccess) && Date.now() - Number(stats.lastSuccess) < DAY;
+	return {
+		score: hasRecentSuccess
+			? clamp(stats.score, -1, 3)
+			: clamp(stats.score, -4, 3),
+		successes,
+		failures: hasRecentSuccess
+			? Math.min(failures, Math.max(2, Math.ceil(successes / 2)))
+			: Math.min(failures, 12),
+		consecutiveFailures: hasRecentSuccess
+			? 0
+			: Math.max(0, Number(stats.consecutiveFailures) || 0),
+		averageElapsed: stats.averageElapsed,
+		lastSuccess: stats.lastSuccess,
+		lastFailure: stats.lastFailure,
+		lastFailureReason: stats.lastFailureReason,
+	};
 }

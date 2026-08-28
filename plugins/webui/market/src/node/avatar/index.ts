@@ -18,25 +18,29 @@
  * 供前端展示插件作者头像(gravatar/cravatar/npm)。
  */
 import type { Context } from "@koishi-ce/koishi";
-import { cleanupAvatarCaches, readAvatarDiskCache, writeAvatarDiskCache } from "./disk-cache.js";
+import {
+	cleanupAvatarCaches,
+	readAvatarDiskCache,
+	writeAvatarDiskCache,
+} from "./disk-cache.js";
 import { clearAvatarCacheStorage } from "./disk-cleanup.js";
 import { normalizeAvatarCacheKey } from "./disk-entry.js";
 import { fetchAvatarFromNetwork } from "./fetch.js";
 import {
-    AVATAR_CACHE_SWEEP_INTERVAL,
-    type AvatarFetchResult,
-    cacheAvatarMemory,
-    cleanupAvatarCache,
-    clearAvatarMemoryCache,
-    getAvatarMemoryCache,
+	AVATAR_CACHE_SWEEP_INTERVAL,
+	type AvatarFetchResult,
+	cacheAvatarMemory,
+	cleanupAvatarCache,
+	clearAvatarMemoryCache,
+	getAvatarMemoryCache,
 } from "./memory-cache.js";
 
 export {
-    AVATAR_CACHE_SWEEP_INTERVAL,
-    type AvatarFetchResult,
-    cleanupAvatarCaches,
-    clearAvatarCacheStorage,
-    clearAvatarMemoryCache,
+	AVATAR_CACHE_SWEEP_INTERVAL,
+	type AvatarFetchResult,
+	cleanupAvatarCaches,
+	clearAvatarCacheStorage,
+	clearAvatarMemoryCache,
 };
 
 /**
@@ -46,26 +50,26 @@ export {
  * 命中的重定向地址,供磁盘缓存回读时做"默认占位图"判定。
  */
 export async function fetchAvatar(
-    ctx: Context,
-    rawKey: string,
-    rawUrl?: string,
+	ctx: Context,
+	rawKey: string,
+	rawUrl?: string,
 ): Promise<AvatarFetchResult | undefined> {
-    const cacheKey = normalizeAvatarCacheKey(rawKey);
-    // 每次取用顺手清扫:过期/超限条目即时淘汰,不依赖宿主定时器
-    cleanupAvatarCache();
-    const cached = getAvatarMemoryCache(cacheKey);
-    if (cached && cached.expiresAt > Date.now()) {
-        return { data: cached.data, type: cached.type, cached: true };
-    }
-    const diskCached = await readAvatarDiskCache(ctx, cacheKey);
-    // 磁盘也未命中且没有来源 URL 时无从抓取,到此为止
-    if (diskCached || !rawUrl) return diskCached;
+	const cacheKey = normalizeAvatarCacheKey(rawKey);
+	// 每次取用顺手清扫:过期/超限条目即时淘汰,不依赖宿主定时器
+	cleanupAvatarCache();
+	const cached = getAvatarMemoryCache(cacheKey);
+	if (cached && cached.expiresAt > Date.now()) {
+		return { data: cached.data, type: cached.type, cached: true };
+	}
+	const diskCached = await readAvatarDiskCache(ctx, cacheKey);
+	// 磁盘也未命中且没有来源 URL 时无从抓取,到此为止
+	if (diskCached || !rawUrl) return diskCached;
 
-    const fetched = await fetchAvatarFromNetwork(ctx, rawUrl);
-    if (!fetched) return;
-    cacheAvatarMemory(cacheKey, fetched.result);
-    // 磁盘写不阻塞返回:命中路径的收益不值得等一次 fs
-    void writeAvatarDiskCache(ctx, cacheKey, fetched.sourceUrl, fetched.result);
-    cleanupAvatarCache();
-    return fetched.result;
+	const fetched = await fetchAvatarFromNetwork(ctx, rawUrl);
+	if (!fetched) return;
+	cacheAvatarMemory(cacheKey, fetched.result);
+	// 磁盘写不阻塞返回:命中路径的收益不值得等一次 fs
+	void writeAvatarDiskCache(ctx, cacheKey, fetched.sourceUrl, fetched.result);
+	cleanupAvatarCache();
+	return fetched.result;
 }

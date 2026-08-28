@@ -10,13 +10,13 @@
  */
 import type { LocalPackageUploadService } from "../../core/install/sources/upload.js";
 import type {
-    LocalPackageUploadChunkRequest,
-    LocalPackageUploadCommitResult,
-    LocalPackageUploadFinishRequest,
-    LocalPackageUploadPreview,
-    LocalPackageUploadProgress,
-    LocalPackageUploadStartRequest,
-    LocalPackageUploadStartResult,
+	LocalPackageUploadChunkRequest,
+	LocalPackageUploadCommitResult,
+	LocalPackageUploadFinishRequest,
+	LocalPackageUploadPreview,
+	LocalPackageUploadProgress,
+	LocalPackageUploadStartRequest,
+	LocalPackageUploadStartResult,
 } from "../../core/upload/types.js";
 
 /** mixin 基类约束：任意构造函数（Service 天然满足）。 */
@@ -24,39 +24,41 @@ import type {
 type GConstructor = abstract new (...args: any[]) => object;
 
 export function UploadsMixin<T extends GConstructor>(Base: T) {
-    abstract class UploadsImpl extends Base {
-        /** @internal 本地上传会话门面（由 Installer 构造器注入）。 */
-        public declare uploadService: LocalPackageUploadService;
+	abstract class UploadsImpl extends Base {
+		/** @internal 本地上传会话门面（由 Installer 构造器注入）。 */
+		public declare uploadService: LocalPackageUploadService;
 
-        startLocalPackageUpload(
-            request: LocalPackageUploadStartRequest,
-        ): Promise<LocalPackageUploadStartResult> {
-            return this.uploadService.startLocalPackageUpload(request);
-        }
+		startLocalPackageUpload(
+			request: LocalPackageUploadStartRequest,
+		): Promise<LocalPackageUploadStartResult> {
+			return this.uploadService.startLocalPackageUpload(request);
+		}
 
-        appendLocalPackageUpload(
-            request: LocalPackageUploadChunkRequest,
-        ): Promise<LocalPackageUploadProgress> {
-            return this.uploadService.appendLocalPackageUpload(request);
-        }
+		appendLocalPackageUpload(
+			request: LocalPackageUploadChunkRequest,
+		): Promise<LocalPackageUploadProgress> {
+			return this.uploadService.appendLocalPackageUpload(request);
+		}
 
-        finishLocalPackageUpload(
-            request: LocalPackageUploadFinishRequest,
-        ): Promise<LocalPackageUploadPreview> {
-            return this.uploadService.finishLocalPackageUpload(request);
-        }
+		finishLocalPackageUpload(
+			request: LocalPackageUploadFinishRequest,
+		): Promise<LocalPackageUploadPreview> {
+			return this.uploadService.finishLocalPackageUpload(request);
+		}
 
-        commitLocalPackageUpload(uploadId: string): Promise<LocalPackageUploadCommitResult> {
-            return this.uploadService.commitLocalPackageUpload(uploadId);
-        }
+		commitLocalPackageUpload(
+			uploadId: string,
+		): Promise<LocalPackageUploadCommitResult> {
+			return this.uploadService.commitLocalPackageUpload(uploadId);
+		}
 
-        cancelLocalPackageUpload(uploadId: string) {
-            return this.uploadService.cancelLocalPackageUpload(uploadId);
-        }
+		cancelLocalPackageUpload(uploadId: string) {
+			return this.uploadService.cancelLocalPackageUpload(uploadId);
+		}
 
-        prepareLocalBinding(name: string) {
-            return this.uploadService.prepareLocalBinding(name);
-        }
-    }
-    return UploadsImpl;
+		prepareLocalBinding(name: string) {
+			return this.uploadService.prepareLocalBinding(name);
+		}
+	}
+	return UploadsImpl;
 }

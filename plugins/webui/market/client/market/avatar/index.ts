@@ -6,8 +6,8 @@
  * re-export,utils.ts 的 `export * from './avatar'` 与消费方符号不变。
  */
 
-export type { AvatarCandidate } from './candidates'
-export { getUserAvatarCandidates } from './candidates'
-export { getCachedAvatarFromCandidates } from './cache'
-export { cacheAvatarFailure, isAvatarFailureCached } from './cache'
-export { fetchAndCacheAvatar, fetchCachedAvatar } from './fetch'
+export type { AvatarCandidate } from "./candidates";
+export { getUserAvatarCandidates } from "./candidates";
+export { getCachedAvatarFromCandidates } from "./cache";
+export { cacheAvatarFailure, isAvatarFailureCached } from "./cache";
+export { fetchAndCacheAvatar, fetchCachedAvatar } from "./fetch";

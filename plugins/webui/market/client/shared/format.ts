@@ -7,9 +7,9 @@
 
 /** 端点 URL → host(含端口);解析失败(相对路径等)原样返回。 */
 export function endpointHost(endpoint: string) {
-  try {
-    return new URL(endpoint).host
-  } catch {
-    return endpoint
-  }
+	try {
+		return new URL(endpoint).host;
+	} catch {
+		return endpoint;
+	}
 }

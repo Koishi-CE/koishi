@@ -17,17 +17,17 @@
 
 /** composer 侧需要的三个词条读写方法的最小结构。 */
 export interface LocaleMessageComposer {
-  getLocaleMessage(locale: string): unknown
-  mergeLocaleMessage(locale: string, messages: Record<string, unknown>): void
-  setLocaleMessage(locale: string, messages: Record<string, unknown>): void
+	getLocaleMessage(locale: string): unknown;
+	mergeLocaleMessage(locale: string, messages: Record<string, unknown>): void;
+	setLocaleMessage(locale: string, messages: Record<string, unknown>): void;
 }
 
 /** 某命名空间的全部词条:locale → 命名空间 → 词条树。 */
-export type LocaleNamespaceMessages = Record<string, Record<string, unknown>>
+export type LocaleNamespaceMessages = Record<string, Record<string, unknown>>;
 
 /** 类型守卫:纯对象(非 null、非数组)。 */
 function isRecord(value: unknown): value is Record<string, unknown> {
-  return !!value && typeof value === 'object' && !Array.isArray(value)
+	return !!value && typeof value === "object" && !Array.isArray(value);
 }
 
 /**
@@ -35,11 +35,11 @@ function isRecord(value: unknown): value is Record<string, unknown> {
  * 只要缺任何一个键或值不一致即视为不完整,需要重新合并。
  */
 function hasCompleteLocaleMessage(actual: unknown, expected: unknown): boolean {
-  if (!isRecord(expected)) return actual === expected
-  if (!isRecord(actual)) return false
-  return Object.entries(expected).every(([key, value]) => {
-    return hasCompleteLocaleMessage(actual[key], value)
-  })
+	if (!isRecord(expected)) return actual === expected;
+	if (!isRecord(actual)) return false;
+	return Object.entries(expected).every(([key, value]) => {
+		return hasCompleteLocaleMessage(actual[key], value);
+	});
 }
 
 /**
@@ -47,31 +47,38 @@ function hasCompleteLocaleMessage(actual: unknown, expected: unknown): boolean {
  * 命名空间 merge 进去。返回是否有变更(供测试/诊断)。
  */
 export function ensureLocaleNamespace(
-  composer: LocaleMessageComposer,
-  namespace: string,
-  messages: LocaleNamespaceMessages,
+	composer: LocaleMessageComposer,
+	namespace: string,
+	messages: LocaleNamespaceMessages,
 ) {
-  let changed = false
-  for (const [locale, value] of Object.entries(messages)) {
-    const current = composer.getLocaleMessage(locale)
-    const namespaceMessages = isRecord(current) ? current[namespace] : undefined
-    if (hasCompleteLocaleMessage(namespaceMessages, value)) continue
-    composer.mergeLocaleMessage(locale, { [namespace]: value })
-    changed = true
-  }
-  return changed
+	let changed = false;
+	for (const [locale, value] of Object.entries(messages)) {
+		const current = composer.getLocaleMessage(locale);
+		const namespaceMessages = isRecord(current)
+			? current[namespace]
+			: undefined;
+		if (hasCompleteLocaleMessage(namespaceMessages, value)) continue;
+		composer.mergeLocaleMessage(locale, { [namespace]: value });
+		changed = true;
+	}
+	return changed;
 }
 
 /** 单个 composer 上的 guard 状态:applying 防递归,ensure 执行补齐。 */
 interface LocaleNamespaceGuard {
-  applying: boolean
-  ensure(): void
+	applying: boolean;
+	ensure(): void;
 }
 
 /** guard 注册表在 globalThis 上的挂载 key(Symbol.for 保证多副本插件共享同一张表)。 */
-const guardRegistryKey = Symbol.for('@koishi-ce/plugin-marketn/i18n-namespace-guards')
+const guardRegistryKey = Symbol.for(
+	"@koishi-ce/plugin-marketn/i18n-namespace-guards",
+);
 /** composer 实例 → guard 的全局注册表(WeakMap,composer 回收时条目自动释放)。 */
-const guardRegistry = ((globalThis as any)[guardRegistryKey] ||= new WeakMap<object, LocaleNamespaceGuard>()) as WeakMap<object, LocaleNamespaceGuard>
+const guardRegistry = ((globalThis as any)[guardRegistryKey] ||= new WeakMap<
+	object,
+	LocaleNamespaceGuard
+>()) as WeakMap<object, LocaleNamespaceGuard>;
 
 /**
  * 为 composer 安装命名空间 guard:
@@ -81,33 +88,33 @@ const guardRegistry = ((globalThis as any)[guardRegistryKey] ||= new WeakMap<obj
  *   并立即执行一次补齐。
  */
 export function installLocaleNamespaceGuard(
-  composer: LocaleMessageComposer,
-  namespace: string,
-  messages: LocaleNamespaceMessages,
+	composer: LocaleMessageComposer,
+	namespace: string,
+	messages: LocaleNamespaceMessages,
 ) {
-  let guard = guardRegistry.get(composer as object)
-  if (!guard) {
-    const setLocaleMessage = composer.setLocaleMessage.bind(composer)
-    guard = {
-      applying: false,
-      ensure: () => {},
-    }
-    // Legacy bundles restore their locale snapshots through this method after
-    // a newer entry can already be active, so the app-level guard must persist.
-    composer.setLocaleMessage = (locale, value) => {
-      setLocaleMessage(locale, value)
-      if (!guard!.applying) guard!.ensure()
-    }
-    guardRegistry.set(composer as object, guard)
-  }
+	let guard = guardRegistry.get(composer as object);
+	if (!guard) {
+		const setLocaleMessage = composer.setLocaleMessage.bind(composer);
+		guard = {
+			applying: false,
+			ensure: () => {},
+		};
+		// Legacy bundles restore their locale snapshots through this method after
+		// a newer entry can already be active, so the app-level guard must persist.
+		composer.setLocaleMessage = (locale, value) => {
+			setLocaleMessage(locale, value);
+			if (!guard!.applying) guard!.ensure();
+		};
+		guardRegistry.set(composer as object, guard);
+	}
 
-  guard.ensure = () => {
-    guard!.applying = true
-    try {
-      ensureLocaleNamespace(composer, namespace, messages)
-    } finally {
-      guard!.applying = false
-    }
-  }
-  guard.ensure()
+	guard.ensure = () => {
+		guard!.applying = true;
+		try {
+			ensureLocaleNamespace(composer, namespace, messages);
+		} finally {
+			guard!.applying = false;
+		}
+	};
+	guard.ensure();
 }

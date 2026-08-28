@@ -152,38 +152,72 @@
  * use-install-flow。
  */
 
-import { computed, ref } from 'vue'
-import { global, store, useConfig, useContext } from '@koishi-ce/client'
-import { active } from '../../shared/plugin-config'
-import BundleUninstall from '../bundle-uninstall/index.vue'
-import { useMarketNextI18n } from '../../shared/i18n'
-import { useInstallVersions } from './use-install-versions'
-import { useInstallDecision } from './use-install-decision'
-import { useInstallFlow } from './use-install-flow'
+import { computed, ref } from "vue";
+import { global, store, useConfig, useContext } from "@koishi-ce/client";
+import { active } from "../../shared/plugin-config";
+import BundleUninstall from "../bundle-uninstall/index.vue";
+import { useMarketNextI18n } from "../../shared/i18n";
+import { useInstallVersions } from "./use-install-versions";
+import { useInstallDecision } from "./use-install-decision";
+import { useInstallFlow } from "./use-install-flow";
 
-const ctx = useContext()
-const config = useConfig()
-const { t } = useMarketNextI18n()
+const ctx = useContext();
+const config = useConfig();
+const { t } = useMarketNextI18n();
 
-const versionsState = useInstallVersions()
+const versionsState = useInstallVersions();
 const {
-  bulkMode, version, selectVersion, localSelection, data,
-  getVersion, setVersion, shouldShowPeerVersionSelect, getPeerResolvedVersion,
-} = versionsState
+	bulkMode,
+	version,
+	selectVersion,
+	localSelection,
+	data,
+	getVersion,
+	setVersion,
+	shouldShowPeerVersionSelect,
+	getPeerResolvedVersion,
+} = versionsState;
 
 /** 合包卸载对话框的目标包名(flow 与 decision 共用,解开两者的相互依赖)。 */
-const bundleUninstallTarget = ref('')
-const decisionState = useInstallDecision(versionsState, t, bundleUninstallTarget, config)
-const flowState = useInstallFlow(versionsState, decisionState.workspace, decisionState.dep, t, ctx, config)
+const bundleUninstallTarget = ref("");
+const decisionState = useInstallDecision(
+	versionsState,
+	t,
+	bundleUninstallTarget,
+	config,
+);
+const flowState = useInstallFlow(
+	versionsState,
+	decisionState.workspace,
+	decisionState.dep,
+	t,
+	ctx,
+	config,
+);
 const {
-  current, local, workspace, unchanged, showRemoveButton, bundleUninstallRecord,
-  registryStatus, registryStatusText, danger, warning, result, getResultIcon, getResultText,
-} = decisionState
+	current,
+	local,
+	workspace,
+	unchanged,
+	showRemoveButton,
+	bundleUninstallRecord,
+	registryStatus,
+	registryStatusText,
+	danger,
+	warning,
+	result,
+	getResultIcon,
+	getResultText,
+} = decisionState;
 const {
-  saveChoice, showRemoveDialog, showBundleUninstallDialog,
-  closePanel, configure, installDep, requestRemove,
-} = flowState
-
+	saveChoice,
+	showRemoveDialog,
+	showBundleUninstallDialog,
+	closePanel,
+	configure,
+	installDep,
+	requestRemove,
+} = flowState;
 </script>
 
 <style lang="scss" src="./index.scss"></style>

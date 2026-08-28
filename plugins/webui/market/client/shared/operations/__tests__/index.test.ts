@@ -7,66 +7,66 @@ import { describe, expect, it, vi } from "vitest";
  */
 
 vi.mock("@koishi-ce/client", async () => {
-    const { createKoishiClientStub } = await import("../../__tests__/helpers");
-    return createKoishiClientStub();
+	const { createKoishiClientStub } = await import("../../__tests__/helpers");
+	return createKoishiClientStub();
 });
 
 vi.mock("../../i18n", () => ({
-    translate: (key: string) => key,
+	translate: (key: string) => key,
 }));
 
 const operations = await import("../index");
 
 describe("shared/operations 聚合出口", () => {
-    it("安装编排与进度面板", () => {
-        for (const name of [
-            "install",
-            "applyEnvironmentSnapshot",
-            "prepareInstallFallbackRetry",
-            "resetInstallFallbackState",
-            "installProgressState",
-        ]) {
-            expect(operations).toHaveProperty(name);
-        }
-        expect(operations.install).toBeTypeOf("function");
-        expect(operations.installProgressState).toBeTypeOf("object");
-    });
+	it("安装编排与进度面板", () => {
+		for (const name of [
+			"install",
+			"applyEnvironmentSnapshot",
+			"prepareInstallFallbackRetry",
+			"resetInstallFallbackState",
+			"installProgressState",
+		]) {
+			expect(operations).toHaveProperty(name);
+		}
+		expect(operations.install).toBeTypeOf("function");
+		expect(operations.installProgressState).toBeTypeOf("object");
+	});
 
-    it("配置就绪等待与依赖分析", () => {
-        for (const name of [
-            "ensureInstalledConfig",
-            "ensureInstalledConfigs",
-            "analyzeVersions",
-            "getRegistryStatus",
-            "getRegistryStatusText",
-        ]) {
-            expect(operations[name]).toBeTypeOf("function");
-        }
-    });
+	it("配置就绪等待与依赖分析", () => {
+		for (const name of [
+			"ensureInstalledConfig",
+			"ensureInstalledConfigs",
+			"analyzeVersions",
+			"getRegistryStatus",
+			"getRegistryStatusText",
+		]) {
+			expect(operations[name]).toBeTypeOf("function");
+		}
+	});
 
-    it("合包记录族与共享状态", () => {
-        for (const name of [
-            "createLocalBundleRecord",
-            "fetchBundleRecord",
-            "getBundleMemberConfigState",
-            "resolveBundlePackageFromGroup",
-            "resolveBundleRecordFromGroup",
-            "addManual",
-            "getConfigWriter",
-        ]) {
-            expect(operations[name]).toBeTypeOf("function");
-        }
-        for (const name of [
-            "activeBundle",
-            "expandedDependency",
-            "pendingBundleUninstalls",
-            "showConfirm",
-            "showEnvironmentVersions",
-            "showInstallHistory",
-            "showManual",
-            "MARKET_NEXT_PACKAGE",
-        ]) {
-            expect(operations).toHaveProperty(name);
-        }
-    });
+	it("合包记录族与共享状态", () => {
+		for (const name of [
+			"createLocalBundleRecord",
+			"fetchBundleRecord",
+			"getBundleMemberConfigState",
+			"resolveBundlePackageFromGroup",
+			"resolveBundleRecordFromGroup",
+			"addManual",
+			"getConfigWriter",
+		]) {
+			expect(operations[name]).toBeTypeOf("function");
+		}
+		for (const name of [
+			"activeBundle",
+			"expandedDependency",
+			"pendingBundleUninstalls",
+			"showConfirm",
+			"showEnvironmentVersions",
+			"showInstallHistory",
+			"showManual",
+			"MARKET_NEXT_PACKAGE",
+		]) {
+			expect(operations).toHaveProperty(name);
+		}
+	});
 });

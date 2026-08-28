@@ -29,19 +29,19 @@ import type { Config } from "./config/index.js";
 import { registerCommands } from "./console/commands.js";
 import { registerListeners } from "./console/listeners/index.js";
 import {
-    DependencyProvider,
-    RegistryProvider,
-    RegistryStatusProvider,
+	DependencyProvider,
+	RegistryProvider,
+	RegistryStatusProvider,
 } from "./console/providers.js";
 import { Installer } from "./installer/index.js";
 import type { MarketDataStore } from "./market/data-store.js";
 import { setupIdleProbe } from "./market/idle-probe.js";
 import { MarketProvider } from "./market/index.js";
 import {
-    createDataStore,
-    normalizeConfigDefaults,
-    setupReadyTasks,
-    setupSnapshotRoute,
+	createDataStore,
+	normalizeConfigDefaults,
+	setupReadyTasks,
+	setupSnapshotRoute,
 } from "./setup.js";
 
 /**
@@ -55,48 +55,48 @@ import {
  * 安装点），npm 安装场景第一轮即可命中。
  */
 function resolveConsoleClientRoot(here: string, packageName: string): string {
-    let dir = here;
-    for (;;) {
-        const candidate = join(dir, "node_modules", packageName);
-        if (existsSync(candidate)) {
-            // console 的 resolveEntry 会向 prod 路径追加 /index.js，因此这里
-            // 必须返回 dist 目录本身（而非包根）。
-            const dist = join(candidate, "dist");
-            if (existsSync(dist)) return dist;
-        }
-        const parent = dirname(dir);
-        if (parent === dir) break;
-        dir = parent;
-    }
-    return resolve(here, "../../dist");
+	let dir = here;
+	for (;;) {
+		const candidate = join(dir, "node_modules", packageName);
+		if (existsSync(candidate)) {
+			// console 的 resolveEntry 会向 prod 路径追加 /index.js，因此这里
+			// 必须返回 dist 目录本身（而非包根）。
+			const dist = join(candidate, "dist");
+			if (existsSync(dist)) return dist;
+		}
+		const parent = dirname(dir);
+		if (parent === dir) break;
+		dir = parent;
+	}
+	return resolve(here, "../../dist");
 }
 
 export type {
-    EnvironmentChangeStatus,
-    EnvironmentSnapshotChange,
-    EnvironmentSnapshotPreview,
+	EnvironmentChangeStatus,
+	EnvironmentSnapshotChange,
+	EnvironmentSnapshotPreview,
 } from "../core/environment/diff.js";
 export type {
-    EnvironmentDependencySnapshot,
-    EnvironmentSnapshotSource,
-    EnvironmentSnapshotSummary,
+	EnvironmentDependencySnapshot,
+	EnvironmentSnapshotSource,
+	EnvironmentSnapshotSummary,
 } from "../core/environment/snapshot.js";
 export type {
-    InstallHistoryChange,
-    InstallHistoryEntry,
-    InstallHistoryStatus,
-    InstallLogDetail,
-    LocalBindingResult,
+	InstallHistoryChange,
+	InstallHistoryEntry,
+	InstallHistoryStatus,
+	InstallLogDetail,
+	LocalBindingResult,
 } from "../core/install/types.js";
 export type {
-    LocalPackageOperation,
-    LocalPackageUploadChunkRequest,
-    LocalPackageUploadCommitResult,
-    LocalPackageUploadFinishRequest,
-    LocalPackageUploadPreview,
-    LocalPackageUploadProgress,
-    LocalPackageUploadStartRequest,
-    LocalPackageUploadStartResult,
+	LocalPackageOperation,
+	LocalPackageUploadChunkRequest,
+	LocalPackageUploadCommitResult,
+	LocalPackageUploadFinishRequest,
+	LocalPackageUploadPreview,
+	LocalPackageUploadProgress,
+	LocalPackageUploadStartRequest,
+	LocalPackageUploadStartResult,
 } from "../core/upload/types.js";
 export * from "../shared/index.js";
 export { Config } from "./config/index.js";
@@ -136,57 +136,59 @@ export const usage = `
  * 分别在 installer / console+server 就绪后装配命令层与 console 前后端。
  */
 export function apply(ctx: Context, config: Config = {}) {
-    // 本插件要写 package.json 与 Koishi 配置文件，只支持 json/yaml 配置宿主
-    if (!ctx.loader?.writable) {
-        return ctx
-            .logger("app")
-            .warn("@koishi-ce/plugin-marketn is only available for json/yaml config file");
-    }
+	// 本插件要写 package.json 与 Koishi 配置文件，只支持 json/yaml 配置宿主
+	if (!ctx.loader?.writable) {
+		return ctx
+			.logger("app")
+			.warn(
+				"@koishi-ce/plugin-marketn is only available for json/yaml config file",
+			);
+	}
 
-    normalizeConfigDefaults(ctx, config);
+	normalizeConfigDefaults(ctx, config);
 
-    // 活跃 MarketDataStore 引用：console 分支创建并登记，命令层经 getDataStore 读取，
-    // 插件卸载时由 setup 里的 effect 清空
-    const active: { dataStore?: MarketDataStore | undefined } = {};
-    const getDataStore = () => active.dataStore;
+	// 活跃 MarketDataStore 引用：console 分支创建并登记，命令层经 getDataStore 读取，
+	// 插件卸载时由 setup 里的 effect 清空
+	const active: { dataStore?: MarketDataStore | undefined } = {};
+	const getDataStore = () => active.dataStore;
 
-    // installer 是命令层与 console 层的共同依赖，先挂载；配置取 registry 分节
-    ctx.plugin(Installer, config.registry ?? {});
+	// installer 是命令层与 console 层的共同依赖，先挂载；配置取 registry 分节
+	ctx.plugin(Installer, config.registry ?? {});
 
-    ctx.inject(["installer"], (ctx) => {
-        registerCommands(ctx, config, getDataStore);
-    });
+	ctx.inject(["installer"], (ctx) => {
+		registerCommands(ctx, config, getDataStore);
+	});
 
-    // console 相关装配：providers → 数据存储/市场源/空闲探测 → 前端入口 →
-    // 快照 HTTP 路由 → RPC listener → ready 阶段任务
-    ctx.inject(["console", "installer", "server"], (ctx) => {
-        ctx.plugin(DependencyProvider);
-        ctx.plugin(RegistryProvider);
-        ctx.plugin(RegistryStatusProvider);
-        const dataStore = createDataStore(ctx, active);
-        ctx.plugin(MarketProvider, config.search ?? {});
-        setupIdleProbe(ctx, config);
+	// console 相关装配：providers → 数据存储/市场源/空闲探测 → 前端入口 →
+	// 快照 HTTP 路由 → RPC listener → ready 阶段任务
+	ctx.inject(["console", "installer", "server"], (ctx) => {
+		ctx.plugin(DependencyProvider);
+		ctx.plugin(RegistryProvider);
+		ctx.plugin(RegistryStatusProvider);
+		const dataStore = createDataStore(ctx, active);
+		ctx.plugin(MarketProvider, config.search ?? {});
+		setupIdleProbe(ctx, config);
 
-        // 注册前端入口：dev 指向 client 源码（宿主内置 vite 代为编译），
-        // prod 指向本包构建产物 dist/。prod 不能直接用 resolve(here, "../../dist")：
-        // console 的 /@plugin-* 静态服务在生产模式只放行 node_modules 内或 console
-        // dist 内的文件（serveAssets 的 403 安全检查），而 workspace（external/）
-        // junction 场景下 __filename 会被 realpath 成真实路径，external/.../dist
-        // 不含 node_modules 会被 403 拦截，导致插件前端页面无法加载。这里向上找到
-        // 宿主 node_modules 里的本包链接作为 prod 根（npm 安装场景同样命中）。
-        const here = dirname(fileURLToPath(import.meta.url));
-        const require = createRequire(fileURLToPath(import.meta.url));
-        const packageName = require("../../package.json").name as string;
-        ctx.console.addEntry({
-            dev: resolve(here, "../../client/index.ts"),
-            prod: resolveConsoleClientRoot(here, packageName),
-        });
+		// 注册前端入口：dev 指向 client 源码（宿主内置 vite 代为编译），
+		// prod 指向本包构建产物 dist/。prod 不能直接用 resolve(here, "../../dist")：
+		// console 的 /@plugin-* 静态服务在生产模式只放行 node_modules 内或 console
+		// dist 内的文件（serveAssets 的 403 安全检查），而 workspace（external/）
+		// junction 场景下 __filename 会被 realpath 成真实路径，external/.../dist
+		// 不含 node_modules 会被 403 拦截，导致插件前端页面无法加载。这里向上找到
+		// 宿主 node_modules 里的本包链接作为 prod 根（npm 安装场景同样命中）。
+		const here = dirname(fileURLToPath(import.meta.url));
+		const require = createRequire(fileURLToPath(import.meta.url));
+		const packageName = require("../../package.json").name as string;
+		ctx.console.addEntry({
+			dev: resolve(here, "../../client/index.ts"),
+			prod: resolveConsoleClientRoot(here, packageName),
+		});
 
-        const marketSnapshotTransport = setupSnapshotRoute(ctx);
-        // 卸载时同步注销 koa 路由与传输缓存，避免路由悬空
-        ctx.effect(() => () => marketSnapshotTransport.clear());
+		const marketSnapshotTransport = setupSnapshotRoute(ctx);
+		// 卸载时同步注销 koa 路由与传输缓存，避免路由悬空
+		ctx.effect(() => () => marketSnapshotTransport.clear());
 
-        registerListeners(ctx, config, dataStore, marketSnapshotTransport);
-        setupReadyTasks(ctx, config, dataStore);
-    });
+		registerListeners(ctx, config, dataStore, marketSnapshotTransport);
+		setupReadyTasks(ctx, config, dataStore);
+	});
 }

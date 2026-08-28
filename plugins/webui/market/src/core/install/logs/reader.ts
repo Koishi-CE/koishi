@@ -13,118 +13,131 @@
 import { promises as fsp, type Stats } from "node:fs";
 import { basename } from "node:path";
 import type {
-    InstallHistoryEntry,
-    InstallHistoryMetadata,
-    InstallHistoryStatus,
-    InstallLogDetail,
-    InstallLogger,
+	InstallHistoryEntry,
+	InstallHistoryMetadata,
+	InstallHistoryStatus,
+	InstallLogDetail,
+	InstallLogger,
 } from "../types.js";
 import { parseLegacyInstallLog } from "./legacy.js";
 import {
-    getInstallLogDir,
-    getInstallLogPath,
-    INSTALL_LOG_DETAIL_LIMIT,
-    INSTALL_LOG_HEAD_LIMIT,
-    INSTALL_LOG_TAIL_LIMIT,
+	getInstallLogDir,
+	getInstallLogPath,
+	INSTALL_LOG_DETAIL_LIMIT,
+	INSTALL_LOG_HEAD_LIMIT,
+	INSTALL_LOG_TAIL_LIMIT,
 } from "./retention.js";
 import { sanitizeInstallLogText } from "./store.js";
 
 /** 读取端依赖面：日志器 + 与 InstallLogStore 共享的会话状态/清理入口。 */
 export interface InstallLogReaderDeps {
-    cwd: string;
-    log: InstallLogger;
-    /** 当前活跃会话的日志文件（正在写入时先等待落盘再读） */
-    activeFile: () => string | undefined;
-    /** 等待活跃会话的追加写入全部落盘 */
-    waitForWrite: () => Promise<void>;
-    /** 触发一次保留策略清理（列表前调用） */
-    cleanup: () => Promise<void>;
+	cwd: string;
+	log: InstallLogger;
+	/** 当前活跃会话的日志文件（正在写入时先等待落盘再读） */
+	activeFile: () => string | undefined;
+	/** 等待活跃会话的追加写入全部落盘 */
+	waitForWrite: () => Promise<void>;
+	/** 触发一次保留策略清理（列表前调用） */
+	cleanup: () => Promise<void>;
 }
 
 /**
  * 读取 .log.json 元数据并校验有效性；文件不存在或内容损坏时返回 undefined
  * （调用方随后回退 legacy 文本解析）。
  */
-async function readInstallLogMetadata(cwd: string, id: string, log: InstallLogger) {
-    const file = getInstallLogPath(cwd, id);
-    if (!file) return undefined;
-    try {
-        const metadata: InstallHistoryMetadata = JSON.parse(
-            await fsp.readFile(`${file}.json`, "utf8"),
-        );
-        // 只信任 version/id/changes 三项齐全的元数据，防止误读半截写入的文件
-        if (metadata?.version !== 1 || metadata.id !== id || !Array.isArray(metadata.changes))
-            return undefined;
-        return metadata;
-    } catch (error) {
-        if (
-            (error as NodeJS.ErrnoException | undefined)?.code !== "ENOENT" &&
-            !(error instanceof SyntaxError)
-        ) {
-            log.debug(
-                `failed to read install log metadata ${id}: ${error instanceof Error ? error.message : error}`,
-            );
-        }
-        return undefined;
-    }
+async function readInstallLogMetadata(
+	cwd: string,
+	id: string,
+	log: InstallLogger,
+) {
+	const file = getInstallLogPath(cwd, id);
+	if (!file) return undefined;
+	try {
+		const metadata: InstallHistoryMetadata = JSON.parse(
+			await fsp.readFile(`${file}.json`, "utf8"),
+		);
+		// 只信任 version/id/changes 三项齐全的元数据，防止误读半截写入的文件
+		if (
+			metadata?.version !== 1 ||
+			metadata.id !== id ||
+			!Array.isArray(metadata.changes)
+		)
+			return undefined;
+		return metadata;
+	} catch (error) {
+		if (
+			(error as NodeJS.ErrnoException | undefined)?.code !== "ENOENT" &&
+			!(error instanceof SyntaxError)
+		) {
+			log.debug(
+				`failed to read install log metadata ${id}: ${error instanceof Error ? error.message : error}`,
+			);
+		}
+		return undefined;
+	}
 }
 
 /**
  * 读取日志正文：不超上限时整读；否则用文件句柄按偏移量读头段与尾段，
  * 中间以 "... N bytes omitted ..." 拼接并标记 truncated。
  */
-async function readInstallLog(file: string, limit: number, headLimit: number, tailLimit: number) {
-    const stat = await fsp.stat(file);
-    if (stat.size <= limit) {
-        return {
-            content: await fsp.readFile(file, "utf8"),
-            truncated: false,
-            size: stat.size,
-        };
-    }
-    const handle = await fsp.open(file, "r");
-    try {
-        // 尾段从文件末尾倒推，头尾可能重叠时优先保证头段完整
-        const headSize = Math.min(headLimit, stat.size);
-        const tailSize = Math.min(tailLimit, Math.max(0, stat.size - headSize));
-        const head = Buffer.alloc(headSize);
-        const tail = Buffer.alloc(tailSize);
-        if (headSize) await handle.read(head, 0, headSize, 0);
-        if (tailSize) await handle.read(tail, 0, tailSize, stat.size - tailSize);
-        return {
-            content: `${head.toString("utf8")}\n\n... ${stat.size - headSize - tailSize} bytes omitted ...\n\n${tail.toString("utf8")}`,
-            truncated: true,
-            size: stat.size,
-        };
-    } finally {
-        await handle.close();
-    }
+async function readInstallLog(
+	file: string,
+	limit: number,
+	headLimit: number,
+	tailLimit: number,
+) {
+	const stat = await fsp.stat(file);
+	if (stat.size <= limit) {
+		return {
+			content: await fsp.readFile(file, "utf8"),
+			truncated: false,
+			size: stat.size,
+		};
+	}
+	const handle = await fsp.open(file, "r");
+	try {
+		// 尾段从文件末尾倒推，头尾可能重叠时优先保证头段完整
+		const headSize = Math.min(headLimit, stat.size);
+		const tailSize = Math.min(tailLimit, Math.max(0, stat.size - headSize));
+		const head = Buffer.alloc(headSize);
+		const tail = Buffer.alloc(tailSize);
+		if (headSize) await handle.read(head, 0, headSize, 0);
+		if (tailSize) await handle.read(tail, 0, tailSize, stat.size - tailSize);
+		return {
+			content: `${head.toString("utf8")}\n\n... ${stat.size - headSize - tailSize} bytes omitted ...\n\n${tail.toString("utf8")}`,
+			truncated: true,
+			size: stat.size,
+		};
+	} finally {
+		await handle.close();
+	}
 }
 
 /** 由元数据组装历史条目：元数据标记 running 但会话已不在活跃列表 → 视为残留，降级为 unknown。 */
 function createInstallHistoryEntry(
-    metadata: InstallHistoryMetadata,
-    size: number,
-    activeFile?: string,
+	metadata: InstallHistoryMetadata,
+	size: number,
+	activeFile?: string,
 ): InstallHistoryEntry {
-    const status: InstallHistoryStatus =
-        metadata.status === "running" && basename(activeFile || "") !== metadata.id
-            ? "unknown"
-            : metadata.status;
-    return {
-        id: metadata.id,
-        startedAt: metadata.startedAt,
-        finishedAt: metadata.finishedAt,
-        duration: metadata.finishedAt
-            ? Math.max(0, metadata.finishedAt - metadata.startedAt)
-            : undefined,
-        status,
-        deps: metadata.deps,
-        forced: metadata.forced,
-        installEndpoint: metadata.installEndpoint,
-        size,
-        changes: metadata.changes,
-    };
+	const status: InstallHistoryStatus =
+		metadata.status === "running" && basename(activeFile || "") !== metadata.id
+			? "unknown"
+			: metadata.status;
+	return {
+		id: metadata.id,
+		startedAt: metadata.startedAt,
+		finishedAt: metadata.finishedAt,
+		duration: metadata.finishedAt
+			? Math.max(0, metadata.finishedAt - metadata.startedAt)
+			: undefined,
+		status,
+		deps: metadata.deps,
+		forced: metadata.forced,
+		installEndpoint: metadata.installEndpoint,
+		size,
+		changes: metadata.changes,
+	};
 }
 
 /**
@@ -132,29 +145,36 @@ function createInstallHistoryEntry(
  * 元数据可用则直接组装，否则截头尾读文本走 legacy 解析。
  */
 async function getInstallHistoryEntry(
-    id: string,
-    deps: InstallLogReaderDeps,
+	id: string,
+	deps: InstallLogReaderDeps,
 ): Promise<InstallHistoryEntry | undefined> {
-    const file = getInstallLogPath(deps.cwd, id);
-    if (!file) return undefined;
-    if (file === deps.activeFile()) await deps.waitForWrite();
-    let stat: Stats;
-    try {
-        stat = await fsp.stat(file);
-    } catch (error) {
-        if ((error as NodeJS.ErrnoException | undefined)?.code !== "ENOENT") throw error;
-        return undefined;
-    }
-    const metadata = await readInstallLogMetadata(deps.cwd, id, deps.log);
-    if (metadata) return createInstallHistoryEntry(metadata, stat.size, deps.activeFile());
-    // 无元数据：只读头尾（头部字段 + 末尾完成标记）即可完成 legacy 解析
-    const preview = await readInstallLog(
-        file,
-        INSTALL_LOG_HEAD_LIMIT + INSTALL_LOG_TAIL_LIMIT,
-        INSTALL_LOG_HEAD_LIMIT,
-        INSTALL_LOG_TAIL_LIMIT,
-    );
-    return parseLegacyInstallLog(id, preview.content, stat.size, deps.activeFile());
+	const file = getInstallLogPath(deps.cwd, id);
+	if (!file) return undefined;
+	if (file === deps.activeFile()) await deps.waitForWrite();
+	let stat: Stats;
+	try {
+		stat = await fsp.stat(file);
+	} catch (error) {
+		if ((error as NodeJS.ErrnoException | undefined)?.code !== "ENOENT")
+			throw error;
+		return undefined;
+	}
+	const metadata = await readInstallLogMetadata(deps.cwd, id, deps.log);
+	if (metadata)
+		return createInstallHistoryEntry(metadata, stat.size, deps.activeFile());
+	// 无元数据：只读头尾（头部字段 + 末尾完成标记）即可完成 legacy 解析
+	const preview = await readInstallLog(
+		file,
+		INSTALL_LOG_HEAD_LIMIT + INSTALL_LOG_TAIL_LIMIT,
+		INSTALL_LOG_HEAD_LIMIT,
+		INSTALL_LOG_TAIL_LIMIT,
+	);
+	return parseLegacyInstallLog(
+		id,
+		preview.content,
+		stat.size,
+		deps.activeFile(),
+	);
 }
 
 /**
@@ -162,33 +182,36 @@ async function getInstallHistoryEntry(
  * （count 钳制在 1..50），目录不存在时返回空数组。
  */
 export async function getInstallHistory(
-    limit = 20,
-    deps: InstallLogReaderDeps,
+	limit = 20,
+	deps: InstallLogReaderDeps,
 ): Promise<InstallHistoryEntry[]> {
-    await deps.cleanup();
-    const count = Math.min(50, Math.max(1, Math.floor(Number(limit) || 20)));
-    const dir = getInstallLogDir(deps.cwd);
-    let files: Array<{ id: string; mtime: number }> = [];
-    try {
-        const entries = await fsp.readdir(dir, { withFileTypes: true });
-        files = (
-            await Promise.all(
-                entries
-                    .filter((entry) => entry.isFile() && entry.name.endsWith(".log"))
-                    .map(async (entry) => ({
-                        id: entry.name,
-                        mtime: (await fsp.stat(`${dir}/${entry.name}`)).mtimeMs,
-                    })),
-            )
-        )
-            .sort((a, b) => b.mtime - a.mtime)
-            .slice(0, count);
-    } catch (error) {
-        if ((error as NodeJS.ErrnoException | undefined)?.code === "ENOENT") return [];
-        throw error;
-    }
-    const records = await Promise.all(files.map((file) => getInstallHistoryEntry(file.id, deps)));
-    return records.filter((item): item is InstallHistoryEntry => !!item);
+	await deps.cleanup();
+	const count = Math.min(50, Math.max(1, Math.floor(Number(limit) || 20)));
+	const dir = getInstallLogDir(deps.cwd);
+	let files: Array<{ id: string; mtime: number }> = [];
+	try {
+		const entries = await fsp.readdir(dir, { withFileTypes: true });
+		files = (
+			await Promise.all(
+				entries
+					.filter((entry) => entry.isFile() && entry.name.endsWith(".log"))
+					.map(async (entry) => ({
+						id: entry.name,
+						mtime: (await fsp.stat(`${dir}/${entry.name}`)).mtimeMs,
+					})),
+			)
+		)
+			.sort((a, b) => b.mtime - a.mtime)
+			.slice(0, count);
+	} catch (error) {
+		if ((error as NodeJS.ErrnoException | undefined)?.code === "ENOENT")
+			return [];
+		throw error;
+	}
+	const records = await Promise.all(
+		files.map((file) => getInstallHistoryEntry(file.id, deps)),
+	);
+	return records.filter((item): item is InstallHistoryEntry => !!item);
 }
 
 /**
@@ -196,17 +219,22 @@ export async function getInstallHistory(
  * 正文经 ANSI 清洗后返回）。id 非法或文件已消失时返回 undefined。
  */
 export async function getInstallLogDetail(
-    id: string,
-    deps: InstallLogReaderDeps,
+	id: string,
+	deps: InstallLogReaderDeps,
 ): Promise<InstallLogDetail | undefined> {
-    const file = getInstallLogPath(deps.cwd, id);
-    if (!file) return undefined;
-    const entry = await getInstallHistoryEntry(id, deps);
-    if (!entry) return undefined;
-    const result = await readInstallLog(file, INSTALL_LOG_DETAIL_LIMIT, 128 * 1024, 384 * 1024);
-    return {
-        ...entry,
-        content: sanitizeInstallLogText(result.content),
-        truncated: result.truncated,
-    };
+	const file = getInstallLogPath(deps.cwd, id);
+	if (!file) return undefined;
+	const entry = await getInstallHistoryEntry(id, deps);
+	if (!entry) return undefined;
+	const result = await readInstallLog(
+		file,
+		INSTALL_LOG_DETAIL_LIMIT,
+		128 * 1024,
+		384 * 1024,
+	);
+	return {
+		...entry,
+		content: sanitizeInstallLogText(result.content),
+		truncated: result.truncated,
+	};
 }

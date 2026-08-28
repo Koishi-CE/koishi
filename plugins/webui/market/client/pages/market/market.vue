@@ -143,124 +143,145 @@
  * use-market-debug(格式化纯函数在 debug-format),彩蛋在 use-market-easter。
  */
 
-import { router, store, global, useConfig } from '@koishi-ce/client'
-import { computed, onMounted, onUnmounted, provide, ref } from 'vue'
-import { active, getPendingOverrides } from '../../shared/plugin-config'
-import { kConfig, MarketFilter, MarketList, MarketSearch } from '../../market'
-import { SearchObject } from '@koishi-ce/registry'
-import { activeBundle } from '../../shared/operations'
-import MarketSecretArchive from './market-secret-archive.vue'
-import { canInstallBundleSearchObject } from '../../market/utils'
-import { useMarketNextI18n } from '../../shared/i18n'
-import { formatSource as formatSourceWith, formatTimingName as formatTimingNameWith, formatTime as formatTimeWith } from './debug-format'
-import { useMarketDebug } from './use-market-debug'
-import { useMarketEaster } from './use-market-easter'
-import { installed, useMarketPage } from './use-market-page'
+import { router, store, global, useConfig } from "@koishi-ce/client";
+import { computed, onMounted, onUnmounted, provide, ref } from "vue";
+import { active, getPendingOverrides } from "../../shared/plugin-config";
+import { kConfig, MarketFilter, MarketList, MarketSearch } from "../../market";
+import { SearchObject } from "@koishi-ce/registry";
+import { activeBundle } from "../../shared/operations";
+import MarketSecretArchive from "./market-secret-archive.vue";
+import { canInstallBundleSearchObject } from "../../market/utils";
+import { useMarketNextI18n } from "../../shared/i18n";
+import {
+	formatSource as formatSourceWith,
+	formatTimingName as formatTimingNameWith,
+	formatTime as formatTimeWith,
+} from "./debug-format";
+import { useMarketDebug } from "./use-market-debug";
+import { useMarketEaster } from "./use-market-easter";
+import { installed, useMarketPage } from "./use-market-page";
 
 /** 主滚动容器(滚动回顶用)。 */
-const root = ref()
+const root = ref();
 /** 搜索框组件引用(focus 快捷键用)。 */
-const searchBox = ref<{ focus?: () => void }>()
-const config = useConfig()
-const { t, locale } = useMarketNextI18n()
+const searchBox = ref<{ focus?: () => void }>();
+const config = useConfig();
+const { t, locale } = useMarketNextI18n();
 /** gravatar 镜像:插件配置优先,退化为服务端下发的 store.market.gravatar。 */
-const marketGravatar = computed(() => config.value.market?.gravatar || store.market?.gravatar)
+const marketGravatar = computed(
+	() => config.value.market?.gravatar || store.market?.gravatar,
+);
 
 // 注入市场配置:静态站点下不提供 installed 判定
 provide(kConfig, {
-  installed: global.static ? undefined : installed,
-})
+	installed: global.static ? undefined : installed,
+});
 
-const page = useMarketPage(config)
+const page = useMarketPage(config);
 const {
-  words, data, visibleData, marketLoading, loadingSlow,
-  loadingEndpoint, loadingTimeout, loadingAutoRoute, showMarketCacheHint,
-  loadInitial,
-} = page
-const { debugItems, debugTimings, debugPhases, debugRoutes, updateClientDebug } = useMarketDebug(t, locale)
+	words,
+	data,
+	visibleData,
+	marketLoading,
+	loadingSlow,
+	loadingEndpoint,
+	loadingTimeout,
+	loadingAutoRoute,
+	showMarketCacheHint,
+	loadInitial,
+} = page;
 const {
-  secretSearchMatched, secretArchiveRecordedAt, secretArchiveKoishiVersion, secretArchiveMarketCount,
+	debugItems,
+	debugTimings,
+	debugPhases,
+	debugRoutes,
+	updateClientDebug,
+} = useMarketDebug(t, locale);
+const {
+	secretSearchMatched,
+	secretArchiveRecordedAt,
+	secretArchiveKoishiVersion,
+	secretArchiveMarketCount,
 } = useMarketEaster(words, data, locale, () => {
-  requestAnimationFrame(() => root.value?.scrollTo(0, 0))
-})
+	requestAnimationFrame(() => root.value?.scrollTo(0, 0));
+});
 
 onMounted(() => {
-  loadInitial()
-  window.addEventListener('keydown', onSearchShortcut)
-})
+	loadInitial();
+	window.addEventListener("keydown", onSearchShortcut);
+});
 
 onUnmounted(() => {
-  window.removeEventListener('keydown', onSearchShortcut)
-})
+	window.removeEventListener("keydown", onSearchShortcut);
+});
 
 /** 全局键盘快捷键:Ctrl/Cmd+K 聚焦搜索框;彩蛋页 Esc 清词并聚焦。 */
 // 键盘快捷键守卫链:逐条排除非目标按键,每条守卫即一条快捷键语义
 // fallow-ignore-next-line complexity
 function onSearchShortcut(event: KeyboardEvent) {
-  if (router.currentRoute.value?.path !== '/market') return
-  if (event.key === 'Escape' && secretSearchMatched.value) {
-    event.preventDefault()
-    words.value = ['']
-    searchBox.value?.focus?.()
-    return
-  }
-  if (event.key.toLowerCase() !== 'k') return
-  if (!event.ctrlKey && !event.metaKey) return
-  event.preventDefault()
-  searchBox.value?.focus?.()
+	if (router.currentRoute.value?.path !== "/market") return;
+	if (event.key === "Escape" && secretSearchMatched.value) {
+		event.preventDefault();
+		words.value = [""];
+		searchBox.value?.focus?.();
+		return;
+	}
+	if (event.key.toLowerCase() !== "k") return;
+	if (!event.ctrlKey && !event.metaKey) return;
+	event.preventDefault();
+	searchBox.value?.focus?.();
 }
 
 /** 卡片操作按钮颜色:已装绿/待操作黄/待卸载红,未装蓝。 */
 function getType(data: SearchObject) {
-  if (global.static) return 'primary'
-  const version = getPendingOverrides()[data.package.name]
-  if (installed(data)) {
-    if (version === '') return 'danger'
-    if (version) return 'warning'
-    return 'success'
-  }
-  if (version) return 'warning'
-  return 'primary'
+	if (global.static) return "primary";
+	const version = getPendingOverrides()[data.package.name];
+	if (installed(data)) {
+		if (version === "") return "danger";
+		if (version) return "warning";
+		return "success";
+	}
+	if (version) return "warning";
+	return "primary";
 }
 
 /** 卡片操作按钮文案:与 getType 的状态机一一对应。 */
 function getText(data: SearchObject) {
-  if (global.static) return t('marketPage.actions.config')
-  const version = getPendingOverrides()[data.package.name]
-  if (installed(data)) {
-    if (version === '') return t('marketPage.actions.waitingRemove')
-    if (version) return t('marketPage.actions.waitingUpdate')
-    return t('marketPage.actions.edit')
-  }
-  if (version) return t('marketPage.actions.waitingInstall')
-  return t('marketPage.actions.addPlugin')
+	if (global.static) return t("marketPage.actions.config");
+	const version = getPendingOverrides()[data.package.name];
+	if (installed(data)) {
+		if (version === "") return t("marketPage.actions.waitingRemove");
+		if (version) return t("marketPage.actions.waitingUpdate");
+		return t("marketPage.actions.edit");
+	}
+	if (version) return t("marketPage.actions.waitingInstall");
+	return t("marketPage.actions.addPlugin");
 }
 
 /** 打开条目详情:可安装的合包打开合包弹层,普通包设置 active 弹层。 */
 function openPackage(data: SearchObject) {
-  if (!global.static && canInstallBundleSearchObject(data)) {
-    activeBundle.value = data
-    return
-  }
-  active.value = data.package.name
+	if (!global.static && canInstallBundleSearchObject(data)) {
+		activeBundle.value = data;
+		return;
+	}
+	active.value = data.package.name;
 }
 
 /** 滚回列表顶部(翻页时由列表触发)。 */
 function scrollToTop() {
-  root.value?.scrollTo(0, 0)
+	root.value?.scrollTo(0, 0);
 }
 
 /** 调试面板格式化桥:注入 t/locale,保持模板调用名不变。 */
 function formatTime(value: number) {
-  return formatTimeWith(value, locale.value)
+	return formatTimeWith(value, locale.value);
 }
 function formatSource(value?: string) {
-  return formatSourceWith(value, t)
+	return formatSourceWith(value, t);
 }
 function formatTimingName(value: string) {
-  return formatTimingNameWith(value, t)
+	return formatTimingNameWith(value, t);
 }
-
 </script>
 
 <style lang="scss" src="./market.scss"></style>

@@ -54,34 +54,46 @@
  * 导出的 showConfirm。
  */
 
-import { computed, ref } from 'vue'
-import { message, send, store, useContext, useConfig } from '@koishi-ce/client'
-import { ensureInstalledConfigs, getConfigWriter, showConfirm, install, pendingBundleUninstalls, MARKET_NEXT_PACKAGE } from '../../shared/operations'
-import { getPendingOverrides, getRemoveConfig, getWritableBundleRecords, patchMarketNextData } from '../../shared/plugin-config'
-import { useMarketNextI18n } from '../../shared/i18n'
+import { computed, ref } from "vue";
+import { message, send, store, useContext, useConfig } from "@koishi-ce/client";
+import {
+	ensureInstalledConfigs,
+	getConfigWriter,
+	showConfirm,
+	install,
+	pendingBundleUninstalls,
+	MARKET_NEXT_PACKAGE,
+} from "../../shared/operations";
+import {
+	getPendingOverrides,
+	getRemoveConfig,
+	getWritableBundleRecords,
+	patchMarketNextData,
+} from "../../shared/plugin-config";
+import { useMarketNextI18n } from "../../shared/i18n";
 
-const ctx = useContext()
-const config = useConfig()
-const { t } = useMarketNextI18n()
+const ctx = useContext();
+const config = useConfig();
+const { t } = useMarketNextI18n();
 /** 待应用的覆盖清单:包名 → 版本请求(空串代表卸载),来自 marketData.override。 */
-const overrides = computed(() => getPendingOverrides())
+const overrides = computed(() => getPendingOverrides());
 
 /** "同时移除插件配置"勾选状态,初始值取用户上次保存的选择(未保存过则默认未勾)。 */
-const removeConfig = ref(getRemoveConfig(config.value))
+const removeConfig = ref(getRemoveConfig(config.value));
 
 /** 丢弃全部待应用变更:清空 override 与合包卸载队列并落库。 */
 function clear() {
-  showConfirm.value = false
-  const override = getPendingOverrides()
-  for (const key of Object.keys(override)) delete override[key]
-  void patchMarketNextData({ override: { ...override } })
-  pendingBundleUninstalls.value = {}
+	showConfirm.value = false;
+	const override = getPendingOverrides();
+	for (const key of Object.keys(override)) delete override[key];
+	void patchMarketNextData({ override: { ...override } });
+	pendingBundleUninstalls.value = {};
 }
 
 /** 清单里是否存在卸载项(版本为空串):决定"移除配置"勾选框是否可用。 */
 const hasRemove = computed(() => {
-  return Object.values(overrides.value).some(version => !version)
-})
+	return Object.values(overrides.value).some((version) => !version);
+});
 
 /**
  * 确认执行:把 override 交给 install(),成功回调里依次完成——
@@ -95,59 +107,73 @@ const hasRemove = computed(() => {
 // 批量变更应用的成块编排:四步收尾同属一次安装的生命周期,拆分会打散配对
 // fallow-ignore-next-line complexity
 function confirm() {
-  showConfirm.value = false
-  const override = { ...overrides.value }
-  const selfUpdate = Object.prototype.hasOwnProperty.call(override, MARKET_NEXT_PACKAGE)
-  const removed = Object.entries(override)
-    .filter(([, value]) => !value)
-    .map(([name]) => name)
-  // 只保留本次真的要卸载的合包(用户可能在队列外又改了主意)
-  const bundleRemovals = Object.fromEntries(Object.entries(pendingBundleUninstalls.value)
-    .filter(([name]) => removed.includes(name)))
-  const bundlePackages = new Set(Object.keys(bundleRemovals))
-  const bundleMembers = new Set(Object.values(bundleRemovals)
-    .flatMap(item => item.members ?? []))
-  // 批量变更应用回调:安装/卸载/合包清理三路收尾编排,分支各自对应一类变更
-  // fallow-ignore-next-line complexity
-  return install(override, async () => {
-    const installNames = Object.entries(override)
-      .filter(([, value]) => value)
-      .map(([name]) => name)
-      .filter(name => name !== MARKET_NEXT_PACKAGE)
-    await ensureInstalledConfigs(ctx, installNames, true)
-    for (const [name, item] of Object.entries(bundleRemovals)) {
-      if (!item.cleanup) continue
-      await send('market/remove-bundle-configs', {
-        package: name,
-        members: item.configs,
-        removeEmptyGroup: true,
-      })
-    }
-    if (removeConfig.value) {
-      for (const name of removed) {
-        if (bundlePackages.has(name) || bundleMembers.has(name)) continue
-        getConfigWriter(ctx)?.remove(name)
-      }
-    }
-    for (const name of removed) {
-      delete getWritableBundleRecords(config.value)[name]
-      delete pendingBundleUninstalls.value[name]
-    }
-    for (const key of Object.keys(getPendingOverrides())) delete getPendingOverrides()[key]
-    const saved = await patchMarketNextData({
-      override: {},
-      bundleRecords: getWritableBundleRecords(config.value),
-    })
-    if (!saved) message.warning(t('operations.confirm.saveBundleFailed'))
-  }, undefined, selfUpdate ? {
-    loadingText: t('operations.progress.selfUpdateTitle'),
-    successText: t('operations.progress.selfSubmittedSuccess'),
-    errorText: t('operations.progress.errorSelf'),
-    timeoutText: t('operations.progress.installTimeout'),
-    selfUpdate: true,
-  } : undefined)
+	showConfirm.value = false;
+	const override = { ...overrides.value };
+	const selfUpdate = Object.prototype.hasOwnProperty.call(
+		override,
+		MARKET_NEXT_PACKAGE,
+	);
+	const removed = Object.entries(override)
+		.filter(([, value]) => !value)
+		.map(([name]) => name);
+	// 只保留本次真的要卸载的合包(用户可能在队列外又改了主意)
+	const bundleRemovals = Object.fromEntries(
+		Object.entries(pendingBundleUninstalls.value).filter(([name]) =>
+			removed.includes(name),
+		),
+	);
+	const bundlePackages = new Set(Object.keys(bundleRemovals));
+	const bundleMembers = new Set(
+		Object.values(bundleRemovals).flatMap((item) => item.members ?? []),
+	);
+	// 批量变更应用回调:安装/卸载/合包清理三路收尾编排,分支各自对应一类变更
+	// fallow-ignore-next-line complexity
+	return install(
+		override,
+		async () => {
+			const installNames = Object.entries(override)
+				.filter(([, value]) => value)
+				.map(([name]) => name)
+				.filter((name) => name !== MARKET_NEXT_PACKAGE);
+			await ensureInstalledConfigs(ctx, installNames, true);
+			for (const [name, item] of Object.entries(bundleRemovals)) {
+				if (!item.cleanup) continue;
+				await send("market/remove-bundle-configs", {
+					package: name,
+					members: item.configs,
+					removeEmptyGroup: true,
+				});
+			}
+			if (removeConfig.value) {
+				for (const name of removed) {
+					if (bundlePackages.has(name) || bundleMembers.has(name)) continue;
+					getConfigWriter(ctx)?.remove(name);
+				}
+			}
+			for (const name of removed) {
+				delete getWritableBundleRecords(config.value)[name];
+				delete pendingBundleUninstalls.value[name];
+			}
+			for (const key of Object.keys(getPendingOverrides()))
+				delete getPendingOverrides()[key];
+			const saved = await patchMarketNextData({
+				override: {},
+				bundleRecords: getWritableBundleRecords(config.value),
+			});
+			if (!saved) message.warning(t("operations.confirm.saveBundleFailed"));
+		},
+		undefined,
+		selfUpdate
+			? {
+					loadingText: t("operations.progress.selfUpdateTitle"),
+					successText: t("operations.progress.selfSubmittedSuccess"),
+					errorText: t("operations.progress.errorSelf"),
+					timeoutText: t("operations.progress.installTimeout"),
+					selfUpdate: true,
+				}
+			: undefined,
+	);
 }
-
 </script>
 
 <style lang="scss" src="./index.scss"></style>

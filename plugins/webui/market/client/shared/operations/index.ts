@@ -6,34 +6,38 @@
  * ('../shared/operations')与符号名不变。
  */
 
-export { install, applyEnvironmentSnapshot } from './install'
+export { install, applyEnvironmentSnapshot } from "./install";
 export {
-  prepareInstallFallbackRetry,
-  resetInstallFallbackState,
-  installProgressState,
-} from './progress'
-export type { LogLine, InstallOptions } from './progress'
-export { ensureInstalledConfig, ensureInstalledConfigs } from './ensure'
-export { analyzeVersions, getRegistryStatus, getRegistryStatusText } from './analyze'
-export type { PeerInfo, ResultType } from './analyze'
+	prepareInstallFallbackRetry,
+	resetInstallFallbackState,
+	installProgressState,
+} from "./progress";
+export type { LogLine, InstallOptions } from "./progress";
+export { ensureInstalledConfig, ensureInstalledConfigs } from "./ensure";
 export {
-  createLocalBundleRecord,
-  fetchBundleRecord,
-  getBundleMemberConfigState,
-  resolveBundlePackageFromGroup,
-  resolveBundleRecordFromGroup,
-} from './bundle'
-export type { BundleRecordView } from './bundle'
+	analyzeVersions,
+	getRegistryStatus,
+	getRegistryStatusText,
+} from "./analyze";
+export type { PeerInfo, ResultType } from "./analyze";
 export {
-  activeBundle,
-  addManual,
-  expandedDependency,
-  getConfigWriter,
-  MARKET_NEXT_PACKAGE,
-  pendingBundleUninstalls,
-  showConfirm,
-  showEnvironmentVersions,
-  showInstallHistory,
-  showManual,
-} from './state'
-export type { BundleMemberCleanupTarget, ClientConfigWriter } from './state'
+	createLocalBundleRecord,
+	fetchBundleRecord,
+	getBundleMemberConfigState,
+	resolveBundlePackageFromGroup,
+	resolveBundleRecordFromGroup,
+} from "./bundle";
+export type { BundleRecordView } from "./bundle";
+export {
+	activeBundle,
+	addManual,
+	expandedDependency,
+	getConfigWriter,
+	MARKET_NEXT_PACKAGE,
+	pendingBundleUninstalls,
+	showConfirm,
+	showEnvironmentVersions,
+	showInstallHistory,
+	showManual,
+} from "./state";
+export type { BundleMemberCleanupTarget, ClientConfigWriter } from "./state";

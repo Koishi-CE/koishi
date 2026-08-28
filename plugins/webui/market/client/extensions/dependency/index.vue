@@ -34,31 +34,37 @@
  * (loadMarketServiceProviders 按服务名增量查询)。由 extensions/index.ts 注册。
  */
 
-import { Dict, store } from '@koishi-ce/client'
-import { computed, inject, ComputedRef, watch } from 'vue'
-import { EnvInfo } from '@koishi-ce/plugin-config/client'
-import KDepLink from '../dep-link/index.vue'
-import { useMarketNextI18n } from '../../shared/i18n'
-import { getMarketServiceProviders, loadMarketServiceProviders } from '../../market/state'
+import { Dict, store } from "@koishi-ce/client";
+import { computed, inject, ComputedRef, watch } from "vue";
+import { EnvInfo } from "@koishi-ce/plugin-config/client";
+import KDepLink from "../dep-link/index.vue";
+import { useMarketNextI18n } from "../../shared/i18n";
+import {
+	getMarketServiceProviders,
+	loadMarketServiceProviders,
+} from "../../market/state";
 
 /** config 插件注入的插件环境信息(peer 依赖 + using 服务)。 */
-const env = inject<ComputedRef<EnvInfo>>('plugin:env')
-const { t } = useMarketNextI18n()
+const env = inject<ComputedRef<EnvInfo>>("plugin:env");
+const { t } = useMarketNextI18n();
 
 /** using 的服务名变化时按需拉取市场里实现该服务的插件列表。 */
-watch(() => Object.keys(env.value?.using ?? {}), (services) => {
-  void loadMarketServiceProviders(services).catch(error => {
-    console.error('[market-next] failed to load service providers', error)
-  })
-}, { immediate: true })
+watch(
+	() => Object.keys(env.value?.using ?? {}),
+	(services) => {
+		void loadMarketServiceProviders(services).catch((error) => {
+			console.error("[market-next] failed to load service providers", error);
+		});
+	},
+	{ immediate: true },
+);
 
 /** 每个未加载服务在市场里的提供者候选包名列表。 */
 const available = computed(() => {
-  const available: Dict<string[]> = {}
-  for (const name in env.value.using) {
-    available[name] = getMarketServiceProviders(name)
-  }
-  return available
-})
-
+	const available: Dict<string[]> = {};
+	for (const name in env.value.using) {
+		available[name] = getMarketServiceProviders(name);
+	}
+	return available;
+});
 </script>

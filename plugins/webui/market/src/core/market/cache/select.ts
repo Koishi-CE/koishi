@@ -11,7 +11,10 @@
  */
 import type { Dict } from "@koishi-ce/koishi";
 import { DAY, HOUR } from "../../utils/time.js";
-import { type MarketScoreContext, marketRouteScore } from "../source/endpoints.js";
+import {
+	type MarketScoreContext,
+	marketRouteScore,
+} from "../source/endpoints.js";
 import type { CacheEntry } from "../types.js";
 
 /** 最多保留的缓存条目数(多端点备份,超出按评分淘汰)。 */
@@ -23,28 +26,35 @@ const CACHE_ENTRY_TTL = 30 * DAY;
  * 缓存条目评分:路由评分打底,按新鲜度加减分(半天内 +3、3 天内 +1、
  * 更旧 -1),用户配置的首选端点再 +0.5。分高者优先进回放/保留名单。
  */
-export function cacheEntryScore(cache: CacheEntry, context: MarketScoreContext) {
-    const age = Number.isFinite(cache.fetchedAt)
-        ? Date.now() - cache.fetchedAt
-        : Number.POSITIVE_INFINITY;
-    let score = marketRouteScore(cache.endpoint, context);
-    if (age <= 12 * HOUR) score += 3;
-    else if (age <= 3 * DAY) score += 1;
-    else score -= 1;
-    if (cache.endpoint === context.config.endpoint) score += 0.5;
-    return score;
+export function cacheEntryScore(
+	cache: CacheEntry,
+	context: MarketScoreContext,
+) {
+	const age = Number.isFinite(cache.fetchedAt)
+		? Date.now() - cache.fetchedAt
+		: Number.POSITIVE_INFINITY;
+	let score = marketRouteScore(cache.endpoint, context);
+	if (age <= 12 * HOUR) score += 3;
+	else if (age <= 3 * DAY) score += 1;
+	else score -= 1;
+	if (cache.endpoint === context.config.endpoint) score += 0.5;
+	return score;
 }
 
 /** 排序比较器:缓存评分降序,并列取更新鲜。 */
-function compareByScoreFreshness(a: CacheEntry, b: CacheEntry, context: MarketScoreContext) {
-    const delta = cacheEntryScore(b, context) - cacheEntryScore(a, context);
-    if (delta) return delta;
-    return b.fetchedAt - a.fetchedAt;
+function compareByScoreFreshness(
+	a: CacheEntry,
+	b: CacheEntry,
+	context: MarketScoreContext,
+) {
+	const delta = cacheEntryScore(b, context) - cacheEntryScore(a, context);
+	if (delta) return delta;
+	return b.fetchedAt - a.fetchedAt;
 }
 
 /** 条目是否带可加载的索引引用(内存内联或拆分文件二选一)。 */
 function hasIndexRef(entry: CacheEntry | undefined): entry is CacheEntry {
-    return !!entry && (Array.isArray(entry.result?.objects) || !!entry.file);
+	return !!entry && (Array.isArray(entry.result?.objects) || !!entry.file);
 }
 
 /**
@@ -52,15 +62,15 @@ function hasIndexRef(entry: CacheEntry | undefined): entry is CacheEntry {
  * 并列取更新鲜"排序;主端点由调用方优先单独尝试。
  */
 export function buildCacheCandidates(
-    endpoints: string[],
-    entries: Dict<CacheEntry>,
-    context: MarketScoreContext,
+	endpoints: string[],
+	entries: Dict<CacheEntry>,
+	context: MarketScoreContext,
 ) {
-    return endpoints
-        .slice(1)
-        .map((endpoint) => entries[endpoint])
-        .filter(hasIndexRef)
-        .sort((a, b) => compareByScoreFreshness(a, b, context));
+	return endpoints
+		.slice(1)
+		.map((endpoint) => entries[endpoint])
+		.filter(hasIndexRef)
+		.sort((a, b) => compareByScoreFreshness(a, b, context));
 }
 
 /**
@@ -69,23 +79,23 @@ export function buildCacheCandidates(
  * 截取 MAX_CACHE_ENTRIES 条返回新的 entries 字典。
  */
 export function pruneCacheEntries(
-    entries: Dict<CacheEntry>,
-    lastUsed: string,
-    context: MarketScoreContext,
+	entries: Dict<CacheEntry>,
+	lastUsed: string,
+	context: MarketScoreContext,
 ): Dict<CacheEntry> {
-    const preferred = context.config.endpoint;
-    const kept = Object.values(entries)
-        .filter(
-            (entry): entry is CacheEntry =>
-                hasIndexRef(entry) && Date.now() - entry.fetchedAt <= CACHE_ENTRY_TTL,
-        )
-        .sort((a, b) => {
-            if (a.endpoint === lastUsed) return -1;
-            if (b.endpoint === lastUsed) return 1;
-            if (a.endpoint === preferred) return -1;
-            if (b.endpoint === preferred) return 1;
-            return compareByScoreFreshness(a, b, context);
-        })
-        .slice(0, MAX_CACHE_ENTRIES);
-    return Object.fromEntries(kept.map((entry) => [entry.endpoint, entry]));
+	const preferred = context.config.endpoint;
+	const kept = Object.values(entries)
+		.filter(
+			(entry): entry is CacheEntry =>
+				hasIndexRef(entry) && Date.now() - entry.fetchedAt <= CACHE_ENTRY_TTL,
+		)
+		.sort((a, b) => {
+			if (a.endpoint === lastUsed) return -1;
+			if (b.endpoint === lastUsed) return 1;
+			if (a.endpoint === preferred) return -1;
+			if (b.endpoint === preferred) return 1;
+			return compareByScoreFreshness(a, b, context);
+		})
+		.slice(0, MAX_CACHE_ENTRIES);
+	return Object.fromEntries(kept.map((entry) => [entry.endpoint, entry]));
 }

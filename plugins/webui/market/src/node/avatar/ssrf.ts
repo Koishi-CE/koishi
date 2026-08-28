@@ -25,43 +25,45 @@ import isPrivateIp from "private-ip";
 const AVATAR_BLOCKED_HOSTS = new Set(["localhost", "localhost.localdomain"]);
 /** 可信白名单:头像的主要来源站,免 DNS 解析直接放行。 */
 const AVATAR_ALLOWED_HOSTS = new Set([
-    "www.npmjs.com",
-    "npmjs.com",
-    "s.gravatar.com",
-    "gravatar.com",
-    "www.gravatar.com",
-    "cravatar.cn",
-    "www.cravatar.cn",
+	"www.npmjs.com",
+	"npmjs.com",
+	"s.gravatar.com",
+	"gravatar.com",
+	"www.gravatar.com",
+	"cravatar.cn",
+	"www.cravatar.cn",
 ]);
 /** gravatar ?d=/default= 支持的占位图模式名(default/mp/identicon 等)。 */
 const AVATAR_DEFAULT_HINTS = new Set([
-    "default",
-    "mp",
-    "identicon",
-    "monsterid",
-    "wavatar",
-    "retro",
-    "robohash",
-    "blank",
+	"default",
+	"mp",
+	"identicon",
+	"monsterid",
+	"wavatar",
+	"retro",
+	"robohash",
+	"blank",
 ]);
 
 /** SSRF 防护：解析目标域名并做私网/被屏蔽主机判定。 */
 export async function isBlockedAvatarTarget(url: URL) {
-    const hostname = normalizeAvatarHostname(url.hostname);
-    // 空 hostname(如 malformed URL)直接拦截
-    if (!hostname || AVATAR_BLOCKED_HOSTS.has(hostname)) return true;
-    if (isAllowedAvatarHost(hostname)) return false;
-    const directIp = isIP(hostname);
-    if (directIp) return isPrivateAddress(hostname, directIp);
-    try {
-        // 字面是域名时必须 lookup 后逐地址判定:域名可指向私网 IP
-        const records = await lookup(hostname, { all: true, verbatim: false });
-        if (!records.length) return true;
-        return records.some((record) => isPrivateAddress(record.address, record.family));
-    } catch {
-        // DNS 解析失败按拦截处理(fail-closed)
-        return true;
-    }
+	const hostname = normalizeAvatarHostname(url.hostname);
+	// 空 hostname(如 malformed URL)直接拦截
+	if (!hostname || AVATAR_BLOCKED_HOSTS.has(hostname)) return true;
+	if (isAllowedAvatarHost(hostname)) return false;
+	const directIp = isIP(hostname);
+	if (directIp) return isPrivateAddress(hostname, directIp);
+	try {
+		// 字面是域名时必须 lookup 后逐地址判定:域名可指向私网 IP
+		const records = await lookup(hostname, { all: true, verbatim: false });
+		if (!records.length) return true;
+		return records.some((record) =>
+			isPrivateAddress(record.address, record.family),
+		);
+	} catch {
+		// DNS 解析失败按拦截处理(fail-closed)
+		return true;
+	}
 }
 
 /**
@@ -71,52 +73,57 @@ export async function isBlockedAvatarTarget(url: URL) {
  */
 /** 判断某个头像 URL 是否为 gravatar 默认占位图（命中后磁盘缓存不落盘）。 */
 export function isAvatarCacheLikelyDefault(url: string, key: string) {
-    try {
-        const parsed = new URL(url);
-        const hostname = normalizeAvatarHostname(parsed.hostname);
-        const isGravatarHost = [
-            "cravatar.cn",
-            "www.cravatar.cn",
-            "s.gravatar.com",
-            "gravatar.com",
-            "www.gravatar.com",
-        ].includes(hostname);
-        if (!isGravatarHost) return false;
-        if (getAvatarDefaultMode(parsed)) return true;
-        if (!key.startsWith("gravatar:")) return false;
-        const mode = (parsed.searchParams.get("d") || parsed.searchParams.get("default") || "")
-            .trim()
-            .toLowerCase();
-        return mode !== "404";
-    } catch {
-        return false;
-    }
+	try {
+		const parsed = new URL(url);
+		const hostname = normalizeAvatarHostname(parsed.hostname);
+		const isGravatarHost = [
+			"cravatar.cn",
+			"www.cravatar.cn",
+			"s.gravatar.com",
+			"gravatar.com",
+			"www.gravatar.com",
+		].includes(hostname);
+		if (!isGravatarHost) return false;
+		if (getAvatarDefaultMode(parsed)) return true;
+		if (!key.startsWith("gravatar:")) return false;
+		const mode = (
+			parsed.searchParams.get("d") ||
+			parsed.searchParams.get("default") ||
+			""
+		)
+			.trim()
+			.toLowerCase();
+		return mode !== "404";
+	} catch {
+		return false;
+	}
 }
 
 /** 依据响应头 avatar-from 判定是否为 gravatar 默认占位图(default/mp)。 */
 export function isAvatarDefaultResponse(headers: Headers) {
-    const from = headers.get("avatar-from")?.trim().toLowerCase();
-    return from === "default" || from === "mp";
+	const from = headers.get("avatar-from")?.trim().toLowerCase();
+	return from === "default" || from === "mp";
 }
 
 /** hostname 是否在可信白名单内。 */
 function isAllowedAvatarHost(hostname: string) {
-    return AVATAR_ALLOWED_HOSTS.has(hostname);
+	return AVATAR_ALLOWED_HOSTS.has(hostname);
 }
 
 /** 归一化 hostname:小写、剥 IPv6 方括号、去尾部点(FQDN 尾点)。 */
 function normalizeAvatarHostname(hostname: string) {
-    return hostname
-        .toLowerCase()
-        .replace(/^\[(.*)\]$/, "$1")
-        .replace(/\.$/, "");
+	return hostname
+		.toLowerCase()
+		.replace(/^\[(.*)\]$/, "$1")
+		.replace(/\.$/, "");
 }
 
 /** 取 URL 的 ?d= / ?default= 占位模式名:非空且在已知模式集合内才返回。 */
 function getAvatarDefaultMode(url: URL) {
-    const value = url.searchParams.get("d") || url.searchParams.get("default") || "";
-    const normalized = value.trim().toLowerCase();
-    return normalized && AVATAR_DEFAULT_HINTS.has(normalized) ? normalized : "";
+	const value =
+		url.searchParams.get("d") || url.searchParams.get("default") || "";
+	const normalized = value.trim().toLowerCase();
+	return normalized && AVATAR_DEFAULT_HINTS.has(normalized) ? normalized : "";
 }
 
 /**
@@ -127,11 +134,12 @@ function getAvatarDefaultMode(url: URL) {
  * IPv4-mapped IPv6 整段拦截、IPv4 组播段(224-239)拦截。
  */
 function isPrivateAddress(address: string, family = isIP(address)) {
-    if (family !== 4 && family !== 6) return true;
-    if (family === 6 && isIpv4Mapped(address)) return true;
-    if (family === 4 && Number.parseInt(address.split(".")[0]!, 10) >= 224) return true;
-    // private-ip 对无法解析的输入返回 undefined,按拦截处理(fail-closed)
-    return isPrivateIp(address) !== false;
+	if (family !== 4 && family !== 6) return true;
+	if (family === 6 && isIpv4Mapped(address)) return true;
+	if (family === 4 && Number.parseInt(address.split(".")[0]!, 10) >= 224)
+		return true;
+	// private-ip 对无法解析的输入返回 undefined,按拦截处理(fail-closed)
+	return isPrivateIp(address) !== false;
 }
 
 /**
@@ -141,6 +149,6 @@ function isPrivateAddress(address: string, family = isIP(address)) {
  * 两个前缀即可全覆盖,无需完整解析。
  */
 function isIpv4Mapped(address: string) {
-    const value = address.toLowerCase();
-    return value.startsWith("::ffff:") || value.startsWith("0:0:0:0:0:ffff:");
+	const value = address.toLowerCase();
+	return value.startsWith("::ffff:") || value.startsWith("0:0:0:0:0:ffff:");
 }

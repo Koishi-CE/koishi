@@ -14,10 +14,10 @@ import type { InstallLogger } from "../../core/install/types.js";
 
 /** koishi Logger -> core InstallLogger 的窄接口适配(core 不 import koishi)。 */
 export function createInstallLogger(logger: Logger): InstallLogger {
-    return {
-        debug: (message) => logger.debug(message),
-        info: (message) => logger.info(message),
-        warn: (message) => logger.warn(message),
-        error: (message) => logger.error(message),
-    };
+	return {
+		debug: (message) => logger.debug(message),
+		info: (message) => logger.info(message),
+		warn: (message) => logger.warn(message),
+		error: (message) => logger.error(message),
+	};
 }

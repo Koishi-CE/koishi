@@ -10,18 +10,18 @@ import { formatBytes, formatTime, formatTimings } from "../utils/format.js";
 
 /** 把性能快照格式化为单行日志串：size/wireSize 走 formatBytes，时间戳走 formatTime。 */
 export function formatSnapshot(snapshot: MarketPerformanceSnapshot = {}) {
-    return [
-        `source=${snapshot.source ?? "unknown"}`,
-        `endpoint=${snapshot.endpoint ?? "unknown"}`,
-        `preferred=${snapshot.preferredEndpoint ?? "-"}`,
-        `fallback=${snapshot.fallbackReason ?? "-"}`,
-        `candidates=${snapshot.candidates ?? "-"}`,
-        `objects=${snapshot.objects ?? "-"}`,
-        `size=${formatBytes(snapshot.size)}`,
-        `wireSize=${formatBytes(snapshot.wireSize)}`,
-        `encoding=${snapshot.contentEncoding ?? "identity"}`,
-        `cachedAt=${formatTime(snapshot.cachedAt)}`,
-        `validatedAt=${formatTime(snapshot.validatedAt)}`,
-        `timings=${formatTimings(snapshot.timings) || "-"}`,
-    ].join(", ");
+	return [
+		`source=${snapshot.source ?? "unknown"}`,
+		`endpoint=${snapshot.endpoint ?? "unknown"}`,
+		`preferred=${snapshot.preferredEndpoint ?? "-"}`,
+		`fallback=${snapshot.fallbackReason ?? "-"}`,
+		`candidates=${snapshot.candidates ?? "-"}`,
+		`objects=${snapshot.objects ?? "-"}`,
+		`size=${formatBytes(snapshot.size)}`,
+		`wireSize=${formatBytes(snapshot.wireSize)}`,
+		`encoding=${snapshot.contentEncoding ?? "identity"}`,
+		`cachedAt=${formatTime(snapshot.cachedAt)}`,
+		`validatedAt=${formatTime(snapshot.validatedAt)}`,
+		`timings=${formatTimings(snapshot.timings) || "-"}`,
+	].join(", ");
 }

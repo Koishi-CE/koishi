@@ -344,58 +344,76 @@
  * use-bundle-diff,安装执行在 use-bundle-install,展示辅助在 bundle-format。
  */
 
-import { computed } from 'vue'
-import { store, useConfig } from '@koishi-ce/client'
-import { activeBundle } from '../../shared/operations'
-import { formatShortname } from '../../market/utils'
-import MarketIcon from '../../market/icons'
-import { useI18nText } from '@koishi-ce/client'
-import { useMarketNextI18n } from '../../shared/i18n'
+import { computed } from "vue";
+import { store, useConfig } from "@koishi-ce/client";
+import { activeBundle } from "../../shared/operations";
+import { formatShortname } from "../../market/utils";
+import MarketIcon from "../../market/icons";
+import { useI18nText } from "@koishi-ce/client";
+import { useMarketNextI18n } from "../../shared/i18n";
 import {
-  formatConfig,
-  getInstalledText as installedStatusText,
-  getPackageDescription as pickDescription,
-  hasPreset,
-  memberCategory,
-  riskTags as collectRiskTags,
-  sensitiveFields,
-} from './bundle-format'
-import { useBundleMembers } from './use-bundle-members'
-import { useBundleDiff } from './use-bundle-diff'
-import { useBundleInstall } from './use-bundle-install'
+	formatConfig,
+	getInstalledText as installedStatusText,
+	getPackageDescription as pickDescription,
+	hasPreset,
+	memberCategory,
+	riskTags as collectRiskTags,
+	sensitiveFields,
+} from "./bundle-format";
+import { useBundleMembers } from "./use-bundle-members";
+import { useBundleDiff } from "./use-bundle-diff";
+import { useBundleInstall } from "./use-bundle-install";
 
-const config = useConfig()
-const { t } = useMarketNextI18n()
-const tt = useI18nText()
+const config = useConfig();
+const { t } = useMarketNextI18n();
+const tt = useI18nText();
 
-const membersState = useBundleMembers(t)
-const diffState = useBundleDiff(membersState, t)
-const installState = useBundleInstall(membersState, diffState, t)
+const membersState = useBundleMembers(t);
+const diffState = useBundleDiff(membersState, t);
+const installState = useBundleInstall(membersState, diffState, t);
 
 // 模板按名消费,此处平铺解构(script setup 的绑定要求)
 const {
-  loading, error, bundle, members, memberJsonErrors,
-  selectedMembers, requiredMembers, optionalMembers, allOptionalSelected,
-  getMemberKey, onJsonInput, toggleMember, toggleAllOptional,
-  batchSetCreateConfig, batchSetUsePreset,
-} = membersState
+	loading,
+	error,
+	bundle,
+	members,
+	memberJsonErrors,
+	selectedMembers,
+	requiredMembers,
+	optionalMembers,
+	allOptionalSelected,
+	getMemberKey,
+	onJsonInput,
+	toggleMember,
+	toggleAllOptional,
+	batchSetCreateConfig,
+	batchSetUsePreset,
+} = membersState;
 const {
-  title, bundleVersion, validationErrors, validationWarnings, progressPercent,
-  installList, configList, moveList, presetList, skippedConfigList,
-} = diffState
-const { installing, canInstall, close, confirmInstall } = installState
+	title,
+	bundleVersion,
+	validationErrors,
+	validationWarnings,
+	progressPercent,
+	installList,
+	configList,
+	moveList,
+	presetList,
+	skippedConfigList,
+} = diffState;
+const { installing, canInstall, close, confirmInstall } = installState;
 
 /** 展示辅助桥:把 tt/t 注入纯函数,保持模板调用名不变。 */
 function getPackageDescription(name: string) {
-  return pickDescription(name, tt)
+	return pickDescription(name, tt);
 }
 function getInstalledText(name: string) {
-  return installedStatusText(name, t)
+	return installedStatusText(name, t);
 }
 function riskTags(member: any) {
-  return collectRiskTags(member, t)
+	return collectRiskTags(member, t);
 }
-
 </script>
 
 <style lang="scss" src="./index.scss"></style>

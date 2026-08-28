@@ -5,21 +5,21 @@
 
 /** 睡眠指定毫秒数:退避、轮询间隔等场景的 Promise 化 setTimeout。 */
 export function sleep(ms: number) {
-    return new Promise<void>((resolve) => setTimeout(resolve, ms));
+	return new Promise<void>((resolve) => setTimeout(resolve, ms));
 }
 
 /** 等待一个任务至多 timeout 毫秒，超时返回 false（不拒绝）。 */
 export async function waitFor(task: Promise<unknown>, timeout: number) {
-    let timer: ReturnType<typeof setTimeout> | undefined;
-    try {
-        return await Promise.race([
-            task.then(() => true),
-            new Promise<boolean>((resolve) => {
-                timer = setTimeout(() => resolve(false), timeout);
-            }),
-        ]);
-    } finally {
-        // 无论胜负都要清掉定时器,避免超时分支的 timer 泄漏
-        clearTimeout(timer);
-    }
+	let timer: ReturnType<typeof setTimeout> | undefined;
+	try {
+		return await Promise.race([
+			task.then(() => true),
+			new Promise<boolean>((resolve) => {
+				timer = setTimeout(() => resolve(false), timeout);
+			}),
+		]);
+	} finally {
+		// 无论胜负都要清掉定时器,避免超时分支的 timer 泄漏
+		clearTimeout(timer);
+	}
 }

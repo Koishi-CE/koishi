@@ -5,12 +5,12 @@
 		"paths": {
 			"@koishi-ce/client": ["../../../../packages/web/client/client"],
 			"@koishi-ce/registry": ["../../../../apps/registry/src"],
-			"@koishi-ce/plugin-config/client": ["../../../../plugins/webui/config/client"],
+			"@koishi-ce/plugin-config/client": [
+				"../../../../plugins/webui/config/client"
+			],
 			"@koishi-ce/plugin-marketn": ["../src"],
 			"@koishi-ce/plugin-marketn/shared": ["../src/shared"]
 		}
 	},
-	"include": [
-		"."
-	]
+	"include": ["."]
 }

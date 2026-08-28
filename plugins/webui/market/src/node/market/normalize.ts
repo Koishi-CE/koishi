@@ -11,22 +11,22 @@ import type { MarketDataStorePayload } from "./data-store.js";
 
 /** 防御性归一化文件内容:非对象或缺字段一律回退空 dict,损坏数据不进内存。 */
 export function normalizeStore(value: unknown): MarketDataStorePayload {
-    const record = isRecord(value) ? value : {};
-    return {
-        override: normalizeDict(record["override"]),
-        updateIgnored: normalizeDict(record["updateIgnored"]),
-        bundleRecords: normalizeDict(record["bundleRecords"]),
-        collapsedGroups: normalizeDict<boolean>(record["collapsedGroups"]),
-    };
+	const record = isRecord(value) ? value : {};
+	return {
+		override: normalizeDict(record["override"]),
+		updateIgnored: normalizeDict(record["updateIgnored"]),
+		bundleRecords: normalizeDict(record["bundleRecords"]),
+		collapsedGroups: normalizeDict<boolean>(record["collapsedGroups"]),
+	};
 }
 
 /** dict 归一化:非对象回退空 dict,对象则浅拷贝(与外部引用脱钩)。 */
 export function normalizeDict<T = unknown>(value: unknown): Dict<T> {
-    if (!isRecord(value)) return {};
-    return { ...(value as Dict<T>) };
+	if (!isRecord(value)) return {};
+	return { ...(value as Dict<T>) };
 }
 
 /** 纯对象判定(null、数组都排除)。 */
 export function isRecord(value: unknown): value is Record<string, unknown> {
-    return !!value && typeof value === "object" && !Array.isArray(value);
+	return !!value && typeof value === "object" && !Array.isArray(value);
 }

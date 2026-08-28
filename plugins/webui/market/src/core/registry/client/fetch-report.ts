@@ -14,24 +14,24 @@ import type { RegistryFetchHost } from "./fetch.js";
 
 /** 上报 loading 状态。 */
 export function reportLoadingStatus(
-    name: string,
-    endpoint: string,
-    attempts: number,
-    serial: number,
-    host: RegistryFetchHost,
+	name: string,
+	endpoint: string,
+	attempts: number,
+	serial: number,
+	host: RegistryFetchHost,
 ) {
-    host.statusSink(
-        name,
-        {
-            loading: true,
-            error: undefined,
-            reason: undefined,
-            endpoint,
-            attempts,
-            elapsed: undefined,
-        },
-        serial,
-    );
+	host.statusSink(
+		name,
+		{
+			loading: true,
+			error: undefined,
+			reason: undefined,
+			endpoint,
+			attempts,
+			elapsed: undefined,
+		},
+		serial,
+	);
 }
 
 /**
@@ -40,37 +40,39 @@ export function reportLoadingStatus(
  * 读取而不用改异常类型。
  */
 export function reportFetchFailure(
-    name: string,
-    lastError: unknown,
-    failureReasons: RegistryReason[],
-    lastEndpoint: string,
-    attempts: number,
-    start: number,
-    host: RegistryFetchHost,
+	name: string,
+	lastError: unknown,
+	failureReasons: RegistryReason[],
+	lastEndpoint: string,
+	attempts: number,
+	start: number,
+	host: RegistryFetchHost,
 ) {
-    const detail = host.formatError(lastError);
-    const finalDetail = mergeFailureDetail(detail, failureReasons);
-    host.statusSink(
-        name,
-        {
-            loading: false,
-            reason: finalDetail.reason,
-            error: finalDetail.error,
-            endpoint: lastEndpoint,
-            attempts,
-            elapsed: Date.now() - start,
-        },
-        host.scope.current,
-    );
-    host.log.warn(`failed to fetch registry metadata for ${name}: ${detail.error}`);
-    if (lastError && typeof lastError === "object") {
-        Object.defineProperty(lastError, "marketNextReason", {
-            value: finalDetail.reason,
-            configurable: true,
-        });
-        Object.defineProperty(lastError, "marketNextReasons", {
-            value: failureReasons,
-            configurable: true,
-        });
-    }
+	const detail = host.formatError(lastError);
+	const finalDetail = mergeFailureDetail(detail, failureReasons);
+	host.statusSink(
+		name,
+		{
+			loading: false,
+			reason: finalDetail.reason,
+			error: finalDetail.error,
+			endpoint: lastEndpoint,
+			attempts,
+			elapsed: Date.now() - start,
+		},
+		host.scope.current,
+	);
+	host.log.warn(
+		`failed to fetch registry metadata for ${name}: ${detail.error}`,
+	);
+	if (lastError && typeof lastError === "object") {
+		Object.defineProperty(lastError, "marketNextReason", {
+			value: finalDetail.reason,
+			configurable: true,
+		});
+		Object.defineProperty(lastError, "marketNextReasons", {
+			value: failureReasons,
+			configurable: true,
+		});
+	}
 }

@@ -51,21 +51,27 @@
  * 父组件通过 ref 调用 open() 打开(打开时按当前策略初始化预设)。
  */
 
-import { useMarketNextI18n } from '../../shared/i18n'
-import { useIgnoreUpdate, type IgnoreUpdateTarget } from './use-ignore-update'
+import { useMarketNextI18n } from "../../shared/i18n";
+import { useIgnoreUpdate, type IgnoreUpdateTarget } from "./use-ignore-update";
 
 const props = defineProps<{
-  displayName: string
-  latestVersion?: string
-  target: IgnoreUpdateTarget
-  config: { value: unknown }
-}>()
+	displayName: string;
+	latestVersion?: string;
+	target: IgnoreUpdateTarget;
+	config: { value: unknown };
+}>();
 
-const { t } = useMarketNextI18n()
+const { t } = useMarketNextI18n();
 const {
-  showIgnoreDialog, ignoreDurationPreset, ignoreCustomDays, ignoreCount,
-  ignorePackagePermanently, ignoreSaving, openIgnoreDialog, confirmIgnoreUpdate,
-} = useIgnoreUpdate(props.target, props.config, t)
+	showIgnoreDialog,
+	ignoreDurationPreset,
+	ignoreCustomDays,
+	ignoreCount,
+	ignorePackagePermanently,
+	ignoreSaving,
+	openIgnoreDialog,
+	confirmIgnoreUpdate,
+} = useIgnoreUpdate(props.target, props.config, t);
 
-defineExpose({ open: openIgnoreDialog })
+defineExpose({ open: openIgnoreDialog });
 </script>

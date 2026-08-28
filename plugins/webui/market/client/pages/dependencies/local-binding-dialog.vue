@@ -24,16 +24,21 @@
  * 父组件通过 ref 调用 open() 打开。
  */
 
-import { useMarketNextI18n } from '../../shared/i18n'
-import { useLocalBinding } from './use-local-binding'
+import { useMarketNextI18n } from "../../shared/i18n";
+import { useLocalBinding } from "./use-local-binding";
 
 const props = defineProps<{
-  name: string
-  displayName: string
-}>()
+	name: string;
+	displayName: string;
+}>();
 
-const { t } = useMarketNextI18n()
-const { showLocalBindingDialog, bindingLocal, openLocalBinding, confirmLocalBinding } = useLocalBinding(props.name, t)
+const { t } = useMarketNextI18n();
+const {
+	showLocalBindingDialog,
+	bindingLocal,
+	openLocalBinding,
+	confirmLocalBinding,
+} = useLocalBinding(props.name, t);
 
-defineExpose({ open: openLocalBinding })
+defineExpose({ open: openLocalBinding });
 </script>

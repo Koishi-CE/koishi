@@ -14,21 +14,23 @@ import type { InstallHistoryChange } from "../types.js";
 
 /** 把目标依赖表格式化为 "name@version, ..." 形式(空串版本表示移除)。 */
 export function formatDeps(deps: Dict<string>) {
-    const entries = Object.entries(deps);
-    if (!entries.length) return "(none)";
-    return entries.map(([name, version]) => `${name}@${version || "(remove)"}`).join(", ");
+	const entries = Object.entries(deps);
+	if (!entries.length) return "(none)";
+	return entries
+		.map(([name, version]) => `${name}@${version || "(remove)"}`)
+		.join(", ");
 }
 
 /** 把本地依赖快照格式化为含 request/resolved/source/local 的调试串。 */
 export function formatLocalDeps(deps: Dict<Dependency>) {
-    const entries = Object.entries(deps);
-    if (!entries.length) return "(none)";
-    return entries
-        .map(
-            ([name, dep]) =>
-                `${name}{request=${dep.request || "-"},resolved=${dep.resolved ?? "-"},source=${dep.source ?? "-"},local=${!!dep.local}}`,
-        )
-        .join(", ");
+	const entries = Object.entries(deps);
+	if (!entries.length) return "(none)";
+	return entries
+		.map(
+			([name, dep]) =>
+				`${name}{request=${dep.request || "-"},resolved=${dep.resolved ?? "-"},source=${dep.source ?? "-"},local=${!!dep.local}}`,
+		)
+		.join(", ");
 }
 
 /**
@@ -37,17 +39,17 @@ export function formatLocalDeps(deps: Dict<Dependency>) {
  * 依据最新依赖缓存回填。
  */
 export function createInstallHistoryChanges(
-    before: Dict<string>,
-    after: Dict<string>,
-    localDeps: Dict<Dependency>,
+	before: Dict<string>,
+	after: Dict<string>,
+	localDeps: Dict<Dependency>,
 ): InstallHistoryChange[] {
-    return Object.keys(after).map((name) => ({
-        name,
-        beforeRequest: Object.hasOwn(before, name) ? before[name]! : null,
-        beforeResolved: localDeps[name]?.resolved ?? null,
-        afterRequest: after[name] || null,
-        afterResolved: null,
-    }));
+	return Object.keys(after).map((name) => ({
+		name,
+		beforeRequest: Object.hasOwn(before, name) ? before[name]! : null,
+		beforeResolved: localDeps[name]?.resolved ?? null,
+		afterRequest: after[name] || null,
+		afterResolved: null,
+	}));
 }
 
 /**
@@ -57,33 +59,40 @@ export function createInstallHistoryChanges(
  * 全部满足(含本地依赖天然免装)才允许跳过。
  */
 export function requiresPackageManager(
-    deps: Dict<string>,
-    localDeps: Dict<Dependency>,
-    manifestDeps: Dict<string>,
-    depCache: Dict<Dependency>,
-    forced?: boolean,
+	deps: Dict<string>,
+	localDeps: Dict<Dependency>,
+	manifestDeps: Dict<string>,
+	depCache: Dict<Dependency>,
+	forced?: boolean,
 ) {
-    if (forced) return true;
-    for (const name in deps) {
-        const nextRequest = deps[name];
-        const currentRequest = manifestDeps[name];
-        const currentSource = classifyDependencySource(currentRequest ?? "", {
-            workspace: depCache[name]?.workspace,
-            installed: !!depCache[name]?.resolved,
-        });
-        const nextSource = classifyDependencySource(nextRequest ?? "", {
-            workspace: localDeps[name]?.workspace,
-            installed: !!localDeps[name]?.resolved,
-        });
-        // 空请求 = 移除该依赖,必须交给包管理器处理
-        if (!nextRequest) return true;
-        // 请求串变了且任一侧是本地来源:本地包的增删换不跑 PM 就不会生效
-        if (currentRequest !== nextRequest && (currentSource.local || nextSource.local))
-            return true;
-        const { resolved, local } = localDeps[name] || {};
-        if (local || (resolved && satisfies(resolved, nextRequest, { includePrerelease: true })))
-            continue;
-        return true;
-    }
-    return false;
+	if (forced) return true;
+	for (const name in deps) {
+		const nextRequest = deps[name];
+		const currentRequest = manifestDeps[name];
+		const currentSource = classifyDependencySource(currentRequest ?? "", {
+			workspace: depCache[name]?.workspace,
+			installed: !!depCache[name]?.resolved,
+		});
+		const nextSource = classifyDependencySource(nextRequest ?? "", {
+			workspace: localDeps[name]?.workspace,
+			installed: !!localDeps[name]?.resolved,
+		});
+		// 空请求 = 移除该依赖,必须交给包管理器处理
+		if (!nextRequest) return true;
+		// 请求串变了且任一侧是本地来源:本地包的增删换不跑 PM 就不会生效
+		if (
+			currentRequest !== nextRequest &&
+			(currentSource.local || nextSource.local)
+		)
+			return true;
+		const { resolved, local } = localDeps[name] || {};
+		if (
+			local ||
+			(resolved &&
+				satisfies(resolved, nextRequest, { includePrerelease: true }))
+		)
+			continue;
+		return true;
+	}
+	return false;
 }

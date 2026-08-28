@@ -17,27 +17,27 @@ export const COLLAPSED_GROUPS_VERSION = 1;
 
 /** migrateFromConfig 的 config 入参形态（koishi.yml 里的旧数据）。 */
 export interface MarketMigrationConfig {
-    updateIgnored?: Dict<string | UpdateIgnoreRule>;
-    bundleRecords?: Dict<PluginBundleRecord>;
-    collapsedGroups?: Dict<boolean>;
+	updateIgnored?: Dict<string | UpdateIgnoreRule>;
+	bundleRecords?: Dict<PluginBundleRecord>;
+	collapsedGroups?: Dict<boolean>;
 }
 
 /** 迁移决策所需的文件侧现状（MarketDataStore 私有状态的只读快照）。 */
 export interface MarketMigrationState {
-    updateIgnored: Dict<string | UpdateIgnoreRule>;
-    bundleRecords: Dict<PluginBundleRecord>;
-    collapsedGroups: Dict<boolean>;
-    /** 文件里是否出现过 collapsedGroups 键(区分"没这状态"与"空状态")。 */
-    hasCollapsedGroupsState: boolean;
-    /** collapsedGroups 迁移版本号(见 COLLAPSED_GROUPS_VERSION)。 */
-    collapsedGroupsVersion: number;
+	updateIgnored: Dict<string | UpdateIgnoreRule>;
+	bundleRecords: Dict<PluginBundleRecord>;
+	collapsedGroups: Dict<boolean>;
+	/** 文件里是否出现过 collapsedGroups 键(区分"没这状态"与"空状态")。 */
+	hasCollapsedGroupsState: boolean;
+	/** collapsedGroups 迁移版本号(见 COLLAPSED_GROUPS_VERSION)。 */
+	collapsedGroupsVersion: number;
 }
 
 /** 迁移计算结果:待应用的 patch 与版本号清理信号。 */
 export interface MarketMigrationPlan {
-    patch: Partial<MarketDataStorePayload>;
-    /** 版本号清理执行后的新版本号;版本已达标无需清理时为 undefined。 */
-    migratedVersion: number | undefined;
+	patch: Partial<MarketDataStorePayload>;
+	/** 版本号清理执行后的新版本号;版本已达标无需清理时为 undefined。 */
+	migratedVersion: number | undefined;
 }
 
 /**
@@ -46,35 +46,38 @@ export interface MarketMigrationPlan {
  * 回写状态并在 patch 之后立即落盘,防止清理重复执行）。
  */
 export function buildMigrationPatch(
-    state: MarketMigrationState,
-    config: MarketMigrationConfig,
+	state: MarketMigrationState,
+	config: MarketMigrationConfig,
 ): MarketMigrationPlan {
-    const patch: Partial<MarketDataStorePayload> = {};
-    const migrateCollapsedGroups = state.collapsedGroupsVersion < COLLAPSED_GROUPS_VERSION;
-    if (
-        !Object.keys(state.updateIgnored).length &&
-        Object.keys(config.updateIgnored ?? {}).length
-    ) {
-        patch.updateIgnored = config.updateIgnored ?? {};
-    }
-    if (
-        !Object.keys(state.bundleRecords).length &&
-        Object.keys(config.bundleRecords ?? {}).length
-    ) {
-        patch.bundleRecords = config.bundleRecords ?? {};
-    }
-    if (!state.hasCollapsedGroupsState) {
-        patch.collapsedGroups = config.collapsedGroups ?? {};
-    }
-    if (migrateCollapsedGroups) {
-        const collapsedGroups = normalizeDict<boolean>(
-            patch.collapsedGroups ?? state.collapsedGroups,
-        );
-        delete collapsedGroups["installed"];
-        patch.collapsedGroups = collapsedGroups;
-    }
-    return {
-        patch,
-        migratedVersion: migrateCollapsedGroups ? COLLAPSED_GROUPS_VERSION : undefined,
-    };
+	const patch: Partial<MarketDataStorePayload> = {};
+	const migrateCollapsedGroups =
+		state.collapsedGroupsVersion < COLLAPSED_GROUPS_VERSION;
+	if (
+		!Object.keys(state.updateIgnored).length &&
+		Object.keys(config.updateIgnored ?? {}).length
+	) {
+		patch.updateIgnored = config.updateIgnored ?? {};
+	}
+	if (
+		!Object.keys(state.bundleRecords).length &&
+		Object.keys(config.bundleRecords ?? {}).length
+	) {
+		patch.bundleRecords = config.bundleRecords ?? {};
+	}
+	if (!state.hasCollapsedGroupsState) {
+		patch.collapsedGroups = config.collapsedGroups ?? {};
+	}
+	if (migrateCollapsedGroups) {
+		const collapsedGroups = normalizeDict<boolean>(
+			patch.collapsedGroups ?? state.collapsedGroups,
+		);
+		delete collapsedGroups["installed"];
+		patch.collapsedGroups = collapsedGroups;
+	}
+	return {
+		patch,
+		migratedVersion: migrateCollapsedGroups
+			? COLLAPSED_GROUPS_VERSION
+			: undefined,
+	};
 }

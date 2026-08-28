@@ -17,42 +17,45 @@
  * 面板),查不到给"去市场搜索"链接。由 extensions/index.ts 注册。
  */
 
-import { computed, inject, watch, WritableComputedRef } from 'vue'
-import { useRouter } from 'vue-router'
-import { active } from '../../shared/plugin-config'
-import { useMarketNextI18n } from '../../shared/i18n'
-import { getMarketObject, loadMarketObjects } from '../../market/state'
+import { computed, inject, watch, WritableComputedRef } from "vue";
+import { useRouter } from "vue-router";
+import { active } from "../../shared/plugin-config";
+import { useMarketNextI18n } from "../../shared/i18n";
+import { getMarketObject, loadMarketObjects } from "../../market/state";
 
-const router = useRouter()
-const { t } = useMarketNextI18n()
+const router = useRouter();
+const { t } = useMarketNextI18n();
 
 /** config 插件注入的"当前正在查看的插件设置节点"。 */
-const current = inject<WritableComputedRef<any>>('manager.settings.current')
+const current = inject<WritableComputedRef<any>>("manager.settings.current");
 
 /** 由插件短名猜完整包名候选:scoped 名补 koishi-plugin 段;普通名拼官方/常规两种前缀。 */
 function getCandidates(name: string) {
-  return name.startsWith('@')
-    ? [name.replace(/\//, '/koishi-plugin-')]
-    : [`@koishijs/plugin-${name}`, `koishi-plugin-${name}`]
+	return name.startsWith("@")
+		? [name.replace(/\//, "/koishi-plugin-")]
+		: [`@koishijs/plugin-${name}`, `koishi-plugin-${name}`];
 }
 
 /** 市场里能查到的第一个候选包名(查不到为 undefined,模板据此切换两种链接)。 */
 const fullname = computed(() => {
-  const { name } = current.value
-  return getCandidates(name).find(name => !!getMarketObject(name))
-})
+	const { name } = current.value;
+	return getCandidates(name).find((name) => !!getMarketObject(name));
+});
 
 /** 切换目标插件时按候选包名增量拉取市场元数据。 */
-watch(() => current.value?.name, (name) => {
-  if (!name) return
-  void loadMarketObjects(getCandidates(name)).catch(error => {
-    console.error('[market-next] failed to resolve missing plugin', error)
-  })
-}, { immediate: true })
+watch(
+	() => current.value?.name,
+	(name) => {
+		if (!name) return;
+		void loadMarketObjects(getCandidates(name)).catch((error) => {
+			console.error("[market-next] failed to resolve missing plugin", error);
+		});
+	},
+	{ immediate: true },
+);
 
 /** 去市场页按插件名搜索。 */
 function gotoMarket() {
-  router.push('/market?keyword=' + current.value.name)
+	router.push("/market?keyword=" + current.value.name);
 }
-
 </script>

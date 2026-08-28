@@ -142,92 +142,116 @@
  * classify 状态机与基础判定在 dependency-helpers。
  */
 
-import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
-import { message, router, useConfig, useContext } from '@koishi-ce/client'
-import { useMarketNextI18n } from '../../shared/i18n'
-import { getLatestVersion, getMarketNextConfig, getPendingOverrides, getWritableMarketNextPolicy, patchMarketNextConfig, patchMarketNextData } from '../../shared/plugin-config'
-import { showConfirm } from '../../shared/operations'
-import ManualInstall from './manual.vue'
-import PackageView from './package.vue'
-import IgnoreUpdateDialog from './ignore-update-dialog.vue'
-import LocalBindingDialog from './local-binding-dialog.vue'
-import BundleUninstall from '../../dialogs/bundle-uninstall/index.vue'
-import MarketIcon from '../../market/icons'
-import { getUpdatePolicy } from './dependency-helpers'
-import { useDependencyNames } from './use-dependency-names'
-import { useDependencyClassify } from './use-dependency-classify'
-import { useDependencyGroups, type FilterKey } from './use-dependency-groups'
-import { useDependencyDialogs } from './use-dependency-dialogs'
+import { computed, onBeforeUnmount, onMounted, ref } from "vue";
+import { message, router, useConfig, useContext } from "@koishi-ce/client";
+import { useMarketNextI18n } from "../../shared/i18n";
+import {
+	getLatestVersion,
+	getMarketNextConfig,
+	getPendingOverrides,
+	getWritableMarketNextPolicy,
+	patchMarketNextConfig,
+	patchMarketNextData,
+} from "../../shared/plugin-config";
+import { showConfirm } from "../../shared/operations";
+import ManualInstall from "./manual.vue";
+import PackageView from "./package.vue";
+import IgnoreUpdateDialog from "./ignore-update-dialog.vue";
+import LocalBindingDialog from "./local-binding-dialog.vue";
+import BundleUninstall from "../../dialogs/bundle-uninstall/index.vue";
+import MarketIcon from "../../market/icons";
+import { getUpdatePolicy } from "./dependency-helpers";
+import { useDependencyNames } from "./use-dependency-names";
+import { useDependencyClassify } from "./use-dependency-classify";
+import { useDependencyGroups, type FilterKey } from "./use-dependency-groups";
+import { useDependencyDialogs } from "./use-dependency-dialogs";
 
-const config = useConfig()
-const ctx = useContext()
-const { t } = useMarketNextI18n()
+const config = useConfig();
+const ctx = useContext();
+const { t } = useMarketNextI18n();
 /** 搜索关键字 / 当前过滤项 / 搜索框引用(Ctrl+K 聚焦用)。 */
-const keyword = ref('')
-const filter = ref<FilterKey>('all')
-const searchInput = ref<{ focus?: () => void }>()
+const keyword = ref("");
+const filter = ref<FilterKey>("all");
+const searchInput = ref<{ focus?: () => void }>();
 
-const { names, disposeNamesWatcher } = useDependencyNames(ctx, config)
-const { items, updates, prereleaseBlocked, summary, refreshing } = useDependencyClassify(ctx, config, names)
-const { filterOptions, toggleGroup, visibleGroups } = useDependencyGroups(items, summary, keyword, filter, t)
+const { names, disposeNamesWatcher } = useDependencyNames(ctx, config);
+const { items, updates, prereleaseBlocked, summary, refreshing } =
+	useDependencyClassify(ctx, config, names);
+const { filterOptions, toggleGroup, visibleGroups } = useDependencyGroups(
+	items,
+	summary,
+	keyword,
+	filter,
+	t,
+);
 const {
-  ignoreDialog, ignoreTarget, ignoreDisplayName, ignoreLatestVersion,
-  bindingDialog, bindingTargetName, bindingDisplayName,
-  showBundleUninstall, bundleUninstallTargetName, bundleUninstallRecord,
-  openIgnore, openBinding, openBundleUninstall,
-} = useDependencyDialogs(config)
+	ignoreDialog,
+	ignoreTarget,
+	ignoreDisplayName,
+	ignoreLatestVersion,
+	bindingDialog,
+	bindingTargetName,
+	bindingDisplayName,
+	showBundleUninstall,
+	bundleUninstallTargetName,
+	bundleUninstallRecord,
+	openIgnore,
+	openBinding,
+	openBundleUninstall,
+} = useDependencyDialogs(config);
 
 /** 注册/注销全局 Ctrl+K 搜索快捷键。 */
 onMounted(() => {
-  window.addEventListener('keydown', onSearchShortcut)
-})
+	window.addEventListener("keydown", onSearchShortcut);
+});
 
 onBeforeUnmount(() => {
-  disposeNamesWatcher()
-  window.removeEventListener('keydown', onSearchShortcut)
-})
+	disposeNamesWatcher();
+	window.removeEventListener("keydown", onSearchShortcut);
+});
 
 /** Ctrl/Cmd+K:仅在依赖页路由上拦截并聚焦搜索框。 */
 function onSearchShortcut(event: KeyboardEvent) {
-  if (router.currentRoute.value?.path !== '/dependencies') return
-  if (event.key.toLowerCase() !== 'k') return
-  if (!event.ctrlKey && !event.metaKey) return
-  event.preventDefault()
-  searchInput.value?.focus?.()
+	if (router.currentRoute.value?.path !== "/dependencies") return;
+	if (event.key.toLowerCase() !== "k") return;
+	if (!event.ctrlKey && !event.metaKey) return;
+	event.preventDefault();
+	searchInput.value?.focus?.();
 }
 
 /** 丢弃全部待应用变更(底部应用栏"放弃")。 */
 function clearChanges() {
-  const override = getPendingOverrides()
-  for (const key of Object.keys(override)) delete override[key]
-  void patchMarketNextData({ override: { ...override } })
+	const override = getPendingOverrides();
+	for (const key of Object.keys(override)) delete override[key];
+	void patchMarketNextData({ override: { ...override } });
 }
 
 /** 切换"屏蔽预发布版本"策略并持久化;保存失败时回滚本地状态。 */
 async function togglePrereleaseFilter() {
-  const policy = getWritableMarketNextPolicy(config.value)
-  const previous = !!policy.updateIgnorePrerelease
-  policy.updateIgnorePrerelease = !previous
-  const saved = await patchMarketNextConfig({ updateIgnorePrerelease: policy.updateIgnorePrerelease })
-  if (!saved) {
-    policy.updateIgnorePrerelease = previous
-    message.error(t('common.messages.saveFailed'))
-  }
+	const policy = getWritableMarketNextPolicy(config.value);
+	const previous = !!policy.updateIgnorePrerelease;
+	policy.updateIgnorePrerelease = !previous;
+	const saved = await patchMarketNextConfig({
+		updateIgnorePrerelease: policy.updateIgnorePrerelease,
+	});
+	if (!saved) {
+		policy.updateIgnorePrerelease = previous;
+		message.error(t("common.messages.saveFailed"));
+	}
 }
 
 /** 页级"全部升级"动作:把每个可更新包的最新版暂存进 override,待批量确认。 */
-ctx.action('dependencies.upgrade', {
-  disabled: () => !updates.value.length,
-  async action() {
-    for (const name of updates.value) {
-      const version = getLatestVersion(name, getUpdatePolicy(config.value))
-      if (!version) continue
-      getPendingOverrides()[name] = version
-    }
-    void patchMarketNextData({ override: { ...getPendingOverrides() } })
-  },
-})
-
+ctx.action("dependencies.upgrade", {
+	disabled: () => !updates.value.length,
+	async action() {
+		for (const name of updates.value) {
+			const version = getLatestVersion(name, getUpdatePolicy(config.value));
+			if (!version) continue;
+			getPendingOverrides()[name] = version;
+		}
+		void patchMarketNextData({ override: { ...getPendingOverrides() } });
+	},
+});
 </script>
 
 <style lang="scss" src="./dependencies.scss"></style>

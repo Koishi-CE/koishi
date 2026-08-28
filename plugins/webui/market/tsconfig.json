@@ -3,7 +3,5 @@
 	"compilerOptions": {
 		"customConditions": ["source"]
 	},
-	"include": [
-		"src"
-	]
+	"include": ["src"]
 }

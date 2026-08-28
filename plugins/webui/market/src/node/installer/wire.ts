@@ -28,7 +28,10 @@ import { DependencyResolver } from "../../core/deps/resolver.js";
 import type { Dependency } from "../../core/deps/types.js";
 import { EnvironmentSnapshotStore } from "../../core/environment/snapshot.js";
 import { EnvironmentSnapshotOps } from "../../core/install/environment.js";
-import { getInstallLogRetention, InstallLogRetention } from "../../core/install/logs/retention.js";
+import {
+	getInstallLogRetention,
+	InstallLogRetention,
+} from "../../core/install/logs/retention.js";
 import { InstallLogStore } from "../../core/install/logs/store.js";
 import { InstallOrchestrator } from "../../core/install/pipeline/orchestrator.js";
 import { InstallQueue } from "../../core/install/pipeline/queue.js";
@@ -38,7 +41,10 @@ import { RouteStatsBook } from "../../core/racing/stats.js";
 import { PackageCache } from "../../core/registry/cache/index.js";
 import type { RegistryStatsStore } from "../../core/registry/cache/stats-file.js";
 import { RegistryClient } from "../../core/registry/client/index.js";
-import { type RegistryReason, registryFailurePenalty } from "../../core/registry/errors.js";
+import {
+	type RegistryReason,
+	registryFailurePenalty,
+} from "../../core/registry/errors.js";
 import { LocalPackageUploadStore } from "../../core/upload/session.js";
 import { JsonStore } from "../../core/utils/json-store.js";
 import { refreshConsole } from "../console/refresh.js";
@@ -54,163 +60,173 @@ const REGISTRY_FAST_ROUTE_THRESHOLD = 800;
 
 /** 组装 Installer 依赖的 core 入口类（保持构造顺序与共享引用不变）。 */
 export function createInstallerCore(
-    ctx: Context,
-    config: InstallerConfig,
-    owner: InstallerWireOwner,
+	ctx: Context,
+	config: InstallerConfig,
+	owner: InstallerWireOwner,
 ): InstallerCore {
-    const scope = new RequestScope({ isActive: () => ctx.scope.isActive });
-    const stats = new RouteStatsBook({
-        fastThreshold: REGISTRY_FAST_ROUTE_THRESHOLD,
-        // 成功加分/失败扣分都做钳制:单次结果不会让某端点权重失真
-        successClamp: [-6, 3],
-        failureClamp: [-8, 3],
-        failurePenalty: (options) =>
-            Math.min(1.5, registryFailurePenalty(options.reason as RegistryReason | undefined)),
-        cooldown: () => 0,
-        roundAverage: true,
-        trackFailureMeta: true,
-    });
-    const statsFile = new JsonStore<RegistryStatsStore>(
-        resolve(ctx.baseDir, "cache", "market-next-registry-stats.json"),
-        {
-            isActive: () => ctx.scope.isActive,
-            onError: (error) =>
-                owner.log.debug(
-                    `failed to write registry route stats: ${error instanceof Error ? error.message : error}`,
-                ),
-        },
-    );
+	const scope = new RequestScope({ isActive: () => ctx.scope.isActive });
+	const stats = new RouteStatsBook({
+		fastThreshold: REGISTRY_FAST_ROUTE_THRESHOLD,
+		// 成功加分/失败扣分都做钳制:单次结果不会让某端点权重失真
+		successClamp: [-6, 3],
+		failureClamp: [-8, 3],
+		failurePenalty: (options) =>
+			Math.min(
+				1.5,
+				registryFailurePenalty(options.reason as RegistryReason | undefined),
+			),
+		cooldown: () => 0,
+		roundAverage: true,
+		trackFailureMeta: true,
+	});
+	const statsFile = new JsonStore<RegistryStatsStore>(
+		resolve(ctx.baseDir, "cache", "market-next-registry-stats.json"),
+		{
+			isActive: () => ctx.scope.isActive,
+			onError: (error) =>
+				owner.log.debug(
+					`failed to write registry route stats: ${error instanceof Error ? error.message : error}`,
+				),
+		},
+	);
 
-    // registry 状态广播节流 200ms:客户端只感知聚合后的结果,不逐请求推送
-    const flushRegistryStatus = ctx.throttle(() => {
-        const status = owner.drainRegistryStatus();
-        void ctx.get("console")?.broadcast("market/registry-status", { ...status });
-    }, 200);
+	// registry 状态广播节流 200ms:客户端只感知聚合后的结果,不逐请求推送
+	const flushRegistryStatus = ctx.throttle(() => {
+		const status = owner.drainRegistryStatus();
+		void ctx.get("console")?.broadcast("market/registry-status", { ...status });
+	}, 200);
 
-    const registry = new RegistryClient(
-        {
-            httpFactory: (endpoint) => ({
-                get: (path, cfg) =>
-                    ctx.http
-                        .extend({
-                            endpoint,
-                            ...(config.timeout === undefined ? {} : { timeout: config.timeout }),
-                        })
-                        .get(path, cfg) as Promise<Registry>,
-            }),
-            isHttpError: (error) => ctx.http.isError(error),
-            stats,
-            statsFile,
-            scope,
-            defaultEndpoint: async () => (await getRegistry()) ?? "https://registry.npmjs.org",
-            statusSink: (name, status, serial) => owner.setRegistryStatus(name, status, serial),
-            log: owner.log,
-        },
-        {
-            endpoint: config.endpoint,
-            timeout: config.timeout,
-            autoRoute: config.autoRoute,
-            retry: config.retry,
-        },
-    );
+	const registry = new RegistryClient(
+		{
+			httpFactory: (endpoint) => ({
+				get: (path, cfg) =>
+					ctx.http
+						.extend({
+							endpoint,
+							...(config.timeout === undefined
+								? {}
+								: { timeout: config.timeout }),
+						})
+						.get(path, cfg) as Promise<Registry>,
+			}),
+			isHttpError: (error) => ctx.http.isError(error),
+			stats,
+			statsFile,
+			scope,
+			defaultEndpoint: async () =>
+				(await getRegistry()) ?? "https://registry.npmjs.org",
+			statusSink: (name, status, serial) =>
+				owner.setRegistryStatus(name, status, serial),
+			log: owner.log,
+		},
+		{
+			endpoint: config.endpoint,
+			timeout: config.timeout,
+			autoRoute: config.autoRoute,
+			retry: config.retry,
+		},
+	);
 
-    const packages = new PackageCache({
-        client: registry,
-        scope,
-        log: owner.log,
-        // 缓存回填按 500ms 节流批量广播,而不是每个包一次
-        onFlush: ctx.throttle(() => {
-            void ctx.get("console")?.broadcast("market/registry", {
-                ...packages.tempCache,
-            });
-            packages.tempCache = {};
-        }, 500),
-    });
+	const packages = new PackageCache({
+		client: registry,
+		scope,
+		log: owner.log,
+		// 缓存回填按 500ms 节流批量广播,而不是每个包一次
+		onFlush: ctx.throttle(() => {
+			void ctx.get("console")?.broadcast("market/registry", {
+				...packages.tempCache,
+			});
+			packages.tempCache = {};
+		}, 500),
+	});
 
-    const resolver = new DependencyResolver({
-        cwd: () => owner.cwd,
-        cache: packages,
-        scope,
-        concurrency: () => config.concurrency,
-        formatError: (error) => registry.formatError(error),
-        ensureProbe: (name) => registry.ensureMetadataEndpoint(name, scope.current),
-        log: owner.log,
-        onMetadataRefreshed: () => void refreshConsole(ctx, ["dependencies"]),
-    });
+	const resolver = new DependencyResolver({
+		cwd: () => owner.cwd,
+		cache: packages,
+		scope,
+		concurrency: () => config.concurrency,
+		formatError: (error) => registry.formatError(error),
+		ensureProbe: (name) => registry.ensureMetadataEndpoint(name, scope.current),
+		log: owner.log,
+		onMetadataRefreshed: () => void refreshConsole(ctx, ["dependencies"]),
+	});
 
-    const environments = new EnvironmentSnapshotStore(
-        resolve(ctx.baseDir, "data", "market-next-environment-snapshots.json"),
-        (message) => owner.log.warn(message),
-    );
+	const environments = new EnvironmentSnapshotStore(
+		resolve(ctx.baseDir, "data", "market-next-environment-snapshots.json"),
+		(message) => owner.log.warn(message),
+	);
 
-    const queue = new InstallQueue(owner.log);
-    const retention = new InstallLogRetention(
-        owner.cwd,
-        () => getInstallLogRetention(config),
-        owner.log,
-    );
+	const queue = new InstallQueue(owner.log);
+	const retention = new InstallLogRetention(
+		owner.cwd,
+		() => getInstallLogRetention(config),
+		owner.log,
+	);
 
-    const logs = new InstallLogStore({
-        cwd: owner.cwd,
-        log: owner.log,
-        retention,
-        broadcast: (type, line) =>
-            void ctx.get("console")?.broadcast("market/install-log", { type, line }),
-        resolveAfter: (name) =>
-            (resolver.getDeps({ background: false }) as Dict<Dependency>)[name]?.resolved,
-    });
+	const logs = new InstallLogStore({
+		cwd: owner.cwd,
+		log: owner.log,
+		retention,
+		broadcast: (type, line) =>
+			void ctx.get("console")?.broadcast("market/install-log", { type, line }),
+		resolveAfter: (name) =>
+			(resolver.getDeps({ background: false }) as Dict<Dependency>)[name]
+				?.resolved,
+	});
 
-    const orchestrator = new InstallOrchestrator({
-        cwd: owner.cwd,
-        log: owner.log,
-        config: { endpoint: config.endpoint, timeout: config.timeout },
-        scope,
-        registry,
-        packages,
-        resolver,
-        environments,
-        queue,
-        logs,
-        agent: owner.agent,
-        refreshChannels: () => owner.refreshData(),
-        refreshDependenciesChannel: () => refreshConsole(ctx, ["dependencies"]),
-        clearRegistryStatus: () => owner.clearRegistryStatus(),
-        fullReload: () => ctx.loader.fullReload(),
-        isActive: () => ctx.scope.isActive,
-        isPackageLoaded: (name) => owner.isPackageLoaded(name),
-    });
+	const orchestrator = new InstallOrchestrator({
+		cwd: owner.cwd,
+		log: owner.log,
+		config: { endpoint: config.endpoint, timeout: config.timeout },
+		scope,
+		registry,
+		packages,
+		resolver,
+		environments,
+		queue,
+		logs,
+		agent: owner.agent,
+		refreshChannels: () => owner.refreshData(),
+		refreshDependenciesChannel: () => refreshConsole(ctx, ["dependencies"]),
+		clearRegistryStatus: () => owner.clearRegistryStatus(),
+		fullReload: () => ctx.loader.fullReload(),
+		isActive: () => ctx.scope.isActive,
+		isPackageLoaded: (name) => owner.isPackageLoaded(name),
+	});
 
-    const envOps = new EnvironmentSnapshotOps({
-        log: owner.log,
-        environments,
-        queue,
-        orchestrator,
-    });
+	const envOps = new EnvironmentSnapshotOps({
+		log: owner.log,
+		environments,
+		queue,
+		orchestrator,
+	});
 
-    const uploads = new LocalPackageUploadStore(ctx.baseDir, (message) => owner.log.warn(message));
-    const uploadService = new LocalPackageUploadService({
-        cwd: owner.cwd,
-        log: owner.log,
-        timeout: config.timeout,
-        uploads,
-        resolver,
-    });
+	const uploads = new LocalPackageUploadStore(ctx.baseDir, (message) =>
+		owner.log.warn(message),
+	);
+	const uploadService = new LocalPackageUploadService({
+		cwd: owner.cwd,
+		log: owner.log,
+		timeout: config.timeout,
+		uploads,
+		resolver,
+	});
 
-    return {
-        scope,
-        stats,
-        statsFile,
-        registry,
-        packages,
-        resolver,
-        environments,
-        queue,
-        logs,
-        orchestrator,
-        envOps,
-        retention,
-        uploads,
-        uploadService,
-        flushRegistryStatus,
-    };
+	return {
+		scope,
+		stats,
+		statsFile,
+		registry,
+		packages,
+		resolver,
+		environments,
+		queue,
+		logs,
+		orchestrator,
+		envOps,
+		retention,
+		uploads,
+		uploadService,
+		flushRegistryStatus,
+	};
 }

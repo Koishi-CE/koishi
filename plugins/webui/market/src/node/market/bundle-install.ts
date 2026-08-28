@@ -15,19 +15,25 @@ import { maxSatisfying } from "semver";
 import type { InstallOptions } from "../../core/install/types.js";
 import { loadManifest } from "../../core/registry/manifest.js";
 import type {
-    BundleInstallMember,
-    BundleInstallRequest,
-    BundleInstallResult,
-    PluginBundleManifest,
-    PluginBundleRecord,
+	BundleInstallMember,
+	BundleInstallRequest,
+	BundleInstallResult,
+	PluginBundleManifest,
+	PluginBundleRecord,
 } from "../../shared/bundle.js";
 import {
-    BUNDLE_KEYWORD,
-    parseBundleManifest,
-    validateBundleManifest,
+	BUNDLE_KEYWORD,
+	parseBundleManifest,
+	validateBundleManifest,
 } from "../../shared/bundle.js";
-import { INSTALL_REFRESH_CHANNELS, refreshConsole } from "../console/refresh.js";
-import { type BundleConfigWriter, createBundleConfigWriter } from "./bundle-config.js";
+import {
+	INSTALL_REFRESH_CHANNELS,
+	refreshConsole,
+} from "../console/refresh.js";
+import {
+	type BundleConfigWriter,
+	createBundleConfigWriter,
+} from "./bundle-config.js";
 import type { MarketDataStore } from "./data-store.js";
 
 /**
@@ -37,33 +43,42 @@ import type { MarketDataStore } from "./data-store.js";
  * 日志跳过（循环检查是尽力而为,不阻断正常安装）。
  */
 async function assertNoDirectBundleCycles(
-    ctx: Context,
-    packageName: string,
-    members: BundleInstallMember[],
+	ctx: Context,
+	packageName: string,
+	members: BundleInstallMember[],
 ) {
-    const bundleName = packageName.toLowerCase();
-    for (const member of members) {
-        try {
-            const registry = await ctx.installer.getRegistry(member.package);
-            const versions = Object.keys(registry?.versions ?? {});
-            const version = maxSatisfying(versions, member.version, { includePrerelease: true });
-            if (!version) continue;
-            const remote = registry?.versions?.[version];
-            const bundle = parseBundleManifest(
-                (remote?.koishi as { bundle?: unknown } | undefined)?.bundle,
-            );
-            if (!bundle?.members.some((item) => item.package.toLowerCase() === bundleName))
-                continue;
-            throw new Error(
-                `plugin bundle has a direct cycle: ${packageName} <-> ${member.package}`,
-            );
-        } catch (error) {
-            if (error instanceof Error && error.message.includes("direct cycle")) throw error;
-            ctx.logger("market").debug(
-                `plugin bundle cycle check skipped: bundle=${packageName}, member=${member.package}, error=${error instanceof Error ? error.message : error}`,
-            );
-        }
-    }
+	const bundleName = packageName.toLowerCase();
+	for (const member of members) {
+		try {
+			const registry = await ctx.installer.getRegistry(member.package);
+			const versions = Object.keys(registry?.versions ?? {});
+			const version = maxSatisfying(versions, member.version, {
+				includePrerelease: true,
+			});
+			if (!version) continue;
+			const remote = registry?.versions?.[version];
+			const bundle = parseBundleManifest(
+				(remote?.koishi as { bundle?: unknown } | undefined)?.bundle,
+			);
+			if (
+				!bundle?.members.some(
+					(item) => item.package.toLowerCase() === bundleName,
+				)
+			)
+				continue;
+			throw new Error(
+				`plugin bundle has a direct cycle: ${packageName} <-> ${member.package}`,
+			);
+		} catch (error) {
+			if (error instanceof Error && error.message.includes("direct cycle"))
+				throw error;
+			ctx
+				.logger("market")
+				.debug(
+					`plugin bundle cycle check skipped: bundle=${packageName}, member=${member.package}, error=${error instanceof Error ? error.message : error}`,
+				);
+		}
+	}
 }
 
 /**
@@ -72,26 +87,30 @@ async function assertNoDirectBundleCycles(
  * 成员结构）,不通过即抛错阻断安装。
  */
 async function resolveBundleManifest(
-    ctx: Context,
-    request: BundleInstallRequest,
+	ctx: Context,
+	request: BundleInstallRequest,
 ): Promise<PluginBundleManifest> {
-    if (!request.version) throw new Error("bundle package version is required");
-    const registry = await ctx.installer.getRegistry(request.package);
-    if (!registry?.versions)
-        throw new Error(`bundle package metadata not loaded: ${request.package}`);
-    const remote = registry.versions[request.version];
-    if (!remote)
-        throw new Error(`bundle package version not found: ${request.package}@${request.version}`);
-    const bundle = parseBundleManifest(
-        (remote?.koishi as { bundle?: unknown } | undefined)?.bundle,
-    );
-    const validation = validateBundleManifest(request.package, bundle, {
-        keyword: remote?.keywords?.some((keyword) => keyword.toLowerCase() === BUNDLE_KEYWORD),
-    });
-    if (!validation.valid) {
-        throw new Error(`invalid plugin bundle: ${validation.errors.join("; ")}`);
-    }
-    return bundle!;
+	if (!request.version) throw new Error("bundle package version is required");
+	const registry = await ctx.installer.getRegistry(request.package);
+	if (!registry?.versions)
+		throw new Error(`bundle package metadata not loaded: ${request.package}`);
+	const remote = registry.versions[request.version];
+	if (!remote)
+		throw new Error(
+			`bundle package version not found: ${request.package}@${request.version}`,
+		);
+	const bundle = parseBundleManifest(
+		(remote?.koishi as { bundle?: unknown } | undefined)?.bundle,
+	);
+	const validation = validateBundleManifest(request.package, bundle, {
+		keyword: remote?.keywords?.some(
+			(keyword) => keyword.toLowerCase() === BUNDLE_KEYWORD,
+		),
+	});
+	if (!validation.valid) {
+		throw new Error(`invalid plugin bundle: ${validation.errors.join("; ")}`);
+	}
+	return bundle!;
 }
 
 /**
@@ -100,34 +119,40 @@ async function resolveBundleManifest(
  * usePreset/move/config,最后只留勾选项。清单里没有的请求成员自然被丢弃。
  */
 function resolveSelectedMembers(
-    request: BundleInstallRequest,
-    manifest: PluginBundleManifest,
+	request: BundleInstallRequest,
+	manifest: PluginBundleManifest,
 ): BundleInstallMember[] {
-    const requestMembers = new Map(
-        (request.members ?? []).map((member) => [`${member.package}\n${member.plugin}`, member]),
-    );
-    return manifest.members
-        .map((member) => {
-            const option = requestMembers.get(`${member.package}\n${member.plugin}`);
-            return {
-                ...member,
-                selected: !!option?.selected,
-                createConfig: option?.createConfig !== false,
-                usePreset: option?.usePreset === true,
-                move: option?.move === true,
-                config: option?.config ?? member.config,
-            };
-        })
-        .filter((member) => member.selected);
+	const requestMembers = new Map(
+		(request.members ?? []).map((member) => [
+			`${member.package}\n${member.plugin}`,
+			member,
+		]),
+	);
+	return manifest.members
+		.map((member) => {
+			const option = requestMembers.get(`${member.package}\n${member.plugin}`);
+			return {
+				...member,
+				selected: !!option?.selected,
+				createConfig: option?.createConfig !== false,
+				usePreset: option?.usePreset === true,
+				move: option?.move === true,
+				config: option?.config ?? member.config,
+			};
+		})
+		.filter((member) => member.selected);
 }
 
 /** 组装安装 override:合包自身 + 各勾选成员的精确版本请求。 */
-function buildInstallDeps(request: BundleInstallRequest, selected: BundleInstallMember[]) {
-    const deps: Dict<string> = { [request.package]: request.version };
-    for (const member of selected) {
-        deps[member.package] = member.version;
-    }
-    return deps;
+function buildInstallDeps(
+	request: BundleInstallRequest,
+	selected: BundleInstallMember[],
+) {
+	const deps: Dict<string> = { [request.package]: request.version };
+	for (const member of selected) {
+		deps[member.package] = member.version;
+	}
+	return deps;
 }
 
 /**
@@ -137,33 +162,33 @@ function buildInstallDeps(request: BundleInstallRequest, selected: BundleInstall
  * 安装失败（code 非 0）时不产出记录。
  */
 function buildBundleRecord(
-    request: BundleInstallRequest,
-    manifest: PluginBundleManifest,
-    selected: BundleInstallMember[],
-    beforeDeps: Dict<string>,
-    code: number,
-    writer: BundleConfigWriter,
+	request: BundleInstallRequest,
+	manifest: PluginBundleManifest,
+	selected: BundleInstallMember[],
+	beforeDeps: Dict<string>,
+	code: number,
+	writer: BundleConfigWriter,
 ): PluginBundleRecord | undefined {
-    if (code) return;
-    return {
-        package: request.package,
-        version: request.version,
-        label: manifest.label,
-        groupKey: writer.group?.key,
-        installedAt: Date.now(),
-        members: selected.map((member) => ({
-            package: member.package,
-            plugin: member.plugin,
-            version: member.version,
-            required: member.required,
-            selected: true,
-            installedByBundle: !beforeDeps[member.package],
-            configured: writer.configured.includes(member.package),
-            moved: writer.moved.includes(member.package),
-            skipped: writer.skipped.includes(member.package),
-            usePreset: member.usePreset,
-        })),
-    };
+	if (code) return;
+	return {
+		package: request.package,
+		version: request.version,
+		label: manifest.label,
+		groupKey: writer.group?.key,
+		installedAt: Date.now(),
+		members: selected.map((member) => ({
+			package: member.package,
+			plugin: member.plugin,
+			version: member.version,
+			required: member.required,
+			selected: true,
+			installedByBundle: !beforeDeps[member.package],
+			configured: writer.configured.includes(member.package),
+			moved: writer.moved.includes(member.package),
+			skipped: writer.skipped.includes(member.package),
+			usePreset: member.usePreset,
+		})),
+	};
 }
 
 /**
@@ -173,38 +198,46 @@ function buildBundleRecord(
  * client 弹层展示"装了什么/配了什么/跳过什么"。
  */
 export async function installBundle(
-    ctx: Context,
-    dataStore: MarketDataStore,
-    request: BundleInstallRequest,
-    forced?: boolean,
-    options: InstallOptions = {},
+	ctx: Context,
+	dataStore: MarketDataStore,
+	request: BundleInstallRequest,
+	forced?: boolean,
+	options: InstallOptions = {},
 ): Promise<BundleInstallResult> {
-    options ||= {};
-    const manifest = await resolveBundleManifest(ctx, request);
-    const selected = resolveSelectedMembers(request, manifest);
-    if (!selected.length) throw new Error("plugin bundle has no selected members");
-    await assertNoDirectBundleCycles(ctx, request.package, selected);
+	options ||= {};
+	const manifest = await resolveBundleManifest(ctx, request);
+	const selected = resolveSelectedMembers(request, manifest);
+	if (!selected.length)
+		throw new Error("plugin bundle has no selected members");
+	await assertNoDirectBundleCycles(ctx, request.package, selected);
 
-    // 安装前先留一份依赖快照:判断哪些成员是"因本次合包而新装"
-    const beforeDeps = loadManifest(ctx.baseDir).dependencies ?? {};
-    const deps = buildInstallDeps(request, selected);
-    const writer = createBundleConfigWriter(ctx, request, manifest, selected);
+	// 安装前先留一份依赖快照:判断哪些成员是"因本次合包而新装"
+	const beforeDeps = loadManifest(ctx.baseDir).dependencies ?? {};
+	const deps = buildInstallDeps(request, selected);
+	const writer = createBundleConfigWriter(ctx, request, manifest, selected);
 
-    const code = await ctx.installer.install(deps, forced, writer.write, options);
-    if (!code) {
-        await writer.write();
-    }
+	const code = await ctx.installer.install(deps, forced, writer.write, options);
+	if (!code) {
+		await writer.write();
+	}
 
-    await refreshConsole(ctx, INSTALL_REFRESH_CHANNELS);
-    const record = buildBundleRecord(request, manifest, selected, beforeDeps, code, writer);
-    if (record) await dataStore.setBundleRecord(record);
-    return {
-        code,
-        installed: Object.keys(deps),
-        configured: writer.configured,
-        moved: writer.moved,
-        skipped: writer.skipped,
-        groupKey: writer.group?.key,
-        record,
-    };
+	await refreshConsole(ctx, INSTALL_REFRESH_CHANNELS);
+	const record = buildBundleRecord(
+		request,
+		manifest,
+		selected,
+		beforeDeps,
+		code,
+		writer,
+	);
+	if (record) await dataStore.setBundleRecord(record);
+	return {
+		code,
+		installed: Object.keys(deps),
+		configured: writer.configured,
+		moved: writer.moved,
+		skipped: writer.skipped,
+		groupKey: writer.group?.key,
+		record,
+	};
 }

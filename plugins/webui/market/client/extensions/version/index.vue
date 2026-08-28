@@ -70,83 +70,118 @@
  * shared/operations 的 install()。由 extensions/index.ts 注册。
  */
 
-import { global, message, send, store, useConfig, useContext } from '@koishi-ce/client'
-import { computed, inject, ComputedRef, ref, watch } from 'vue'
-import { getBulkMode, getBundleRecords, getMarketNextPolicy, getPendingOverrides, getRemoveConfig, getWritableBundleRecords, hasUpdate, patchMarketNextData } from '../../shared/plugin-config'
-import type {} from '@koishi-ce/plugin-config'
-import type { PluginBundleRecord } from '../../../src/shared/bundle'
 import {
-  createLocalBundleRecord,
-  fetchBundleRecord,
-  getConfigWriter,
-  install,
-  pendingBundleUninstalls,
-  type BundleRecordView,
-} from '../../shared/operations'
-import BundleUninstall from '../../dialogs/bundle-uninstall/index.vue'
-import { useMarketNextI18n } from '../../shared/i18n'
-import { getMarketObject, loadMarketObjects } from '../../market/state'
+	global,
+	message,
+	send,
+	store,
+	useConfig,
+	useContext,
+} from "@koishi-ce/client";
+import { computed, inject, ComputedRef, ref, watch } from "vue";
+import {
+	getBulkMode,
+	getBundleRecords,
+	getMarketNextPolicy,
+	getPendingOverrides,
+	getRemoveConfig,
+	getWritableBundleRecords,
+	hasUpdate,
+	patchMarketNextData,
+} from "../../shared/plugin-config";
+import type {} from "@koishi-ce/plugin-config";
+import type { PluginBundleRecord } from "../../../src/shared/bundle";
+import {
+	createLocalBundleRecord,
+	fetchBundleRecord,
+	getConfigWriter,
+	install,
+	pendingBundleUninstalls,
+	type BundleRecordView,
+} from "../../shared/operations";
+import BundleUninstall from "../../dialogs/bundle-uninstall/index.vue";
+import { useMarketNextI18n } from "../../shared/i18n";
+import { getMarketObject, loadMarketObjects } from "../../market/state";
 
-const ctx = useContext()
-const config = useConfig()
-const { t } = useMarketNextI18n()
+const ctx = useContext();
+const config = useConfig();
+const { t } = useMarketNextI18n();
 /** config 插件注入的当前插件包名。 */
-const name = inject<ComputedRef<string>>('plugin:name')
+const name = inject<ComputedRef<string>>("plugin:name");
 /** 宿主运行所必需的依赖,不提供卸载入口。 */
-const protectedDeps = new Set(['@koishijs/plugin-console', '@koishi-ce/plugin-config', '@koishijs/plugin-server'])
+const protectedDeps = new Set([
+	"@koishijs/plugin-console",
+	"@koishi-ce/plugin-config",
+	"@koishijs/plugin-server",
+]);
 
 /** 本地已加载包 / 市场元数据 / 依赖条目 / registry 版本表 / 是否有可用更新。 */
-const local = computed(() => store.packages?.[name.value])
-const object = computed(() => getMarketObject(name.value))
-const dep = computed(() => store.dependencies?.[name.value])
-const versions = computed(() => store.registry?.[name.value])
-const updateAvailable = computed(() => hasUpdate(name.value, getMarketNextPolicy(config.value)))
+const local = computed(() => store.packages?.[name.value]);
+const object = computed(() => getMarketObject(name.value));
+const dep = computed(() => store.dependencies?.[name.value]);
+const versions = computed(() => store.registry?.[name.value]);
+const updateAvailable = computed(() =>
+	hasUpdate(name.value, getMarketNextPolicy(config.value)),
+);
 /** 卸载执行中 / 合包记录拉取中 / 两个弹窗开关 / 远端合包记录。 */
-const uninstalling = ref(false)
-const loadingBundleRecord = ref(false)
-const showUninstallDialog = ref(false)
-const showBundleUninstallDialog = ref(false)
-const remoteBundleRecord = ref<BundleRecordView>()
+const uninstalling = ref(false);
+const loadingBundleRecord = ref(false);
+const showUninstallDialog = ref(false);
+const showBundleUninstallDialog = ref(false);
+const remoteBundleRecord = ref<BundleRecordView>();
 
 /** 切换目标插件时拉取其市场元数据。 */
-watch(name, (value) => {
-  if (!value) return
-  void loadMarketObjects([value]).catch(error => {
-    console.error('[market-next] failed to load plugin market metadata', error)
-  })
-}, { immediate: true })
+watch(
+	name,
+	(value) => {
+		if (!value) return;
+		void loadMarketObjects([value]).catch((error) => {
+			console.error(
+				"[market-next] failed to load plugin market metadata",
+				error,
+			);
+		});
+	},
+	{ immediate: true },
+);
 
 /** 批量模式下该包是否已暂存为待卸载(override 里值为空串)。 */
 const pendingRemove = computed(() => {
-  const override = getPendingOverrides()
-  return Object.prototype.hasOwnProperty.call(override, name.value) && !override[name.value]
-})
+	const override = getPendingOverrides();
+	return (
+		Object.prototype.hasOwnProperty.call(override, name.value) &&
+		!override[name.value]
+	);
+});
 
 /** 该包在 koishi.yml 是否已有配置节点。 */
 const hasConfigEntries = computed(() => {
-  return !!getConfigWriter(ctx)?.get(name.value)?.length
-})
+	return !!getConfigWriter(ctx)?.get(name.value)?.length;
+});
 
 /** 合包记录视图:持久化记录 > 远端记录 > 本地推导(非合包为 undefined)。 */
-const bundleRecord = computed<BundleRecordView | PluginBundleRecord | undefined>(() => {
-  const stored = getBundleRecords(config.value)[name.value]
-  if (stored) return stored
-  if (remoteBundleRecord.value?.package === name.value) return remoteBundleRecord.value
-  return createLocalBundleRecord(name.value)
-})
+const bundleRecord = computed<
+	BundleRecordView | PluginBundleRecord | undefined
+>(() => {
+	const stored = getBundleRecords(config.value)[name.value];
+	if (stored) return stored;
+	if (remoteBundleRecord.value?.package === name.value)
+		return remoteBundleRecord.value;
+	return createLocalBundleRecord(name.value);
+});
 
 /** 是否展示卸载按钮:静态构建/受保护依赖/workspace 包不显示;已暂存卸载、或在依赖表/本地包中才显示。 */
 const showDependencyUninstall = computed(() => {
-  if (global.static || protectedDeps.has(name.value)) return false
-  if (local.value?.workspace || dep.value?.workspace) return false
-  if (pendingRemove.value) return true
-  if (store.dependencies) return !!dep.value
-  return !!local.value
-})
+	if (global.static || protectedDeps.has(name.value)) return false;
+	if (local.value?.workspace || dep.value?.workspace) return false;
+	if (pendingRemove.value) return true;
+	if (store.dependencies) return !!dep.value;
+	return !!local.value;
+});
 
 /** 取批量模式共享的待应用覆盖清单(marketData.override)。 */
 function ensureOverride() {
-  return getPendingOverrides()
+	return getPendingOverrides();
 }
 
 /**
@@ -155,79 +190,88 @@ function ensureOverride() {
  * 否则直接执行 uninstallDependency。
  */
 async function requestUninstall() {
-  if (!name.value || uninstalling.value) return
-  if (bundleRecord.value) {
-    await loadRemoteBundleRecord()
-    showBundleUninstallDialog.value = true
-    return
-  }
-  if (getBulkMode(config.value)) {
-    const override = ensureOverride()
-    override[name.value] = ''
-    void patchMarketNextData({ override: { ...override } })
-    message.success(t('extensions.messages.stagedUninstall'))
-    return
-  }
-  const savedRemoveConfig = getRemoveConfig(config.value)
-  if (hasConfigEntries.value && typeof savedRemoveConfig !== 'boolean') {
-    showUninstallDialog.value = true
-    return
-  }
-  return uninstallDependency(savedRemoveConfig === true)
+	if (!name.value || uninstalling.value) return;
+	if (bundleRecord.value) {
+		await loadRemoteBundleRecord();
+		showBundleUninstallDialog.value = true;
+		return;
+	}
+	if (getBulkMode(config.value)) {
+		const override = ensureOverride();
+		override[name.value] = "";
+		void patchMarketNextData({ override: { ...override } });
+		message.success(t("extensions.messages.stagedUninstall"));
+		return;
+	}
+	const savedRemoveConfig = getRemoveConfig(config.value);
+	if (hasConfigEntries.value && typeof savedRemoveConfig !== "boolean") {
+		showUninstallDialog.value = true;
+		return;
+	}
+	return uninstallDependency(savedRemoveConfig === true);
 }
 
 /** 拉取远端合包记录:已有持久化记录或已拉到有效记录时跳过;失败只告警(还有本地推导兜底)。 */
 async function loadRemoteBundleRecord() {
-  if (!name.value || getBundleRecords(config.value)[name.value]) return
-  if (remoteBundleRecord.value?.package === name.value && remoteBundleRecord.value.members.length) return
-  loadingBundleRecord.value = true
-  try {
-    const record = await fetchBundleRecord(name.value)
-    if (record) remoteBundleRecord.value = record
-  } catch (error) {
-    console.warn(error)
-    message.warning(t('extensions.messages.bundleRecordFailedShort'))
-  } finally {
-    loadingBundleRecord.value = false
-  }
+	if (!name.value || getBundleRecords(config.value)[name.value]) return;
+	if (
+		remoteBundleRecord.value?.package === name.value &&
+		remoteBundleRecord.value.members.length
+	)
+		return;
+	loadingBundleRecord.value = true;
+	try {
+		const record = await fetchBundleRecord(name.value);
+		if (record) remoteBundleRecord.value = record;
+	} catch (error) {
+		console.warn(error);
+		message.warning(t("extensions.messages.bundleRecordFailedShort"));
+	} finally {
+		loadingBundleRecord.value = false;
+	}
 }
 
 /** 撤销批量模式下暂存的卸载:连同该合包的成员卸载项一并清出 override 与队列。 */
 function cancelPendingUninstall() {
-  const pendingBundle = pendingBundleUninstalls.value[name.value]
-  const override = ensureOverride()
-  delete override[name.value]
-  for (const member of pendingBundle?.members ?? []) {
-    delete override[member]
-  }
-  void patchMarketNextData({ override: { ...override } })
-  delete pendingBundleUninstalls.value[name.value]
-  message.success(t('extensions.messages.cancelUninstall'))
+	const pendingBundle = pendingBundleUninstalls.value[name.value];
+	const override = ensureOverride();
+	delete override[name.value];
+	for (const member of pendingBundle?.members ?? []) {
+		delete override[member];
+	}
+	void patchMarketNextData({ override: { ...override } });
+	delete pendingBundleUninstalls.value[name.value];
+	message.success(t("extensions.messages.cancelUninstall"));
 }
 
 /** 执行卸载:install() 传空串版本;成功回调里按需移除配置并清掉合包持久化记录。 */
 async function uninstallDependency(removeConfig: boolean) {
-  if (!name.value || uninstalling.value) return
-  showUninstallDialog.value = false
-  uninstalling.value = true
-  try {
-    await install({ [name.value]: '' }, async () => {
-      if (removeConfig) getConfigWriter(ctx)?.remove(name.value)
-      const records = getWritableBundleRecords(config.value)
-      delete records[name.value]
-      const saved = await patchMarketNextData({ bundleRecords: records })
-      if (!saved) message.warning(t('extensions.messages.bundleRecordFailed'))
-    }, undefined, {
-      loadingText: t('operations.install.uninstalling'),
-      successText: t('operations.install.uninstalled'),
-      errorText: t('operations.install.uninstallFailed'),
-      timeoutText: t('operations.install.uninstallTimeout'),
-    })
-  } finally {
-    uninstalling.value = false
-  }
+	if (!name.value || uninstalling.value) return;
+	showUninstallDialog.value = false;
+	uninstalling.value = true;
+	try {
+		await install(
+			{ [name.value]: "" },
+			async () => {
+				if (removeConfig) getConfigWriter(ctx)?.remove(name.value);
+				const records = getWritableBundleRecords(config.value);
+				delete records[name.value];
+				const saved = await patchMarketNextData({ bundleRecords: records });
+				if (!saved)
+					message.warning(t("extensions.messages.bundleRecordFailed"));
+			},
+			undefined,
+			{
+				loadingText: t("operations.install.uninstalling"),
+				successText: t("operations.install.uninstalled"),
+				errorText: t("operations.install.uninstallFailed"),
+				timeoutText: t("operations.install.uninstallTimeout"),
+			},
+		);
+	} finally {
+		uninstalling.value = false;
+	}
 }
-
 </script>
 
 <style lang="scss" scoped src="./index.scss"></style>

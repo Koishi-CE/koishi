@@ -12,28 +12,31 @@
  * 两个 patch 都用 watch 监听宿主菜单/actions 项,宿主重建菜单后自动重打;
  * ctx.effect 注册的清理函数会恢复原始 label/action,保证插件停用后不留痕。
  */
-import { Context, store } from '@koishi-ce/client'
-import type { MenuItem } from '@koishi-ce/client'
+import { Context, store } from "@koishi-ce/client";
+import type { MenuItem } from "@koishi-ce/client";
 // 宿主 @koishi-ce/plugin-config 提供 packages/services/config 三个 Console 服务；
 // 仅在 .vue 里 import type 对 tsc 不生效，这里加载其类型声明以扩展 store。
-import type {} from '@koishi-ce/plugin-config'
-import { markRaw, watch } from 'vue'
-import ConfigRemove from './config-remove/index.vue'
-import { isProtectedConfigNode, requestConfigRemove } from './config-remove/index'
-import BundleGroupUninstall from './bundle-group-uninstall/index.vue'
-import { requestBundleGroupUninstall } from './bundle-group-uninstall/index'
-import Dependency from './dependency/index.vue'
-import Missing from './missing/index.vue'
-import Select from './select/index.vue'
-import Version from './version/index.vue'
-import { resolveBundlePackageFromGroup } from '../shared/operations'
-import { getBundleRecords } from '../shared/plugin-config'
-import { translate } from '../shared/i18n'
+import type {} from "@koishi-ce/plugin-config";
+import { markRaw, watch } from "vue";
+import ConfigRemove from "./config-remove/index.vue";
+import {
+	isProtectedConfigNode,
+	requestConfigRemove,
+} from "./config-remove/index";
+import BundleGroupUninstall from "./bundle-group-uninstall/index.vue";
+import { requestBundleGroupUninstall } from "./bundle-group-uninstall/index";
+import Dependency from "./dependency/index.vue";
+import Missing from "./missing/index.vue";
+import Select from "./select/index.vue";
+import Version from "./version/index.vue";
+import { resolveBundlePackageFromGroup } from "../shared/operations";
+import { getBundleRecords } from "../shared/plugin-config";
+import { translate } from "../shared/i18n";
 
 /** 判断配置树节点是否合包分组:分组路径能反查到合包包名即算(持久化记录优先)。 */
 function isBundleGroup(tree: any) {
-  if (!tree?.children) return false
-  return !!resolveBundlePackageFromGroup(tree.path, getBundleRecords())
+	if (!tree?.children) return false;
+	return !!resolveBundlePackageFromGroup(tree.path, getBundleRecords());
 }
 
 /**
@@ -42,39 +45,48 @@ function isBundleGroup(tree: any) {
  * 原始 label 供清理时恢复。
  */
 function patchConfigRemoveLabel(ctx: Context) {
-  const patched = new Map<MenuItem, MenuItem['label']>()
-  const label: MenuItem['label'] = ({ config }: any) => {
-    if (isBundleGroup(config.tree)) return translate('extensions.menu.uninstallBundle')
-    return config.tree?.children ? translate('extensions.menu.removeGroup') : translate('extensions.menu.removeConfig')
-  }
-  const apply = () => {
-    const list = ctx.internal.menus['config.tree']
-    const index = list?.findIndex(item => item.id === '.remove') ?? -1
-    if (index < 0) return
-    const item = list[index]
-    if (!patched.has(item)) patched.set(item, item.label)
-    if (item.label === label) return
-    item.label = label
-    list.splice(index, 1, item)
-  }
+	const patched = new Map<MenuItem, MenuItem["label"]>();
+	const label: MenuItem["label"] = ({ config }: any) => {
+		if (isBundleGroup(config.tree))
+			return translate("extensions.menu.uninstallBundle");
+		return config.tree?.children
+			? translate("extensions.menu.removeGroup")
+			: translate("extensions.menu.removeConfig");
+	};
+	const apply = () => {
+		const list = ctx.internal.menus["config.tree"];
+		const index = list?.findIndex((item) => item.id === ".remove") ?? -1;
+		if (index < 0) return;
+		const item = list[index];
+		if (!patched.has(item)) patched.set(item, item.label);
+		if (item.label === label) return;
+		item.label = label;
+		list.splice(index, 1, item);
+	};
 
-  ctx.effect(() => {
-    const stop = watch(() => {
-      const item = ctx.internal.menus['config.tree']?.find(item => item.id === '.remove')
-      return [item, item?.label] as const
-    }, apply, { immediate: true })
+	ctx.effect(() => {
+		const stop = watch(
+			() => {
+				const item = ctx.internal.menus["config.tree"]?.find(
+					(item) => item.id === ".remove",
+				);
+				return [item, item?.label] as const;
+			},
+			apply,
+			{ immediate: true },
+		);
 
-    return () => {
-      stop()
-      for (const [item, previous] of patched) {
-        const list = ctx.internal.menus['config.tree']
-        const index = list?.indexOf(item) ?? -1
-        if (item.label === label) item.label = previous
-        if (index >= 0) list.splice(index, 1, item)
-      }
-      patched.clear()
-    }
-  })
+		return () => {
+			stop();
+			for (const [item, previous] of patched) {
+				const list = ctx.internal.menus["config.tree"];
+				const index = list?.indexOf(item) ?? -1;
+				if (item.label === label) item.label = previous;
+				if (index >= 0) list.splice(index, 1, item);
+			}
+			patched.clear();
+		};
+	});
 }
 
 /**
@@ -83,79 +95,85 @@ function patchConfigRemoveLabel(ctx: Context) {
  * 清理时恢复 previous 或删掉整个 action。
  */
 function patchConfigRemoveAction(ctx: Context) {
-  const action = markRaw({
-    disabled: ({ config }: any) => !config.tree?.path || isProtectedConfigNode(config.tree),
-    action: ({ config }: any) => {
-      if (isBundleGroup(config.tree)) return requestBundleGroupUninstall(config.tree)
-      return requestConfigRemove(config.tree)
-    },
-  })
+	const action = markRaw({
+		disabled: ({ config }: any) =>
+			!config.tree?.path || isProtectedConfigNode(config.tree),
+		action: ({ config }: any) => {
+			if (isBundleGroup(config.tree))
+				return requestBundleGroupUninstall(config.tree);
+			return requestConfigRemove(config.tree);
+		},
+	});
 
-  ctx.effect(() => {
-    let previous: any
+	ctx.effect(() => {
+		let previous: any;
 
-    const apply = () => {
-      const current = ctx.internal.actions['config.tree.remove']
-      if (current === action) return
-      if (current) previous = current
-      ctx.internal.actions['config.tree.remove'] = action
-    }
+		const apply = () => {
+			const current = ctx.internal.actions["config.tree.remove"];
+			if (current === action) return;
+			if (current) previous = current;
+			ctx.internal.actions["config.tree.remove"] = action;
+		};
 
-    const stop = watch(() => ctx.internal.actions['config.tree.remove'], apply, { immediate: true })
+		const stop = watch(
+			() => ctx.internal.actions["config.tree.remove"],
+			apply,
+			{ immediate: true },
+		);
 
-    return () => {
-      stop()
-      if (ctx.internal.actions['config.tree.remove'] !== action) return
-      if (previous) {
-        ctx.internal.actions['config.tree.remove'] = previous
-      } else {
-        delete ctx.internal.actions['config.tree.remove']
-      }
-    }
-  })
+		return () => {
+			stop();
+			if (ctx.internal.actions["config.tree.remove"] !== action) return;
+			if (previous) {
+				ctx.internal.actions["config.tree.remove"] = previous;
+			} else {
+				delete ctx.internal.actions["config.tree.remove"];
+			}
+		};
+	});
 }
 
 /** 扩展入口:打两个菜单/动作补丁,再注册各插槽(全局对话框 + 4 个 config 插件扩展位)。 */
 export default (ctx: Context) => {
-  patchConfigRemoveLabel(ctx)
-  patchConfigRemoveAction(ctx)
+	patchConfigRemoveLabel(ctx);
+	patchConfigRemoveAction(ctx);
 
-  // 配置移除确认对话框(全局挂载,由 configRemoveTarget 触发)
-  ctx.slot({
-    type: 'global',
-    component: ConfigRemove,
-  })
+	// 配置移除确认对话框(全局挂载,由 configRemoveTarget 触发)
+	ctx.slot({
+		type: "global",
+		component: ConfigRemove,
+	});
 
-  // 合包分组卸载对话框(全局挂载,由 bundleGroupUninstallTarget 触发)
-  ctx.slot({
-    type: 'global',
-    component: BundleGroupUninstall,
-  })
+	// 合包分组卸载对话框(全局挂载,由 bundleGroupUninstallTarget 触发)
+	ctx.slot({
+		type: "global",
+		component: BundleGroupUninstall,
+	});
 
-  // 插件详情页的 peer 依赖/服务状态区
-  ctx.slot({
-    type: 'plugin-dependency',
-    component: Dependency,
-    disabled: () => !store.packages,
-  })
+	// 插件详情页的 peer 依赖/服务状态区
+	ctx.slot({
+		type: "plugin-dependency",
+		component: Dependency,
+		disabled: () => !store.packages,
+	});
 
-  // 插件详情页:外部链接导航 + 卸载入口(version.vue)
-  ctx.slot({
-    type: 'plugin-details',
-    component: Version,
-    disabled: () => !store.packages,
-    order: 1000,
-  })
+	// 插件详情页:外部链接导航 + 卸载入口(version.vue)
+	ctx.slot({
+		type: "plugin-details",
+		component: Version,
+		disabled: () => !store.packages,
+		order: 1000,
+	});
 
-  // 插件配置指向未安装包时的"快速安装/去市场"提示(missing.vue)
-  ctx.slot({
-    type: 'plugin-missing',
-    component: Missing,
-  })
+	// 插件配置指向未安装包时的"快速安装/去市场"提示(missing.vue)
+	ctx.slot({
+		type: "plugin-missing",
+		component: Missing,
+	});
 
-  // 插件选择器的分类标签过滤(select.vue)
-  ctx.slot({
-    type: 'plugin-select',
-    component: Select,
-  })
-}
+	// 插件选择器的分类标签过滤(select.vue)
+	ctx.slot({
+		type: "plugin-select",
+		component: Select,
+	});
+};

@@ -7,26 +7,31 @@
  * 符号名不变。similarity 的打分细节不进聚合面。
  */
 
-export * from './avatar'
-export { getUserKey, getUsers } from './users'
+export * from "./avatar";
+export { getUserKey, getUsers } from "./users";
 
-export { formatShortname, isPluginPackage, kConfig, useMarketI18n } from './context'
-export type { MarketConfig } from './context'
 export {
-  badges,
-  canInstallBundleSearchObject,
-  categories,
-  isBundleSearchObject,
-  resolveCategory,
-} from './catalog'
-export type { Badge } from './catalog'
-export { comparators, getSortedPrepared } from './sort'
+	formatShortname,
+	isPluginPackage,
+	kConfig,
+	useMarketI18n,
+} from "./context";
+export type { MarketConfig } from "./context";
 export {
-  getFiltered,
-  getSilentFiltered,
-  getVisible,
-  hasFilter,
-  parseSilentFilters,
-  validate,
-  validateWord,
-} from './filter'
+	badges,
+	canInstallBundleSearchObject,
+	categories,
+	isBundleSearchObject,
+	resolveCategory,
+} from "./catalog";
+export type { Badge } from "./catalog";
+export { comparators, getSortedPrepared } from "./sort";
+export {
+	getFiltered,
+	getSilentFiltered,
+	getVisible,
+	hasFilter,
+	parseSilentFilters,
+	validate,
+	validateWord,
+} from "./filter";

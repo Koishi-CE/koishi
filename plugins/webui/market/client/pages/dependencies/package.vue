@@ -156,21 +156,39 @@
 </template>
 
 <script lang="ts" setup>
+import { computed, nextTick, ref, watch } from "vue";
+import { useConfig, useContext } from "@koishi-ce/client";
+import type { SearchObject } from "@koishi-ce/registry";
+import { getPendingOverrides } from "../../shared/plugin-config";
+import {
+	activeBundle,
+	ensureInstalledConfig,
+	expandedDependency,
+	pendingBundleUninstalls,
+} from "../../shared/operations";
+import MarketIcon from "../../market/icons";
+import { useMarketNextI18n } from "../../shared/i18n";
+import {
+	restoreIgnoreUpdate,
+	type IgnoreUpdateTarget,
+} from "./use-ignore-update";
+import { usePackageCardMeta } from "./use-package-card-meta";
+import { usePackageCardState } from "./use-package-card-state";
+import { usePackageCardStatus } from "./use-package-card-status";
+import { usePackageVisibility } from "./use-package-visibility";
 
-import { computed, nextTick, ref, watch } from 'vue'
-import { useConfig, useContext } from '@koishi-ce/client'
-import type { SearchObject } from '@koishi-ce/registry'
-import { getPendingOverrides } from '../../shared/plugin-config'
-import { activeBundle, ensureInstalledConfig, expandedDependency, pendingBundleUninstalls } from '../../shared/operations'
-import MarketIcon from '../../market/icons'
-import { useMarketNextI18n } from '../../shared/i18n'
-import { restoreIgnoreUpdate, type IgnoreUpdateTarget } from './use-ignore-update'
-import { usePackageCardMeta } from './use-package-card-meta'
-import { usePackageCardState } from './use-package-card-state'
-import { usePackageCardStatus } from './use-package-card-status'
-import { usePackageVisibility } from './use-package-visibility'
-
-type ItemKind = 'pending' | 'bundle' | 'unconfigured' | 'updatable' | 'ignored' | 'check-disabled' | 'invalid' | 'error' | 'local' | 'manual' | 'installed'
+type ItemKind =
+	| "pending"
+	| "bundle"
+	| "unconfigured"
+	| "updatable"
+	| "ignored"
+	| "check-disabled"
+	| "invalid"
+	| "error"
+	| "local"
+	| "manual"
+	| "installed";
 
 /**
  * 性能约定:本组件在依赖页卡片墙中被全量实例化(数百张),任何新增的
@@ -179,182 +197,226 @@ type ItemKind = 'pending' | 'bundle' | 'unconfigured' | 'updatable' | 'ignored' 
  * 卡片展开或用户点击占位前不挂载,平时以纯文本占位展示当前值。
  */
 const props = defineProps<{
-  name: string
-  kind?: ItemKind
-}>()
+	name: string;
+	kind?: ItemKind;
+}>();
 
 const emit = defineEmits<{
-  /** 请求打开"忽略此更新"对话框(页面级单例,payload 为目标包名)。 */
-  (event: 'open-ignore', name: string): void
-  /** 请求打开"本地依赖绑定"对话框(页面级单例,payload 为目标包名)。 */
-  (event: 'open-binding', name: string): void
-  /** 请求打开"合包卸载"对话框(页面级单例,payload 为目标包名)。 */
-  (event: 'open-bundle-uninstall', name: string): void
-}>()
+	/** 请求打开"忽略此更新"对话框(页面级单例,payload 为目标包名)。 */
+	(event: "open-ignore", name: string): void;
+	/** 请求打开"本地依赖绑定"对话框(页面级单例,payload 为目标包名)。 */
+	(event: "open-binding", name: string): void;
+	/** 请求打开"合包卸载"对话框(页面级单例,payload 为目标包名)。 */
+	(event: "open-bundle-uninstall", name: string): void;
+}>();
 
-const removeValue = '__market_next_remove__'
-const config = useConfig()
-const ctx = useContext()
-const { t } = useMarketNextI18n()
-const configuring = ref(false)
+const removeValue = "__market_next_remove__";
+const config = useConfig();
+const ctx = useContext();
+const { t } = useMarketNextI18n();
+const configuring = ref(false);
 /** 版本下拉是否已打开过(打开前不渲染版本 el-option,避免数百选项常驻)。 */
-const versionOptionsReady = ref(false)
+const versionOptionsReady = ref(false);
 /** 版本控件是否已激活(激活前用纯文本占位,不挂 el-select 组件树)。 */
-const versionControlReady = ref(false)
+const versionControlReady = ref(false);
 /** el-select 实例引用(激活占位后聚焦并展开下拉)。 */
-const versionSelect = ref<{ focus?: () => void }>()
+const versionSelect = ref<{ focus?: () => void }>();
 const editing = computed({
-  get: () => expandedDependency.value === props.name,
-  set: (value: boolean) => expandedDependency.value = value ? props.name : '',
-})
+	get: () => expandedDependency.value === props.name,
+	set: (value: boolean) => (expandedDependency.value = value ? props.name : ""),
+});
 
-const state = usePackageCardState(props, config, ctx)
-const status = usePackageCardStatus(state, t, editing)
-const meta = usePackageCardMeta(state, t, editing, ctx, status.statusClass)
+const state = usePackageCardState(props, config, ctx);
+const status = usePackageCardStatus(state, t, editing);
+const meta = usePackageCardMeta(state, t, editing, ctx, status.statusClass);
 const visibility = usePackageVisibility({
-  state,
-  t,
-  statusClass: status.statusClass,
-  configText: meta.configText,
-  sourceText: meta.sourceText,
-  statusIcon: status.statusIcon,
-  identityIcon: meta.identityIcon,
-  detailText: status.detailText,
-  editing,
-})
+	state,
+	t,
+	statusClass: status.statusClass,
+	configText: meta.configText,
+	sourceText: meta.sourceText,
+	statusIcon: status.statusIcon,
+	identityIcon: meta.identityIcon,
+	detailText: status.detailText,
+	editing,
+});
 
 // 模板按名消费,此处平铺解构(script setup 的绑定要求)
 const {
-  dep, local, localDependency, marketData, bundleRecord, displayName, data,
-  latestVersion, pending, pendingRemove, updatable, bundlePackage, unconfigured, overrideValue,
-} = state
+	dep,
+	local,
+	localDependency,
+	marketData,
+	bundleRecord,
+	displayName,
+	data,
+	latestVersion,
+	pending,
+	pendingRemove,
+	updatable,
+	bundlePackage,
+	unconfigured,
+	overrideValue,
+} = state;
 const {
-  statusClass, statusLabel, badgeIcon, currentText, targetText, targetLabel,
-  detailText, compactStatusText, versionSourceText,
-} = status
+	statusClass,
+	statusLabel,
+	badgeIcon,
+	currentText,
+	targetText,
+	targetLabel,
+	detailText,
+	compactStatusText,
+	versionSourceText,
+} = status;
 const {
-  configText, sourceText, removeButtonText, requestText, identityIcon,
-  identityText, cardStyle, summaryText, editToggleText,
-} = meta
+	configText,
+	sourceText,
+	removeButtonText,
+	requestText,
+	identityIcon,
+	identityText,
+	cardStyle,
+	summaryText,
+	editToggleText,
+} = meta;
 const {
-  markIcon, showIdentityPill, showIdentityMeta, showStatusBadge, showConfigMeta, showSourceMeta,
-  showTargetMeta, showDetailText, showVersionControl, showEditToggle, canExpandCard,
-  showQuickUpdate, showInlineIgnoreUpdate, showRestoreUpdate, showConfigure, showBindLocal,
-  showRemoveDependency, showCardActions, floatingActions,
-} = visibility
+	markIcon,
+	showIdentityPill,
+	showIdentityMeta,
+	showStatusBadge,
+	showConfigMeta,
+	showSourceMeta,
+	showTargetMeta,
+	showDetailText,
+	showVersionControl,
+	showEditToggle,
+	canExpandCard,
+	showQuickUpdate,
+	showInlineIgnoreUpdate,
+	showRestoreUpdate,
+	showConfigure,
+	showBindLocal,
+	showRemoveDependency,
+	showCardActions,
+	floatingActions,
+} = visibility;
 
 const selectedVersion = computed({
-  get() {
-    if (pendingRemove.value) return removeValue
-    if (overrideValue.value) return overrideValue.value
-    return dep.value?.resolved ?? latestVersion.value ?? ''
-  },
-  set(value: string) {
-    const override = getPendingOverrides()
-    if (value === removeValue) {
-      override[props.name] = ''
-    } else if (value === dep.value?.resolved || !value && !dep.value) {
-      delete override[props.name]
-    } else {
-      override[props.name] = value
-    }
-    state.setOverride(override)
-  },
-})
+	get() {
+		if (pendingRemove.value) return removeValue;
+		if (overrideValue.value) return overrideValue.value;
+		return dep.value?.resolved ?? latestVersion.value ?? "";
+	},
+	set(value: string) {
+		const override = getPendingOverrides();
+		if (value === removeValue) {
+			override[props.name] = "";
+		} else if (value === dep.value?.resolved || (!value && !dep.value)) {
+			delete override[props.name];
+		} else {
+			override[props.name] = value;
+		}
+		state.setOverride(override);
+	},
+});
 
 /** 版本下拉首次展开后才渲染全部版本选项(此前只显示当前值文本)。 */
 function onVersionSelectVisible(visible: boolean) {
-  if (visible) versionOptionsReady.value = true
+	if (visible) versionOptionsReady.value = true;
 }
 
 /** 版本控件占位文本:与 el-select 的显示一致(移除标记转文案,空值退状态摘要)。 */
 const versionPlaceholderText = computed(() => {
-  if (pendingRemove.value) return t('dependencyCard.actions.remove')
-  return selectedVersion.value || compactStatusText.value
-})
+	if (pendingRemove.value) return t("dependencyCard.actions.remove");
+	return selectedVersion.value || compactStatusText.value;
+});
 
 /** 点击占位:挂载 el-select 并聚焦(automatic-dropdown 下聚焦即展开下拉)。 */
 function activateVersionControl() {
-  versionControlReady.value = true
-  void nextTick(() => versionSelect.value?.focus?.())
+	versionControlReady.value = true;
+	void nextTick(() => versionSelect.value?.focus?.());
 }
 
 // 卡片收起时回收 el-select,回到轻量占位(编辑态本身即激活条件)
 watch(editing, (value) => {
-  if (!value) versionControlReady.value = false
-})
+	if (!value) versionControlReady.value = false;
+});
 
 /** "恢复更新":清忽略规则与禁检名单并双写持久化。 */
 function restoreUpdate() {
-  const target: IgnoreUpdateTarget = {
-    name: props.name,
-    getUpdatePolicy: state.getUpdatePolicy,
-    getUpdateIgnored: state.getUpdateIgnored,
-  }
-  void restoreIgnoreUpdate(target, config, t)
+	const target: IgnoreUpdateTarget = {
+		name: props.name,
+		getUpdatePolicy: state.getUpdatePolicy,
+		getUpdateIgnored: state.getUpdateIgnored,
+	};
+	void restoreIgnoreUpdate(target, config, t);
 }
 
 function toggleCardActions() {
-  if (!canExpandCard.value) return
-  if (bundlePackage.value) {
-    openBundlePanel()
-    return
-  }
-  editing.value = !editing.value
+	if (!canExpandCard.value) return;
+	if (bundlePackage.value) {
+		openBundlePanel();
+		return;
+	}
+	editing.value = !editing.value;
 }
 
 function toggleEdit() {
-  if (bundlePackage.value) {
-    openBundlePanel()
-    return
-  }
-  editing.value = !editing.value
+	if (bundlePackage.value) {
+		openBundlePanel();
+		return;
+	}
+	editing.value = !editing.value;
 }
 
 function openBundlePanel() {
-  const entry = marketData.value
-  if (entry) {
-    activeBundle.value = entry
-    return
-  }
-  activeBundle.value = {
-    package: {
-      name: props.name,
-      version: dep.value?.resolved ?? local.value?.package.version ?? latestVersion.value ?? '',
-      keywords: [],
-    },
-    shortname: displayName.value,
-  } as SearchObject
+	const entry = marketData.value;
+	if (entry) {
+		activeBundle.value = entry;
+		return;
+	}
+	activeBundle.value = {
+		package: {
+			name: props.name,
+			version:
+				dep.value?.resolved ??
+				local.value?.package.version ??
+				latestVersion.value ??
+				"",
+			keywords: [],
+		},
+		shortname: displayName.value,
+	} as SearchObject;
 }
 
 function clearOverride() {
-  const pendingBundle = pendingBundleUninstalls.value[props.name]
-  const override = getPendingOverrides()
-  delete override[props.name]
-  for (const member of pendingBundle?.members ?? []) {
-    delete override[member]
-  }
-  state.setOverride(override)
-  delete pendingBundleUninstalls.value[props.name]
+	const pendingBundle = pendingBundleUninstalls.value[props.name];
+	const override = getPendingOverrides();
+	delete override[props.name];
+	for (const member of pendingBundle?.members ?? []) {
+		delete override[member];
+	}
+	state.setOverride(override);
+	delete pendingBundleUninstalls.value[props.name];
 }
 
 function removeDependency() {
-  if (bundleRecord.value) {
-    emit('open-bundle-uninstall', props.name)
-    return
-  }
-  selectedVersion.value = removeValue
+	if (bundleRecord.value) {
+		emit("open-bundle-uninstall", props.name);
+		return;
+	}
+	selectedVersion.value = removeValue;
 }
 
 async function configure() {
-  configuring.value = true
-  try {
-    await ensureInstalledConfig(ctx, props.name, false)
-  } finally {
-    configuring.value = false
-  }
+	configuring.value = true;
+	try {
+		await ensureInstalledConfig(ctx, props.name, false);
+	} finally {
+		configuring.value = false;
+	}
 }
-
 </script>
 
 <style lang="scss" src="./package.scss"></style>

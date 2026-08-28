@@ -130,156 +130,194 @@
  * 关键设计:预览请求用自增 serial 标记,响应回来时若已有更新的请求则丢弃,
  * 避免快速切换快照时旧响应覆盖新状态。
  */
-import { computed, ref, watch } from 'vue'
-import { send, useConfig } from '@koishi-ce/client'
+import { computed, ref, watch } from "vue";
+import { send, useConfig } from "@koishi-ce/client";
 import type {
-  EnvironmentChangeStatus,
-  EnvironmentSnapshotChange,
-  EnvironmentSnapshotPreview,
-  EnvironmentSnapshotSource,
-  EnvironmentSnapshotSummary,
-} from '@koishi-ce/plugin-marketn/shared'
-import { applyEnvironmentSnapshot, showEnvironmentVersions } from '../../shared/operations'
-import { useMarketNextI18n } from '../../shared/i18n'
-import MarketIcon from '../../market/icons'
+	EnvironmentChangeStatus,
+	EnvironmentSnapshotChange,
+	EnvironmentSnapshotPreview,
+	EnvironmentSnapshotSource,
+	EnvironmentSnapshotSummary,
+} from "@koishi-ce/plugin-marketn/shared";
+import {
+	applyEnvironmentSnapshot,
+	showEnvironmentVersions,
+} from "../../shared/operations";
+import { useMarketNextI18n } from "../../shared/i18n";
+import MarketIcon from "../../market/icons";
 
-const config = useConfig()
-const { t, locale } = useMarketNextI18n()
+const config = useConfig();
+const { t, locale } = useMarketNextI18n();
 /** 快照摘要列表(左侧栏数据源)。 */
-const snapshots = ref<EnvironmentSnapshotSummary[]>([])
+const snapshots = ref<EnvironmentSnapshotSummary[]>([]);
 /** 当前选中的快照 id。 */
-const selectedId = ref('')
+const selectedId = ref("");
 /** 选中快照的 diff 预览结果。 */
-const preview = ref<EnvironmentSnapshotPreview>()
+const preview = ref<EnvironmentSnapshotPreview>();
 /** 列表加载中/预览加载中/各自错误文案。 */
-const loading = ref(false)
-const previewLoading = ref(false)
-const loadError = ref('')
-const previewError = ref('')
+const loading = ref(false);
+const previewLoading = ref(false);
+const loadError = ref("");
+const previewError = ref("");
 /** 二次确认弹窗开关。 */
-const confirmVisible = ref(false)
+const confirmVisible = ref(false);
 /** 预览请求序号:响应携带过期序号时丢弃,防止快速切换快照时旧响应覆盖新状态。 */
-let previewSerial = 0
+let previewSerial = 0;
 
 /** 对话框打开时拉取快照列表;关闭时收起二次确认弹窗。 */
 watch(showEnvironmentVersions, (visible) => {
-  if (visible) void loadSnapshots()
-  else confirmVisible.value = false
-})
+	if (visible) void loadSnapshots();
+	else confirmVisible.value = false;
+});
 
 /** diff 行排序权重:不支持 > 移除 > 降级 > 升级 > 新增 > 版本变化 > 未变化,同级按包名。 */
 const statusOrder: Record<EnvironmentChangeStatus, number> = {
-  unsupported: 0,
-  removed: 1,
-  downgrade: 2,
-  upgrade: 3,
-  added: 4,
-  changed: 5,
-  unchanged: 6,
-}
+	unsupported: 0,
+	removed: 1,
+	downgrade: 2,
+	upgrade: 3,
+	added: 4,
+	changed: 5,
+	unchanged: 6,
+};
 
 /** 预览变更按上述权重排序后的展示列表。 */
-const orderedChanges = computed(() => [...(preview.value?.changes ?? [])].sort((left, right) => {
-  return statusOrder[left.status] - statusOrder[right.status] || left.name.localeCompare(right.name)
-}))
+const orderedChanges = computed(() =>
+	[...(preview.value?.changes ?? [])].sort((left, right) => {
+		return (
+			statusOrder[left.status] - statusOrder[right.status] ||
+			left.name.localeCompare(right.name)
+		);
+	}),
+);
 
 /** 变更数/未变更数/将被移除数,驱动头部摘要与二次确认里的移除警告。 */
-const changedCount = computed(() => preview.value?.changes.filter(change => change.status !== 'unchanged').length ?? 0)
-const unchangedCount = computed(() => preview.value?.changes.filter(change => change.status === 'unchanged').length ?? 0)
-const removedCount = computed(() => preview.value?.changes.filter(change => change.status === 'removed').length ?? 0)
+const changedCount = computed(
+	() =>
+		preview.value?.changes.filter((change) => change.status !== "unchanged")
+			.length ?? 0,
+);
+const unchangedCount = computed(
+	() =>
+		preview.value?.changes.filter((change) => change.status === "unchanged")
+			.length ?? 0,
+);
+const removedCount = computed(
+	() =>
+		preview.value?.changes.filter((change) => change.status === "removed")
+			.length ?? 0,
+);
 /** 可回滚条件:有预览、目标不是当前环境、存在可执行变更且无不受支持的变更。 */
-const canApply = computed(() => !!preview.value
-  && !preview.value.snapshot.current
-  && preview.value.actionableCount > 0
-  && preview.value.unsupportedCount === 0)
+const canApply = computed(
+	() =>
+		!!preview.value &&
+		!preview.value.snapshot.current &&
+		preview.value.actionableCount > 0 &&
+		preview.value.unsupportedCount === 0,
+);
 
 /** 拉取快照列表并选中默认项(优先非当前的最近快照);preserveSelection 供刷新时保住当前选择。 */
 // 快照列表加载与默认选中链:优先级回退(上次选择>非当前>首个)即语义
 // fallow-ignore-next-line complexity
 async function loadSnapshots(preserveSelection = false) {
-  if (loading.value) return
-  loading.value = true
-  loadError.value = ''
-  try {
-    snapshots.value = await (send('market/environment-snapshots') ?? Promise.resolve([]))
-    const previous = preserveSelection && snapshots.value.some(snapshot => snapshot.id === selectedId.value)
-      ? selectedId.value
-      : ''
-    const target = previous || snapshots.value.find(snapshot => !snapshot.current)?.id || snapshots.value[0]?.id || ''
-    if (target) await selectSnapshot(target, true)
-    else {
-      selectedId.value = ''
-      preview.value = undefined
-    }
-  } catch (error) {
-    console.error(error)
-    loadError.value = t('environment.loadFailed')
-  } finally {
-    loading.value = false
-  }
+	if (loading.value) return;
+	loading.value = true;
+	loadError.value = "";
+	try {
+		snapshots.value = await (send("market/environment-snapshots") ??
+			Promise.resolve([]));
+		const previous =
+			preserveSelection &&
+			snapshots.value.some((snapshot) => snapshot.id === selectedId.value)
+				? selectedId.value
+				: "";
+		const target =
+			previous ||
+			snapshots.value.find((snapshot) => !snapshot.current)?.id ||
+			snapshots.value[0]?.id ||
+			"";
+		if (target) await selectSnapshot(target, true);
+		else {
+			selectedId.value = "";
+			preview.value = undefined;
+		}
+	} catch (error) {
+		console.error(error);
+		loadError.value = t("environment.loadFailed");
+	} finally {
+		loading.value = false;
+	}
 }
 
 /** 请求选中快照的 diff 预览;force 用于强制重拉(同一快照默认有缓存则跳过)。 */
 // 预览拉取的串号守卫流程:serial 校验贯穿每个 await 之后,拆分会打散竞态防护
 // fallow-ignore-next-line complexity
 async function selectSnapshot(id: string, force = false) {
-  if (!force && id === selectedId.value && preview.value) return
-  selectedId.value = id
-  preview.value = undefined
-  previewError.value = ''
-  previewLoading.value = true
-  const serial = ++previewSerial
-  try {
-    const result = await (send('market/environment-snapshot-preview', id) ?? Promise.resolve(undefined))
-    if (serial !== previewSerial) return
-    if (!result) throw new Error('environment snapshot not found')
-    preview.value = result
-  } catch (error) {
-    if (serial !== previewSerial) return
-    console.error(error)
-    previewError.value = t('environment.previewFailed')
-  } finally {
-    if (serial === previewSerial) previewLoading.value = false
-  }
+	if (!force && id === selectedId.value && preview.value) return;
+	selectedId.value = id;
+	preview.value = undefined;
+	previewError.value = "";
+	previewLoading.value = true;
+	const serial = ++previewSerial;
+	try {
+		const result = await (send("market/environment-snapshot-preview", id) ??
+			Promise.resolve(undefined));
+		if (serial !== previewSerial) return;
+		if (!result) throw new Error("environment snapshot not found");
+		preview.value = result;
+	} catch (error) {
+		if (serial !== previewSerial) return;
+		console.error(error);
+		previewError.value = t("environment.previewFailed");
+	} finally {
+		if (serial === previewSerial) previewLoading.value = false;
+	}
 }
 
 /** 执行回滚:检测本插件自身是否也在变更列表里(是则按自更新场景传参),交给 applyEnvironmentSnapshot。 */
 function applySnapshot() {
-  if (!canApply.value || !preview.value) return
-  const id = preview.value.snapshot.id
-  const selfUpdate = preview.value.changes.some(change => {
-    return change.name === '@koishi-ce/plugin-marketn' && change.status !== 'unchanged'
-  })
-  confirmVisible.value = false
-  void applyEnvironmentSnapshot(id, selfUpdate)
+	if (!canApply.value || !preview.value) return;
+	const id = preview.value.snapshot.id;
+	const selfUpdate = preview.value.changes.some((change) => {
+		return (
+			change.name === "@koishi-ce/plugin-marketn" &&
+			change.status !== "unchanged"
+		);
+	});
+	confirmVisible.value = false;
+	void applyEnvironmentSnapshot(id, selfUpdate);
 }
 
 /** 时间戳转本地可读时间;非法/缺失值显示"时间未知"。 */
 function formatDate(value: number) {
-  if (!Number.isFinite(value) || value <= 0) return t('common.messages.timeUnknown')
-  return new Date(value).toLocaleString(locale.value)
+	if (!Number.isFinite(value) || value <= 0)
+		return t("common.messages.timeUnknown");
+	return new Date(value).toLocaleString(locale.value);
 }
 
 /** 快照来源文案:启动时自动保存/安装操作后保存/外部(手动等)。 */
 function sourceText(source: EnvironmentSnapshotSource) {
-  switch (source) {
-    case 'startup': return t('environment.sourceStartup')
-    case 'operation': return t('environment.sourceOperation')
-    default: return t('environment.sourceExternal')
-  }
+	switch (source) {
+		case "startup":
+			return t("environment.sourceStartup");
+		case "operation":
+			return t("environment.sourceOperation");
+		default:
+			return t("environment.sourceExternal");
+	}
 }
 
 /** 版本号缺省时展示"未安装"。 */
 function versionText(version?: string) {
-  return version || t('environment.notInstalled')
+	return version || t("environment.notInstalled");
 }
 
 function statusText(status: EnvironmentChangeStatus) {
-  return t(`environment.change.${status}`)
+	return t(`environment.change.${status}`);
 }
 
-function reasonText(reason: NonNullable<EnvironmentSnapshotChange['reason']>) {
-  return t(`environment.reason.${reason}`)
+function reasonText(reason: NonNullable<EnvironmentSnapshotChange["reason"]>) {
+	return t(`environment.reason.${reason}`);
 }
 </script>
 

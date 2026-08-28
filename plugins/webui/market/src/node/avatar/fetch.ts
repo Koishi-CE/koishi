@@ -20,10 +20,10 @@
  */
 import type { Context, HTTP } from "@koishi-ce/koishi";
 import {
-    AVATAR_MAX_SIZE,
-    type AvatarBodyStream,
-    cancelAvatarBody,
-    readAvatarResponse,
+	AVATAR_MAX_SIZE,
+	type AvatarBodyStream,
+	cancelAvatarBody,
+	readAvatarResponse,
 } from "./body.js";
 import type { AvatarFetchResult } from "./memory-cache.js";
 import { isBlockedAvatarTarget } from "./ssrf.js";
@@ -36,7 +36,7 @@ const AVATAR_HEAD_TIMEOUT = 1200;
 const AVATAR_MAX_REDIRECTS = 3;
 /** Accept 头:优先现代图片格式,svg 降权,其余任意类型兜底。 */
 const AVATAR_ACCEPT =
-    "image/avif,image/webp,image/png,image/jpeg,image/gif,image/svg+xml;q=0.8,*/*;q=0.1";
+	"image/avif,image/webp,image/png,image/jpeg,image/gif,image/svg+xml;q=0.8,*/*;q=0.1";
 
 /**
  * 网络抓取路径:解析并校验 URL -> SSRF 校验 -> HEAD 预检 -> 限流 GET ->
@@ -44,29 +44,31 @@ const AVATAR_ACCEPT =
  * undefined(不抛错,调用方视作未命中)。
  */
 export async function fetchAvatarFromNetwork(
-    ctx: Context,
-    rawUrl: string,
+	ctx: Context,
+	rawUrl: string,
 ): Promise<{ result: AvatarFetchResult; sourceUrl: string } | undefined> {
-    const url = parseAvatarHttpUrl(rawUrl);
-    if (!url) return;
-    if (await isBlockedAvatarTarget(url)) return;
-    const checked = await checkAvatarHead(ctx, url);
-    if (checked.blocked) return;
-    const fetched = await fetchAvatarResponse(ctx, checked.url ?? url);
-    if (!fetched) return;
-    const result = await readAvatarResponse(fetched.response);
-    if (!result) return;
-    return { result, sourceUrl: fetched.sourceUrl };
+	const url = parseAvatarHttpUrl(rawUrl);
+	if (!url) return;
+	if (await isBlockedAvatarTarget(url)) return;
+	const checked = await checkAvatarHead(ctx, url);
+	if (checked.blocked) return;
+	const fetched = await fetchAvatarResponse(ctx, checked.url ?? url);
+	if (!fetched) return;
+	const result = await readAvatarResponse(fetched.response);
+	if (!result) return;
+	return { result, sourceUrl: fetched.sourceUrl };
 }
 
 /** 解析头像 URL:仅接受 http(s) 协议,解析失败或协议不符返回 undefined。 */
 function parseAvatarHttpUrl(rawUrl: string) {
-    try {
-        const url = new URL(rawUrl);
-        return url.protocol === "http:" || url.protocol === "https:" ? url : undefined;
-    } catch {
-        return undefined;
-    }
+	try {
+		const url = new URL(rawUrl);
+		return url.protocol === "http:" || url.protocol === "https:"
+			? url
+			: undefined;
+	} catch {
+		return undefined;
+	}
 }
 
 /**
@@ -74,35 +76,43 @@ function parseAvatarHttpUrl(rawUrl: string) {
  * 拦截超大 Content-Length 与危险目标。HEAD 抛错(如目标不支持)不阻断,
  * 返回当前 URL 降级为直接 GET。
  */
-async function checkAvatarHead(ctx: Context, url: URL): Promise<{ url?: URL; blocked?: boolean }> {
-    let current = url;
-    for (let index = 0; index <= AVATAR_MAX_REDIRECTS; index++) {
-        if (await isBlockedAvatarTarget(current)) return { blocked: true };
-        try {
-            const head = await ctx.http("HEAD", current.toString(), {
-                timeout: AVATAR_HEAD_TIMEOUT,
-                redirect: "manual",
-                validateStatus: (status) => status >= 200 && status < 600,
-                headers: { accept: AVATAR_ACCEPT },
-            });
-            if (isAvatarRedirect(head.status)) {
-                const next = await resolveAvatarRedirect(current, head.headers.get("location"));
-                if (!next) return { blocked: true };
-                current = next;
-                continue;
-            }
-            const headLength = Number(head.headers.get("content-length"));
-            if (Number.isFinite(headLength) && headLength > AVATAR_MAX_SIZE)
-                return { blocked: true };
-            return { url: current };
-        } catch (error) {
-            ctx.logger("market").debug(
-                `avatar HEAD skipped: url=${current}, error=${error instanceof Error ? error.message : error}`,
-            );
-            return { url: current };
-        }
-    }
-    return { blocked: true };
+async function checkAvatarHead(
+	ctx: Context,
+	url: URL,
+): Promise<{ url?: URL; blocked?: boolean }> {
+	let current = url;
+	for (let index = 0; index <= AVATAR_MAX_REDIRECTS; index++) {
+		if (await isBlockedAvatarTarget(current)) return { blocked: true };
+		try {
+			const head = await ctx.http("HEAD", current.toString(), {
+				timeout: AVATAR_HEAD_TIMEOUT,
+				redirect: "manual",
+				validateStatus: (status) => status >= 200 && status < 600,
+				headers: { accept: AVATAR_ACCEPT },
+			});
+			if (isAvatarRedirect(head.status)) {
+				const next = await resolveAvatarRedirect(
+					current,
+					head.headers.get("location"),
+				);
+				if (!next) return { blocked: true };
+				current = next;
+				continue;
+			}
+			const headLength = Number(head.headers.get("content-length"));
+			if (Number.isFinite(headLength) && headLength > AVATAR_MAX_SIZE)
+				return { blocked: true };
+			return { url: current };
+		} catch (error) {
+			ctx
+				.logger("market")
+				.debug(
+					`avatar HEAD skipped: url=${current}, error=${error instanceof Error ? error.message : error}`,
+				);
+			return { url: current };
+		}
+	}
+	return { blocked: true };
 }
 
 /**
@@ -111,31 +121,37 @@ async function checkAvatarHead(ctx: Context, url: URL): Promise<{ url?: URL; blo
  * 校验通过前的返回都交由调用方判定 body。
  */
 async function fetchAvatarResponse(
-    ctx: Context,
-    url: URL,
-): Promise<{ response: HTTP.Response<AvatarBodyStream>; sourceUrl: string } | undefined> {
-    let current = url;
-    for (let index = 0; index <= AVATAR_MAX_REDIRECTS; index++) {
-        if (await isBlockedAvatarTarget(current)) return;
-        const response = await ctx.http(current.toString(), {
-            timeout: AVATAR_FETCH_TIMEOUT,
-            responseType: "stream",
-            redirect: "manual",
-            validateStatus: (status) => status >= 200 && status < 600,
-            headers: { accept: AVATAR_ACCEPT },
-        });
-        if (!isAvatarRedirect(response.status)) return { response, sourceUrl: current.toString() };
-        await cancelAvatarBody(response.data);
-        const next = await resolveAvatarRedirect(current, response.headers.get("location"));
-        if (!next) return;
-        current = next;
-    }
-    return undefined;
+	ctx: Context,
+	url: URL,
+): Promise<
+	{ response: HTTP.Response<AvatarBodyStream>; sourceUrl: string } | undefined
+> {
+	let current = url;
+	for (let index = 0; index <= AVATAR_MAX_REDIRECTS; index++) {
+		if (await isBlockedAvatarTarget(current)) return;
+		const response = await ctx.http(current.toString(), {
+			timeout: AVATAR_FETCH_TIMEOUT,
+			responseType: "stream",
+			redirect: "manual",
+			validateStatus: (status) => status >= 200 && status < 600,
+			headers: { accept: AVATAR_ACCEPT },
+		});
+		if (!isAvatarRedirect(response.status))
+			return { response, sourceUrl: current.toString() };
+		await cancelAvatarBody(response.data);
+		const next = await resolveAvatarRedirect(
+			current,
+			response.headers.get("location"),
+		);
+		if (!next) return;
+		current = next;
+	}
+	return undefined;
 }
 
 /** 是否为需要手动跟随的 3xx 重定向状态码。 */
 function isAvatarRedirect(status: number) {
-    return status >= 300 && status < 400;
+	return status >= 300 && status < 400;
 }
 
 /**
@@ -143,14 +159,14 @@ function isAvatarRedirect(status: number) {
  * 新目标做 SSRF 校验。任一不满足返回 undefined(调用方视为终止)。
  */
 async function resolveAvatarRedirect(base: URL, location: string | null) {
-    if (!location) return;
-    let next: URL;
-    try {
-        next = new URL(location, base);
-    } catch {
-        return;
-    }
-    if (!["http:", "https:"].includes(next.protocol)) return;
-    if (await isBlockedAvatarTarget(next)) return;
-    return next;
+	if (!location) return;
+	let next: URL;
+	try {
+		next = new URL(location, base);
+	} catch {
+		return;
+	}
+	if (!["http:", "https:"].includes(next.protocol)) return;
+	if (await isBlockedAvatarTarget(next)) return;
+	return next;
 }

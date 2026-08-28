@@ -22,22 +22,22 @@ import type { Context } from "@koishi-ce/koishi";
 import { writeJsonAtomic } from "../../core/utils/atomic-write.js";
 import { cleanupAvatarDiskCache } from "./disk-cleanup.js";
 import {
-    type AvatarDiskCacheEntry,
-    getAvatarCacheFile,
-    normalizeAvatarDiskCache,
+	type AvatarDiskCacheEntry,
+	getAvatarCacheFile,
+	normalizeAvatarDiskCache,
 } from "./disk-entry.js";
 import {
-    AVATAR_CACHE_TTL,
-    type AvatarFetchResult,
-    avatarCache,
-    cleanupAvatarCache,
+	AVATAR_CACHE_TTL,
+	type AvatarFetchResult,
+	avatarCache,
+	cleanupAvatarCache,
 } from "./memory-cache.js";
 import { isAvatarCacheLikelyDefault } from "./ssrf.js";
 
 /** 全量清理入口:先清内存,再异步触发磁盘清理(void:不等待扫盘完成)。 */
 export function cleanupAvatarCaches(ctx: Context) {
-    cleanupAvatarCache();
-    void cleanupAvatarDiskCache(ctx);
+	cleanupAvatarCache();
+	void cleanupAvatarDiskCache(ctx);
 }
 
 /**
@@ -46,36 +46,41 @@ export function cleanupAvatarCaches(ctx: Context) {
  * 读失败只记 debug,ENOENT(首次无缓存)连日志都不记。
  */
 export async function readAvatarDiskCache(
-    ctx: Context,
-    key: string,
+	ctx: Context,
+	key: string,
 ): Promise<AvatarFetchResult | undefined> {
-    try {
-        const file = getAvatarCacheFile(ctx, key);
-        const entry = normalizeAvatarDiskCache(JSON.parse(await fsp.readFile(file, "utf8")), key);
-        if (!entry) {
-            // 无效条目顺手清掉,避免下次再解析一遍
-            void fsp.unlink(file).catch(() => {});
-            return;
-        }
-        if (isAvatarCacheLikelyDefault(entry.url, key)) {
-            void fsp.unlink(file).catch(() => {});
-            return;
-        }
-        // 回填内存缓存:过期时间沿用磁盘条目的 cachedAt + TTL,而非重新计时
-        avatarCache.set(key, {
-            data: entry.data,
-            type: entry.type,
-            expiresAt: entry.cachedAt + AVATAR_CACHE_TTL,
-        });
-        return { data: entry.data, type: entry.type, cached: true };
-    } catch (error) {
-        if ((error as NodeJS.ErrnoException | undefined)?.code !== "ENOENT") {
-            ctx.logger("market").debug(
-                `failed to read avatar disk cache: ${error instanceof Error ? error.message : error}`,
-            );
-        }
-    }
-    return undefined;
+	try {
+		const file = getAvatarCacheFile(ctx, key);
+		const entry = normalizeAvatarDiskCache(
+			JSON.parse(await fsp.readFile(file, "utf8")),
+			key,
+		);
+		if (!entry) {
+			// 无效条目顺手清掉,避免下次再解析一遍
+			void fsp.unlink(file).catch(() => {});
+			return;
+		}
+		if (isAvatarCacheLikelyDefault(entry.url, key)) {
+			void fsp.unlink(file).catch(() => {});
+			return;
+		}
+		// 回填内存缓存:过期时间沿用磁盘条目的 cachedAt + TTL,而非重新计时
+		avatarCache.set(key, {
+			data: entry.data,
+			type: entry.type,
+			expiresAt: entry.cachedAt + AVATAR_CACHE_TTL,
+		});
+		return { data: entry.data, type: entry.type, cached: true };
+	} catch (error) {
+		if ((error as NodeJS.ErrnoException | undefined)?.code !== "ENOENT") {
+			ctx
+				.logger("market")
+				.debug(
+					`failed to read avatar disk cache: ${error instanceof Error ? error.message : error}`,
+				);
+		}
+	}
+	return undefined;
 }
 
 /**
@@ -83,24 +88,26 @@ export async function readAvatarDiskCache(
  * 命中率,不应打断头像抓取主流程。
  */
 export async function writeAvatarDiskCache(
-    ctx: Context,
-    key: string,
-    url: string,
-    result: AvatarFetchResult,
+	ctx: Context,
+	key: string,
+	url: string,
+	result: AvatarFetchResult,
 ) {
-    try {
-        const file = getAvatarCacheFile(ctx, key);
-        const entry: AvatarDiskCacheEntry = {
-            key,
-            url,
-            type: result.type,
-            data: result.data,
-            cachedAt: Date.now(),
-        };
-        await writeJsonAtomic(file, entry, { newline: false });
-    } catch (error) {
-        ctx.logger("market").debug(
-            `failed to write avatar disk cache: ${error instanceof Error ? error.message : error}`,
-        );
-    }
+	try {
+		const file = getAvatarCacheFile(ctx, key);
+		const entry: AvatarDiskCacheEntry = {
+			key,
+			url,
+			type: result.type,
+			data: result.data,
+			cachedAt: Date.now(),
+		};
+		await writeJsonAtomic(file, entry, { newline: false });
+	} catch (error) {
+		ctx
+			.logger("market")
+			.debug(
+				`failed to write avatar disk cache: ${error instanceof Error ? error.message : error}`,
+			);
+	}
 }

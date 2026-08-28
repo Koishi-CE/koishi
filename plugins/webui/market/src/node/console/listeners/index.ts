@@ -18,12 +18,12 @@ import { registerUploadListeners } from "./upload.js";
 
 /** 注册全部 market/* console listener（按 install/upload/market 三组拆分）。 */
 export function registerListeners(
-    ctx: Context,
-    config: Config,
-    dataStore: MarketDataStore,
-    marketSnapshotTransport: MarketSnapshotTransport,
+	ctx: Context,
+	config: Config,
+	dataStore: MarketDataStore,
+	marketSnapshotTransport: MarketSnapshotTransport,
 ) {
-    registerInstallListeners(ctx, dataStore);
-    registerUploadListeners(ctx);
-    registerMarketListeners(ctx, config, dataStore, marketSnapshotTransport);
+	registerInstallListeners(ctx, dataStore);
+	registerUploadListeners(ctx);
+	registerMarketListeners(ctx, config, dataStore, marketSnapshotTransport);
 }

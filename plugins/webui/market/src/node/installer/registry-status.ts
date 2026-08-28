@@ -20,55 +20,61 @@ import type { RegistryStatus } from "../../shared/types.js";
 type GConstructor = abstract new (...args: any[]) => object;
 
 export function RegistryStatusMixin<T extends GConstructor>(Base: T) {
-    abstract class RegistryStatusImpl extends Base {
-        /** koishi 上下文（基类 Service 提供；此处声明供类型推导使用）。 */
-        public declare ctx: Context;
+	abstract class RegistryStatusImpl extends Base {
+		/** koishi 上下文（基类 Service 提供；此处声明供类型推导使用）。 */
+		public declare ctx: Context;
 
-        /** registry 状态表（registryStatus 通道的值）：包名 → 最新状态。 */
-        public registryStatus: Dict<RegistryStatus> = {};
+		/** registry 状态表（registryStatus 通道的值）：包名 → 最新状态。 */
+		public registryStatus: Dict<RegistryStatus> = {};
 
-        /** @internal 待广播的 registry 状态增量：由 drainRegistryStatus 取走并经节流广播清空。 */
-        public tempRegistryStatus: Dict<RegistryStatus> = {};
+		/** @internal 待广播的 registry 状态增量：由 drainRegistryStatus 取走并经节流广播清空。 */
+		public tempRegistryStatus: Dict<RegistryStatus> = {};
 
-        /** @internal registry 请求失效域：setRegistryStatus 按 serial 判过期。 */
-        public declare scope: RequestScope;
+		/** @internal registry 请求失效域：setRegistryStatus 按 serial 判过期。 */
+		public declare scope: RequestScope;
 
-        /** @internal registryStatus 节流广播句柄（200ms，wire.ts 中构造）。 */
-        public declare flushRegistryStatus: () => void;
+		/** @internal registryStatus 节流广播句柄（200ms，wire.ts 中构造）。 */
+		public declare flushRegistryStatus: () => void;
 
-        /** @internal 以宿主 package.json 为基准创建的 require：供 isPackageLoaded 探测 require.cache。 */
-        public declare require: NodeRequire;
+		/** @internal 以宿主 package.json 为基准创建的 require：供 isPackageLoaded 探测 require.cache。 */
+		public declare require: NodeRequire;
 
-        setRegistryStatus(name: string, status: Partial<RegistryStatus>, serial: number) {
-            if (this.scope.isStale(serial)) return;
-            const value: RegistryStatus = {
-                ...this.registryStatus[name],
-                ...status,
-                updatedAt: Date.now(),
-            };
-            this.registryStatus[name] = this.tempRegistryStatus[name] = value;
-            this.flushRegistryStatus();
-        }
+		setRegistryStatus(
+			name: string,
+			status: Partial<RegistryStatus>,
+			serial: number,
+		) {
+			if (this.scope.isStale(serial)) return;
+			const value: RegistryStatus = {
+				...this.registryStatus[name],
+				...status,
+				updatedAt: Date.now(),
+			};
+			this.registryStatus[name] = this.tempRegistryStatus[name] = value;
+			this.flushRegistryStatus();
+		}
 
-        clearRegistryStatus() {
-            this.registryStatus = {};
-            this.tempRegistryStatus = {};
-            void this.ctx.get("console")?.broadcast("market/registry-status/clear", {});
-        }
+		clearRegistryStatus() {
+			this.registryStatus = {};
+			this.tempRegistryStatus = {};
+			void this.ctx
+				.get("console")
+				?.broadcast("market/registry-status/clear", {});
+		}
 
-        drainRegistryStatus(): Dict<RegistryStatus> {
-            const status = this.tempRegistryStatus;
-            this.tempRegistryStatus = {};
-            return status;
-        }
+		drainRegistryStatus(): Dict<RegistryStatus> {
+			const status = this.tempRegistryStatus;
+			this.tempRegistryStatus = {};
+			return status;
+		}
 
-        isPackageLoaded(name: string) {
-            try {
-                return this.require.resolve(name) in this.require.cache;
-            } catch {
-                return true;
-            }
-        }
-    }
-    return RegistryStatusImpl;
+		isPackageLoaded(name: string) {
+			try {
+				return this.require.resolve(name) in this.require.cache;
+			} catch {
+				return true;
+			}
+		}
+	}
+	return RegistryStatusImpl;
 }

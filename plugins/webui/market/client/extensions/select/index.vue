@@ -26,31 +26,42 @@
  * 过滤包列表。由 extensions/index.ts 注册。
  */
 
-import { store } from '@koishi-ce/client'
-import { categories, MarketIcon, useMarketI18n, resolveCategory } from '../../market'
-import { PackageProvider } from '@koishi-ce/plugin-config'
-import { provide, ref, watch } from 'vue'
-import { getMarketObject, loadMarketObjects } from '../../market/state'
+import { store } from "@koishi-ce/client";
+import {
+	categories,
+	MarketIcon,
+	useMarketI18n,
+	resolveCategory,
+} from "../../market";
+import { PackageProvider } from "@koishi-ce/plugin-config";
+import { provide, ref, watch } from "vue";
+import { getMarketObject, loadMarketObjects } from "../../market/state";
 
 /** 分类标签全集:all/other 打头 + 市场定义的分类列表。 */
-const extended = ['all', 'other', ...categories]
+const extended = ["all", "other", ...categories];
 
-const { t } = useMarketI18n()
+const { t } = useMarketI18n();
 
 /** 当前选中的分类标签 key。 */
-const active = ref('all')
+const active = ref("all");
 
 /** packages 列表变化时增量拉取各包的市场分类元数据。 */
-watch(() => Object.keys(store.packages ?? {}), (names) => {
-  void loadMarketObjects(names).catch(error => {
-    console.error('[market-next] failed to load plugin category metadata', error)
-  })
-}, { immediate: true })
+watch(
+	() => Object.keys(store.packages ?? {}),
+	(names) => {
+		void loadMarketObjects(names).catch((error) => {
+			console.error(
+				"[market-next] failed to load plugin category metadata",
+				error,
+			);
+		});
+	},
+	{ immediate: true },
+);
 
 /** 注入给宿主 plugin-select-base 的过滤函数:all 放行,其余按市场分类(缺省归 other)匹配。 */
-provide('plugin-select-filter', ({ name, manifest }: PackageProvider.Data) => {
-  const category = getMarketObject(name)?.category || manifest?.category
-  return active.value === 'all' || resolveCategory(category) === active.value
-})
-
+provide("plugin-select-filter", ({ name, manifest }: PackageProvider.Data) => {
+	const category = getMarketObject(name)?.category || manifest?.category;
+	return active.value === "all" || resolveCategory(category) === active.value;
+});
 </script>

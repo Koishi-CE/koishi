@@ -84,80 +84,81 @@
  * 状态机在 use-local-package-upload.ts,本组件通过 props 接收、把
  * select/error 事件抛回去。
  */
-import type { LocalPackageUploadPreview } from '@koishi-ce/plugin-marketn/shared'
-import { ref } from 'vue'
-import { useMarketNextI18n } from '../../shared/i18n'
-import MarketIcon from '../../market/icons'
+import type { LocalPackageUploadPreview } from "@koishi-ce/plugin-marketn/shared";
+import { ref } from "vue";
+import { useMarketNextI18n } from "../../shared/i18n";
+import MarketIcon from "../../market/icons";
 
 const props = defineProps<{
-  busy: boolean
-  error: string
-  preview?: LocalPackageUploadPreview
-  selectedFilename: string
-  selectedSize: number
-  uploadedBytes: number
-  uploading: boolean
-  uploadProgress: number
-}>()
+	busy: boolean;
+	error: string;
+	preview?: LocalPackageUploadPreview;
+	selectedFilename: string;
+	selectedSize: number;
+	uploadedBytes: number;
+	uploading: boolean;
+	uploadProgress: number;
+}>();
 
 const emit = defineEmits<{
-  error: [message: string]
-  select: [file: File]
-}>()
+	error: [message: string];
+	select: [file: File];
+}>();
 
-const { t } = useMarketNextI18n()
+const { t } = useMarketNextI18n();
 /** 隐藏 file input 的元素引用。 */
-const fileInput = ref<HTMLInputElement>()
+const fileInput = ref<HTMLInputElement>();
 /** 拖拽高亮状态;dragDepth 计数避免子元素 dragleave 误熄高亮。 */
-const dragging = ref(false)
-let dragDepth = 0
+const dragging = ref(false);
+let dragDepth = 0;
 
 /** 点击/键盘打开系统文件选择器(busy 时禁用)。 */
 function openFilePicker() {
-  if (props.busy) return
-  fileInput.value?.click()
+	if (props.busy) return;
+	fileInput.value?.click();
 }
 
 /** file input 的 change 处理:取首个文件后立即清空 value(允许重复选同一文件)。 */
 function onFileInput(event: Event) {
-  const target = event.target as HTMLInputElement
-  const file = target.files?.[0]
-  target.value = ''
-  if (file) emit('select', file)
+	const target = event.target as HTMLInputElement;
+	const file = target.files?.[0];
+	target.value = "";
+	if (file) emit("select", file);
 }
 
 /** dragenter 计数 +1 并点亮高亮。 */
 function onDragEnter() {
-  if (props.busy) return
-  dragDepth++
-  dragging.value = true
+	if (props.busy) return;
+	dragDepth++;
+	dragging.value = true;
 }
 
 /** dragleave 计数 -1,归零才熄灭高亮。 */
 function onDragLeave() {
-  dragDepth = Math.max(0, dragDepth - 1)
-  if (!dragDepth) dragging.value = false
+	dragDepth = Math.max(0, dragDepth - 1);
+	if (!dragDepth) dragging.value = false;
 }
 
 /** drop 处理:只接受单个文件,多选报错,单个抛 select 事件。 */
 function onDrop(event: DragEvent) {
-  dragDepth = 0
-  dragging.value = false
-  if (props.busy) return
-  const files = [...(event.dataTransfer?.files ?? [])]
-  if (files.length !== 1) {
-    emit('error', t('operations.manual.singleFile'))
-    return
-  }
-  emit('select', files[0])
+	dragDepth = 0;
+	dragging.value = false;
+	if (props.busy) return;
+	const files = [...(event.dataTransfer?.files ?? [])];
+	if (files.length !== 1) {
+		emit("error", t("operations.manual.singleFile"));
+		return;
+	}
+	emit("select", files[0]);
 }
 
 /** 字节数人性化:B/KiB/MiB 自适应。 */
 function formatBytes(value: number) {
-  if (!value) return '0 B'
-  if (value < 1024) return `${value} B`
-  if (value < 1024 * 1024) return `${(value / 1024).toFixed(value < 10 * 1024 ? 1 : 0)} KiB`
-  return `${(value / 1024 / 1024).toFixed(value < 10 * 1024 * 1024 ? 1 : 0)} MiB`
+	if (!value) return "0 B";
+	if (value < 1024) return `${value} B`;
+	if (value < 1024 * 1024)
+		return `${(value / 1024).toFixed(value < 10 * 1024 ? 1 : 0)} KiB`;
+	return `${(value / 1024 / 1024).toFixed(value < 10 * 1024 * 1024 ? 1 : 0)} MiB`;
 }
 </script>
 

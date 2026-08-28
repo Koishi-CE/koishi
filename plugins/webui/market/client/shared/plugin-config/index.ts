@@ -6,33 +6,33 @@
  * 消费方的导入路径('../shared/plugin-config')与符号名不变。
  */
 
-export type { MarketNextConfig, MarketNextConfigPatch } from './config'
+export type { MarketNextConfig, MarketNextConfigPatch } from "./config";
 export {
-  active,
-  getBulkMode,
-  getMarketNextConfig,
-  getMarketNextPolicy,
-  getRemoveConfig,
-  getWritableMarketNextPolicy,
-  patchMarketNextConfig,
-} from './config'
-export type { MarketNextDataStore } from './data-store'
+	active,
+	getBulkMode,
+	getMarketNextConfig,
+	getMarketNextPolicy,
+	getRemoveConfig,
+	getWritableMarketNextPolicy,
+	patchMarketNextConfig,
+} from "./config";
+export type { MarketNextDataStore } from "./data-store";
 export {
-  getBundleRecords,
-  getCollapsedGroups,
-  getPendingOverrides,
-  getWritableBundleRecords,
-  patchMarketNextData,
-} from './data-store'
-export type { UpdateIgnoreOptions, UpdatePolicy } from './update-policy'
+	getBundleRecords,
+	getCollapsedGroups,
+	getPendingOverrides,
+	getWritableBundleRecords,
+	patchMarketNextData,
+} from "./data-store";
+export type { UpdateIgnoreOptions, UpdatePolicy } from "./update-policy";
 export {
-  createUpdateIgnoreRule,
-  getIgnoredUpdateVersion,
-  getLatestVersion,
-  getUpdateIgnoreText,
-  hasUpdate,
-  isUpdateCheckDisabled,
-  isUpdateIgnored,
-} from './update-policy'
-export type { IgnoredUpdates, UpdateIgnoreRule } from './update-policy'
-export { getMarketSilentFilters, getMarketSilentRules } from './silent'
+	createUpdateIgnoreRule,
+	getIgnoredUpdateVersion,
+	getLatestVersion,
+	getUpdateIgnoreText,
+	hasUpdate,
+	isUpdateCheckDisabled,
+	isUpdateIgnored,
+} from "./update-policy";
+export type { IgnoredUpdates, UpdateIgnoreRule } from "./update-policy";
+export { getMarketSilentFilters, getMarketSilentRules } from "./silent";
