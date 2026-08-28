@@ -7,8 +7,9 @@
  * - `createServer(baseDir)`：创建开发模式的 vite 中间件服务器。
  */
 
-import { existsSync, promises as fs, globSync, readFileSync } from "node:fs";
-import { dirname, resolve } from "node:path";
+import { existsSync } from "node:fs";
+import { mkdir, rm } from "node:fs/promises";
+import { resolve } from "node:path";
 import yaml from "@maikolib/vite-plugin-yaml";
 import vue from "@vitejs/plugin-vue";
 import * as vite from "vite";
@@ -27,22 +28,21 @@ interface BuildResult {
 // 将全部工作区包名映射到其源码目录,行为对齐根 tsconfig 的 paths 别名。
 // 没有被任何工作区包依赖的插件(如 plugin-logger)不会出现在 node_modules
 // 的链接里,bundler 无法按包名解析,必须显式提供这层映射。
-function collectWorkspaceAliases(): Record<string, string> {
-	const here = dirname(
-		new URL(import.meta.url).pathname.replace(/^\/(\w:)/, "$1"),
-	);
-	const repoRoot = resolve(here, "../../../..");
-	const manifest = JSON.parse(readFileSync(`${repoRoot}/package.json`, "utf8"));
+async function collectWorkspaceAliases(): Promise<Record<string, string>> {
+	// 源码形态(src/)与产物形态(lib/)都在包根下一级,上跳四级到仓库根一致
+	const repoRoot = resolve(import.meta.dir, "../../../..").replace(/\\/g, "/");
+	const manifest = await Bun.file(`${repoRoot}/package.json`).json();
 	const aliases: Record<string, string> = {};
 	for (const pattern of manifest.workspaces ?? []) {
-		let files: string[] = [];
-		try {
-			files = globSync(`${repoRoot}/${pattern}/package.json`);
-		} catch {}
+		// scanSync 产出的相对路径在 Windows 上是反斜杠,统一归一化为正斜杠
+		const files = new Bun.Glob(`${pattern}/package.json`).scanSync({
+			cwd: repoRoot,
+		});
 		for (const file of files) {
-			const dir = dirname(file).replace(/\\/g, "/");
+			const rel = file.replaceAll("\\", "/");
+			const dir = `${repoRoot}/${rel.slice(0, -"/package.json".length)}`;
 			try {
-				const { name } = JSON.parse(readFileSync(file, "utf8"));
+				const { name } = await Bun.file(`${dir}/package.json`).json();
 				if (!name) continue;
 				// 控制台前端语境下,裸包名对到浏览器端入口(替代上游 lib 的 browser
 				// 导出条件);`<name>/src` 子路径对到源码目录,供共享代码引用。
@@ -56,7 +56,7 @@ function collectWorkspaceAliases(): Record<string, string> {
 	return aliases;
 }
 
-const workspaceAliases = collectWorkspaceAliases();
+const workspaceAliases = await collectWorkspaceAliases();
 
 // 虚拟子路径 "schemastery-vue/client" 的运行时载体（补齐真实包缺失的
 // SchemaBase 具名导出）绝对路径，从 components 包的工作区别名推导；
@@ -77,9 +77,9 @@ export async function build(root: string, config: vite.UserConfig = {}) {
 	// 产物约定：固定写入插件目录下的 dist/，清空后重建
 	const outDir = `${root}/dist`;
 	if (existsSync(outDir)) {
-		await fs.rm(outDir, { recursive: true });
+		await rm(outDir, { recursive: true });
 	}
-	await fs.mkdir(`${root}/dist`, { recursive: true });
+	await mkdir(outDir, { recursive: true });
 
 	const results = (await vite.build(
 		vite.mergeConfig(
@@ -161,15 +161,18 @@ export async function build(root: string, config: vite.UserConfig = {}) {
 		const dest = `${root}/dist/${fileName}`;
 		if (item.type === "asset") {
 			if (item.source === undefined) continue;
-			await fs.writeFile(dest, item.source);
+			await Bun.write(dest, item.source);
 		} else if (item.code !== undefined) {
-			// JS 产物再过一次 esbuild：压缩空白并强制 utf-8 输出
-			// （避免中文等非 ASCII 字符被转义成 \u 序列）
-			const transformed = await vite.transformWithEsbuild(item.code, dest, {
-				minifyWhitespace: true,
-				charset: "utf8",
+			// JS 产物再过一次 rolldown 的 minify：仅压缩空白、不动标识符
+			// （compress/mangle 均由上面的 minify: true 完成），oxc 原生按
+			// UTF-8 输出，中文等非 ASCII 字符不会被转义成 \u 序列。
+			// 替代已废弃的 transformWithEsbuild（其 minifyWhitespace+charset
+			// 组合在此等价于 compress:false + mangle:false 的默认 codegen）
+			const { code } = await vite.minify(dest, item.code, {
+				compress: false,
+				mangle: false,
 			});
-			await fs.writeFile(dest, transformed.code);
+			await Bun.write(dest, code);
 		}
 	}
 }
@@ -187,7 +190,8 @@ export async function createServer(
 	config: vite.InlineConfig = {},
 ) {
 	// 开发模式下以本包的 app/ 宿主应用为入口
-	const root = resolve(__dirname, "../app");
+	// （源码 src/ 与产物 lib/ 都在包根下一级，相对定位两者一致）
+	const root = resolve(import.meta.dir, "../app");
 	return vite.createServer(
 		vite.mergeConfig(
 			{

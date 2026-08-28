@@ -8,7 +8,7 @@
  *   供主应用、client 与所有 webui 插件以 external 依赖的方式共享
  */
 
-import { appendFile, copyFile } from "node:fs/promises";
+import { appendFile } from "node:fs/promises";
 import { resolve } from "node:path";
 import yaml from "@maikolib/vite-plugin-yaml";
 import vue from "@vitejs/plugin-vue";
@@ -40,7 +40,9 @@ function findModulePath(id: string) {
 	return path.slice(0, path.indexOf(keyword)) + keyword.slice(0, -1);
 }
 
-const cwd = resolve(__dirname, "../../../..");
+// 源码 scripts/ 与打包后 lib/ 到仓库根的深度一致（四级），两种运行
+// 形态下相对定位结果相同
+const cwd = resolve(import.meta.dir, "../../../..");
 const dist = cwd + "/plugins/webui/console/dist";
 
 /**
@@ -135,9 +137,9 @@ export default async function () {
 	// vue-router 与 @vueuse/core 以各自官方浏览器产物为入口重新打包，
 	// preserveEntrySignatures: "strict" 保留入口导出签名供具名导入
 	await Promise.all([
-		copyFile(
-			findModulePath("vue") + "/dist/vue.runtime.esm-browser.prod.js",
+		Bun.write(
 			dist + "/vue.js",
+			Bun.file(findModulePath("vue") + "/dist/vue.runtime.esm-browser.prod.js"),
 		),
 		build(findModulePath("vue-router") + "/dist", {
 			build: {
