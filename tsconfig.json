@@ -1,6 +1,6 @@
 // 根配置仅作为兼容入口：全量类型检查由 scripts/typecheck.mjs 逐项目执行。
 // 保留此文件供 typecheck:legacy 和 koishi-scripts 生成的 monorepo 使用。
 {
-    "$schema": "https://json.schemastore.org/tsconfig",
-    "extends": "./tsconfig.base"
+	"$schema": "https://json.schemastore.org/tsconfig",
+	"extends": "./tsconfig.base"
 }
