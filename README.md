@@ -11,15 +11,17 @@ Early restructuring phase:
 - [x] Merge koishi + webui into one Bun-workspace monorepo
 - [x] Package management on Bun — `workspace:*` links, `bun.lock`, yakumo removed
 - [x] Decide the npm naming/publishing strategy — packages renamed to the `@koishi-ce` scope (`koishi` → `@koishi-ce/koishi`, command name unchanged); repo metadata points at Koishi-CE/koishi
+- [x] Dependency modernization phases 0–4 — vite 8 / TypeScript 7 / tsdown / biome 2.5, tests migrated to `bun test` (mocha removed, chai kept); cordis 4 (phase 5) blocked upstream, see `docs/upgrade-plan.md`
+- [ ] Strict-mode type cleanup beyond `packages/node/*` (webui plugin clients, `packages/web/*`, `apps/online` still have errors)
 - [ ] Zero-build exports for node packages; vite build for client packages
-- [ ] Test suite runnable on Bun (mocha bootstraps; full run awaits zero-build)
 
 ## Layout
 
-- `packages/node/` — libraries that run on Node (`core`, `loader`, `cli`, `console`, `utils`, `i18n-utils`)
-- `packages/web/` — libraries that run in the browser (`client`, `components`, `market`)
+- `packages/node/` — libraries that run on Node (`core`, `loader`, `cli`, `console`, `utils`, `i18n-utils`), built together by the root tsdown config into dual-format `lib/` output
+- `packages/web/` — libraries that run in the browser (`client`, `components`); consumed as source by the console bundler, no standalone build
 - `plugins/common/` — general-purpose bot plugins (`bind`, `broadcast`, `callme`, `echo`, `help`, `inspect`)
-- `plugins/infra/` — infrastructure plugins (`http`, `server`, `proxy-agent`, `hmr`, `mock`)
-- `plugins/webui/` — console/webui plugins (`admin`, `auth`, `config`, `market`, ...) — node side in `src/`, Vue side in `client/` (upstream convention)
-- `apps/` — deployable applications (website `online`, plugin `registry`)
-- `tooling/` — build/release/CI helpers
+- `plugins/infra/` — infrastructure plugins (`hmr`, `mock`, plus vendored prebuilt `http`, `server`, `proxy-agent`)
+- `plugins/webui/` — console/webui plugins (`admin`, `auth`, `config`, ...) — node side in `src/`, Vue side in `client/` (upstream convention)
+- `apps/` — deployable applications: `online` (koishi.online website), `registry` (npm plugin scanner), `koishi-create` (`create-koishi-ce` scaffold CLI), `koishi-scripts` (plugin dev CLI)
+- `tooling/` — build/release/CI helpers (currently an archived upstream yakumo config)
+- `docs/` — development guide and architecture notes (start at `docs/README.md`); repo-wide agent conventions live in `AGENTS.md`
