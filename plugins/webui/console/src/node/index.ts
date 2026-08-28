@@ -17,11 +17,9 @@ import { extname, resolve } from "path";
 import { fileURLToPath, pathToFileURL } from "url";
 import type { FileSystemServeOptions, ViteDevServer } from "vite";
 
-declare module "koishi" {
-	interface EnvData {
-		clientCount?: number;
-	}
-}
+// 上游此处以 `declare module "koishi"` 给 EnvData 增加 clientCount 字段；
+// 本仓 @koishi-ce/core 将 EnvData 定义为 type alias（无法做 interface 合并），
+// 且 loader 的 envData 实际类型为推断的 any，故该增强在本仓无落点，不再声明。
 
 export * from "@koishi-ce/console";
 
@@ -40,27 +38,30 @@ interface HeartbeatConfig {
 }
 
 class NodeConsole extends Console {
-	static inject = { required: ["server"], optional: ["console"] };
+	static override inject = { required: ["server"], optional: ["console"] };
 	// static inject = ['server']
 
 	// workaround for edge case (collision with @koishi-ce/plugin-config)
-	private _config: NodeConsole.Config;
+	private _config!: NodeConsole.Config;
 
-	public vite: ViteDevServer;
+	public vite!: ViteDevServer;
 	public root: string;
 	public layer: WebSocketLayer;
 
-	constructor(
-		public ctx: Context,
-		config: NodeConsole.Config,
-	) {
+	override ctx: Context;
+
+	constructor(ctx: Context, config: NodeConsole.Config) {
 		super(ctx);
+		this.ctx = ctx;
 		this.config = config;
 
-		this.layer = ctx.server.ws(config.apiPath, (socket, request) => {
-			// @types/ws does not provide typings for `dispatchEvent`
-			this.accept(socket as any, request);
-		});
+		this.layer = ctx.server.ws(
+			config.apiPath ?? "/status",
+			(socket, request) => {
+				// @types/ws does not provide typings for `dispatchEvent`
+				this.accept(socket as any, request);
+			},
+		);
 
 		ctx.on("console/connection", () => {
 			const loader = ctx.get("loader");
@@ -68,7 +69,6 @@ class NodeConsole extends Console {
 			loader.envData.clientCount = this.layer.clients.size;
 		});
 
-		// @ts-expect-error
 		const base = import.meta.url || pathToFileURL(__filename).href;
 		const require = createRequire(base);
 		this.root = config.devMode
@@ -76,28 +76,38 @@ class NodeConsole extends Console {
 			: fileURLToPath(new URL("../../dist", base));
 	}
 
-	// @ts-expect-error FIXME
-	get config() {
+	// 基类（cordis Service）将 config 声明为数据属性，而这里需要存取器间接持有
+	// （workaround：规避与 @koishi-ce/plugin-config 的碰撞 edge case）；
+	// TS 语言规则禁止存取器覆盖基类数据属性（运行时合法），只能在此抑制
+	// @ts-expect-error TS2611: 存取器不能覆盖基类的数据属性 config
+	override get config() {
 		return this._config;
 	}
 
-	set config(value) {
+	override set config(value) {
 		this._config = value;
 	}
 
 	createGlobal() {
 		const global = {} as ClientConfig;
-		const { devMode, uiPath, apiPath, selfUrl, heartbeat } = this.config;
+		// 解构默认值与 Config Schema 的 default 保持一致（正常路径下 Schema 已填充，此处仅为类型兜底）
+		const {
+			devMode = process.env["NODE_ENV"] === "development",
+			uiPath = "",
+			apiPath = "/status",
+			selfUrl = "",
+			heartbeat,
+		} = this.config;
 		global.devMode = devMode;
 		global.uiPath = uiPath;
-		global.heartbeat = heartbeat;
+		if (heartbeat !== undefined) global.heartbeat = heartbeat;
 		global.endpoint = selfUrl + apiPath;
 		const proxy = this.ctx.get("server.proxy");
 		if (proxy) global.proxyBase = proxy.config.path + "/";
 		return global;
 	}
 
-	async start() {
+	override async start() {
 		if (this.config.devMode) await this.createVite();
 		this.serveAssets();
 
@@ -108,9 +118,10 @@ class NodeConsole extends Console {
 			if (
 				this.config.open &&
 				!this.ctx.get("loader")?.envData.clientCount &&
-				!process.env.KOISHI_AGENT
+				!process.env["KOISHI_AGENT"]
 			) {
-				open(target);
+				// 打开浏览器失败无需处理，显式忽略返回的 Promise
+				void open(target);
 			}
 			this.ctx.logger.info("webui is available at %c", target);
 		});
@@ -143,7 +154,7 @@ class NodeConsole extends Console {
 	}
 
 	private serveAssets() {
-		const { uiPath } = this.config;
+		const { uiPath = "" } = this.config;
 
 		this.ctx.server.get(uiPath + "(.*)", async (ctx, next) => {
 			await next();
@@ -162,7 +173,7 @@ class NodeConsole extends Console {
 
 			if (name.startsWith("@plugin-")) {
 				const [key] = name.slice(8).split("/", 1);
-				if (this.entries[key]) {
+				if (key !== undefined && this.entries[key]) {
 					const files = makeArray(this.getFiles(this.entries[key].files));
 					let filename = files[0] + name.slice(8 + key.length);
 					filename = resolve(this.root, filename);
@@ -206,7 +217,7 @@ class NodeConsole extends Console {
 
 	private async transformImport(source: string) {
 		let output = "";
-		let cap: RegExpExecArray;
+		let cap: RegExpExecArray | null;
 		while (
 			(cap = /((?:^|;)import\b[^'"]+\bfrom\s*)(['"])([^'"]+)\2;/m.exec(source))
 		) {
@@ -220,7 +231,7 @@ class NodeConsole extends Console {
 					"vue-router": "../vue-router.js",
 					"@vueuse/core": "../vueuse.js",
 					"@koishi-ce/client": "../client.js",
-				}[path] ?? path) +
+				}[path ?? ""] ?? path) +
 				quote +
 				";";
 			source = source.slice(cap.index + stmt.length);
@@ -229,7 +240,7 @@ class NodeConsole extends Console {
 	}
 
 	private async transformHtml(template: string) {
-		const { uiPath, head = [] } = this.config;
+		const { uiPath = "", head = [] } = this.config;
 		if (this.vite) {
 			template = await this.vite.transformIndexHtml(uiPath, template);
 		} else {
@@ -249,15 +260,13 @@ class NodeConsole extends Console {
 	}
 
 	private async createVite() {
-		const { cacheDir, dev } = this.config;
+		const { cacheDir = "cache/vite", dev } = this.config;
 		const { createServer } =
 			require("@koishi-ce/client/lib") as typeof import("@koishi-ce/client/lib");
 
 		this.vite = await createServer(this.ctx.baseDir, {
 			cacheDir: resolve(this.ctx.baseDir, cacheDir),
-			server: {
-				fs: dev.fs,
-			},
+			...(dev ? { server: { fs: dev.fs } } : {}),
 		});
 
 		this.ctx.server.all(
@@ -271,31 +280,25 @@ class NodeConsole extends Console {
 		this.ctx.on("dispose", () => this.vite.close());
 	}
 
-	stop() {
+	override stop() {
 		this.layer.close();
 	}
-}
 
-namespace NodeConsole {
-	export interface Dev {
-		fs: FileSystemServeOptions;
-	}
-
-	export const Dev: Schema<Dev> = Schema.object({
+	// erasableSyntaxOnly 禁止含运行时值的 namespace：以下三个 Schema 常量改挂为类的静态属性
+	// （NodeConsole.Dev / NodeConsole.Head / NodeConsole.Config 的取值不变），
+	// 类型声明保留在文末仅含类型的 namespace 中，以维持 `NodeConsole.Config` 等的类型访问
+	// biome-ignore lint/style/useNamingConvention: 插件 Schema 约定为 PascalCase 的静态属性（与类型 namespace 同名合并）
+	static Dev: Schema<NodeConsole.Dev> = Schema.object({
 		fs: Schema.object({
 			strict: Schema.boolean().default(true),
-			allow: Schema.array(String).default(null),
-			deny: Schema.array(String).default(null),
+			// .default(null) 的空值占位超出 schemastery 类型定义，用精确断言放宽
+			allow: Schema.array(String).default(null as never),
+			deny: Schema.array(String).default(null as never),
 		}).hidden(),
 	});
 
-	export interface Head {
-		tag: string;
-		attrs?: Dict<string>;
-		content?: string;
-	}
-
-	export const Head: Schema<Head> = Schema.intersect([
+	// biome-ignore lint/style/useNamingConvention: 插件 Schema 约定为 PascalCase 的静态属性（与类型 namespace 同名合并）
+	static Head: Schema<NodeConsole.Head> = Schema.intersect([
 		Schema.object({
 			tag: Schema.union([
 				"title",
@@ -337,6 +340,40 @@ namespace NodeConsole {
 		]),
 	]);
 
+	// biome-ignore lint/style/useNamingConvention: 插件 Schema 约定为 PascalCase 的静态属性（与类型 namespace 同名合并）
+	static Config: Schema<NodeConsole.Config> = Schema.intersect([
+		Schema.object({
+			uiPath: Schema.string().default(""),
+			apiPath: Schema.string().default("/status"),
+			selfUrl: Schema.string().role("link").default(""),
+			open: Schema.boolean(),
+			head: Schema.array(NodeConsole.Head),
+			heartbeat: Schema.object({
+				interval: Schema.number().default(Time.second * 30),
+				timeout: Schema.number().default(Time.minute),
+			}),
+			devMode: Schema.boolean()
+				.default(process.env["NODE_ENV"] === "development")
+				.hidden(),
+			cacheDir: Schema.string().default("cache/vite").hidden(),
+			dev: NodeConsole.Dev,
+		}),
+	]).i18n({
+		"zh-CN": require("./locales/zh-CN"),
+	});
+}
+
+namespace NodeConsole {
+	export interface Dev {
+		fs: FileSystemServeOptions;
+	}
+
+	export interface Head {
+		tag: string;
+		attrs?: Dict<string>;
+		content?: string;
+	}
+
 	export interface Config {
 		uiPath?: string;
 		devMode?: boolean;
@@ -348,27 +385,6 @@ namespace NodeConsole {
 		heartbeat?: HeartbeatConfig;
 		dev?: Dev;
 	}
-
-	export const Config: Schema<Config> = Schema.intersect([
-		Schema.object({
-			uiPath: Schema.string().default(""),
-			apiPath: Schema.string().default("/status"),
-			selfUrl: Schema.string().role("link").default(""),
-			open: Schema.boolean(),
-			head: Schema.array(Head),
-			heartbeat: Schema.object({
-				interval: Schema.number().default(Time.second * 30),
-				timeout: Schema.number().default(Time.minute),
-			}),
-			devMode: Schema.boolean()
-				.default(process.env.NODE_ENV === "development")
-				.hidden(),
-			cacheDir: Schema.string().default("cache/vite").hidden(),
-			dev: Dev,
-		}),
-	]).i18n({
-		"zh-CN": require("./locales/zh-CN"),
-	});
 }
 
 export default NodeConsole;
