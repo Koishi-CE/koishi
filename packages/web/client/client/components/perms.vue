@@ -24,9 +24,12 @@
 </template>
 
 <script lang="ts" setup>
+// SchemaBase 经由 components 包的再导出获取:本包的 node_modules 没有
+// schemastery-vue 链接(它是 components 的依赖,Bun 隔离布局下不跨包可见)
+
 import { store } from "@koishi-ce/client";
+import { type Schema, SchemaBase } from "@koishi-ce/components";
 import type { CascaderOption } from "element-plus";
-import SchemaBase, { type Schema } from "schemastery-vue";
 import { computed, type PropType } from "vue";
 
 defineProps({

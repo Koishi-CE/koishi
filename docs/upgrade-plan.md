@@ -169,7 +169,7 @@
 bun install                        # 依赖解析与 workspace 健康
 bun run lint                       # biome
 bunx tsc --noEmit -p tsconfig.json # 全仓类型检查(paths 别名全覆盖)
-bun packages/web/client/bin.js build   # 控制台前端产物构建(Phase 2/3 重点)
+bun packages/web/client/src/bin.ts build   # 控制台前端产物构建(Phase 2/3 重点)
 bun test                           # Phase 4 起
 # 定向冒烟:koishi --help(cli/cac)、create-koishi-ce --yes 临时目录脚手架(Phase 1)
 ```

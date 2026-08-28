@@ -35,7 +35,8 @@
 	},
 	"exports": {
 		".": {
-			"source": "./src/index.ts"
+			"source": "./src/index.ts",
+			"default": "./client/index.ts"
 		}
 	}
 }

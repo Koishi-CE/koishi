@@ -36,7 +36,7 @@ koishi/（Bun workspaces：packages/node/* · packages/web/* · plugins/{common,
 
 | 目录 | 包名 | 说明 |
 |---|---|---|
-| `client` | `@koishi-ce/client` | 控制台前端运行时 + **构建器**：`src/index.ts` 暴露编程式 `build(root)`（vite.build + collectWorkspaceAliases）；`bin.js` 暴露 `koishi-console` CLI；`scripts/client.ts` 是宿主前端总装脚本 |
+| `client` | `@koishi-ce/client` | 控制台前端运行时 + **构建器**：`src/index.ts` 暴露编程式 `build(root)`（vite.build + collectWorkspaceAliases）；`src/bin.ts`（产物 `lib/bin.mjs`）暴露 `koishi-console` CLI；`scripts/client.ts` 是宿主前端总装脚本 |
 | `components` | `@koishi-ce/components` | 前端共享组件库（`client/` 源码，`src/` 仅类型出口），**无独立构建**，仅作为客户端源码被 console 打包器消费 |
 | ~~`market`~~ | — | **已删除**（commit 668401a） |
 
@@ -110,7 +110,7 @@ node 侧在 `src/`、Vue 侧在 `client/`（上游约定），`koishi.public: ["
 ### 前端：vite 编程式构建（无配置文件）
 
 - **宿主控制台总装**：`packages/web/client/scripts/client.ts` —— 依次构建 app（unocss preset-mini）、拷贝 vue runtime、构建 vue-router / @vueuse 外部块、client（element-plus 单独 manualChunks），产物统一输出 `plugins/webui/console/dist`，并把 vue / vue-router / @vueuse / @koishi-ce/client 指向外部块文件（宿主只装一份）。
-- **单插件前端**：`packages/web/client/src/index.ts` 的 `build(root)`（CLI：`bun packages/web/client/bin.js build <插件目录>`）。内置 `collectWorkspaceAliases()` 扫描根 workspaces glob，把每个 workspace 包名映射到其 `client/index.ts` 或 `src/`——**未被依赖的插件不会出现在 node_modules 链接里**，必须显式映射才能被 bundler 解析。
+- **单插件前端**：`packages/web/client/src/index.ts` 的 `build(root)`（CLI：`bun packages/web/client/src/bin.ts build <插件目录>`）。内置 `collectWorkspaceAliases()` 扫描根 workspaces glob，把每个 workspace 包名映射到其 `client/index.ts` 或 `src/`——**未被依赖的插件不会出现在 node_modules 链接里**，必须显式映射才能被 bundler 解析。
 - 插件自带构建脚本：`plugins/webui/analytics/build/client.ts`（fuck-echarts：echarts chunk 内 `Symbol` 重命名）、`plugins/webui/explorer/build/client.ts`（monaco manualChunks）；网站：`apps/online/src/build.ts`。
 - `packages/web/components` 无构建（源码直出，被 console 打包器消费）。
 

@@ -20,6 +20,11 @@
 		"forceConsistentCasingInFileNames": true,
 		"allowImportingTsExtensions": true,
 		"erasableSyntaxOnly": true,
-		"types": []
+		"types": [],
+		"paths": {
+			"schemastery-vue/client": [
+				"./packages/web/components/client/schemastery-vue-client.ts"
+			]
+		}
 	}
 }

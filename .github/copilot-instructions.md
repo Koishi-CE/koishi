@@ -38,8 +38,8 @@ bun run build                   # 根 tsdown：全部 node 侧包 → lib/（ESM
 bun test packages plugins/common plugins/webui/admin plugins/webui/commands
                                 # 全量自有用例（20 文件 / 145 用例）；
                                 # 裸 `bun test` 会卷入 gitignored 的 market（*.test.ts）并挂起，见已知坑
-bun packages/web/client/bin.js build            # 宿主控制台前端 → plugins/webui/console/dist
-bun packages/web/client/bin.js build <插件目录>  # 单个 webui 插件的前端
+bun packages/web/client/src/bin.ts build            # 宿主控制台前端 → plugins/webui/console/dist
+bun packages/web/client/src/bin.ts build <插件目录>  # 单个 webui 插件的前端
 ```
 
 - `apps/koishi-create`、`apps/koishi-scripts` 各有自己的 tsdown.config.ts，进目录 `bun run build`；`apps/online` 用 `src/build.ts`（vite 编程式，PPA 在线化）。

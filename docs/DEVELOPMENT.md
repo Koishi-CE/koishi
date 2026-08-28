@@ -32,8 +32,8 @@ bun test packages/node/core        # 定向跑某包测试
 前端产物（vite，编程式构建，无配置文件）：
 
 ```bash
-bun packages/web/client/bin.js build                    # 宿主控制台前端 → plugins/webui/console/dist
-bun packages/web/client/bin.js build plugins/webui/status   # 单个 webui 插件的前端
+bun packages/web/client/src/bin.ts build                    # 宿主控制台前端 → plugins/webui/console/dist
+bun packages/web/client/src/bin.ts build plugins/webui/status   # 单个 webui 插件的前端
 ```
 
 独立构建的 apps（各有自己的 tsdown.config.ts）：

@@ -8,14 +8,25 @@
  *   供主应用、client 与所有 webui 插件以 external 依赖的方式共享
  */
 
+import { appendFile, copyFile } from "node:fs/promises";
+import { resolve } from "node:path";
 import yaml from "@maikolib/vite-plugin-yaml";
 import vue from "@vitejs/plugin-vue";
-import { appendFile, copyFile } from "fs/promises";
-import { resolve } from "path";
-import type { RollupOutput } from "rollup";
 import mini from "unocss/preset-mini";
 import unocss from "unocss/vite";
 import * as vite from "vite";
+
+// vite 8 基于 rolldown,rollup 已不在依赖树中;这里按实际消费的字段
+// 局部声明构建产物类型(与 src/index.ts 的 BuildResult 同构)
+interface BuildResult {
+	output: Array<{
+		fileName: string;
+		type: string;
+		name?: string;
+		source?: string | Uint8Array;
+		code?: string;
+	}>;
+}
 
 /**
  * 定位某个依赖包在 node_modules 中的安装目录。
@@ -76,31 +87,25 @@ export async function build(
 			},
 		},
 		plugins: [vue(), yaml(), ...(config.plugins || [])],
-		css: {
-			preprocessorOptions: {
-				scss: {
-					api: "modern-compiler",
-				},
-			},
-		},
 		resolve: {
 			alias: {
 				vue: root + "/vue.js",
 				"vue-router": root + "/vue-router.js",
 				"@vueuse/core": root + "/vueuse.js",
 				"@koishi-ce/client": root + "/client.js",
+				// 虚拟子路径的运行时载体（补齐真实包缺失的 SchemaBase 具名
+				// 导出，见 packages/web/components/client/schemastery-vue-runtime.ts）；
+				// 类型面由根 tsconfig.client.json 的 paths 解析到类型载体
+				"schemastery-vue/client":
+					cwd + "/packages/web/components/client/schemastery-vue-runtime.ts",
 				...(isClient
 					? {
 							// client 组件库本体需要真实打包 vue-i18n：直接别名到官方
-							// esm-browser.prod 预编译产物（面向浏览器 ESM 且自带压缩），
-							// 其运行时依赖 @intlify/core-base 同样取 esm-browser 版本，
-							// 避免把包的 CJS 入口卷进 client chunk
+							// esm-browser.prod 预编译产物（面向浏览器 ESM 且自带压缩，
+							// @intlify/core-base 已内联其中，无需额外处理）
 							"vue-i18n":
 								findModulePath("vue-i18n") +
 								"/dist/vue-i18n.esm-browser.prod.js",
-							"@intlify/core-base":
-								findModulePath("@intlify/core-base") +
-								"/dist/core-base.esm-browser.prod.js",
 						}
 					: {
 							// 其余构建（主应用等）不打包 vue-i18n，运行时复用宿主的 client.js
@@ -108,7 +113,7 @@ export async function build(
 						}),
 			},
 		},
-	})) as RollupOutput;
+	})) as BuildResult;
 }
 
 export default async function () {
@@ -152,8 +157,10 @@ export default async function () {
 				outDir: dist,
 				emptyOutDir: false,
 				rollupOptions: {
+					// @vueuse/core v14 的 ESM 入口位于 dist/index.js
+					// （v11 时代是包根的 index.mjs）
 					input: {
-						vueuse: findModulePath("@vueuse/core") + "/index.mjs",
+						vueuse: findModulePath("@vueuse/core") + "/dist/index.js",
 					},
 					preserveEntrySignatures: "strict",
 				},
@@ -174,8 +181,9 @@ export default async function () {
 						client: cwd + "/packages/web/client/client/index.ts",
 					},
 					output: {
-						manualChunks: {
-							element: ["element-plus"],
+						// element-plus 体积大，单独拆为 element chunk
+						manualChunks(id: string) {
+							return id.includes("element-plus") ? "element" : undefined;
 						},
 					},
 					preserveEntrySignatures: "strict",
@@ -190,6 +198,7 @@ export default async function () {
 	// 使最终 style.css 同时包含两者
 	for (const file of output) {
 		if (file.type === "asset" && file.name === "style.css") {
+			if (file.source === undefined) continue;
 			await appendFile(dist + "/style.css", file.source);
 		}
 	}

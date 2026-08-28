@@ -36,10 +36,13 @@ const extensions = [
 
 // tsdown workspace 模式的包发现范围：覆盖全部 node 侧子包；
 // vendored 三包（plugins/infra/{http,proxy-agent,server}）是预编译
-// 产物包（无 src/、分别内联再导出 @cordisjs/plugin-*），显式排除
+// 产物包（无 src/、分别内联再导出 @cordisjs/plugin-*），显式排除；
+// packages/web/components 仅作为客户端源码被 console 打包器消费，
+// 无独立运行时产物，同样排除
 const workspace = {
 	include: [
 		"packages/node/*",
+		"packages/web/*",
 		"apps/registry",
 		"plugins/common/*",
 		"plugins/infra/*",
@@ -49,6 +52,7 @@ const workspace = {
 		"plugins/infra/http",
 		"plugins/infra/proxy-agent",
 		"plugins/infra/server",
+		"packages/web/components",
 	],
 };
 

@@ -3,14 +3,14 @@
  *
  * 提供两个编程式 API（本仓库的前端构建没有 vite 配置文件，全部在此完成）：
  * - `build(root)`：构建单个 webui 插件的前端（`<插件目录>/client/` → `dist/`），
- *   由 `bin.js` CLI（`koishi-console build`）暴露给各插件使用；
+ *   由 `koishi-console` CLI（src/bin.ts）暴露给各插件使用；
  * - `createServer(baseDir)`：创建开发模式的 vite 中间件服务器。
  */
 
+import { existsSync, promises as fs, globSync, readFileSync } from "node:fs";
+import { dirname, resolve } from "node:path";
 import yaml from "@maikolib/vite-plugin-yaml";
 import vue from "@vitejs/plugin-vue";
-import { existsSync, promises as fs, globSync, readFileSync } from "fs";
-import { dirname, resolve } from "path";
 import * as vite from "vite";
 
 // vite 8 基于 rolldown,rollup 已不在依赖树中;这里按实际消费的字段
@@ -19,7 +19,7 @@ interface BuildResult {
 	output: Array<{
 		fileName: string;
 		type: string;
-		source?: any;
+		source?: string | Uint8Array;
 		code?: string;
 	}>;
 }
@@ -32,7 +32,7 @@ function collectWorkspaceAliases(): Record<string, string> {
 		new URL(import.meta.url).pathname.replace(/^\/(\w:)/, "$1"),
 	);
 	const repoRoot = resolve(here, "../../../..");
-	const manifest = JSON.parse(readFileSync(repoRoot + "/package.json", "utf8"));
+	const manifest = JSON.parse(readFileSync(`${repoRoot}/package.json`, "utf8"));
 	const aliases: Record<string, string> = {};
 	for (const pattern of manifest.workspaces ?? []) {
 		let files: string[] = [];
@@ -58,6 +58,13 @@ function collectWorkspaceAliases(): Record<string, string> {
 
 const workspaceAliases = collectWorkspaceAliases();
 
+// 虚拟子路径 "schemastery-vue/client" 的运行时载体（补齐真实包缺失的
+// SchemaBase 具名导出）绝对路径，从 components 包的工作区别名推导；
+// 类型面由根 tsconfig.client.json 的 paths 解析到 schemastery-vue-client.ts
+const runtimeShimPath = (
+	workspaceAliases["@koishi-ce/components"] ?? ""
+).replace(/client\/index\.ts$/, "client/schemastery-vue-runtime.ts");
+
 /**
  * 构建单个 webui 插件的前端产物。
  *
@@ -65,14 +72,14 @@ const workspaceAliases = collectWorkspaceAliases();
  * @param config 额外的 vite 配置，逐层合并覆盖下方默认值
  */
 export async function build(root: string, config: vite.UserConfig = {}) {
-	if (!existsSync(root + "/client")) return;
+	if (!existsSync(`${root}/client`)) return;
 
 	// 产物约定：固定写入插件目录下的 dist/，清空后重建
-	const outDir = root + "/dist";
+	const outDir = `${root}/dist`;
 	if (existsSync(outDir)) {
 		await fs.rm(outDir, { recursive: true });
 	}
-	await fs.mkdir(root + "/dist", { recursive: true });
+	await fs.mkdir(`${root}/dist`, { recursive: true });
 
 	const results = (await vite.build(
 		vite.mergeConfig(
@@ -88,7 +95,7 @@ export async function build(root: string, config: vite.UserConfig = {}) {
 						strictRequires: true,
 					},
 					lib: {
-						entry: root + "/client/index.ts",
+						entry: `${root}/client/index.ts`,
 						fileName: "index",
 						formats: ["es"],
 					},
@@ -122,13 +129,6 @@ export async function build(root: string, config: vite.UserConfig = {}) {
 						],
 					}),
 				],
-				css: {
-					preprocessorOptions: {
-						scss: {
-							api: "modern-compiler",
-						},
-					},
-				},
 				resolve: {
 					alias: {
 						...workspaceAliases,
@@ -138,8 +138,10 @@ export async function build(root: string, config: vite.UserConfig = {}) {
 						// 组件库同样经由宿主 client 包提供，避免每个插件
 						// 都把整套组件库重复打进产物
 						"@koishi-ce/components": "@koishi-ce/client",
-						// 虚拟子路径,类型见 packages/web/components/client/shims.d.ts
-						"schemastery-vue/client": "schemastery-vue",
+						// 虚拟子路径的运行时载体（补齐真实包缺失的 SchemaBase
+						// 具名导出）；类型面由 tsconfig.client.json 的 paths
+						// 解析到 schemastery-vue-client.ts
+						"schemastery-vue/client": runtimeShimPath,
 					},
 				},
 				define: {
@@ -152,20 +154,22 @@ export async function build(root: string, config: vite.UserConfig = {}) {
 
 	// build.write: false 让构建结果留在内存里，由这里手动落盘，
 	// 以便对文件名和 JS 产物做后处理
-	for (const item of results[0]!.output) {
+	for (const item of results[0]?.output ?? []) {
 		// lib es 格式的产物名是 index.mjs，统一改名为 index.js
-		if (item.fileName === "index.mjs") item.fileName = "index.js";
-		const dest = root + "/dist/" + item.fileName;
+		// （rolldown 的 output 条目是冻结对象，不能原地改写）
+		const fileName = item.fileName === "index.mjs" ? "index.js" : item.fileName;
+		const dest = `${root}/dist/${fileName}`;
 		if (item.type === "asset") {
+			if (item.source === undefined) continue;
 			await fs.writeFile(dest, item.source);
-		} else {
+		} else if (item.code !== undefined) {
 			// JS 产物再过一次 esbuild：压缩空白并强制 utf-8 输出
 			// （避免中文等非 ASCII 字符被转义成 \u 序列）
-			const result = await vite.transformWithEsbuild(item.code!, dest, {
+			const transformed = await vite.transformWithEsbuild(item.code, dest, {
 				minifyWhitespace: true,
 				charset: "utf8",
 			});
-			await fs.writeFile(dest, result.code);
+			await fs.writeFile(dest, transformed.code);
 		}
 	}
 }
@@ -206,13 +210,6 @@ export async function createServer(
 						],
 					}),
 				],
-				css: {
-					preprocessorOptions: {
-						scss: {
-							api: "modern-compiler",
-						},
-					},
-				},
 				resolve: {
 					// 强制这些依赖全局单实例，避免不同副本并存导致
 					// （例如多个 vue 实例）运行异常
@@ -232,8 +229,8 @@ export async function createServer(
 						"../vue.js": "vue",
 						"../vue-router.js": "vue-router",
 						"../vueuse.js": "@vueuse/core",
-						// 虚拟子路径,类型见 packages/web/components/client/shims.d.ts
-						"schemastery-vue/client": "schemastery-vue",
+						// 虚拟子路径的运行时载体（同 build 的别名说明）
+						"schemastery-vue/client": runtimeShimPath,
 					},
 				},
 				optimizeDeps: {
@@ -249,7 +246,7 @@ export async function createServer(
 				},
 				build: {
 					rollupOptions: {
-						input: root + "/index.html",
+						input: `${root}/index.html`,
 					},
 				},
 			} as vite.InlineConfig,

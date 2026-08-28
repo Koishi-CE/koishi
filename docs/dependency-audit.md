@@ -169,7 +169,7 @@ koishi-bun/
 ## 5. package.json 之外的技术栈
 
 - **TypeScript**:`tsconfig.base.json` — target es2022 / module esnext / `moduleResolution: bundler` / `emitDeclarationOnly + composite` / 仅 `strictBindCallApply`(未开全 strict)/ jsx react-jsx(`jsxImportSource: @satorijs/element`)/ `types: ["yml-register/types"]`。根 `tsconfig.json` 用 **paths 别名**把全部 35 个 `@koishi-ce/*` 包指向各自 `src/`(无 project references);`tsconfig.client.json` 供 Vue 客户端代码(`jsx: preserve`、`moduleResolution: node`)。
-- **构建**:无 vite/unocss 配置文件,构建逻辑全在 TS 脚本(`packages/web/client/scripts/client.ts` 及 `src/index.ts` 暴露 `build(root)` API、`bin.js` 暴露 `koishi-console` CLI);node 侧走向 zero-build(部分包 exports 直指 `src/`,部分仍指 `lib/`)。`apps/create-koishi-ce` 与 `apps/koishi-scripts` 用 `tsc -b` 构建。
+- **构建**:无 vite/unocss 配置文件,构建逻辑全在 TS 脚本(`packages/web/client/scripts/client.ts` 及 `src/index.ts` 暴露 `build(root)` API、`src/bin.ts` 暴露 `koishi-console` CLI);node 侧走向 zero-build(部分包 exports 直指 `src/`,部分仍指 `lib/`)。`apps/create-koishi-ce` 与 `apps/koishi-scripts` 用 `tsc -b` 构建。
 - **Lint**:Biome 2.x,根脚本 `lint`/`format`;未提交的 biome.json 修改新增了排除 `**/lib/**` 与 `*.tsbuildinfo`。
 - **测试**:mocha 风格 `tests/*.spec.ts`(core/loader/utils/i18n-utils/common 插件/admin/commands),chai + chai-shape + chai-as-promised,内存库驱动跑数据库用例;**无 .mocharc、无任何 test 脚本**,README 承认测试尚未在 Bun 上完整跑通。
 - **部署**:`apps/online` 经 `vercel.json` 部署(网站 + Online Loader)。

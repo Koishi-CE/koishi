@@ -6,8 +6,9 @@
 /// <reference path="../shims.d.ts" />
 // 注意:这里刻意从 "schemastery-vue/client" 导入而非包名本身——该包仅以
 // TS 源码发布,直接导入会把不满足严格配置的源码拉进类型程序。虚拟子路径
-// 的类型由 client/shims.d.ts 提供,运行时由构建器别名映射回真实包
-// (见 packages/web/client/src/index.ts 的 resolve.alias)。
+// 的类型由上方 reference 引入的 ambient 兜底 + 根 tsconfig.client.json
+// 的 paths(compiler-sfc 需要)双轨提供,运行时由构建器别名映射到同目录
+// schemastery-vue-runtime.ts(见 packages/web/client/src/index.ts)。
 import form from "schemastery-vue/client";
 import type { App } from "vue";
 import Computed from "./computed.vue";
