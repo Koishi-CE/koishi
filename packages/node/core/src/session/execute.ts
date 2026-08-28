@@ -7,13 +7,12 @@
  * 数据预取 -> 进入指令 i18n 作用域执行 -> 发送结果。
  */
 import { h, Logger } from "@satorijs/core";
-import type { Dict } from "cosmokit";
 import { Argv } from "../command";
 import type { Context } from "../context";
 import type { Tables } from "../database";
 import type { Next } from "../middleware";
 import { SessionLocalized } from "./locale";
-import type { Session } from "./types";
+import type { FieldCollector } from "./types";
 import { collectFields } from "./types";
 
 const logger = new Logger("session");
@@ -35,7 +34,7 @@ export class SessionExecutable extends SessionLocalized {
 		fields = new Set<keyof Tables[T]>(),
 	): Set<keyof Tables[T]> {
 		const collect = (argv: Argv) => {
-			argv.session = this as Session<any, any, any>;
+			argv.session = this;
 			if (argv.tokens) {
 				for (const { inters } of argv.tokens) {
 					inters.forEach(collect);
@@ -43,13 +42,22 @@ export class SessionExecutable extends SessionLocalized {
 			}
 			const command = this.app.$commander.resolveCommand(argv);
 			if (!command) return;
-			(this.app as Context).emit(
-				argv.session,
-				`command/before-attach-${key}` as any,
+			// 事件名与 fields 的具体类型由泛型 T 决定，emit 的重载无法表达该映射，
+			// 退化为运行时事件总线签名调用
+			const emit = (this.app as Context).emit as (
+				session: unknown,
+				name: `command/before-attach-${T}`,
+				argv: Argv,
+				fields: Set<keyof Tables[T]>,
+			) => void;
+			emit(argv.session, `command/before-attach-${key}`, argv, fields);
+			collectFields(
 				argv,
+				(command as unknown as Record<`_${T}Fields`, FieldCollector<T>[]>)[
+					`_${key}Fields`
+				],
 				fields,
 			);
-			collectFields(argv, (command as Dict<any>)[`_${key}Fields`], fields);
 		};
 		if (argv) collect(argv);
 		return fields;
@@ -69,7 +77,7 @@ export class SessionExecutable extends SessionLocalized {
 	override async execute(argv: string | Argv, next?: true | Next) {
 		if (typeof argv === "string") argv = Argv.parse(argv);
 
-		argv.session = this as Session<any, any, any>;
+		argv.session = this;
 		if (argv.tokens) {
 			for (const arg of argv.tokens) {
 				const { inters } = arg;

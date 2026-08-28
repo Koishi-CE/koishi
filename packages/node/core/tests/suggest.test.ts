@@ -18,7 +18,7 @@ describe("Command Suggestion", () => {
 
 	app
 		.command("foo <text>", { checkArgCount: true })
-		.action((_, bar) => "foo" + bar);
+		.action((_, bar) => `foo${bar}`);
 
 	app
 		.command("fooo", { checkUnknown: true })
@@ -101,7 +101,7 @@ describe("session.suggest()", () => {
 
 	// find 指令：条目不存在时用 session.suggest 做条目名纠错
 	app.command("find [item]").action(async ({ session }, item) => {
-		if (items.includes(item)) return "found:" + item;
+		if (items.includes(item)) return `found:${item}`;
 		const name = await session!.suggest({
 			actual: item,
 			expect: ["foo", "bar", "baz"],

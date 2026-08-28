@@ -40,7 +40,7 @@ export default class Koishi extends cordis.Service<Context.Config, Context> {
  * 使服务内部注册的副作用挂在 Koishi 上下文体系内。
  */
 export abstract class Service<
-	T = any,
+	T = unknown,
 	C extends Context = Context,
 > extends satori.Service<T, C> {
 	override [satori.Service.setup]() {

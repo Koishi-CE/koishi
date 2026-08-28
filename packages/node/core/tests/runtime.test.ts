@@ -31,7 +31,7 @@ const cmd1 = app
 	.shortcut("foo4", { fuzzy: true })
 	.option("bar", "", { authority: 3 })
 	.option("baz", "")
-	.action((_: unknown, arg: string) => "cmd1:" + arg);
+	.action((_: unknown, arg: string) => `cmd1:${arg}`);
 
 const cmd2 = app
 	.command("cmd2")

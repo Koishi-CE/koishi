@@ -56,10 +56,12 @@ declare module "../context" {
 		/** 频道数据装配前：监听者可向 fields 补充需要预取的字段 */
 		"before-attach-channel"(session: Session, fields: Set<Channel.Field>): void;
 		/** 频道数据装配后；返回 true 可短路整个处理流程 */
+		// biome-ignore lint/suspicious/noConfusingVoidType: 事件负载：void 表示监听器无输出、true 表示短路，改为 undefined 会破坏 void 返回监听器的可赋值性
 		"attach-channel"(session: Session): Awaitable<void | boolean>;
 		/** 用户数据装配前：同上，可补充预取字段 */
 		"before-attach-user"(session: Session, fields: Set<User.Field>): void;
 		/** 用户数据装配后；返回 true 可短路 */
+		// biome-ignore lint/suspicious/noConfusingVoidType: 事件负载：void 表示监听器无输出、true 表示短路，改为 undefined 会破坏 void 返回监听器的可赋值性
 		"attach-user"(session: Session): Awaitable<void | boolean>;
 		/** 数据装配全部开始前 */
 		"before-attach"(session: Session): void;

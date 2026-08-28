@@ -125,7 +125,7 @@ export function setupCommander(cmdr: Commander, ctx: Context) {
 			const message =
 				name +
 				content.slice(actual.length) +
-				(quote?.content ? " " + quote.content : "");
+				(quote?.content ? ` ${quote.content}` : "");
 			return session.execute(message, next);
 		});
 	});

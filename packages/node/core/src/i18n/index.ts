@@ -49,12 +49,16 @@ export namespace I18n {
 
 	/** 预置渲染器：把 (值, 插值参数, 语言) 渲染为字符串 */
 	export type Formatter = (
-		value: any,
+		value: unknown,
 		args: string[],
 		locale: string,
 	) => string;
 	/** 渲染器签名（注册到 _presets 后由 kTemplate 引用） */
-	export type Renderer = (dict: Dict, params: any, locale: string) => string;
+	export type Renderer = (
+		dict: Dict,
+		params: unknown,
+		locale: string,
+	) => string;
 
 	/** 查找选项（透传模糊匹配选项）。 */
 	export interface FindOptions extends CompareOptions {}
@@ -147,7 +151,7 @@ export class I18n {
 				if (key.startsWith("_")) continue;
 				const child = value[key];
 				if (child === undefined) continue;
-				yield* this.set(locale, prefix + key + ".", child);
+				yield* this.set(locale, `${prefix + key}.`, child);
 			}
 		} else if (prefix.includes("@")) {
 			throw new Error("preset is deprecated");
@@ -179,7 +183,7 @@ export class I18n {
 		const dict = (this._data[locale] ??= {});
 		const paths = [
 			...(typeof dictOrKey === "string"
-				? this.set(locale, dictOrKey + ".", value ?? "")
+				? this.set(locale, `${dictOrKey}.`, value ?? "")
 				: this.set(locale, "", dictOrKey)),
 		];
 		this.ctx.emit("internal/i18n");
@@ -207,7 +211,7 @@ export class I18n {
 	 * 渲染单个字典节点：字符串走 h.parse（支持 `{参数}` 插值与元素语法）；
 	 * 带 kTemplate 的对象走预置渲染器，找不到渲染器则抛错。
 	 */
-	_render(value: I18n.Node, params: any, locale: string) {
+	_render(value: I18n.Node, params: object, locale: string) {
 		if (typeof value !== "string") {
 			const preset = value[kTemplate];
 			const render = preset === undefined ? undefined : this._presets[preset];
@@ -233,7 +237,7 @@ export class I18n {
 		// 逐个路径、逐个语言尝试渲染
 		for (const path of paths) {
 			for (const locale of locales) {
-				for (const key of ["$" + locale, locale]) {
+				for (const key of [`$${locale}`, locale]) {
 					const value = this._data[key]?.[path];
 					if (value === undefined || (!value && !locale && path !== ""))
 						continue;

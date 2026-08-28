@@ -42,7 +42,7 @@ export interface Argv<
 	U extends User.Field = never,
 	G extends Channel.Field = never,
 	A extends unknown[] = unknown[],
-	O extends {} = {},
+	O extends object = object,
 > {
 	/** 位置参数（已按声明中的 domain 类型强转） */
 	args?: A;

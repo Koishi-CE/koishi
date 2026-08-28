@@ -17,7 +17,7 @@ interface Task {
 	/** 消息内容 */
 	content: Fragment;
 	resolve(ids: string[]): void;
-	reject(reason: any): void;
+	reject(reason: unknown): void;
 }
 
 /** 会话消息发送层：直接发送与排队发送（限速队列） */

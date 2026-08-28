@@ -41,6 +41,7 @@ declare module "@satorijs/core" {
 defineProperty(Bot, "filter", false);
 defineProperty(Adapter, "filter", false);
 
+// biome-ignore lint/correctness/noUnusedVariables: 该接口与同名类声明合并，为类实例注入 satori Bot 的 this 成员（this.getGuildMemberIter 等），并非冗余
 interface KoishiBot extends Bot<Context> {}
 
 /**

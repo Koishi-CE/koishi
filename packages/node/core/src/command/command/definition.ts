@@ -25,6 +25,7 @@ import { CommandCore } from "./core";
  * 回调参数取 never 以满足逆变——任意泛型实例的 Command.Action /
  * FieldCollector 均可赋入；执行装配处通过 apply 以数组还原实参。
  */
+// biome-ignore lint/suspicious/noConfusingVoidType: 内部擦除存储必须原样承接公共 Action 的 void 返回（void 不可赋值给 undefined）
 type ErasedAction = (argv: never, ...args: never) => Awaitable<void | Fragment>;
 
 /** 同上，作用于字段收集器：字段名列表或以 argv 为参的回调 */
@@ -36,7 +37,7 @@ export class CommandDefinition<
 	U extends User.Field = never,
 	G extends Channel.Field = never,
 	A extends unknown[] = unknown[],
-	O extends {} = {},
+	O extends object = object,
 > extends CommandCore {
 	/** help 展示的示例列表 */
 	_examples: string[] = [];
@@ -242,7 +243,7 @@ export class CommandDefinition<
 			}
 		}
 		for (const arg of config.args || []) {
-			content += " " + this._escape(arg);
+			content += ` ${this._escape(arg)}`;
 		}
 		if (config.fuzzy) content += " {1}";
 		const regex = config.i18n;

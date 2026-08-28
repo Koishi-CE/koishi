@@ -14,16 +14,18 @@ import type { Context } from "./index";
 /** @deprecated 已废弃：请改用 `ctx.serial` / `ctx.bail`。 */
 export async function waterfallImpl(
 	ctx: Context,
-	args: [any, ...any[]],
+	args: [unknown, ...unknown[]],
 ): Promise<unknown> {
+	const first = args[0];
 	const thisArg =
-		typeof args[0] === "object" || typeof args[0] === "function"
-			? args.shift()
+		typeof first === "object" || typeof first === "function"
+			? (args.shift() as object)
 			: null;
-	const name = args.shift();
+	const name = args.shift() as string;
 	for (const hook of ctx.lifecycle.filterHooks(
 		ctx.lifecycle._hooks[name] || [],
-		thisArg,
+		// 无 thisArg 时为 null（与 cordis dispatch 的取参逻辑一致，其内部以 ?. 兼容）
+		thisArg as object | undefined,
 	)) {
 		const result = await hook.callback.apply(thisArg, args);
 		// 上一个监听器的返回值作为下一个的首个实参（瀑布语义）
@@ -33,15 +35,20 @@ export async function waterfallImpl(
 }
 
 /** @deprecated 已废弃：同步版瀑布事件，请改用 `ctx.bail`。 */
-export function chainImpl(ctx: Context, args: [any, ...any[]]): unknown {
+export function chainImpl(
+	ctx: Context,
+	args: [unknown, ...unknown[]],
+): unknown {
+	const first = args[0];
 	const thisArg =
-		typeof args[0] === "object" || typeof args[0] === "function"
-			? args.shift()
+		typeof first === "object" || typeof first === "function"
+			? (args.shift() as object)
 			: null;
-	const name = args.shift();
+	const name = args.shift() as string;
 	for (const hook of ctx.lifecycle.filterHooks(
 		ctx.lifecycle._hooks[name] || [],
-		thisArg,
+		// 无 thisArg 时为 null（与 cordis dispatch 的取参逻辑一致，其内部以 ?. 兼容）
+		thisArg as object | undefined,
 	)) {
 		const result = hook.callback.apply(thisArg, args);
 		args[0] = result;

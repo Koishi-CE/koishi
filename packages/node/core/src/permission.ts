@@ -16,6 +16,7 @@
 import { Logger } from "@satorijs/core";
 import { type Awaitable, defineProperty, remove } from "cosmokit";
 import { Context } from "./context";
+import type { Channel, User } from "./database";
 import { createMatch, type MatchResult } from "./i18n";
 import type { Session } from "./session";
 
@@ -92,8 +93,9 @@ export class Permissions {
 		// 内置权限：authority:N —— 用户等级达到 N 即通过；
 		// 未登录（无 user 记录）时同样放行，由调用方决定是否要求登录
 		this.define("authority:(value)", {
-			check: ({ value }, { user }: Partial<Session<any, any, any>>) => {
-				return !user || user["authority"] >= +value;
+			check: ({ value }, { user }: Partial<Session>) => {
+				// 调用方只保证 user 是观察对象，预取字段集合由具体会话决定
+				return !user || (user as User.Observed)["authority"] >= +value;
 			},
 			list: () =>
 				Array(5)
@@ -110,11 +112,15 @@ export class Permissions {
 		// 兜底判定 2：查本地授权列表——会话临时授权 > 用户表 > 频道表
 		this.provide(
 			"(name)",
-			({ name }, session: Partial<Session<any, any, any>>) => {
+			({ name }, { permissions, user, channel }: Partial<Session>) => {
+				// user / channel 的预取字段由调用方决定，这里按完整表结构
+				// 读取（未预取时值为 undefined，不影响判定结果）
+				const u = user as User.Observed | undefined;
+				const c = channel as Channel.Observed | undefined;
 				return !!(
-					session.permissions?.includes(name) ||
-					session.user?.["permissions"]?.includes(name) ||
-					session.channel?.["permissions"]?.includes(name)
+					permissions?.includes(name) ||
+					u?.permissions?.includes(name) ||
+					c?.permissions?.includes(name)
 				);
 			},
 		);
@@ -239,7 +245,10 @@ export class Permissions {
 	) {
 		// 若传入的是 shadow 会话（see session.ts 的 Context.shadow），
 		// 还原为原始会话再校验，避免代理层干扰
-		session = (session as any)[Context.shadow] || session;
+		session =
+			((session as unknown as Record<symbol, unknown>)[
+				Context.shadow
+			] as Partial<Session>) || session;
 		if (typeof names === "string") names = [names];
 		for (const name of this.subgraph("depends", names)) {
 			const parents = [...this.subgraph("inherits", [name])];

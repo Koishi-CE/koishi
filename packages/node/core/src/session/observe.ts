@@ -65,7 +65,7 @@ export class SessionObservable extends SessionMessaging {
 				// 游离频道不入库（写回前拦截），见上游 issue #1267：
 				// https://github.com/koishijs/koishi/issues/1267
 				if ("$detached" in data && data["$detached"]) return;
-				await this.app.database.setChannel(platform, channelId, diff as any);
+				await this.app.database.setChannel(platform, channelId, diff);
 			},
 			`channel ${key}`,
 		);
@@ -139,9 +139,12 @@ export class SessionObservable extends SessionMessaging {
 		let cache = this.user;
 		if (cache) {
 			for (const key in cache) {
-				fieldSet.delete(key as any);
+				// 非 user 字段的观察对象成员（$diff 等）不在集合内，delete 为空操作
+				fieldSet.delete(key as User.Field);
 			}
-			if (!fieldSet.size) return (this.user = cache as any);
+			if (!fieldSet.size) {
+				return (this.user = cache) as User.Observed<T>;
+			}
 		}
 
 		// 匿名用户：不落库，用模型默认值构造临时观察对象
@@ -168,15 +171,11 @@ export class SessionObservable extends SessionMessaging {
 					// 游离用户不入库（写回前拦截），见上游 issue #1267：
 					// https://github.com/koishijs/koishi/issues/1267
 					if ("$detached" in data && data["$detached"]) return;
-					await this.app.database.setUser(
-						this.platform,
-						userId ?? "",
-						diff as any,
-					);
+					await this.app.database.setUser(this.platform, userId ?? "", diff);
 				},
 				`user ${this.uid}`,
 			);
 		}
-		return (this.user = cache as any);
+		return (this.user = cache) as User.Observed<T>;
 	}
 }

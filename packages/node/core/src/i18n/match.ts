@@ -45,11 +45,12 @@ export function createMatch<P extends string>(
 	return (string: string) => {
 		const capture = regexp.exec(string);
 		if (!capture) return;
-		const data: any = {};
+		const data: Record<string, string> = {};
 		for (const [i, name] of groups.entries()) {
-			data[name] = capture[i + 1];
+			// 匹配成功时每个捕获组必有值（(.+) 至少吞掉一个字符）
+			data[name] = capture[i + 1] as string;
 		}
-		return data;
+		return data as MatchResult<P>;
 	};
 }
 

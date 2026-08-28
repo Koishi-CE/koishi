@@ -21,21 +21,21 @@ export class SessionCore {
 	 * 求值计算属性（接口说明见 types.ts 的 Session.resolve）。
 	 * minato 表达式以 `{ _: this }` 为求值环境，故表达式内可用 `_` 引用会话。
 	 */
-	resolve<T, R extends any[]>(
-		source:
-			| T
-			| Eval.Expr
-			| ((session: Session<any, any, any>, ...args: R) => T),
+	resolve<T, R extends unknown[]>(
+		source: T | Eval.Expr | ((session: Session, ...args: R) => T),
 		...args: R
 	): T extends Eval.Expr
 		? Eval<T>
-		: T extends (...args: any[]) => any
+		: T extends (...args: never[]) => unknown
 			? ReturnType<T>
 			: T;
 
-	resolve(source: any, ...params: any[]) {
+	resolve(source: unknown, ...params: unknown[]): unknown {
 		if (typeof source === "function") {
-			return Reflect.apply(source, null, [this, ...params]);
+			return Reflect.apply(source as (...args: unknown[]) => unknown, null, [
+				this,
+				...params,
+			]);
 		}
 		if (!isEvalExpr(source)) return source;
 		return executeEval({ _: this }, source);

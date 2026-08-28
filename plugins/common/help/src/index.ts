@@ -180,7 +180,8 @@ export function apply(ctx: Context, config: Config) {
 			const { args, session } = argv;
 			const [target] = args ?? [];
 			if (!session) return;
-			const result = findCommand(target, session);
+			// target 是消息中的指令名；FieldCollector 擦除后 args 为 unknown[]
+			const result = findCommand(target as string, session);
 			if (!Array.isArray(result)) {
 				if (result) {
 					session.collect(

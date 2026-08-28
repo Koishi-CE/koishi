@@ -62,9 +62,9 @@ export function executeMatcher(
 	if ((appel || stripped.hasAt) && !stripped.appel) return;
 	if (!context.filter(session)) return;
 	let content = stripped.content;
-	if (quote?.content) content += " " + quote.content;
+	if (quote?.content) content += ` ${quote.content}`;
 
-	const match = (pattern: any): [string, ...string[]] | null => {
+	const match = (pattern: string | RegExp): [string, ...string[]] | null => {
 		if (!pattern) return null;
 		if (typeof pattern === "string") {
 			// 非模糊模式要求整条消息与模板一致
@@ -78,7 +78,8 @@ export function executeMatcher(
 			}
 			return [content, rest];
 		} else {
-			return pattern.exec(content);
+			// exec 结果首元素恒为完整匹配，天然满足捕获组元组形状
+			return pattern.exec(content) as [string, ...string[]] | null;
 		}
 	};
 

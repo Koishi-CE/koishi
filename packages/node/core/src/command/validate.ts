@@ -52,9 +52,9 @@ export default function validate(ctx: Context) {
 	// 用户权限校验：命令本体 + 用户实际传入的每个选项都要通过测试
 	ctx.before(
 		"command/execute",
-		async (argv: Argv<"authority">): Promise<string | void> => {
+		async (argv: Argv<"authority">): Promise<string | undefined> => {
 			const { session, options, command } = argv;
-			if (!session?.user || !command) return;
+			if (!session?.user || !command) return undefined;
 
 			const sendHint = (message: string, ...param: unknown[]) =>
 				command.config.showWarning ? session.text(message, param) : "";
@@ -70,6 +70,7 @@ export default function validate(ctx: Context) {
 			if (!(await ctx.permissions.test(permissions, session))) {
 				return sendHint("internal.low-authority");
 			}
+			return undefined;
 		},
 		true,
 	);
@@ -77,9 +78,9 @@ export default function validate(ctx: Context) {
 	// argv 校验：参数数量与未知选项
 	ctx.before(
 		"command/execute",
-		async (argv: Argv): Promise<string | void> => {
+		async (argv: Argv): Promise<string | undefined> => {
 			const { args = [], options = {}, command, session } = argv;
-			if (!command || !session) return;
+			if (!command || !session) return undefined;
 			const sendHint = (message: string, ...param: unknown[]) =>
 				command.config.showWarning ? session.text(message, param) : "";
 
@@ -118,6 +119,7 @@ export default function validate(ctx: Context) {
 					return sendHint("internal.unknown-option", unknown.join(", "));
 				}
 			}
+			return undefined;
 		},
 		true,
 	);

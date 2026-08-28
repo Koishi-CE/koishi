@@ -14,7 +14,6 @@ import {
 	expect,
 	it,
 	jest,
-	type Mock,
 } from "bun:test";
 import {
 	App,
@@ -27,7 +26,7 @@ import {
 } from "@koishi-ce/koishi";
 import mock from "@koishi-ce/plugin-mock";
 
-type NextCallback = Extract<Next.Callback, (...args: any[]) => any>;
+type NextCallback = Extract<Next.Callback, (...args: never[]) => unknown>;
 
 const app = new App();
 app.plugin(mock);
@@ -52,7 +51,7 @@ afterAll(() => {
 });
 
 describe("Middleware Runtime", () => {
-	let callSequence: Mock<any>[];
+	let callSequence: unknown[];
 
 	beforeEach(() => {
 		print.mockClear();
@@ -62,7 +61,7 @@ describe("Middleware Runtime", () => {
 	});
 
 	/** 包装中间件：调用时把自身记入 callSequence，用于断言执行顺序。 */
-	function trace<T extends (...args: any[]) => any>(callback: T) {
+	function trace<T extends (...args: never[]) => unknown>(callback: T) {
 		const wrapper = jest.fn((...args: Parameters<T>) => {
 			callSequence.push(wrapper);
 			return callback.apply(null, args) as ReturnType<T>;
@@ -179,7 +178,10 @@ describe("Middleware Runtime", () => {
 
 	it("edge case 1 (isolated next)", async () => {
 		// 会话结束后才调用 next（孤立 next）：记一条错误日志
-		app.middleware((_, next) => (next(), undefined));
+		app.middleware((_, next) => {
+			next();
+			return undefined;
+		});
 		app.middleware((_, next) => sleep(0).then(() => next()));
 		await client.shouldNotReply("foo");
 		await sleep(0);

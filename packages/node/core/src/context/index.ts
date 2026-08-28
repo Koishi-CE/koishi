@@ -55,8 +55,8 @@ export {
 export type { Disposable, Plugin, ScopeStatus } from "cordis";
 export { resolveConfig } from "cordis";
 
-/** 环境数据占位类型（Koishi 未使用 satori 的 EnvData，保留空接口以兼容）。 */
-export type EnvData = {};
+/** 环境数据占位类型（Koishi 未使用 satori 的 EnvData，保留以兼容）。 */
+export type EnvData = object;
 
 /** 从字符串类型 S 中删去子串 T（用于从 "before-" 事件名反推原事件名）。 */
 type OmitSubstring<
@@ -151,7 +151,7 @@ export class Context extends satori.Context {
 		name: K,
 		...args: Parameters<GetEvents<this>[K]>
 	): Promisify<ReturnType<GetEvents<this>[K]>>;
-	waterfall(...args: [any, ...any[]]) {
+	waterfall(...args: [unknown, ...unknown[]]) {
 		return waterfallImpl(this, args);
 	}
 
@@ -165,7 +165,7 @@ export class Context extends satori.Context {
 		name: K,
 		...args: Parameters<GetEvents<this>[K]>
 	): ReturnType<GetEvents<this>[K]>;
-	chain(...args: [any, ...any[]]) {
+	chain(...args: [unknown, ...unknown[]]) {
 		return chainImpl(this, args);
 	}
 
@@ -182,7 +182,14 @@ export class Context extends satori.Context {
 	) {
 		const seg = (name as string).split("/");
 		seg[seg.length - 1] = `before-${seg[seg.length - 1]}`;
-		return this.on(seg.join("/") as any, listener, !append);
+		// 动态拼出的 "before-" 事件名无法用 K 的字面量重载表达，
+		// 退化为运行时事件总线签名调用（与 cordis 内部实现签名一致）
+		const on = this.on as (
+			name: string,
+			listener: unknown,
+			options?: boolean,
+		) => () => boolean;
+		return on(seg.join("/"), listener, !append);
 	}
 }
 
@@ -249,12 +256,11 @@ defineContextConfig(Context.Config);
 // 会话过滤挂载：cordis 事件分发时以 session[Context.filter](hookCtx) 判定
 // 监听器所在上下文是否放行本会话，缺失会导致 $filter / ctx.user 等选择器全部失效
 // （Context.filter 是 cordis 的 unique symbol，Session 类型上无对应索引，需断言）
-(satori.Session.prototype as any)[Context.filter] = function (
-	this: Session,
-	ctx: Context,
-) {
-	return ctx.filter(this);
-};
+Object.assign(satori.Session.prototype, {
+	[Context.filter](this: Session, ctx: Context) {
+		return ctx.filter(this);
+	},
+});
 
 // 向后兼容：历史上应用类名为 App
 export { Context as App };

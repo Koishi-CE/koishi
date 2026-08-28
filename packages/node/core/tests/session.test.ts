@@ -59,7 +59,7 @@ describe("Session API", () => {
 			if (session.content !== "prompt") return next();
 			await session.send("prompt text");
 			const message = (await session.prompt()) || "nothing";
-			await session.send("received " + message);
+			await session.send(`received ${message}`);
 		});
 
 		it("session.prompt 1", async () => {

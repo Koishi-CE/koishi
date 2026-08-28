@@ -33,7 +33,7 @@ export class Command<
 	U extends User.Field = never,
 	G extends Channel.Field = never,
 	A extends unknown[] = unknown[],
-	O extends {} = {},
+	O extends object = object,
 > extends CommandDefinition<U, G, A, O> {
 	/** 命令名归一化：小写 + 下划线转连字符 */
 	static normalize(name: string) {
@@ -226,7 +226,8 @@ export namespace Command {
 		U extends User.Field = never,
 		G extends Channel.Field = never,
 		A extends unknown[] = unknown[],
-		O extends {} = {},
+		O extends object = object,
+		// biome-ignore lint/suspicious/noConfusingVoidType: 公共 API：action 返回 void 表示透传给后续 checker，改为 undefined 会破坏 void 返回回调的可赋值性
 	> = (argv: Argv<U, G, A, O>, ...args: A) => Awaitable<void | Fragment>;
 
 	/** 用法说明：静态字符串或按会话动态生成的函数 */
@@ -247,6 +248,7 @@ export namespace Command {
 		/** 错误处理策略：true 返回通用提示，false 上抛，函数自定义 */
 		handleError?:
 			| boolean
+			// biome-ignore lint/suspicious/noConfusingVoidType: 公共 API：返回 void 表示无自定义输出，改为 undefined 会破坏 void 返回回调的可赋值性
 			| ((error: Error, argv: Argv) => Awaitable<void | Fragment>);
 		/** 是否向平台注册斜线指令 */
 		slash?: boolean;

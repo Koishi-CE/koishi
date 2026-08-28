@@ -68,8 +68,7 @@ export function registerComponents(ctx: Context) {
 				const minor = Time[minorUnit];
 				if (ms >= major - minor / 2) {
 					ms += minor / 2;
-					let result =
-						Math.floor(ms / major) + " " + session.text(`general.${majorUnit}`);
+					let result = `${Math.floor(ms / major)} ${session.text(`general.${majorUnit}`)}`;
 					if (ms % major > minor) {
 						result +=
 							` ${Math.floor((ms % major) / minor)} ` +
@@ -78,9 +77,7 @@ export function registerComponents(ctx: Context) {
 					return result;
 				}
 			}
-			return (
-				Math.round(ms / Time.second) + " " + session.text("general.second")
-			);
+			return `${Math.round(ms / Time.second)} ${session.text("general.second")}`;
 		},
 		{ session: true },
 	);

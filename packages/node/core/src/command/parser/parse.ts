@@ -26,7 +26,7 @@ export function parseCommand(
 	const options: Dict<unknown> = { ...argv.options };
 
 	if (!argv.source && argv.tokens) {
-		argv.source = cmd.name + " " + Argv.stringify(argv);
+		argv.source = `${cmd.name} ${Argv.stringify(argv)}`;
 	}
 
 	// 变长参数越过声明末位后，继续沿用最后一条有效声明做类型转换

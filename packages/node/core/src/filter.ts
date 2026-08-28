@@ -34,15 +34,12 @@ export namespace Computed {
  *
  * 插件配置中大量使用该类型（如权限等级、开关项），让配置可以按用户/频道变化。
  */
-export type Computed<T> =
-	| T
-	| Eval.Expr<T>
-	| ((session: Session<any, any, any>) => T);
+export type Computed<T> = T | Eval.Expr<T> | ((session: Session) => T);
 /**
  * 会话过滤器：接收一个 Session，返回该会话是否允许通过。
  * 挂在 Context 上即成为该上下文的事件准入条件。
  */
-export type Filter = (session: Session<any, any, any>) => boolean;
+export type Filter = (session: Session) => boolean;
 
 declare module "./context" {
 	interface Context {

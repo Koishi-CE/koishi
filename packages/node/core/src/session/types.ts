@@ -65,8 +65,8 @@ export interface Stripped {
 export type FieldCollector<
 	T extends keyof Tables,
 	K = keyof Tables[T],
-	A extends any[] = any[],
-	O extends {} = {},
+	A extends unknown[] = unknown[],
+	O extends object = object,
 > =
 	| Iterable<K>
 	| ((argv: Argv<never, never, A, O>, fields: Set<keyof Tables[T]>) => void);
@@ -75,7 +75,7 @@ export type FieldCollector<
 export function collectFields<T extends keyof Tables>(
 	argv: Argv,
 	collectors: FieldCollector<T>[],
-	fields: Set<any>,
+	fields: Set<keyof Tables[T]>,
 ) {
 	for (const collector of collectors) {
 		if (typeof collector === "function") {
@@ -119,15 +119,12 @@ export interface Session<
 	 * 求值计算属性：静态值原样返回；函数以 (session, ...args) 调用；
 	 * minato Eval 表达式则在本会话上下文（`_`）中执行。
 	 */
-	resolve<T, R extends any[]>(
-		source:
-			| T
-			| Eval.Expr
-			| ((session: Session<any, any, any>, ...args: R) => T),
+	resolve<T, R extends unknown[]>(
+		source: T | Eval.Expr | ((session: Session, ...args: R) => T),
 		...args: R
 	): T extends Eval.Expr
 		? Eval<T>
-		: T extends (...args: any[]) => any
+		: T extends (...args: never[]) => unknown
 			? ReturnType<T>
 			: T;
 	/** 消息预处理结果（惰性缓存） */
@@ -194,12 +191,12 @@ export interface Session<
 	 */
 	execute(content: string | Argv, next?: true | Next): Promise<h[]>;
 	/** 注册仅对当前会话生效的临时中间件，返回注销函数 */
-	middleware(middleware: Middleware<Session<any, any, any>>): () => boolean;
+	middleware(middleware: Middleware): () => boolean;
 	/** 等待当前用户的下一条消息（剥离 @机器人 前缀），超时返回 undefined */
 	prompt(timeout?: number): Promise<string | undefined>;
 	/** prompt 的回调版本：以自定义逻辑处理下一条消息并返回结果 */
 	prompt<T>(
-		callback: (session: Session<any, any, any>) => Awaitable<T>,
+		callback: (session: Session) => Awaitable<T>,
 		options?: PromptOptions,
 	): Promise<T>;
 	/** 发送纠错建议；当只剩唯一候选时等待用户输入 `.` 确认，返回确认结果 */

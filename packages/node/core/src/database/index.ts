@@ -97,6 +97,7 @@ declare module "../context" {
 	}
 }
 
+// biome-ignore lint/correctness/noUnusedVariables: 该接口与同名类声明合并，为类实例注入 minato.Database 的 this 成员（this.get / this.set 等），并非冗余
 interface KoishiDatabase extends minato.Database<Tables, Types, Context> {}
 
 /**
@@ -195,7 +196,11 @@ class KoishiDatabase {
 		ids: string[],
 		modifier?: Driver.Cursor<K>,
 	): Promise<FlatPick<Channel, K>[]>;
-	async getChannel(platform: string, id: MaybeArray<string>, modifier?: any) {
+	async getChannel<K extends FlatKeys<Channel>>(
+		platform: string,
+		id: MaybeArray<string>,
+		modifier?: Driver.Cursor<K>,
+	) {
 		const data = await this.get("channel", { platform, id }, modifier);
 		if (Array.isArray(id)) return data;
 		if (data[0]) Object.assign(data[0], { platform, id });

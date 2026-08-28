@@ -99,7 +99,7 @@ export class CommanderCore {
 			name = segments[0] ?? "",
 			command: Command | undefined;
 		while ((command = this.get(name, session)) && i < segments.length) {
-			name = command.name + "." + (segments[i++] ?? "");
+			name = `${command.name}.${segments[i++] ?? ""}`;
 		}
 		return { command, name };
 	}
@@ -123,7 +123,7 @@ export class CommanderCore {
 		transform?: Argv.Transform<Argv.Domain[K]>,
 		options?: Argv.DomainConfig<Argv.Domain[K]>,
 	) {
-		const service = "domain:" + name;
+		const service = `domain:${name}`;
 		if (!transform) return this.ctx.get(service);
 		return this.ctx.set(service, { transform, ...options });
 	}

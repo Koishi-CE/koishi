@@ -29,21 +29,23 @@ export class SessionError extends Error {
 }
 
 /** next 函数：可选传入回调（追加中间件）或字符串（直接作为返回值） */
+// biome-ignore lint/suspicious/noConfusingVoidType: 公共 API：返回 void 表示不发送、Fragment 表示回复，改为 undefined 会破坏 void 返回中间件的可赋值性
 export type Next = (next?: Next.Callback) => Promise<void | Fragment>;
 /** 中间件签名：返回 Fragment 表示要发送给用户的内容 */
-export type Middleware<S extends Session<any, any, any> = Session> = (
+export type Middleware<S extends Session = Session> = (
 	session: S,
 	next: Next,
+	// biome-ignore lint/suspicious/noConfusingVoidType: 公共 API：返回 void 表示透传、Fragment 表示回复，改为 undefined 会破坏 void 返回中间件的可赋值性
 ) => Awaitable<void | Fragment>;
 
 export namespace Next {
 	/** 中间件执行队列（每个元素绑定好 session，只差 next 引用） */
+	// biome-ignore lint/suspicious/noConfusingVoidType: 公共 API：返回 void 表示透传，改为 undefined 会破坏 void 返回中间件的可赋值性
 	export type Queue = ((next?: Next) => Awaitable<void | Fragment>)[];
 	/** next 的入参：void（直接放行）/ 字符串（本层返回值）/ 函数（追加一层） */
 	export type Callback =
-		| void
-		| string
-		| ((next?: Next) => Awaitable<void | Fragment>);
+		// biome-ignore lint/suspicious/noConfusingVoidType: 公共 API：返回 void 表示透传，改为 undefined 会破坏 void 返回中间件的可赋值性
+		void | string | ((next?: Next) => Awaitable<void | Fragment>);
 }
 
 export const Next = {

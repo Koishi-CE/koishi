@@ -18,7 +18,7 @@ export class SessionInteractive extends SessionExecutable {
 	 * 注册只对当前会话生效的临时中间件（按会话 fid 匹配），
 	 * 内部通过 `app.middleware(..., true)` 以前置方式挂载。
 	 */
-	override middleware(middleware: Middleware<Session<any, any, any>>) {
+	override middleware(middleware: Middleware) {
 		const id = this.fid;
 		return this.app.middleware(async (session, next) => {
 			if (id && session.fid !== id) return next();
@@ -35,13 +35,13 @@ export class SessionInteractive extends SessionExecutable {
 	 */
 	override prompt(timeout?: number): Promise<string | undefined>;
 	override prompt<T>(
-		callback: (session: Session<any, any, any>) => Awaitable<T>,
+		callback: (session: Session) => Awaitable<T>,
 		options?: PromptOptions,
 	): Promise<T>;
-	override prompt(...args: any[]): any {
-		const callback: (session: Session<any, any, any>) => any =
+	override prompt(...args: unknown[]): unknown {
+		const callback: (session: Session) => Awaitable<unknown> =
 			typeof args[0] === "function"
-				? args.shift()
+				? (args.shift() as (session: Session) => Awaitable<unknown>)
 				: (session) => {
 						// 剥离消息开头 @机器人 的元素，只留正文
 						const elements = (session.elements ?? []).slice();
@@ -62,7 +62,8 @@ export class SessionInteractive extends SessionExecutable {
 				clearTimeout(timer);
 				dispose();
 				const value = await callback(session);
-				resolve(value);
+				// 实现内部仅以文本兑现；重载泛型 T 的兑现值由签名表达
+				resolve(value as string | undefined);
 				if (isNullable(value)) return next();
 			});
 			const timer = setTimeout(() => {

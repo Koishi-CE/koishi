@@ -88,7 +88,7 @@ export class CommandBase<T extends CommandBase.Config = CommandBase.Config> {
 		const cap = OPTION_REGEXP.exec(def);
 		if (!cap) return;
 		const param = paramCase(name);
-		let syntax = cap[1] || "--" + param;
+		let syntax = cap[1] || `--${param}`;
 		const bracket = cap[2] || "";
 		const desc = (cap[3] ?? "").trim();
 
@@ -107,11 +107,11 @@ export class CommandBase<T extends CommandBase.Config = CommandBase.Config> {
 
 		// 未指定固定取值且长名写法未出现时，补全 "-x, --xxx" 形式的完整语法
 		if (!("value" in config) && !aliases.includes(param)) {
-			syntax += ", --" + param;
+			syntax += `, --${param}`;
 		}
 
 		const declList = this.ctx.$commander.parseDecl(bracket.trimStart());
-		if (declList.stripped) syntax += " " + declList.stripped;
+		if (declList.stripped) syntax += ` ${declList.stripped}`;
 		// 同名选项重复注册时合并（保留先前登记的别名与变体）
 		const option = (this._options[name] ||= {
 			...declList[0],
@@ -210,7 +210,7 @@ export class CommandBase<T extends CommandBase.Config = CommandBase.Config> {
 			}
 		}
 		for (const arg of args) {
-			output += " " + this.stringifyArg(arg);
+			output += ` ${this.stringifyArg(arg)}`;
 		}
 		return output;
 	}
