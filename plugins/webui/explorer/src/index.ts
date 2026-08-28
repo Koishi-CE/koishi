@@ -39,8 +39,8 @@ declare module "@koishi-ce/console" {
 
 export interface File {
 	base64: string;
-	mime: string;
-	encoding: string;
+	mime?: string;
+	encoding?: string;
 }
 
 export interface Entry {
@@ -56,7 +56,19 @@ export interface Entry {
 }
 
 class Explorer extends DataService<Entry[]> {
-	task: Promise<Entry[]>;
+	// 配置 schema 的值侧由类静态承载(erasableSyntaxOnly 不允许 namespace 内运行时值),
+	// 类型侧见下方 namespace Explorer 的 Config
+	// biome-ignore lint/style/useNamingConvention: 插件 Schema 约定为 PascalCase 的 Config 静态属性
+	static Config: Schema<Explorer.Config> = Schema.object({
+		root: Schema.string().default(""),
+		ignored: Schema.array(String)
+			.role("table")
+			.default(["**/node_modules", "**/.*", "cache"]),
+	}).i18n({
+		"zh-CN": zhCN,
+	});
+
+	task!: Promise<Entry[]>;
 	watchers: Dict<FSWatcher> = Object.create(null);
 	globFilter: Tester;
 	root: string;
@@ -65,36 +77,35 @@ class Explorer extends DataService<Entry[]> {
 		super(ctx, "explorer", { authority: 4 });
 
 		ctx.console.addEntry(
-			process.env.KOISHI_BASE
+			process.env["KOISHI_BASE"]
 				? [
-						process.env.KOISHI_BASE + "/dist/index.js",
-						process.env.KOISHI_BASE + "/dist/style.css",
+						process.env["KOISHI_BASE"] + "/dist/index.js",
+						process.env["KOISHI_BASE"] + "/dist/style.css",
 					]
-				: process.env.KOISHI_ENV === "browser"
-					? [
-							// @ts-expect-error
-							import.meta.url.replace(/\/src\/[^/]+$/, "/client/index.ts"),
-						]
+				: process.env["KOISHI_ENV"] === "browser"
+					? [import.meta.url.replace(/\/src\/[^/]+$/, "/client/index.ts")]
 					: {
 							dev: resolve(__dirname, "../client/index.ts"),
 							prod: resolve(__dirname, "../dist"),
 						},
 		);
 
-		this.globFilter = anymatch(config.ignored);
-		this.root = resolve(ctx.baseDir, config.root);
+		this.globFilter = anymatch(config.ignored ?? []);
+		this.root = resolve(ctx.baseDir, config.root ?? "");
 
 		ctx.console.addListener(
 			"explorer/read",
-			async (filename, binary) => {
+			async (filename) => {
 				filename = join(this.root, filename);
 				const buffer = await readFile(filename);
 				const result = await fileTypeFromBuffer(buffer);
-				return {
-					base64: buffer.toString("base64"),
-					mime: result?.mime,
-					encoding: detect(buffer),
-				};
+				const encoding = detect(buffer);
+				// exactOptionalPropertyTypes:探测失败时不上键,与原先携带 undefined
+				// 值的对象在 JSON 序列化后表现一致
+				const file: File = { base64: buffer.toString("base64") };
+				if (result) file.mime = result.mime;
+				if (encoding) file.encoding = encoding;
+				return file;
 			},
 			{ authority: 4 },
 		);
@@ -154,7 +165,7 @@ class Explorer extends DataService<Entry[]> {
 		);
 	}
 
-	stop() {
+	override stop() {
 		for (const watcher of Object.values(this.watchers)) {
 			watcher.close();
 		}
@@ -163,7 +174,7 @@ class Explorer extends DataService<Entry[]> {
 	private async traverse(root: string): Promise<Entry[]> {
 		const dirents = await readdir(root, { withFileTypes: true });
 		return Promise.all(
-			dirents.map<Promise<Entry>>(async (dirent) => {
+			dirents.map(async (dirent): Promise<Entry | undefined> => {
 				const filename = join(root, dirent.name);
 				if (this.globFilter(relative(this.root, filename))) return;
 				if (dirent.isFile()) {
@@ -181,12 +192,16 @@ class Explorer extends DataService<Entry[]> {
 						target: await readlink(filename),
 					};
 				}
+				// 其余类型(FIFO / socket 等)不展示,显式返回以通过 noImplicitReturns
+				return;
 			}),
 		).then((entries) =>
-			entries.filter(Boolean).sort((a, b) => {
-				if (a.type !== b.type) return a.type === "directory" ? -1 : 1;
-				return a.name.localeCompare(b.name);
-			}),
+			entries
+				.filter((entry): entry is Entry => !!entry)
+				.sort((a, b) => {
+					if (a.type !== b.type) return a.type === "directory" ? -1 : 1;
+					return a.name.localeCompare(b.name);
+				}),
 		);
 	}
 
@@ -194,7 +209,7 @@ class Explorer extends DataService<Entry[]> {
 		return this.traverse(this.root);
 	}
 
-	async get(forced = false) {
+	override async get(forced = false) {
 		if (!forced && this.task) return this.task;
 		return (this.task = this._get());
 	}
@@ -205,15 +220,6 @@ namespace Explorer {
 		root?: string;
 		ignored?: string[];
 	}
-
-	export const Config: Schema<Config> = Schema.object({
-		root: Schema.string().default(""),
-		ignored: Schema.array(String)
-			.role("table")
-			.default(["**/node_modules", "**/.*", "cache"]),
-	}).i18n({
-		"zh-CN": zhCN,
-	});
 }
 
 export default Explorer;

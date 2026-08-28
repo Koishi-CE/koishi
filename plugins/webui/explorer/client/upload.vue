@@ -30,7 +30,7 @@ function handleDataTransfer(event: Event, transfer: DataTransfer) {
 		reader.addEventListener(
 			"load",
 			() => {
-				send(
+				void send(
 					"explorer/write",
 					prefix + file.name,
 					Binary.toBase64(reader.result as ArrayBuffer),

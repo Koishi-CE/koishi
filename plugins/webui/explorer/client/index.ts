@@ -1,5 +1,5 @@
 import type { Context } from "@koishi-ce/client";
-import {} from "@koishi-ce/plugin-explorer/src";
+import type { Entry } from "@koishi-ce/plugin-explorer";
 import FilePicker from "./file-picker.vue";
 import Layout from "./index.vue";
 import Status from "./status.vue";
@@ -9,6 +9,17 @@ import "./editor";
 
 import "virtual:uno.css";
 import "./editor.scss";
+
+// 浏览器端 tsconfig 无 paths,@koishi-ce/plugin-console 解析不到真实模块,
+// Console.Services 来自 packages/web/client/client/shims.d.ts 的手写环境声明;
+// 这里按同名环境声明合并为其补充 explorer 键,使 ctx.page 的 fields 通过检查
+declare module "@koishi-ce/plugin-console" {
+	namespace Console {
+		export interface Services {
+			explorer: DataService<Entry[]>;
+		}
+	}
+}
 
 export default (ctx: Context) => {
 	ctx.schema({

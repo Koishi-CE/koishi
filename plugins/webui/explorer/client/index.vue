@@ -114,6 +114,7 @@ ctx.action("explorer.save", {
 		!["files"].includes(router.currentRoute.value?.meta?.activity.id),
 	action: async () => {
 		const content = files[active.value].newValue;
+		// biome-ignore lint/nursery/noFloatingPromises: 已在 async 回调中 await，nursery 规则对 .vue 内 send 调用的误报
 		await send("explorer/write", active.value, content);
 		files[active.value].oldValue = content;
 	},
@@ -278,13 +279,13 @@ function confirmRename(entry: TreeEntry) {
 		files[filename] = entry;
 		delete files[entry.filename];
 		if (name) {
-			send("explorer/rename", entry.filename, filename);
+			void send("explorer/rename", entry.filename, filename);
 			active.value = filename;
 		} else if (entry.type === "file") {
-			send("explorer/write", filename, "");
+			void send("explorer/write", filename, "");
 			active.value = filename;
 		} else {
-			send("explorer/mkdir", filename);
+			void send("explorer/mkdir", filename);
 		}
 		entry.filename = filename;
 	}

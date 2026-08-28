@@ -146,7 +146,7 @@ function confirmRename() {
 	} else {
 		files[filename] = entry;
 		delete files[current.value];
-		send("explorer/mkdir", filename);
+		void send("explorer/mkdir", filename);
 		entry.filename = filename;
 	}
 }

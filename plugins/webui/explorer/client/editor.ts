@@ -27,7 +27,9 @@ window.MonacoEnvironment = {
 
 export const model = monaco.editor.createModel("");
 
-const { cssDefaults, lessDefaults, scssDefaults } = monaco.languages.css;
+// monaco 0.56 起 languages.css / json / typescript / html 标记为
+// { deprecated: true },语言配置入口迁移到顶层命名空间
+const { cssDefaults, lessDefaults, scssDefaults } = monaco.css;
 for (const service of [cssDefaults, lessDefaults, scssDefaults]) {
 	service.setModeConfiguration({
 		completionItems: false,
@@ -46,7 +48,7 @@ for (const service of [cssDefaults, lessDefaults, scssDefaults]) {
 	});
 }
 
-const { jsonDefaults } = monaco.languages.json;
+const { jsonDefaults } = monaco.json;
 for (const service of [jsonDefaults]) {
 	service.setModeConfiguration({
 		documentFormattingEdits: false,
@@ -62,7 +64,7 @@ for (const service of [jsonDefaults]) {
 	});
 }
 
-const { javascriptDefaults, typescriptDefaults } = monaco.languages.typescript;
+const { javascriptDefaults, typescriptDefaults } = monaco.typescript;
 for (const service of [javascriptDefaults, typescriptDefaults]) {
 	service.setModeConfiguration({
 		completionItems: false,
@@ -81,8 +83,7 @@ for (const service of [javascriptDefaults, typescriptDefaults]) {
 	});
 }
 
-const { htmlDefaults, handlebarDefaults, razorDefaults } =
-	monaco.languages.html;
+const { htmlDefaults, handlebarDefaults, razorDefaults } = monaco.html;
 for (const service of [htmlDefaults, handlebarDefaults, razorDefaults]) {
 	service.setModeConfiguration({
 		completionItems: false,

@@ -18,7 +18,9 @@ watch(
 	() => store.explorer,
 	() => {
 		const oldFiles = { ...files };
-		function traverse(entries: Entry[], prefix = "/") {
+		// store.explorer 与 entry.children 都可能为 undefined,
+		// 函数体内已有空值短路,参数类型如实放宽
+		function traverse(entries: Entry[] | undefined, prefix = "/") {
 			if (!entries) return;
 			for (const entry of entries) {
 				entry.filename = prefix + entry.name;
@@ -39,4 +41,4 @@ export const vFocus: Directive = {
 	mounted: (el) => el.focus(),
 };
 
-export const uploading = ref<string>(null);
+export const uploading = ref<string | null>(null);

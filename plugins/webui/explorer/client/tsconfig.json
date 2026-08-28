@@ -1,6 +1,9 @@
 {
 	"extends": "../../../../tsconfig.client",
-	"include": [
-		"."
-	]
+	"include": ["."],
+	"compilerOptions": {
+		"paths": {
+			"vue": ["../../../../packages/web/client/node_modules/vue"]
+		}
+	}
 }
