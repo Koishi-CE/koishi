@@ -17,6 +17,7 @@ import vueParser from "vue-eslint-parser";
 export default [
 	{
 		name: "koishi-ce/vue",
+		// 只圈定所有含 .vue 的 client / app 目录；.ts 一律归 biome 管
 		files: [
 			"apps/online/app/**/*.vue",
 			"apps/koishi-scripts/template/client/**/*.vue",
@@ -24,6 +25,7 @@ export default [
 			"plugins/webui/*/client/**/*.vue",
 		],
 		languageOptions: {
+			// 模板用 vue-eslint-parser，<script> 块内部再交给 @typescript-eslint/parser
 			parser: vueParser,
 			parserOptions: {
 				parser: tsParser,

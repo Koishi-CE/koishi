@@ -17,6 +17,8 @@ import { defineConfig } from "tsdown";
  * - @koishi-ce/koishi（cli）、apps/create-koishi-ce 与 apps/koishi-scripts
  *   各有自己的 tsdown.config.ts。
  */
+// 模块解析扩展名顺序：显式包含 .yml，让无扩展名的 locale 相对导入
+// （如 `../locales/zh-CN`）能在构建时解析到 .yml 文件并触发 copy loader
 const extensions = [
 	".tsx",
 	".ts",
@@ -30,6 +32,9 @@ const extensions = [
 	".yml",
 ];
 
+// tsdown workspace 模式的包发现范围：覆盖全部 node 侧子包；
+// vendored 三包（plugins/infra/{http,proxy-agent,server}）是预编译
+// 产物包（无 src/，分别内联再导出 @cordisjs/plugin-*），显式排除
 const workspace = {
 	include: [
 		"packages/node/*",
@@ -45,6 +50,7 @@ const workspace = {
 	],
 };
 
+/** 两种格式共享的基础配置（entry / 外部化 / copy loader 等） */
 const common: UserConfig = {
 	entry: "src/index.ts",
 	platform: "node" as const,
@@ -60,6 +66,8 @@ const common: UserConfig = {
 };
 
 export default defineConfig([
+	// 第一遍：CJS（index.js + index.d.ts）。这是 Koishi loader require()
+	// 加载插件所依赖的必备产物，先构建并 clean 掉旧产物
 	{
 		...common,
 		workspace,
@@ -70,6 +78,8 @@ export default defineConfig([
 		// 而各包 exports 声明的是 require → index.js，显式对齐
 		outExtensions: () => ({ js: ".js", dts: ".d.ts" }),
 	},
+	// 第二遍：ESM（index.mjs），追加在同目录、不重复出 d.ts、不 clean
+	// （避免把第一遍的 CJS 产物清掉）
 	{
 		...common,
 		workspace,
