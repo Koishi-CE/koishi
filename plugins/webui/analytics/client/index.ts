@@ -13,6 +13,12 @@ declare module "@koishi-ce/plugin-console" {
 	}
 }
 
+/**
+ * analytics 插件（浏览器侧）入口。
+ *
+ * - Charts：注册四个统计图表组件（历史消息 / 每小时消息 / 平台占比 / 指令频率）；
+ * - Home：控制台首页的统计面板（数值卡网格 + 图表网格），挂到 home 插槽位。
+ */
 import Charts from "./charts";
 import Home from "./home.vue";
 import "./icons";

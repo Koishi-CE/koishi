@@ -15,6 +15,10 @@ const botStatus: Record<
 	RECONNECT: 4,
 };
 
+/**
+ * 将 Universal.Status 枚举值映射为 CSS class 名（小写状态字符串），
+ * 供状态灯与预览卡按 class 着色。
+ */
 export function getStatus(status: Universal.Status) {
 	switch (status) {
 		case botStatus.OFFLINE:

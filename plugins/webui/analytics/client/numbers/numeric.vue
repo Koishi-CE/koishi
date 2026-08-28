@@ -1,3 +1,5 @@
+<!-- 统计数值卡：左侧图标 + 右侧标题与主数值，可选页脚左右两栏（如"昨日增量"）。
+     纯展示组件，数据由父级通过插槽注入。 -->
 <template>
   <k-card class="k-analytic-number">
     <k-icon :name="icon"/>

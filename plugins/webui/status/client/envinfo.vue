@@ -1,3 +1,6 @@
+<!-- 状态栏左侧的版本号徽标：显示 Koishi 核心版本，
+     悬停展开 envinfo 服务采集的分组明细（系统 / 运行时 / Koishi 生态），
+     点击将全部环境信息格式化为多行文本并复制到剪贴板。 -->
 <template>
   <k-status v-if="store.envinfo" class="version" @click="copyInfo">
     Koishi v{{ store.envinfo.koishi.Core }}
@@ -16,6 +19,7 @@
 import { capitalize, message, store } from "@koishi-ce/client";
 import { copyToClipboard } from "./utils";
 
+// 将 envinfo 的 { 分组: { 条目: 值 } } 结构展开为缩进的多行文本后复制
 async function copyInfo() {
 	const text = Object.entries(store.envinfo)
 		.map(([key, data]) => {

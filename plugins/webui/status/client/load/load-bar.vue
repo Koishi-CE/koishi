@@ -1,3 +1,6 @@
+<!-- 负载条形图：将一条负载率（[本进程占比, 整机占比]）拆分为三段色带，
+     依次为"其它进程"（used，主色）、"本进程"（app，警示色）与"空闲"（free，底色）。
+     占比过半的段内嵌 "进程 / 整机" 百分比说明；无过半段时较宽的段各自标注自身占比。 -->
 <template>
   <div class="load-bar">
     <span class="title">{{ title }}</span>
@@ -26,16 +29,19 @@ function percentage(value: number, digits = 1) {
 
 const types = ["used", "app", "free"] as const;
 
+// 三段色带的宽度占比：整机减本进程（其它进程）、本进程、剩余空闲
 const distribution = computed(() => [
 	props.rate[1] - props.rate[0],
 	props.rate[0],
 	1 - props.rate[1],
 ]);
 
+// 第一个占比 >= 50% 的段下标（找不到为 -1），该段足够宽时内嵌完整说明文案
 const maxIndex = computed(() => {
 	return distribution.value.findIndex((value) => value >= 0.5);
 });
 
+// 内嵌文案："本进程占比 / 整机占比"
 const caption = computed(() => {
 	return `${percentage(props.rate[0], 1)} / ${percentage(props.rate[1], 1)}`;
 });

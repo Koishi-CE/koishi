@@ -1,6 +1,13 @@
+/**
+ * 历史消息数量图：按日汇总的平滑折线图（收 / 发页签切换）。
+ *
+ * messageByDate 的下标 0 是恒为 0 的"今天"占位，故 slice(1) 丢弃；
+ * x 轴从今天往前逐日生成日期标签后与数据一起反转，形成从早到晚的时间轴。
+ */
 import type { Context } from "@koishi-ce/client";
 import { createChart, Tooltip } from "./utils";
 
+// 星期的中文缩写，供 tooltip 中按 getDay() 取字符拼接"星期几"
 const week = "日一二三四五六";
 
 export default (ctx: Context) => {

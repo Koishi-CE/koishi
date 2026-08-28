@@ -1,3 +1,6 @@
+<!-- 首页数值卡网格：用户总数 / 群组总数 / 今日 DAU 三张统计卡，
+     各自以页脚形式附带昨日增量或近期均值。数值卡本体通过 provide
+     暴露为 analytic-number 组件，status 插件的 QPS 卡也挂入同一插槽复用样式。 -->
 <template>
   <div class="card-grid numeric-grid" v-if="store.analytics">
     <k-slot name="analytic-number">
@@ -30,6 +33,7 @@ import Numeric from "./numeric.vue";
 
 provide("component:analytic-number", Numeric);
 
+// 近期 DAU：剔除今天的占位后取历史天数的平均值（天数不足时按实际天数除）
 const recentDau = computed(() => {
 	const data = store.analytics.dauHistory.slice(1);
 	const historyLength = store.analytics.dauHistory.length - 1;

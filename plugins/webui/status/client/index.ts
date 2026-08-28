@@ -1,3 +1,14 @@
+/**
+ * status 插件（浏览器侧）入口。
+ *
+ * 将各展示组件挂载到控制台对应的插槽位：
+ * - status-right：机器人状态灯（bots）与 CPU / 内存负载（load）；
+ * - status-left：环境信息版本号（envinfo.vue）；
+ * - analytic-number：当前 / 近期 QPS 数值卡（analytics.vue，供 analytics 插件的数值区复用）；
+ * - plugin-details：插件配置页中的机器人预览（config.vue）。
+ *
+ * 并注册本插件的前端设置项 mergeThreshold（状态灯合并显示阈值）。
+ */
 import { type Context, Schema } from "@koishi-ce/client";
 import {} from "@koishi-ce/plugin-status";
 import Analytics from "./analytics.vue";

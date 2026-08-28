@@ -1,3 +1,5 @@
+<!-- 单个机器人的预览卡：头像（经代理加载）+ 右下角状态灯（悬停显示状态文案）、
+     昵称、平台与最近一分钟的收发消息速率。用于状态栏悬停层与插件配置页。 -->
 <template>
   <section class="bot-view">
     <div class="avatar" :style="{ backgroundImage: `url(${withProxy(data.user.avatar)})` }" @click="$emit('avatar-click')">
@@ -28,6 +30,7 @@ import type { ProfileProvider } from "@koishi-ce/plugin-status";
 import StatusLight from "./light.vue";
 import { getStatus } from "./utils";
 
+// 状态枚举值到悬停提示文案的映射
 const statusNames: Record<Universal.Status, string> = {
 	[Universal.Status.ONLINE]: "运行中",
 	[Universal.Status.OFFLINE]: "离线",

@@ -1,3 +1,7 @@
+<!-- 状态栏右侧的机器人概况：按在线状态聚合一排状态灯，
+     同状态机器人过多（超过 mergeThreshold）时合并为"灯 + ×数量"；
+     悬停展开每个机器人的预览卡，点击可跳转到对应插件配置页。
+     尾部实时显示全部机器人最近一分钟的收发消息总量。 -->
 <template>
   <k-status v-if="store.status">
     <template #tooltip>
@@ -35,6 +39,7 @@ import { getStatus } from "./utils";
 
 const config = useConfig();
 
+// 按状态聚合的计数表（如 { online: 3, offline: 1 }），键名字典序排列保证灯的顺序稳定
 const statusMap = computed(() => {
 	const map: Dict<number> = {};
 	for (const bot of Object.values(store.status.bots)) {
@@ -46,6 +51,7 @@ const statusMap = computed(() => {
 	);
 });
 
+// 全部机器人最近一分钟发送消息总量
 const sent = computed(() => {
 	return Object.values(store.status.bots).reduce(
 		(acc, bot) => acc + bot.messageSent,
@@ -53,6 +59,7 @@ const sent = computed(() => {
 	);
 });
 
+// 全部机器人最近一分钟接收消息总量
 const received = computed(() => {
 	return Object.values(store.status.bots).reduce(
 		(acc, bot) => acc + bot.messageReceived,

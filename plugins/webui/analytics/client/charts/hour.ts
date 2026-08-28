@@ -1,6 +1,12 @@
+/**
+ * 每小时消息数量图：按时段汇总的柱状图（收 / 发页签切换），展示一天 24 小时
+ * 的日均消息分布。x 轴是数值轴：第 i 小时的柱子画在 i + 0.5 处，
+ * 使整点刻度落在柱子边界上（0:00 与 24:00 各占一端）。
+ */
 import type { Context } from "@koishi-ce/client";
 import { createChart, Tooltip } from "./utils";
 
+// 把小时中点值格式化为时段区间文案，如 9.5 → "9:00-10:00"
 const formatHour = (value: number) =>
 	`${(value - 0.5).toFixed()}:00-${(value + 0.5).toFixed()}:00`;
 
@@ -14,6 +20,7 @@ export default (ctx: Context) => {
 			options({ analytics }, tab) {
 				// render 侧已按 fields 守卫,此处仅为收窄可选的 store 键
 				if (!analytics) return;
+				// 当前页签下全天均为 0（对应方向无数据）则不渲染
 				if (analytics.messageByHour.every((val) => !val[tab])) return;
 				return {
 					tooltip: Tooltip.axis<number[]>(([first]) => {

@@ -1,3 +1,9 @@
+/**
+ * 各平台消息占比图：两层旭日图（sunburst）。
+ *
+ * 内层为平台，外层为该平台下的各机器人（以 bot 昵称展示，缺资料时回退 selfId），
+ * 数值取 messageByBot 的日均收 / 发消息量（页签切换），全为 0 时不渲染。
+ */
 import type { Context } from "@koishi-ce/client";
 import { createChart, Tooltip } from "./utils";
 
@@ -11,6 +17,7 @@ export default (ctx: Context) => {
 			options({ analytics }, tab) {
 				// render 侧已按 fields 守卫,此处仅为收窄可选的 store 键
 				if (!analytics) return;
+				// 把 { 平台: { selfId: 统计 } } 转成旭日图的层级 data 结构
 				const data = Object.entries(analytics.messageByBot).map(
 					([key, value]) => ({
 						name: key,

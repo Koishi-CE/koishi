@@ -1,3 +1,5 @@
+<!-- 状态指示灯：纯展示组件，本身无颜色；
+     颜色由父组件按机器人状态附加 class 决定（online / connect / error / offline）。 -->
 <template>
   <span class="status-light"></span>
 </template>
