@@ -10,7 +10,7 @@ import {
 import type { Entry } from "@koishi-ce/plugin-console";
 import { resolve } from "path";
 
-declare module "koishi" {
+declare module "@koishi-ce/koishi" {
 	interface Context {
 		notifier: NotifierService;
 	}
@@ -23,15 +23,15 @@ declare module "@koishi-ce/console" {
 }
 
 export class Notifier {
+	public ctx: Context;
 	public options: Notifier.Config;
 	public dispose: () => void;
 
 	private actionKeys: string[] = [];
 
-	constructor(
-		public ctx: Context,
-		options: h.Fragment | Notifier.Options,
-	) {
+	// constructor 参数属性被 erasableSyntaxOnly 禁止，拆为显式字段赋值
+	constructor(ctx: Context, options: h.Fragment | Notifier.Options) {
+		this.ctx = ctx;
 		this.options = {
 			type: "primary",
 			content: [],
@@ -68,11 +68,11 @@ export class Notifier {
 					? [h("p", options.content)]
 					: h.toElementArray(options.content);
 			options.content = h.transform(content, ({ type, attrs }) => {
-				if (type === "button" && typeof attrs.onClick === "function") {
+				if (type === "button" && typeof attrs["onClick"] === "function") {
 					const key = Math.random().toString(36).slice(2);
-					this.ctx.notifier.actions[key] = attrs.onClick;
+					this.ctx.notifier.actions[key] = attrs["onClick"];
 					this.actionKeys.push(key);
-					attrs.onClick = key;
+					attrs["onClick"] = key;
 				}
 				return true;
 			});
@@ -82,10 +82,11 @@ export class Notifier {
 	}
 
 	toJSON(): Notifier.Data {
+		const paths = this.ctx.get("loader")?.paths(this.ctx.scope);
 		return {
 			...this.options,
 			content: this.options.content.join(""),
-			paths: this.ctx.get("loader")?.paths(this.ctx.scope),
+			...(paths !== undefined ? { paths } : {}),
 		};
 	}
 }
@@ -111,30 +112,34 @@ export namespace Notifier {
 class NotifierService extends Service {
 	static inject = { optional: ["notifier"] };
 
+	// 配置 schema 的值侧由类静态承载（erasableSyntaxOnly 不允许 namespace 内运行时值），
+	// 类型侧见下方 namespace NotifierService 的 Config
+	// biome-ignore lint/style/useNamingConvention: 插件 Schema 约定为 PascalCase 的 Config 静态属性
+	static Config: Schema<NotifierService.Config> = Schema.object({});
+
 	public store: Notifier[] = [];
 	public actions: Dict<() => void> = Object.create(null);
-	public entry?: Entry<NotifierService.Data>;
+	// 显式联合以兼容 exactOptionalPropertyTypes 下置 undefined 的写法
+	public entry: Entry<NotifierService.Data> | undefined;
 
-	constructor(
-		ctx: Context,
-		public config: NotifierService.Config,
-	) {
+	public override config: NotifierService.Config;
+
+	// constructor 参数属性被 erasableSyntaxOnly 禁止，拆为显式字段赋值
+	constructor(ctx: Context, config: NotifierService.Config) {
 		super(ctx, "notifier", true);
+		this.config = config;
 
 		ctx.inject(["console"], (ctx) => {
 			ctx.on("dispose", () => (this.entry = undefined));
 
 			this.entry = ctx.console.addEntry(
-				process.env.KOISHI_BASE
+				process.env["KOISHI_BASE"]
 					? [
-							process.env.KOISHI_BASE + "/dist/index.js",
-							process.env.KOISHI_BASE + "/dist/style.css",
+							process.env["KOISHI_BASE"] + "/dist/index.js",
+							process.env["KOISHI_BASE"] + "/dist/style.css",
 						]
-					: process.env.KOISHI_ENV === "browser"
-						? [
-								// @ts-expect-error
-								import.meta.url.replace(/\/src\/[^/]+$/, "/client/index.ts"),
-							]
+					: process.env["KOISHI_ENV"] === "browser"
+						? [import.meta.url.replace(/\/src\/[^/]+$/, "/client/index.ts")]
 						: {
 								dev: resolve(__dirname, "../client/index.ts"),
 								prod: resolve(__dirname, "../dist"),
@@ -145,21 +150,21 @@ class NotifierService extends Service {
 			);
 
 			ctx.console.addListener("notifier/button", (id: string) => {
-				return this.actions[id]();
+				return this.actions[id]?.();
 			});
 		});
 	}
 
 	message(options?: string | Notifier.Options<string>) {
-		if (typeof options === "string") {
-			options = { content: options };
-		}
-		options.type ||= "primary";
-		this.ctx.get("console").broadcast("notifier/message", options);
+		// 显式兜底 undefined，避免对可空入参解引用
+		const data: Notifier.Options<string> =
+			typeof options === "string" ? { content: options } : (options ?? {});
+		data.type ||= "primary";
+		this.ctx.get("console")?.broadcast("notifier/message", data);
 	}
 
 	create(options?: h.Fragment | Notifier.Options) {
-		return new Notifier(this.ctx, options);
+		return new Notifier(this.ctx, options ?? {});
 	}
 }
 
@@ -169,8 +174,6 @@ namespace NotifierService {
 	}
 
 	export type Config = {};
-
-	export const Config: Schema<Config> = Schema.object({});
 }
 
 export default NotifierService;

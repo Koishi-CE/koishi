@@ -1,5 +1,5 @@
 import { type Context, message } from "@koishi-ce/client";
-import {} from "@koishi-ce/plugin-notifier/src";
+import {} from "@koishi-ce/plugin-notifier";
 import Config from "./config.vue";
 
 import "virtual:uno.css";
