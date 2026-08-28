@@ -6,7 +6,7 @@ import ProfileProvider from "./profile";
 
 export type Activity = Record<number, number>;
 
-declare module "koishi" {
+declare module "@koishi-ce/koishi" {
 	interface Channel {
 		name: string;
 		activity: Activity;

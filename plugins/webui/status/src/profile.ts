@@ -10,7 +10,7 @@ import {
 import { cpus, freemem, totalmem } from "os";
 import zhCN from "./locales/zh-CN.yml";
 
-declare module "koishi" {
+declare module "@koishi-ce/koishi" {
 	interface Bot {
 		_messageSent: TickCounter;
 		_messageReceived: TickCounter;
@@ -63,8 +63,8 @@ function getCpuUsage() {
 	const usage = process.cpuUsage().user;
 
 	for (const cpu of cpuInfo) {
-		for (const type in cpu.times) {
-			totalTick += cpu.times[type];
+		for (const time of Object.values(cpu.times)) {
+			totalTick += time;
 		}
 		totalIdle += cpu.times.idle;
 	}
@@ -86,22 +86,29 @@ function updateCpuUsage() {
 }
 
 class ProfileProvider extends DataService<ProfileProvider.Payload> {
-	cached: ProfileProvider.Payload;
+	// 仅在 get() 内作读取判断，本类从不写入（恒为 undefined），
+	// 用 declare + 显式 undefined 如实反映运行时形状，不产生字段初始化
+	declare cached: ProfileProvider.Payload | undefined;
 
-	constructor(
-		ctx: Context,
-		public config: ProfileProvider.Config,
-	) {
+	// 基类链（cordis Service）上已有 config 成员，故需 override
+	override config: ProfileProvider.Config;
+
+	constructor(ctx: Context, config: ProfileProvider.Config) {
 		super(ctx, "status");
+
+		this.config = config;
 
 		ctx.i18n.define("zh-CN", zhCN);
 
 		const { tickInterval } = config;
 		ctx.on("ready", () => {
-			ctx.setInterval(() => {
-				updateCpuUsage();
-				this.refresh();
-			}, tickInterval);
+			ctx.setInterval(
+				() => {
+					updateCpuUsage();
+					this.refresh();
+				},
+				tickInterval ?? Time.second * 5,
+			);
 		});
 
 		ctx.any().before("send", (session) => {
@@ -134,6 +141,7 @@ class ProfileProvider extends DataService<ProfileProvider.Payload> {
 		});
 
 		ctx.command("status").action(async ({ session }) => {
+			if (!session) return;
 			const data = await this.get();
 			const output = Object.values(data.bots).map((bot) => {
 				return session.text(".bot", bot);
@@ -143,36 +151,41 @@ class ProfileProvider extends DataService<ProfileProvider.Payload> {
 		});
 	}
 
-	async get(forced = false) {
+	override async get(forced = false) {
 		if (this.cached && !forced) return this.cached;
 		const memory = await memoryRate();
 		const cpu: LoadRate = [appRate, usedRate];
 		const bots: Dict<ProfileProvider.BotData> = {};
 		for (const bot of this.ctx.bots) {
 			if (bot.hidden) continue;
+			const paths = this.ctx.get("loader")?.paths(bot.ctx.scope);
 			bots[bot.sid] = {
 				...bot.toJSON(),
-				paths: this.ctx.get("loader")?.paths(bot.ctx.scope),
 				error: bot.error?.message,
 				messageSent: bot._messageSent.get(),
 				messageReceived: bot._messageReceived.get(),
+				// exactOptionalPropertyTypes：paths 可选属性不在 undefined 时展开
+				...(paths ? { paths } : {}),
 			};
 		}
 		return { memory, cpu, bots };
 	}
+
+	// erasableSyntaxOnly 禁止含运行时值的 namespace，
+	// 原 namespace 内的 Config 常量移到此处的静态字段，对外形状不变
+	// biome-ignore lint/style/useNamingConvention: 插件 Schema 约定为 PascalCase 的 Config 静态属性
+	static Config: Schema<ProfileProvider.Config> = Schema.object({
+		tickInterval: Schema.natural()
+			.role("ms")
+			.description("性能数据推送的时间间隔。")
+			.default(Time.second * 5),
+	});
 }
 
 namespace ProfileProvider {
 	export interface Config {
 		tickInterval?: number;
 	}
-
-	export const Config: Schema<Config> = Schema.object({
-		tickInterval: Schema.natural()
-			.role("ms")
-			.description("性能数据推送的时间间隔。")
-			.default(Time.second * 5),
-	});
 
 	export interface BotData extends Universal.Login {
 		error?: string;

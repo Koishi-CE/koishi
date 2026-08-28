@@ -1,5 +1,5 @@
 import { type Context, Schema } from "@koishi-ce/client";
-import {} from "@koishi-ce/plugin-status/src";
+import {} from "@koishi-ce/plugin-status";
 import Analytics from "./analytics.vue";
 import Bots from "./bots";
 import Config from "./config.vue";
