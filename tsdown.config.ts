@@ -1,3 +1,4 @@
+import type { UserConfig } from "tsdown";
 import { defineConfig } from "tsdown";
 
 /**
@@ -30,11 +31,21 @@ const extensions = [
 ];
 
 const workspace = {
-	include: ["packages/node/*", "plugins/common/*", "plugins/infra/*", "plugins/webui/*"],
-	exclude: ["plugins/infra/http", "plugins/infra/proxy-agent", "plugins/infra/server"],
+	include: [
+		"packages/node/*",
+		"apps/registry",
+		"plugins/common/*",
+		"plugins/infra/*",
+		"plugins/webui/*",
+	],
+	exclude: [
+		"plugins/infra/http",
+		"plugins/infra/proxy-agent",
+		"plugins/infra/server",
+	],
 };
 
-const common = {
+const common: UserConfig = {
 	entry: "src/index.ts",
 	platform: "node" as const,
 	outDir: "lib",
