@@ -2,14 +2,16 @@ import { fallback, LocaleTree } from "@koishi-ce/i18n-utils";
 import { h, Logger, Schema } from "@satorijs/core";
 import { type Dict, isNullable } from "cosmokit";
 import { distance } from "fastest-levenshtein";
-import type { Context } from "./context";
-import enUS from "../locales/en-US.yml";
-import zhCN from "../locales/zh-CN.yml";
+import type { Context } from "../context";
+import { defineBuiltInLocales } from "./locales";
+import { type CompareOptions, findMatches, type MatchResult } from "./match";
+
+export * from "./match";
 
 const logger = new Logger("i18n");
 const kTemplate = Symbol("template");
 
-declare module "./context" {
+declare module "../context" {
 	interface Context {
 		i18n: I18n;
 	}
@@ -17,40 +19,6 @@ declare module "./context" {
 	interface Events {
 		"internal/i18n"(): void;
 	}
-}
-
-type GroupNames<
-	P extends string,
-	K extends string = never,
-> = P extends `${string}(${infer R})${infer S}` ? GroupNames<S, K | R> : K;
-
-export type MatchResult<P extends string = never> = Record<
-	GroupNames<P>,
-	string
->;
-
-export function createMatch<P extends string>(
-	pattern: P,
-): (string: string) => undefined | MatchResult<P> {
-	const groups: string[] = [];
-	const source = pattern.replace(/\(([^)]+)\)/g, (_, name) => {
-		groups.push(name);
-		return "(.+)";
-	});
-	const regexp = new RegExp(`^${source}$`);
-	return (string: string) => {
-		const capture = regexp.exec(string);
-		if (!capture) return;
-		const data: any = {};
-		for (const [i, name] of groups.entries()) {
-			data[name] = capture[i + 1];
-		}
-		return data;
-	};
-}
-
-export interface CompareOptions {
-	minSimilarity?: number;
 }
 
 export namespace I18n {
@@ -101,10 +69,7 @@ export class I18n {
 	constructor(ctx: Context, config: I18n.Config = {}) {
 		this.ctx = ctx;
 		this.locales = LocaleTree.from(config.locales ?? []);
-
-		this.define("", { "": "" });
-		this.define("zh-CN", zhCN);
-		this.define("en-US", enUS);
+		defineBuiltInLocales(this);
 	}
 
 	fallback(locales: string[]) {
@@ -182,21 +147,7 @@ export class I18n {
 		actual: string,
 		options: I18n.FindOptions = {},
 	): I18n.FindResult<P>[] {
-		if (!actual) return [];
-		const match = createMatch(pattern);
-		const results: I18n.FindResult<P>[] = [];
-		for (const locale in this._data) {
-			for (const path in this._data[locale]) {
-				const data = match(path);
-				if (!data) continue;
-				const expect = this._data[locale][path];
-				if (typeof expect !== "string") continue;
-				const similarity = this.compare(expect, actual, options);
-				if (!similarity) continue;
-				results.push({ locale, data, similarity });
-			}
-		}
-		return results;
+		return findMatches(this, pattern, actual, options);
 	}
 
 	_render(value: I18n.Node, params: any, locale: string) {
