@@ -39,7 +39,10 @@
 	},
 	"exports": {
 		".": {
-			"source": "./src/index.ts"
-		}
+			"source": "./src/index.ts",
+			"types": "./lib/index.d.ts",
+			"node": "./lib/index.js"
+		},
+		"./package.json": "./package.json"
 	}
 }
