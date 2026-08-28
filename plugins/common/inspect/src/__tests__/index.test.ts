@@ -1,3 +1,7 @@
+/**
+ * inspect 插件测试：验证当前会话、at / sharp 元素参数、
+ * 非法参数与引用消息四类输入的元信息输出。
+ */
 import { afterAll, beforeAll, describe, it } from "bun:test";
 import { Context } from "@koishi-ce/koishi";
 import mock from "@koishi-ce/plugin-mock";
@@ -14,6 +18,7 @@ beforeAll(() => app.start());
 afterAll(() => app.stop());
 
 describe("@koishi-ce/plugin-inspect", () => {
+	// 裸 inspect 输出会话元信息；at / sharp 参数输出对应 ID；非法参数报错；引用消息输出被引用者信息
 	it("basic support", async () => {
 		await client.shouldReply(
 			"inspect",

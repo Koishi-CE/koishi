@@ -1,3 +1,13 @@
+/**
+ * 插件热重载插件（hmr，以 watcher 服务挂载到 ctx.watcher）。
+ *
+ * 基于 chokidar 监听工作区文件变动，对插件做模块级热替换（HMR）：
+ * 1. 入口文件（配置文件 / 环境文件）变动 → 热更新应用配置或整体重启；
+ * 2. 框架自身依赖变动（不属于任何插件的模块）→ 只能整体重启；
+ * 3. 插件源码变动 → 分析 require 依赖图，仅清理受影响插件的
+ *    模块缓存并重载（TS 源码由 loader 借助 esbuild 即时编译）。
+ * 重载失败时回滚 require.cache 与插件状态，保证进程存活。
+ */
 import {
 	type Context,
 	coerce,
@@ -31,6 +41,12 @@ declare module "@koishi-ce/koishi" {
 	}
 }
 
+/**
+ * 收集某模块及其全部子依赖的文件路径
+ * @param filename 入口模块的绝对路径
+ * @param ignored 需要排除的文件路径集合
+ * @returns 依赖文件路径集合（不含 node_modules 与 ignored 中的文件）
+ */
 function loadDependencies(filename: string, ignored: Set<string>) {
 	const dependencies = new Set<string>();
 	function traverse({ filename, children }: NodeJS.Module) {
@@ -48,11 +64,18 @@ function loadDependencies(filename: string, ignored: Set<string>) {
 	return dependencies;
 }
 
+/** 单个待重载插件的记录：入口文件名 + 各 fork 状态到引用名的映射 */
 interface Reload {
 	filename: string;
 	children: Map<ForkScope, string | undefined>;
 }
 
+/**
+ * 文件监听器：实现插件级 HMR。
+ *
+ * 依赖 loader 服务，并以 `watcher` 服务名挂载到 ctx（ctx.watcher），
+ * 区分“整体重启”（fullReload）与“局部重载”（triggerLocalReload）两种策略。
+ */
 class Watcher {
 	static inject = ["loader"];
 
@@ -79,29 +102,29 @@ class Watcher {
 	);
 
 	/**
-	 * changes from externals E will always trigger a full reload
+	 * 外部文件集合 E：这些文件的变动始终触发整体重启
 	 *
-	 * - root R -> external E -> none of plugin Q
+	 * - 即根 R -> 外部 E -> 不被任何插件 Q 依赖的模块
 	 */
 	private externals!: Set<string>;
 
 	/**
-	 * files X that should be reloaded
+	 * 需要重载的文件集合 X
 	 *
-	 * - including all stashed files S
-	 * - some plugin P -> file X -> some change C
+	 * - 包含所有暂存文件 S
+	 * - 某插件 P -> 文件 X ->（直接或间接依赖）某次变动 C
 	 */
 	private accepted!: Set<string>;
 
 	/**
-	 * files X that should not be reloaded
+	 * 不需要重载的文件集合 X
 	 *
-	 * - including all externals E
-	 * - some change C -> file X -> none of change D
+	 * - 包含所有外部文件 E
+	 * - 某次变动 C 与文件 X 之间不存在依赖路径（X 不依赖任何变动 D）
 	 */
 	private declined!: Set<string>;
 
-	/** stashed changes */
+	/** 暂存的变动文件（防抖窗口内累积，触发局部重载后清空） */
 	private stashed = new Set<string>();
 
 	private logger: Logger;
@@ -119,11 +142,13 @@ class Watcher {
 		ctx.on("dispose", () => this.stop());
 	}
 
+	/** 将绝对路径转换为相对监听根目录的展示路径 */
 	relative(filename: string) {
 		if (!this.base) return filename;
 		return relative(this.base, filename);
 	}
 
+	/** 启动 chokidar 监听（root 列表相对 base 目录解析）并注册变动处理 */
 	start() {
 		const { loader } = this.ctx;
 		const { root, ignored } = this.config;
@@ -133,7 +158,7 @@ class Watcher {
 			ignored: makeArray(ignored),
 		});
 
-		// files independent from any plugins will trigger a full reload
+		// 框架自身（koishi 入口）的依赖集合：这些文件不属于任何插件，变动时只能整体重启
 		this.externals = loadDependencies(
 			require.resolve("koishi"),
 			new Set(Object.values(loader.cache)),
@@ -147,6 +172,7 @@ class Watcher {
 			const filename = resolve(this.base, path);
 			const isEntry =
 				filename === loader.filename || loader.envFiles.includes(filename);
+			// loader 写回配置文件时置 suspend，跳过这一次自身触发的变动
 			if (loader.suspend && isEntry) {
 				loader.suspend = false;
 				return;
@@ -155,6 +181,7 @@ class Watcher {
 			this.logger.debug("change detected:", path);
 
 			if (isEntry) {
+				// 入口文件变动：配置模块已加载过只能整体重启；否则热更新应用配置
 				if (require.cache[filename]) {
 					this.ctx.loader.fullReload();
 				} else {
@@ -163,6 +190,7 @@ class Watcher {
 					this.ctx.emit("config");
 				}
 			} else {
+				// 普通文件变动：外部依赖只能整体重启，其余暂存后走防抖的局部重载
 				if (this.externals.has(filename)) {
 					this.ctx.loader.fullReload();
 				} else if (require.cache[filename]) {
@@ -177,8 +205,9 @@ class Watcher {
 		return this.watcher.close();
 	}
 
+	/** 沿 require 依赖图自底向上传播：任一子模块 accepted 则本模块 accepted，全部 declined 才 declined */
 	private analyzeChanges() {
-		/** files pending classification */
+		/** 尚未定论的待分类文件 */
 		const pending: string[] = [];
 
 		this.accepted = new Set(this.stashed);
@@ -217,19 +246,18 @@ class Watcher {
 				let isDeclined = true,
 					isAccepted = false;
 				for (const { filename } of children) {
-					// ignore all declined children
+					// 忽略已判定为 declined 的子模块
 					if (
 						this.declined.has(filename) ||
 						filename.includes("/node_modules/")
 					)
 						continue;
 					if (this.accepted.has(filename)) {
-						// mark the module as accepted if any child is accepted
+						// 任一子模块 accepted，则本模块也 accepted
 						isAccepted = true;
 						break;
 					} else {
-						// the child module is neither accepted nor declined
-						// so we need to perform further analysis
+						// 子模块既非 accepted 也非 declined，需要继续向下分析
 						isDeclined = false;
 						if (!pending.includes(filename)) {
 							hasUpdate = true;
@@ -243,33 +271,34 @@ class Watcher {
 					if (isAccepted) {
 						this.accepted.add(filename);
 					} else {
-						// mark the module as declined if all children are declined
+						// 全部子模块 declined，则本模块也 declined
 						this.declined.add(filename);
 					}
 				} else {
 					index++;
 				}
 			}
-			// infinite loop
+			// 一轮下来毫无进展则退出，避免死循环
 			if (!hasUpdate) break;
 		}
 
+		// 循环结束后仍未定论的文件（如循环依赖）一律视为 declined
 		for (const filename of pending) {
 			this.declined.add(filename);
 		}
 	}
 
+	/** 执行局部重载：分析依赖、锁定受影响插件、重建模块缓存并重载插件 */
 	private triggerLocalReload() {
 		this.analyzeChanges();
 
-		/** plugins pending classification */
+		/** 待分类的插件 */
 		const pending = new Map<string, [Plugin, MainScope | undefined]>();
 
-		/** plugins that should be reloaded */
+		/** 需要重载的插件 */
 		const reloads = new Map<Plugin, Reload>();
 
-		// we assume that plugin entry files are "atomic"
-		// that is, reloading them will not cause any other reloads
+		// 假设插件入口文件是“原子”的，即重载它不会连带引发其他插件的重载
 		for (const filename of Object.values(this.ctx.loader.cache)) {
 			const module = require.cache[filename];
 			if (!module) continue;
@@ -281,17 +310,16 @@ class Watcher {
 		}
 
 		for (const [filename, [plugin, runtime]] of pending) {
-			// check if it is a dependent of the changed file
+			// 检查该插件是否（直接或间接）依赖了变动的文件
 			this.declined.delete(filename);
 			const dependencies = [...loadDependencies(filename, this.declined)];
 			this.declined.add(filename);
 
-			// we only detect reloads at plugin level
-			// a plugin will be reloaded if any of its dependencies are accepted
+			// 只在插件级别判定重载：任一依赖被 accepted 即重载整个插件
 			if (!dependencies.some((dep) => this.accepted.has(dep))) continue;
 			dependencies.forEach((dep) => this.accepted.add(dep));
 
-			// prepare for reload
+			// 准备重载：遍历插件的 fork 子树，记录各 fork 的状态与引用名
 			if (runtime) {
 				let isMarked = false;
 				const visited = new Set<MainScope>();
@@ -321,8 +349,7 @@ class Watcher {
 			}
 		}
 
-		// save require.cache for rollback
-		// and delete module cache before re-require
+		// 备份 require.cache 以便回滚；重新 require 前先删除模块缓存
 		const backup: Dict<NodeJS.Module> = {};
 		for (const filename of this.accepted) {
 			const module = require.cache[filename];
@@ -330,14 +357,14 @@ class Watcher {
 			delete require.cache[filename];
 		}
 
-		/** rollback require.cache */
+		/** 回滚 require.cache */
 		function rollback() {
 			for (const filename in backup) {
 				require.cache[filename] = backup[filename];
 			}
 		}
 
-		// attempt to load entry files
+		// 尝试重新加载各插件入口（TS 源码此时由 loader 借 esbuild 即时编译）
 		const attempts: Dict<any> = {};
 		try {
 			for (const [, { filename }] of reloads) {
@@ -348,7 +375,7 @@ class Watcher {
 			return rollback();
 		}
 
-		// emit reload event before replacing loader cache
+		// 在替换 loader 缓存前发出 hmr/reload 事件，供其他插件同步状态
 		this.ctx.emit("hmr/reload", reloads);
 
 		try {
@@ -364,7 +391,7 @@ class Watcher {
 					);
 				}
 
-				// replace loader cache for `keyFor` method
+				// 替换 loader 缓存，保证 keyFor 等方法取到新插件
 				this.ctx.loader.replace(plugin, attempts[filename]);
 
 				try {
@@ -389,7 +416,7 @@ class Watcher {
 				}
 			}
 		} catch {
-			// rollback require.cache and plugin states
+			// 重载中途失败：回滚 require.cache，并用旧插件对象逐一恢复各 fork 状态
 			rollback();
 			for (const [plugin, { filename, children }] of reloads) {
 				try {
@@ -412,7 +439,7 @@ class Watcher {
 			return;
 		}
 
-		// reset stashed files
+		// 重载全部成功，清空暂存文件
 		this.stashed = new Set();
 	}
 }

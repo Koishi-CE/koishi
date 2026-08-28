@@ -1,3 +1,7 @@
+/**
+ * broadcast 插件测试：用两个 mock bot 验证全局广播、
+ * 仅本 bot 广播（-o）与静默频道过滤（-f）的目标频道集合。
+ */
 import { beforeAll, describe, it } from "bun:test";
 import { mock as jest } from "node:test";
 import { App, Bot, Channel } from "@koishi-ce/koishi";
@@ -27,6 +31,7 @@ beforeAll(async () => {
 });
 
 describe("@koishi-ce/plugin-broadcast", () => {
+	// 拦截各 bot 的 sendMessage，断言广播命中了正确的频道且静默频道被正确跳过或强制发送
 	it("basic support", async () => {
 		const send1 = jest.method(
 			app.bots.find((bot) => bot.selfId === "514")!,

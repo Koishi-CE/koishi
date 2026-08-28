@@ -1,3 +1,7 @@
+/**
+ * help 插件测试：覆盖帮助列表、指令属性（别名 / 用法 / 示例 / 权限）、
+ * 选项展示、子指令、无数据库场景与 shortcut / options 配置开关。
+ */
 import { beforeAll, describe, it } from "bun:test";
 import { App } from "@koishi-ce/koishi";
 import * as help from "@koishi-ce/plugin-help";
@@ -25,6 +29,7 @@ beforeAll(async () => {
 let message: string;
 
 describe("@koishi-ce/plugin-help", () => {
+	// 验证全局帮助列表、“帮助”快捷调用、-h 选项与相似度建议（“您要找的是不是…”）
 	it("basic support", async () => {
 		await client.shouldReply(
 			"help",
@@ -35,7 +40,7 @@ describe("@koishi-ce/plugin-help", () => {
 			].join("\n")),
 		);
 
-		// global shortcut
+		// 全局快捷调用
 		await client.shouldReply("帮助", message);
 
 		await client.shouldReply(
@@ -58,6 +63,7 @@ describe("@koishi-ce/plugin-help", () => {
 		await client.shouldReply("help 帮助", message);
 	});
 
+	// 验证 description / 别名 / usage / example / authority 等指令属性在帮助中的呈现
 	it("command attributes", async () => {
 		app.command("foo1", "DESCRIPTION").alias("foo");
 		app.command("foo3", "DESCRIPTION").shortcut(/foobar/);
@@ -83,6 +89,7 @@ describe("@koishi-ce/plugin-help", () => {
 		await client.shouldReply("help foo7", "权限不足。");
 	});
 
+	// 验证 hideOptions、选项权限与 hidden 选项的过滤，以及 -H 的全量展示
 	it("command options", async () => {
 		const bar = app
 			.command("bar <arg:number>", "DESCRIPTION", { hideOptions: true })
@@ -123,6 +130,7 @@ describe("@koishi-ce/plugin-help", () => {
 		);
 	});
 
+	// 验证多级子指令在父指令帮助中的逐层呈现
 	it("subcommand", async () => {
 		const foo2 = app.command("foo2", "DESCRIPTION", { authority: 0 });
 		const foo1 = foo2.subcommand("foo1");
@@ -150,6 +158,7 @@ describe("@koishi-ce/plugin-help", () => {
 		);
 	});
 
+	// 无数据库环境下 help 仍能正常列出指令
 	it("no database", async () => {
 		const app = new App();
 		app.plugin(help);
@@ -164,6 +173,7 @@ describe("@koishi-ce/plugin-help", () => {
 		);
 	});
 
+	// options: false 时不为指令注入 -h 选项
 	it("disable help options", async () => {
 		const app = new App();
 		app.plugin(help, { options: false });
@@ -176,6 +186,7 @@ describe("@koishi-ce/plugin-help", () => {
 		await client.shouldNotReply("foo -h");
 	});
 
+	// shortcut: false 时不注册“帮助”全局快捷调用
 	it("disable help shortcut", async () => {
 		const app = new App();
 		app.plugin(help, { shortcut: false });
@@ -187,6 +198,7 @@ describe("@koishi-ce/plugin-help", () => {
 		await client.shouldNotReply("帮助");
 	});
 
+	// 带 checkArgCount 的指令在缺参追问后仍可用 -h 查看帮助（回归 #769）
 	it("checkArgCount (#769)", async () => {
 		const app = new App();
 		app.plugin(help);

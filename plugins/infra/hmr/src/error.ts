@@ -1,12 +1,27 @@
+/**
+ * hmr 错误处理辅助模块。
+ *
+ * 识别 esbuild 的构建失败（BuildFailure，通常来自 TS 源码的即时编译），
+ * 为每个带位置信息的错误生成语法高亮的代码帧（code frame）并写入日志，
+ * 便于在热重载失败时直接定位到源码的出错行。
+ */
 import { codeFrameColumns } from "@babel/code-frame";
 import type { Logger } from "@koishi-ce/koishi";
 import type { BuildFailure } from "esbuild";
 import { readFileSync } from "node:fs";
 
+/** 判断异常是否为 esbuild 构建失败（errors 数组且每项都带 text 字段） */
 function isBuildFailure(e: any): e is BuildFailure {
 	return Array.isArray(e?.errors) && e.errors.every((error: any) => error.text);
 }
 
+/**
+ * 记录热重载过程中的异常
+ * @param e 捕获到的异常
+ * @param logger 日志输出对象
+ *
+ * 普通异常直接告警；esbuild 构建失败则逐项输出带代码帧的位置信息
+ */
 export function handleError(e: any, logger: Logger) {
 	if (!isBuildFailure(e)) {
 		logger.warn(e);

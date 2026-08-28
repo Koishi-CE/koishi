@@ -1,3 +1,12 @@
+/**
+ * mock 适配器与模拟 Bot。
+ *
+ * MockBot 以 "mock" 平台注册，不连接任何真实聊天平台，
+ * 可由测试代码直接构造并派发会话（session）；
+ * MockAdapter 随 MockBot 加载，向 ctx 提供 `mock` 服务：
+ * initUser / initChannel 预置数据库，client / receive 模拟用户消息。
+ * 两者构成本仓库绝大多数插件测试的基础设施。
+ */
 import {
 	Adapter,
 	Bot,
@@ -30,14 +39,17 @@ declare module "@koishi-ce/koishi" {
 	}
 }
 
+/** 未配置 selfId 时的默认自身 ID */
 export const DEFAULT_SELF_ID = "514";
 
 export namespace MockBot {
+	/** mock Bot 配置 */
 	export interface Config {
 		selfId: string;
 	}
 }
 
+/** 模拟 Bot：以 "mock" 平台注册，支持不经真实平台直接派发会话 */
 export class MockBot<C extends Context = Context> extends Bot<C> {
 	static override MessageEncoder = MockMessageEncoder;
 
@@ -50,10 +62,12 @@ export class MockBot<C extends Context = Context> extends Bot<C> {
 		ctx.plugin(MockAdapter, this);
 	}
 
+	/** 为该 Bot 创建一个模拟用户的消息客户端 */
 	client(userId: string, channelId?: string) {
 		return new MessageClient(this, userId, channelId);
 	}
 
+	/** 基于事件模板构造会话并派发到应用（可携带来源 client 以回捕回复），返回会话 ID */
 	receive(event: Partial<Universal.Event>, client?: MessageClient) {
 		const session = this.session(event);
 		session.client = client;
@@ -61,6 +75,7 @@ export class MockBot<C extends Context = Context> extends Bot<C> {
 		return session.id;
 	}
 
+	/** 返回极简的消息记录（仅满足接口形状，内容为空） */
 	override async getMessage(channelId: string, id: string) {
 		const isDirect = channelId.startsWith("private:");
 		return {
@@ -79,6 +94,7 @@ export class MockBot<C extends Context = Context> extends Bot<C> {
 	}
 }
 
+/** 模拟适配器：向 ctx 注入 mock 服务，并代理到第一个 bot 的便捷方法 */
 export class MockAdapter<C extends Context = Context> extends Adapter<
 	C,
 	MockBot<C>
@@ -92,10 +108,12 @@ export class MockAdapter<C extends Context = Context> extends Adapter<
 		ctx.provide("mock", this, true);
 	}
 
+	/** 在数据库中预置一个 mock 平台用户 */
 	async initUser(id: string, authority = 1, data?: Partial<User>) {
 		await this.ctx.root.database.createUser("mock", id, { authority, ...data });
 	}
 
+	/** 在数据库中预置一个 mock 平台频道（默认指派给第一个 bot） */
 	async initChannel(
 		id: string,
 		assignee = this.bots[0]!.selfId,
@@ -107,14 +125,17 @@ export class MockAdapter<C extends Context = Context> extends Adapter<
 		});
 	}
 
+	/** 在第一个 bot 上创建消息客户端 */
 	client(userId: string, channelId?: string) {
 		return this.bots[0]!.client(userId, channelId);
 	}
 
+	/** 让第一个 bot 派发一条事件 */
 	receive(event: Partial<Universal.Event>, client?: MessageClient) {
 		return this.bots[0]!.receive(event, client);
 	}
 
+	/** 让第一个 bot 构造一个会话（不派发） */
 	session(event: Partial<Universal.Event>) {
 		return this.bots[0]!.session(event);
 	}

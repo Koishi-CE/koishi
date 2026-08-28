@@ -1,3 +1,7 @@
+/**
+ * bind 插件测试：用两个 mock 客户端模拟跨平台用户，
+ * 验证两步令牌绑定流程与解绑（含原初账号保护）。
+ */
 import { afterAll, beforeAll, describe, it } from "bun:test";
 import { Context } from "@koishi-ce/koishi";
 import * as bind from "@koishi-ce/plugin-bind";
@@ -32,6 +36,7 @@ beforeAll(async () => {
 afterAll(() => app.stop());
 
 describe("@koishi-ce/plugin-bind", () => {
+	// 两用户经两枚令牌完成绑定后，两侧昵称应统一为被绑定者的昵称
 	it("create binding", async () => {
 		await client1.shouldReply("name", "foo");
 		await client2.shouldReply("name", "bar");
@@ -44,6 +49,7 @@ describe("@koishi-ce/plugin-bind", () => {
 		await client2.shouldReply("name", "bar");
 	});
 
+	// 解绑：原初账号受保护不可解绑；迁移绑定的账号解绑后各回各的昵称
 	it("remove binding", async () => {
 		await client2.shouldReply("bind -r", "无法解除绑定：这是你的原始账号。");
 		await client1.shouldReply("bind -r", "账号解绑成功！");

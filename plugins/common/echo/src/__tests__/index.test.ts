@@ -1,3 +1,7 @@
+/**
+ * echo 插件测试：验证基础复述、CQ 码转义 / 反转义
+ * 与定向发送（-u 用户私聊 / -c 频道）的参数形状。
+ */
 import { beforeAll, describe, it } from "bun:test";
 import { mock as jest } from "node:test";
 import { App, type Bot, h } from "@koishi-ce/koishi";
@@ -18,6 +22,7 @@ const client = app.mock.client("123");
 beforeAll(() => app.start());
 
 describe("@koishi-ce/plugin-echo", () => {
+	// 覆盖纯文本、转义输入、-E 反转义（拆分为多条消息），以及向用户 / 频道定向发送时的调用参数
 	it("basic support", async () => {
 		await client.shouldReply("echo", "请输入要发送的文本。");
 		await client.shouldReply("echo foo", "foo");
