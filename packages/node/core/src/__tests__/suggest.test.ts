@@ -24,7 +24,9 @@ describe("Command Suggestion", () => {
 		.command("fooo", { checkUnknown: true })
 		.alias("bool")
 		.option("text", "-t <bar>")
-		.action(({ options }) => "fooo" + options.text);
+		.action(
+			({ options }: { options: { text: string } }) => "fooo" + options.text,
+		);
 
 	beforeAll(() => app.start());
 	afterAll(() => app.stop());
@@ -102,14 +104,14 @@ describe("session.suggest()", () => {
 	// find 指令：条目不存在时用 session.suggest 做条目名纠错
 	app.command("find [item]").action(async ({ session }, item) => {
 		if (items.includes(item)) return "found:" + item;
-		const name = await session.suggest({
+		const name = await session!.suggest({
 			actual: item,
 			expect: ["foo", "bar", "baz"],
 			prefix: "PREFIX",
 			suffix: "SUFFIX",
 		});
 		if (!name) return;
-		return session.execute({ args: [name], name: "find" });
+		return session!.execute({ args: [name], name: "find" });
 	});
 
 	beforeAll(() => app.start());

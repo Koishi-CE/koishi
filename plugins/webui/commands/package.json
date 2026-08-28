@@ -2,7 +2,7 @@
 	"name": "@koishi-ce/plugin-commands",
 	"description": "Override Command Config for Koishi",
 	"version": "3.5.5",
-	"main": "lib/index.js",
+	"main": "lib/index.mjs",
 	"typings": "lib/index.d.ts",
 	"files": [
 		"lib",
@@ -58,7 +58,9 @@
 		"@koishi-ce/plugin-help": "workspace:*",
 		"@koishi-ce/plugin-locales": "workspace:*",
 		"@koishi-ce/plugin-mock": "workspace:*",
-		"@koishi-ce/koishi": "workspace:*"
+		"@koishi-ce/koishi": "workspace:*",
+		"@types/chai": "^4.3.16",
+		"chai": "^6.2.2"
 	},
 	"dependencies": {
 		"@koishi-ce/console": "workspace:*"
@@ -68,7 +70,7 @@
 			"source": "./src/index.ts",
 			"types": "./lib/index.d.ts",
 			"import": "./lib/index.mjs",
-			"require": "./lib/index.js"
+			"default": "./lib/index.mjs"
 		}
 	}
 }

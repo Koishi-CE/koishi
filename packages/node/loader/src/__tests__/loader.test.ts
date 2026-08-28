@@ -27,10 +27,12 @@ describe("@koishi-ce/loader", () => {
 		const app = await loader.createApp();
 		expect(app).to.be.instanceof(Context);
 		expect(app.koishi.config.prefix).to.deep.equal(["."]);
-		expect(app.registry.get(loader.data.foo)).to.be.ok;
-		expect(app.registry.get(loader.data.foo)?.config).to.deep.equal({});
-		expect(app.registry.get(loader.data.bar)).to.be.ok;
-		expect(app.registry.get(loader.data.bar)?.config).to.deep.equal({ a: 1 });
+		expect(app.registry.get(loader.data["foo"]!)).to.be.ok;
+		expect(app.registry.get(loader.data["foo"]!)?.config).to.deep.equal({});
+		expect(app.registry.get(loader.data["bar"]!)).to.be.ok;
+		expect(app.registry.get(loader.data["bar"]!)?.config).to.deep.equal({
+			a: 1,
+		});
 	});
 
 	// 验证更新根配置后：$if 为假的插件被卸载、其余插件按新配置重载
@@ -59,17 +61,19 @@ describe("@koishi-ce/loader", () => {
 		app.scope.update(loader.config);
 		await sleep(0);
 		expect(app.koishi.config.prefix).to.deep.equal(["/"]);
-		expect(app.registry.get(loader.data.foo)).to.be.not.ok;
-		expect(app.registry.get(loader.data.bar)).to.be.ok;
-		expect(app.registry.get(loader.data.bar)?.config).to.deep.equal({ a: 2 });
-		expect(app.registry.get(loader.data.baz)).to.be.ok;
-		expect(app.registry.get(loader.data.baz)?.config).to.deep.equal({});
+		expect(app.registry.get(loader.data["foo"]!)).to.be.not.ok;
+		expect(app.registry.get(loader.data["bar"]!)).to.be.ok;
+		expect(app.registry.get(loader.data["bar"]!)?.config).to.deep.equal({
+			a: 2,
+		});
+		expect(app.registry.get(loader.data["baz"]!)).to.be.ok;
+		expect(app.registry.get(loader.data["baz"]!)?.config).to.deep.equal({});
 	});
 
 	// 验证运行期更新插件配置会同步回写 loader 的配置对象
 	it("plugin update", async () => {
 		const { app } = loader;
-		const runtime = app.registry.get(loader.data.bar);
+		const runtime = app.registry.get(loader.data["bar"]!);
 		runtime?.update({ a: 3 });
 		expect(loader.config.plugins).to.deep.equal({
 			foo: {
@@ -96,10 +100,10 @@ describe("@koishi-ce/loader", () => {
 		app.plugin(mock);
 		expect(app.lifecycle._hooks["test/bar"]).to.have.length(1);
 		expect(app.lifecycle._hooks["test/baz"]).to.have.length(1);
-		const bar = app.lifecycle._hooks["test/bar"][0].callback as Mock<
+		const bar = app.lifecycle._hooks["test/bar"]![0]!.callback as Mock<
 			() => void
 		>;
-		const baz = app.lifecycle._hooks["test/baz"][0].callback as Mock<
+		const baz = app.lifecycle._hooks["test/baz"]![0]!.callback as Mock<
 			() => void
 		>;
 		expect(bar.mock.calls).to.have.length(0);

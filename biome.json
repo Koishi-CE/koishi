@@ -58,7 +58,8 @@
 			"linter": {
 				"rules": {
 					"style": {
-						"useNamingConvention": "off"
+						"useNamingConvention": "off",
+						"noNonNullAssertion": "off"
 					}
 				}
 			}

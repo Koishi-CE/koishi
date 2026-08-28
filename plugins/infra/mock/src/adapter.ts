@@ -43,9 +43,9 @@ declare module "@koishi-ce/koishi" {
 export const DEFAULT_SELF_ID = "514";
 
 export namespace MockBot {
-	/** mock Bot 配置 */
+	/** mock Bot 配置（selfId 缺省时使用 DEFAULT_SELF_ID） */
 	export interface Config {
-		selfId: string;
+		selfId?: string;
 	}
 }
 
@@ -53,7 +53,9 @@ export namespace MockBot {
 export class MockBot<C extends Context = Context> extends Bot<C> {
 	static override MessageEncoder = MockMessageEncoder;
 
-	constructor(ctx: C, config: MockBot.Config) {
+	// config 参数可选：cordis 的 plugin() 以 Spread<T> 推断参数个数，
+	// 可选 config 才能让测试里的裸 `app.plugin(mock)` 通过类型检查
+	constructor(ctx: C, config: MockBot.Config = {}) {
 		super(ctx, config, "mock");
 		this.selfId = config.selfId ?? DEFAULT_SELF_ID;
 		// Universal.Status 是 ambient const enum（verbatimModuleSyntax 下禁止取值），

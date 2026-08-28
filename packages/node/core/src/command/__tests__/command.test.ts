@@ -10,18 +10,14 @@ import {
 	beforeAll,
 	beforeEach,
 	describe,
+	expect,
 	it,
+	jest,
 } from "bun:test";
-import { mock as jest } from "node:test";
+import { inspect } from "node:util";
 import { App, type Command, Logger, Next } from "@koishi-ce/koishi";
 import mock from "@koishi-ce/plugin-mock";
-import { expect, use } from "chai";
-import promise from "chai-as-promised";
-import { inspect } from "util";
-import { shape } from "../../../../../scripts/testing/chai-shape";
-
-use(shape);
-use(promise);
+import "../../__tests__/shape";
 
 // 捕获 logger 输出，用于断言错误日志是否被打印
 const print = jest.fn();
@@ -52,24 +48,24 @@ describe("Command API", () => {
 
 		// 空命令名应在构造时抛错
 		it("constructor checks", () => {
-			expect(() => app.command("")).to.throw();
+			expect(() => app.command("")).toThrow();
 		});
 
 		// 自定义 inspect 输出应为 "Command <name>" 而非整个对象
 		it("custom inspect", () => {
-			expect(app.$commander._commandList).to.have.length(3);
-			expect(inspect(app.command("a"))).to.equal("Command <a>");
+			expect(app.$commander._commandList).toHaveLength(3);
+			expect(inspect(app.command("a"))).toBe("Command <a>");
 		});
 
 		// 同名重复注册应更新既有命令而非新建，config 以最后一次为准
 		it("modify commands", () => {
 			const d1 = app.command("d", "foo", { authority: 1 });
-			expect(app.$commander.get("d").config.authority).to.equal(1);
+			expect(app.$commander.get("d")?.config.authority).toBe(1);
 
 			const d2 = app.command("d", "bar", { authority: 2 });
-			expect(app.$commander.get("d").config.authority).to.equal(2);
+			expect(app.$commander.get("d")?.config.authority).toBe(2);
 
-			expect(d1).to.equal(d2);
+			expect(d1).toBe(d2);
 		});
 
 		// 别名冲突规则：不同 filter 作用域可同名；全局别名撞名抛错；
@@ -78,23 +74,23 @@ describe("Command API", () => {
 			expect(() => {
 				app.command("e");
 				app.user("10000").command("e");
-			}).not.to.throw();
+			}).not.toThrow();
 
 			expect(() => {
 				const x1 = app.command("e").alias("x");
 				const x2 = app.user("10000").command("x");
-				expect(x1).to.equal(x2);
-			}).not.to.throw();
+				expect(x1).toBe(x2);
+			}).not.toThrow();
 
 			expect(() => {
 				app.command("g").alias("y");
 				app.command("h").alias("y");
-			}).to.throw();
+			}).toThrow();
 
 			expect(() => {
 				app.command("i").alias("z");
 				app.command("i").alias("z");
-			}).not.to.throw();
+			}).not.toThrow();
 		});
 	});
 
@@ -109,40 +105,40 @@ describe("Command API", () => {
 			const a = app.command("a");
 			const b = a.subcommand("b");
 			const c = b.subcommand(".c");
-			expect(a.children).to.have.shape([b]);
-			expect(b.name).to.equal("b");
-			expect(b.parent).to.equal(a);
-			expect(b.children).to.have.shape([c]);
-			expect(c.name).to.equal("b.c");
-			expect(c.parent).to.equal(b);
+			expect(a.children).toHaveShape([b]);
+			expect(b.name).toBe("b");
+			expect(b.parent).toBe(a);
+			expect(b.children).toHaveShape([c]);
+			expect(c.name).toBe("b.c");
+			expect(c.parent).toBe(b);
 		});
 
 		// 点分 / 斜杠路径会自动创建中间父命令，已存在的同名命令被挂为父节点
 		it("implicit subcommands", () => {
 			const a = app.command("a");
 			const d = app.command("a.d");
-			expect(d.name).to.equal("a.d");
-			expect(d.parent).to.equal(a);
+			expect(d.name).toBe("a.d");
+			expect(d.parent).toBe(a);
 
 			const b = app.command("b");
 			const e = app.command("b/e");
-			expect(e.name).to.equal("e");
-			expect(e.parent).to.equal(b);
+			expect(e.name).toBe("e");
+			expect(e.parent).toBe(b);
 
 			const f = a.subcommand(".b/f");
-			expect(f.name).to.equal("f");
-			expect(f.parent.name).to.equal("a.b");
-			expect(f.parent.parent).to.equal(a);
+			expect(f.name).toBe("f");
+			expect(f.parent.name).toBe("a.b");
+			expect(f.parent.parent).toBe(a);
 
 			const g = b.subcommand("c.g");
-			expect(g.name).to.equal("c.g");
-			expect(g.parent.name).to.equal("c");
-			expect(g.parent.parent).to.equal(b);
+			expect(g.name).toBe("c.g");
+			expect(g.parent.name).toBe("c");
+			expect(g.parent.parent).toBe(b);
 
 			const h = app.command("h");
 			b.subcommand("h");
-			expect(h.name).to.equal("h");
-			expect(h.parent).to.equal(b);
+			expect(h.name).toBe("h");
+			expect(h.parent).toBe(b);
 		});
 
 		// 环与跨树限制：不能把命令挂为自己的子命令，
@@ -150,20 +146,20 @@ describe("Command API", () => {
 		it("check subcommand", () => {
 			const a = app.command("a");
 			const b = a.subcommand("b");
-			const c = b.subcommand("c");
-			const d = app.command("d");
+			b.subcommand("c");
+			app.command("d");
 
 			// 显式注册子命令
-			expect(() => a.subcommand("a")).to.throw();
-			expect(() => a.subcommand("b")).not.to.throw();
-			expect(() => a.subcommand("c")).to.throw();
-			expect(() => a.subcommand("d")).not.to.throw();
+			expect(() => a.subcommand("a")).toThrow();
+			expect(() => a.subcommand("b")).not.toThrow();
+			expect(() => a.subcommand("c")).toThrow();
+			expect(() => a.subcommand("d")).not.toThrow();
 
 			// 隐式路径注册子命令
-			expect(() => app.command("b/c")).not.to.throw();
-			expect(() => app.command("a/c")).to.throw();
-			expect(() => app.command("c/b")).to.throw();
-			expect(() => app.command("a/d")).not.to.throw();
+			expect(() => app.command("b/c")).not.toThrow();
+			expect(() => app.command("a/c")).toThrow();
+			expect(() => app.command("c/b")).toThrow();
+			expect(() => app.command("a/d")).not.toThrow();
 		});
 	});
 
@@ -177,13 +173,13 @@ describe("Command API", () => {
 		test.alias("it").shortcut("2");
 
 		it("basic support", () => {
-			expect(app.$commander._commandList).to.have.length(3);
-			expect(app.$processor._matchers).to.have.length(2);
-			expect(foo.children).to.have.length(1);
+			expect(app.$commander._commandList).toHaveLength(3);
+			expect(app.$processor._matchers).toHaveLength(2);
+			expect(foo.children).toHaveLength(1);
 			bar.dispose();
-			expect(app.$commander._commandList).to.have.length(1);
-			expect(app.$processor._matchers).to.have.length(0);
-			expect(foo.children).to.have.length(0);
+			expect(app.$commander._commandList).toHaveLength(1);
+			expect(app.$processor._matchers).toHaveLength(0);
+			expect(foo.children).toHaveLength(0);
 		});
 	});
 
@@ -198,8 +194,8 @@ describe("Command API", () => {
 		let command: Command;
 		beforeEach(() => {
 			command = app.command("test");
-			print.mock.resetCalls();
-			next.mock.resetCalls();
+			print.mockClear();
+			next.mockClear();
 		});
 		afterEach(() => command?.dispose());
 
@@ -207,77 +203,67 @@ describe("Command API", () => {
 		it("basic 1 (return undefined)", async () => {
 			command.action(() => {});
 
-			await expect(command.execute({ session }, next)).eventually.to.equal("");
-			expect(next.mock.calls).to.have.length(0);
+			await expect(command.execute({ session }, next)).resolves.toBe("");
+			expect(next.mock.calls).toHaveLength(0);
 		});
 
 		// action 返回字符串时作为回复输出
 		it("basic 2 (return string)", async () => {
 			command.action(() => "result");
 
-			await expect(command.execute({ session }, next)).eventually.to.equal(
-				"result",
-			);
-			expect(next.mock.calls).to.have.length(0);
+			await expect(command.execute({ session }, next)).resolves.toBe("result");
+			expect(next.mock.calls).toHaveLength(0);
 		});
 
 		// action 调 next() 空参透传时，由外部 fallback 提供返回值
 		it("compose 1 (return in next function)", async () => {
-			next.mock.mockImplementationOnce(() => Promise.resolve("result"));
-			command.action(({ next }) => next());
+			next.mockImplementationOnce(() => Promise.resolve("result"));
+			command.action(({ next }) => next!());
 
-			await expect(command.execute({ session }, next)).eventually.to.equal(
-				"result",
-			);
-			expect(next.mock.calls).to.have.length(1);
+			await expect(command.execute({ session }, next)).resolves.toBe("result");
+			expect(next.mock.calls).toHaveLength(1);
 		});
 
 		// prepend 的 action 优先执行：命中条件时短路返回，否则继续透传
 		it("compose 2 (return in action)", async () => {
 			command.action(() => "result");
 			command.action(({ next }, arg) => {
-				return arg === "ping" ? "pong" : next();
+				return arg === "ping" ? "pong" : next!();
 			}, true);
 
-			await expect(command.execute({ session }, next)).eventually.to.equal(
-				"result",
-			);
+			await expect(command.execute({ session }, next)).resolves.toBe("result");
 			await expect(
 				command.execute({ session, args: ["ping"] }, next),
-			).eventually.to.equal("pong");
-			expect(next.mock.calls).to.have.length(0);
+			).resolves.toBe("pong");
+			expect(next.mock.calls).toHaveLength(0);
 		});
 
 		// next(callback) 注入的回调可在后续执行，结果回到最外层调用方
 		it("compose 3 (return in next callback)", async () => {
-			command.action(({ next }) => next("result"));
+			command.action(({ next }) => next!("result"));
 
-			await expect(
-				command.execute({ session }, async () => {}),
-			).eventually.to.equal("");
-			await expect(command.execute({ session }, next)).eventually.to.equal(
-				"result",
+			await expect(command.execute({ session }, async () => {})).resolves.toBe(
+				"",
 			);
-			expect(next.mock.calls).to.have.length(1);
+			await expect(command.execute({ session }, next)).resolves.toBe("result");
+			expect(next.mock.calls).toHaveLength(1);
 		});
 
 		// 多层嵌套的 next 回调应逐层展开而不爆栈
 		it("compose 4 (nested next callbacks)", async () => {
 			command.action(({ next }) => {
-				return next((next) => {
-					return next((next) => {
-						return next("result");
+				return next!((next) => {
+					return next!((next) => {
+						return next!("result");
 					});
 				});
 			});
 
-			await expect(
-				command.execute({ session }, async () => {}),
-			).eventually.to.equal("");
-			await expect(command.execute({ session }, next)).eventually.to.equal(
-				"result",
+			await expect(command.execute({ session }, async () => {})).resolves.toBe(
+				"",
 			);
-			expect(next.mock.calls).to.have.length(1);
+			await expect(command.execute({ session }, next)).resolves.toBe("result");
+			expect(next.mock.calls).toHaveLength(1);
 		});
 
 		// action 抛错：由 handleError 配置接管，日志打印且 fallback 不被调用
@@ -287,56 +273,50 @@ describe("Command API", () => {
 				throw new Error("message 1");
 			});
 
-			await expect(command.execute({ session }, next)).eventually.to.equal(
-				"乌拉！",
-			);
-			expect(print.mock.calls).to.have.length(1);
-			expect(print.mock.calls[0].arguments[0]).to.match(/Error: message 1/);
-			expect(next.mock.calls).to.have.length(0);
+			await expect(command.execute({ session }, next)).resolves.toBe("乌拉！");
+			expect(print.mock.calls).toHaveLength(1);
+			expect(print.mock.calls[0]?.[0]).toMatch(/Error: message 1/);
+			expect(next.mock.calls).toHaveLength(0);
 		});
 
 		// next 回调抛错：默认 handleError 返回内置错误文案
 		it("throw 2 (error in next callback)", async () => {
 			command.action(({ next }) => {
-				return next(() => {
+				return next!(() => {
 					throw new Error("message 2");
 				});
 			});
 
-			await expect(command.execute({ session }, next)).eventually.to.equal(
+			await expect(command.execute({ session }, next)).resolves.toBe(
 				"发生未知错误。",
 			);
-			expect(print.mock.calls).to.have.length(1);
-			expect(print.mock.calls[0].arguments[0]).to.match(/Error: message 2/);
-			expect(next.mock.calls).to.have.length(1);
+			expect(print.mock.calls).toHaveLength(1);
+			expect(print.mock.calls[0]?.[0]).toMatch(/Error: message 2/);
+			expect(next.mock.calls).toHaveLength(1);
 		});
 
 		// 外部 fallback 本身抛错时不再被命令捕获，向上原样传播
 		it("throw 3 (error in next function)", async () => {
-			next.mock.mockImplementationOnce(() =>
-				Promise.reject(new Error("message 3")),
-			);
-			command.action(({ next }) => next());
+			next.mockImplementationOnce(() => Promise.reject(new Error("message 3")));
+			command.action(({ next }) => next!());
 
-			await expect(command.execute({ session }, next)).to.be.rejected;
-			expect(print.mock.calls).to.have.length(0);
-			expect(next.mock.calls).to.have.length(1);
+			await expect(command.execute({ session }, next)).rejects.toThrow();
+			expect(print.mock.calls).toHaveLength(0);
+			expect(next.mock.calls).toHaveLength(1);
 		});
 
 		// action 内自行 catch next() 的错误：不触发全局日志
 		it("throw 4 (error handling)", async () => {
 			command.action(async ({ next }) => {
-				return next().catch(() => "catched");
+				return next!().catch(() => "catched");
 			});
 			command.action(() => {
 				throw new Error("message 4");
 			});
 
-			await expect(command.execute({ session }, next)).eventually.to.equal(
-				"catched",
-			);
-			expect(print.mock.calls).to.have.length(0);
-			expect(next.mock.calls).to.have.length(0);
+			await expect(command.execute({ session }, next)).resolves.toBe("catched");
+			expect(print.mock.calls).toHaveLength(0);
+			expect(next.mock.calls).toHaveLength(0);
 		});
 	});
 
@@ -349,13 +329,13 @@ describe("Command API", () => {
 
 		// 一个抢占式中间件：内容含 "escape" 时直接回复 "early"
 		app.middleware((session, next) => {
-			if (session.content.includes("escape")) return "early";
+			if (session.content?.includes("escape")) return "early";
 			return next();
 		});
 
 		// action 透传的 next 值可被外部中间件接管
 		it("basic support", async () => {
-			app.command("test1").action(({ next }) => next("final"));
+			app.command("test1").action(({ next }) => next!("final"));
 
 			await app.start();
 			await client.shouldReply("test1 foo", "final");
@@ -364,7 +344,7 @@ describe("Command API", () => {
 
 		// action 无限透传 next(Next.compose) 不应造成死循环或报错
 		it("infinite loop", async () => {
-			app.command("test2").action(({ next }) => next(Next.compose));
+			app.command("test2").action(({ next }) => next!(Next.compose));
 
 			await app.start();
 			await client.shouldNotReply("test2");

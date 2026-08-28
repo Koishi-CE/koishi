@@ -21,7 +21,7 @@ describe("Session API", () => {
 		app.command("echo [content:text]").action((_, text) => text);
 		app
 			.command("exec [command:text]")
-			.action(({ session }, text) => session.execute(text));
+			.action(({ session }, text) => session!.execute(text));
 
 		beforeAll(() => app.start());
 		afterAll(() => app.stop());
@@ -71,7 +71,7 @@ describe("Session API", () => {
 
 		it("session.prompt 2", async () => {
 			// prompt 超时（delay.prompt=0 立即超时）走兜底值 "nothing"
-			app.koishi.config.delay.prompt = 0;
+			app.koishi.config.delay!.prompt = 0;
 			await client.shouldReply("prompt", "prompt text");
 			await sleep(0);
 			await client.shouldReply("foo", "received nothing");
@@ -84,8 +84,8 @@ describe("Session API", () => {
 		app.plugin(mock);
 		app.plugin(memory);
 		app.command("foo").action(() => "foo");
-		app.middleware(async (session, next) => {
-			session.user["name"] = "bar";
+		app.middleware(async (session) => {
+			Object.assign(session.user!, { name: "bar" });
 			return "bar";
 		});
 		await app.start();

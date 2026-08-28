@@ -5,7 +5,7 @@
 import { afterAll, beforeAll, describe, it } from "bun:test";
 import { Context } from "@koishi-ce/koishi";
 import mock from "@koishi-ce/plugin-mock";
-import * as inspect from "../src";
+import * as inspect from "../index";
 
 const app = new Context();
 

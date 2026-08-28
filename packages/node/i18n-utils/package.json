@@ -2,7 +2,7 @@
 	"name": "@koishi-ce/i18n-utils",
 	"description": "I18n Utilities for Koishi",
 	"version": "1.0.1",
-	"main": "lib/index.cjs",
+	"main": "lib/index.mjs",
 	"module": "lib/index.mjs",
 	"typings": "lib/index.d.ts",
 	"files": [
@@ -42,7 +42,11 @@
 			"source": "./src/index.ts",
 			"types": "./lib/index.d.ts",
 			"import": "./lib/index.mjs",
-			"require": "./lib/index.js"
+			"default": "./lib/index.mjs"
 		}
+	},
+	"devDependencies": {
+		"@types/chai": "^4.3.16",
+		"chai": "^6.2.2"
 	}
 }

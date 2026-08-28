@@ -2,15 +2,10 @@
  * echo 插件测试：验证基础复述、CQ 码转义 / 反转义
  * 与定向发送（-u 用户私聊 / -c 频道）的参数形状。
  */
-import { beforeAll, describe, it } from "bun:test";
-import { mock as jest } from "node:test";
+import { beforeAll, describe, expect, it, jest } from "bun:test";
 import { App, type Bot, h } from "@koishi-ce/koishi";
 import * as echo from "@koishi-ce/plugin-echo";
 import mock from "@koishi-ce/plugin-mock";
-import { expect, use } from "chai";
-import { shape } from "../../../../scripts/testing/chai-shape";
-
-use(shape);
 
 const app = new App();
 
@@ -38,15 +33,18 @@ describe("@koishi-ce/plugin-echo", () => {
 			"3",
 		]);
 
-		const send1 = (app.bots[0].sendPrivateMessage =
+		const send1 = (app.bots[0]!.sendPrivateMessage =
 			jest.fn<Bot["sendPrivateMessage"]>());
 		await client.shouldNotReply("echo -u @100 foo");
-		expect(send1.mock.calls).to.have.length(1);
-		expect(send1.mock.calls[0].arguments).to.have.shape(["100", ["foo"]]);
+		expect(send1.mock.calls).toHaveLength(1);
+		// 形状断言：仅校验期望侧的数组索引（args[0] 平台目标、args[1] 消息体）
+		expect(send1.mock.calls[0]?.[0]).toBe("100");
+		expect(send1.mock.calls[0]?.[1]).toStrictEqual(["foo"]);
 
-		const send2 = (app.bots[0].sendMessage = jest.fn<Bot["sendMessage"]>());
+		const send2 = (app.bots[0]!.sendMessage = jest.fn<Bot["sendMessage"]>());
 		await client.shouldNotReply("echo -c #200 foo");
-		expect(send1.mock.calls).to.have.length(1);
-		expect(send2.mock.calls[0].arguments).to.have.shape(["200", ["foo"]]);
+		expect(send1.mock.calls).toHaveLength(1);
+		expect(send2.mock.calls[0]?.[0]).toBe("200");
+		expect(send2.mock.calls[0]?.[1]).toStrictEqual(["foo"]);
 	});
 });

@@ -7,7 +7,7 @@
  * 以及指令校验（权限等级、参数数量、未知选项、选项类型、before 钩子）。
  */
 import { afterAll, beforeAll, describe, it } from "bun:test";
-import { App, Channel, sleep, User } from "@koishi-ce/koishi";
+import { App, Channel, type Session, sleep, User } from "@koishi-ce/koishi";
 import mock, { DEFAULT_SELF_ID } from "@koishi-ce/plugin-mock";
 import memory from "@minatojs/driver-memory";
 import { install } from "@sinonjs/fake-timers";
@@ -31,7 +31,7 @@ const cmd1 = app
 	.shortcut("foo4", { fuzzy: true })
 	.option("bar", "", { authority: 3 })
 	.option("baz", "")
-	.action((_, arg) => "cmd1:" + arg);
+	.action((_: unknown, arg: string) => "cmd1:" + arg);
 
 const cmd2 = app
 	.command("cmd2")
@@ -40,11 +40,11 @@ const cmd2 = app
 	.shortcut("foo3", { prefix: true, fuzzy: true })
 	.option("bar", "", { authority: 3 })
 	.option("baz", "")
-	.action(({ session }) => "cmd2:" + session.userId);
+	.action(({ session }: { session: Session }) => "cmd2:" + session.userId);
 
 // 抢先短路用的中间件：消息含 "escape" 时直接回复，不进入指令
 app.middleware((session, next) => {
-	if (session.content.includes("escape")) return "early";
+	if (session.content?.includes("escape")) return "early";
 	return next();
 });
 
@@ -102,8 +102,9 @@ describe("Runtime", () => {
 		});
 
 		it("no prefix", async () => {
-			// 无前缀配置：带任何前缀都不触发
-			app.koishi.config.prefix = null;
+			// 无前缀配置：带任何前缀都不触发。
+			// prefix 类型不含 null（运行时以 falsy 分支处理"无前缀"），故此处断言式关闭
+			app.koishi.config.prefix = null as never;
 
 			await client1.shouldReply("cmd2", "cmd2:123");
 			await client4.shouldReply("cmd2", "cmd2:123");
@@ -120,7 +121,7 @@ describe("Runtime", () => {
 		});
 
 		afterAll(() => {
-			app.koishi.config.prefix = null;
+			app.koishi.config.prefix = null as never;
 		});
 
 		it("no nickname", async () => {
@@ -183,7 +184,7 @@ describe("Runtime", () => {
 		});
 
 		afterAll(() => {
-			app.koishi.config.prefix = null;
+			app.koishi.config.prefix = null as never;
 		});
 
 		it("single shortcut", async () => {

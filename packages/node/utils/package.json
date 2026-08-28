@@ -2,7 +2,7 @@
 	"name": "@koishi-ce/utils",
 	"description": "Utilities for Koishi",
 	"version": "7.2.1",
-	"main": "lib/index.cjs",
+	"main": "lib/index.mjs",
 	"module": "lib/index.mjs",
 	"typings": "lib/index.d.ts",
 	"files": [
@@ -28,7 +28,9 @@
 	],
 	"devDependencies": {
 		"@sinonjs/fake-timers": "^15.4.0",
-		"@koishi-ce/koishi": "workspace:*"
+		"@koishi-ce/koishi": "workspace:*",
+		"@types/chai": "^4.3.16",
+		"chai": "^6.2.2"
 	},
 	"dependencies": {
 		"cosmokit": "^1.8.1",
@@ -39,7 +41,7 @@
 			"source": "./src/index.ts",
 			"types": "./lib/index.d.ts",
 			"import": "./lib/index.mjs",
-			"require": "./lib/index.js"
+			"default": "./lib/index.mjs"
 		}
 	}
 }
