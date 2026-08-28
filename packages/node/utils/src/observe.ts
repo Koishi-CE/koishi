@@ -161,19 +161,17 @@ export function observe<T extends object, R>(
 
 	const observer = observeObject(target) as Observed<T, R>;
 
-	defineProperty(
-		observer,
-		"$update",
-		function $update(this: Observed<T, R>): R | undefined {
-			const diff = { ...this.$diff };
-			const fields = Object.keys(diff);
-			if (!fields.length) return undefined;
-			for (const key in this.$diff) {
-				delete this.$diff[key];
-			}
-			return update(diff);
-		},
-	);
+	defineProperty(observer, "$update", function $update(this: Observed<T, R>):
+		| R
+		| undefined {
+		const diff = { ...this.$diff };
+		const fields = Object.keys(diff);
+		if (!fields.length) return undefined;
+		for (const key in this.$diff) {
+			delete this.$diff[key];
+		}
+		return update(diff);
+	});
 
 	defineProperty(
 		observer,

@@ -34,16 +34,20 @@ const projects = [
 
 async function run(project) {
 	return new Promise((resolve) => {
-		const child = spawn(
-			process.execPath,
-			[tsc, "--noEmit", "-p", project],
-			{ cwd: root, windowsHide: true },
-		);
+		const child = spawn(process.execPath, [tsc, "--noEmit", "-p", project], {
+			cwd: root,
+			windowsHide: true,
+		});
 		let output = "";
 		child.stdout.on("data", (chunk) => (output += chunk));
 		child.stderr.on("data", (chunk) => (output += chunk));
 		child.on("close", (code) =>
-			resolve({ project, code, errors: (output.match(/error TS/g) || []).length, output }),
+			resolve({
+				project,
+				code,
+				errors: (output.match(/error TS/g) || []).length,
+				output,
+			}),
 		);
 	});
 }
@@ -63,7 +67,9 @@ const workers = Array.from(
 
 const results = (await Promise.all(workers)).flat();
 let failed = 0;
-for (const { project, code, errors, output } of results.sort((a, b) => a.project.localeCompare(b.project))) {
+for (const { project, code, errors, output } of results.sort((a, b) =>
+	a.project.localeCompare(b.project),
+)) {
 	if (code === 0) continue;
 	failed++;
 	console.log(`\n=== ${project} (${errors || "crashed"}) ===`);

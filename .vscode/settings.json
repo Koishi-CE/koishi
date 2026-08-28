@@ -1,9 +1,9 @@
 {
-    "js/ts.experimental.useTsgo": true,
-    "material-icon-theme.folders.associations": {
-        "webui": "client"
-    },
-    "material-icon-theme.files.associations": {
-        "NOTICE": "certificate"
-    }
+	"js/ts.experimental.useTsgo": true,
+	"material-icon-theme.folders.associations": {
+		"webui": "client"
+	},
+	"material-icon-theme.files.associations": {
+		"NOTICE": "certificate"
+	}
 }

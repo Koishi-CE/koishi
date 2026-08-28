@@ -135,8 +135,8 @@ class Analytics extends DataService<Analytics.Payload> {
 
 		ctx.any().before("command/execute", ({ command, session }) => {
 			if (!command || !session) return;
-			// biome-ignore lint/suspicious/noExplicitAny: Session<never,...> 的 user
 			// 观察字段在类型上不可索引,按宽泛视图读取(与 createIndex 同理)
+			// biome-ignore lint/suspicious/noExplicitAny: Session<never,...> 的 user
 			const user = (session as Session<any, any, any>).user;
 			this.addAudit(this.commands, {
 				...this.createIndex(session),
@@ -154,8 +154,8 @@ class Analytics extends DataService<Analytics.Payload> {
 		});
 	}
 
-	// biome-ignore lint/suspicious/noExplicitAny: Session 泛型在 user 观察字段上
 	// 不协变,各事件回调处的具体泛型互不相同,内部工具方法统一放宽
+	// biome-ignore lint/suspicious/noExplicitAny: Session 泛型在 user 观察字段上
 	private createIndex(session: Session<any, any, any>): Analytics.Index {
 		return {
 			selfId: session.selfId,
