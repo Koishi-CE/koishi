@@ -1,4 +1,5 @@
 <template>
+  <!-- 登录页：居中卡片内嵌登录表单 -->
   <k-layout main="darker page-login">
     <k-card>
       <login-form></login-form>

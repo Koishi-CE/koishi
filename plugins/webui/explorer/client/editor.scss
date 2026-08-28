@@ -1,3 +1,5 @@
+// 让 monaco 编辑器各区域（编辑区、粘性滚动、面包屑、行号槽等）
+// 的背景色跟随控制台主题变量，而非 monaco 自带的 vscode 配色
 .layout-main .monaco-editor {
   --vscode-editor-background: var(--k-main-bg);
   --vscode-editorStickyScroll-background: var(--k-main-bg);

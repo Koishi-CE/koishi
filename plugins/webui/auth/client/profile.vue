@@ -35,18 +35,26 @@
 </template>
 
 <script lang="ts" setup>
+/**
+ * 个人资料页：基本资料表单（用户名 / 密码）+ 平台绑定列表 + 登录历史。
+ * 修改先写入 diff，经右上角"应用更改"统一提交；绑定列表可解绑，
+ * 登录历史即 token 会话列表，可逐条移除（登出其它设备）。
+ */
 import { message, Schema, send, store } from "@koishi-ce/client";
 import type { UserUpdate } from "@koishi-ce/plugin-auth";
 import { computed, ref } from "vue";
 import { shared, showLoginDialog } from "./utils";
 
+// 登录类型 id 到显示名的映射
 const types = {
 	platform: "平台账户",
 	password: "用户密码",
 };
 
+// 待提交的资料改动（k-form 按 schema 写入，空对象表示无改动）
 const diff = ref<UserUpdate>({});
 
+// 基本资料表单 schema：默认值取本地记住的用户名/密码
 const schema = computed(() => {
 	const result: Schema<UserUpdate> = Schema.object({
 		name: Schema.string().description("用户名").default(shared.value.name),
@@ -58,6 +66,7 @@ const schema = computed(() => {
 	return result;
 });
 
+/** 退出登录：清空本地令牌并删除服务端会话。 */
 async function logout() {
 	store.user = null;
 	delete shared.value.id;
@@ -66,6 +75,7 @@ async function logout() {
 	return send("user/logout");
 }
 
+/** 提交资料修改：成功后同步本地 shared 与 store 中的用户信息。 */
 async function update() {
 	try {
 		// biome-ignore lint/nursery/noFloatingPromises: 已在 async 回调中 await，nursery 规则对 send 调用的误报
@@ -79,10 +89,12 @@ async function update() {
 	}
 }
 
+// 本账号"自身"的绑定（bid === 自身 id）：仅剩一个自身绑定时禁止解绑
 const original = computed(() => {
 	return store.user?.bindings.filter((item) => store.user.id === item.bid);
 });
 
+// 右上角操作菜单：应用资料修改 / 退出登录
 const menu = computed(() => [
 	{
 		icon: "check",

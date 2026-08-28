@@ -1,3 +1,12 @@
+/**
+ * explorer 插件（浏览器端入口）：注册文件管理器页面与配套 UI。
+ *
+ * - /files 路由的主页面（index.vue：左侧文件树 + 右侧 monaco 编辑器）
+ * - Schema path 角色的路径选择控件（file-picker.vue，供其它插件的配置表单使用）
+ * - 全局上传对话框（upload.vue）与状态栏当前语言指示（status.vue）
+ * - explorer / explorer.tree 两组菜单项，供页面动作与文件树右键菜单挂载
+ */
+
 import type { Context } from "@koishi-ce/client";
 import type { Entry } from "@koishi-ce/plugin-explorer";
 import FilePicker from "./file-picker.vue";
@@ -22,6 +31,8 @@ declare module "@koishi-ce/plugin-console" {
 }
 
 export default (ctx: Context) => {
+	// 注册 path 角色的 string 控件:配置表单中的路径字段
+	// 会渲染为 FilePicker 弹窗选择器
 	ctx.schema({
 		type: "string",
 		role: "path",
@@ -29,11 +40,13 @@ export default (ctx: Context) => {
 		validate: (value) => typeof value === "string",
 	});
 
+	// 全局插槽:挂载拖拽/粘贴上传的监听对话框
 	ctx.slot({
 		type: "global",
 		component: Upload,
 	});
 
+	// 文件管理器主页面(左侧树 + 右侧编辑器),依赖 explorer 数据服务
 	ctx.page({
 		id: "files",
 		path: "/files/:name*",
@@ -44,11 +57,13 @@ export default (ctx: Context) => {
 		component: Layout,
 	});
 
+	// 状态栏右侧:当前编辑文件的语言名
 	ctx.slot({
 		type: "status-right",
 		component: Status,
 	});
 
+	// 页面级菜单(ctrl+s / ctrl+r),由 index.vue 的 ctx.action 响应
 	ctx.menu("explorer", [
 		{
 			id: "explorer.save",
@@ -62,6 +77,7 @@ export default (ctx: Context) => {
 		},
 	]);
 
+	// 文件树右键菜单(id 以 . 开头的项挂在节点上,由 explorer.tree 上下文触发)
 	ctx.menu("explorer.tree", [
 		{
 			id: ".create-file",

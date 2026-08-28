@@ -1,3 +1,13 @@
+/**
+ * auth 插件（服务端）：控制台登录鉴权。
+ *
+ * 向应用注入 ctx.auth 服务（AuthService）：扩展 user 表的 password 字段
+ * 并建立 token 会话表，支持用户密码 / 平台验证码 / 已存令牌三种登录方式，
+ * 维护每个 WebSocket 客户端的登录态（client.auth），并按登录用户的权限
+ * 拦截 console 事件。浏览器端对应实现在 ../client/（登录页、个人资料页、
+ * 配置同步对话框）。
+ */
+
 import type { Client, DataService } from "@koishi-ce/console";
 import {
 	type Binding,
@@ -54,31 +64,48 @@ declare module "@koishi-ce/console" {
 	}
 }
 
+/** token 表记录：一次登录会话的令牌及其来源信息。 */
 export interface LoginToken {
+	/** 自增主键（删除指定会话用） */
 	inc: number;
+	/** 所属用户 id */
 	id: number;
+	/** 登录方式 */
 	type: LoginType;
+	/** 随机令牌（唯一索引） */
 	token: string;
+	/** 过期时间戳（毫秒） */
 	expiredAt: number;
 	createdAt: Date;
 	lastUsedAt: Date;
+	/** 登录时的 User-Agent */
 	userAgent: string;
+	/** 登录时的来源 IP */
 	address: string;
 }
 
+/** 下发到客户端的登录态（user 数据服务的单条形态，不含 tokens/bindings 明细）。 */
 export type Auth = Pick<LoginToken, "token" | "expiredAt"> &
 	Pick<User, "id" | "name" | "authority" | "config">;
 
+/** user 数据服务下发给客户端的完整鉴权数据：登录态 + 会话列表 + 绑定列表。 */
 interface AuthData extends Auth {
 	tokens: Omit<LoginToken, "token" | "id">[];
 	bindings: Omit<Binding, "aid">[];
 }
 
+/** 登录方式：平台验证码 / 用户密码 / 已存令牌续期。 */
 type LoginType = "platform" | "password" | "token";
 
+// 随机令牌的字符表（数字 + 大小写字母）
 const letters =
 	"0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
 
+/**
+ * 生成指定长度的随机令牌字符串。
+ * @param length 令牌长度，默认 40
+ * @returns 从字符表随机取字符拼接成的字符串
+ */
 export function randomId(length = 40) {
 	return Array(length)
 		.fill(0)
@@ -86,17 +113,27 @@ export function randomId(length = 40) {
 		.join("");
 }
 
+/** login/platform 事件的返回值：待登录用户信息 + 一次性验证码及其过期时间。 */
 export interface UserLogin extends Pick<User, "id" | "name"> {
 	token: string;
 	expiredAt: number;
 }
 
+/** user/update 事件允许修改的用户字段。 */
 export type UserUpdate = Partial<Pick<User, "name" | "password" | "config">>;
 
+/** 密码哈希：SHA-256 十六进制（user.password 的存储格式）。 */
 function toHash(password: string) {
 	return createHash("sha256").update(password).digest("hex");
 }
 
+/**
+ * 鉴权服务：维护控制台客户端的登录态。
+ *
+ * 构造时扩展 user 表（password / config 字段）与 token 表，注册浏览器端
+ * 的登录与用户管理事件；登录成功后把 Auth 写入 client.auth 并以 user
+ * 数据服务全量下发。依赖 console 与 database 服务。
+ */
 class AuthService extends Service {
 	static inject = ["console", "database"];
 
@@ -182,6 +219,7 @@ class AuthService extends Service {
 		this.initLogin();
 	}
 
+	/** 启动时按配置确保管理员账户（id = 0）存在。 */
 	override async start() {
 		const { enabled, username, password } = this.config.admin;
 		if (!enabled) return;
@@ -198,6 +236,13 @@ class AuthService extends Service {
 		]);
 	}
 
+	/**
+	 * 设置客户端登录态并全量下发 user 数据。
+	 * @param client 目标 WebSocket 客户端
+	 * @param auth 新登录态；缺省沿用 client.auth，传 undefined 表示登出
+	 * @param passive 为 true 时只写 client.auth，不推送数据也不刷新
+	 *   （已登录状态下修改资料后仅同步本地时使用）
+	 */
 	async setAuth(client: Client, auth = client.auth, passive = false) {
 		client.auth = auth;
 		if (passive) return;
@@ -221,6 +266,11 @@ class AuthService extends Service {
 		client.refresh();
 	}
 
+	/**
+	 * 为用户签发新令牌并立即让客户端登录。
+	 * 从 WebSocket 升级请求中提取 User-Agent 与来源 IP 一并落库，
+	 * 过期时长由 authTokenExpire 配置决定。
+	 */
 	async createToken(
 		client: Client,
 		type: LoginType,
@@ -249,11 +299,15 @@ class AuthService extends Service {
 		await this.setAuth(client, { ...user, expiredAt, token });
 	}
 
+	/** 注册全部登录 / 用户管理事件与权限拦截逻辑（构造时调用）。 */
 	initLogin() {
 		const self = this;
 		const { ctx, config } = this;
+		// 平台验证码登录的进行中状态：键为 `${platform}:${userId}`，
+		// 值为 [验证码, 过期时间, 发起登录的客户端]
 		const states: Record<string, [string, number, Client]> = {};
 
+		// 用户密码登录：校验通过后签发新令牌
 		ctx.console.addListener("login/password", async function (name, password) {
 			password = toHash(password);
 			const [user] = await ctx.database.get("user", { name }, [
@@ -268,6 +322,8 @@ class AuthService extends Service {
 			await self.createToken(this, "password", omit(user, ["password"]));
 		});
 
+		// 已存令牌续期登录：本地记录的令牌未过期即恢复登录态，
+		// 同时刷新该令牌的最后访问时间
 		ctx.console.addListener("login/token", async function (aid, token) {
 			const [data] = await ctx.database.get("token", { id: aid, token }, [
 				"expiredAt",
@@ -285,6 +341,9 @@ class AuthService extends Service {
 			await self.setAuth(this, { ...user, ...data, token });
 		});
 
+		// 平台账户登录（第一步）：校验平台账号存在后生成一次性验证码，
+		// 用户把验证码发给任意机器人即可完成登录/绑定（见下方中间件）。
+		// 状态在验证码过期或客户端断开时清理
 		ctx.console.addListener(
 			"login/platform",
 			async function (platform, userId) {
@@ -300,6 +359,7 @@ class AuthService extends Service {
 				const expiredAt = Date.now() + config.loginTokenExpire;
 				states[key] = [token, expiredAt, this];
 
+				// 客户端断开或验证码超时即作废本次登录状态
 				const listener = () => {
 					delete states[key];
 					dispose();
@@ -315,6 +375,8 @@ class AuthService extends Service {
 			},
 		);
 
+		// 平台账户登录（第二步）：前置中间件捕获用户发给机器人的验证码——
+		// 客户端已登录则把该平台账号绑定到当前用户，否则为平台对应用户签发令牌
 		ctx.middleware(async (session, next) => {
 			const state = states[session.uid];
 			if (!state || state[0] !== session.stripped.content) {
@@ -342,6 +404,8 @@ class AuthService extends Service {
 			}
 		}, true);
 
+		// 拦截带 authority 要求的 console 事件：未登录、令牌过期或
+		// 权限不足时拒绝（返回 true 表示拦截）
 		ctx.on("console/intercept", async (client, listener) => {
 			if (!listener.authority) return false;
 			if (!client.auth) return true;
@@ -350,6 +414,7 @@ class AuthService extends Service {
 			return false;
 		});
 
+		// 删除指定登录会话（登出其它设备）
 		ctx.console.addListener("user/delete-token", async function (inc) {
 			if (!this.auth) throw new Error("请先登录。");
 			const [data] = await ctx.database.get("token", { id: this.auth.id, inc });
@@ -358,6 +423,7 @@ class AuthService extends Service {
 			await self.setAuth(this);
 		});
 
+		// 退出登录：删除当前令牌并清除登录态
 		ctx.console.addListener("user/logout", async function () {
 			if (this.auth) {
 				await ctx.database.remove("token", { token: this.auth.token });
@@ -365,6 +431,7 @@ class AuthService extends Service {
 			await self.setAuth(this, undefined);
 		});
 
+		// 修改用户资料（用户名 / 密码 / 配置），密码先哈希再落库
 		ctx.console.addListener("user/update", async function (data) {
 			if (!this.auth) throw new Error("请先登录。");
 			if (data.password) data.password = toHash(data.password);
@@ -373,6 +440,8 @@ class AuthService extends Service {
 			await self.setAuth(this, undefined, true);
 		});
 
+		// 解绑平台账号：绑到别的用户时改指回其主账号；是自身主账号且
+		// 仅剩一个自绑定时拒绝解绑（避免用户失去登录途径），否则删除记录
 		ctx.console.addListener("user/unbind", async function (platform, pid) {
 			if (!this.auth) throw new Error("请先登录。");
 			const bindings = await ctx.database.get("binding", { aid: this.auth.id });

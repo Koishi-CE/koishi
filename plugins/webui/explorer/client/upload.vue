@@ -10,6 +10,10 @@
 </template>
 
 <script lang="ts" setup>
+/**
+ * 全局上传对话框：uploading 非空时显示提示，
+ * 接管整个窗口的 drop / paste 事件，把文件以 base64 写入目标目录。
+ */
 import { Binary, send } from "@koishi-ce/client";
 import { useEventListener } from "@vueuse/core";
 import { computed } from "vue";
@@ -20,6 +24,7 @@ const showUploading = computed({
 	set: (v) => (uploading.value = null),
 });
 
+/** 遍历拖入/粘贴的数据项，把其中的文件读为 ArrayBuffer 后以 base64 写到目标目录。 */
 function handleDataTransfer(event: Event, transfer: DataTransfer) {
 	const prefix = uploading.value;
 	for (const item of transfer.items) {
@@ -44,16 +49,19 @@ function handleDataTransfer(event: Event, transfer: DataTransfer) {
 	uploading.value = null;
 }
 
+// 拖拽释放：读取拖入的文件
 useEventListener("drop", (event: DragEvent) => {
 	if (!uploading.value) return;
 	handleDataTransfer(event, event.dataTransfer);
 });
 
+// 粘贴：读取剪贴板中的文件（如截图）
 useEventListener("paste", (event: ClipboardEvent) => {
 	if (!uploading.value) return;
 	handleDataTransfer(event, event.clipboardData);
 });
 
+// 阻止默认行为，否则浏览器会离开当前页面打开被拖入的文件
 useEventListener("dragover", (event: DragEvent) => {
 	if (!uploading.value) return;
 	event.preventDefault();

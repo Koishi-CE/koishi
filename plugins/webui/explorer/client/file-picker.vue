@@ -45,6 +45,11 @@
 </template>
 
 <script lang="ts" setup>
+/**
+ * 文件路径选择控件（Schema path 角色的渲染器）：
+ * 在弹窗中浏览文件树并选择路径，支持按扩展名筛选、直接选定目录、
+ * 新建文件夹与上传文件。选定的值写回表单的 modelValue。
+ */
 import {
 	isNullable,
 	type Schema,
@@ -70,15 +75,19 @@ const config = SchemaBase.useModel<string>();
 defineEmits(["update:modelValue"]);
 
 const options = computed<Schemastery.Path.Options>(() => ({
+	// 合并 schema meta.extra 携带的 path 选项（filters 等），默认只允许选文件
 	filters: ["file"],
 	...props.schema.meta.extra,
 }));
 
+/** 是否允许选定目录（filters 含 "directory"）。 */
 const allowDir = computed(() => options.value.filters.includes("directory"));
+/** 是否允许选定文件（filters 中存在非 "directory" 的过滤项）。 */
 const allowFile = computed(() =>
 	options.value.filters.some((x) => x !== "directory"),
 );
 
+/** 按钮文案：根据可选类型给出提示。 */
 const hint = computed(() => {
 	if (!allowDir.value) {
 		return "选择文件";
@@ -90,8 +99,9 @@ const hint = computed(() => {
 });
 
 const showDialog = ref(false);
-const current = ref("/");
+const current = ref("/"); // 弹窗内当前浏览到的目录（始终以 / 结尾）
 
+// 当前目录下的可见条目：目录恒显示，文件/符号链接按 filters 的扩展名过滤
 const entries = computed(() => {
 	const children =
 		files[current.value.slice(0, -1)]?.children || store?.explorer || [];
@@ -114,6 +124,7 @@ const entries = computed(() => {
 	});
 });
 
+/** 点击条目：进入子目录，或选定文件（去掉开头的 / 写回表单值并关闭弹窗）。 */
 function handleClick(entry: Entry) {
 	if (entry.filename === current.value) return;
 	if (entry.type === "directory") {
@@ -124,6 +135,7 @@ function handleClick(entry: Entry) {
 	}
 }
 
+/** 新建文件夹：在当前目录插入一个待命名的空目录条目（回车确认）。 */
 function createFolder() {
 	files[current.value] = {
 		type: "directory",
@@ -137,6 +149,7 @@ function createFolder() {
 	parent.push(files[current.value]);
 }
 
+/** 确认新建文件夹名：重名或空名视为取消；否则下发 mkdir 并更新索引。 */
 function confirmRename() {
 	const entry = files[current.value];
 	if (!entry) return;
@@ -151,6 +164,7 @@ function confirmRename() {
 	}
 }
 
+/** 取消新建：移除占位条目。 */
 function cancelRename() {
 	const entry = files[current.value];
 	if (!entry) return;
@@ -160,6 +174,7 @@ function cancelRename() {
 	parent.splice(parent.indexOf(entry), 1);
 }
 
+/** 按钮上展示的已选路径：可识别时标注为文件/目录并显示名称。 */
 const target = computed(() => {
 	if (isNullable(config.value)) return;
 	if (!config.value) return "根目录";
@@ -168,11 +183,13 @@ const target = computed(() => {
 	return (entry.type === "file" ? "文件：" : "目录：") + entry.name;
 });
 
+/** 返回上一级目录。 */
 function toPrevious() {
 	const index = current.value.slice(0, -1).lastIndexOf("/");
 	current.value = current.value.slice(0, index + 1);
 }
 
+/** "选定当前目录"：把当前目录（去掉首尾 /）写回表单值。 */
 function confirm() {
 	showDialog.value = false;
 	if (allowDir.value) {

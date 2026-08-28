@@ -16,11 +16,17 @@
 </template>
 
 <script lang="ts" setup>
+/**
+ * 配置同步冲突对话框：本地配置与云端（用户配置）不一致时弹出，
+ * 由用户选择上传本地、下载云端或关闭同步。对话框不可点击遮罩关闭，
+ * 强制用户做出选择（关闭即视为关闭同步）。
+ */
 import { message, send, store, useConfig } from "@koishi-ce/client";
 import { shared, showSyncDialog } from "./utils";
 
 const config = useConfig();
 
+/** 处理用户选择：关闭同步；upload 上传本地配置，download 用云端覆盖本地。 */
 async function setMode(value?: "upload" | "download") {
 	shared.value.sync = !!value;
 	showSyncDialog.value = false;

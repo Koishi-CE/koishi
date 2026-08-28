@@ -1,3 +1,12 @@
+/**
+ * auth 插件（浏览器端入口）：登录页、个人资料页与鉴权路由守卫。
+ *
+ * - 插件加载时用本地记忆的令牌尝试静默续期登录
+ * - 全局路由守卫：需登录的页面未登录时跳 /login，权限不足时阻断
+ * - 注册 /login 与 /profile 两个页面、绑定/同步两个全局对话框插槽
+ *   以及"用户设置"面板中的配置同步开关
+ */
+
 import {
 	type Context,
 	deepEqual,
@@ -68,18 +77,22 @@ icons.register("sign-out", SignOut);
 icons.register("user-full", UserFull);
 
 export default (ctx: Context) => {
-	// 本地登录态的 id/token/expiredAt 由同一批 pick 写入,同时存在
+	// 本地登录态的 id/token/expiredAt 由同一批 pick 写入,同时存在。
+	// 刷新页面后用未过期的令牌向服务端静默续期登录
 	if (shared.value.token && shared.value.expiredAt! > Date.now()) {
 		send("login/token", shared.value.id!, shared.value.token).catch((e) =>
 			message.error(e.message),
 		);
 	}
 
+	// 声明各活动（页面）的可见性：要求权限高于当前登录态时隐藏
 	ctx.on("activity", (data) => {
 		const authority = data.authority ?? 0;
 		return authority > 0 && (!store.user || store.user.authority < authority);
 	});
 
+	// 全局路由守卫：需要登录（声明 authority 或依赖 user 数据）的页面
+	// 在未登录时重定向到 /login；已登录但权限不足则阻断并提示
 	ctx.scope.disposables.push(
 		router.beforeEach((route) => {
 			const { activity } = route.meta;
@@ -88,7 +101,7 @@ export default (ctx: Context) => {
 				(activity.authority || (activity.fields ?? []).includes("user")) &&
 				!store.user
 			) {
-				// handle router.back()
+				// 处理浏览器返回：上一页就是登录页时回到首页，避免返回键在两页间打转
 				return history.state.forward === "/login" ? "/" : "/login";
 			}
 
@@ -103,6 +116,7 @@ export default (ctx: Context) => {
 		}),
 	);
 
+	// 登录页：已登录时从活动列表隐藏
 	ctx.page({
 		path: "/login",
 		name: "登录",
@@ -113,6 +127,7 @@ export default (ctx: Context) => {
 		component: Login,
 	});
 
+	// 个人资料页：依赖 user 数据服务（须登录）
 	ctx.page({
 		path: "/profile",
 		name: "用户资料",
@@ -123,6 +138,7 @@ export default (ctx: Context) => {
 		component: Profile,
 	});
 
+	// 两个全局对话框：绑定平台账户 / 配置同步冲突
 	ctx.slot({
 		type: "global",
 		component: BindDialog,
@@ -133,6 +149,7 @@ export default (ctx: Context) => {
 		component: SyncDialog,
 	});
 
+	// "用户设置"面板：配置同步开关（shared 持久化到 localStorage）
 	ctx.settings({
 		id: "user",
 		title: "用户设置",
@@ -151,6 +168,7 @@ export default (ctx: Context) => {
 
 	const config = useConfig();
 
+	/** 比较本地与云端的用户配置，不一致时弹出同步选择框。 */
 	function checkSync() {
 		// 两处调用点均已确保 store.user 存在,此处仅作收窄守卫
 		if (!store.user) return;
@@ -158,6 +176,7 @@ export default (ctx: Context) => {
 		showSyncDialog.value = true;
 	}
 
+	// 本地配置变化且已开启同步：自动上传云端
 	ctx.on(
 		"dispose",
 		watch(
@@ -171,6 +190,7 @@ export default (ctx: Context) => {
 		),
 	);
 
+	// 开启同步的瞬间立即比对一次本地与云端
 	ctx.on(
 		"dispose",
 		watch(
@@ -181,6 +201,8 @@ export default (ctx: Context) => {
 		),
 	);
 
+	// 登录态变化：登出时回登录页；登录成功时记忆令牌（供下次静默续期）、
+	// 按需比对同步配置，并跳转到来路页面或个人资料页
 	ctx.on(
 		"dispose",
 		watch(
