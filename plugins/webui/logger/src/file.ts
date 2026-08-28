@@ -3,23 +3,26 @@ import { Buffer } from "buffer";
 import { type FileHandle, open } from "fs/promises";
 
 export class FileWriter {
-	public data: Logger.Record[];
+	// data / size 在构造器的异步回调中赋值,先给空初始值避免读到 undefined
+	public data: Logger.Record[] = [];
 	public task: Promise<FileHandle>;
-	public size: number;
+	public size = 0;
 
 	private temp: Logger.Record[] = [];
 
-	constructor(
-		public date: string,
-		public path: string,
-	) {
+	public date: string;
+	public path: string;
+
+	constructor(date: string, path: string) {
+		this.date = date;
+		this.path = path;
 		this.task = open(path, "a+").then(async (handle) => {
 			const buffer = await handle.readFile();
 			this.data = this.parse(new TextDecoder().decode(buffer));
 			this.size = buffer.byteLength;
 			return handle;
 		});
-		this.task.then(() => this.flush());
+		void this.task.then(() => this.flush());
 	}
 
 	flush() {
