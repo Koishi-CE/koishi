@@ -17,7 +17,7 @@ import {
 import { inspect } from "node:util";
 import { App, type Command, Logger, Next } from "@koishi-ce/koishi";
 import mock from "@koishi-ce/plugin-mock";
-import "../../__tests__/shape";
+import "../../../tests/shape";
 
 // 捕获 logger 输出，用于断言错误日志是否被打印
 const print = jest.fn();

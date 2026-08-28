@@ -6,7 +6,7 @@
 
 import { describe, expect, it } from "bun:test";
 import { type Command, Context } from "@koishi-ce/koishi";
-import "../../__tests__/shape";
+import "../../../tests/shape";
 
 const app = new Context();
 
