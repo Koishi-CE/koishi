@@ -1,16 +1,35 @@
+/**
+ * 命令定义串的解析与值转换。
+ *
+ * - parseDecl：解析 "<foo> [bar:text]" 形式的声明为 Declaration 列表，
+ *   并产出剥离类型标注的 stripped 展示形式；
+ * - resolveDomain：把类型标注（内置名 / 正则 / 枚举 / 函数 / 配置对象）
+ *   统一归一为 DomainConfig；
+ * - parseValue：调用 domain 的 transform 做类型强转，失败时把
+ *   用户可读的错误文案写入 argv.error（不抛异常）。
+ */
+
 import type { Context } from "../context";
 import type { Argv } from "./parser";
 
 // https://github.com/microsoft/TypeScript/issues/17002
-// it never got fixed so we have to do this
+// 上游 TS 缺陷长期未修，只能用断言绕过数组分支的 readonly 收窄问题
 const isArray = Array.isArray as (arg: any) => arg is readonly any[];
 
+// 匹配声明中的一段参数：<...>（必填）或 [...]（可选）
 const BRACKET_REGEXP = /<[^>]+>|\[[^\]]+\]/g;
 
+/** parseDecl 的产出：声明列表 + 剥离类型标注后的展示形式 */
 export interface DeclarationList extends Array<Argv.Declaration> {
+	/** 原始声明串；贪婪类型（如 text）的标注替换为 "..."，其余类型标注删除 */
 	stripped: string;
 }
 
+/**
+ * 把类型标注归一为 DomainConfig。
+ * 函数 / 正则 / 枚举数组按字面量构造 transform；对象视作完整配置；
+ * 字符串视为内置 domain 名，从 ctx 服务表（domain:<name>）查询。
+ */
 export function resolveDomain(ctx: Context, type: Argv.Type | undefined) {
 	if (typeof type === "function") {
 		return { transform: type };
@@ -32,6 +51,14 @@ export function resolveDomain(ctx: Context, type: Argv.Type | undefined) {
 	return ctx.get(`domain:${type}`) ?? {};
 }
 
+/**
+ * 按声明的类型把原始字符串强转为实际取值。
+ *
+ * @param kind 出错文案的类型段："argument" 或 "option"
+ * 转换抛错时不向上传播：有会话时组装本地化的错误提示
+ * （优先用 domain 抛出的错误键，否则用通用语法文案），
+ * 无会话时退回裸键名。
+ */
 export function parseValue(
 	ctx: Context,
 	source: string,
@@ -41,7 +68,7 @@ export function parseValue(
 ) {
 	const { name, type = "string" } = decl;
 
-	// apply domain callback
+	// 调用 domain 的转换函数执行强转
 	const domain = resolveDomain(ctx, type);
 	try {
 		return domain.transform(source, argv.session);
@@ -60,6 +87,13 @@ export function parseValue(
 	}
 }
 
+/**
+ * 解析定义串中的参数声明。
+ *
+ * 语法：`<name:type>` 必填、`[name:type]` 可选、`...name` 变长；
+ * stripped 为去掉类型标注（贪婪类型保留 "..."）后的展示形式，
+ * 供 help 与选项语法串拼接使用。
+ */
 export function parseDecl(ctx: Context, source: string): DeclarationList {
 	let cap: RegExpExecArray | null;
 	const result: DeclarationList = Object.assign([], { stripped: "" });

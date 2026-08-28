@@ -1,8 +1,19 @@
+/**
+ * 命令校验插件：权限定义 + 执行前的两类校验。
+ *
+ * 注册两套权限定义（命令级 command:(name)、选项级 command:(name):option:(name2)，
+ * 声明其依赖与继承关系供权限系统判定；再挂两条 before("command/execute") 钩子：
+ * 1. 用户权限校验：命令本体与本次传入的选项逐一测试；
+ * 2. argv 校验：参数数量（可交互式追问补全）与未知选项检查。
+ * 校验返回的字符串会作为回复直接输出（showWarning 可关闭提示）。
+ */
+
 import { isNullable } from "cosmokit";
 import type { Context } from "../context";
 import type { Argv } from "./parser";
 
 export default function validate(ctx: Context) {
+	// 命令级权限：依赖 = 显式 dependencies + 父命令权限；继承 = config.permissions
 	ctx.permissions.define("command:(name)", {
 		depends: ({ name }) => {
 			const command = ctx.$commander.get(name);
@@ -21,6 +32,7 @@ export default function validate(ctx: Context) {
 		},
 	});
 
+	// 选项级权限：依赖与继承取自选项自身的注册配置
 	ctx.permissions.define("command:(name):option:(name2)", {
 		depends: ({ name, name2 }) => {
 			return ctx.$commander.get(name)?._options[name2]?.dependencies;
@@ -37,7 +49,7 @@ export default function validate(ctx: Context) {
 		},
 	});
 
-	// check user
+	// 用户权限校验：命令本体 + 用户实际传入的每个选项都要通过测试
 	ctx.before(
 		"command/execute",
 		async (argv: Argv<"authority">): Promise<string | void> => {
@@ -47,7 +59,7 @@ export default function validate(ctx: Context) {
 			const sendHint = (message: string, ...param: any[]) =>
 				command.config.showWarning ? session.text(message, param) : "";
 
-			// check permissions
+			// 权限测试：命令本体与传入选项的权限一并校验
 			const permissions = [`command:${command.name}`];
 			for (const option of Object.values(command._options)) {
 				const { name } = option;
@@ -62,7 +74,7 @@ export default function validate(ctx: Context) {
 		true,
 	);
 
-	// check argv
+	// argv 校验：参数数量与未知选项
 	ctx.before(
 		"command/execute",
 		async (argv: Argv): Promise<string | void> => {
@@ -71,7 +83,8 @@ export default function validate(ctx: Context) {
 			const sendHint = (message: string, ...param: any[]) =>
 				command.config.showWarning ? session.text(message, param) : "";
 
-			// check argument count
+			// 参数数量校验：必填参数缺失时逐个交互式追问补全；
+			// 参数超出声明数（且末位不是变长参数）时报错
 			if (command.config.checkArgCount) {
 				let index = args.length;
 				while (command._arguments[index]?.required) {
@@ -96,7 +109,7 @@ export default function validate(ctx: Context) {
 				}
 			}
 
-			// check unknown options
+			// 未知选项校验：传入了命令未注册的选项时报错
 			if (command.config.checkUnknown) {
 				const unknown = Object.keys(options).filter(
 					(key) => !command._options[key],

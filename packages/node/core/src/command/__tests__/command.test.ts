@@ -1,3 +1,9 @@
+/**
+ * Command API 集成测试：命令注册、子命令树、销毁与执行链（洋葱模型）。
+ * 覆盖 Command 的公开行为与 Commander 的注册表管理，
+ * 通过 mock 插件构造会话验证执行结果。
+ */
+
 import {
 	afterAll,
 	afterEach,
@@ -17,6 +23,7 @@ import { shape } from "../../../../../scripts/testing/chai-shape";
 use(shape);
 use(promise);
 
+// 捕获 logger 输出，用于断言错误日志是否被打印
 const print = jest.fn();
 
 beforeAll(() => {
@@ -33,6 +40,8 @@ afterAll(() => {
 });
 
 describe("Command API", () => {
+	// 基础注册：不同作用域（user / guild filter）下创建命令、
+	// 同名命令的更新与别名冲突检测
 	describe("Register Commands", () => {
 		const app = new App();
 		const ctx1 = app.user("10000");
@@ -41,15 +50,18 @@ describe("Command API", () => {
 		ctx1.command("b");
 		ctx2.command("c");
 
+		// 空命令名应在构造时抛错
 		it("constructor checks", () => {
 			expect(() => app.command("")).to.throw();
 		});
 
+		// 自定义 inspect 输出应为 "Command <name>" 而非整个对象
 		it("custom inspect", () => {
 			expect(app.$commander._commandList).to.have.length(3);
 			expect(inspect(app.command("a"))).to.equal("Command <a>");
 		});
 
+		// 同名重复注册应更新既有命令而非新建，config 以最后一次为准
 		it("modify commands", () => {
 			const d1 = app.command("d", "foo", { authority: 1 });
 			expect(app.$commander.get("d").config.authority).to.equal(1);
@@ -60,6 +72,8 @@ describe("Command API", () => {
 			expect(d1).to.equal(d2);
 		});
 
+		// 别名冲突规则：不同 filter 作用域可同名；全局别名撞名抛错；
+		// 同一命令重复注册同一别名不抛错
 		it("name conflicts", () => {
 			expect(() => {
 				app.command("e");
@@ -84,10 +98,13 @@ describe("Command API", () => {
 		});
 	});
 
+	// 子命令树：显式 subcommand() 与路径式（"a.b" / "b/c" / ".c"）隐式注册，
+	// 以及非法父子关系（自引用、跨树挂载）的检测
 	describe("Register Subcommands", () => {
 		let app: App;
 		beforeEach(() => (app = new App()));
 
+		// subcommand() 与 ".xxx" 相对名写法的父子关系
 		it("command.prototype.subcommand", () => {
 			const a = app.command("a");
 			const b = a.subcommand("b");
@@ -100,6 +117,7 @@ describe("Command API", () => {
 			expect(c.parent).to.equal(b);
 		});
 
+		// 点分 / 斜杠路径会自动创建中间父命令，已存在的同名命令被挂为父节点
 		it("implicit subcommands", () => {
 			const a = app.command("a");
 			const d = app.command("a.d");
@@ -127,19 +145,21 @@ describe("Command API", () => {
 			expect(h.parent).to.equal(b);
 		});
 
+		// 环与跨树限制：不能把命令挂为自己的子命令，
+		// 已有父节点的命令不能再挂到其它命令下
 		it("check subcommand", () => {
 			const a = app.command("a");
 			const b = a.subcommand("b");
 			const c = b.subcommand("c");
 			const d = app.command("d");
 
-			// register explicit subcommand
+			// 显式注册子命令
 			expect(() => a.subcommand("a")).to.throw();
 			expect(() => a.subcommand("b")).not.to.throw();
 			expect(() => a.subcommand("c")).to.throw();
 			expect(() => a.subcommand("d")).not.to.throw();
 
-			// register implicit subcommand
+			// 隐式路径注册子命令
 			expect(() => app.command("b/c")).not.to.throw();
 			expect(() => app.command("a/c")).to.throw();
 			expect(() => app.command("c/b")).to.throw();
@@ -147,6 +167,7 @@ describe("Command API", () => {
 		});
 	});
 
+	// 销毁命令：应级联销毁子命令、注销 matcher，并从命令列表移除
 	describe("Dispose Commands", () => {
 		const app = new App();
 		const foo = app.command("foo");
@@ -166,6 +187,8 @@ describe("Command API", () => {
 		});
 	});
 
+	// 执行链：action 队列与 next 函数的洋葱模型组合，
+	// 以及各类错误（action 抛错 / next 回调抛错 / fallback 抛错）的传播路径
 	describe("Execute Commands", () => {
 		const app = new App();
 		app.plugin(mock);
@@ -180,6 +203,7 @@ describe("Command API", () => {
 		});
 		afterEach(() => command?.dispose());
 
+		// action 返回 undefined 时命令输出空串，且不调用 fallback
 		it("basic 1 (return undefined)", async () => {
 			command.action(() => {});
 
@@ -187,6 +211,7 @@ describe("Command API", () => {
 			expect(next.mock.calls).to.have.length(0);
 		});
 
+		// action 返回字符串时作为回复输出
 		it("basic 2 (return string)", async () => {
 			command.action(() => "result");
 
@@ -196,6 +221,7 @@ describe("Command API", () => {
 			expect(next.mock.calls).to.have.length(0);
 		});
 
+		// action 调 next() 空参透传时，由外部 fallback 提供返回值
 		it("compose 1 (return in next function)", async () => {
 			next.mock.mockImplementationOnce(() => Promise.resolve("result"));
 			command.action(({ next }) => next());
@@ -206,6 +232,7 @@ describe("Command API", () => {
 			expect(next.mock.calls).to.have.length(1);
 		});
 
+		// prepend 的 action 优先执行：命中条件时短路返回，否则继续透传
 		it("compose 2 (return in action)", async () => {
 			command.action(() => "result");
 			command.action(({ next }, arg) => {
@@ -221,6 +248,7 @@ describe("Command API", () => {
 			expect(next.mock.calls).to.have.length(0);
 		});
 
+		// next(callback) 注入的回调可在后续执行，结果回到最外层调用方
 		it("compose 3 (return in next callback)", async () => {
 			command.action(({ next }) => next("result"));
 
@@ -233,6 +261,7 @@ describe("Command API", () => {
 			expect(next.mock.calls).to.have.length(1);
 		});
 
+		// 多层嵌套的 next 回调应逐层展开而不爆栈
 		it("compose 4 (nested next callbacks)", async () => {
 			command.action(({ next }) => {
 				return next((next) => {
@@ -251,6 +280,7 @@ describe("Command API", () => {
 			expect(next.mock.calls).to.have.length(1);
 		});
 
+		// action 抛错：由 handleError 配置接管，日志打印且 fallback 不被调用
 		it("throw 1 (error in action)", async () => {
 			command.config.handleError = () => "乌拉！";
 			command.action(() => {
@@ -265,6 +295,7 @@ describe("Command API", () => {
 			expect(next.mock.calls).to.have.length(0);
 		});
 
+		// next 回调抛错：默认 handleError 返回内置错误文案
 		it("throw 2 (error in next callback)", async () => {
 			command.action(({ next }) => {
 				return next(() => {
@@ -280,6 +311,7 @@ describe("Command API", () => {
 			expect(next.mock.calls).to.have.length(1);
 		});
 
+		// 外部 fallback 本身抛错时不再被命令捕获，向上原样传播
 		it("throw 3 (error in next function)", async () => {
 			next.mock.mockImplementationOnce(() =>
 				Promise.reject(new Error("message 3")),
@@ -291,6 +323,7 @@ describe("Command API", () => {
 			expect(next.mock.calls).to.have.length(1);
 		});
 
+		// action 内自行 catch next() 的错误：不触发全局日志
 		it("throw 4 (error handling)", async () => {
 			command.action(async ({ next }) => {
 				return next().catch(() => "catched");
@@ -307,16 +340,20 @@ describe("Command API", () => {
 		});
 	});
 
+	// 中间件旁路：action 返回 next(...) 时把控制权交还中间件链，
+	// 由其它中间件决定是否继续处理
 	describe("Bypass Middleware", async () => {
 		const app = new App();
 		app.plugin(mock);
 		const client = app.mock.client("123");
 
+		// 一个抢占式中间件：内容含 "escape" 时直接回复 "early"
 		app.middleware((session, next) => {
 			if (session.content.includes("escape")) return "early";
 			return next();
 		});
 
+		// action 透传的 next 值可被外部中间件接管
 		it("basic support", async () => {
 			app.command("test1").action(({ next }) => next("final"));
 
@@ -325,6 +362,7 @@ describe("Command API", () => {
 			await client.shouldReply("test1 escape", "early");
 		});
 
+		// action 无限透传 next(Next.compose) 不应造成死循环或报错
 		it("infinite loop", async () => {
 			app.command("test2").action(({ next }) => next(Next.compose));
 

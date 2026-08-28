@@ -1,3 +1,10 @@
+/**
+ * 应用根配置（Context.Config）各分块 Schema 的定义。
+ *
+ * 根配置被拆成 Basic / I18n / Delay / Advanced / request 若干分块，
+ * 便于控制台分组渲染。本文件只负责把这些 Schema 挂到 Config 静态对象上
+ * （实际挂载动作由 context/index.ts 调用 defineContextConfig 完成）。
+ */
 import { HTTP, Schema } from "@satorijs/core";
 import { defineProperty, Time } from "cosmokit";
 import { I18n } from "../i18n";
@@ -6,6 +13,7 @@ import type { Context } from "./index";
 declare module "cordis" {
 	namespace Plugin {
 		interface Object {
+			/** 插件对象可声明 filter: false 以退出 Koishi 的会话过滤体系 */
 			filter?: boolean;
 		}
 	}
@@ -101,6 +109,8 @@ export function defineContextConfig(Config: typeof Context.Config) {
 		}).description("高级设置"),
 	);
 
+	// Config.list 是控制台渲染根配置时的分块顺序：
+	// 基础设置 -> i18n -> 延迟设置 -> 高级设置 -> 网络请求
 	Config.list.push(Config.Basic);
 	Config.list.push(
 		Schema.object({
