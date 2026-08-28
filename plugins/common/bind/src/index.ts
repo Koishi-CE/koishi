@@ -1,11 +1,5 @@
-import {
-	type Context,
-	type Dict,
-	Random,
-	Schema,
-	type Session,
-	Time,
-} from "@koishi-ce/koishi";
+import type { Context, Dict, Session } from "@koishi-ce/koishi";
+import { Schema, Time } from "@koishi-ce/koishi";
 import enUS from "../locales/en-US.yml";
 import zhCN from "../locales/zh-CN.yml";
 
@@ -20,6 +14,18 @@ export const Config: Schema<Config> = Schema.object({
 	generateToken: Schema.function().hidden(),
 });
 
+function randomDigits(length: number) {
+	const result: string[] = [];
+	while (result.length < length) {
+		const bytes = new Uint8Array(length - result.length);
+		globalThis.crypto.getRandomValues(bytes);
+		for (const byte of bytes) {
+			if (byte < 250) result.push(String(byte % 10));
+		}
+	}
+	return result.join("");
+}
+
 export function apply(ctx: Context, config: Config = {}) {
 	ctx.i18n.define("zh-CN", zhCN);
 	ctx.i18n.define("en-US", enUS);
@@ -31,7 +37,7 @@ export function apply(ctx: Context, config: Config = {}) {
 	const tokens: Dict<TokenData> = Object.create(null);
 
 	const { tokenPrefix: prefix = "koishi/" } = config;
-	const { generateToken = () => `${prefix}` + Random.id(6, 10) } = config;
+	const { generateToken = () => `${prefix}${randomDigits(6)}` } = config;
 
 	function generate(session: Session, phase: number) {
 		const { userId } = session;
