@@ -5,7 +5,7 @@ import { describe, expect, it } from "bun:test";
 import { promises as fs } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { locateConfig, parseConfig, saveConfig } from "../node/config-file";
+import { locateConfig, parseConfig, saveConfig } from "../config-file";
 
 /** 建立临时目录并在用后清理 */
 async function withDir(fn: (dir: string) => Promise<void>) {

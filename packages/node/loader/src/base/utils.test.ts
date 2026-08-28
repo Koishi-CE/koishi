@@ -3,7 +3,7 @@
  */
 import { describe, expect, it } from "bun:test";
 import type { Dict } from "@koishi-ce/core";
-import { rename, separate, unwrapExports } from "../base/utils";
+import { rename, separate, unwrapExports } from "./utils";
 
 describe("unwrapExports", () => {
 	it("优先取 default 导出", () => {
