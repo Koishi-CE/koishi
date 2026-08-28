@@ -1,3 +1,7 @@
+<!--
+  k-empty：空状态占位组件。
+  居中展示 Koishi 徽标图标与默认插槽文案，用于无数据 / 无权限等场景。
+-->
 <template>
   <div class="k-empty">
     <div class="image">

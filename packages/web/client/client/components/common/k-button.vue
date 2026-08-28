@@ -1,3 +1,9 @@
+<!--
+  k-button：通用按钮组件。
+  通过 type（primary / warning / success / error）着色，支持 solid（实心）、
+  frameless（无边框）、round（圆形）与 disabled（禁用）等形态；
+  禁用时不触发 click 事件、不显示 title 提示。
+-->
 <template>
   <button
     @click.prevent="onClick"
@@ -23,6 +29,7 @@ const props = defineProps({
 const emit = defineEmits(["click"]);
 
 function onClick(event: MouseEvent) {
+	// 禁用态吞掉点击，不向外发 click 事件
 	if (props.disabled) return;
 	emit("click", event);
 }
@@ -55,7 +62,7 @@ function onClick(event: MouseEvent) {
   transition: var(--color-transition);
   display: inline-block;
 
-  // default: transparent & framed
+  // 默认形态：透明背景 + 描边
   color: var(--el-button-text-color);
   border: 1px solid var(--k-color-border);
   background-color: transparent;
@@ -93,7 +100,7 @@ function onClick(event: MouseEvent) {
     }
   }
 
-  // frameless
+  // 无边框形态：常用于行内文字按钮
   &.frameless {
     padding: 0;
     border-color: transparent;

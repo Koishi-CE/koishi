@@ -1,3 +1,8 @@
+/**
+ * 全局样式插件：引入 app 级 SCSS，并注册四套内置主题
+ * （默认 / 高对比 × 明亮 / 暗色），供主题选择器列出与切换。
+ */
+
 import type { Context } from "@koishi-ce/client";
 
 import "./index.scss";

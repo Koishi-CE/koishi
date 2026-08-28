@@ -1,3 +1,8 @@
+<!--
+  欢迎卡片：文档 / 社区论坛等入口链接。
+  自带 zh-CN 与 en-US 两套文案（局部 vue-i18n 实例，独立于全局语言包），
+  其余扩展可通过 "welcome-choice" 插槽追加自定义入口。
+-->
 <template>
   <div class="k-card welcome">
     <h1>{{ t('title') }}</h1>
@@ -26,6 +31,7 @@ import { useI18n } from "vue-i18n";
 import enUS from "./welcome.en-US.yml";
 import zhCN from "./welcome.zh-CN.yml";
 
+// 组件私有的双语文案：不依赖全局 i18n，确保欢迎页在任何语言环境下可用
 const { t, setLocaleMessage } = useI18n({
 	messages: {
 		"zh-CN": zhCN,
@@ -33,6 +39,7 @@ const { t, setLocaleMessage } = useI18n({
 	},
 });
 
+// 开发模式下 yml 文案改动即时热替换，无需整页刷新
 if (import.meta.hot) {
 	import.meta.hot.accept("./welcome.zh-CN.yml", (module) => {
 		setLocaleMessage("zh-CN", module.default);

@@ -1,3 +1,8 @@
+<!--
+  活动栏单个图标按钮，也是拖拽排序的拖拽源：
+  拖起时向 dataTransfer 写入 "activity:<id>" 文本供落点组件识别。
+  无 id 的项（如溢出组的 "..." 图标）渲染为不可点击的 span。
+-->
 <template>
   <component
     :is="data.id ? 'k-activity-link' : 'span'"
@@ -23,6 +28,7 @@ const isDragging = ref(false);
 
 function handleDragStart(event: DragEvent) {
 	isDragging.value = true;
+	// 约定的拖拽协议：以 "activity:" 前缀 + 活动 id 标识被拖动的活动项
 	event.dataTransfer.setData("text/plain", "activity:" + props.data.id);
 }
 

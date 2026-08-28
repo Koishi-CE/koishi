@@ -1,3 +1,7 @@
+<!--
+  布局顶栏：左侧标题（默认取当前路由名）、右侧菜单区，
+  移动端额外提供侧栏开关按钮与溢出菜单（"..."）按钮。
+-->
 <template>
   <div class="layout-header" :class="{ 'has-menu': menuKey }">
     <div
@@ -40,6 +44,7 @@ const props = defineProps<{
 	menuData?: any;
 }>();
 
+// 溢出菜单按钮的点击触发器：打开 menuKey 对应的上下文菜单
 const trigger = useMenu(props.menuKey as any);
 
 defineEmits(["update:isLeftAsideOpen", "update:isRightAsideOpen"]);

@@ -1,3 +1,8 @@
+<!--
+  k-hint：带悬浮提示（tooltip）的问号图标。
+  默认是纯展示的提示图标；当传入 v-model（modelValue 有值）时变为
+  可点击的开关图标（常用于控制帮助文案或更多信息的显隐）。
+-->
 <template>
   <el-tooltip :placement="placement">
     <template #content>
@@ -22,6 +27,7 @@ const props = defineProps({
 
 const emit = defineEmits(["update:modelValue"]);
 
+// modelValue 被显式传入时才呈现手型光标并响应点击（开关语义）
 const pointer = computed(() => props.modelValue !== undefined);
 
 function onClick() {

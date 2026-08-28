@@ -1,3 +1,9 @@
+<!--
+  k-tab-group：侧栏式选项卡分组。
+  遍历 data（键 → 条目对象），filter 可按条目过滤显示；
+  每个条目渲染为一个 k-tab-item，选中键经 v-model 双向绑定，
+  条目数据通过作用域插槽传给内容。
+-->
 <template>
   <template v-for="(item, key) in data" :key="key">
     <k-tab-item v-model="model" :label="key"

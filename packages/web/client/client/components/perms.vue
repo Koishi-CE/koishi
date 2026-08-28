@@ -1,3 +1,9 @@
+<!--
+  perms.vue：权限选择控件（array + perms 角色）。
+  把服务端下发的扁平权限名（如 "channel.xxx"）按 ":" 逐级拆分，
+  构造成 el-cascader 的级联选项树；checkStrictly 允只勾选父级权限，
+  emitPath: false 使选中值仍是完整的权限路径字符串。
+-->
 <template>
   <schema-base>
     <template #title><slot name="title"></slot></template>
@@ -35,6 +41,11 @@ defineEmits(["update:modelValue"]);
 
 const config = SchemaBase.useModel();
 
+/**
+ * 递归插入一个权限路径（如 ["channel", "admin", "x"]）：
+ * 逐段查找/创建级联节点；中间段（还有下级时）标记为 disabled，
+ * 因为 el-cascader 的父节点勾选会影响子级，而中间段并非真实权限。
+ */
 function addNode(nodes: CascaderOption[], path: string[], prefix = "") {
 	const name = path.shift();
 	let node = nodes.find((node) => node.value === prefix + name);
@@ -46,6 +57,7 @@ function addNode(nodes: CascaderOption[], path: string[], prefix = "") {
 	addNode((node.children ||= []), path, prefix + name + ":");
 }
 
+// 由全部权限名构建级联选项树
 const options = computed(() => {
 	const result: CascaderOption[] = [];
 	for (const name of store.permissions) {

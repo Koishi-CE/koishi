@@ -1,3 +1,8 @@
+<!--
+  用户设置页：左侧 el-tree 分组导航 + 右侧当前分组的内容。
+  分组内的条目三种形态二选一渲染：组件型（component）、表单型（schema），
+  disabled 的条目直接跳过。
+-->
 <template>
   <k-layout main="page-settings">
     <template #header>
@@ -35,9 +40,11 @@ import { useRoute, useRouter } from "vue-router";
 const route = useRoute();
 const router = useRouter();
 
+// 全局控制台配置（双向可写），表单型条目直接绑定到此对象
 const config = useConfig(true);
 const ctx = useContext();
 
+// el-tree 的数据源：由 internal.settings 中各分组的首个条目标题生成
 interface Tree {
 	id: string;
 	label: string;
@@ -52,10 +59,12 @@ const data = computed(() =>
 );
 
 function handleClick(tree: Tree) {
+	// 仅叶子节点（无 children）可切换分组
 	if (tree.children) return;
 	path.value = tree.id;
 }
 
+// 当前分组与路由参数双向同步；无效分组名回退为空串
 const path = computed({
 	get() {
 		const name = route.params.name?.toString();

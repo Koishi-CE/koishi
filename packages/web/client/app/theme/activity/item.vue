@@ -1,3 +1,8 @@
+<!--
+  活动栏条目：children[0] 为组的主图标，其余为并入该组的子活动，
+  悬停 tooltip 中列出组内成员。条目本身也是拖拽落点——
+  把另一个活动拖到本条目上即并入（或互换）分组。
+-->
 <template>
   <div
     class="activity-item"
@@ -43,6 +48,7 @@ const props = defineProps<{
 }>();
 
 const isActive = computed(() => {
+	// 组内任一成员命中当前路由即整组高亮
 	return Object.values(props.children).some(
 		(child) => route.meta?.activity?.id === child.id,
 	);
@@ -52,6 +58,7 @@ const hasDragOver = ref(false);
 
 const trigger = useMenu("theme.activity");
 
+// tooltip 中当前悬停的成员下标（0 为主图标，其余对应组内子活动）
 const hoverIndex = ref(0);
 
 watch(
@@ -74,14 +81,18 @@ const config = useConfig();
 function handleDrop(event: DragEvent) {
 	hasDragOver.value = false;
 	const text = event.dataTransfer.getData("text/plain");
+	// 只响应活动栏自身的拖拽协议，忽略外部拖入内容
 	if (!text.startsWith("activity:")) return;
 	const id = text.slice(9);
 	const target = props.children[0].id;
+	// 拖到自身所在组上无需处理
 	if (target === id) return;
 	event.preventDefault();
 
 	const override = ((config.value.activities ??= {})[id] ??= {});
 	if (override.parent === target) {
+		// 原本 id 已是 target 的子项：视为"拖出"，反转父子关系，
+		// 并让原父项（及其它子项）改挂到新的父项 id 之下
 		delete override.parent;
 		(config.value.activities[target] ??= {}).parent = id;
 		for (const key in config.value.activities) {
@@ -91,6 +102,7 @@ function handleDrop(event: DragEvent) {
 			}
 		}
 	} else {
+		// 常规情形：把拖入项并到 target 组
 		override.parent = target;
 	}
 }

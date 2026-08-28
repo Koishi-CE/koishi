@@ -1,3 +1,8 @@
+<!--
+  主题选择器：role 为 "theme" 的字符串 schema 的专用渲染组件。
+  下拉选项按明 / 暗模式过滤（主题 id 以 -light / -dark 结尾），
+  每个选项以三色块 + 标题的形式预览主题配色。
+-->
 <template>
   <schema-base>
     <template #title><slot name="title"></slot></template>
@@ -45,6 +50,8 @@ const tt = useI18nText();
 
 const config = SchemaBase.useModel();
 
+// el-select 的双向绑定：get 返回当前主题的显示名（供下拉框回显），
+// set 把选中的主题 id（即 el-option 的 value）透传给父级表单
 const model = computed({
 	get() {
 		return tt(ctx.internal.themes[config.value]?.name);

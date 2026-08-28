@@ -1,3 +1,8 @@
+<!--
+  k-tab-item：选项卡条目（配合 k-tab-group 使用）。
+  label 为条目标识兼默认文案，点击时 emit update:modelValue；
+  与当前选中值相等时高亮。
+-->
 <template>
   <div class="k-tab-item k-tab-menu-item truncate"
     :title="label"

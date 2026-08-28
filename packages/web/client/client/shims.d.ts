@@ -34,8 +34,10 @@ declare module "@koishi-ce/plugin-console" {
 		ping(): string;
 	}
 
+	/** 服务端数据服务的类型骨架（仅类型层面使用，浏览器端无实现） */
 	export abstract class DataService<T = any> {}
 
+	/** 扩展入口描述：由服务端 entry 服务推送，loader 据此动态加载扩展 */
 	export interface EntryData {
 		files: string[];
 		paths?: string[];
@@ -43,6 +45,7 @@ declare module "@koishi-ce/plugin-console" {
 	}
 
 	export namespace Console {
+		/** 服务端可用数据服务的清单，Store 类型据此推导各键的负载数据 */
 		export interface Services {
 			entry: DataService<Dict<EntryData>>;
 			schema: DataService<Dict<Schema>>;

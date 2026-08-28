@@ -1,3 +1,9 @@
+<!--
+  过滤器编辑器（全局组件 k-filter）：以「或 → 与 → 单条表达式」三层结构
+  编辑 minato 查询条件——外层各组之间为 $or，组内各行之间为 $and，
+  每行由 k-filter-expr 编辑。单项时省略包裹键，空组自动折叠为 undefined，
+  以保持 modelValue 的最简形态。无法按此结构解析时整体降级为提示文案。
+-->
 <template>
   <p v-if="invalid">无法解析过滤器。</p>
   <div class="k-filter" v-else>
@@ -30,6 +36,7 @@ const props = defineProps<{
 
 const emit = defineEmits(["update:modelValue"]);
 
+// modelValue 无法按「$or → $and → 表达式」结构解析时标记整体不可编辑
 const invalid = computed(() => {
 	const outer = extract(props.modelValue, "$or");
 	if (!outer) return true;
@@ -39,6 +46,10 @@ const invalid = computed(() => {
 	}
 });
 
+/**
+ * 从 modelValue 中按层级键（$or / $and）展开出数组：
+ * 缺省返回空数组，单项包裹返回该项，已是数组则原样返回。
+ */
 function extract(value: any, type: string) {
 	if (!value) {
 		return [];
@@ -49,6 +60,10 @@ function extract(value: any, type: string) {
 	}
 }
 
+/**
+ * extract 的逆操作：过滤空项后，0 项返回 undefined、1 项脱去包裹键、
+ * 多项重新包成 { [type]: values }，保证 modelValue 始终最简。
+ */
 function format(values: any, type: string) {
 	values = values.filter(Boolean);
 	if (!values.length) {
@@ -60,6 +75,7 @@ function format(values: any, type: string) {
 	}
 }
 
+/** 替换指定位置（外层 outerKey / 内层 innerKey）的表达式并整体重排 emit */
 function update(
 	expr: any,
 	innerKey: string | number,
@@ -72,6 +88,7 @@ function update(
 	emit("update:modelValue", format(outer, "$or"));
 }
 
+/** 删除指定位置的表达式（置空后交给 format 收敛结构） */
 function remove(innerKey: string | number, outerKey: string | number) {
 	const outer = extract(props.modelValue, "$or").slice();
 	const inner = extract(outer[outerKey], "$and").slice();

@@ -1,3 +1,7 @@
+<!--
+  页面组件按需加载进度条：按当前路由所需扩展（ctx.$loader.extensions）
+  的完成比例显示进度；store.entry 尚未就绪时以不确定进度（indeterminate）展示。
+-->
 <template>
   <k-status v-if="progress < 1">
     <el-progress :indeterminate="!store.entry" :percentage="progress * 100">

@@ -1,3 +1,7 @@
+<!--
+  活动栏条目间的分隔槽：平时不可见，拖拽悬停时显示横线提示，
+  松手即把被拖项移动到该位置（拖拽排序的核心落点组件）。
+-->
 <template>
   <div
     class="separator"
@@ -38,10 +42,12 @@ const ctx = useContext();
 function handleDrop(event: DragEvent) {
 	hasDragOver.value = false;
 	const text = event.dataTransfer.getData("text/plain");
+	// 只响应活动栏自身的拖拽协议
 	if (!text.startsWith("activity:")) return;
 	const id = text.slice(9);
 	const list = groups.value[props.position].map(([item]) => item);
 	const oldIndex = list.findIndex((item) => item.id === id);
+	// 落点即原位（含紧邻原位的前一格）时无需移动
 	if (
 		oldIndex === props.index ||
 		(oldIndex === props.index - 1 && oldIndex !== -1)
@@ -49,17 +55,21 @@ function handleDrop(event: DragEvent) {
 		return;
 	event.preventDefault();
 
+	// 先在副本上完成移动，得到目标排列，再据此反推各项的 order 覆盖值
 	let index = props.index;
 	const item = ctx.$router.pages[id];
 	if (oldIndex < 0) {
 		list.splice(index, 0, item);
 	} else {
+		// 原位置在落点之前时，移除自身会使落点前移一格，需补偿
 		if (oldIndex < index) index--;
 		list.splice(oldIndex, 1);
 		list.splice(index, 0, item);
 	}
 
 	const override = ((config.value.activities ??= {})[id] ??= {});
+	// 拖拽落在条目之间意味着脱离原分组，清除父项；
+	// 位置（top / bottom）与注册默认不同才记录覆盖，相同则删掉以保持配置干净
 	delete override.parent;
 	if (item.options.position !== props.position) {
 		override.position = props.position;
@@ -67,6 +77,9 @@ function handleDrop(event: DragEvent) {
 		delete override.position;
 	}
 
+	// 左右最近的"未改序"条目（order 仍等于注册默认值）作为锚点，
+	// 介于两锚点之间的项按线性插值重算 order；
+	// 只有一侧锚点时按步长 100 单向递增 / 递减；两侧都没有则恢复默认
 	const anchorL = list.findLastIndex(
 		(item, i) => i < index && item.order === item.options.order,
 	);
@@ -102,6 +115,7 @@ function handleDrop(event: DragEvent) {
 		}
 	}
 
+	// 覆盖配置为空对象时删除该键，避免残留无意义的配置项
 	if (!Object.keys(override).length) {
 		delete config.value.activities[id];
 	}

@@ -9,6 +9,10 @@ import type {
 import { markRaw, reactive, ref } from "vue";
 import type { Context } from "./context";
 
+/**
+ * 全局数据仓库的类型：按服务名映射到该 DataService 推送的负载数据。
+ * 服务端每类数据（entry、schema、permissions 等）对应 Store 的一个键。
+ */
 export type Store = {
 	[K in keyof Console.Services]?: Console.Services[K] extends DataService<
 		infer T
@@ -17,18 +21,36 @@ export type Store = {
 		: never;
 };
 
+// 由构建期注入的客户端配置（见 @koishi-ce/plugin-console 的 define 替换）
 declare const KOISHI_CONFIG: ClientConfig;
+/** 服务端下发的客户端配置（uiPath、heartbeat、proxyBase 等），只读 */
 export const global = KOISHI_CONFIG;
+/** 全局响应式数据仓库：服务端通过 data/patch 事件驱动其更新 */
 export const store = reactive<Store>({});
 
+/**
+ * 为资源 URL 拼上代理前缀。
+ * 控制台在反向代理后部署时，静态资源需经由 proxyBase 转发。
+ */
 export function withProxy(url: string) {
 	return (global.proxyBase || "") + url;
 }
 
+/** 当前与服务端的 WebSocket 连接（未连接时为 null） */
 export const socket = ref<Universal.WebSocket | null>(null);
+/** 按事件名登记的推送监听器（receive 注册） */
 const listeners: Record<string, (data: any) => void> = {};
+/** 按报文 id 暂存的 RPC 应答钩子 [resolve, reject]（send 写入） */
 const responseHooks: Record<string, [Function, Function]> = {};
 
+/**
+ * 向服务端发起一次 RPC 调用。
+ *
+ * 通过 WebSocket 发送 `{ id, type, args }` 报文，并以随机 id 关联
+ * 异步应答（见下方 "response" 监听）；超时 60s 后 reject。
+ * @param type 事件名（对应服务端 Events 接口的方法名）
+ * @param args 调用参数
+ */
 export function send<T extends keyof Events>(
 	type: T,
 	...args: Parameters<Events[T]>
@@ -47,14 +69,20 @@ export function send(type: string, ...args: any[]) {
 	});
 }
 
+/**
+ * 注册服务端主动推送事件的监听器（每类事件仅保留最后一个监听）。
+ * @param event 事件名，如 "data" / "patch" / "response" / "entry-data"
+ */
 export function receive<T = any>(event: string, listener: (data: T) => void) {
 	listeners[event] = listener;
 }
 
+// 服务端整表推送：直接覆盖 store 中对应键
 receive<{ key: keyof Store; value: any }>("data", ({ key, value }) => {
 	store[key] = value;
 });
 
+// 服务端增量推送：数组做追加，对象做浅合并
 receive<{ key: keyof Store; value: any }>("patch", ({ key, value }) => {
 	if (Array.isArray(store[key])) {
 		store[key].push(...value);
@@ -63,6 +91,7 @@ receive<{ key: keyof Store; value: any }>("patch", ({ key, value }) => {
 	}
 });
 
+// RPC 应答分发：按报文 id 找到 send() 留下的 resolve/reject 并结算
 receive("response", ({ id, value, error }) => {
 	if (!responseHooks[id]) return;
 	const [resolve, reject] = responseHooks[id];
@@ -74,11 +103,21 @@ receive("response", ({ id, value, error }) => {
 	}
 });
 
+/**
+ * 建立 WebSocket 连接并维护其生命周期。
+ *
+ * - 开启心跳：按配置间隔发送 ping，超时未收到消息则主动断开；
+ * - 断线重连：清空 store 后 1s 重试，重连成功则刷新页面以恢复完整状态。
+ * @param ctx 根 Context，用于把消息转发为 cordis 事件
+ * @param callback 创建 WebSocket 实例的工厂函数
+ */
 export function connect(ctx: Context, callback: () => Universal.WebSocket) {
 	const value = callback();
 
 	let sendTimer: number;
 	let closeTimer: number;
+	// 每收到一条消息就重置两个计时器：interval 到点发 ping，
+	// timeout 到点仍无消息则强制断线（触发 reconnect）
 	const refresh = () => {
 		if (!global.heartbeat) return;
 		clearTimeout(sendTimer);
@@ -89,6 +128,7 @@ export function connect(ctx: Context, callback: () => Universal.WebSocket) {
 
 	const reconnect = () => {
 		socket.value = null;
+		// 清空本地数据仓库：断线期间的数据已不可信，等待重连后重新拉取
 		for (const key in store) {
 			(store as Record<string, unknown>)[key] = undefined;
 		}

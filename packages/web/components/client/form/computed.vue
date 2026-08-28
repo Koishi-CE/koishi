@@ -1,3 +1,11 @@
+<!--
+  计算属性编辑器（schemastery-vue 扩展组件，经 form/index.ts 注册到
+  type=union + role=computed 节点）：把配置值表达为 $switch 结构——
+  「满足某条件的分支取各自的值，其余走 default」。
+  · 未展开成 $switch 时退化为单个 k-schema 渲染，仅追加「添加分支」入口；
+  · 展开后每个分支由条件（k-filter-button）与取值（k-schema）组成，
+    右键菜单提供分支的上移 / 下移 / 删除 / 上下方插入。
+-->
 <template>
   <k-schema
     v-bind="$attrs"
@@ -108,10 +116,12 @@ const emit = defineEmits(["update:modelValue"]);
 
 const tt = useI18nText();
 
+// 当前值是否已展开为 $switch 结构（决定渲染单值形态还是分支列表形态）
 const isSwitch = computed(() => {
 	return props.schema?.meta.role === "computed" && props.modelValue?.$switch;
 });
 
+// 对分支列表的全部编辑操作：均以不可变方式重建 $switch 对象后整体 emit
 const actions = {
 	up(index: number) {
 		const branches = props.modelValue.$switch.branches.slice();
@@ -135,6 +145,7 @@ const actions = {
 				$switch: { ...props.modelValue.$switch, branches },
 			});
 		} else {
+			// 仅剩最后一个分支时删除整个 $switch，塌缩回普通值（default）
 			emit("update:modelValue", props.modelValue.$switch["default"]);
 		}
 	},
@@ -153,6 +164,7 @@ const actions = {
 				$switch: { ...props.modelValue.$switch, branches },
 			});
 		} else {
+			// 从普通值首次展开为 $switch：原值降级为 default 分支
 			emit("update:modelValue", {
 				$switch: {
 					branches: [{ case: null, then: null }],

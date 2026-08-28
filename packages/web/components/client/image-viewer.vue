@@ -1,3 +1,9 @@
+<!--
+  图片查看器（全局组件 k-image-viewer）：在容器内居中展示单张图片，
+  底部悬浮工具条提供缩小 / 放大 / 复原 / 旋转操作。切换图片后自动复位
+  缩放与旋转，容器尺寸变化（useResizeObserver）或图片换源时重新按
+  naturalWidth / naturalHeight 等比缩放并居中。
+-->
 <template>
   <div class="image-viewer" ref="container">
     <slot></slot>
@@ -30,6 +36,7 @@ const props = defineProps<{
 	src?: string;
 }>();
 
+// 用户缩放 / 旋转量（transform 叠加在居中定位之上）
 const scale = ref(1);
 const rotate = ref(0);
 const img = ref<HTMLImageElement>(null);
@@ -39,6 +46,7 @@ const transform = computed(() => {
 	return `scale(${scale.value}) rotate(${rotate.value}deg)`;
 });
 
+// 切换图片源时复位缩放与旋转
 watch(
 	() => props.src,
 	(el) => {
@@ -47,12 +55,19 @@ watch(
 	},
 );
 
+// 图片元素挂载 / 更新后重新定位居中
 watch(img, moveToCenter);
 
+// 容器尺寸变化（如窗口缩放）时重新居中
 useResizeObserver(container, () => {
 	moveToCenter(img.value);
 });
 
+/**
+ * 按图片固有宽高与容器大小计算等比缩放，并以绝对定位居中：
+ * 直接写 style 的 width / height / left / top（不使用 transform，
+ * 避免与用户缩放 / 旋转的 transform 相互干扰）。
+ */
 function moveToCenter(el: HTMLImageElement) {
 	if (!el) return;
 	const { naturalHeight, naturalWidth } = el;

@@ -1,3 +1,9 @@
+<!--
+  overlay.vue：全屏图片查看器（经 router 的 global 插槽挂载）。
+  打开时把图片从原位"飞入"屏幕中心（appear 阶段从原坐标过渡到居中），
+  关闭时回到原坐标；支持放大/缩小/旋转/复原，左右切换页面内相邻图片，
+  键盘操作：方向键切换、Esc 关闭、Enter 关闭并滚动定位到原图片。
+-->
 <template>
   <transition name="overlay">
     <div class="overlay-image-viewer" v-if="shared.overlayImage" @click="setImage(null)">
@@ -35,6 +41,7 @@
 import { computed, onBeforeUnmount, onMounted, ref, watch } from "vue";
 import { shared } from "./utils";
 
+// 用户手动调整的缩放与旋转量（复原即回到 1 / 0）
 const scale = ref(1);
 const rotate = ref(0);
 const img = ref<HTMLImageElement>(null);
@@ -43,6 +50,7 @@ const transform = computed(() => {
 	return `scale(${scale.value}) rotate(${rotate.value}deg)`;
 });
 
+// 相邻图片：以文档中 .chat-image（chat/image.vue 渲染）的出现顺序为准
 const siblings = computed(() => {
 	if (!shared.overlayImage) return;
 	const elements = Array.from(
@@ -55,6 +63,7 @@ const siblings = computed(() => {
 	};
 });
 
+// 初始（适配屏幕）缩放比：按视口剩余空间把图片等比缩小，不放大
 const defaultScale = computed(() => {
 	const { naturalHeight, naturalWidth } = shared.overlayImage;
 	const maxHeight = innerHeight - paddingVertical * 2;
@@ -62,6 +71,8 @@ const defaultScale = computed(() => {
 	return Math.min(1, maxHeight / naturalHeight, maxWidth / naturalWidth);
 });
 
+// 切换/关闭查看器时重置手动缩放与旋转；
+// 关闭（el 为空）时把图片移回原位，切换则平滑过渡到新图居中
 watch(
 	() => shared.overlayImage,
 	(el, origin) => {
@@ -80,6 +91,7 @@ function setImage(el: HTMLImageElement) {
 	shared.overlayImage = el;
 }
 
+/** 把大图元素摆到原图片所在的位置与尺寸（关闭时的"飞回"动画终点） */
 function moveToOrigin(el: HTMLImageElement, origin = shared.overlayImage) {
 	const { height, width } = origin;
 	const { left, top } = origin.getBoundingClientRect();
@@ -90,9 +102,11 @@ function moveToOrigin(el: HTMLImageElement, origin = shared.overlayImage) {
 	el.style.transition = "0.3s ease";
 }
 
+// 视口四周预留的边距（当前为 0，即允许图片占满视口）
 const paddingVertical = 0;
 const paddingHorizontal = 0;
 
+/** 把图片按适配缩放比居中摆放到视口中央 */
 function moveToCenter(el: HTMLImageElement) {
 	const { naturalHeight, naturalWidth } = shared.overlayImage;
 	const scale = defaultScale.value;
@@ -112,6 +126,7 @@ onBeforeUnmount(() => {
 	document.removeEventListener("keydown", onKeyDown);
 });
 
+// 全局键盘操作：查看器打开期间接管方向键 / Esc / Enter
 function onKeyDown(ev: KeyboardEvent) {
 	if (!shared.overlayImage) return;
 	ev.preventDefault();
@@ -122,6 +137,7 @@ function onKeyDown(ev: KeyboardEvent) {
 	} else if (ev.key === "Escape") {
 		setImage(null);
 	} else if (ev.key === "Enter") {
+		// 关闭并把页面滚动到原图所在位置，便于继续浏览消息
 		shared.overlayImage.offsetParent.scrollIntoView({ behavior: "smooth" });
 		setImage(null);
 	}

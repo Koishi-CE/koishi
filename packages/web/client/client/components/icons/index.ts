@@ -1,3 +1,11 @@
+/**
+ * 图标中心：所有内置图标的注册表与 <k-icon> 组件。
+ *
+ * 图标分两类来源：本目录下的 svg / activity 组件，以及
+ * @koishi-ce/components 中现成的 Icon* 组件；统一以字符串名注册到
+ * registry，业务侧通过 <k-icon name="..."/> 按名渲染。
+ * 新图标可随时经 register() 补充注册。
+ */
 import {
 	type App,
 	type Component,
@@ -49,8 +57,10 @@ import User from "./svg/user.vue";
 
 import "./style.scss";
 
+// 图标名 → 组件的注册表（响应式以支持运行时动态注册）
 const registry: Record<string, Component> = reactive({});
 
+// —— 内置图标注册：activity:* 用于侧栏页面，其余为通用小图标 ——
 register("activity:default", Default);
 register("activity:ellipsis", Ellipsis);
 register("activity:home", Home);
@@ -101,10 +111,12 @@ register("tools", Tools);
 register("undo", Undo);
 register("user", User);
 
+/** 向注册表登记一个图标（markRaw 避免组件被响应式代理） */
 export function register(name: string, component: Component) {
 	registry[name] = markRaw(component);
 }
 
+/** 注册 <k-icon> 全局组件：按 name 从注册表查找并渲染对应图标 */
 export function install(app: App) {
 	app.component(
 		"k-icon",

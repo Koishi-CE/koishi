@@ -1,3 +1,7 @@
+<!--
+  底部状态栏容器：左右两组插槽（status-left / status-right），
+  移动端（<=768px）整条隐藏。
+-->
 <template>
   <footer class="layout-status">
     <div><k-slot name="status-left"></k-slot></div>

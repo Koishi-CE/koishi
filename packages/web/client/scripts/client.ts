@@ -1,3 +1,13 @@
+/**
+ * 宿主控制台前端的总装构建脚本（编程式 vite.build，本仓库没有 vite 配置文件）。
+ *
+ * 产物目录硬编码为 `plugins/webui/console/dist/`，内容分四部分：
+ * - 主应用（本包 `app/` 目录）→ `index.js`
+ * - client 组件库（本包 `client/` 目录）→ `client.js`（element-plus 单独成 chunk）
+ * - vue / vue-router / @vueuse/core 三个运行时共享包 → `vue.js` 等，
+ *   供主应用、client 与所有 webui 插件以 external 依赖的方式共享
+ */
+
 import yaml from "@maikolib/vite-plugin-yaml";
 import vue from "@vitejs/plugin-vue";
 import { appendFile, copyFile } from "fs/promises";
@@ -7,6 +17,12 @@ import mini from "unocss/preset-mini";
 import unocss from "unocss/vite";
 import * as vite from "vite";
 
+/**
+ * 定位某个依赖包在 node_modules 中的安装目录。
+ *
+ * @param id 依赖包名（须能被 require.resolve 解析到）
+ * @returns 形如 `<前缀>/node_modules/<id>` 的目录路径（统一为正斜杠）
+ */
 function findModulePath(id: string) {
 	const path = require.resolve(id).replace(/\\/g, "/");
 	const keyword = `/node_modules/${id}/`;
@@ -16,6 +32,15 @@ function findModulePath(id: string) {
 const cwd = resolve(__dirname, "../../../..");
 const dist = cwd + "/plugins/webui/console/dist";
 
+/**
+ * 通用构建函数：以 `root` 为构建根目录打一个 ES 模块包到 console dist。
+ *
+ * @param root 构建根目录（决定默认入口与 html 所在位置）
+ * @param config 额外的 vite 配置，逐层合并覆盖下方默认值
+ * @param isClient 标记本次构建的是否为 client 组件库本体。仅该构建需要
+ *   真实打包 vue-i18n（见下方别名说明），其余构建一律复用宿主的 client.js
+ * @returns rollup 构建结果（供调用方进一步处理产物）
+ */
 export async function build(
 	root: string,
 	config: vite.UserConfig = {},
@@ -27,11 +52,14 @@ export async function build(
 		build: {
 			outDir: cwd + "/plugins/webui/console/dist",
 			emptyOutDir: true,
+			// 样式合并为单个 style.css，方便服务端一次性下发
 			cssCodeSplit: false,
 			...config.build,
 			rollupOptions: {
 				...rollupOptions,
 				makeAbsoluteExternalsRelative: true,
+				// 各 root 下预置的共享包文件（vue.js / client.js 等）视为外部依赖，
+				// 产物以相对路径引用它们而非打包进来
 				external: [
 					root + "/vue.js",
 					root + "/vue-router.js",
@@ -63,6 +91,10 @@ export async function build(
 				"@koishi-ce/client": root + "/client.js",
 				...(isClient
 					? {
+							// client 组件库本体需要真实打包 vue-i18n：直接别名到官方
+							// esm-browser.prod 预编译产物（面向浏览器 ESM 且自带压缩），
+							// 其运行时依赖 @intlify/core-base 同样取 esm-browser 版本，
+							// 避免把包的 CJS 入口卷进 client chunk
 							"vue-i18n":
 								findModulePath("vue-i18n") +
 								"/dist/vue-i18n.esm-browser.prod.js",
@@ -71,6 +103,7 @@ export async function build(
 								"/dist/core-base.esm-browser.prod.js",
 						}
 					: {
+							// 其余构建（主应用等）不打包 vue-i18n，运行时复用宿主的 client.js
 							"vue-i18n": root + "/client.js",
 						}),
 			},
@@ -79,12 +112,13 @@ export async function build(
 }
 
 export default async function () {
-	// build for console main
+	// 第一步：构建控制台主应用（入口为 app/index.html，产物 index.js）
 	const { output } = await build(cwd + "/packages/web/client/app", {
 		plugins: [
 			unocss({
 				presets: [
 					mini({
+						// 宿主 html 已自带基础样式，这里关掉 unocss 的全局 reset
 						preflight: false,
 					}),
 				],
@@ -92,6 +126,9 @@ export default async function () {
 		],
 	});
 
+	// 第二步：三个运行时共享包。vue 直接复制官方 runtime esm-browser 产物；
+	// vue-router 与 @vueuse/core 以各自官方浏览器产物为入口重新打包，
+	// preserveEntrySignatures: "strict" 保留入口导出签名供具名导入
 	await Promise.all([
 		copyFile(
 			findModulePath("vue") + "/dist/vue.runtime.esm-browser.prod.js",
@@ -124,6 +161,8 @@ export default async function () {
 		}),
 	]);
 
+	// 第三步：构建 client 组件库（isClient = true，打包真实 vue-i18n）；
+	// element-plus 体积大，单独拆为 element chunk
 	await build(
 		cwd + "/packages/web/client/client",
 		{
@@ -146,6 +185,9 @@ export default async function () {
 		true,
 	);
 
+	// client 构建会用自己的一份 style.css 覆盖主应用先前写出的同名文件，
+	// 因此这里把主应用构建（留在内存 output 中）的样式追加到文件末尾，
+	// 使最终 style.css 同时包含两者
 	for (const file of output) {
 		if (file.type === "asset" && file.name === "style.css") {
 			await appendFile(dist + "/style.css", file.source);

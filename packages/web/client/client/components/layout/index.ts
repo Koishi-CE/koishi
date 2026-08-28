@@ -5,6 +5,7 @@ import Empty from "./empty.vue";
 import TabGroup from "./tab-group.vue";
 import TabItem from "./tab-item.vue";
 
+/** 注册布局组件（k-card / k-content / k-empty / k-tab-group / k-tab-item） */
 export default function (app: App) {
 	app.component("k-card", Card);
 	app.component("k-content", Content);

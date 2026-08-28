@@ -1,3 +1,8 @@
+<!--
+  k-content：页面主内容区容器。
+  水平居中、限宽 55rem，自带垂直滚动（el-scrollbar），
+  左右留白随屏幕宽度自适应收窄。
+-->
 <template>
   <el-scrollbar>
     <div class="k-content">

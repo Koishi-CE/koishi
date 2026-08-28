@@ -1,3 +1,12 @@
+/**
+ * @koishi-ce/client 构建入口。
+ *
+ * 提供两个编程式 API（本仓库的前端构建没有 vite 配置文件，全部在此完成）：
+ * - `build(root)`：构建单个 webui 插件的前端（`<插件目录>/client/` → `dist/`），
+ *   由 `bin.js` CLI（`koishi-console build`）暴露给各插件使用；
+ * - `createServer(baseDir)`：创建开发模式的 vite 中间件服务器。
+ */
+
 import yaml from "@maikolib/vite-plugin-yaml";
 import vue from "@vitejs/plugin-vue";
 import { existsSync, promises as fs, globSync, readFileSync } from "fs";
@@ -49,9 +58,16 @@ function collectWorkspaceAliases(): Record<string, string> {
 
 const workspaceAliases = collectWorkspaceAliases();
 
+/**
+ * 构建单个 webui 插件的前端产物。
+ *
+ * @param root 插件目录（无 `client/` 子目录时视为该插件没有前端，直接跳过）
+ * @param config 额外的 vite 配置，逐层合并覆盖下方默认值
+ */
 export async function build(root: string, config: vite.UserConfig = {}) {
 	if (!existsSync(root + "/client")) return;
 
+	// 产物约定：固定写入插件目录下的 dist/，清空后重建
 	const outDir = root + "/dist";
 	if (existsSync(outDir)) {
 		await fs.rm(outDir, { recursive: true });
@@ -78,6 +94,8 @@ export async function build(root: string, config: vite.UserConfig = {}) {
 					},
 					rollupOptions: {
 						makeAbsoluteExternalsRelative: true,
+						// 运行时由宿主控制台提供的共享依赖（vue.js / client.js 等），
+						// 不打入插件产物，插件在浏览器中向宿主索取
 						external: [
 							"vue",
 							"vue-router",
@@ -114,7 +132,11 @@ export async function build(root: string, config: vite.UserConfig = {}) {
 				resolve: {
 					alias: {
 						...workspaceAliases,
+						// 插件侧不打包 vue-i18n 本体，运行时复用宿主 client 包
+						// 再导出的实例（配合上面的 external 生效）
 						"vue-i18n": "@koishi-ce/client",
+						// 组件库同样经由宿主 client 包提供，避免每个插件
+						// 都把整套组件库重复打进产物
 						"@koishi-ce/components": "@koishi-ce/client",
 						// 虚拟子路径,类型见 packages/web/components/client/shims.d.ts
 						"schemastery-vue/client": "schemastery-vue",
@@ -128,12 +150,17 @@ export async function build(root: string, config: vite.UserConfig = {}) {
 		),
 	)) as BuildResult[];
 
+	// build.write: false 让构建结果留在内存里，由这里手动落盘，
+	// 以便对文件名和 JS 产物做后处理
 	for (const item of results[0]!.output) {
+		// lib es 格式的产物名是 index.mjs，统一改名为 index.js
 		if (item.fileName === "index.mjs") item.fileName = "index.js";
 		const dest = root + "/dist/" + item.fileName;
 		if (item.type === "asset") {
 			await fs.writeFile(dest, item.source);
 		} else {
+			// JS 产物再过一次 esbuild：压缩空白并强制 utf-8 输出
+			// （避免中文等非 ASCII 字符被转义成 \u 序列）
 			const result = await vite.transformWithEsbuild(item.code!, dest, {
 				minifyWhitespace: true,
 				charset: "utf8",
@@ -143,10 +170,19 @@ export async function build(root: string, config: vite.UserConfig = {}) {
 	}
 }
 
+/**
+ * 创建开发模式下的 vite dev server（middlewareMode，不监听独立端口，
+ * 由宿主 HTTP 服务挂载到 `/vite/` 前缀下）。
+ *
+ * @param baseDir 用于圈定文件访问范围的工作区根目录
+ * @param config 额外的 vite 配置
+ * @returns vite 的 ViteDevServer 实例
+ */
 export async function createServer(
 	baseDir: string,
 	config: vite.InlineConfig = {},
 ) {
+	// 开发模式下以本包的 app/ 宿主应用为入口
 	const root = resolve(__dirname, "../app");
 	return vite.createServer(
 		vite.mergeConfig(
@@ -178,6 +214,8 @@ export async function createServer(
 					},
 				},
 				resolve: {
+					// 强制这些依赖全局单实例，避免不同副本并存导致
+					// （例如多个 vue 实例）运行异常
 					dedupe: [
 						"vue",
 						"vue-demi",
@@ -189,7 +227,7 @@ export async function createServer(
 						"xss",
 					],
 					alias: {
-						// for backward compatibility
+						// 向后兼容：旧式插件以相对路径引用宿主共享包
 						"../client.js": "@koishi-ce/client",
 						"../vue.js": "vue",
 						"../vue-router.js": "vue-router",

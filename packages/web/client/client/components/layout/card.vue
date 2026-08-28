@@ -1,3 +1,8 @@
+<!--
+  k-card：通用卡片容器。
+  可选 header（标题文字或 header 插槽）与 footer 插槽；
+  scrollbar 开启时正文区使用 el-scrollbar 滚动。
+-->
 <template>
   <section class="k-card">
     <header v-if="title || $slots.header">

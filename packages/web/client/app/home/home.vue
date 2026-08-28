@@ -1,3 +1,7 @@
+<!--
+  控制台首页：WebSocket 就绪后渲染 "home" 插槽内容（默认为欢迎卡片），
+  未连接时显示连接提示卡片。
+-->
 <template>
   <k-layout :main="`darker page-home${socket ? '' : ' loading'}`">
     <el-scrollbar v-if="socket">

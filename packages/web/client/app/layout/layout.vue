@@ -1,3 +1,8 @@
+<!--
+  三栏布局组件（页面模板中 <k-layout> 的内置实现）：
+  可选的左右侧栏 + 顶部 header + 主区域。
+  移动端（<=768px）下侧栏转为抽屉式展开，由半透明遮罩（aside-mask）点击收起。
+-->
 <template>
   <div class="layout-container" :class="[container, styles]">
     <aside class="layout-aside layout-left" :class="left" v-if="$slots.left">
@@ -16,8 +21,10 @@
         </template>
         <template #right>
           <slot name="menu">
+            <!-- menu 为字符串时，渲染 ctx.internal.menus 中注册的同名菜单 -->
             <template v-if="typeof menu === 'string'">
               <template v-for="item in ctx.internal.menus[menu]" :key="menu">
+                <!-- 以 "." 开头的是相对菜单 id，需拼上所属菜单前缀再查 action -->
                 <layout-menu-item
                   v-if="item.id !== '@separator'"
                   :item="{ ...item, ...ctx.internal.actions[item.id.startsWith('.') ? menu + item.id : item.id] }"
@@ -49,6 +56,8 @@ import { useRoute } from "vue-router";
 import LayoutHeader from "./header.vue";
 import LayoutMenuItem from "./menu-item.vue";
 
+// 各 class prop 用于向对应区域追加自定义类名；menu 传数组时作为
+// 菜单项列表直接渲染，menuData 则作为菜单触发时的附加数据传入
 defineProps<{
 	main?: string;
 	left?: string;
@@ -62,9 +71,11 @@ const slots = useSlots();
 const route = useRoute();
 const ctx = useContext();
 
+// 移动端左右侧栏（抽屉）的展开状态
 const isLeftAsideOpen = ref(false);
 const isRightAsideOpen = ref(false);
 
+// 布局类名：左右插槽是否存在决定骨架形态，开合状态配合移动端抽屉样式
 const styles = computed(() => ({
 	"has-left-aside": slots.left,
 	"has-right-aside": slots.right,

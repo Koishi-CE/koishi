@@ -1,3 +1,8 @@
+<!--
+  通知条（全局组件 k-comment）：带左侧色条与状态图标的提示块。
+  type 取 primary / secondary / warning / success / error（error 会映射为
+  danger 样式类），默认插槽可放任意内容，未提供插槽时展示 title 文案。
+-->
 <template>
   <div class="k-comment" :class="type === 'error' ? 'danger' : type">
     <k-icon :name="icon"></k-icon>
@@ -15,6 +20,7 @@ const props = defineProps({
 	title: { type: String, required: false },
 });
 
+// 按 type 选取对应的全填充状态图标
 const icon = computed(() => {
 	switch (props.type) {
 		case "success":

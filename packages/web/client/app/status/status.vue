@@ -1,3 +1,8 @@
+<!--
+  通用状态项容器（页面模板中 <k-status> 的内置实现）：
+  内容区 + 悬停时的 tooltip（内容经 el-scrollbar 限高滚动）。
+  inheritAttrs 关闭，让外部透传的属性落到内层 div 而非根组件。
+-->
 <template>
   <el-tooltip placement="top" effect="light" popper-class="k-status-tooltip">
     <template #content>

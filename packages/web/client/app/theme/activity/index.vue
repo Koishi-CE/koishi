@@ -1,3 +1,9 @@
+<!--
+  活动栏（最左侧图标栏）：分 top / bottom 两区渲染活动项，
+  项与项之间的分隔槽（activity-separator）同时充当拖拽排序的落点。
+  空间不足时放不下的活动项折叠进 "..." 溢出组；
+  整条栏支持右键菜单（theme.activity，如"重置活动栏"）。
+-->
 <template>
   <nav
     class="layout-activity flex flex-col justify-evenly"
@@ -34,15 +40,20 @@ const config = useConfig();
 const trigger = useMenu("theme.activity");
 const { height, width } = useWindowSize();
 
+// 计算最终的活动栏分组：{ top, bottom, hidden（溢出折叠组，可能为空） }
 const groups = computed(() => {
 	let hidden: Activity[];
+	// 单个活动项占位（与 CSS 中 --activity-width / --activity-padding 对应）
 	const unit = width.value <= 768 ? 52 : 56;
+	// 可用总高度：视口高度减去上下留白（窄屏 4px / 宽屏 8px）
 	const total = height.value - (width.value <= 768 ? 4 : 8);
+	// 初始分组表：每个未禁用页面各自成一组（值为 Activity 数组）
 	const available = Object.fromEntries(
 		Object.entries(ctx.$router.pages)
 			.filter(([, data]) => !data.disabled())
 			.map(([key, data]) => [key, [data]]),
 	);
+	// 应用用户的覆盖配置：hidden 的直接移除；声明 parent 的并入父项所在组
 	for (const id of Object.keys(available)) {
 		const override = config.value.activities?.[id];
 		if (!override) continue;
@@ -58,6 +69,8 @@ const groups = computed(() => {
 		}
 	}
 	const list = Object.values(available).sort(([a], [b]) => a.order - b.order);
+	// 放不下时：从头部取出溢出项折叠成一个组，top 位优先、同位再按 order 排，
+	// 并以 "..." 图标作为该组的展示入口
 	if (list.length * unit > total) {
 		hidden = list
 			.splice(0, list.length + 1 - Math.floor(total / unit))
@@ -71,11 +84,13 @@ const groups = computed(() => {
 			.flat();
 		hidden.unshift({ icon: "activity:ellipsis" } as Activity);
 	}
+	// top 区按 order 逆序输出（order 大者靠上），bottom 区保持正序
 	const top = list.filter(([data]) => data.position !== "bottom").reverse();
 	const bottom = list.filter(([data]) => data.position === "bottom");
 	return { top, bottom, hidden };
 });
 
+// 供 separator 子组件注入，用于拖拽落点计算
 provide("groups", groups);
 </script>
 
