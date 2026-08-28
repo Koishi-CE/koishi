@@ -54,6 +54,7 @@ const common: UserConfig = {
 		// 声明文件不内联外部包类型，仅保留 import 引用
 		dts: { neverBundle: true },
 	},
+	// locale 位于包根目录，源码中的相对导入会触发 yml 原样复制
 	loader: { ".yml": "copy" },
 	inputOptions: { resolve: { extensions } },
 };

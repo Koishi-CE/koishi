@@ -6,7 +6,8 @@
 	"typings": "lib/index.d.ts",
 	"files": [
 		"lib",
-		"src"
+		"src",
+		"locales"
 	],
 	"author": "Shigma <shigma10826@gmail.com>",
 	"license": "MIT",
