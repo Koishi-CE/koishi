@@ -40,19 +40,30 @@
 </template>
 
 <script setup lang="ts">
+/**
+ * fork 管理弹窗：管理同一插件的多份配置（fork）。
+ *
+ * 表格逐行列出该插件的每份配置（状态灯 + 完整分组路径），
+ * 提供跳转编辑、删除操作，底部支持新建一份配置。
+ * 由全局状态 dialogFork 控制显隐（configWriter.ensure 与
+ * "管理多份配置"菜单项都会打开它）。
+ */
 import { router, send, store } from "@koishi-ce/client";
 import { computed } from "vue";
 import { dialogFork, getStatus, plugins, removeItem, type Tree } from "./utils";
 
+/** 弹窗对应的插件短名。 */
 const shortname = computed(() =>
 	dialogFork.value?.replace(/(koishi-|^@koishijs\/)plugin-/, ""),
 );
 const local = computed(() => store.packages?.[dialogFork.value]);
 
+/** 单个节点的显示文案：`标签 [路径]`。 */
 function getLabel(tree: Tree) {
 	return `${tree.label ? `${tree.label} ` : ""}[${tree.path}]`;
 }
 
+/** 从根到该节点的完整层级路径（用 " > " 连接，不含全局设置）。 */
 function getFullPath(tree: Tree) {
 	const path = [getLabel(tree)];
 	while (tree.parent) {
@@ -63,6 +74,11 @@ function getFullPath(tree: Tree) {
 	return path.join(" > ");
 }
 
+/**
+ * 跳转到某份配置的编辑页；不传 key 时先新建一份停用配置。
+ *
+ * @param key 现有配置的路径标识（留空则新建）
+ */
 async function configure(key?: string) {
 	const target = shortname.value;
 	if (!key) {

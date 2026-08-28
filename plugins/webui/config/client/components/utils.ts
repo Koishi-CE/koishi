@@ -1,21 +1,43 @@
+/**
+ * config 插件浏览器端的共享工具与全局状态。
+ *
+ * 核心职责：
+ * - 声明浏览器端的服务 / 事件类型（与服务端 shared/index.ts、writer.ts
+ *   的声明合并一一对应）；
+ * - 由 store.config（服务端推送的配置）派生出配置树 plugins
+ *   （data / forks / paths / expanded 四个视图）；
+ * - 由 store.packages 派生每个插件的依赖环境信息 envMap，
+ *   供配置页展示"依赖 / 服务 / 可重用性"提示；
+ * - 维护跨组件共享的响应式状态（current、dialogFork、dialogSelect）。
+ */
 import { router, ScopeStatus, send, store } from "@koishi-ce/client";
 import type { Context, Dict } from "@koishi-ce/koishi";
 import type { PackageProvider } from "@koishi-ce/plugin-config";
 import { computed, ref } from "vue";
 
+/** 单条"注入服务"依赖的信息。 */
 interface DepInfo {
+	/** 是否为必需依赖 */
 	required: boolean;
 }
 
+/** 单条 peer 插件依赖的信息。 */
 interface PeerInfo {
+	/** 是否为必需的 peerDependency（未被 peerDependenciesMeta 标记为 optional） */
 	required: boolean;
+	/** 该依赖插件当前是否已加载 */
 	active: boolean;
 }
 
+/** 插件依赖环境汇总，驱动配置页顶部的各项提示。 */
 export interface EnvInfo {
+	/** 本插件实现的服务列表 */
 	impl: string[];
+	/** 注入的服务依赖（using/inject），键为服务名 */
 	using: Dict<DepInfo>;
+	/** 插件级的 peer 依赖（其它 koishi 插件），键为包名 */
 	peer: Dict<PeerInfo>;
+	/** 是否存在需要警示用户的情况（不可重用已运行 / 未声明 schema） */
 	warning?: boolean;
 }
 
@@ -52,15 +74,25 @@ declare module "@koishi-ce/plugin-console" {
 	}
 }
 
+/** fork 管理弹窗当前展示的插件名（非空即打开弹窗）。 */
 export const dialogFork = ref<string>();
+
+/** 插件选择弹窗当前的目标节点（非空即打开弹窗）。 */
 export const dialogSelect = ref<Tree>();
 
+/** 控制台核心插件包名：这些插件不允许被停用或移除。 */
 export const coreDeps = [
 	"@koishi-ce/plugin-console",
 	"@koishi-ce/plugin-config",
 	"@koishi-ce/plugin-server",
 ];
 
+/**
+ * 判断配置树节点（及其后代）中是否包含控制台核心插件。
+ * 用于在右键菜单中禁用核心插件的"停用 / 移除"操作。
+ *
+ * @param tree 配置树节点
+ */
 export function hasCoreDeps(tree: Tree) {
 	if (
 		tree.name &&
@@ -71,7 +103,14 @@ export function hasCoreDeps(tree: Tree) {
 	if (tree.children) return tree.children.some(hasCoreDeps);
 }
 
+/**
+ * 汇总单个插件的依赖环境信息（peer 依赖 / 实现的服务 / 注入的服务 /
+ * 可重用性 / schema 声明），包不存在时返回空骨架。
+ *
+ * @param name 插件完整包名
+ */
 function getEnvInfo(name: string) {
+	/** 把服务名记入 using（已提供或 console 服务本身除外）。 */
 	function setService(name: string, required: boolean) {
 		if (services.has(name)) return;
 		if (name === "console") return;
@@ -84,7 +123,7 @@ function getEnvInfo(name: string) {
 	const local = packages?.[name];
 	if (!packages || !local) return result;
 
-	// check peer dependencies
+	// 检查 peer 依赖:只关注 koishi 插件类依赖,并顺带收集其实现的服务
 	for (const name in local.package.peerDependencies ?? {}) {
 		if (
 			!name.includes("@koishi-ce/plugin-") &&
@@ -101,13 +140,13 @@ function getEnvInfo(name: string) {
 		}
 	}
 
-	// check implementations
+	// 检查本插件实现的服务(adapter 服务由适配器体系单独处理,跳过)
 	for (const name of local.manifest.service.implements) {
 		if (name === "adapter") continue;
 		result.impl.push(name);
 	}
 
-	// check services
+	// 检查注入的服务依赖:required 来自 inject.required,optional 来自其余
 	for (const name of local.runtime?.required ?? []) {
 		setService(name, true);
 	}
@@ -115,12 +154,12 @@ function getEnvInfo(name: string) {
 		setService(name, false);
 	}
 
-	// check reusability
+	// 检查可重用性:已在运行且不可 fork 的插件,再启用一份可能出问题
 	if (local.runtime?.id && !local.runtime?.forkable) {
 		result.warning = true;
 	}
 
-	// check schema
+	// 检查 schema:未声明配置项的插件通常并非预期
 	if (!local.runtime?.schema) {
 		result.warning = true;
 	}
@@ -128,6 +167,7 @@ function getEnvInfo(name: string) {
 	return result;
 }
 
+/** 各插件的依赖环境信息表（键为完整包名，不含全局设置条目）。 */
 export const envMap = computed(() => {
 	return Object.fromEntries(
 		Object.keys(store.packages ?? {})
@@ -142,19 +182,37 @@ declare module "@koishi-ce/client" {
 	}
 }
 
+/**
+ * 配置树节点。name 是插件短名，id 是配置键（`name:ident`），
+ * path 是去掉插件名前缀的路径标识，与路由 /plugins/:name 对应。
+ */
 export interface Tree {
+	/** 配置键（形如 `name:ident`，分组为 `group:ident`） */
 	id: string;
+	/** 插件短名（分组为 "group"，根节点为空串） */
 	name: string;
+	/** 分组路径标识（根节点为空串），同时用作路由参数 */
 	path: string;
+	/** 用户自定义标签（$label），展示时代替插件名 */
 	label?: string;
+	/** 该节点的原始配置对象 */
 	config?: any;
 	parent?: Tree;
+	/** 是否处于停用状态（配置键带 ~ 前缀） */
 	disabled?: boolean;
 	children?: Tree[];
 }
 
+/** 当前选中的配置树节点（随路由同步）。 */
 export const current = ref<Tree>();
 
+/**
+ * 把插件短名还原为完整包名（在 store.packages 中实际存在的那一个），
+ * 兼容 `@scope/name` 与无 scope 两种情况。
+ *
+ * @param shortname 插件短名
+ * @returns 完整包名；找不到时为 undefined
+ */
 export function getFullName(shortname: string) {
 	if (!shortname) return shortname;
 	if (shortname.includes("/")) {
@@ -168,11 +226,17 @@ export function getFullName(shortname: string) {
 	);
 }
 
+/** 当前选中插件的完整包名。 */
 export const name = computed(() => {
 	if (!current.value) return;
 	return getFullName(current.value.name);
 });
 
+/**
+ * 当前选中节点在配置树菜单中应显示的类型标记：
+ * 存在警示（缺 schema / 注入服务未满足等）且处于停用态时为 "warning"，
+ * 否则为空（正常）。
+ */
 export const type = computed(() => {
 	const env = envMap.value[name.value ?? ""];
 	if (!env) return;
@@ -186,6 +250,18 @@ export const type = computed(() => {
 	}
 });
 
+/**
+ * 把服务端推送的 plugins 配置对象递归转换为配置树节点列表。
+ *
+ * 解析规则：
+ * - `$` 开头的键是内部控制字段（如 $label/$if），不生成节点；
+ * - `~` 前缀表示停用态，拆出后记入 node.disabled；
+ * - `group:ident` 键是分组，其值递归解析为 children。
+ *
+ * @param parent 父节点（用于回溯）
+ * @param plugins 当前层级的 plugins 配置对象
+ * @returns 节点列表（保持配置文件中的书写顺序）
+ */
 function getTree(parent: Tree, plugins: any): Tree[] {
 	const trees: Tree[] = [];
 	for (let key in plugins) {
@@ -208,6 +284,13 @@ function getTree(parent: Tree, plugins: any): Tree[] {
 	return trees;
 }
 
+/**
+ * 配置树派生视图（随 store.config 自动更新），包含四部分：
+ * - data：el-tree 的节点数据（根节点 + 各插件/分组）；
+ * - expanded：初始展开的分组路径（未设置 $collapsed 的分组）；
+ * - forks：插件短名 → 各份配置的路径列表；
+ * - paths：路径 → 节点的索引表。
+ */
 export const plugins = computed(() => {
 	const root: Tree = {
 		name: "",
@@ -227,6 +310,7 @@ export const plugins = computed(() => {
 		data.push(node);
 		traverse(node);
 	}
+	/** 收集展开状态、fork 索引与路径索引。 */
 	function traverse(tree: Tree) {
 		if (!tree.config?.$collapsed && tree.children) {
 			expanded.push(tree.path);
@@ -238,6 +322,12 @@ export const plugins = computed(() => {
 	return { data, forks, paths, expanded };
 });
 
+/**
+ * 读取某个配置节点的运行状态灯样式。
+ * 状态来自服务端 runtime.forks[path].status；无记录时视为已停用。
+ *
+ * @param tree 配置树节点
+ */
 export function getStatus(tree: Tree) {
 	switch (
 		store.packages?.[getFullName(tree.name) ?? ""]?.runtime?.forks?.[tree.path]
@@ -258,6 +348,11 @@ export function getStatus(tree: Tree) {
 	}
 }
 
+/**
+ * 移除某个配置节点：发送移除事件后跳回其父分组的配置页。
+ *
+ * @param tree 待移除的配置树节点
+ */
 export async function removeItem(tree: Tree) {
 	void send("manager/remove", tree.parent?.path ?? "", tree.id);
 	await router.replace("/plugins/" + tree.parent!.path);

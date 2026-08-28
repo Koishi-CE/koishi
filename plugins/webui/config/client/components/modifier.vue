@@ -6,6 +6,11 @@
 </template>
 
 <script lang="ts" setup>
+/**
+ * 过滤器设置组件：编辑插件/分组配置中的 $filter 字段
+ * （决定插件在哪些会话/频道生效的上下文过滤条件）。
+ * 以 v-model 形式与父级配置对象双向绑定。
+ */
 import { computed } from "vue";
 
 const props = defineProps<{
@@ -14,6 +19,7 @@ const props = defineProps<{
 
 const emit = defineEmits(["update:modelValue"]);
 
+// 读写都代理到 modelValue.$filter 这一个字段
 const filter = computed({
 	get: () => props.modelValue?.$filter,
 	set: (value) =>

@@ -3,6 +3,11 @@
 </template>
 
 <script lang="ts" setup>
+/**
+ * 全局设置面板：根节点（全局设置）的配置编辑区。
+ * 直接使用 store.packages[""] 中以 Context.Config 为 schema 的
+ * 运行时信息渲染 k-form。
+ */
 import { store } from "@koishi-ce/client";
 import { computed } from "vue";
 import type { Tree } from "./utils";

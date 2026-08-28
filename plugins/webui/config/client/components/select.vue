@@ -26,6 +26,13 @@
 </template>
 
 <script lang="ts" setup>
+/**
+ * 插件选择弹窗：从已安装的插件列表中挑选一个添加配置。
+ *
+ * 挂载在 plugin-select / plugin-select-base 两个插槽上，由全局插槽
+ * 统一渲染；标题与页签位置留有具名插槽（title / tabs）供其它插件
+ * 定制（如市场页签）。支持关键词过滤与外部 filter 注入。
+ */
 import { router, send, store, useI18nText } from "@koishi-ce/client";
 import type { PackageProvider } from "@koishi-ce/plugin-config";
 import { computed, inject, nextTick, ref, watch } from "vue";
@@ -36,11 +43,14 @@ const tt = useI18nText();
 const keyword = ref("");
 const input = ref();
 
+// 外部可通过 provide("plugin-select-filter") 注入自定义过滤逻辑,
+// 默认不做额外过滤
 const filter = inject(
 	"plugin-select-filter",
 	(data: PackageProvider.Data) => true,
 );
 
+/** 可选插件列表：排除全局设置条目，并应用关键词与注入的过滤器。 */
 const packages = computed(() =>
 	Object.values(store.packages).filter(({ name, shortname }) => {
 		return (
@@ -51,6 +61,11 @@ const packages = computed(() =>
 	}),
 );
 
+/**
+ * 选中某个插件：以随机 ident 新建一份停用配置并跳转到其配置页。
+ *
+ * @param shortname 插件短名
+ */
 function configure(shortname: string) {
 	const path = dialogSelect.value.path;
 	const ident = Math.random().toString(36).slice(2, 8);
@@ -60,6 +75,7 @@ function configure(shortname: string) {
 	router.push("/plugins/" + ident);
 }
 
+// 弹窗打开后自动聚焦搜索框
 watch(
 	dialogSelect,
 	async (value) => {
