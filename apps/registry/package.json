@@ -2,7 +2,7 @@
 	"name": "@koishi-ce/registry",
 	"description": "Scan Package Manager for Koishi Plugins",
 	"version": "7.0.3",
-	"main": "lib/index.js",
+	"main": "lib/index.mjs",
 	"typings": "lib/index.d.ts",
 	"files": [
 		"lib",
@@ -41,7 +41,7 @@
 		".": {
 			"source": "./src/index.ts",
 			"types": "./lib/index.d.ts",
-			"node": "./lib/index.js"
+			"node": "./lib/index.mjs"
 		},
 		"./package.json": "./package.json"
 	}

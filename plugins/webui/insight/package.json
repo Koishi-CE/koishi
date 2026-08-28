@@ -2,14 +2,14 @@
 	"name": "@koishi-ce/plugin-insight",
 	"description": "Show plugin dependency graph for Koishi",
 	"version": "3.5.2",
-	"main": "lib/index.cjs",
+	"main": "lib/index.mjs",
 	"types": "lib/index.d.ts",
 	"exports": {
 		".": {
 			"source": "./src/index.ts",
 			"types": "./lib/index.d.ts",
 			"import": "./lib/index.mjs",
-			"require": "./lib/index.js"
+			"default": "./lib/index.mjs"
 		},
 		"./package.json": "./package.json"
 	},

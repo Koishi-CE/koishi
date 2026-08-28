@@ -2,20 +2,22 @@ import type { UserConfig } from "tsdown";
 import { defineConfig } from "tsdown";
 
 /**
- * 根级统一构建：一个配置构建所有 node 侧子包（packages / plugins）。
+ * 根级统一构建：一个配置构建所有 node 侧子包（packages / plugins），
+ * 单遍 ESM-only（index.mjs + index.d.ts）。
  *
- * - 源码保持 ESM（编辑器与类型检查按 ESM 解析），但 Koishi 的 loader 用
- *   require() 加载插件，CJS 产物（index.js）是必须的；loader / cli 等包
- *   的 package.json 同时声明 node.import → index.mjs，因此统一追加
- *   ESM 产物，未被 exports 引用的 .mjs 对其余包无副作用。
+ * - 本仓库全面拥抱 Bun 运行时：Bun 的 require() 可直接加载 ESM，
+ *   各包 exports 以 `default` 条件兜底 require 解析，CJS 双格式产物
+ *   已退役（各包 package.json 正逐个完成 ESM-only 收敛）。
  * - workspace 内 @koishi-ce/* 互相引用按包名外部化（运行时由 node_modules
  *   的 workspace 链接提供）；类型声明只保留对依赖的引用，不做跨包内联。
- * - locale 的 .yml 原样拷入产物（引用路径自动改写），运行时由 koishi
- *   内置的 yml-register 直接加载。
+ * - locale 的 .yml 原样拷入产物（引用路径自动改写），Bun 运行时原生
+ *   支持 yml 导入，直接加载。
  * - packages/web/components、market 仅作为客户端源码被 console 打包器消费，
  *   无独立运行时产物；webui 插件的 .vue 部分由 vite 构建。
- * - @koishi-ce/koishi（cli）、apps/create-koishi-ce 与 apps/koishi-scripts
- *   各有自己的 tsdown.config.ts。
+ * - 例外（不走本配置）：vendored 三包（plugins/infra/{http,proxy-agent,
+ *   server}，预编译产物包，见 workspace.exclude）；apps/koishi-create 与
+ *   apps/koishi-scripts 各有自己的 CJS tsdown 配置（npx 直执行的脚手架，
+ *   待后续单独迁移）；apps/online 为 vite 编程式构建。
  */
 // 模块解析扩展名顺序：显式包含 .yml，让无扩展名的 locale 相对导入
 // （如 `../locales/zh-CN`）能在构建时解析到 .yml 文件并触发 copy loader
@@ -34,7 +36,7 @@ const extensions = [
 
 // tsdown workspace 模式的包发现范围：覆盖全部 node 侧子包；
 // vendored 三包（plugins/infra/{http,proxy-agent,server}）是预编译
-// 产物包（无 src/，分别内联再导出 @cordisjs/plugin-*），显式排除
+// 产物包（无 src/、分别内联再导出 @cordisjs/plugin-*），显式排除
 const workspace = {
 	include: [
 		"packages/node/*",
@@ -50,11 +52,14 @@ const workspace = {
 	],
 };
 
-/** 两种格式共享的基础配置（entry / 外部化 / copy loader 等） */
-const common: UserConfig = {
+const config: UserConfig = {
+	workspace,
 	entry: "src/index.ts",
 	platform: "node" as const,
 	outDir: "lib",
+	format: "esm",
+	dts: true,
+	clean: true,
 	deps: {
 		neverBundle: [/^@koishi-ce\//],
 		// 声明文件不内联外部包类型，仅保留 import 引用
@@ -63,29 +68,9 @@ const common: UserConfig = {
 	// locale 位于包根目录，源码中的相对导入会触发 yml 原样复制
 	loader: { ".yml": "copy" },
 	inputOptions: { resolve: { extensions } },
+	// ESM 产物用 .mjs 扩展名（不依赖各包的 "type": "module" 逐步到位），
+	// 声明文件保持 .d.ts（各包 exports 的 types 条件均指向它）
+	outExtensions: () => ({ js: ".mjs", dts: ".d.ts" }),
 };
 
-export default defineConfig([
-	// 第一遍：CJS（index.js + index.d.ts）。这是 Koishi loader require()
-	// 加载插件所依赖的必备产物，先构建并 clean 掉旧产物
-	{
-		...common,
-		workspace,
-		format: "cjs",
-		dts: true,
-		clean: true,
-		// 双格式同目录时 tsdown 会自动切换固定扩展名（.cjs），
-		// 而各包 exports 声明的是 require → index.js，显式对齐
-		outExtensions: () => ({ js: ".js", dts: ".d.ts" }),
-	},
-	// 第二遍：ESM（index.mjs），追加在同目录、不重复出 d.ts、不 clean
-	// （避免把第一遍的 CJS 产物清掉）
-	{
-		...common,
-		workspace,
-		format: "esm",
-		dts: false,
-		clean: false,
-		outExtensions: () => ({ js: ".mjs", dts: ".d.mts" }),
-	},
-]);
+export default defineConfig([config]);

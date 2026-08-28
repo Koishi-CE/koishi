@@ -11,7 +11,8 @@
 		".": {
 			"source": "./src/index.ts",
 			"types": "./lib/index.d.ts",
-			"import": "./lib/index.mjs"
+			"import": "./lib/index.mjs",
+			"default": "./lib/index.mjs"
 		},
 		"./lib/cli": "./lib/cli/index.mjs",
 		"./lib/worker": "./lib/worker/index.mjs",

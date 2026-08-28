@@ -2,15 +2,15 @@
 	"name": "@koishi-ce/plugin-console",
 	"description": "Web User Interface for Koishi",
 	"version": "5.30.11",
-	"main": "lib/node/index.js",
+	"main": "lib/node/index.mjs",
 	"types": "lib/index.d.ts",
 	"exports": {
 		".": {
 			"source": "./src/index.ts",
 			"types": "./lib/index.d.ts",
 			"node": {
-				"require": "./lib/node/index.js",
-				"import": "./lib/node/index.mjs"
+				"import": "./lib/node/index.mjs",
+				"default": "./lib/node/index.mjs"
 			},
 			"browser": "./lib/browser/index.mjs"
 		},

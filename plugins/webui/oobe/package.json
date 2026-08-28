@@ -2,14 +2,14 @@
 	"name": "@koishi-ce/plugin-oobe",
 	"description": "Out-Of-the-Box Experience for Koishi",
 	"version": "0.0.2",
-	"main": "lib/index.cjs",
+	"main": "lib/index.mjs",
 	"types": "lib/index.d.ts",
 	"exports": {
 		".": {
 			"source": "./src/index.ts",
 			"types": "./lib/index.d.ts",
 			"import": "./lib/index.mjs",
-			"require": "./lib/index.js"
+			"default": "./lib/index.mjs"
 		},
 		"./package.json": "./package.json"
 	},

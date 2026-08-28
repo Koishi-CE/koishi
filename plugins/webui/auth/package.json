@@ -2,7 +2,7 @@
 	"name": "@koishi-ce/plugin-auth",
 	"description": "Console User Authentication",
 	"version": "4.1.7",
-	"main": "lib/index.js",
+	"main": "lib/index.mjs",
 	"typings": "lib/index.d.ts",
 	"files": [
 		"lib",
@@ -60,7 +60,7 @@
 			"source": "./src/index.ts",
 			"types": "./lib/index.d.ts",
 			"import": "./lib/index.mjs",
-			"require": "./lib/index.js"
+			"default": "./lib/index.mjs"
 		}
 	}
 }

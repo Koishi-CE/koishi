@@ -98,7 +98,7 @@
     "packages/node/cli": {
       "name": "@koishi-ce/koishi",
       "version": "4.18.11",
-      "bin": "bin.js",
+      "bin": "lib/cli/index.mjs",
       "dependencies": {
         "@koishi-ce/core": "workspace:*",
         "@koishi-ce/loader": "workspace:*",
@@ -135,10 +135,6 @@
         "@koishi-ce/plugin-mock": "workspace:*",
         "@minatojs/driver-memory": "^3.7.0",
         "@sinonjs/fake-timers": "^15.4.0",
-        "@types/chai": "^4.3.16",
-        "@types/chai-as-promised": "^7.1.8",
-        "chai": "^6.2.2",
-        "chai-as-promised": "^8.0.2",
       },
     },
     "packages/node/i18n-utils": {
@@ -146,6 +142,10 @@
       "version": "1.0.1",
       "dependencies": {
         "cosmokit": "^1.8.1",
+      },
+      "devDependencies": {
+        "@types/chai": "^4.3.16",
+        "chai": "^6.2.2",
       },
     },
     "packages/node/loader": {
@@ -160,7 +160,9 @@
         "@koishi-ce/core": "workspace:*",
         "@koishi-ce/koishi": "workspace:*",
         "@koishi-ce/plugin-mock": "workspace:*",
+        "@types/chai": "^4.3.16",
         "@types/js-yaml": "^4.0.9",
+        "chai": "^6.2.2",
       },
       "peerDependencies": {
         "@koishijs/core": "4.18.11",
@@ -176,6 +178,8 @@
       "devDependencies": {
         "@koishi-ce/koishi": "workspace:*",
         "@sinonjs/fake-timers": "^15.4.0",
+        "@types/chai": "^4.3.16",
+        "chai": "^6.2.2",
       },
     },
     "packages/web/client": {
@@ -235,6 +239,8 @@
         "@koishi-ce/koishi": "workspace:*",
         "@koishi-ce/plugin-mock": "workspace:*",
         "@minatojs/driver-memory": "^3.7.0",
+        "@types/chai": "^4.3.16",
+        "chai": "^6.2.2",
         "minato": "^3.7.0",
       },
       "peerDependencies": {
@@ -442,6 +448,8 @@
         "@koishi-ce/plugin-help": "workspace:*",
         "@koishi-ce/plugin-locales": "workspace:*",
         "@koishi-ce/plugin-mock": "workspace:*",
+        "@types/chai": "^4.3.16",
+        "chai": "^6.2.2",
       },
       "peerDependencies": {
         "@koishijs/plugin-console": "^5.30.11",

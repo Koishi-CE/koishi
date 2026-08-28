@@ -2,13 +2,13 @@
 	"name": "@koishi-ce/plugin-marketn",
 	"description": "Next-generation Koishi plugin market and dependency management center",
 	"version": "3.0.0",
-	"main": "lib/index.js",
+	"main": "lib/index.mjs",
 	"types": "lib/index.d.ts",
 	"exports": {
 		".": {
 			"source": "./src/index.ts",
 			"types": "./lib/index.d.ts",
-			"node": "./lib/index.js"
+			"node": "./lib/index.mjs"
 		},
 		"./shared": {
 			"source": "./src/shared/index.ts"

@@ -2,7 +2,7 @@
 	"name": "@koishi-ce/plugin-sandbox",
 	"description": "Test Your Virtual Bot in Console",
 	"version": "3.4.2",
-	"main": "lib/index.js",
+	"main": "lib/index.mjs",
 	"typings": "lib/index.d.ts",
 	"files": [
 		"lib",
@@ -67,7 +67,7 @@
 			"source": "./src/index.ts",
 			"types": "./lib/index.d.ts",
 			"import": "./lib/index.mjs",
-			"require": "./lib/index.js"
+			"default": "./lib/index.mjs"
 		}
 	}
 }

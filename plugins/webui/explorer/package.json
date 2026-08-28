@@ -2,14 +2,14 @@
 	"name": "@koishi-ce/plugin-explorer",
 	"description": "File explorer and editor for Koishi",
 	"version": "1.5.5",
-	"main": "lib/index.cjs",
+	"main": "lib/index.mjs",
 	"types": "lib/index.d.ts",
 	"exports": {
 		".": {
 			"source": "./src/index.ts",
 			"types": "./lib/index.d.ts",
 			"import": "./lib/index.mjs",
-			"require": "./lib/index.js"
+			"default": "./lib/index.mjs"
 		},
 		"./package.json": "./package.json"
 	},
