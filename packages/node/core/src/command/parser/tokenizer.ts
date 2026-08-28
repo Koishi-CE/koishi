@@ -92,7 +92,9 @@ export class Tokenizer {
 			inters: [],
 		};
 		const index = leftQuotes.indexOf(source.charAt(0));
-		const quote = rightQuotes[index] ?? "";
+		// 越界时保持 undefined（不可改成 ""）：行尾 "$" 会匹配出空串，
+		// 若 quote 为 "" 则 capture[0] === quote 恒真，末尾 token 会被误判为引号包裹
+		const quote = rightQuotes[index];
 		let content = "";
 		if (quote) {
 			source = source.slice(1);

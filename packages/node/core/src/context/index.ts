@@ -246,5 +246,15 @@ export namespace Context {
 
 defineContextConfig(Context.Config);
 
+// 会话过滤挂载：cordis 事件分发时以 session[Context.filter](hookCtx) 判定
+// 监听器所在上下文是否放行本会话，缺失会导致 $filter / ctx.user 等选择器全部失效
+// （Context.filter 是 cordis 的 unique symbol，Session 类型上无对应索引，需断言）
+(satori.Session.prototype as any)[Context.filter] = function (
+	this: Session,
+	ctx: Context,
+) {
+	return ctx.filter(this);
+};
+
 // 向后兼容：历史上应用类名为 App
 export { Context as App };
