@@ -102,6 +102,12 @@
 </template>
 
 <script lang="ts" setup>
+/*
+ * 权限管理主页面：左侧是用户组与用户组路线两组可搜索列表（可新建 / 删除 / 行内重命名），
+ * 右侧为选中条目的权限列表（增删后整表回写）；
+ * 选中用户组时还提供组成员管理（按平台 + 账号添加 / 移除用户）。
+ * 所有变更通过 admin/* RPC 事件发送到服务端。
+ */
 import { message, send, store, useRpc } from "@koishi-ce/client";
 import type Admin from "@koishi-ce/plugin-admin/src";
 import {} from "@koishi-ce/plugin-locales";
@@ -131,6 +137,7 @@ interface Active {
 	id?: string;
 }
 
+// 从路由解析当前选中条目（/admin/group/:id 或 /admin/track/:id），无效时为空对象
 const active = computed<Active>(() => {
 	if (route.path.startsWith("/admin/group/")) {
 		const id = route.path.slice(13);
@@ -168,10 +175,12 @@ const activeTrack = computed<string>({
 	},
 });
 
+// 选中条目的权限列表（active 已保证 type / id 有效）
 const permissions = computed(() => {
 	return data.value[active.value.type][active.value.id].permissions;
 });
 
+// 行内重命名：输入停顿 1s 后才发送，避免每个按键都打一次 RPC
 const renameItem = debounce(
 	1000,
 	(type: "group" | "track", id: number, name: string) => {
@@ -189,6 +198,7 @@ const renameInput = computed<string>({
 	},
 });
 
+// 新建用户组 / 路线后跳转到新条目
 async function createItem() {
 	showCreateDialog.value = false;
 	const id = await send(`admin/create-${createType.value}`, createInput.value);
@@ -196,12 +206,14 @@ async function createItem() {
 	createInput.value = "";
 }
 
+// 删除当前选中的用户组 / 路线并回到列表首页
 async function deleteItem() {
 	// biome-ignore lint/nursery/noFloatingPromises: 已在 async 回调中 await，nursery 规则对 .vue 内 send 调用的误报
 	await send(`admin/delete-${active.value.type}`, +active.value.id);
 	router.replace("/admin/");
 }
 
+// 追加一个权限并把整份权限列表回写
 async function addPermission() {
 	const { permissions } = data.value[active.value.type][active.value.id];
 	permissions.push(permission.value);
@@ -214,6 +226,7 @@ async function addPermission() {
 	);
 }
 
+// 移除一个权限并把整份权限列表回写
 async function removePermission(index: number) {
 	const { permissions } = data.value[active.value.type][active.value.id];
 	permissions.splice(index, 1);
@@ -225,6 +238,7 @@ async function removePermission(index: number) {
 	);
 }
 
+// 按平台 + 账号把用户加入当前用户组（服务端报错时弹失败提示）
 async function addUser() {
 	try {
 		// biome-ignore lint/nursery/noFloatingPromises: 已在 async 回调中 await，nursery 规则对 .vue 内 send 调用的误报
@@ -242,6 +256,7 @@ async function addUser() {
 	showUserDialog.value = false;
 }
 
+// 按平台 + 账号把用户移出当前用户组
 async function removeUser() {
 	try {
 		// biome-ignore lint/nursery/noFloatingPromises: 已在 async 回调中 await，nursery 规则对 .vue 内 send 调用的误报
@@ -259,6 +274,7 @@ async function removeUser() {
 	showUserDialog.value = false;
 }
 
+// 权限条目的跳转链接：group/track 指回本页面，command 跳到指令管理页
 function getLink(name: string) {
 	if (name.startsWith("group:")) {
 		return `/admin/group/${name.slice(6)}`;

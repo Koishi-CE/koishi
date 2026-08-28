@@ -16,6 +16,11 @@
 </template>
 
 <script lang="ts" setup>
+/*
+ * 通用日志列表组件（日志页与插件详情共用）：
+ * 虚拟滚动渲染全部记录，把每条记录拼装成带 ANSI 颜色的终端风格行，
+ * 可选显示指向日志来源插件的跳转链接；本次启动的首条日志上方绘制分隔线。
+ */
 import { store, Time, VirtualList } from "@koishi-ce/client";
 import {} from "@koishi-ce/plugin-config";
 import { AnsiUp } from "ansi_up";
@@ -34,15 +39,21 @@ const props = defineProps<{
 	maxHeight?: string;
 }>();
 
-// this package does not have consistent exports in different environments
+// ansi_up 在不同环境下的导出形状不一致，因此这里统一按实例化后使用
 const converter = new AnsiUp();
 
+/** 生成一段 ANSI 颜色转义序列（8/16 色码 + 可选装饰，如加粗 ";1"）。 */
 function renderColor(code: number, value: any, decoration = "") {
 	return `\u001b[3${code < 8 ? code : "8;5;" + code}${decoration}m${value}\u001b[0m`;
 }
 
 const showTime = "yyyy-MM-dd hh:mm:ss";
 
+/**
+ * 判断某行是否是本次启动的首条日志：
+ * 前一行 id 更大（说明日志序号回绕，即重启）且来源为 app 时成立，
+ * 用于在两次启动的日志之间画分隔线。
+ */
 function isStart(record: LogRecord & { index: number }) {
 	return (
 		record.index &&
@@ -51,6 +62,10 @@ function isStart(record: LogRecord & { index: number }) {
 	);
 }
 
+/**
+ * 拼装单行日志：时间戳 + [级别] + 作用域名（按名称散列取色、对齐补白）+ 正文，
+ * 多行正文按首行缩进对齐，最后整体交给 AnsiUp 转成带颜色的 HTML。
+ */
 function renderLine(record: LogRecord) {
 	const prefix = `[${record.type[0].toUpperCase()}]`;
 	const space = " ";

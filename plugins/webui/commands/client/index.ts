@@ -9,6 +9,11 @@ import Settings from "./settings.vue";
 
 import "virtual:uno.css";
 
+/**
+ * 指令管理面板的浏览器侧入口：
+ * 注册「指令管理」页面、插件详情页的指令列表插槽、
+ * 本地化页面的跳转插槽，以及页面顶部的操作菜单（保存 / 移除 / 创建）。
+ */
 icons.register("activity:commands", Activity);
 icons.register("check", Check);
 icons.register("trash-can", TrashCan);

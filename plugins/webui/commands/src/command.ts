@@ -2,12 +2,23 @@ import type { Context } from "@koishi-ce/koishi";
 import type CommandManager from ".";
 import zhCN from "../locales/zh-CN.yml";
 
+/**
+ * 从对象中摘除一个键，返回被摘除的值（无则返回 undefined）。
+ * @param object 目标对象
+ * @param key 要摘除的键
+ */
 export function remove<O, K extends keyof O>(object: O, key: K) {
 	const value = object[key];
 	delete object[key];
 	return value;
 }
 
+/**
+ * 注册 `command` 聊天指令：在会话中直接管理指令的别名、父级与创建，
+ * 等价于控制台面板的对应操作（均写回插件配置）。
+ * @param ctx 运行上下文
+ * @param manager 所属的指令管理器实例
+ */
 export default function (ctx: Context, manager: CommandManager) {
 	ctx.i18n.define("zh-CN", zhCN);
 

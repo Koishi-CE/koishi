@@ -6,6 +6,11 @@ import memory from "@koishijs/plugin-database-memory";
 import { expect, use } from "chai";
 import promise from "chai-as-promised";
 
+/**
+ * @koishi-ce/plugin-admin 聊天指令的行为测试：
+ * 覆盖 user/authorize 的目标校验与权限约束、channel/assign 的受理人指派，
+ * 断言以中文回执文案为准。
+ */
 use(promise);
 
 const app = new App();
@@ -29,6 +34,8 @@ beforeAll(async () => {
 
 describe("Admin Commands", () => {
 	it("user/authorize", async () => {
+		// 校验缺参 / 非法目标 / 参数格式错误的报错路径，
+		// 以及权限边界（不可操作同级或更高权限用户）与正常改写
 		await client1.shouldReply("authorize", "请指定目标用户。");
 		await client1.shouldReply(
 			"authorize -u nan",
@@ -46,6 +53,8 @@ describe("Admin Commands", () => {
 	});
 
 	it("channel/assign", async () => {
+		// 校验私聊缺 -c、非法频道、跨平台受理人等报错路径，
+		// 以及受理人缺省（指派给机器人自身）与显式指派的落库结果
 		await app.mock
 			.client("123")
 			.shouldReply(

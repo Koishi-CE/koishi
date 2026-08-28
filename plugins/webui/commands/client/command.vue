@@ -86,6 +86,12 @@
 </template>
 
 <script setup lang="ts">
+/*
+ * 单条指令的配置面板（指令管理页右侧内容区）：
+ * - 别名表格（设为默认 / 禁用 / 恢复 / 删除）与「添加别名」对话框（支持实时参数解析预览）；
+ * - 指令配置、各选项的 k-form 表单（Schema 由 store 按类型名反查）；
+ * - 通过顶部菜单 action 把改动发送回服务端。
+ */
 import {
 	clone,
 	type Dict,
@@ -127,6 +133,7 @@ const showAliasDialog = computed({
 	set: () => (target.value = null),
 });
 
+// 指令切换时：反查配置 / 选项的 Schema，并把覆盖态克隆为可编辑的草稿
 watch(
 	() => props.command,
 	(value) => {
@@ -143,6 +150,7 @@ watch(
 	{ immediate: true },
 );
 
+// 顶部菜单：保存更改（无改动时禁用，改动经深比较判定）
 ctx.action("command.update", {
 	disabled: () =>
 		deepEqual(
@@ -157,6 +165,7 @@ ctx.action("command.update", {
 		),
 });
 
+// 把某个别名提到字典最前，使其成为显示名称（首项即显示名）
 function setDefault(name: string) {
 	const item = current.value.aliases[name];
 	current.value.aliases = {
@@ -166,6 +175,7 @@ function setDefault(name: string) {
 	void send("command/aliases", props.command.name, current.value.aliases);
 }
 
+// 删除别名：初始就有的别名改为置 filter=false（禁用），后续新增的直接移除
 function deleteAlias(name: string) {
 	if (props.command.initial.aliases[name]) {
 		current.value.aliases[name].filter = false;
@@ -175,11 +185,13 @@ function deleteAlias(name: string) {
 	void send("command/aliases", props.command.name, current.value.aliases);
 }
 
+// 恢复被禁用的初始别名
 function recoverAlias(name: string) {
 	current.value.aliases[name] = props.command.initial.aliases[name];
 	void send("command/aliases", props.command.name, current.value.aliases);
 }
 
+// 把别名携带的参数 / 选项还原成可读文本（如 "--foo=bar baz"）
 function stringify(alias: Command.Alias) {
 	return [
 		...(alias?.args || []),
@@ -191,22 +203,27 @@ function stringify(alias: Command.Alias) {
 
 async function handleOpen() {
 	// https://github.com/element-plus/element-plus/issues/15250
+	// 对话框挂载后需等一个 tick 才能拿到输入框焦点
 	await nextTick();
 	inputEl.value?.focus();
 }
 
+// 全部指令已使用的别名集合（用于重名校验）
 const aliases = computed(() => {
 	return Object.values(data.value).flatMap(
 		(command) => command.override.aliases,
 	);
 });
 
+// 新别名为空或与现有别名冲突时无效
 const invalidName = computed(() => {
 	return !inputName.value || !!aliases.value[inputName.value];
 });
 
+// 服务端解析「别名参数」输入的实时结果（含 error 字段供校验）
 const parsed = ref<Argv>({});
 
+// 输入防抖 500ms 后请求服务端解析参数文本，用于实时预览
 watchDebounced(
 	inputSource,
 	async (value) => {
@@ -220,6 +237,7 @@ watchDebounced(
 	{ debounce: 500 },
 );
 
+// 确认添加别名：参数文本解析成功则连同解析结果一并存入，否则存空别名
 async function onEnter() {
 	if (invalidName.value) return;
 	if (inputSource.value.trim()) {

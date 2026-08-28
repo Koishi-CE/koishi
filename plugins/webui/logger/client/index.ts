@@ -25,6 +25,10 @@ declare module "@koishi-ce/plugin-console" {
 	}
 }
 
+/**
+ * 日志查看器的浏览器侧入口：
+ * 注册「日志」页面（订阅 logs 数据服务）与插件详情页的运行日志插槽。
+ */
 export default (ctx: Context) => {
 	ctx.page({
 		path: "/logs",

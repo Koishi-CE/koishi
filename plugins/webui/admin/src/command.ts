@@ -9,6 +9,13 @@ import {
 	type User,
 } from "@koishi-ce/koishi";
 
+/**
+ * 聊天侧管理指令：
+ * - `user/authorize`、`user/locale`、`channel/assign`、`channel/locale` 四条指令；
+ * - 对声明了 `config.admin` 的指令注入 `-u` / `-c` 选项，
+ *   使其可作用于其它用户 / 频道（adminUser / adminChannel 两个装饰器实现）。
+ */
+
 declare module "@koishi-ce/koishi" {
 	namespace Command {
 		interface Config {
@@ -26,6 +33,7 @@ declare module "@koishi-ce/koishi" {
 }
 
 export default function apply(ctx: Context) {
+	// 对已有 / 后续新增的指令应用管理装饰（按 config.admin 决定注入哪些能力）
 	function enableAdmin(command: Command) {
 		if (!command.config.admin) return;
 		command[Context.current] = ctx;
@@ -103,6 +111,7 @@ export default function apply(ctx: Context) {
 		.use(adminLocale, "channel");
 }
 
+/** 拆分 "platform:id" 形式的目标标识。 */
 function parsePlatform(target: string): [platform: string, id: string] {
 	const index = target.indexOf(":");
 	const platform = target.slice(0, index);
@@ -110,9 +119,19 @@ function parsePlatform(target: string): [platform: string, id: string] {
 	return [platform, id] as [platform: string, id: string];
 }
 
+/**
+ * 指令的「用户管理」装饰器：注入 `-u [user:user]` 选项，
+ * 让指令可以把 session.user 临时切换为数据库中的目标用户（观察者代理，
+ * 差异自动落库），执行完毕后恢复原用户。返回包装了前置 / 后置逻辑的新指令。
+ */
 function adminUser(command: Command) {
 	let notFound: boolean;
 
+	/**
+	 * 前置处理：按 -u 选项把 session.user 换成目标用户。
+	 * 目标不存在时用空模板创建观察者（配合 upsert 决定是报错还是建档）；
+	 * 目标权限不低于操作者时拒绝操作。
+	 */
 	async function setTarget(
 		argv: Argv<"authority", never, any[], Extend<{}, "user", string>>,
 	) {
@@ -121,16 +140,16 @@ function adminUser(command: Command) {
 		const { app } = session;
 		notFound = false;
 
-		// user not specified, use current user
+		// 未指定目标用户时，直接作用于当前用户
 		if (!options?.user) return undefined;
 
-		// spectified user is identical to current user
+		// 指定的目标用户就是当前用户
 		const [platform, userId] = parsePlatform(options.user);
 		if (session.userId === userId && session.platform === platform) {
 			return undefined;
 		}
 
-		// get target user
+		// 读取目标用户数据
 		const fields = session.collect("user", argv);
 		const data = await app.database.getUser(platform, userId, [...fields]);
 
@@ -198,9 +217,18 @@ function adminUser(command: Command) {
 		}, true);
 }
 
+/**
+ * 指令的「频道管理」装饰器：注入 `-c [channel:channel]` 选项，
+ * 让指令可以把 session.channel 临时切换为目标频道（观察者代理，差异自动落库），
+ * 执行完毕后恢复原频道。私聊场景必须显式指定 -c。
+ */
 function adminChannel(command: Command) {
 	let notFound: boolean;
 
+	/**
+	 * 前置处理：按 -c 选项把 session.channel 换成目标频道。
+	 * 目标不存在时用空模板创建观察者（配合 upsert 决定是报错还是建档）。
+	 */
 	async function setTarget(
 		argv: Argv<never, never, any[], Extend<{}, "channel", string>>,
 	) {
@@ -209,12 +237,12 @@ function adminChannel(command: Command) {
 		const { app } = session;
 		notFound = false;
 
-		// channel is required for private messages
+		// 私聊没有频道上下文，必须显式指定目标频道
 		if (session.isDirect && !options?.channel) {
 			return session.text("admin.not-in-group");
 		}
 
-		// channel not specified or identical, use current channel
+		// 未指定目标频道或与当前频道相同时，直接作用于当前频道
 		const channel = options?.channel ?? session.cid;
 		// $detached 是 observe 运行时附加的标记(仅会赋 true),不在 Observed 类型中
 		const current = session.channel;
@@ -222,7 +250,7 @@ function adminChannel(command: Command) {
 			return undefined;
 		}
 
-		// get target channel
+		// 读取目标频道数据
 		const [platform, channelId] = parsePlatform(channel);
 		const fields = session.collect("channel", argv);
 		const data = await app.database.getChannel(platform, channelId, [
@@ -289,6 +317,12 @@ function adminChannel(command: Command) {
 
 type Key = "user" | "channel";
 
+/**
+ * locale 子指令的公共实现：设置 / 清除目标用户或频道的第一语言，
+ * 不带参数时查询当前设置。
+ * @param cmd 待挂载 action 的指令
+ * @param key 操作目标是 user 还是 channel（决定读写 session 的哪个字段）
+ */
 function adminLocale<
 	U extends User.Field,
 	G extends Channel.Field,

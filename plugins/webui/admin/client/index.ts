@@ -6,6 +6,10 @@ import TrashCan from "./icons/trash-can.vue";
 
 import "virtual:uno.css";
 
+/**
+ * 权限管理面板的浏览器侧入口：
+ * 注册「权限管理」页面（用户组 / 用户组路线两组列表）并挂载所需图标。
+ */
 icons.register("trash-can", TrashCan);
 icons.register("activity:group", Activity);
 

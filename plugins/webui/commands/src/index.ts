@@ -14,6 +14,15 @@ import {
 import { resolve } from "path";
 import CommandExtension from "./command";
 
+/**
+ * @koishi-ce/plugin-commands 的 node 侧入口。
+ *
+ * 核心是 {@link CommandManager}：以「初始快照 + 用户覆盖」双层结构在运行时改写
+ * 指令树（别名 / 选项 / 配置 / 父子归属），并把覆盖部分持久化到插件配置；
+ * 插件卸载时按快照恢复指令原状。同时向 console 注册前端入口并监听
+ * 管理面板发来的 RPC 事件（增删改 / 移动 / 别名 / 参数解析）。
+ */
+
 declare module "@koishi-ce/console" {
 	interface Events {
 		"command/create"(name: string): void;
@@ -33,6 +42,11 @@ interface Override extends Partial<CommandState> {
 	create?: boolean;
 }
 
+/**
+ * 单条指令的覆盖项 Schema：只保留与初始状态不同的部分（别名 / 选项 / 配置）。
+ * `name` 形如 "parent/child"，用于声明指令在指令树中的归属；
+ * `aliases` 兼容「字典」与「字符串数组」两种写法（后者等价于值全为空对象的字典）。
+ */
 const Override: Schema<Override> = Schema.object({
 	name: Schema.string(),
 	create: Schema.boolean(),
@@ -57,12 +71,18 @@ const Override: Schema<Override> = Schema.object({
 	config: Schema.any(),
 });
 
+/** 指令的一份完整状态：别名表、配置与选项声明。 */
 export interface CommandState {
 	aliases: Dict<Command.Alias>;
 	config: Command.Config;
 	options: Dict<Argv.OptionDeclaration>;
 }
 
+/**
+ * 指令快照：记录插件加载时的初始状态与用户覆盖状态。
+ * `initial` 用于插件卸载时恢复原状；`override` 是当前生效的用户改动；
+ * `pending` 在目标父指令尚未注册时暂存其名称，等 command-added 事件再补挂。
+ */
 export interface Snapshot {
 	create?: boolean;
 	pending?: string | null;
@@ -74,6 +94,7 @@ export interface Snapshot {
 
 interface Config extends Override {}
 
+/** 插件配置 Schema：值为覆盖字典，也允许直接写字符串简写（仅声明归属）。 */
 const Config: Schema<string | Config, Config> = Schema.union([
 	Override,
 	Schema.transform(String, (name) => ({
@@ -84,6 +105,7 @@ const Config: Schema<string | Config, Config> = Schema.union([
 	})),
 ]);
 
+/** 下发给前端的一份指令数据：快照两态 + 树结构（children / paths）。 */
 export interface CommandData {
 	create: boolean;
 	name: string;
@@ -93,6 +115,16 @@ export interface CommandData {
 	override: CommandState;
 }
 
+/**
+ * 指令管理器：本插件的主体服务。
+ *
+ * 职责：
+ * - 启动时读取配置，对每条被覆盖的指令调用 {@link accept} 应用改动；
+ * - 监听指令的增删改事件，维护快照与数据缓存；
+ * - 暴露 alias / teleport / update 等变更方法（控制台 RPC 与 `command` 指令共用），
+ *   并通过 {@link write} 把覆盖写回插件配置持久化；
+ * - 卸载时把所有指令恢复到初始快照。
+ */
 export class CommandManager {
 	static filter = false;
 	static schema: Schema<Dict<string | Config>, Dict<Config>> =
@@ -109,6 +141,10 @@ export class CommandManager {
 
 	public snapshots: Dict<Snapshot> = Object.create(null);
 
+	/**
+	 * @param ctx 运行上下文
+	 * @param config 插件配置：以指令名为键的覆盖字典
+	 */
 	constructor(ctx: Context, config: Dict<Config>) {
 		this.ctx = ctx;
 		this.config = config;
@@ -129,8 +165,7 @@ export class CommandManager {
 			}
 		}
 
-		// The command API is chained, so it's better to wait for the next tick
-		// because the command may not be fully initialized at this moment.
+		// 指令 API 是链式的，此刻指令可能尚未完成初始化，留到下一个事件循环再处理更稳妥
 		ctx.on("command-added", async (cmd) => {
 			this.init(cmd);
 			for (const snapshot of Object.values(this.snapshots)) {
@@ -168,7 +203,7 @@ export class CommandManager {
 					this.snapshots,
 				)) {
 					command.config = initial.config;
-					// initial aliases cannot include false values
+					// 初始别名不可能包含 false 值（禁用是覆盖层才有的语义）
 					command._aliases = initial.aliases;
 					Object.assign(command._options, initial.options);
 					this._teleport(command, parent);
@@ -182,6 +217,10 @@ export class CommandManager {
 		this.installWebUI();
 	}
 
+	/**
+	 * 指令被（重新）添加或更新后，延后一个 tick 再应用配置中的覆盖，
+	 * 避免与指令自身的链式初始化产生竞争；同一指令的重复触发会被合并。
+	 */
 	init(command: Command) {
 		const config = this.config[command.name];
 		if (!config) return;
@@ -191,12 +230,19 @@ export class CommandManager {
 		}, 0);
 	}
 
+	/**
+	 * 取到指令对应的快照；不存在时以指令当前状态为初始值创建一份。
+	 * @param name 指令全名
+	 * @param create 标记该指令是否由本插件创建（创建后卸载时要连同指令一起销毁）
+	 * @param patch 为 true 时先用指令现状回填快照（供其它插件改动后重新接管）
+	 * @returns 该指令的快照
+	 */
 	ensure(name: string, create?: boolean, patch?: boolean) {
 		// 调用方均保证该名称的指令存在（缺失时行为与原先一致，运行时抛错）
 		const command = this.ctx.$commander.get(name)!;
 		const snapshot = this.snapshots[command.name];
 		if (patch && snapshot) {
-			// Aliases and options may be modified by other plugins.
+			// 别名与选项可能已被其它插件修改，先把新出现的部分并入初始状态
 			snapshot.initial.options = mapValues(command._options, (option, key) => {
 				return snapshot.initial.options[key] || clone(option);
 			});
@@ -227,6 +273,7 @@ export class CommandManager {
 		});
 	}
 
+	/** 内部挂载实现：把指令从当前父节点摘下，挂到指定父节点（null 表示成为顶层指令）。 */
 	_teleport(command: Command, parent: Command | null = null) {
 		if (command.parent === parent) return;
 		if (command.parent) {
@@ -235,6 +282,13 @@ export class CommandManager {
 		command.parent = parent;
 	}
 
+	/**
+	 * 移动指令在指令树中的位置。
+	 * 目标父指令尚未注册时记入 `pending`，待其注册后再补挂。
+	 * @param command 待移动的指令
+	 * @param name 目标父指令名（空串表示移到顶层）
+	 * @param write 是否把归属变化写入插件配置
+	 */
 	teleport(command: Command, name: string, write = false) {
 		// 调用前均已通过 ensure 建立快照
 		const snapshot = this.snapshots[command.name]!;
@@ -253,6 +307,13 @@ export class CommandManager {
 		}
 	}
 
+	/**
+	 * 整体替换指令的别名表。
+	 * 与初始状态相同的别名不写入配置（保证配置里只留差异）。
+	 * @param command 目标指令
+	 * @param aliases 完整的新别名表（值或引用同一指令的显示名）
+	 * @param write 是否写入插件配置
+	 */
 	alias(command: Command, aliases: Dict<Command.Alias>, write = false) {
 		// 调用前均已通过 ensure 建立快照
 		const snapshot = this.snapshots[command.name]!;
@@ -269,6 +330,12 @@ export class CommandManager {
 		}
 	}
 
+	/**
+	 * 更新指令的配置与选项覆盖：先合并到运行中的指令上，再按需写回配置。
+	 * @param command 目标指令
+	 * @param data 新的覆盖（config / options 均为完整覆盖体）
+	 * @param write 是否写入插件配置
+	 */
 	update(
 		command: Command,
 		data: Pick<CommandState, "config" | "options">,
@@ -297,6 +364,7 @@ export class CommandManager {
 		}
 	}
 
+	/** 注册一条新指令并标记为「本插件创建」，同时写入配置。 */
 	create(name: string) {
 		this.ctx.command(name);
 		this.ensure(name, true);
@@ -304,6 +372,10 @@ export class CommandManager {
 		this.write();
 	}
 
+	/**
+	 * 删除一条由本插件创建的指令：先清快照与配置，
+	 * 把子指令交还给它们原本的父指令，最后销毁指令本体。
+	 */
 	remove(name: string) {
 		const snapshot = this.snapshots[name];
 		if (!snapshot) return;
@@ -320,16 +392,22 @@ export class CommandManager {
 		this.write(...commands);
 	}
 
+	/**
+	 * 把一份覆盖完整应用到指令上：建快照 → 覆盖配置与选项 → 移动归属 → 合并别名。
+	 * @param target 目标指令
+	 * @param override 覆盖项（可含 name / aliases / options / config / create）
+	 * @param patch 是否以指令现状回填快照（见 {@link ensure} 的 patch 参数）
+	 */
 	accept(target: Command, override: Override, patch?: boolean) {
 		const { create, options = {}, config = {} } = override;
 
-		// create snapshot for restoration
+		// 建立快照，便于插件卸载时恢复
 		this.ensure(target.name, create, patch);
 
-		// override config and options
+		// 覆盖配置与选项
 		this.update(target, { options, config });
 
-		// teleport to new parent
+		// 移动到新的父指令
 		let name = override.name;
 		if (name?.includes("/")) {
 			const [parent = "", child] = name.split("/");
@@ -337,7 +415,7 @@ export class CommandManager {
 			this.teleport(target, parent);
 		}
 
-		// extend aliases and display name
+		// 合并别名与显示名
 		this.alias(target, {
 			...(name ? { [name]: {} } : {}),
 			...target._aliases,
@@ -347,18 +425,23 @@ export class CommandManager {
 		this.refresh();
 	}
 
+	/**
+	 * 把指定指令的覆盖状态写回插件配置（清掉空对象，避免配置膨胀），
+	 * 随后触发 command-updated 事件并整体更新插件配置。
+	 * 不传参数时仅刷新全部已建快照的指令。
+	 */
 	write(...commands: Command[]) {
 		for (const command of commands) {
 			const snapshot = this.ensure(command.name);
 			// 正常调用路径均已先写入配置项；缺失时（原先会抛错）补空对象以继续流程
 			const override = (this.config[command.name] ??= {});
 
-			// config
+			// config：空覆盖不落盘
 			if (override.config && !Object.keys(override.config).length) {
 				delete override.config;
 			}
 
-			// options
+			// options：空条目、空字典均不落盘
 			for (const key in override.options) {
 				if (
 					override.options[key] &&
@@ -371,10 +454,11 @@ export class CommandManager {
 				delete override.options;
 			}
 
-			// aliases
+			// aliases：空字典不落盘
 			if (override.aliases && !Object.keys(override.aliases).length) {
 				delete override.aliases;
 			}
+			// name：与实际归属一致时不再保留（未改动父级的证据）
 			if (override.name) {
 				const initial = (snapshot.parent?.name || "") + "/" + command.name;
 				if (override.name === initial || override.name === command.name) {
@@ -391,6 +475,11 @@ export class CommandManager {
 		this.ctx.scope.update(this.config, false);
 	}
 
+	/**
+	 * 注册 console 前端入口并监听管理面板的 RPC 事件。
+	 * 数据侧按需生成全量指令快照（带缓存，失效由 refresh 驱动）；
+	 * 事件侧均要求 authority 4（管理员）。
+	 */
 	installWebUI() {
 		this.ctx.inject(["console"], (ctx) => {
 			ctx.on("dispose", () => (this.entry = undefined));

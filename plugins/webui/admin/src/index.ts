@@ -13,6 +13,15 @@ import zhCN from "../locales/zh-CN.yml";
 
 export * from "./command";
 
+/**
+ * @koishi-ce/plugin-admin 的 node 侧入口。
+ *
+ * 提供权限管理服务 {@link Admin}：基于数据库表维护「用户组（group）」与
+ * 「用户组路线（perm_track）」两类权限容器，把它们的权限定义注入
+ * ctx.permissions 继承体系；同时注册 console 前端入口与一组管理 RPC 事件。
+ * 聊天侧指令（user / channel 系列）见 ./command.ts。
+ */
+
 declare module "@koishi-ce/koishi" {
 	interface Context {
 		admin: Admin;
@@ -43,21 +52,31 @@ declare module "@koishi-ce/console" {
 	}
 }
 
+/** 用户组数据（group 表）：权限的命名集合，用户通过 `group:<id>` 权限加入。 */
 export interface PermGroup {
 	id: number;
 	name: string;
 	permissions: string[];
+	/** 组内用户数（仅在内存中统计，不落库） */
 	count?: number;
+	/** 注销权限定义的回调 */
 	dispose?: () => void;
 }
 
+/** 用户组路线数据（perm_track 表）：按列表顺序形成权限的继承链。 */
 export interface PermTrack {
 	id: number;
 	name: string;
 	permissions: string[];
+	/** 注销权限定义的回调 */
 	dispose?: () => void;
 }
 
+/**
+ * 权限管理服务：维护用户组与用户组路线的内存态与数据库态，
+ * 并把它们注册为 ctx.permissions 中的继承规则；
+ * 每个变更方法都会同步数据库并刷新 console 数据入口。
+ */
 export class Admin extends Service {
 	// erasableSyntaxOnly:原 namespace Admin 中的运行时值迁至类静态成员
 	static inject = ["database"];
@@ -100,6 +119,10 @@ export class Admin extends Service {
 		);
 	}
 
+	/**
+	 * 服务启动：从数据库加载用户组与路线、统计各组人数并注册权限定义，
+	 * 随后注入 console 上下文注册前端入口与 RPC 监听（均要求 authority 4）。
+	 */
 	override async start() {
 		this.groups = await this.ctx.database.get("group", {});
 		this.tracks = await this.ctx.database.get("perm_track", {});
@@ -221,6 +244,10 @@ export class Admin extends Service {
 		});
 	}
 
+	/**
+	 * 注册用户组的权限定义：组内声明的每个权限，
+	 * 只要用户持有 `group:<id>` 就视为继承获得。
+	 */
 	private setupGroup(item: PermGroup) {
 		item.dispose = this.ctx.permissions.define("(name)", {
 			inherits: ({ name }) => {
@@ -230,6 +257,10 @@ export class Admin extends Service {
 		});
 	}
 
+	/**
+	 * 注册用户组路线的权限定义：权限按列表顺序构成继承链，
+	 * 持有列表中某个权限即同时继承其前面的所有权限。
+	 */
 	private setupTrack(item: PermTrack) {
 		item.dispose = this.ctx.permissions.define("(name)", {
 			inherits: ({ name }) => {
@@ -240,6 +271,7 @@ export class Admin extends Service {
 		});
 	}
 
+	/** 创建用户组路线，返回新 id。 */
 	async createTrack(name: string) {
 		const item = await this.ctx.database.create("perm_track", { name });
 		this.setupTrack(item);
@@ -248,6 +280,7 @@ export class Admin extends Service {
 		return item.id;
 	}
 
+	/** 重命名用户组路线（名称未变化时直接跳过）。 */
 	async renameTrack(id: number, name: string) {
 		const item = this.tracks.find((track) => track.id === id);
 		if (!item) throw new Error("track not found");
@@ -257,6 +290,7 @@ export class Admin extends Service {
 		this.entry?.refresh();
 	}
 
+	/** 删除用户组路线：先注销权限定义，再删除数据库记录。 */
 	async deleteTrack(id: number) {
 		const index = this.tracks.findIndex((track) => track.id === id);
 		if (index < 0) throw new Error("track not found");
@@ -267,6 +301,7 @@ export class Admin extends Service {
 		await this.ctx.database.remove("perm_track", id);
 	}
 
+	/** 整体替换某条路线的权限列表。 */
 	async updateTrack(id: number, permissions: string[]) {
 		const item = this.tracks.find((group) => group.id === id);
 		if (!item) throw new Error("track not found");
@@ -275,6 +310,7 @@ export class Admin extends Service {
 		this.entry?.refresh();
 	}
 
+	/** 创建用户组（人数从 0 起计），返回新 id。 */
 	async createGroup(name: string) {
 		const item = await this.ctx.database.create("group", { name });
 		item.count = 0;
@@ -284,6 +320,7 @@ export class Admin extends Service {
 		return item.id;
 	}
 
+	/** 重命名用户组（名称未变化时直接跳过）。 */
 	async renameGroup(id: number, name: string) {
 		const item = this.groups.find((group) => group.id === id);
 		if (!item) throw new Error("group not found");
@@ -293,12 +330,18 @@ export class Admin extends Service {
 		this.entry?.refresh();
 	}
 
+	/**
+	 * 删除用户组：注销权限定义后，从所有成员用户的 permissions 中
+	 * 移除 `group:<id>`（upsert 批量回写），再清理其它组对它的引用，
+	 * 最后删除组本身。任何一步都保持数据库与内存一致。
+	 */
 	async deleteGroup(id: number) {
 		const index = this.groups.findIndex((group) => group.id === id);
 		if (index < 0) throw new Error("group not found");
 		const [item] = this.groups.splice(index, 1);
 		if (!item) throw new Error("group not found");
 		item.dispose!();
+		// 找出所有 permissions 含 group:<id> 的成员用户，逐个移除该引用后批量回写
 		const users = await this.ctx.database.get(
 			"user",
 			{ permissions: { ["$el"]: "group:" + id } },
@@ -308,6 +351,7 @@ export class Admin extends Service {
 			remove(user.permissions, "group:" + id);
 		}
 		await this.ctx.database.upsert("user", users);
+		// 其它用户组若把本组当作权限引用，同样清理掉
 		const updates = this.groups.filter((group) => {
 			return remove(group.permissions, "group:" + id);
 		});
@@ -316,6 +360,7 @@ export class Admin extends Service {
 		this.entry?.refresh();
 	}
 
+	/** 整体替换某个用户组的权限列表。 */
 	async updateGroup(id: number, permissions: string[]) {
 		const item = this.groups.find((group) => group.id === id);
 		if (!item) throw new Error("group not found");
@@ -324,6 +369,13 @@ export class Admin extends Service {
 		this.entry?.refresh();
 	}
 
+	/**
+	 * 把用户加入用户组：向其 permissions 追加 `group:<gid>` 并回写，
+	 * 已在组内时不重复写入。
+	 * @param id 用户组 id
+	 * @param platform 用户所属平台
+	 * @param aid 平台内的用户号
+	 */
 	async addUser(id: number, platform: string, aid: string) {
 		const item = this.groups.find((group) => group.id === id);
 		if (!item) throw new Error("group not found");
@@ -342,6 +394,10 @@ export class Admin extends Service {
 		}
 	}
 
+	/**
+	 * 把用户移出用户组：从其 permissions 中摘除 `group:<gid>` 并回写，
+	 * 本就不在组内时不做任何写入。
+	 */
 	async removeUser(id: number, platform: string, aid: string) {
 		const item = this.groups.find((group) => group.id === id);
 		if (!item) throw new Error("group not found");
@@ -364,6 +420,7 @@ export class Admin extends Service {
 export namespace Admin {
 	export type Config = {};
 
+	/** 下发给前端的数据形状：以 id 为键的用户组 / 路线字典。 */
 	export interface Data {
 		group: Dict<PermGroup>;
 		track: Dict<PermTrack>;
