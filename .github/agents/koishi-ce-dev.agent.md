@@ -10,7 +10,7 @@ user-invocable: true
 ## 项目要点
 
 - **项目**：[koishijs/koishi](https://github.com/koishijs/koishi)（MIT）+ [koishijs/webui](https://github.com/koishijs/webui)（部分 AGPL-3.0）的文件级合并 fork，包作用域统一 `@koishi-ce`，运行时目标 Bun，npm 组织 Koishi-CE。与 Koishijs 组织无隶属关系。
-- **技术栈**：TypeScript（TS7 类型检查 + typescript6 供 eslint）/ Bun workspaces + bun:test + chai / tsdown（node 侧库打包，双格式）/ vite 8（前端，编程式 `vite.build()` 无配置文件）/ biome 2 + eslint（仅 .vue）。
+- **技术栈**：TypeScript（TS7 类型检查 + typescript6 供 eslint）/ Bun workspaces + bun:test + chai（存量，逐步迁移）/ tsdown（node 侧库打包，ESM-only）/ vite 8（前端，编程式 `vite.build()` 无配置文件）/ biome 2 + eslint（仅 .vue）。
 - **布局**：`packages/node/*`（运行时核心库，根 tsdown 统一构建）、`packages/web/*`（浏览器侧，源码直出）、`plugins/common|infra|webui/*`（插件：`src/` 为 Node 侧、`client/` 为 Vue 侧）、`apps/*`（online 网站、registry 扫描库、koishi-create 脚手架、koishi-scripts 插件开发 CLI）、`tooling/`（上游 yakumo 配置存档）。
 - **docs/**：开发依据是 `docs/DEVELOPMENT.md` 与 `docs/ARCHITECTURE.md`（以实际代码为准）；依赖升级的决策记录在 `docs/upgrade-plan.md`（含 Phase 5 cordis 4 阻塞结论）与 `docs/dependency-audit.md`。
 
@@ -20,7 +20,7 @@ user-invocable: true
 - **不要"顺手修复" peerDependencies 的上游名**：`koishi ^4.18.11`、`@koishijs/plugin-console`、`@koishijs/loader`、`@koishijs/client`、`@koishijs/core` 等指向上游是刻意的生态兼容设计（见 `UPSTREAM.md`）；代码内导入则一律 `@koishi-ce/*`。
 - **cordis 生态冻结在 3.x**：cordis / minato / @cordisjs/* / @satorijs/* 不得跳 4.x / 1.x（Phase 5 已实证被 `@satorijs/core` 双 cordis 问题阻塞并回退，重启条件见 `docs/upgrade-plan.md`）。
 - **vendored 三包不动**：`plugins/infra/{http,proxy-agent,server}` 是无源码的预编译产物包，被根 tsdown 显式 exclude。
-- **CJS 产物必须**：Koishi loader 用 `require()` 加载插件，根 tsdown 的双格式构建（CJS `index.js` + ESM `index.mjs` + d.ts）与 `.yml` copy loader 不可拆。
+- **ESM-only 产物 + Bun 运行时**：根 tsdown 单遍构建只出 ESM（`index.mjs` + `index.d.ts`），exports 以 `default` 条件兜底 require 解析（Bun 的 require() 可直接加载 ESM）；**不要恢复 CJS 双格式产物**。
 - **`plugins/webui/market/` 被 .gitignore 临时忽略**（迁入对齐期间），但 `scripts/typecheck.mjs` 与 `bun test` 不读 .gitignore，报告错误时先分辨来源。
 - **不要在 Biome 的 JSON 行尾不可见字符上浪费 Token**：已知、正常、无害，看到即跳过。
 - 除以上约束外，不要过度解读本提示词——其余行为遵循默认 Agent 规则。
@@ -29,7 +29,7 @@ user-invocable: true
 
 ```bash
 bun run check     # 全量门禁 = lint + lint:client + typecheck（提交前必跑）
-bun run build     # 根 tsdown：全部 node 侧包 → lib/（CJS + ESM + d.ts）
+bun run build     # 根 tsdown：全部 node 侧包 → lib/（ESM-only：index.mjs + index.d.ts）
 bun test packages plugins/common plugins/webui/admin plugins/webui/commands
                   # 全量自有用例（20 文件）；裸 `bun test` 会卷入 gitignored 的 market 并挂起
 bun packages/web/client/bin.js build [<插件目录>]   # 前端产物（缺省=宿主控制台）

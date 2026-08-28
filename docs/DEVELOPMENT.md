@@ -60,13 +60,13 @@ cd apps/online          && bun run build   # koishi.online 网站（src/build.ts
 
 | 产物 | 位置 | 产生方式 |
 |---|---|---|
-| node 侧库产物 | 各包 `lib/`（`index.js` CJS + `index.mjs` ESM + `index.d.ts`） | 根 `tsdown.config.ts` 一次构建所有 workspace 内的 node 包 |
+| node 侧库产物 | 各包 `lib/`（`index.mjs` ESM + `index.d.ts`） | 根 `tsdown.config.ts` 一次构建所有 workspace 内的 node 包（单遍 ESM-only） |
 | `.yml` locale | 随 `lib/` 拷贝 | tsdown `loader: { ".yml": "copy" }` |
 | 宿主控制台前端 | `plugins/webui/console/dist/` | `packages/web/client/scripts/client.ts`（总装：app + vue runtime 外部块 + client） |
 | 各 webui 插件前端 | 各插件 `dist/`（`koishi.public` 声明） | `packages/web/client/src/index.ts` 的 `build(root)` API |
 | apps 产物 | 各 app `lib/` | 各自 tsdown / build 脚本 |
 
-- **CJS 产物是硬需求**：Koishi loader 用 `require()` 加载插件（`packages/node/loader/src/index.ts` 的 `import(name)` 内部即 `require`），因此源码虽为 ESM，`lib/index.js` 必须存在；ESM `index.mjs` 供 `node.import` 条件导出。
+- **ESM-only + Bun 运行时**：根 tsdown 单遍构建只出 ESM（`index.mjs`，exports 以 `default` 条件兜底 require 解析）。Koishi loader 用 `require()` 加载插件（`packages/node/loader/src/index.ts` 的 `import(name)` 内部即 `require`），Bun 的 require() 可直接加载 ESM，插件加载链据此工作；运行时以 Bun 为准（Node 仅 ≥22.12 有 require(esm)，不作兼容目标）。
 - `**/lib/`、`**/dist/` 均被 .gitignore 忽略，不入库。
 - vendored 三包（`plugins/infra/{http,proxy-agent,server}`）的 `index.cjs/index.mjs/index.d.ts` 是**提交进仓库的**预编译产物（再导出 `@cordisjs/plugin-*`），不走 tsdown。
 
@@ -100,25 +100,25 @@ cd apps/online          && bun run build   # koishi.online 网站（src/build.ts
 
 ## 6. 测试写法
 
-框架：`bun:test`（`describe` / `it` / `before` / `after` 从 `bun:test` 导入）+ **chai 断言**（`expect` 从 `chai` 导入，不是 `bun:expect`）。
+框架：`bun:test`（`describe` / `it` / `before` / `after` 从 `bun:test` 导入）+ **`bun:test` 的 `expect` 断言**（新标准；core 与 echo 已迁移，存量 chai 用例逐步迁移、不新增）。
 
 ```ts
-import { describe, it } from "bun:test";
-import { expect, use } from "chai";
-import shape from "../../../../scripts/testing/chai-shape";
+import { describe, expect, it } from "bun:test";
+import { App } from "@koishi-ce/koishi";
 
-use(shape);
+expect(app.database.getUser("mock", "A")).resolves.toHaveShape({ authority: 1 });
 ```
 
-- **shape 断言**（`.to.have.shape()`）来自 `scripts/testing/chai-shape.ts` 的内联实现（上游 chai-shape 包未跟进 chai 6，故内联），按测试文件目录深度写相对路径。
+- **shape 断言**（`toHaveShape`）由 `packages/node/core/src/__tests__/shape.ts` 注册（`expect.extend` 自定义 matcher，import 该文件一次即注册；语义与上游 chai-shape 一致：期望为实际的递归子集）。原 `scripts/testing/chai-shape.ts` 已随 scripts 目录删除。
+- chai 存量用例的 `chai-as-promised` 写法迁移对照：`await expect(p).eventually.to.eql(x)` → `await expect(p).resolves.toEqual(x)`；`.to.be.rejected` → `.rejects.toThrow()`。
 - 数据库用例用 `@koishijs/plugin-database-memory`（上游包）；时间模拟用 `@sinonjs/fake-timers`（`install()` / `tick()`）。
-- spec 文件分布：`packages/node/core/tests/`（8 个）、loader / utils / i18n-utils、`plugins/common/{bind,broadcast,echo,help,inspect}/tests/`、`plugins/webui/{admin,commands}/tests/`。
+- 测试文件分布：`packages/node/core/src/**/__tests__/`（8 个）、loader / utils / i18n-utils、`plugins/common/{bind,broadcast,echo,help,inspect}/src/__tests__/`、`plugins/webui/{admin,commands}/src/__tests__/`。
 - `.yml` locale 在测试中可直接 import（Bun 原生支持）。
 
 ## 7. 已知坑（历史经验，别再踩）
 
-1. **loader `require()` 加载插件** → CJS 产物必须存在，双格式构建不可拆（见 §4）。
-2. **`.yml` 运行时链路**：Bun 原生支持 yml 导入（测试、开发 OK）；Node 下 `require()` CJS 产物中的 `.yml` 没有对应 hook——tsdown 已把 .yml copy 进产物，运行时由 Koishi 侧约定加载。根 tsdown 注释里"koishi 内置 yml-register"的说法与实际不符（全仓无该依赖）。
+1. **Bun 的 require(esm) 是插件加载链的根基**：根 tsdown 只出 ESM 产物（`index.mjs` + `index.d.ts`），loader 的 `require()` 直接加载 ESM 插件，各包 exports 以 `default` 条件兜底（见 §4）。不要恢复 CJS 双格式产物。
+2. **`.yml` 运行时链路**：Bun 原生支持 yml 导入（测试、开发、运行时均 OK）；构建期 tsdown copy loader 把 .yml 原样拷入产物并改写引用路径。根 tsdown 注释里"koishi 内置 yml-register"的说法与实际不符（全仓无该依赖）。
 3. **typecheck / bun test 不读 .gitignore**：gitignored 的 `plugins/webui/market/` 会被卷入——typecheck 侧其 tsconfig 有数百个存量错误；test 侧其 vitest 用例（`*.test.ts`）在 bun 下挂死（见 §3）。定位报错先看路径前缀。
 4. **`apps/koishi-create`（目录）≠ `create-koishi-ce`（包名）**；biome override、其 package.json `repository.directory`、根 tsdown 注释仍写旧名 `apps/create-koishi-ce`，是失效路径。引用一律以 `apps/koishi-create` 为准。
 5. **前端构建无 vite 配置文件**：全部编程式 `vite.build()`。宿主总装 `packages/web/client/scripts/client.ts` 把产物硬编码到 `plugins/webui/console/dist`（`cwd` 上跳 4 级）；单插件 `build(root)` 内置 `collectWorkspaceAliases()`——未被依赖的 workspace 包不在 node_modules 链接里，必须显式映射。

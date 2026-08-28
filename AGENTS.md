@@ -22,7 +22,7 @@
 2. **代码内导入一律 `@koishi-ce/*`**（workspace 内部引用）；仅有的外部上游导入例外是测试用的 `@koishijs/plugin-database-memory` 与 console 的类型引用 `@koishijs/plugin-server-proxy`。
 3. **cordis 生态冻结在 3.x 内洽线**：cordis / minato / @cordisjs/* / @satorijs/* 不得跳 4.x / 1.x——Phase 5 已实证被 `@satorijs/core`（内部携带 cordis ^3，无 cordis 4 线）阻塞并整体回退，重启条件见 `docs/upgrade-plan.md` Phase 5 节。
 4. **vendored 三包不动**：`plugins/infra/{http,proxy-agent,server}` 是预编译产物包（无 `src/`、不走 tsdown、根 tsdown 配置显式 exclude），分别内联再导出 `@cordisjs/plugin-*`。
-5. **CJS 产物必须存在**：Koishi loader 用 `require()` 加载插件，源码虽是 ESM，根 tsdown 的双格式构建（`index.js` CJS + `index.mjs` ESM + d.ts）不可拆；`.yml` locale 走 copy loader 原样拷入产物。
+5. **ESM-only 产物 + Bun 运行时**：本仓库全面拥抱 Bun——根 tsdown 单遍构建只出 ESM（`index.mjs` + `index.d.ts`），各包 exports 以 `default` 条件兜底；Bun 的 `require()` 可直接加载 ESM，loader 的插件加载链（`require → 插件 lib/index.mjs → @koishi-ce/*`）据此工作，**不要恢复 CJS 双格式产物**。运行时以 Bun 为准（Node 仅支持 ≥22.12 的 require(esm)，不作兼容目标）；`.yml` locale 走 copy loader 原样拷入产物，Bun 原生支持 yml 导入。已收敛 `"type": "module"` 的包：core、cli；其余包后续逐个迁移。
 6. **许可证分区**：`packages/web/*`、`plugins/webui/*`（console 插件为 MIT，其余 AGPL）、`apps/online` 为 AGPL-3.0，其余目录 MIT——以 `NOTICE` 表格为准；在 AGPL 目录新增文件同样受 AGPL 约束。
 7. **`plugins/webui/market/`（`@koishi-ce/plugin-marketn`）当前被 .gitignore 临时忽略**（迁入对齐期间）；注意 `scripts/typecheck.mjs` 与 `bun test` **不读 .gitignore**，仍会把它卷进检查范围，定位错误时先分辨是否来自该目录。
 
@@ -33,8 +33,8 @@ bun install                     # 安装依赖（Bun workspaces，产出 bun.loc
 bun run check                   # 全量门禁 = lint + lint:client + typecheck
 bun run lint                    # biome check .（格式 + lint 唯一权威）
 bun run lint:client             # eslint 仅查 *.vue（biome 不解析 .vue）
-bun run typecheck               # TS7 逐 tsconfig 并行类型检查（scripts/typecheck.mjs）
-bun run build                   # 根 tsdown：全部 node 侧包 → lib/（CJS + ESM + d.ts）
+bun run typecheck               # TS7 逐 tsconfig 并行类型检查（bun scripts/typecheck.mjs）
+bun run build                   # 根 tsdown：全部 node 侧包 → lib/（ESM-only：index.mjs + index.d.ts）
 bun test packages plugins/common plugins/webui/admin plugins/webui/commands
                                 # 全量自有用例（20 文件 / 145 用例）；
                                 # 裸 `bun test` 会卷入 gitignored 的 market（*.test.ts）并挂起，见已知坑
@@ -55,9 +55,9 @@ bun packages/web/client/bin.js build <插件目录>  # 单个 webui 插件的前
 
 ## 已知坑（历史经验，别再踩）
 
-- `.yml` 导入链路：类型来自 `typings/yml.d.ts`，测试 / Bun 运行时靠 Bun 原生 yml 支持；Node 下 `require()` CJS 产物中的 `.yml` 无对应 hook（产物级 caveat，tsdown 已把 .yml copy 进产物）。
+- `.yml` 导入链路：类型来自 `typings/yml.d.ts`，测试 / Bun 运行时靠 Bun 原生 yml 支持；构建期由 tsdown copy loader 原样拷入产物并改写引用路径。
 - **裸 `bun test`（仓库根）当前会挂起**：bun test 的发现规则包含 `*.test.ts`，会把 gitignored 的 `plugins/webui/market/`（vitest 用例，`i18n.test.ts` 处挂死）卷进来。跑测试用上面带过滤参数的全量命令或按包定向（`bun test packages/node/core`）；market 对齐完成、用例迁为 `*.spec.ts` 后此坑消除。
-- 测试断言用 **chai 的 `expect`**（不是 `bun:expect`）；shape 断言从 `scripts/testing/chai-shape.ts` 相对路径引入（内联实现，按测试文件目录深度数斜杠）。
+- 测试断言**新标准是 `bun:test` 的 `expect`**（Jest/Vitest 风格 API）；core 与 echo 已完成迁移（shape 断言用 `packages/node/core/src/__tests__/shape.ts` 注册的 `toHaveShape` 自定义 matcher，import 该文件一次即注册）。存量 chai 用例（loader / utils / i18n-utils / broadcast / help / admin / commands）逐步迁移，**不要新增 chai 断言**；`chai-as-promised` 的 `.eventually` / `.be.rejected` 写法对应 `await expect(p).resolves / .rejects`。
 - 前端构建**没有 vite 配置文件**，全部是编程式 `vite.build()`：宿主控制台总装在 `packages/web/client/scripts/client.ts`（产物路径硬编码到 `plugins/webui/console/dist`）；单插件用 `packages/web/client/src/index.ts` 的 `build(root)`（内置 `collectWorkspaceAliases()`——未被依赖的 workspace 包不会出现在 node_modules 链接里，必须显式映射才能被 bundler 解析）。
 - `scripts/typecheck.mjs` 递归扫描 packages / plugins / apps 下**所有** `tsconfig.json`（不读 .gitignore），仅排除 `apps/koishi-scripts/template/`（模板面向终端用户，依赖不在本仓）。
 - 目录名 `apps/koishi-create` 与包名 `create-koishi-ce` 不一致；biome override、该包 repository.directory、根 tsdown 注释等处仍写着旧名 `apps/create-koishi-ce`（失效路径，勿效仿引用，以 `apps/koishi-create` 为准）。

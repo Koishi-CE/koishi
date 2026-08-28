@@ -12,7 +12,7 @@
 
 ```
 koishi/（Bun workspaces：packages/node/* · packages/web/* · plugins/{common,infra,webui}/* · apps/* · tooling/*）
-├── packages/node/   Node 侧核心库（根 tsdown 统一构建 → lib/ 双格式）
+├── packages/node/   Node 侧核心库（根 tsdown 统一构建 → lib/ ESM-only）
 ├── packages/web/    浏览器侧库（源码直出，无独立构建产物）
 ├── plugins/common/  通用 bot 插件（MIT）
 ├── plugins/infra/   基础设施插件（http/proxy-agent/server 为 vendored 预编译）
@@ -27,7 +27,7 @@ koishi/（Bun workspaces：packages/node/* · packages/web/* · plugins/{common,
 |---|---|---|---|
 | `core` | `@koishi-ce/core` | 4.18.11 | 框架核心：Context / Command / Session / 数据库 / I18n；依赖 cordis ^3.18、minato ^3.7、@satorijs/core ^4.6 |
 | `loader` | `@koishi-ce/loader` | 4.6.11 | 配置加载器（koishi.yml、插件名解析、热重载）；**用 `require()` 加载插件**；peerDeps 精确锁 `@koishijs/core 4.18.11` |
-| `cli` | `@koishi-ce/koishi` | 4.18.11 | CLI 入口（bin：`koishi`），src 分 `cli/` 与 `worker/`；**有自己的 tsdown.config.ts**（三入口双格式） |
+| `cli` | `@koishi-ce/koishi` | 4.18.11 | CLI 入口（bin：`koishi`），src 分 `cli/` 与 `worker/`；已迁移 Bun ESM 运行时（`Bun.spawn` + shebang `bun`），走根 tsdown 构建（cli/worker 多入口产物待恢复） |
 | `console` | `@koishi-ce/console` | 5.30.11 | Console 服务 node 侧（协议 / 频道抽象），来自 webui；src 分 `node/` 与 `browser/` |
 | `utils` | `@koishi-ce/utils` | 7.2.1 | 通用工具（cosmokit、inaba） |
 | `i18n-utils` | `@koishi-ce/i18n-utils` | 1.0.1 | i18n 回退与工具 |
@@ -102,10 +102,10 @@ node 侧在 `src/`、Vue 侧在 `client/`（上游约定），`koishi.public: ["
 根 `tsdown.config.ts` 用 workspace 模式一次构建所有 node 侧包：
 
 - `workspace.include`：`packages/node/*`、`apps/registry`、`plugins/common/*`、`plugins/infra/*`、`plugins/webui/*`；`exclude`：vendored 三包。
-- **两遍构建**：CJS（`dts: true`，`index.js` + `index.d.ts`，对齐各包 exports 的 `require`）+ ESM（`index.mjs`）。
+- **单遍 ESM-only 构建**：`index.mjs` + `index.d.ts`。本仓库运行时目标是 Bun，其 `require()` 可直接加载 ESM，各包 exports 以 `default` 条件兜底，CJS 双格式产物已退役（各包 package.json 逐个收敛 ESM-only，core / cli 已完成）。
 - `deps.neverBundle: [/^@koishi-ce\//]`：workspace 内互相引用按包名外部化（运行时由 node_modules workspace 链接提供）；dts 不内联外部类型。
 - `loader: { ".yml": "copy" }`：locale yml 原样拷入产物，引用路径自动改写。
-- 独立 tsdown 配置：`packages/node/cli`（三入口：index + cli + worker）、`apps/koishi-create`、`apps/koishi-scripts`。
+- 独立 tsdown 配置：`apps/koishi-create`、`apps/koishi-scripts`（npx 直执行 CLI，暂为 CJS 单格式）；`packages/node/cli` 已删除包级配置、走根构建（其 cli/worker 多入口产物待恢复）。
 
 ### 前端：vite 编程式构建（无配置文件）
 
@@ -122,8 +122,8 @@ node 侧在 `src/`、Vue 侧在 `client/`（上游约定），`koishi.public: ["
 
 ## 5. 测试体系
 
-- 运行器 `bun test`（Phase 4 从 mocha 迁移完成）；断言 chai ^6 + chai-as-promised ^8；shape 断言内联于 `scripts/testing/chai-shape.ts`（上游包未跟进 chai 6）。
-- 约 20 个 `*.spec.ts`：core（8：command / database / filter / middleware / parser / runtime / session / suggest）、loader（1）、utils（3）、i18n-utils（1）、common 插件（5）、webui admin / commands（2）。
+- 运行器 `bun test`（Phase 4 从 mocha 迁移完成）；断言**新标准为 `bun:test` 的 `expect`**（core 与 echo 已迁移）；存量 chai ^6 用例（loader / utils / i18n-utils / broadcast / help / admin / commands）逐步迁移，不新增。shape 断言用 `packages/node/core/src/__tests__/shape.ts` 注册的 `toHaveShape` matcher（原 `scripts/testing/chai-shape.ts` 已随 scripts 目录删除）。
+- 20 个 `*.test.ts`：core（8：command / database / filter / middleware / parser / runtime / session / suggest）、loader（1）、utils（3）、i18n-utils（1）、common 插件（5）、webui admin / commands（2）。
 - 数据库用例用 `@koishijs/plugin-database-memory`；时间模拟用 `@sinonjs/fake-timers`。
 
 ## 6. 许可证分区（权威：`NOTICE`）
