@@ -46,7 +46,7 @@ const model = computed({
 	get: () => props.name,
 	set: (value) => {
 		instances.value[props.id].name = value;
-		flush();
+		void flush();
 	},
 });
 

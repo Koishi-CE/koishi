@@ -2,8 +2,8 @@ import yaml from "@maikolib/vite-plugin-yaml";
 import vue from "@vitejs/plugin-vue";
 import { appendFile, copyFile } from "fs/promises";
 import { resolve } from "path";
-import type { RollupOutput } from "rollup";
 import * as vite from "vite";
+import type { RollupOutput } from "vite/types/internal/rollupTypeCompat";
 
 function findModulePath(id: string) {
 	const path = require.resolve(id).replace(/\\/g, "/");
@@ -55,7 +55,7 @@ const shims = {
 function toExternal(name: string) {
 	return (
 		"https://registry.koishi.chat/modules/" +
-		(shims[name] ?? name) +
+		(shims[name as keyof typeof shims] ?? name) +
 		"/index.js"
 	);
 }
@@ -150,8 +150,10 @@ export default async function () {
 					client: cwd + "/packages/web/client/client/index.ts",
 				},
 				output: {
-					manualChunks: {
-						element: ["element-plus"],
+					// rolldown 的 manualChunks 仅接受函数形式（对象形式为其拒绝的类型），
+					// 这里按 rollup 对象配置的语义改写为等价函数
+					manualChunks(id) {
+						return id.includes("element-plus") ? "element" : null;
 					},
 				},
 				preserveEntrySignatures: "strict",

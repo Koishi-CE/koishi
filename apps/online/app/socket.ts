@@ -4,7 +4,9 @@ import loader from "./loader";
 import { initialize } from "./utils";
 
 class StubWebSocket implements Universal.WebSocket {
-	remote: StubWebSocket;
+	url = "";
+	// 两个派生类（ServerWebSocket / ClientWebSocket）的构造流程均保证赋值
+	remote!: StubWebSocket;
 	listeners: Dict<Set<Universal.WebSocket.EventListener>> = {};
 
 	addEventListener(type: any, listener: (event: any) => void) {
@@ -31,11 +33,13 @@ class StubWebSocket implements Universal.WebSocket {
 }
 
 class ServerWebSocket extends StubWebSocket {
-	app: Context;
+	// 由 loader 机制在建立连接后回填
+	app!: Context;
 
-	constructor(public remote: StubWebSocket) {
+	constructor(remote: StubWebSocket) {
 		super();
-		this.start();
+		this.remote = remote;
+		void this.start();
 	}
 
 	private async start() {

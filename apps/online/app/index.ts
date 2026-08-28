@@ -37,7 +37,7 @@ if (!("chrome" in window)) {
 		"请使用最新版本的 Chrome 或 Edge 浏览器。",
 	];
 } else {
-	connect(root, () => new ClientWebSocket());
+	void connect(root, () => new ClientWebSocket());
 }
 
 if (process.env.NODE_ENV === "production") {

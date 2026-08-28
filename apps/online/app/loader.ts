@@ -13,9 +13,13 @@ if (process.env.NODE_ENV !== "development") {
 }
 
 class BrowserLoader extends Loader {
+	// loader 机制（如 koishi.socket）会在运行时向实例挂载 symbol 键
+	[key: symbol]: unknown;
+
 	public envData: any = {};
 	public config: any = { plugins: {} };
-	public market: SearchResult;
+	// 由 init() -> prepare() 异步回填
+	public market!: SearchResult;
 
 	constructor() {
 		Logger.targets = [];
@@ -42,8 +46,10 @@ class BrowserLoader extends Loader {
 	}
 
 	async import(name: string) {
+		const specifier = this.cache[name];
+		if (!specifier) return;
 		try {
-			return await import(/* @vite-ignore */ this.cache[name]);
+			return await import(/* @vite-ignore */ specifier);
 		} catch (err) {
 			console.warn(err);
 		}

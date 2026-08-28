@@ -1,9 +1,15 @@
 {
 	"extends": "../../../tsconfig.client",
 	"compilerOptions": {
-		"noEmit": true
+		"noEmit": true,
+		"paths": {
+			"vue": ["../../../packages/web/client/node_modules/vue"],
+			"@vueuse/core": [
+				"../../../packages/web/client/node_modules/@vueuse/core"
+			],
+			"@koishi-ce/core": ["../../../packages/node/core/lib/index.d.ts"],
+			"@koishi-ce/registry": ["../../../apps/registry/lib/index.d.ts"]
+		}
 	},
-	"include": [
-		"."
-	]
+	"include": ["."]
 }

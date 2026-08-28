@@ -5,12 +5,19 @@ import { dump, load } from "js-yaml";
 import { ref, shallowRef, watch } from "vue";
 import loader from "./loader";
 
+// 浏览器运行时经 @cordiverse/fs 等垫片挂载的全局量（下方赋值语句的目标）
+declare global {
+	var fs: typeof import("fs").promises;
+	var loader: typeof import("./loader").default;
+}
+
 globalThis.fs = fs;
 globalThis.loader = loader;
 
 interface StorageData {
 	version?: number;
-	current: string;
+	// 尚未选中任何实例时为 null（见 createStorage 的初始值）
+	current: string | null;
 }
 
 const version = 2;
@@ -29,7 +36,7 @@ export const data: RemovableRef<StorageData> = createStorage({
 	current: null,
 });
 
-const storageData = shallowRef({});
+const storageData = shallowRef<Record<string, Record<string, unknown>>>({});
 
 provideStorage((key, version, fallback) => {
 	if (!data.value.current) throw new Error("no instance selected");
@@ -38,7 +45,7 @@ provideStorage((key, version, fallback) => {
 	watch(
 		storageData,
 		() => {
-			const initial = fallback ? fallback() : {};
+			const initial = (fallback ? fallback() : {}) as Record<string, unknown>;
 			initial["__version__"] = version;
 			if (storageData.value[key]?.["__version__"] !== version) {
 				storageData.value[key] = initial;
@@ -91,7 +98,8 @@ export async function activate(id?: string, event?: Event, config?: any) {
 	try {
 		await loader.init(`${root}/${id}`);
 		await loader.readConfig();
-		instances.value[id].lastVisit = Date.now();
+		const instance = instances.value[id];
+		if (instance) instance.lastVisit = Date.now();
 		await flush();
 	} catch {
 		loader.config = {
@@ -126,7 +134,7 @@ export async function activate(id?: string, event?: Event, config?: any) {
 		await loader.init(`${root}/${id}`);
 	}
 	const files = await fs.readdir(`${root}/${id}/data/storage`);
-	const storage = {};
+	const storage: Record<string, Record<string, unknown>> = {};
 	for (const file of files) {
 		if (!file.endsWith(".json")) continue;
 		const key = file.slice(0, -5);
@@ -157,8 +165,10 @@ async function getInstances() {
 		throw new Error("invalid instance index");
 	}
 	for (const id in result) {
-		result[id].name ??= id;
-		result[id].lastVisit ??= 0;
+		const instance = result[id];
+		if (!instance) continue;
+		instance.name ??= id;
+		instance.lastVisit ??= 0;
 	}
 	return result;
 }
@@ -187,8 +197,8 @@ export async function initialize() {
 	if (share) {
 		const config = JSON.parse(atob(share));
 		location.replace(location.origin + location.pathname);
-		await activate(null, null, config);
+		await activate(undefined, undefined, config);
 	} else {
-		await activate(data.value.current);
+		await activate(data.value.current ?? undefined);
 	}
 }

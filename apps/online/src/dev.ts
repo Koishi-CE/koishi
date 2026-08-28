@@ -10,10 +10,16 @@ import { dirname, extname, resolve } from "path";
 import { load } from "tsconfig-utils";
 import type { ViteDevServer } from "vite";
 
+// package.json 的条件导出结构（exports 字段的递归形态）
+interface PackageJsonExports {
+	[key: string]: string | PackageJsonExports;
+}
+
 interface PackageJson {
 	main?: string;
 	module?: string;
-	exports?: string | Record<string, unknown>;
+	exports?: string | PackageJsonExports;
+	koishi?: { exports?: Record<string, string> };
 }
 
 const app = new Koa();
@@ -68,16 +74,18 @@ router.get("/portable.json", async (ctx) => {
 	ctx.body = scanner;
 });
 
-function getConditionalExport(exports: PackageJson.Exports) {
+function getConditionalExport(exports: string | PackageJsonExports) {
 	if (typeof exports === "string") return exports;
 	for (const key of ["browser", "import", "default", "."]) {
-		if (exports[key]) return getConditionalExport(exports[key]);
+		const value = exports[key];
+		if (value) return getConditionalExport(value);
 	}
+	return undefined;
 }
 
-function getExport(meta: PackageJson) {
+function getExport(meta: PackageJson): string {
 	if (meta.exports) {
-		return getConditionalExport(meta.exports);
+		return getConditionalExport(meta.exports) ?? "index.js";
 	} else if (typeof meta.module === "string") {
 		return meta.module;
 	} else if (typeof meta.main === "string") {
@@ -88,9 +96,9 @@ function getExport(meta: PackageJson) {
 }
 
 router.get("/modules(/.+)+", async (ctx) => {
-	const parts = ctx.params[0].slice(1).split("/");
-	let name = parts.shift();
-	if (name.startsWith("@")) name += "/" + parts.shift();
+	const parts = (ctx.params[0] ?? "").slice(1).split("/");
+	let name = parts.shift() ?? "";
+	if (name.startsWith("@")) name += "/" + (parts.shift() ?? "");
 	const filename = parts.join("/");
 	const metafile = require.resolve(name + "/package.json");
 	const cwd = resolve(metafile, "..");
@@ -100,9 +108,9 @@ router.get("/modules(/.+)+", async (ctx) => {
 	if (filename === "index.js") {
 		const config = await load(cwd);
 		const {
-			rootDir,
+			rootDir = ".",
 			outFile,
-			outDir = dirname(outFile),
+			outDir = outFile ? dirname(outFile) : ".",
 		} = config.compilerOptions;
 		let entry = getExport(meta);
 		if (entry.startsWith("./")) entry = entry.slice(2);
@@ -118,16 +126,19 @@ router.get("/modules(/.+)+", async (ctx) => {
 		}
 		ctx.redirect(`/vite/@fs${entry}`);
 	} else {
-		let entry = (meta["koishi"].exports || {})[filename];
+		const entry = meta["koishi"]?.exports?.[filename];
+		if (!entry) {
+			ctx.status = 404;
+			return;
+		}
 		const require = createRequire(metafile);
-		entry = require.resolve(entry);
-		ctx.body = createReadStream(entry);
+		ctx.body = createReadStream(require.resolve(entry));
 		ctx.type = "application/wasm";
 	}
 });
 
 router.get("/modules(/.+)+", async (ctx) => {
-	const name = ctx.params[0].slice(1);
+	const name = ctx.params[0] ?? "";
 	const metapath = require.resolve(name + "/package.json");
 	const cwd = resolve(metapath, "..");
 	const meta = (await readFile(metapath, "utf8").then(
@@ -135,9 +146,9 @@ router.get("/modules(/.+)+", async (ctx) => {
 	)) as PackageJson;
 	const config = await load(cwd);
 	const {
-		rootDir,
+		rootDir = ".",
 		outFile,
-		outDir = dirname(outFile),
+		outDir = outFile ? dirname(outFile) : ".",
 	} = config.compilerOptions;
 	let entry = getExport(meta);
 	if (entry.startsWith("./")) entry = entry.slice(2);
@@ -253,6 +264,6 @@ async function createVite() {
 	return vite;
 }
 
-createVite();
+void createVite();
 
 app.listen(3000);
