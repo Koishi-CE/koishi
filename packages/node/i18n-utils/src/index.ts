@@ -13,7 +13,7 @@ import { deduplicate } from "cosmokit";
 /** 语言环境树：每个键（语言环境名）指向其子语言环境构成的子树 */
 export type LocaleTree = { [key in string]: LocaleTree };
 
-// biome-ignore lint/style/useNamingConvention: 值侧与同名类型合并声明,保持上游 API
+// 值侧与同名类型合并声明,保持上游 API
 export const LocaleTree = {
 	/**
 	 * 由语言环境列表构造语言环境树：按 `-` 逐级展开层级。
