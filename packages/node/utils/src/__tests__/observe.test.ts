@@ -1,55 +1,54 @@
-import { describe, it } from "bun:test";
+import { describe, expect, it } from "bun:test";
 import { mock as jest } from "node:test";
 import { type Dict, noop, observe } from "@koishi-ce/koishi";
-import { expect } from "chai";
 
 /** 观察器 API（observe.ts）的单元测试 */
 describe("Observer API", () => {
 	// 验证对原语、null、内建类型实例等非法目标调用 observe 均抛错
 	it("type checks", () => {
-		expect(() => observe(1 as never)).to.throw();
-		expect(() => observe("2" as never)).to.throw();
-		expect(() => observe(/./ as never)).to.throw();
-		expect(() => observe(BigInt(3) as never)).to.throw();
-		expect(() => observe(true as never)).to.throw();
-		expect(() => observe(noop as never)).to.throw();
-		expect(() => observe(Symbol("foo") as never)).to.throw();
-		expect(() => observe(Symbol.for("foo") as never)).to.throw();
-		expect(() => observe(null as never)).to.throw();
-		expect(() => observe(undefined as never)).to.throw();
-		expect(() => observe([])).to.throw();
-		expect(() => observe(new Date())).to.throw();
-		expect(() => observe(new Set())).to.throw();
-		expect(() => observe(new Map())).to.throw();
-		expect(() => observe(new WeakSet())).to.throw();
-		expect(() => observe(new WeakMap())).to.throw();
+		expect(() => observe(1 as never)).toThrow();
+		expect(() => observe("2" as never)).toThrow();
+		expect(() => observe(/./ as never)).toThrow();
+		expect(() => observe(BigInt(3) as never)).toThrow();
+		expect(() => observe(true as never)).toThrow();
+		expect(() => observe(noop as never)).toThrow();
+		expect(() => observe(Symbol("foo") as never)).toThrow();
+		expect(() => observe(Symbol.for("foo") as never)).toThrow();
+		expect(() => observe(null as never)).toThrow();
+		expect(() => observe(undefined as never)).toThrow();
+		expect(() => observe([])).toThrow();
+		expect(() => observe(new Date())).toThrow();
+		expect(() => observe(new Set())).toThrow();
+		expect(() => observe(new Map())).toThrow();
+		expect(() => observe(new WeakSet())).toThrow();
+		expect(() => observe(new WeakMap())).toThrow();
 	});
 
 	// 验证顶层属性的赋值与删除均被记录进 $diff，且重复赋同值不产生 diff
 	it("observe property", () => {
 		const target: Dict<number> = { a: 1, b: 2 };
 		const object = observe(target, "foo");
-		expect(object.$diff).to.deep.equal({});
+		expect(object.$diff).toEqual({});
 
-		object.a = 1;
-		expect(object).to.deep.equal({ a: 1, b: 2 });
-		expect(object.$diff).to.deep.equal({});
+		object["a"] = 1;
+		expect(object).toEqual<Dict<number>>({ a: 1, b: 2 });
+		expect(object.$diff).toEqual({});
 
-		object.a = 2;
-		expect(object).to.deep.equal({ a: 2, b: 2 });
-		expect(object.$diff).to.deep.equal({ a: 2 });
+		object["a"] = 2;
+		expect(object).toEqual<Dict<number>>({ a: 2, b: 2 });
+		expect(object.$diff).toEqual({ a: 2 });
 
-		object.c = 3;
-		expect(object).to.deep.equal({ a: 2, b: 2, c: 3 });
-		expect(object.$diff).to.deep.equal({ a: 2, c: 3 });
+		object["c"] = 3;
+		expect(object).toEqual<Dict<number>>({ a: 2, b: 2, c: 3 });
+		expect(object.$diff).toEqual({ a: 2, c: 3 });
 
-		delete object.b;
-		expect(object).to.deep.equal({ a: 2, c: 3 });
-		expect(object.$diff).to.deep.equal({ a: 2, b: undefined, c: 3 });
+		delete object["b"];
+		expect(object).toEqual<Dict<number>>({ a: 2, c: 3 });
+		expect(object.$diff).toEqual({ a: 2, b: undefined, c: 3 });
 
-		delete object.c;
-		expect(object).to.deep.equal({ a: 2 });
-		expect(object.$diff).to.deep.equal({ a: 2, b: undefined, c: undefined });
+		delete object["c"];
+		expect(object).toEqual<Dict<number>>({ a: 2 });
+		expect(object.$diff).toEqual({ a: 2, b: undefined, c: undefined });
 	});
 
 	// 验证嵌套对象/数组的深层变更会以顶层键为单位汇总进 $diff
@@ -59,60 +58,60 @@ describe("Observer API", () => {
 			c: [{ d: 2 }],
 			x: [{ y: 3 }],
 		});
-		expect(object.$diff).to.deep.equal({});
+		expect(object.$diff).toEqual({});
 
 		object.a.e = 3;
-		expect(object).to.deep.equal({
+		expect(object).toEqual({
 			a: { b: 1, e: 3 },
 			c: [{ d: 2 }],
 			x: [{ y: 3 }],
 		});
-		expect(object.$diff).to.deep.equal({
+		expect(object.$diff).toEqual({
 			a: { b: 1, e: 3 },
 		});
 
 		object.c.push({ f: 4 });
-		expect(object).to.deep.equal({
+		expect(object).toEqual({
 			a: { b: 1, e: 3 },
 			c: [{ d: 2 }, { f: 4 }],
 			x: [{ y: 3 }],
 		});
-		expect(object.$diff).to.deep.equal({
+		expect(object.$diff).toEqual({
 			a: { b: 1, e: 3 },
 			c: [{ d: 2 }, { f: 4 }],
 		});
 
 		object.x[0].y = 4;
-		expect(object).to.deep.equal({
+		expect(object).toEqual({
 			a: { b: 1, e: 3 },
 			c: [{ d: 2 }, { f: 4 }],
 			x: [{ y: 4 }],
 		});
-		expect(object.$diff).to.deep.equal({
+		expect(object.$diff).toEqual({
 			a: { b: 1, e: 3 },
 			c: [{ d: 2 }, { f: 4 }],
 			x: [{ y: 4 }],
 		});
 
 		object.x[1] = [5];
-		expect(object).to.deep.equal({
+		expect(object).toEqual({
 			a: { b: 1, e: 3 },
 			c: [{ d: 2 }, { f: 4 }],
 			x: [{ y: 4 }, [5]],
 		});
-		expect(object.$diff).to.deep.equal({
+		expect(object.$diff).toEqual({
 			a: { b: 1, e: 3 },
 			c: [{ d: 2 }, { f: 4 }],
 			x: [{ y: 4 }, [5]],
 		});
 
 		delete object.a.b;
-		expect(object).to.deep.equal({
+		expect(object).toEqual({
 			a: { e: 3 },
 			c: [{ d: 2 }, { f: 4 }],
 			x: [{ y: 4 }, [5]],
 		});
-		expect(object.$diff).to.deep.equal({
+		expect(object.$diff).toEqual({
 			a: { e: 3 },
 			c: [{ d: 2 }, { f: 4 }],
 			x: [{ y: 4 }, [5]],
@@ -124,18 +123,18 @@ describe("Observer API", () => {
 		const object = observe<any>({
 			a: [],
 		});
-		expect(object.$diff).to.deep.equal({});
+		expect(object.$diff).toEqual({});
 
 		object.a.push({ b: 1 });
-		expect(object.$diff).to.deep.equal({
+		expect(object.$diff).toEqual({
 			a: [{ b: 1 }],
 		});
 
 		object.$update();
-		expect(object.$diff).to.deep.equal({});
+		expect(object.$diff).toEqual({});
 
 		object.a[0].b = 2;
-		expect(object.$diff).to.deep.equal({
+		expect(object.$diff).toEqual({
 			a: [{ b: 2 }],
 		});
 	});
@@ -144,56 +143,56 @@ describe("Observer API", () => {
 	it("observe date", () => {
 		const object = observe({ foo: new Date() });
 		object.foo.getFullYear();
-		expect(object.$diff).to.not.have.property("foo");
+		expect(object.$diff).not.toHaveProperty("foo");
 		object.foo.setFullYear(2000);
-		expect(object.$diff).to.have.property("foo");
+		expect(object.$diff).toHaveProperty("foo");
 	});
 
 	// 验证 $update 按批消费变更：无 diff 不回调、消费后 diff 清空
 	it("flush changes", () => {
 		const flush = jest.fn();
 		const object = observe({ a: 1, b: [2] }, flush);
-		expect(object.$diff).to.deep.equal({});
+		expect(object.$diff).toEqual({});
 
 		object.$update();
-		expect(flush.mock.calls).to.have.length(0);
+		expect(flush.mock.calls).toHaveLength(0);
 
 		object.b.shift();
-		expect(object).to.deep.equal({ a: 1, b: [] });
-		expect(object.$diff).to.deep.equal({ b: [] });
+		expect(object).toEqual<{ a: number; b: number[] }>({ a: 1, b: [] });
+		expect(object.$diff).toEqual({ b: [] });
 
 		object.$update();
-		expect(flush.mock.calls).to.have.length(1);
-		expect(flush.mock.calls[0].arguments).to.deep.equal([{ b: [] }]);
-		expect(object).to.deep.equal({ a: 1, b: [] });
-		expect(object.$diff).to.deep.equal({});
+		expect(flush.mock.calls).toHaveLength(1);
+		expect(flush.mock.calls[0]?.arguments).toEqual([{ b: [] }]);
+		expect(object).toEqual<{ a: number; b: number[] }>({ a: 1, b: [] });
+		expect(object.$diff).toEqual({});
 
 		object.a = 3;
-		expect(object).to.deep.equal({ a: 3, b: [] });
-		expect(object.$diff).to.deep.equal({ a: 3 });
+		expect(object).toEqual<{ a: number; b: number[] }>({ a: 3, b: [] });
+		expect(object.$diff).toEqual({ a: 3 });
 
 		object.$update();
-		expect(flush.mock.calls).to.have.length(2);
-		expect(flush.mock.calls[1].arguments).to.deep.equal([{ a: 3 }]);
-		expect(object).to.deep.equal({ a: 3, b: [] });
-		expect(object.$diff).to.deep.equal({});
+		expect(flush.mock.calls).toHaveLength(2);
+		expect(flush.mock.calls[1]?.arguments).toEqual([{ a: 3 }]);
+		expect(object).toEqual<{ a: number; b: number[] }>({ a: 3, b: [] });
+		expect(object.$diff).toEqual({});
 	});
 
 	// 验证 $merge 合并外部数据不影响既有 diff，且键冲突时抛错拒绝合并
 	it("merge properties", () => {
 		const object = observe<any>({ a: 1 });
-		expect(object.$diff).to.deep.equal({});
+		expect(object.$diff).toEqual({});
 
 		object.a = 2;
-		expect(object).to.deep.equal({ a: 2 });
-		expect(object.$diff).to.deep.equal({ a: 2 });
+		expect(object).toEqual({ a: 2 });
+		expect(object.$diff).toEqual({ a: 2 });
 
 		object.$merge({ b: 3 });
-		expect(object).to.deep.equal({ a: 2, b: 3 });
-		expect(object.$diff).to.deep.equal({ a: 2 });
+		expect(object).toEqual({ a: 2, b: 3 });
+		expect(object.$diff).toEqual({ a: 2 });
 
-		expect(() => object.$merge({ a: 3 })).to.throw();
-		expect(object).to.deep.equal({ a: 2, b: 3 });
-		expect(object.$diff).to.deep.equal({ a: 2 });
+		expect(() => object.$merge({ a: 3 })).toThrow();
+		expect(object).toEqual({ a: 2, b: 3 });
+		expect(object.$diff).toEqual({ a: 2 });
 	});
 });

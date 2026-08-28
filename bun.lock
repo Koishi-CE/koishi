@@ -174,8 +174,6 @@
       "devDependencies": {
         "@koishi-ce/koishi": "workspace:*",
         "@sinonjs/fake-timers": "^15.4.0",
-        "@types/chai": "^4.3.16",
-        "chai": "^6.2.2",
       },
     },
     "packages/web/client": {
