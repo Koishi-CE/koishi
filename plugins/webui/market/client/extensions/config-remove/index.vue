@@ -19,10 +19,10 @@
  * 由 extensions/index.ts 注册为 global 插槽。
  */
 
-import { computed, ref } from "vue";
 import { message, router, send } from "@koishi-ce/client";
-import { configRemoveTarget } from "./index.ts";
+import { computed, ref } from "vue";
 import { useMarketNextI18n } from "../../shared/i18n";
+import { configRemoveTarget } from "./index.ts";
 
 /** 移除请求执行中标记。 */
 const removing = ref(false);

@@ -113,15 +113,15 @@
 import type { Registry } from "@koishi-ce/registry";
 import { useDebounceFn } from "@vueuse/core";
 import { computed, ref, watch } from "vue";
-import LocalPackageUpload from "./local-package-upload.vue";
 import MarketIcon from "../../market/icons";
-import { useLocalPackageUpload } from "./use-local-package-upload";
 import { useMarketNextI18n } from "../../shared/i18n";
+import { addManual, showManual } from "../../shared/operations";
 import {
 	getPendingOverrides,
 	patchMarketNextData,
 } from "../../shared/plugin-config";
-import { addManual, showManual } from "../../shared/operations";
+import LocalPackageUpload from "./local-package-upload.vue";
+import { useLocalPackageUpload } from "./use-local-package-upload";
 
 /** 对话框页签:local=本地包上传,registry=包名查询。 */
 type ManualMode = "local" | "registry";

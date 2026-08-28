@@ -11,13 +11,14 @@
  * 关键设计:自增 uploadGeneration 作废旧流程——用户中途换文件或重置时,
  * 在途分块请求的响应按代数丢弃,并自动调 cancel 上报服务端清理。
  */
-import { Binary } from "cosmokit";
+
 import { message, send } from "@koishi-ce/client";
 import type {
 	LocalPackageUploadCommitResult,
 	LocalPackageUploadPreview,
 	LocalPackageUploadStartResult,
 } from "@koishi-ce/plugin-marketn";
+import { Binary } from "cosmokit";
 import { computed, onScopeDispose, ref } from "vue";
 import { install } from "../../shared/operations";
 

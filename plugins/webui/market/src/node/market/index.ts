@@ -1,6 +1,6 @@
 import { resolve } from "node:path";
-import type { RemotePackage } from "@koishi-ce/registry";
 import { type Context, Schema, Time } from "@koishi-ce/koishi";
+import type { RemotePackage } from "@koishi-ce/registry";
 import { DEFAULT_ENDPOINT } from "../../core/market/source/endpoints.js";
 import type { MarketHttp } from "../../core/market/source/fetch-endpoint.js";
 import {

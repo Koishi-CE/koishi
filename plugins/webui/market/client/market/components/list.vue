@@ -62,6 +62,7 @@
  * - settled 标记:数据更新后 700ms 无新变化才置 true,供 CSS 做入场动画。
  */
 
+import type { SearchObject } from "@koishi-ce/registry";
 import {
 	computed,
 	inject,
@@ -72,7 +73,7 @@ import {
 	shallowRef,
 	watch,
 } from "vue";
-import { SearchObject } from "@koishi-ce/registry";
+import { useMarketNextI18n } from "../../shared/i18n";
 import {
 	getFiltered,
 	getSortedPrepared,
@@ -81,7 +82,6 @@ import {
 	kConfig,
 } from "../utils";
 import MarketPackage from "./package.vue";
-import { useMarketNextI18n } from "../../shared/i18n";
 
 const props = defineProps<{
 	/** 查询词表(过滤条件来源,变化时重置分页)。 */

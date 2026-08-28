@@ -5,8 +5,8 @@
  * 上报的前端统计(过滤/排序/虚拟化耗时)为面板键值对条目。
  */
 
-import { computed, ref } from "vue";
 import { store } from "@koishi-ce/client";
+import { computed, ref } from "vue";
 import {
 	formatCompressionRatio,
 	formatDebugPhase,

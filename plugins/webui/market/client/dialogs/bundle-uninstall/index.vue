@@ -108,7 +108,6 @@
  * 记录来源优先 props.record,缺则用 fetchBundleRecord 拉取。
  */
 
-import { computed, reactive, ref, watch } from "vue";
 import {
 	message,
 	router,
@@ -117,15 +116,17 @@ import {
 	useConfig,
 	useContext,
 } from "@koishi-ce/client";
-import { getBundleGroupIdent } from "../../../src/shared/bundle-idents";
+import { computed, reactive, ref, watch } from "vue";
 import type { PluginBundleRecord } from "../../../src/shared/bundle";
+import { getBundleGroupIdent } from "../../../src/shared/bundle-idents";
+import { useMarketNextI18n } from "../../shared/i18n";
 import {
+	type BundleMemberCleanupTarget,
+	type BundleRecordView,
 	fetchBundleRecord,
 	getBundleMemberConfigState,
 	install,
 	pendingBundleUninstalls,
-	type BundleRecordView,
-	type BundleMemberCleanupTarget,
 } from "../../shared/operations";
 import {
 	getBulkMode,
@@ -133,7 +134,6 @@ import {
 	getWritableBundleRecords,
 	patchMarketNextData,
 } from "../../shared/plugin-config";
-import { useMarketNextI18n } from "../../shared/i18n";
 
 /** 成员级卸载策略:config=仅清组内配置,dependency=卸载依赖(含清配置),keep=保留不动。 */
 type MemberAction = "config" | "dependency" | "keep";

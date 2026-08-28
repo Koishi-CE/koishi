@@ -5,10 +5,11 @@
  * 为每个带位置信息的错误生成语法高亮的代码帧（code frame）并写入日志，
  * 便于在热重载失败时直接定位到源码的出错行。
  */
+
+import { readFileSync } from "node:fs";
 import { codeFrameColumns } from "@babel/code-frame";
 import type { Logger } from "@koishi-ce/koishi";
 import type { BuildFailure } from "esbuild";
-import { readFileSync } from "node:fs";
 
 /** 判断异常是否为 esbuild 构建失败（errors 数组且每项都带 text 字段） */
 function isBuildFailure(e: any): e is BuildFailure {

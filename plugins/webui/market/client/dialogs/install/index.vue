@@ -152,14 +152,14 @@
  * use-install-flow。
  */
 
-import { computed, ref } from "vue";
 import { global, store, useConfig, useContext } from "@koishi-ce/client";
+import { computed, ref } from "vue";
+import { useMarketNextI18n } from "../../shared/i18n";
 import { active } from "../../shared/plugin-config";
 import BundleUninstall from "../bundle-uninstall/index.vue";
-import { useMarketNextI18n } from "../../shared/i18n";
-import { useInstallVersions } from "./use-install-versions";
 import { useInstallDecision } from "./use-install-decision";
 import { useInstallFlow } from "./use-install-flow";
+import { useInstallVersions } from "./use-install-versions";
 
 const ctx = useContext();
 const config = useConfig();

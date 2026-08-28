@@ -8,13 +8,13 @@
 
 import type { SearchObject } from "@koishi-ce/registry";
 import type { Dict } from "cosmokit";
+import type { MarketConfig } from "./context";
 import { compareRecommendFallback, getRecommendScore } from "./recommend";
 import {
 	getSearchIndex,
 	getSearchScoreByIndex,
 	getSearchWords,
 } from "./similarity";
-import type { MarketConfig } from "./context";
 
 interface Comparator {
 	icon: string;

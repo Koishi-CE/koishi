@@ -21,9 +21,9 @@
  * 构造函数调用一次。
  */
 import { resolve } from "node:path";
+import type { Context, Dict } from "@koishi-ce/koishi";
 import type { Registry } from "@koishi-ce/registry";
 import getRegistry from "get-registry";
-import type { Context, Dict } from "@koishi-ce/koishi";
 import { DependencyResolver } from "../../core/deps/resolver.js";
 import type { Dependency } from "../../core/deps/types.js";
 import { EnvironmentSnapshotStore } from "../../core/environment/snapshot.js";

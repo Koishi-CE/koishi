@@ -21,10 +21,10 @@
  */
 import { mkdir, rm, writeFile } from "node:fs/promises";
 import { resolve } from "node:path";
-import vue from "@vitejs/plugin-vue";
 import yaml from "@maikolib/vite-plugin-yaml";
-import uno from "unocss/vite";
+import vue from "@vitejs/plugin-vue";
 import presetMini from "unocss/preset-mini";
+import uno from "unocss/vite";
 import * as vite from "vite";
 
 const root = resolve(import.meta.dirname, "..");

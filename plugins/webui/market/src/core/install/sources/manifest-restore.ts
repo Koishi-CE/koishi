@@ -10,8 +10,8 @@
  */
 import { promises as fsp } from "node:fs";
 import { resolve } from "node:path";
-import type { PackageJson } from "@koishi-ce/registry";
 import type { Dict } from "@koishi-ce/koishi";
+import type { PackageJson } from "@koishi-ce/registry";
 import { classifyDependencySource } from "../../../shared/dependency-source.js";
 import type { Dependency } from "../../deps/types.js";
 import { loadManifest } from "../../registry/manifest.js";

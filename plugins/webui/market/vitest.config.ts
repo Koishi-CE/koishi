@@ -1,5 +1,5 @@
-import vue from "@vitejs/plugin-vue";
 import yaml from "@maikolib/vite-plugin-yaml";
+import vue from "@vitejs/plugin-vue";
 import { defineConfig } from "vitest/config";
 
 export default defineConfig({

@@ -12,12 +12,8 @@
  * 消费方:入口 index.ts 的 setupActions(ctx)。
  */
 
+import { type Context, message, router, send, store } from "@koishi-ce/client";
 import { ref, watch } from "vue";
-import { Context, message, router, send, store } from "@koishi-ce/client";
-import {
-	getPendingOverrides,
-	patchMarketNextData,
-} from "../shared/plugin-config";
 import { translate } from "../shared/i18n";
 import {
 	showConfirm,
@@ -26,9 +22,13 @@ import {
 	showManual,
 } from "../shared/operations";
 import {
+	getPendingOverrides,
+	patchMarketNextData,
+} from "../shared/plugin-config";
+import {
+	type MarketStore,
 	REGISTRY_STATUS_SWEEP_INTERVAL,
 	sweepRegistryStatus,
-	type MarketStore,
 } from "./registry-state";
 
 /** alt+g → alt+b 序列输入的时限(毫秒),超时重新计数。 */

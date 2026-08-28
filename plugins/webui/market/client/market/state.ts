@@ -14,8 +14,8 @@ import {
 	getSummaryKey,
 	isMarketSnapshotTransfer,
 	isSnapshotSuperseded,
-	resolveMarketSnapshot,
 	type MarketSnapshot,
+	resolveMarketSnapshot,
 } from "./snapshot-utils";
 
 export {

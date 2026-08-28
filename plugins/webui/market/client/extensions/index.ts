@@ -12,26 +12,27 @@
  * 两个 patch 都用 watch 监听宿主菜单/actions 项,宿主重建菜单后自动重打;
  * ctx.effect 注册的清理函数会恢复原始 label/action,保证插件停用后不留痕。
  */
-import { Context, store } from "@koishi-ce/client";
+
 import type { MenuItem } from "@koishi-ce/client";
+import { type Context, store } from "@koishi-ce/client";
 // 宿主 @koishi-ce/plugin-config 提供 packages/services/config 三个 Console 服务；
 // 仅在 .vue 里 import type 对 tsc 不生效，这里加载其类型声明以扩展 store。
 import type {} from "@koishi-ce/plugin-config";
 import { markRaw, watch } from "vue";
-import ConfigRemove from "./config-remove/index.vue";
+import { translate } from "../shared/i18n";
+import { resolveBundlePackageFromGroup } from "../shared/operations";
+import { getBundleRecords } from "../shared/plugin-config";
+import { requestBundleGroupUninstall } from "./bundle-group-uninstall/index";
+import BundleGroupUninstall from "./bundle-group-uninstall/index.vue";
 import {
 	isProtectedConfigNode,
 	requestConfigRemove,
 } from "./config-remove/index";
-import BundleGroupUninstall from "./bundle-group-uninstall/index.vue";
-import { requestBundleGroupUninstall } from "./bundle-group-uninstall/index";
+import ConfigRemove from "./config-remove/index.vue";
 import Dependency from "./dependency/index.vue";
 import Missing from "./missing/index.vue";
 import Select from "./select/index.vue";
 import Version from "./version/index.vue";
-import { resolveBundlePackageFromGroup } from "../shared/operations";
-import { getBundleRecords } from "../shared/plugin-config";
-import { translate } from "../shared/i18n";
 
 /** 判断配置树节点是否合包分组:分组路径能反查到合包包名即算(持久化记录优先)。 */
 function isBundleGroup(tree: any) {

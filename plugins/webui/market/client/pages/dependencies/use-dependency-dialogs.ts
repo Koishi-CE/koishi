@@ -7,8 +7,10 @@
  * 驱动单例挂载(v-if)与打开(ref.open / v-model)。
  */
 
-import { computed, nextTick, ref } from "vue";
 import { store } from "@koishi-ce/client";
+import { computed, nextTick, ref } from "vue";
+import { formatShortname } from "../../market/utils";
+import { createLocalBundleRecord } from "../../shared/operations";
 import {
 	getBundleRecords,
 	getIgnoredUpdateVersion,
@@ -16,8 +18,6 @@ import {
 	getMarketNextPolicy,
 	getWritableMarketNextPolicy,
 } from "../../shared/plugin-config";
-import { createLocalBundleRecord } from "../../shared/operations";
-import { formatShortname } from "../../market/utils";
 import { getUpdatePolicy } from "./dependency-helpers";
 import type { IgnoreUpdateTarget } from "./use-ignore-update";
 

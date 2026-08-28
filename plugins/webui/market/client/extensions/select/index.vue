@@ -27,14 +27,14 @@
  */
 
 import { store } from "@koishi-ce/client";
+import type { PackageProvider } from "@koishi-ce/plugin-config";
+import { provide, ref, watch } from "vue";
 import {
 	categories,
 	MarketIcon,
-	useMarketI18n,
 	resolveCategory,
+	useMarketI18n,
 } from "../../market";
-import { PackageProvider } from "@koishi-ce/plugin-config";
-import { provide, ref, watch } from "vue";
 import { getMarketObject, loadMarketObjects } from "../../market/state";
 
 /** 分类标签全集:all/other 打头 + 市场定义的分类列表。 */

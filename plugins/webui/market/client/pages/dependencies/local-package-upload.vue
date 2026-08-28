@@ -86,8 +86,8 @@
  */
 import type { LocalPackageUploadPreview } from "@koishi-ce/plugin-marketn/shared";
 import { ref } from "vue";
-import { useMarketNextI18n } from "../../shared/i18n";
 import MarketIcon from "../../market/icons";
+import { useMarketNextI18n } from "../../shared/i18n";
 
 const props = defineProps<{
 	busy: boolean;

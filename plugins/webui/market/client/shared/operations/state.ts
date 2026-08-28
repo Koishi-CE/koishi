@@ -6,10 +6,10 @@
  * 独立成文件避免状态定义与安装编排逻辑互相耦合。
  */
 
-import { send } from "@koishi-ce/client";
 import type { Context } from "@koishi-ce/client";
-import type { Dict } from "cosmokit";
+import { send } from "@koishi-ce/client";
 import type { Registry, SearchObject } from "@koishi-ce/registry";
+import type { Dict } from "cosmokit";
 import { compare } from "semver";
 import { reactive, ref } from "vue";
 

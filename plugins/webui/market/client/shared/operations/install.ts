@@ -10,17 +10,17 @@
 import { message, send, socket } from "@koishi-ce/client";
 import type { Awaitable, Dict } from "cosmokit";
 import { watch } from "vue";
-import { active } from "../plugin-config";
 import { translate } from "../i18n";
-import { MARKET_NEXT_PACKAGE, showEnvironmentVersions } from "./state";
+import { active } from "../plugin-config";
 import {
+	type InstallOptions,
 	installProgressState,
+	type LogLine,
 	prepareInstallFallbackRetry,
 	pushInstallLog,
 	resetInstallFallbackState,
-	type InstallOptions,
-	type LogLine,
 } from "./progress";
+import { MARKET_NEXT_PACKAGE, showEnvironmentVersions } from "./state";
 
 /** 安装回调的文案覆盖项:各入口(市场/依赖页/环境回滚)传入自己的标题与提示。 */
 interface InstallMessages {
@@ -67,7 +67,7 @@ function reportInstallRequestError(error: unknown, messages: InstallMessages) {
 
 /** 自更新判定:覆盖清单里含有本插件包名(哪怕是卸载它)就算。 */
 function isSelfUpdate(override: Dict<string>) {
-	return Object.prototype.hasOwnProperty.call(override, MARKET_NEXT_PACKAGE);
+	return Object.hasOwn(override, MARKET_NEXT_PACKAGE);
 }
 
 /** install/环境回滚共用的面板重置:清 fallback、状态机归位、写入标题与首条日志。 */

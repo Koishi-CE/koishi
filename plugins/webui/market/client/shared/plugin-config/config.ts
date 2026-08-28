@@ -5,8 +5,8 @@
  * 在其上提供类型化的读取器与双写补丁(本地立即生效 + RPC 持久化)。
  */
 
-import { ref } from "vue";
 import { send, store } from "@koishi-ce/client";
+import { ref } from "vue";
 import type {
 	MarketSilentCustomRule,
 	MarketSilentDateRule,
@@ -14,8 +14,8 @@ import type {
 	MarketSilentRule,
 	MarketSilentStatusRule,
 } from "../../../src/shared/types";
-import type { UpdatePolicy } from "./update-policy";
 import { getMarketDataStore } from "./data-store";
+import type { UpdatePolicy } from "./update-policy";
 
 /** 市场条目弹层当前打开的包名(空串表示关闭);安装开始前会被清空。 */
 export const active = ref("");
@@ -177,5 +177,5 @@ export function hasOwn<T extends object, K extends PropertyKey>(
 	source: T | undefined,
 	key: K,
 ): source is T & Record<K, unknown> {
-	return !!source && Object.prototype.hasOwnProperty.call(source, key);
+	return !!source && Object.hasOwn(source, key);
 }

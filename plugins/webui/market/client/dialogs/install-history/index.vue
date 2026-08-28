@@ -117,16 +117,17 @@
  *
  * 关键设计:明细请求用自增 serial 标记,快速切换记录时丢弃过期响应。
  */
-import { computed, ref, watch } from "vue";
+
 import { message, send, useConfig } from "@koishi-ce/client";
 import type {
 	InstallHistoryChange,
 	InstallHistoryEntry,
 	InstallLogDetail,
 } from "@koishi-ce/plugin-marketn/shared";
-import { showInstallHistory } from "../../shared/operations";
+import { computed, ref, watch } from "vue";
 import { endpointHost } from "../../shared/format";
 import { useMarketNextI18n } from "../../shared/i18n";
+import { showInstallHistory } from "../../shared/operations";
 
 const config = useConfig();
 const { t, locale } = useMarketNextI18n();

@@ -34,15 +34,15 @@
  * (loadMarketServiceProviders 按服务名增量查询)。由 extensions/index.ts 注册。
  */
 
-import { Dict, store } from "@koishi-ce/client";
-import { computed, inject, ComputedRef, watch } from "vue";
-import { EnvInfo } from "@koishi-ce/plugin-config/client";
-import KDepLink from "../dep-link/index.vue";
-import { useMarketNextI18n } from "../../shared/i18n";
+import { type Dict, store } from "@koishi-ce/client";
+import type { EnvInfo } from "@koishi-ce/plugin-config/client";
+import { type ComputedRef, computed, inject, watch } from "vue";
 import {
 	getMarketServiceProviders,
 	loadMarketServiceProviders,
 } from "../../market/state";
+import { useMarketNextI18n } from "../../shared/i18n";
+import KDepLink from "../dep-link/index.vue";
 
 /** config 插件注入的插件环境信息(peer 依赖 + using 服务)。 */
 const env = inject<ComputedRef<EnvInfo>>("plugin:env");

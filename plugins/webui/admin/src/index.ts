@@ -8,8 +8,8 @@ import {
 	Service,
 } from "@koishi-ce/koishi";
 import { resolve } from "path";
-import command from "./command";
 import zhCN from "../locales/zh-CN.yml";
+import command from "./command";
 
 export * from "./command";
 

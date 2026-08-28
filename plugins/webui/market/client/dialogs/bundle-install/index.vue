@@ -344,25 +344,24 @@
  * use-bundle-diff,安装执行在 use-bundle-install,展示辅助在 bundle-format。
  */
 
+import { store, useConfig, useI18nText } from "@koishi-ce/client";
 import { computed } from "vue";
-import { store, useConfig } from "@koishi-ce/client";
-import { activeBundle } from "../../shared/operations";
-import { formatShortname } from "../../market/utils";
 import MarketIcon from "../../market/icons";
-import { useI18nText } from "@koishi-ce/client";
+import { formatShortname } from "../../market/utils";
 import { useMarketNextI18n } from "../../shared/i18n";
+import { activeBundle } from "../../shared/operations";
 import {
-	formatConfig,
-	getInstalledText as installedStatusText,
-	getPackageDescription as pickDescription,
-	hasPreset,
-	memberCategory,
 	riskTags as collectRiskTags,
+	formatConfig,
+	hasPreset,
+	getInstalledText as installedStatusText,
+	memberCategory,
+	getPackageDescription as pickDescription,
 	sensitiveFields,
 } from "./bundle-format";
-import { useBundleMembers } from "./use-bundle-members";
 import { useBundleDiff } from "./use-bundle-diff";
 import { useBundleInstall } from "./use-bundle-install";
+import { useBundleMembers } from "./use-bundle-members";
 
 const config = useConfig();
 const { t } = useMarketNextI18n();

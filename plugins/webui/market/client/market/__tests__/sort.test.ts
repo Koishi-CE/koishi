@@ -9,7 +9,7 @@ import { describe, expect, it } from "vitest";
  */
 
 import { comparators, getSortedPrepared } from "../sort";
-import { makeEntry, type EntryOverrides } from "./helpers";
+import { type EntryOverrides, makeEntry } from "./helpers";
 
 function entry(overrides: EntryOverrides = {}) {
 	return makeEntry(overrides);

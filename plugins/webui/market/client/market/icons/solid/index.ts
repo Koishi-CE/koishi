@@ -1,7 +1,6 @@
 import Adapter from "./adapter.vue";
 import Ai from "./ai.vue";
 import All from "./all.vue";
-import WebUI from "./webui.vue";
 import Core from "./core.vue";
 import Extension from "./extension.vue";
 import Game from "./game.vue";
@@ -15,6 +14,7 @@ import Meme from "./meme.vue";
 import Other from "./other.vue";
 import Preset from "./preset.vue";
 import Tool from "./tool.vue";
+import WebUI from "./webui.vue";
 
 export default {
 	"solid:adapter": Adapter,

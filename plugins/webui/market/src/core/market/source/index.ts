@@ -12,8 +12,9 @@
  * 通过结构性子集接口解耦;dataVersion 只在内容 hash 变化时递增,revision
  * 每次 apply 都递增;start(refresh) 复用仍在跑的同 serial 后台任务。
  */
-import type { SearchObject, SearchResult } from "@koishi-ce/registry";
+
 import type { Dict } from "@koishi-ce/koishi";
+import type { SearchObject, SearchResult } from "@koishi-ce/registry";
 import type {
 	MarketPerformance,
 	MarketPerformanceSnapshot,

@@ -9,8 +9,9 @@
  *   保证 getSnapshot 永不长时间阻塞、也尽量不返回空数据。
  * 成块移植自旧 MarketProvider.getSnapshot / createPayload。
  */
-import type { SearchObject, SearchResult } from "@koishi-ce/registry";
+
 import type { Dict } from "@koishi-ce/koishi";
+import type { SearchObject, SearchResult } from "@koishi-ce/registry";
 import type { MarketPayload, MarketPerformance } from "../../shared/types.js";
 import { waitFor } from "../utils/async.js";
 import { formatError } from "../utils/format.js";

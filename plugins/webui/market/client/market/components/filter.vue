@@ -165,19 +165,19 @@
  *  值完整才写入查询词;相对天数过滤即时生效。
  */
 
+import type { SearchObject } from "@koishi-ce/registry";
 import { computed, inject, ref, watch } from "vue";
+import MarketIcon from "../icons";
 import {
-	Badge,
+	type Badge,
 	badges,
-	kConfig,
-	comparators,
 	categories,
+	comparators,
 	isBundleSearchObject,
+	kConfig,
 	resolveCategory,
 	useMarketI18n,
 } from "../utils";
-import { SearchObject } from "@koishi-ce/registry";
-import MarketIcon from "../icons";
 
 const props = defineProps<{
 	/** 当前查询词表(末尾恒有草稿槽空串)。 */

@@ -5,12 +5,12 @@
  * 已装态卡片用 identity 色做强调色(cardStyle),其余态在元数据区展示。
  */
 
-import { computed } from "vue";
-import type { ComputedRef } from "vue";
-import { useI18nText } from "@koishi-ce/client";
 import type { Context as ClientContext } from "@koishi-ce/client";
-import { getConfigWriter } from "../../shared/operations";
+import { useI18nText } from "@koishi-ce/client";
+import type { ComputedRef } from "vue";
+import { computed } from "vue";
 import { formatShortname, isPluginPackage } from "../../market/utils";
+import { getConfigWriter } from "../../shared/operations";
 import { resolveIdentity } from "./package-utils";
 import type { PackageCardState } from "./use-package-card-state";
 

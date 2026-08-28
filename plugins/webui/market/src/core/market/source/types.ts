@@ -7,8 +7,9 @@
  * - `createMarketRouteStatsBook` 集中承载市场侧端点统计调参（冷却阶梯、失败惩罚、
  *   rescue 降罚），供 source/index.ts 组装与 endpoints 测试共用，避免调参散落。
  */
-import type { SearchObject } from "@koishi-ce/registry";
+
 import type { Dict } from "@koishi-ce/koishi";
+import type { SearchObject } from "@koishi-ce/registry";
 import type { MarketPerformance } from "../../../shared/types.js";
 import { RouteStatsBook } from "../../racing/stats.js";
 import type { MarketHttp } from "./fetch-endpoint.js";

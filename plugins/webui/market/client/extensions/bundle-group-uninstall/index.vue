@@ -17,18 +17,18 @@
  * (redirectToPlugins)。由 extensions/index.ts 注册为 global 插槽。
  */
 
-import { computed, ref, watch } from "vue";
 import { message, useConfig } from "@koishi-ce/client";
+import { computed, ref, watch } from "vue";
+import BundleUninstall from "../../dialogs/bundle-uninstall/index.vue";
+import { useMarketNextI18n } from "../../shared/i18n";
 import {
+	type BundleRecordView,
 	fetchBundleRecord,
 	resolveBundlePackageFromGroup,
 	resolveBundleRecordFromGroup,
-	type BundleRecordView,
 } from "../../shared/operations";
 import { getBundleRecords } from "../../shared/plugin-config";
 import { bundleGroupUninstallTarget } from "./index.ts";
-import BundleUninstall from "../../dialogs/bundle-uninstall/index.vue";
-import { useMarketNextI18n } from "../../shared/i18n";
 
 const config = useConfig();
 const { t } = useMarketNextI18n();

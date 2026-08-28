@@ -7,8 +7,9 @@
  * 直接调用,无需挂载整套对话框 composable。
  */
 
-import { ref } from "vue";
 import { message } from "@koishi-ce/client";
+import { ref } from "vue";
+import type { IgnoredUpdates } from "../../shared/plugin-config";
 import {
 	createUpdateIgnoreRule,
 	getWritableMarketNextPolicy,
@@ -16,13 +17,12 @@ import {
 	patchMarketNextData,
 	type UpdatePolicy,
 } from "../../shared/plugin-config";
-import type { IgnoredUpdates } from "../../shared/plugin-config";
 import {
 	day,
 	dialogDuration,
 	getDurationPreset,
-	normalizeDialogCount,
 	type IgnoreDurationPreset,
+	normalizeDialogCount,
 } from "./package-utils";
 
 /** 忽略对话框依赖的最小接口:目标包名 + 更新策略/忽略记录的读写。 */

@@ -6,17 +6,17 @@
  * registry 就绪后为 override 新增包补拉 manual 元数据。
  */
 
-import { computed, watch, type WatchStopHandle } from "vue";
-import { store, type Context } from "@koishi-ce/client";
+import { type Context, store } from "@koishi-ce/client";
+import { computed, type WatchStopHandle, watch } from "vue";
+import { shouldIncludeDiscoveredLocalPlugin } from "../../../src/shared/dependency-source";
+import { loadMarketObjects } from "../../market/state";
+import { isPluginPackage } from "../../market/utils";
 import {
 	addManual,
-	getConfigWriter,
 	type ClientConfigWriter,
+	getConfigWriter,
 } from "../../shared/operations";
 import { getPendingOverrides } from "../../shared/plugin-config";
-import { shouldIncludeDiscoveredLocalPlugin } from "../../../src/shared/dependency-source";
-import { isPluginPackage } from "../../market/utils";
-import { loadMarketObjects } from "../../market/state";
 import { isManageableBundle, isUnconfigured } from "./dependency-helpers";
 
 /** store.packages 里的本地包条目(可能缺省)。 */

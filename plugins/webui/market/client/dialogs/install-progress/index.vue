@@ -82,11 +82,12 @@
  * 里写。本组件负责状态横幅、日志终端(自动滚底)、fallback 镜像重试按钮
  * 与关闭控制(running 中禁止关闭)。由 app/pages.ts 全局挂载。
  */
-import { computed, nextTick, ref, watch } from "vue";
+
 import { useConfig } from "@koishi-ce/client";
+import { computed, nextTick, ref, watch } from "vue";
+import MarketIcon from "../../market/icons";
 import { useMarketNextI18n } from "../../shared/i18n";
 import { installProgressState } from "../../shared/operations";
-import MarketIcon from "../../market/icons";
 
 const config = useConfig();
 const { t } = useMarketNextI18n();

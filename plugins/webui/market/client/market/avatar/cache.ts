@@ -7,7 +7,7 @@
  */
 
 import { ref } from "vue";
-import { createAvatarUrlCacheKey, type AvatarCandidate } from "./candidates";
+import { type AvatarCandidate, createAvatarUrlCacheKey } from "./candidates";
 
 /** 成功缓存条目:data 为 base64 正文,type 为 MIME,cachedAt 用于 TTL 判定。 */
 export type AvatarCacheEntry = {

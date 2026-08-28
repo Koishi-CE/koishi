@@ -11,12 +11,12 @@
  * 消费方:由 Koishi console 按客户端入口约定加载(whole/共享 bundle 均指向此处)。
  */
 
+import { type Context, global, store } from "@koishi-ce/client";
 import { isReactive, markRaw, toRaw, watch } from "vue";
-import { Context, global, store } from "@koishi-ce/client";
-import { registerMarketNextI18n } from "./shared/i18n";
-import { refreshMarketLookups, restoreMarketSnapshot } from "./market/state";
-import { setupPages } from "./app/pages";
 import { setupActions } from "./app/actions";
+import { setupPages } from "./app/pages";
+import { refreshMarketLookups, restoreMarketSnapshot } from "./market/state";
+import { registerMarketNextI18n } from "./shared/i18n";
 import "./shared/icons";
 import "./shared/styles/scrollbars.scss";
 import "./shared/styles/version-select.scss";

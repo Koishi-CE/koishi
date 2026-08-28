@@ -19,7 +19,6 @@
  */
 import { createRequire } from "node:module";
 import { resolve } from "node:path";
-import type { RemotePackage } from "@koishi-ce/registry";
 import {
 	type Context,
 	type Dict,
@@ -27,6 +26,7 @@ import {
 	Service,
 	Time,
 } from "@koishi-ce/koishi";
+import type { RemotePackage } from "@koishi-ce/registry";
 import { detect } from "package-manager-detector";
 import type { DependencyResolver } from "../../core/deps/resolver.js";
 import type { EnvironmentSnapshotOps } from "../../core/install/environment.js";

@@ -7,9 +7,10 @@
  * versions 映射。
  */
 
-import { computed, reactive, watch } from "vue";
 import { send, store, useConfig } from "@koishi-ce/client";
 import type { Dict } from "cosmokit";
+import { computed, reactive, watch } from "vue";
+import { isLocalDependency } from "../../../src/shared/dependency-source";
 import {
 	analyzeVersions,
 	getRegistryStatus,
@@ -21,7 +22,6 @@ import {
 	getPendingOverrides,
 	patchMarketNextConfig,
 } from "../../shared/plugin-config";
-import { isLocalDependency } from "../../../src/shared/dependency-source";
 
 export function useInstallVersions() {
 	const config = useConfig();

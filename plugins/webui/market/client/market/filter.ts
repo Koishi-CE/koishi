@@ -12,9 +12,9 @@ import type { MarketConfig } from "./context";
 import {
 	getSearchIndex,
 	getSimilarityByIndex,
+	type MarketSearchIndex,
 	normalizeFilterWords,
 	normalizePackageName,
-	type MarketSearchIndex,
 } from "./similarity";
 import { getUsers } from "./users";
 

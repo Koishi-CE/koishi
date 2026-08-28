@@ -8,6 +8,9 @@
  *    模块缓存并重载（TS 源码由 loader 借助 esbuild 即时编译）。
  * 重载失败时回滚 require.cache 与插件状态，保证进程存活。
  */
+
+import { createRequire } from "node:module";
+import { relative, resolve } from "node:path";
 import {
 	type Context,
 	coerce,
@@ -21,8 +24,6 @@ import {
 } from "@koishi-ce/koishi";
 import { Loader, type LoaderScope, unwrapExports } from "@koishi-ce/loader";
 import { type ChokidarOptions, type FSWatcher, watch } from "chokidar";
-import { createRequire } from "node:module";
-import { relative, resolve } from "node:path";
 import { handleError } from "./error";
 
 declare module "@koishi-ce/koishi" {

@@ -7,8 +7,8 @@
  * 这是从「一条消息」到「一次命令调用」的关键衔接层。
  */
 
-import { CommanderCore } from "./core";
 import type { Argv } from "../parser";
+import { CommanderCore } from "./core";
 
 export class CommanderResolve extends CommanderCore {
 	/**

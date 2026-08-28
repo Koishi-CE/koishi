@@ -12,10 +12,10 @@ import {
 	getSearchIndex,
 	getSearchScoreByIndex,
 	getSearchWords,
+	getSimilarityByIndex,
 	normalizeFilterWords,
 	normalizePackageName,
 	normalizeSearchText,
-	getSimilarityByIndex,
 } from "../similarity";
 import { makeEntry, makeIndex } from "./helpers";
 

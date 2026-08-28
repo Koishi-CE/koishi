@@ -15,29 +15,29 @@
 
 import type { Context } from "@koishi-ce/client";
 import { useI18n } from "vue-i18n";
-import zhCommon from "./locales/zh-CN/common.yml";
-import enCommon from "./locales/en-US/common.yml";
-import zhDependencies from "./locales/zh-CN/dependencies.yml";
-import enDependencies from "./locales/en-US/dependencies.yml";
-import zhMarketPage from "./locales/zh-CN/market-page.yml";
-import enMarketPage from "./locales/en-US/market-page.yml";
-import zhOperations from "./locales/zh-CN/operations.yml";
-import enOperations from "./locales/en-US/operations.yml";
-import zhDependencyCard from "./locales/zh-CN/dependency-card.yml";
-import enDependencyCard from "./locales/en-US/dependency-card.yml";
-import zhExtensions from "./locales/zh-CN/extensions.yml";
-import enExtensions from "./locales/en-US/extensions.yml";
-import zhBundle from "./locales/zh-CN/bundle.yml";
-import enBundle from "./locales/en-US/bundle.yml";
-import zhEnvironment from "./locales/zh-CN/environment.yml";
-import enEnvironment from "./locales/en-US/environment.yml";
-import zhMarket from "../market/locales/zh-CN.yml";
 import enMarket from "../market/locales/en-US.yml";
+import zhMarket from "../market/locales/zh-CN.yml";
 import {
 	ensureLocaleNamespace,
 	installLocaleNamespaceGuard,
 	type LocaleMessageComposer,
 } from "./i18n-runtime";
+import enBundle from "./locales/en-US/bundle.yml";
+import enCommon from "./locales/en-US/common.yml";
+import enDependencies from "./locales/en-US/dependencies.yml";
+import enDependencyCard from "./locales/en-US/dependency-card.yml";
+import enEnvironment from "./locales/en-US/environment.yml";
+import enExtensions from "./locales/en-US/extensions.yml";
+import enMarketPage from "./locales/en-US/market-page.yml";
+import enOperations from "./locales/en-US/operations.yml";
+import zhBundle from "./locales/zh-CN/bundle.yml";
+import zhCommon from "./locales/zh-CN/common.yml";
+import zhDependencies from "./locales/zh-CN/dependencies.yml";
+import zhDependencyCard from "./locales/zh-CN/dependency-card.yml";
+import zhEnvironment from "./locales/zh-CN/environment.yml";
+import zhExtensions from "./locales/zh-CN/extensions.yml";
+import zhMarketPage from "./locales/zh-CN/market-page.yml";
+import zhOperations from "./locales/zh-CN/operations.yml";
 
 /** 本插件在全局 i18n 里的命名空间,所有 key 都以 `marketNext.` 开头。 */
 const namespace = "marketNext";

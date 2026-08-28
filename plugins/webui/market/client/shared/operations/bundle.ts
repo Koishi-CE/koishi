@@ -6,21 +6,21 @@
  * koishi.yml 分组路径反查合包、统计成员配置节点分布等工具。
  */
 
-import { send, store } from "@koishi-ce/client";
-import type { Dict } from "cosmokit";
 import type { Context } from "@koishi-ce/client";
+import { send, store } from "@koishi-ce/client";
 import type { Registry } from "@koishi-ce/registry";
+import type { Dict } from "cosmokit";
+import {
+	isBundlePackageName,
+	type PluginBundleManifest,
+	type PluginBundleRecord,
+	parseBundleManifest,
+} from "../../../src/shared/bundle";
 import {
 	getBundleGroupIdent,
 	getPluginShortname,
 } from "../../../src/shared/bundle-idents";
-import {
-	isBundlePackageName,
-	parseBundleManifest,
-	type PluginBundleManifest,
-	type PluginBundleRecord,
-} from "../../../src/shared/bundle";
-import { getConfigWriter, type BundleMemberCleanupTarget } from "./state";
+import { type BundleMemberCleanupTarget, getConfigWriter } from "./state";
 
 /** PluginBundleRecord 的前端视图形态:fallback=true 表示非持久化记录、由本地状态推导。 */
 export type BundleRecordView = PluginBundleRecord & {

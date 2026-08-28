@@ -6,8 +6,9 @@
  * 过程中通过 flushMarketPatch 增量广播补片(market/patch 频道),
  * 让前端在长分析过程中渐进看到数据。
  */
-import type { SearchObject } from "@koishi-ce/registry";
+
 import type { Dict } from "@koishi-ce/koishi";
+import type { SearchObject } from "@koishi-ce/registry";
 import type { MarketPerformance } from "../../../shared/types.js";
 import { formatError } from "../../utils/format.js";
 import { applyDiskCache, type MarketWarmupSource } from "../cache/warmup.js";

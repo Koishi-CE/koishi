@@ -5,10 +5,18 @@
  * 状态判定族(待应用变更/更新忽略/可升级/未配置等),供展示层与显隐层消费。
  */
 
+import { type Context, store } from "@koishi-ce/client";
 import { computed } from "vue";
-import { store, type Context } from "@koishi-ce/client";
 import type { PluginBundleRecord } from "../../../src/shared/bundle";
 import { isLocalDependency } from "../../../src/shared/dependency-source";
+import { getMarketObject } from "../../market/state";
+import { formatShortname, isPluginPackage } from "../../market/utils";
+import {
+	analyzeVersions,
+	createLocalBundleRecord,
+	getConfigWriter,
+	getRegistryStatus,
+} from "../../shared/operations";
 import {
 	getBundleRecords,
 	getIgnoredUpdateVersion,
@@ -21,14 +29,6 @@ import {
 	isUpdateIgnored,
 	patchMarketNextData,
 } from "../../shared/plugin-config";
-import {
-	analyzeVersions,
-	createLocalBundleRecord,
-	getConfigWriter,
-	getRegistryStatus,
-} from "../../shared/operations";
-import { formatShortname, isPluginPackage } from "../../market/utils";
-import { getMarketObject } from "../../market/state";
 
 /** 卡片组件的 props 形态(状态层只用 name 与 kind)。 */
 export interface PackageCardProps {
@@ -96,7 +96,7 @@ export function usePackageCardState(
 
 	const overrideValue = computed(() => {
 		const override = getPendingOverrides();
-		if (!Object.prototype.hasOwnProperty.call(override, props.name)) return;
+		if (!Object.hasOwn(override, props.name)) return;
 		return override[props.name];
 	});
 

@@ -143,20 +143,20 @@
  * use-market-debug(格式化纯函数在 debug-format),彩蛋在 use-market-easter。
  */
 
-import { router, store, global, useConfig } from "@koishi-ce/client";
+import { global, router, store, useConfig } from "@koishi-ce/client";
+import type { SearchObject } from "@koishi-ce/registry";
 import { computed, onMounted, onUnmounted, provide, ref } from "vue";
-import { active, getPendingOverrides } from "../../shared/plugin-config";
 import { kConfig, MarketFilter, MarketList, MarketSearch } from "../../market";
-import { SearchObject } from "@koishi-ce/registry";
-import { activeBundle } from "../../shared/operations";
-import MarketSecretArchive from "./market-secret-archive.vue";
 import { canInstallBundleSearchObject } from "../../market/utils";
 import { useMarketNextI18n } from "../../shared/i18n";
+import { activeBundle } from "../../shared/operations";
+import { active, getPendingOverrides } from "../../shared/plugin-config";
 import {
 	formatSource as formatSourceWith,
-	formatTimingName as formatTimingNameWith,
 	formatTime as formatTimeWith,
+	formatTimingName as formatTimingNameWith,
 } from "./debug-format";
+import MarketSecretArchive from "./market-secret-archive.vue";
 import { useMarketDebug } from "./use-market-debug";
 import { useMarketEaster } from "./use-market-easter";
 import { installed, useMarketPage } from "./use-market-page";

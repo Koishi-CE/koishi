@@ -6,13 +6,13 @@
  * - getRegistryStatus(Text):读取并翻译 registry 拉取状态(loading/超时/404 等)。
  */
 
-import { valueMap } from "cosmokit";
-import type { Dict } from "cosmokit";
 import { store } from "@koishi-ce/client";
 import type { RegistryStatus } from "@koishi-ce/plugin-marketn/shared";
+import type { Dict } from "cosmokit";
+import { valueMap } from "cosmokit";
 import { satisfies } from "semver";
-import { translate } from "../i18n";
 import { endpointHost } from "../format";
+import { translate } from "../i18n";
 import { manualDeps } from "./state";
 
 /** 依赖/peer 检查结论的展示级别:success 绿 / warning 黄 / danger 红 / primary 蓝(仅提示)。 */

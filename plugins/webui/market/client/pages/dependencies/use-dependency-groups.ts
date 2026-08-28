@@ -5,13 +5,13 @@
  * (collapsedGroups 持久化)与"过滤 + 搜索后的分组视图"组装。
  */
 
-import { computed, type ComputedRef, type Ref } from "vue";
+import { type ComputedRef, computed, type Ref } from "vue";
 import {
 	getCollapsedGroups,
 	patchMarketNextData,
 } from "../../shared/plugin-config";
-import type { DependencyItem } from "./use-dependency-classify";
 import type { ItemKind } from "./dependency-helpers";
+import type { DependencyItem } from "./use-dependency-classify";
 
 /** 过滤下拉的选项 key(与分组 key 基本同集,含 all)。 */
 export type FilterKey =

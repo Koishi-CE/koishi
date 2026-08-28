@@ -15,14 +15,14 @@
  */
 
 import { receive, store } from "@koishi-ce/client";
-import type { Dict } from "cosmokit";
 import type {
 	PluginBundleRecord,
 	RegistryStatus,
 } from "@koishi-ce/plugin-marketn/shared";
+import type { Dict } from "cosmokit";
 import type { DependencySource } from "../../src/shared/dependency-source";
-import type { IgnoredUpdates } from "../shared/plugin-config";
 import { translate } from "../shared/i18n";
+import type { IgnoredUpdates } from "../shared/plugin-config";
 
 declare module "@koishi-ce/client" {
 	interface Config {

@@ -18,8 +18,8 @@
 
 import { store } from "@koishi-ce/client";
 import {} from "@koishi-ce/plugin-config";
-import { active } from "../../shared/plugin-config";
 import { useMarketNextI18n } from "../../shared/i18n";
+import { active } from "../../shared/plugin-config";
 
 defineProps<{
 	name: string;

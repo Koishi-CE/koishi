@@ -7,15 +7,15 @@
  * 镜像重试;断连一律按失败处理。成功后弹出 moved/skipped 统计并关闭。
  */
 
-import { computed, ref, watch } from "vue";
 import { message, send, socket } from "@koishi-ce/client";
+import { computed, ref, watch } from "vue";
 import type { BundleInstallResult } from "../../../src/shared/bundle";
 import {
 	activeBundle,
+	type InstallOptions,
 	installProgressState,
 	prepareInstallFallbackRetry,
 	resetInstallFallbackState,
-	type InstallOptions,
 } from "../../shared/operations";
 import type { BundleDiff } from "./use-bundle-diff";
 import type { BundleMembers } from "./use-bundle-members";

@@ -9,8 +9,8 @@
 
 import { Context } from "../../context";
 import { Command } from "../command/command";
-import { CommanderResolve } from "./resolve";
 import { normalizeCommand } from "../normalize";
+import { CommanderResolve } from "./resolve";
 
 export class CommanderRegister extends CommanderResolve {
 	/**

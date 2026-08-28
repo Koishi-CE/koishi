@@ -17,11 +17,11 @@
  * 面板),查不到给"去市场搜索"链接。由 extensions/index.ts 注册。
  */
 
-import { computed, inject, watch, WritableComputedRef } from "vue";
+import { computed, inject, type WritableComputedRef, watch } from "vue";
 import { useRouter } from "vue-router";
-import { active } from "../../shared/plugin-config";
-import { useMarketNextI18n } from "../../shared/i18n";
 import { getMarketObject, loadMarketObjects } from "../../market/state";
+import { useMarketNextI18n } from "../../shared/i18n";
+import { active } from "../../shared/plugin-config";
 
 const router = useRouter();
 const { t } = useMarketNextI18n();

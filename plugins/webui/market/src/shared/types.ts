@@ -1,5 +1,5 @@
-import type { SearchObject } from "@koishi-ce/registry";
 import type { Dict } from "@koishi-ce/koishi";
+import type { SearchObject } from "@koishi-ce/registry";
 
 /**
  * shared 层的协议类型集合：市场通道 payload、性能快照、路由评分、lookup/snapshot 请求响应等。

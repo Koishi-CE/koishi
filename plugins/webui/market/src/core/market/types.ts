@@ -10,8 +10,9 @@
  * 架构位置：core/market 的最底层类型模块，被 source/*（拉取与聚合）、cache/*（磁盘持久化）、
  * snapshot.ts（性能快照）共同引用；自身不依赖 market 内其他模块。
  */
-import type { SearchResult } from "@koishi-ce/registry";
+
 import type { Dict } from "@koishi-ce/koishi";
+import type { SearchResult } from "@koishi-ce/registry";
 import type { MarketPerformanceSnapshot } from "../../shared/types.js";
 
 /**

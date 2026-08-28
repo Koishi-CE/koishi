@@ -38,10 +38,10 @@
  * 回写时若用户正在输入且内容等价则跳过,避免外部同步把打字中的草稿冲掉。
  */
 
-import { computed, ref, watch } from "vue";
-import { useMarketI18n, validateWord } from "../utils";
 import { useDebounceFn } from "@vueuse/core";
+import { computed, ref, watch } from "vue";
 import MarketIcon from "../icons";
+import { useMarketI18n, validateWord } from "../utils";
 
 const props = defineProps<{
 	modelValue: string[];

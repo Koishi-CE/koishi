@@ -8,15 +8,7 @@
  */
 
 export * from "./avatar";
-export { getUserKey, getUsers } from "./users";
-
-export {
-	formatShortname,
-	isPluginPackage,
-	kConfig,
-	useMarketI18n,
-} from "./context";
-export type { MarketConfig } from "./context";
+export type { Badge } from "./catalog";
 export {
 	badges,
 	canInstallBundleSearchObject,
@@ -24,8 +16,13 @@ export {
 	isBundleSearchObject,
 	resolveCategory,
 } from "./catalog";
-export type { Badge } from "./catalog";
-export { comparators, getSortedPrepared } from "./sort";
+export type { MarketConfig } from "./context";
+export {
+	formatShortname,
+	isPluginPackage,
+	kConfig,
+	useMarketI18n,
+} from "./context";
 export {
 	getFiltered,
 	getSilentFiltered,
@@ -35,3 +32,5 @@ export {
 	validate,
 	validateWord,
 } from "./filter";
+export { comparators, getSortedPrepared } from "./sort";
+export { getUserKey, getUsers } from "./users";

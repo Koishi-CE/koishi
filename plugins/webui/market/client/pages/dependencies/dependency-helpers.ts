@@ -6,7 +6,14 @@
  * 避免相互依赖。
  */
 
-import { store, type Context } from "@koishi-ce/client";
+import { type Context, store } from "@koishi-ce/client";
+import { isPluginPackage } from "../../market/utils";
+import {
+	type ClientConfigWriter,
+	createLocalBundleRecord,
+	getConfigWriter,
+	getRegistryStatus,
+} from "../../shared/operations";
 import {
 	getBundleRecords,
 	getMarketNextPolicy,
@@ -15,13 +22,6 @@ import {
 	isUpdateCheckDisabled,
 	isUpdateIgnored,
 } from "../../shared/plugin-config";
-import {
-	createLocalBundleRecord,
-	getConfigWriter,
-	getRegistryStatus,
-	type ClientConfigWriter,
-} from "../../shared/operations";
-import { isPluginPackage } from "../../market/utils";
 
 /** 依赖条目的分类标签(installed 为兜底态)。 */
 export type ItemKind =
@@ -85,7 +85,7 @@ export function classify(
 ): ItemKind {
 	const dep = store.dependencies?.[name];
 	const override = getOverride();
-	const pending = Object.prototype.hasOwnProperty.call(override, name);
+	const pending = Object.hasOwn(override, name);
 	if (pending) return "pending";
 	if (!dep) return store.packages?.[name] ? "local" : "manual";
 	if (dep.local || dep.workspace) return "local";

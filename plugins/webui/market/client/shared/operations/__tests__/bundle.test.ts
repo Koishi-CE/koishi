@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import type { KoishiClientStub } from "../../__tests__/helpers";
 import type { PluginBundleManifest } from "../../../../src/shared/bundle";
+import type { KoishiClientStub } from "../../__tests__/helpers";
 
 /**
  * @file bundle.ts 的单元测试:本地合包记录推导、分组路径反查、

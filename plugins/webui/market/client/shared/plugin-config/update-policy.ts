@@ -8,7 +8,11 @@
 
 import { store } from "@koishi-ce/client";
 import { gt } from "semver";
-import { translate } from "../i18n";
+import { isLocalDependency } from "../../../src/shared/dependency-source";
+import type {
+	IgnoredUpdates,
+	UpdateIgnoreRule,
+} from "../../../src/shared/update";
 import {
 	getUpdateCandidates as getSharedUpdateCandidates,
 	isUpdateCheckDisabled,
@@ -16,11 +20,7 @@ import {
 	normalizeUpdateIgnoreCount,
 	normalizeUpdateIgnoreRule,
 } from "../../../src/shared/update";
-import { isLocalDependency } from "../../../src/shared/dependency-source";
-import type {
-	IgnoredUpdates,
-	UpdateIgnoreRule,
-} from "../../../src/shared/update";
+import { translate } from "../i18n";
 
 export type {
 	IgnoredUpdates,

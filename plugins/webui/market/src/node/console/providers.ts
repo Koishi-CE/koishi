@@ -10,8 +10,8 @@
  * declarations.ts 中声明为 Console.Services。
  */
 import { DataService } from "@koishi-ce/console";
-import type { DependencyMetaKey, RemotePackage } from "@koishi-ce/registry";
 import type { Context, Dict } from "@koishi-ce/koishi";
+import type { DependencyMetaKey, RemotePackage } from "@koishi-ce/registry";
 import type { Dependency } from "../../core/deps/types.js";
 import type { RegistryStatus } from "../../shared/types.js";
 

@@ -54,15 +54,16 @@
  * 导出的 showConfirm。
  */
 
+import { message, send, store, useConfig, useContext } from "@koishi-ce/client";
 import { computed, ref } from "vue";
-import { message, send, store, useContext, useConfig } from "@koishi-ce/client";
+import { useMarketNextI18n } from "../../shared/i18n";
 import {
 	ensureInstalledConfigs,
 	getConfigWriter,
-	showConfirm,
 	install,
-	pendingBundleUninstalls,
 	MARKET_NEXT_PACKAGE,
+	pendingBundleUninstalls,
+	showConfirm,
 } from "../../shared/operations";
 import {
 	getPendingOverrides,
@@ -70,7 +71,6 @@ import {
 	getWritableBundleRecords,
 	patchMarketNextData,
 } from "../../shared/plugin-config";
-import { useMarketNextI18n } from "../../shared/i18n";
 
 const ctx = useContext();
 const config = useConfig();
@@ -109,10 +109,7 @@ const hasRemove = computed(() => {
 function confirm() {
 	showConfirm.value = false;
 	const override = { ...overrides.value };
-	const selfUpdate = Object.prototype.hasOwnProperty.call(
-		override,
-		MARKET_NEXT_PACKAGE,
-	);
+	const selfUpdate = Object.hasOwn(override, MARKET_NEXT_PACKAGE);
 	const removed = Object.entries(override)
 		.filter(([, value]) => !value)
 		.map(([name]) => name);

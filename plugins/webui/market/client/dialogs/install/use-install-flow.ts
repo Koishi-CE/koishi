@@ -6,8 +6,8 @@
  * 顺带清合包记录;合包目标转交 bundle-uninstall 对话框。
  */
 
-import { ref, type Ref } from "vue";
-import { message, type Context } from "@koishi-ce/client";
+import { type Context, message } from "@koishi-ce/client";
+import { type Ref, ref } from "vue";
 import {
 	createLocalBundleRecord,
 	ensureInstalledConfig,

@@ -7,7 +7,6 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
  * 候选链上的缓存命中顺序。
  */
 
-import type { AvatarCandidate } from "../candidates";
 import {
 	AVATAR_FAILURE_TTL,
 	cacheAvatar,
@@ -17,6 +16,7 @@ import {
 	isAvatarFailureCached,
 	resetAvatarCachesForTest,
 } from "../cache";
+import type { AvatarCandidate } from "../candidates";
 
 const DAY_MS = 1000 * 60 * 60 * 24;
 

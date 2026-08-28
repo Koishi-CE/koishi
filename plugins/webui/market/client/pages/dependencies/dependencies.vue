@@ -142,9 +142,12 @@
  * classify 状态机与基础判定在 dependency-helpers。
  */
 
-import { computed, onBeforeUnmount, onMounted, ref } from "vue";
 import { message, router, useConfig, useContext } from "@koishi-ce/client";
+import { computed, onBeforeUnmount, onMounted, ref } from "vue";
+import BundleUninstall from "../../dialogs/bundle-uninstall/index.vue";
+import MarketIcon from "../../market/icons";
 import { useMarketNextI18n } from "../../shared/i18n";
+import { showConfirm } from "../../shared/operations";
 import {
 	getLatestVersion,
 	getMarketNextConfig,
@@ -153,18 +156,15 @@ import {
 	patchMarketNextConfig,
 	patchMarketNextData,
 } from "../../shared/plugin-config";
-import { showConfirm } from "../../shared/operations";
-import ManualInstall from "./manual.vue";
-import PackageView from "./package.vue";
+import { getUpdatePolicy } from "./dependency-helpers";
 import IgnoreUpdateDialog from "./ignore-update-dialog.vue";
 import LocalBindingDialog from "./local-binding-dialog.vue";
-import BundleUninstall from "../../dialogs/bundle-uninstall/index.vue";
-import MarketIcon from "../../market/icons";
-import { getUpdatePolicy } from "./dependency-helpers";
-import { useDependencyNames } from "./use-dependency-names";
+import ManualInstall from "./manual.vue";
+import PackageView from "./package.vue";
 import { useDependencyClassify } from "./use-dependency-classify";
-import { useDependencyGroups, type FilterKey } from "./use-dependency-groups";
 import { useDependencyDialogs } from "./use-dependency-dialogs";
+import { type FilterKey, useDependencyGroups } from "./use-dependency-groups";
+import { useDependencyNames } from "./use-dependency-names";
 
 const config = useConfig();
 const ctx = useContext();

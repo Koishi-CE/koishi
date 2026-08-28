@@ -3,8 +3,8 @@
 // independently against sibling sources.
 import { spawn } from "node:child_process";
 import { readdirSync } from "node:fs";
-import { join, relative, sep } from "node:path";
 import { availableParallelism } from "node:os";
+import { join, relative, sep } from "node:path";
 
 const root = process.cwd();
 const tsc = join(root, "node_modules", "@typescript", "native", "bin", "tsc");

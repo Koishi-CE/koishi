@@ -5,8 +5,8 @@
  * 各操作按钮、元数据格、版本选择器的出现条件。
  */
 
-import { computed } from "vue";
 import type { ComputedRef } from "vue";
+import { computed } from "vue";
 import type { PackageCardState } from "./use-package-card-state";
 
 export function usePackageVisibility(options: {

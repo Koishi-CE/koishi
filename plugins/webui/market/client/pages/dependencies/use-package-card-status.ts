@@ -5,10 +5,10 @@
  * 当前/目标版本文案与状态明细文案——依赖页 11 态的展示核心。
  */
 
-import { computed, type ComputedRef } from "vue";
-import { getUpdateIgnoreText } from "../../shared/plugin-config";
-import { getRegistryStatusText } from "../../shared/operations";
+import { type ComputedRef, computed } from "vue";
 import { endpointHost } from "../../shared/format";
+import { getRegistryStatusText } from "../../shared/operations";
+import { getUpdateIgnoreText } from "../../shared/plugin-config";
 import type { PackageCardState } from "./use-package-card-state";
 
 export function usePackageCardStatus(

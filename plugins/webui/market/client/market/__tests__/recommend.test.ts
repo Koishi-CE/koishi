@@ -10,7 +10,7 @@ import { describe, expect, it } from "vitest";
 
 import type { MarketConfig } from "../context";
 import { compareRecommendFallback, getRecommendScore } from "../recommend";
-import { makeEntry, makeIndex, type EntryOverrides } from "./helpers";
+import { type EntryOverrides, makeEntry, makeIndex } from "./helpers";
 
 const NOW = Date.parse("2026-01-15T00:00:00.000Z");
 

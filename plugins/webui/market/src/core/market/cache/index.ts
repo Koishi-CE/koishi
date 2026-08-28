@@ -17,8 +17,8 @@
  */
 import { promises as fsp } from "node:fs";
 import { resolve } from "node:path";
-import type { SearchResult } from "@koishi-ce/registry";
 import type { Dict } from "@koishi-ce/koishi";
+import type { SearchResult } from "@koishi-ce/registry";
 import type { RouteStatsBook } from "../../racing/stats.js";
 import {
 	formatAge,

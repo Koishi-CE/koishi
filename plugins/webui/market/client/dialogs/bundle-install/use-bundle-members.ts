@@ -6,9 +6,10 @@
  * 初始勾选;预置配置 JSON 就地编辑的报错也在此管理。
  */
 
-import { computed, reactive, ref, watch } from "vue";
-import { send, store, useContext, type Context } from "@koishi-ce/client";
+import { type Context, send, store, useContext } from "@koishi-ce/client";
 import type { Registry } from "@koishi-ce/registry";
+import { satisfies } from "semver";
+import { computed, reactive, ref, watch } from "vue";
 import type {
 	BundleInstallMember,
 	PluginBundleManifest,
@@ -16,12 +17,11 @@ import type {
 } from "../../../src/shared/bundle";
 import { parseBundleManifest } from "../../../src/shared/bundle";
 import { getBundleGroupIdent } from "../../../src/shared/bundle-idents";
+import { loadMarketObjects } from "../../market/state";
 import {
 	activeBundle,
 	getBundleMemberConfigState,
 } from "../../shared/operations";
-import { loadMarketObjects } from "../../market/state";
-import { satisfies } from "semver";
 import { hasPreset } from "./bundle-format";
 
 /** 从 registry 版本表里取目标版本条目;目标缺失时退回首个条目。 */

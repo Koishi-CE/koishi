@@ -52,7 +52,7 @@
  */
 
 import { useMarketNextI18n } from "../../shared/i18n";
-import { useIgnoreUpdate, type IgnoreUpdateTarget } from "./use-ignore-update";
+import { type IgnoreUpdateTarget, useIgnoreUpdate } from "./use-ignore-update";
 
 const props = defineProps<{
 	displayName: string;

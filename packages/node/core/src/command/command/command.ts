@@ -17,9 +17,9 @@ import type { Computed } from "../../filter";
 import { Next, SessionError } from "../../middleware";
 import type { Permissions } from "../../permission";
 import type { Session } from "../../session";
-import { CommandDefinition } from "./definition";
 import { normalizeCommand } from "../normalize";
 import type { Argv, CommandBase } from "../parser";
+import { CommandDefinition } from "./definition";
 
 const logger = new Logger("command");
 

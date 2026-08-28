@@ -6,8 +6,11 @@
  * 结论的图标与文案、合包卸载的回放记录。
  */
 
-import { computed } from "vue";
 import { store } from "@koishi-ce/client";
+import { parse } from "semver";
+import { computed } from "vue";
+import { isBundlePackageName } from "../../../src/shared/bundle";
+import { getMarketObject } from "../../market/state";
 import {
 	createLocalBundleRecord,
 	getRegistryStatus,
@@ -20,9 +23,6 @@ import {
 	getBundleRecords,
 	getPendingOverrides,
 } from "../../shared/plugin-config";
-import { parse } from "semver";
-import { isBundlePackageName } from "../../../src/shared/bundle";
-import { getMarketObject } from "../../market/state";
 import type { InstallVersions } from "./use-install-versions";
 
 export function useInstallDecision(

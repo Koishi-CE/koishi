@@ -6,20 +6,13 @@
  * ('../shared/operations')与符号名不变。
  */
 
-export { install, applyEnvironmentSnapshot } from "./install";
-export {
-	prepareInstallFallbackRetry,
-	resetInstallFallbackState,
-	installProgressState,
-} from "./progress";
-export type { LogLine, InstallOptions } from "./progress";
-export { ensureInstalledConfig, ensureInstalledConfigs } from "./ensure";
+export type { PeerInfo, ResultType } from "./analyze";
 export {
 	analyzeVersions,
 	getRegistryStatus,
 	getRegistryStatusText,
 } from "./analyze";
-export type { PeerInfo, ResultType } from "./analyze";
+export type { BundleRecordView } from "./bundle";
 export {
 	createLocalBundleRecord,
 	fetchBundleRecord,
@@ -27,7 +20,15 @@ export {
 	resolveBundlePackageFromGroup,
 	resolveBundleRecordFromGroup,
 } from "./bundle";
-export type { BundleRecordView } from "./bundle";
+export { ensureInstalledConfig, ensureInstalledConfigs } from "./ensure";
+export { applyEnvironmentSnapshot, install } from "./install";
+export type { InstallOptions, LogLine } from "./progress";
+export {
+	installProgressState,
+	prepareInstallFallbackRetry,
+	resetInstallFallbackState,
+} from "./progress";
+export type { BundleMemberCleanupTarget, ClientConfigWriter } from "./state";
 export {
 	activeBundle,
 	addManual,
@@ -40,4 +41,3 @@ export {
 	showInstallHistory,
 	showManual,
 } from "./state";
-export type { BundleMemberCleanupTarget, ClientConfigWriter } from "./state";

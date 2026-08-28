@@ -10,7 +10,7 @@ import { send, store } from "@koishi-ce/client";
 import { markRaw, shallowRef } from "vue";
 import type { MarketLookupResult } from "../../src/shared";
 import { collectServiceProviders } from "../../src/shared/lookup";
-import { normalizeLookupValues, type LookupInput } from "./snapshot-utils";
+import { type LookupInput, normalizeLookupValues } from "./snapshot-utils";
 
 /** lookup 结果缓存:包名 → 市场对象(仅含按需请求过的条目)。 */
 const marketLookupData = shallowRef<Record<string, any>>({});
@@ -118,10 +118,7 @@ async function loadMarketLookup(request: LookupInput, force = false) {
 	const pendingServices = force
 		? services
 		: services.filter((name) => {
-				return !Object.prototype.hasOwnProperty.call(
-					marketLookupServices.value,
-					name,
-				);
+				return !Object.hasOwn(marketLookupServices.value, name);
 			});
 	if (!pendingNames.length && !pendingServices.length) return;
 

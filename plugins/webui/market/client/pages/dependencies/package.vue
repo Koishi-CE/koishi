@@ -156,21 +156,21 @@
 </template>
 
 <script lang="ts" setup>
-import { computed, nextTick, ref, watch } from "vue";
 import { useConfig, useContext } from "@koishi-ce/client";
 import type { SearchObject } from "@koishi-ce/registry";
-import { getPendingOverrides } from "../../shared/plugin-config";
+import { computed, nextTick, ref, watch } from "vue";
+import MarketIcon from "../../market/icons";
+import { useMarketNextI18n } from "../../shared/i18n";
 import {
 	activeBundle,
 	ensureInstalledConfig,
 	expandedDependency,
 	pendingBundleUninstalls,
 } from "../../shared/operations";
-import MarketIcon from "../../market/icons";
-import { useMarketNextI18n } from "../../shared/i18n";
+import { getPendingOverrides } from "../../shared/plugin-config";
 import {
-	restoreIgnoreUpdate,
 	type IgnoreUpdateTarget,
+	restoreIgnoreUpdate,
 } from "./use-ignore-update";
 import { usePackageCardMeta } from "./use-package-card-meta";
 import { usePackageCardState } from "./use-package-card-state";

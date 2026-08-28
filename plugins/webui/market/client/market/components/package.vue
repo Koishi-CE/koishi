@@ -104,10 +104,11 @@
  *  时钟偏差导致"刚刚/几天前"错乱。
  */
 
+import { store, useI18nText } from "@koishi-ce/client";
+import type { SearchObject } from "@koishi-ce/registry";
 import { computed, inject, onUnmounted, ref, watch } from "vue";
-import { SearchObject } from "@koishi-ce/registry";
-import { useI18nText } from "@koishi-ce/client";
-import { store } from "@koishi-ce/client";
+import MarketIcon from "../icons";
+import { looksLikeMarkdown } from "../inline-markdown";
 import {
 	badges,
 	cacheAvatarFailure,
@@ -119,13 +120,11 @@ import {
 	getUsers,
 	isAvatarFailureCached,
 	isBundleSearchObject,
+	kConfig,
 	resolveCategory,
 	useMarketI18n,
 	validate,
 } from "../utils";
-import { kConfig } from "../utils";
-import { looksLikeMarkdown } from "../inline-markdown";
-import MarketIcon from "../icons";
 
 defineEmits(["query"]);
 

@@ -78,7 +78,20 @@ import {
 	useConfig,
 	useContext,
 } from "@koishi-ce/client";
-import { computed, inject, ComputedRef, ref, watch } from "vue";
+import type {} from "@koishi-ce/plugin-config";
+import { type ComputedRef, computed, inject, ref, watch } from "vue";
+import type { PluginBundleRecord } from "../../../src/shared/bundle";
+import BundleUninstall from "../../dialogs/bundle-uninstall/index.vue";
+import { getMarketObject, loadMarketObjects } from "../../market/state";
+import { useMarketNextI18n } from "../../shared/i18n";
+import {
+	type BundleRecordView,
+	createLocalBundleRecord,
+	fetchBundleRecord,
+	getConfigWriter,
+	install,
+	pendingBundleUninstalls,
+} from "../../shared/operations";
 import {
 	getBulkMode,
 	getBundleRecords,
@@ -89,19 +102,6 @@ import {
 	hasUpdate,
 	patchMarketNextData,
 } from "../../shared/plugin-config";
-import type {} from "@koishi-ce/plugin-config";
-import type { PluginBundleRecord } from "../../../src/shared/bundle";
-import {
-	createLocalBundleRecord,
-	fetchBundleRecord,
-	getConfigWriter,
-	install,
-	pendingBundleUninstalls,
-	type BundleRecordView,
-} from "../../shared/operations";
-import BundleUninstall from "../../dialogs/bundle-uninstall/index.vue";
-import { useMarketNextI18n } from "../../shared/i18n";
-import { getMarketObject, loadMarketObjects } from "../../market/state";
 
 const ctx = useContext();
 const config = useConfig();
@@ -148,10 +148,7 @@ watch(
 /** 批量模式下该包是否已暂存为待卸载(override 里值为空串)。 */
 const pendingRemove = computed(() => {
 	const override = getPendingOverrides();
-	return (
-		Object.prototype.hasOwnProperty.call(override, name.value) &&
-		!override[name.value]
-	);
+	return Object.hasOwn(override, name.value) && !override[name.value];
 });
 
 /** 该包在 koishi.yml 是否已有配置节点。 */

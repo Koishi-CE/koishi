@@ -9,8 +9,8 @@ import {
 import { DataService } from "@koishi-ce/plugin-console";
 import { mkdir, readdir, rm } from "fs/promises";
 import { resolve } from "path";
-import { FileWriter } from "./file";
 import zhCN from "../locales/zh-CN.yml";
+import { FileWriter } from "./file";
 
 /**
  * @koishi-ce/plugin-logger 的 node 侧入口。

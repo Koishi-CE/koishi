@@ -6,14 +6,10 @@
  * 双向同步(180ms 去抖);服务端 dataVersion 前进时重拉快照。
  */
 
-import { computed, ref, watch } from "vue";
-import { useTimeoutFn, watchDebounced } from "@vueuse/core";
 import { global, router, store } from "@koishi-ce/client";
 import type { SearchObject } from "@koishi-ce/registry";
-import {
-	getMarketSilentFilters,
-	getMarketSilentRules,
-} from "../../shared/plugin-config";
+import { useTimeoutFn, watchDebounced } from "@vueuse/core";
+import { computed, ref, watch } from "vue";
 import {
 	getSilentFiltered,
 	getVisible,
@@ -26,6 +22,10 @@ import {
 	marketSnapshotError,
 	marketSnapshotLoading,
 } from "../../market/state";
+import {
+	getMarketSilentFilters,
+	getMarketSilentRules,
+} from "../../shared/plugin-config";
 
 /** installed 判定:优先 store.packages,静态站点模式退化为 dependencies。 */
 export function installed(data: SearchObject) {

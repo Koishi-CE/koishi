@@ -18,9 +18,9 @@
 import { createHash } from "node:crypto";
 import { promises as fsp, type Stats } from "node:fs";
 import { dirname, relative, resolve } from "node:path";
+import type { Dict } from "@koishi-ce/koishi";
 import type { PackageJson } from "@koishi-ce/registry";
 import { execa } from "execa";
-import type { Dict } from "@koishi-ce/koishi";
 import type { DependencyResolver } from "../deps/resolver.js";
 import type { Dependency } from "../deps/types.js";
 import { snapshotPackageManifest } from "../install/sources/manifest-restore.js";

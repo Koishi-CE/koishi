@@ -24,7 +24,13 @@ export {
 	getWritableBundleRecords,
 	patchMarketNextData,
 } from "./data-store";
-export type { UpdateIgnoreOptions, UpdatePolicy } from "./update-policy";
+export { getMarketSilentFilters, getMarketSilentRules } from "./silent";
+export type {
+	IgnoredUpdates,
+	UpdateIgnoreOptions,
+	UpdateIgnoreRule,
+	UpdatePolicy,
+} from "./update-policy";
 export {
 	createUpdateIgnoreRule,
 	getIgnoredUpdateVersion,
@@ -34,5 +40,3 @@ export {
 	isUpdateCheckDisabled,
 	isUpdateIgnored,
 } from "./update-policy";
-export type { IgnoredUpdates, UpdateIgnoreRule } from "./update-policy";
-export { getMarketSilentFilters, getMarketSilentRules } from "./silent";

@@ -9,8 +9,8 @@
 
 import { receive, send } from "@koishi-ce/client";
 import { reactive } from "vue";
-import { translate } from "../i18n";
 import { endpointHost } from "../format";
+import { translate } from "../i18n";
 
 /** 安装日志行:type 区分 stdout/stderr 以便进度面板着色。 */
 export interface LogLine {

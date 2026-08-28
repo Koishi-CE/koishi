@@ -5,8 +5,8 @@
  * 预发布屏蔽开关态、各分类计数摘要与全局加载提示。
  */
 
-import { computed, type ComputedRef } from "vue";
-import { store, type Context } from "@koishi-ce/client";
+import { type Context, store } from "@koishi-ce/client";
+import { type ComputedRef, computed } from "vue";
 import { getConfigWriter } from "../../shared/operations";
 import { getPendingOverrides } from "../../shared/plugin-config";
 import {
@@ -35,7 +35,7 @@ export function useDependencyClassify(
 		return names.value.map((name) => ({
 			name,
 			kind: classify(name, ctx, config.value, configWriter),
-			pending: Object.prototype.hasOwnProperty.call(getOverride(), name),
+			pending: Object.hasOwn(getOverride(), name),
 			manual: !store.dependencies?.[name] && !store.packages?.[name],
 		}));
 	});

@@ -18,13 +18,14 @@
  */
 // 宿主 @koishi-ce/plugin-config 提供 packages/services/config 三个 Console 服务的
 // 类型声明（Services 键），setup/listeners 中多处 refresh('packages')/refresh('config') 依赖它
+
+import type { Dict } from "@koishi-ce/koishi";
 import type {} from "@koishi-ce/plugin-config";
 import type {
 	DependencyMetaKey,
 	Registry,
 	RemotePackage,
 } from "@koishi-ce/registry";
-import type { Dict } from "@koishi-ce/koishi";
 import type { EnvironmentSnapshotPreview } from "../core/environment/diff.js";
 import type { EnvironmentSnapshotSummary } from "../core/environment/snapshot.js";
 import type {

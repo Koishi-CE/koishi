@@ -1,5 +1,5 @@
-import type { SearchObject } from "@koishi-ce/registry";
 import type { Dict } from "@koishi-ce/koishi";
+import type { SearchObject } from "@koishi-ce/registry";
 
 /** 从市场快照数据中收集实现了指定服务的插件名（client 与 node 的 market/lookup 共用）。 */
 export function collectServiceProviders(

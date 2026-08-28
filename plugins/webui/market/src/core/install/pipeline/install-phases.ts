@@ -13,8 +13,8 @@
  * 的 runInstallLocked 在串行锁内按序调用。
  */
 import { resolve } from "node:path";
-import type { PackageJson } from "@koishi-ce/registry";
 import type { Dict } from "@koishi-ce/koishi";
+import type { PackageJson } from "@koishi-ce/registry";
 import type { Dependency } from "../../deps/types.js";
 import { resolveLocalSources } from "../sources/local-sources.js";
 import {

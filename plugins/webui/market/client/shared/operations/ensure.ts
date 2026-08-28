@@ -6,7 +6,7 @@
  * configWriter.ensure 兜底建一个空配置。批量安装后统一调用。
  */
 
-import { Context, send, store } from "@koishi-ce/client";
+import { type Context, send, store } from "@koishi-ce/client";
 import { getConfigWriter } from "./state";
 
 /** 简易 sleep:轮询等待用。 */

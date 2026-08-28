@@ -130,7 +130,7 @@
  * 关键设计:预览请求用自增 serial 标记,响应回来时若已有更新的请求则丢弃,
  * 避免快速切换快照时旧响应覆盖新状态。
  */
-import { computed, ref, watch } from "vue";
+
 import { send, useConfig } from "@koishi-ce/client";
 import type {
 	EnvironmentChangeStatus,
@@ -139,12 +139,13 @@ import type {
 	EnvironmentSnapshotSource,
 	EnvironmentSnapshotSummary,
 } from "@koishi-ce/plugin-marketn/shared";
+import { computed, ref, watch } from "vue";
+import MarketIcon from "../../market/icons";
+import { useMarketNextI18n } from "../../shared/i18n";
 import {
 	applyEnvironmentSnapshot,
 	showEnvironmentVersions,
 } from "../../shared/operations";
-import { useMarketNextI18n } from "../../shared/i18n";
-import MarketIcon from "../../market/icons";
 
 const config = useConfig();
 const { t, locale } = useMarketNextI18n();
