@@ -52,7 +52,10 @@
 	},
 	"exports": {
 		".": {
-			"source": "./src/index.ts"
+			"source": "./src/index.ts",
+			"types": "./lib/index.d.ts",
+			"import": "./lib/index.mjs",
+			"require": "./lib/index.js"
 		}
 	}
 }
