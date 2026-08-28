@@ -50,6 +50,3 @@ archive/
 .pnpm-store
 .repo/
 
-# 暂时忽略（marketn 迁入对齐期间；完成后移除本行以纳入版本控制）
-
-plugins/webui/market/
