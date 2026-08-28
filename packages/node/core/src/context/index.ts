@@ -181,7 +181,7 @@ export class Context extends satori.Context {
 		append = false,
 	) {
 		const seg = (name as string).split("/");
-		seg[seg.length - 1] = "before-" + seg[seg.length - 1];
+		seg[seg.length - 1] = `before-${seg[seg.length - 1]}`;
 		return this.on(seg.join("/") as any, listener, !append);
 	}
 }

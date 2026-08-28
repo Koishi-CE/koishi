@@ -133,7 +133,7 @@ function adminUser(command: Command) {
 	 * 目标权限不低于操作者时拒绝操作。
 	 */
 	async function setTarget(
-		argv: Argv<"authority", never, any[], Extend<{}, "user", string>>,
+		argv: Argv<"authority", never, unknown[], Extend<{}, "user", unknown>>,
 	) {
 		const { options, session } = argv;
 		if (!session) return undefined;
@@ -143,8 +143,8 @@ function adminUser(command: Command) {
 		// 未指定目标用户时，直接作用于当前用户
 		if (!options?.user) return undefined;
 
-		// 指定的目标用户就是当前用户
-		const [platform, userId] = parsePlatform(options.user);
+		// 指定的目标用户就是当前用户（-u [user:user] 保证运行时为 string）
+		const [platform, userId] = parsePlatform(options.user as string);
 		if (session.userId === userId && session.platform === platform) {
 			return undefined;
 		}
@@ -230,7 +230,7 @@ function adminChannel(command: Command) {
 	 * 目标不存在时用空模板创建观察者（配合 upsert 决定是报错还是建档）。
 	 */
 	async function setTarget(
-		argv: Argv<never, never, any[], Extend<{}, "channel", string>>,
+		argv: Argv<never, never, unknown[], Extend<{}, "channel", unknown>>,
 	) {
 		const { options, session } = argv;
 		if (!session) return undefined;
@@ -250,8 +250,8 @@ function adminChannel(command: Command) {
 			return undefined;
 		}
 
-		// 读取目标频道数据
-		const [platform, channelId] = parsePlatform(channel);
+		// 读取目标频道数据（-c [channel:channel] 保证选项运行时为 string）
+		const [platform, channelId] = parsePlatform(channel as string);
 		const fields = session.collect("channel", argv);
 		const data = await app.database.getChannel(platform, channelId, [
 			...fields,

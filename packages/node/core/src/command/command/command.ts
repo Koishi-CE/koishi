@@ -32,7 +32,7 @@ export type Extend<O extends {}, K extends string, T> = {
 export class Command<
 	U extends User.Field = never,
 	G extends Channel.Field = never,
-	A extends any[] = any[],
+	A extends unknown[] = unknown[],
 	O extends {} = {},
 > extends CommandDefinition<U, G, A, O> {
 	/** 命令名归一化：小写 + 下划线转连字符 */
@@ -93,12 +93,14 @@ export class Command<
 		// 解析阶段已产生错误（如类型转换失败）：直接把错误文案作为回复
 		if (error) return error;
 		if (logger.level >= 3)
-			logger.debug((argv.source ||= this.stringify(args as any, options)));
+			logger.debug((argv.source ||= this.stringify(args, options)));
 
 		// 前置校验：任一 checker 返回非空值即短路返回
 		for (const validator of this._checkers) {
-			const result = await validator.call(this as any, argv as any, ...args);
-			if (!isNullable(result)) return result;
+			// _checkers 存储为擦除签名（见 definition.ts 的 ErasedAction），
+			// 以 apply + 数组断言还原当前命令的实参（与 .call 语义一致）
+			const result = await validator.apply(this, [argv, ...args] as never);
+			if (!isNullable(result)) return result as Fragment;
 		}
 
 		// FIXME: 空 action 列表会导致无限循环，此处提前返回规避
@@ -106,7 +108,7 @@ export class Command<
 
 		let index = 0;
 		const queue: Next.Queue = this._actions.map((action) => async () => {
-			return await action.call(this as any, argv, ...args);
+			return await action.apply(this, [argv, ...args] as never);
 		});
 
 		queue.push(fallback);
@@ -132,7 +134,7 @@ export class Command<
 			}
 			const stack = coerce(err);
 			logger.warn(
-				`${(argv.source ||= this.stringify(args as any, options))}\n${stack}`,
+				`${(argv.source ||= this.stringify(args, options))}\n${stack}`,
 			);
 			this.ctx.emit(argv.session, "command-error", argv, err);
 			if (typeof this.config.handleError === "function") {
@@ -156,7 +158,7 @@ export class Command<
 		for (const cmd of this.children.slice()) {
 			cmd.dispose();
 		}
-		remove(this.ctx.$commander._commandList, this as any);
+		remove(this.ctx.$commander._commandList, this);
 		this.parent = null;
 	}
 
@@ -223,7 +225,7 @@ export namespace Command {
 	export type Action<
 		U extends User.Field = never,
 		G extends Channel.Field = never,
-		A extends any[] = any[],
+		A extends unknown[] = unknown[],
 		O extends {} = {},
 	> = (argv: Argv<U, G, A, O>, ...args: A) => Awaitable<void | Fragment>;
 

@@ -41,7 +41,7 @@ export default function (ctx: Context, manager: CommandManager) {
 			const snapshot = manager.ensure(name);
 			const command = snapshot.command;
 			if (typeof options.alias === "string") {
-				const item = command._aliases[options.rename] || {};
+				const item = command._aliases[String(options.rename ?? "")] || {};
 				const aliases = { ...command._aliases, [options.alias]: item };
 				manager.alias(command, aliases, true);
 				delete options.alias;

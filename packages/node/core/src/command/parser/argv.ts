@@ -41,7 +41,7 @@ export interface Token {
 export interface Argv<
 	U extends User.Field = never,
 	G extends Channel.Field = never,
-	A extends any[] = any[],
+	A extends unknown[] = unknown[],
 	O extends {} = {},
 > {
 	/** 位置参数（已按声明中的 domain 类型强转） */
@@ -131,7 +131,7 @@ export namespace Argv {
 	export type DomainType = keyof Domain;
 
 	/** 提取声明段 `foo:bar` 中冒号后的 domain 名并映射到对应类型；未标注则回退 F */
-	type ParamType<S extends string, F> = S extends `${any}:${infer T}`
+	type ParamType<S extends string, F> = S extends `${string}:${infer T}`
 		? T extends DomainType
 			? Domain[T]
 			: F
@@ -150,7 +150,7 @@ export namespace Argv {
 		: [];
 
 	/** 只提取声明中第一个 `...]` 段的类型（选项只取一个值） */
-	type ExtractFirst<S extends string, F> = S extends `${infer L}]${any}`
+	type ExtractFirst<S extends string, F> = S extends `${infer L}]${string}`
 		? ParamType<L, F>
 		: boolean;
 
@@ -164,10 +164,11 @@ export namespace Argv {
 		Replace<S, ">", "]">
 	>;
 
-	/** 从选项定义（如 `<val:number>`）推导选项值类型；无值声明的选项推导为 boolean */
+	/** 从选项定义（如 `<val:number>`）推导选项值类型；无值声明的选项推导为 boolean，
+	 * 带值声明但未标注类型时推导为 string（与运行时 parseValue 的默认 string 域一致） */
 	export type OptionType<S extends string> = ExtractFirst<
 		Replace<S, ">", "]">,
-		any
+		string
 	>;
 
 	/**
@@ -179,8 +180,8 @@ export namespace Argv {
 		| DomainType
 		| RegExp
 		| readonly string[]
-		| Transform<any>
-		| DomainConfig<any>;
+		| Transform<unknown>
+		| DomainConfig<unknown>;
 
 	/** 参数 / 选项的单条声明 */
 	export interface Declaration {
@@ -189,7 +190,7 @@ export namespace Argv {
 		/** 类型标注 */
 		type?: Type;
 		/** 默认值（parse 结束时填充到 options，未出现在结果中的参数不填） */
-		fallback?: any;
+		fallback?: unknown;
 		/** 是否为变长参数（`...foo`），吃掉剩余全部 token */
 		variadic?: boolean;
 		/** 是否必填（`<foo>` 为必填，`[foo]` 为可选） */
@@ -200,7 +201,7 @@ export namespace Argv {
 	export type Transform<T> = (source: string, session: Session) => T;
 
 	/** domain 的注册配置 */
-	export interface DomainConfig<T = any> {
+	export interface DomainConfig<T = unknown> {
 		/** 转换函数本体 */
 		transform?: Transform<T>;
 		/** 贪婪类型（如 text / el）：匹配时吞掉剩余全部输入 */
@@ -208,6 +209,9 @@ export namespace Argv {
 		/** 数值类型：允许把 "-1" 这样的 token 当作参数值而非选项 */
 		numeric?: boolean;
 	}
+
+	/** 选项固定取值的类型（value 变体，如 "-A, --anonymous" 预设值） */
+	export type OptionValue = string | number | boolean | null;
 
 	/** 选项注册配置 */
 	export interface OptionConfig<T extends Type = Type>
@@ -217,9 +221,9 @@ export namespace Argv {
 		/** 符号别名列表（如 "#"、"@"，不解析为普通选项名） */
 		symbols?: string[];
 		/** 固定取值：出现该选项即取此值（用于 -A, --anonymous 类开关） */
-		value?: any;
+		value?: OptionValue;
 		/** 默认值：未显式传入时填充 */
-		fallback?: any;
+		fallback?: unknown;
 		/** 值类型标注 */
 		type?: T;
 		/** i18n 描述的路径覆盖（默认 commands.<cmd>.options.<name>） */
@@ -240,7 +244,7 @@ export namespace Argv {
 	/** 选项的完整声明：合并 Declaration 与变体信息 */
 	export interface OptionDeclaration extends Declaration, OptionVariant {
 		/** 别名到固定取值的映射（value 选项） */
-		values: Dict<any>;
+		values: Dict<OptionValue>;
 		/** @deprecated 已废弃，保留兼容 */
 		valuesSyntax: Dict<string>;
 		/** 取值到语法变体的映射 */

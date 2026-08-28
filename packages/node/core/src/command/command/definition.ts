@@ -9,33 +9,49 @@
  * 最终的 Command 在此之上补齐执行引擎（execute）与序列化（toJSON）。
  */
 
-import { camelize, remove } from "cosmokit";
+import type { Fragment } from "@satorijs/core";
+import { type Awaitable, camelize, remove } from "cosmokit";
 import type { Channel, User } from "../../database";
 import type { FieldCollector, Session } from "../../session";
 import type { Argv } from "../parser";
-import type { Command } from "./command";
+import type { Command, Extend } from "./command";
 import { CommandCore } from "./core";
+
+/**
+ * 命令内部存储的擦除形态。
+ *
+ * 命令实例会以不同泛型参数被引用（children、_commandList、事件负载等），
+ * 带泛型的存储属性必须与实例化参数无关，才能保证各实例之间互相可赋值。
+ * 回调参数取 never 以满足逆变——任意泛型实例的 Command.Action /
+ * FieldCollector 均可赋入；执行装配处通过 apply 以数组还原实参。
+ */
+type ErasedAction = (argv: never, ...args: never) => Awaitable<void | Fragment>;
+
+/** 同上，作用于字段收集器：字段名列表或以 argv 为参的回调 */
+type ErasedFieldCollector<K> =
+	| Iterable<K>
+	| ((argv: never, fields: Set<K>) => void);
 
 export class CommandDefinition<
 	U extends User.Field = never,
 	G extends Channel.Field = never,
-	A extends any[] = any[],
+	A extends unknown[] = unknown[],
 	O extends {} = {},
 > extends CommandCore {
 	/** help 展示的示例列表 */
 	_examples: string[] = [];
-	/** 命令用法说明（字符串或按会话生成的函数） */
-	_usage?: Command.Usage<any, any>;
+	/** 命令用法说明（字符串或按会话生成的函数；存储为擦除形态） */
+	_usage?: string | ((session: never) => Awaitable<string>);
 
 	/** 需要观测的用户字段收集器；默认收集 locales 供 i18n 使用 */
-	_userFields: FieldCollector<"user", any, any, any>[] = [["locales"]];
+	_userFields: ErasedFieldCollector<User.Field>[] = [["locales"]];
 	/** 需要观测的频道字段收集器；默认收集 locales */
-	_channelFields: FieldCollector<"channel", any, any, any>[] = [["locales"]];
+	_channelFields: ErasedFieldCollector<Channel.Field>[] = [["locales"]];
 	/** action 队列：按注册顺序执行，构成洋葱模型 */
-	_actions: Command.Action<any, any, any, any>[] = [];
+	_actions: ErasedAction[] = [];
 	/** checker 队列：action 之前的校验钩子；首个为内置的 before-execute 事件 */
-	_checkers: Command.Action<any, any, any, any>[] = [
-		async (argv) => {
+	_checkers: ErasedAction[] = [
+		async (argv: Argv) => {
 			return this.ctx.serial(argv.session, "command/before-execute", argv);
 		},
 	];
@@ -48,7 +64,9 @@ export class CommandDefinition<
 		fields: FieldCollector<"user", T, A, O>,
 	): Command<U | T, G, A, O> {
 		this._userFields.push(fields);
-		return this as any;
+		// 运行时是同一实例，只是拓宽 U：User 字段均为必选，U 变体之间
+		// 不存在结构关系（Session 内嵌 Argv 泛型导致无限递归），只能双重断言
+		return this as unknown as Command<U | T, G, A, O>;
 	}
 
 	/** 同 userFields，作用于频道（channel）字段 */
@@ -56,55 +74,104 @@ export class CommandDefinition<
 		fields: FieldCollector<"channel", T, A, O>,
 	): Command<U, G | T, A, O> {
 		this._channelFields.push(fields);
-		return this as any;
+		return this as unknown as Command<U, G | T, A, O>;
 	}
 
 	/**
 	 * 定义子命令：以当前命令名为前缀拼接后走 ctx.command 注册。
 	 * def 以 "." 开头时直接视为相对名（如 ".c" → "父名.c"）。
 	 */
-	subcommand(def: string, ...args: any[]) {
+	subcommand<D extends string>(
+		def: D,
+		config?: Command.Config,
+	): Command<never, never, Argv.ArgumentType<D>>;
+	subcommand<D extends string>(
+		def: D,
+		desc: string,
+		config?: Command.Config,
+	): Command<never, never, Argv.ArgumentType<D>>;
+	subcommand(
+		def: string,
+		...args: [first?: string | Command.Config, second?: Command.Config]
+	): Command<never, never, unknown[]> {
 		def = this.name + (def.charCodeAt(0) === 46 ? "" : "/") + def;
-		const desc = typeof args[0] === "string" ? (args.shift() as string) : "";
-		const config = (args[0] as Command.Config) || {};
-		return (this as any).ctx.command(def, desc, config);
+		const desc = typeof args[0] === "string" ? args[0] : "";
+		const config = (typeof args[0] === "string" ? args[1] : args[0]) ?? {};
+		return this.ctx.command(def, desc, config);
 	}
 
 	/** 设置命令用法说明（help 中展示） */
 	usage(text: Command.Usage<U, G>) {
 		this._usage = text;
-		return this as any;
+		return this;
 	}
 
 	/** 追加一条使用示例（help 中展示） */
 	example(example: string) {
 		this._examples.push(example);
-		return this as any;
+		return this;
 	}
 
 	/**
 	 * 定义一个选项。
 	 * @param name 选项名（camelCase，注册键）
-	 * @param args [desc, config]：描述文本与选项配置
+	 * @param desc 描述文本（如 "-b, --beta <val:number> 说明"）
+	 * @param config 选项配置
 	 * 权限默认换算自 authority（未配置视为 0）；
 	 * 注册行为绑定到当前 caller 作用域，销毁时自动注销该选项。
+	 *
+	 * 取值类型按 config 推导：value 固定取值 / 正则 / 转换函数 / 枚举
+	 * 各有精确映射，其余（boolean 开关、按 desc 标注的 domain 等）为 unknown。
 	 */
-	option(name: string, ...args: any[]) {
+	option<K extends string>(
+		name: K,
+		desc: string,
+		config: { value: Argv.OptionValue } & Argv.OptionConfig,
+	): Command<U, G, A, Extend<O, K, Argv.OptionValue>>;
+	option<K extends string>(
+		name: K,
+		desc: string,
+		config: Argv.TypedOptionConfig<RegExp>,
+	): Command<U, G, A, Extend<O, K, string>>;
+	option<K extends string, T>(
+		name: K,
+		desc: string,
+		config: Argv.TypedOptionConfig<(source: string) => T>,
+	): Command<U, G, A, Extend<O, K, T>>;
+	option<K extends string, R extends string>(
+		name: K,
+		desc: string,
+		config: Argv.TypedOptionConfig<R[]>,
+	): Command<U, G, A, Extend<O, K, R>>;
+
+	option<K extends string>(
+		name: K,
+		desc: string,
+		config?: Argv.OptionConfig,
+	): Command<U, G, A, Extend<O, K, unknown>>;
+	option(
+		name: string,
+		...args: [desc?: string, config?: Argv.OptionConfig]
+	): Command<U, G, A> {
 		let desc = "";
 		if (typeof args[0] === "string") {
-			desc = args.shift() as string;
+			desc = args[0];
 		}
-		const config = { ...(args[0] as Argv.OptionConfig) };
+		const config = {
+			...(typeof args[0] === "string" ? args[1] : args[0]),
+		};
 		config.permissions ??= [`authority:${config.authority ?? 0}`];
 		this._createOption(name, desc, config);
-		this.caller.emit("command-updated", this as any);
+		// 运行时实例必为 Command；CommandDefinition 层静态缺 execute 等成员，
+		// 经基类引用中转完成窄化
+		this.caller.emit("command-updated", this as CommandCore as Command);
 		this.caller.collect("option", () => this.removeOption(name));
-		return this as any;
+		return this as CommandCore as Command<U, G, A>;
 	}
 
 	/** 会话能否触发本命令：交由当前 filter 判定 */
 	match(session: Session) {
-		return (this as any).ctx.filter(session);
+		return this.ctx.filter(session);
 	}
 
 	/** 注册前置校验（before 的别名）：返回非空值可中止命令执行 */
@@ -123,7 +190,7 @@ export class CommandDefinition<
 			this._checkers.unshift(callback);
 		}
 		this.caller.scope.disposables?.push(() => remove(this._checkers, callback));
-		return this as any;
+		return this;
 	}
 
 	/**
@@ -138,7 +205,7 @@ export class CommandDefinition<
 			this._actions.push(callback);
 		}
 		this.caller.scope.disposables?.push(() => remove(this._actions, callback));
-		return this as any;
+		return this;
 	}
 
 	/**
@@ -146,8 +213,8 @@ export class CommandDefinition<
 	 * "$$" 还原为字面量 "$"，"$1" 等转为 "{1}" 占位符
 	 * （matcher 会在插值阶段将其替换为实际捕获内容）。
 	 */
-	_escape(source: any) {
-		if (typeof source !== "string") return source;
+	_escape(source: unknown): string {
+		if (typeof source !== "string") return String(source);
 		return source
 			.replace(/\$\$/g, "@@__PLACEHOLDER__@@")
 			.replace(/\$\d/g, (s) => `{${s[1]}}`)
@@ -171,7 +238,7 @@ export class CommandDefinition<
 		for (const [key, value] of Object.entries(config.options ?? {})) {
 			content += ` --${camelize(key)}`;
 			if (value !== true) {
-				content += " " + this._escape(value);
+				content += ` ${this._escape(value)}`;
 			}
 		}
 		for (const arg of config.args || []) {
@@ -187,21 +254,17 @@ export class CommandDefinition<
 			} else {
 				config.i18n = true;
 				const key = `commands.${this.name}.shortcuts._${Math.random().toString(36).slice(2)}`;
-				(this as any).ctx.i18n.define("", key, pattern);
+				this.ctx.i18n.define("", key, pattern);
 				pattern = key;
 			}
 		}
-		const dispose = (this as any).ctx.match(
-			pattern,
-			`<execute>${content}</execute>`,
-			{
-				appel: config.prefix ?? false,
-				fuzzy: config.fuzzy ?? false,
-				i18n: config.i18n as never,
-				regex: regex ?? false,
-			},
-		);
+		const dispose = this.ctx.match(pattern, `<execute>${content}</execute>`, {
+			appel: config.prefix ?? false,
+			fuzzy: config.fuzzy ?? false,
+			i18n: config.i18n as never,
+			regex: regex ?? false,
+		});
 		this._disposables.push(dispose);
-		return this as any;
+		return this;
 	}
 }

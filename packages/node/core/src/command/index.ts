@@ -52,7 +52,7 @@ declare module "../context" {
 		/** 命令被销毁 */
 		"command-removed"(command: Command): void;
 		/** 命令执行抛出未被 handleError 接管的异常 */
-		"command-error"(argv: Argv, error: any): void;
+		"command-error"(argv: Argv, error: unknown): void;
 		/** 命令执行前的钩子（即内置的第一个 checker）；返回值可短路执行 */
 		"command/before-execute"(argv: Argv): Awaitable<void | Fragment>;
 		/** 数据库频道字段观测收集（session.observeChannel 前触发） */

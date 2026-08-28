@@ -8,6 +8,7 @@
  */
 
 import { camelCase, type Dict } from "cosmokit";
+import type { Command } from "../command/command";
 import { Argv } from "./argv";
 import type { CommandBase } from "./base";
 
@@ -22,7 +23,7 @@ export function parseCommand(
 	}
 	// 复制一份避免污染调用方传入的 argv（alias 注入的预设值也一并带过来）
 	const args = [...(argv.args || [])];
-	const options: Dict<any> = { ...argv.options };
+	const options: Dict<unknown> = { ...argv.options };
 
 	if (!argv.source && argv.tokens) {
 		argv.source = cmd.name + " " + Argv.stringify(argv);
@@ -190,6 +191,6 @@ export function parseCommand(
 		options,
 		args,
 		error: argv.error || "",
-		command: cmd as any,
+		command: cmd as Command,
 	};
 }

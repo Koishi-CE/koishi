@@ -127,13 +127,13 @@ describe("Command API", () => {
 
 			const f = a.subcommand(".b/f");
 			expect(f.name).toBe("f");
-			expect(f.parent.name).toBe("a.b");
-			expect(f.parent.parent).toBe(a);
+			expect(f.parent?.name).toBe("a.b");
+			expect(f.parent?.parent).toBe(a);
 
 			const g = b.subcommand("c.g");
 			expect(g.name).toBe("c.g");
-			expect(g.parent.name).toBe("c");
-			expect(g.parent.parent).toBe(b);
+			expect(g.parent?.name).toBe("c");
+			expect(g.parent?.parent).toBe(b);
 
 			const h = app.command("h");
 			b.subcommand("h");

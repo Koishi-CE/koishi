@@ -13,8 +13,9 @@ import type { Context } from "../context";
 import type { Argv } from "./parser";
 
 // https://github.com/microsoft/TypeScript/issues/17002
-// 上游 TS 缺陷长期未修，只能用断言绕过数组分支的 readonly 收窄问题
-const isArray = Array.isArray as (arg: any) => arg is readonly any[];
+// 上游 TS 缺陷长期未修：内置 Array.isArray 对含 readonly 数组的联合类型
+// 会把 false 分支也收窄进数组，只能用 unknown 版谓词断言绕过
+const isArray = Array.isArray as (arg: unknown) => arg is readonly unknown[];
 
 // 匹配声明中的一段参数：<...>（必填）或 [...]（可选）
 const BRACKET_REGEXP = /<[^>]+>|\[[^\]]+\]/g;

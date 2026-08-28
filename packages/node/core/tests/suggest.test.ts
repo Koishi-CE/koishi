@@ -24,9 +24,7 @@ describe("Command Suggestion", () => {
 		.command("fooo", { checkUnknown: true })
 		.alias("bool")
 		.option("text", "-t <bar>")
-		.action(
-			({ options }: { options: { text: string } }) => "fooo" + options.text,
-		);
+		.action(({ options }) => `fooo${options?.text}`);
 
 	beforeAll(() => app.start());
 	afterAll(() => app.stop());

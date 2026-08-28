@@ -127,10 +127,12 @@ export class CommandBase<T extends CommandBase.Config = CommandBase.Config> {
 		const fallbackType = typeof option.fallback;
 		if ("value" in config) {
 			// 固定取值选项：登记变体并把所有别名映射到该取值
-			path += "." + config.value;
-			option.variants[config.value] = { ...config, syntax };
-			option.valuesSyntax[config.value] = syntax;
-			aliases.forEach((name) => (option.values[name] = config.value));
+			// （对象键运行时本就经字符串强转，String() 与原行为一致）
+			const value = config.value as Argv.OptionValue;
+			path += `.${value}`;
+			option.variants[String(value)] = { ...config, syntax };
+			option.valuesSyntax[String(value)] = syntax;
+			aliases.forEach((name) => (option.values[name] = value));
 		} else if (!bracket.trim()) {
 			option.type = "boolean";
 		} else if (
@@ -189,16 +191,16 @@ export class CommandBase<T extends CommandBase.Config = CommandBase.Config> {
 	}
 
 	/** 单个参数值的序列化：含空格时补双引号 */
-	private stringifyArg(value: any) {
-		value = "" + value;
-		return value.includes(" ") ? `"${value}"` : value;
+	private stringifyArg(value: unknown) {
+		const text = String(value);
+		return text.includes(" ") ? `"${text}"` : text;
 	}
 
 	/** 把 args / options 还原为 "cmd --key value arg" 形式的命令行文本 */
-	stringify(args: readonly string[], options: any) {
+	stringify(args: readonly unknown[], options: object) {
 		let output = this.name;
 		for (const key in options) {
-			const value = options[key];
+			const value: unknown = (options as Record<string, unknown>)[key];
 			if (value === true) {
 				output += ` --${key}`;
 			} else if (value === false) {

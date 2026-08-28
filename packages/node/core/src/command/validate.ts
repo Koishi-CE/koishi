@@ -56,7 +56,7 @@ export default function validate(ctx: Context) {
 			const { session, options, command } = argv;
 			if (!session?.user || !command) return;
 
-			const sendHint = (message: string, ...param: any[]) =>
+			const sendHint = (message: string, ...param: unknown[]) =>
 				command.config.showWarning ? session.text(message, param) : "";
 
 			// 权限测试：命令本体与传入选项的权限一并校验
@@ -80,7 +80,7 @@ export default function validate(ctx: Context) {
 		async (argv: Argv): Promise<string | void> => {
 			const { args = [], options = {}, command, session } = argv;
 			if (!command || !session) return;
-			const sendHint = (message: string, ...param: any[]) =>
+			const sendHint = (message: string, ...param: unknown[]) =>
 				command.config.showWarning ? session.text(message, param) : "";
 
 			// 参数数量校验：必填参数缺失时逐个交互式追问补全；

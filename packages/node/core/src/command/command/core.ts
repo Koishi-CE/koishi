@@ -37,7 +37,9 @@ export class CommandCore extends CommandBase<Command.Config> {
 		// 兼容旧版 authority 写法：换算成 permissions 权限列表
 		this.config.permissions ??= [`authority:${config?.authority ?? 1}`];
 		this._registerAlias(name);
-		ctx.$commander._commandList.push(this as any);
+		// CommandCore 为非泛型基类，this 的多态类型无法直接窄化为 Command，
+		// 经基类引用中转（Command → CommandCore 可赋值，故反向窄化合法）
+		ctx.$commander._commandList.push(this as CommandCore as Command);
 	}
 
 	/** 当前调用方上下文：优先取触发本命令的动态作用域，否则回退注册时上下文 */
@@ -62,11 +64,11 @@ export class CommandCore extends CommandBase<Command.Config> {
 	set parent(parent: Command | null) {
 		if (this._parent === parent) return;
 		if (this._parent) {
-			remove(this._parent.children, this as any);
+			remove(this._parent.children, this as CommandCore as Command);
 		}
 		this._parent = parent;
 		if (parent) {
-			parent.children.push(this as any);
+			parent.children.push(this as CommandCore as Command);
 		}
 	}
 
@@ -84,7 +86,7 @@ export class CommandCore extends CommandBase<Command.Config> {
 
 		// 全局查重：同名命令（含其它命令的别名）不可重复注册
 		const previous = this.ctx.$commander.get(name);
-		if (previous && previous !== (this as any)) {
+		if (previous && previous !== (this as CommandCore)) {
 			throw new Error(`duplicate command names: "${name}"`);
 		}
 
@@ -112,20 +114,21 @@ export class CommandCore extends CommandBase<Command.Config> {
 	 */
 	alias(...names: string[]): this;
 	alias(name: string, options: Command.Alias): this;
-	alias(...args: any[]) {
+	alias(...args: string[] | [string, Command.Alias]) {
 		if (typeof args[1] === "object") {
 			this._registerAlias(args[0], false, args[1]);
 		} else {
+			// 走到此分支说明第二参不是 Alias 对象，所有实参均为别名
 			for (const name of args) {
-				this._registerAlias(name);
+				if (typeof name === "string") this._registerAlias(name);
 			}
 		}
-		this.caller.emit("command-updated", this as any);
-		return this as any;
+		this.caller.emit("command-updated", this as CommandCore as Command);
+		return this;
 	}
 
 	/** @deprecated 命令不支持插件式复用，直接调用回调本身 */
-	use<T extends Command, R extends any[]>(
+	use<T extends Command, R extends unknown[]>(
 		callback: (command: this, ...args: R) => T,
 		...args: R
 	): T {

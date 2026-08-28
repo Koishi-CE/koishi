@@ -28,7 +28,7 @@ export function apply(ctx: Context) {
 			if (!message) return session.text(".expect-text");
 			if (!options.only) {
 				// 非仅本 bot 模式：交给全局广播（覆盖所有 bot 的指派频道）
-				await ctx.broadcast(message, options.forced);
+				await ctx.broadcast(message, Boolean(options.forced));
 				return;
 			}
 

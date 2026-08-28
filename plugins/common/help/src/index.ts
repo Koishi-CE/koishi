@@ -246,7 +246,7 @@ export function apply(ctx: Context, config: Config) {
 					".global-prolog",
 					session,
 					commands,
-					options,
+					options as HelpOptions,
 				);
 				const epilog = session.text(".global-epilog", [prefix]);
 				if (epilog) output.push(epilog);
@@ -258,7 +258,7 @@ export function apply(ctx: Context, config: Config) {
 			if (!(await ctx.permissions.test(`command:${command.name}`, session))) {
 				return session.text("internal.low-authority");
 			}
-			return showHelp(command, session, options);
+			return showHelp(command, session, options as HelpOptions);
 		});
 
 	// 注册全局快捷调用“帮助”（具体文本由各语言的 i18n 文本提供）
@@ -425,7 +425,8 @@ async function showHelp(
 		output.push(
 			typeof command._usage === "string"
 				? command._usage
-				: await command._usage(session),
+				: // _usage 存储为擦除签名（见 core 的 CommandDefinition），此处还原实参
+					await command._usage(session as never),
 		);
 	} else {
 		const text = session.text(

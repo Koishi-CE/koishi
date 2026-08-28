@@ -51,7 +51,7 @@ export function apply(ctx: Context, _config: Config) {
 			// 指定了 -u / -c 时改为向目标发送，而不是回复当前会话
 			const target = options.user || options.channel;
 			if (target) {
-				const [platform, id] = parsePlatform(target);
+				const [platform, id] = parsePlatform(target as string);
 				const bot = ctx.bots.find((bot) => bot.platform === platform);
 				if (!bot) {
 					return session.text(".platform-not-found");
