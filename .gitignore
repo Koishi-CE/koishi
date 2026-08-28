@@ -40,15 +40,16 @@ coverage/
 *.njsproj
 *.sln
 
-# QQ 运行产物（登录态数据库，勿提交）
-*.db
-
 # 归档区
 archive/
 
 # token
 .npmrc
 
-# 一些缓存？
+# 一些缓存
 .pnpm-store
 .repo/
+
+# 暂时忽略（marketn 迁入对齐期间；完成后移除本行以纳入版本控制）
+
+plugins/webui/market/
