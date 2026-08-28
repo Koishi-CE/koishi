@@ -37,6 +37,13 @@
 </template>
 
 <script lang="ts" setup>
+/**
+ * 依赖图页面主组件：以 d3-force 力导向图渲染 insight 服务推送的插件拓扑。
+ *
+ * - 布局：link / charge / x / y 四种力叠加，容器尺寸变化时节流重置并重启模拟；
+ * - 交互：节点可拖拽（固定坐标 fx/fy），悬停节点 / 连线显示 tooltip，
+ *   并高亮节点的全部祖先子图（向上追溯的所有依赖链）。
+ */
 import { store } from "@koishi-ce/client";
 import { useElementSize, useEventListener, watchThrottled } from "@vueuse/core";
 import * as d3 from "d3-force";
@@ -57,8 +64,12 @@ const fLink = ref<Link>(null);
 const nodes = reactive<Node[]>(store.insight.nodes as any);
 const links = computed<Link[]>(() => store.insight.edges as any);
 
+/**
+ * 计算外层 svg 的尺寸与 transform：先求出全部节点的包围盒，
+ * 再按容器宽高比取较小的缩放比并居中，使整幅图恰好铺满可视区域。
+ */
 const svgAttrs = computed(() => {
-	// fix all the nodes in the root element
+	// 求所有节点的包围盒（最小/最大坐标）
 	let minX = Infinity,
 		minY = Infinity,
 		maxX = -Infinity,
@@ -92,10 +103,12 @@ const svgAttrs = computed(() => {
 	};
 });
 
+/** 连线的权重：实线（调用关系）权重 1，虚线（服务注入）权重 0.2。 */
 function weight(link: Link) {
 	return link.type === "solid" ? 1 : 0.2;
 }
 
+/** 节点的（加权）度数：与其相连的所有连线权重之和。 */
 function degree(node: Node) {
 	let count = 0;
 	for (const link of links.value) {
@@ -105,6 +118,8 @@ function degree(node: Node) {
 	return count;
 }
 
+// 引力模型：连线强度按权重归一，并除以两端节点度数的较小值，
+// 度数高的节点之间引力更弱，避免中心过度聚拢
 const forceLink = d3
 	.forceLink<Node, Link>(links.value)
 	.id((node) => node.uid)
@@ -124,12 +139,19 @@ const simulation = d3
 	.force("y", forceY)
 	.stop();
 
+/**
+ * 重置各力的参数并配置模拟退火节奏。
+ *
+ * x/y 两个定位力的强度按容器宽高比分配（窄的一轴更强的向心力），
+ * alpha 衰减率由目标 alphaMin 与期望步数（logTicks）反推。
+ */
 function resetForce() {
 	forceLink.distance(100); // (config.value.link.distance)
 	forceManyBody.strength(-200); // (-config.value.strengh.repulsion)
 	forceX.strength(0.1 * (height.value / (width.value + height.value) || 1)); // (config.value.strengh.centering)
 	forceY.strength(0.1 * (width.value / (width.value + height.value) || 1)); // (config.value.strengh.centering)
 
+	// alphaMin / alphaTicks 取指数刻度：6~7 个数量级,兼顾收敛速度与稳定性
 	const alphaMin = Math.exp(-6); // (-config.value.simulation.logMin)
 	const alphaTicks = Math.exp(7); // (config.value.simulation.logTicks)
 	simulation
@@ -159,6 +181,8 @@ onMounted(() => {
 	);
 });
 
+// 服务端数据到达时做增量合并：保留仍存在节点的模拟坐标（避免整图重排），
+// 移除消失的节点、更新字段，最后以较低初始能量（alpha 0.3）重启模拟
 watch(
 	() => store.insight,
 	(value) => {
@@ -186,6 +210,7 @@ useEventListener("touchmove", onDragMove);
 useEventListener("mouseup", onDragEnd);
 useEventListener("touchend", onDragEnd);
 
+/** 悬停节点：记录焦点节点并弹出 tooltip（插件名 + 提供的服务列表）。 */
 function onMouseEnterNode(node: Node, event: MouseEvent) {
 	fNode.value = node;
 	const result = ["插件：" + node.name];
@@ -201,6 +226,7 @@ function onMouseLeaveNode(node: Node, event: MouseEvent) {
 	tooltip.deactivate(300);
 }
 
+/** 悬停连线：tooltip 显示边的类型（服务/调用）与两端插件名。 */
 function onMouseEnterLink(link: Link, event: MouseEvent) {
 	fLink.value = link;
 	const type = link.type === "dashed" ? "服务" : "调用";
@@ -213,6 +239,7 @@ function onMouseLeaveLink(link: Link, event: MouseEvent) {
 	tooltip.deactivate(300);
 }
 
+/** 拖拽开始：固定节点坐标（fx/fy 设为当前值）并加热模拟，使拖拽带动画反馈。 */
 function onDragStart(node: Node, event: MouseEvent | TouchEvent) {
 	dragged.value = node;
 	simulation.alphaTarget(0.3).restart();
@@ -223,6 +250,7 @@ function onDragStart(node: Node, event: MouseEvent | TouchEvent) {
 	node.fy = node.y;
 }
 
+/** 拖拽中：按指针位移增量更新固定坐标。 */
 function onDragMove(event: MouseEvent | TouchEvent) {
 	const node = dragged.value;
 	if (!node) return;
@@ -233,6 +261,7 @@ function onDragMove(event: MouseEvent | TouchEvent) {
 	node.lastY = point.clientY;
 }
 
+/** 拖拽结束：解除坐标固定（节点回归力学模拟）并冷却模拟。 */
 function onDragEnd(event: MouseEvent | TouchEvent) {
 	simulation.alphaTarget(0);
 	const node = dragged.value;
@@ -243,6 +272,7 @@ function onDragEnd(event: MouseEvent | TouchEvent) {
 	dragged.value = null;
 }
 
+/** 高亮子图：节点集合 + 边集合。 */
 interface Graph {
 	nodes: Set<Node>;
 	links: Set<Link>;
@@ -250,11 +280,17 @@ interface Graph {
 
 const getEmptyGraph = (): Graph => ({ nodes: new Set(), links: new Set() });
 
+/** 仅含一条边及其两端节点的子图。 */
 const getLinkGraph = (link: Link): Graph => ({
 	nodes: new Set([link.source, link.target]),
 	links: new Set([link]),
 });
 
+/**
+ * 求节点的祖先子图：从该节点出发，沿边反向（target -> source）不断
+ * 收集指向已选节点的边与它的 source 端，迭代到不动点，即该节点
+ * 全部上游依赖链（含直接与间接依赖）。
+ */
 const getAncestorGraph = (node: Node): Graph => {
 	const graph: Graph = {
 		nodes: new Set([node]),
@@ -275,6 +311,7 @@ const getAncestorGraph = (node: Node): Graph => {
 	return graph;
 };
 
+// 当前应高亮的子图：悬停边时只取该边，悬停节点时取其祖先子图，无焦点为空
 const subgraph = computed<Graph>(() => {
 	if (fLink.value) return getLinkGraph(fLink.value);
 	if (!fNode.value) return getEmptyGraph();

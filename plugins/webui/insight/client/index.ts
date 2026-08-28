@@ -1,3 +1,9 @@
+/**
+ * insight 插件（浏览器侧入口）。
+ *
+ * 将依赖图页面注册到控制台路由（`/graph`），声明依赖 `insight` 数据频道，
+ * 页面组件为 ./index.vue 的力导向图，同时挂载本目录的图标资源。
+ */
 import type { Context } from "@koishi-ce/client";
 import type Insight from "@koishi-ce/plugin-insight";
 import Graph from "./index.vue";

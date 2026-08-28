@@ -47,6 +47,15 @@
 </template>
 
 <script lang="ts" setup>
+/**
+ * 沙盒页面主布局。
+ *
+ * 左栏管理虚拟用户（创建 / 切换 / 删除，昵称取自 words 候选表）；
+ * 顶栏切换私聊 / 群聊 / 用户设置三种面板：
+ * - 私聊/群聊：消息虚拟列表 + 输入框（支持引用回复、方向键翻查历史输入）；
+ * - 用户设置：k-form 编辑当前用户的权限等级，变更自动写回数据库。
+ * 消息的收发通过 utils.ts 的 config / api 与 node 侧 SandboxBot 对接。
+ */
 import {
 	clone,
 	deepEqual,
@@ -65,6 +74,7 @@ import { api, channel, config, panelTypes, words } from "./utils";
 
 const ctx = useContext();
 
+// 消息右键菜单的两项动作:删除消息 / 设为引用回复
 ctx.action("sandbox.message.delete", {
 	action: ({ sandbox }) => deleteMessage(sandbox.message),
 });
@@ -73,22 +83,26 @@ ctx.action("sandbox.message.quote", {
 	action: ({ sandbox }) => (quote.value = sandbox.message),
 });
 
+/** 用户设置表单的 schema：当前仅暴露权限等级字段。 */
 const schema = Schema.object({
 	authority: Schema.natural().description("权限等级"),
 });
 
+/** 已创建的用户列表（从 messages 的 `@` 前缀键提取）。 */
 const users = computed(() => {
 	return Object.keys(config.value.messages)
 		.filter((key) => key.startsWith("@"))
 		.map((key) => key.slice(1));
 });
 
+/** 左栏用户列表的 k-tab-group 数据源。 */
 const userMap = computed(() => {
 	return Object.fromEntries(users.value.map((name) => [name, { name }]));
 });
 
 const length = 10;
 
+/** 创建用户：按 index 轮询取 words 中未占用的昵称，并通知 node 侧入库。 */
 function createUser() {
 	if (users.value.length >= length) {
 		return message.error("可创建的用户数量已达上限。");
@@ -103,6 +117,7 @@ function createUser() {
 	void send("sandbox/set-user", config.value.platform, config.value.user, {});
 }
 
+/** 删除用户：清掉本地消息并通知 node 侧移除数据，被删的是当前用户时切换选中项。 */
 function removeUser(name: string) {
 	const index = users.value.indexOf(name);
 	delete config.value.messages["@" + name];
@@ -116,6 +131,11 @@ const input = ref("");
 const offset = ref(0);
 const quote = ref<Message>();
 
+/**
+ * 输入框的历史回溯（终端风格）：
+ * ArrowUp 向上翻查当前用户发过的历史消息，ArrowDown 向下返回，
+ * offset 记录距最新一条的偏移，超出范围时回到空输入。
+ */
 function onKeydown(event: KeyboardEvent) {
 	if (event.key === "ArrowUp") {
 		const list = config.value.messages[channel.value].filter(
@@ -144,6 +164,7 @@ function onKeydown(event: KeyboardEvent) {
 const user = ref();
 const model = ref();
 
+// 切换用户时拉取其数据库记录,克隆一份作为表单编辑副本
 watch(
 	() => config.value.user,
 	async (value) => {
@@ -158,6 +179,7 @@ watch(
 	{ immediate: true },
 );
 
+// 表单深度变更且与库中记录不一致时,自动写回 node 侧数据库
 watch(
 	model,
 	async (value) => {
@@ -174,6 +196,7 @@ watch(
 	{ deep: true },
 );
 
+/** 发送消息：重置历史偏移，携带引用消息发往 node 侧并清空引用状态。 */
 function sendMessage(content: string) {
 	offset.value = 0;
 	void send(
@@ -187,6 +210,7 @@ function sendMessage(content: string) {
 	quote.value = null;
 }
 
+/** 删除消息：通知 node 侧派发删除事件，并同步移除本地消息列表中的记录。 */
 async function deleteMessage(data: Message) {
 	// biome-ignore lint/nursery/noFloatingPromises: 已在 async 函数中 await，nursery 规则对 .vue 内 send 调用的误报
 	await send(

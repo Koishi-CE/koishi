@@ -14,6 +14,9 @@
 </template>
 
 <script lang="ts" setup>
+// 单条沙盒消息的气泡渲染：头像 + 昵称 + 消息体（@satorijs/components-vue
+// 的 message-content 渲染元素内容），引用消息以 blockquote 内嵌；
+// 消息体上右键触发 sandbox.message 菜单（删除 / 引用）。
 import { useMenu } from "@koishi-ce/client";
 import type { Message } from "@koishi-ce/plugin-sandbox";
 import { MessageContent } from "@satorijs/components-vue";

@@ -1,3 +1,10 @@
+/**
+ * 沙盒消息编码器：机器人回复消息的出口。
+ *
+ * 机器人侧发送的内容经 visit() 逐元素累积到 buffer，在边界（flush /
+ * message / figure 分段）时整体转换并通过 WebSocket 以 sandbox/message
+ * 事件推回浏览器上屏；媒体资源若为 file: 协议，改写到沙盒静态文件服务。
+ */
 import { type Dict, h, MessageEncoder, Random } from "@koishi-ce/koishi";
 import type { SandboxBot } from "./bot";
 
@@ -6,6 +13,8 @@ import type { SandboxBot } from "./bot";
 export class SandboxMessenger extends MessageEncoder {
 	private buffer = "";
 
+	// 媒体元素转换规则:image/img/audio/video/file 的 src 为 file: 协议时,
+	// 重写为沙盒静态文件服务的 HTTP 地址,其余原样透传
 	private rules: Dict<h.Transformer> = Object.fromEntries(
 		["image", "img", "audio", "video", "file"].map((type) => {
 			return [
@@ -25,6 +34,7 @@ export class SandboxMessenger extends MessageEncoder {
 		}),
 	);
 
+	/** 把 buffer 中累积的内容作为一条机器人消息推送到浏览器，并记录到 results。 */
 	async flush() {
 		if (!this.buffer.trim()) return;
 		const content = await h.transformAsync(this.buffer.trim(), this.rules);
@@ -47,6 +57,7 @@ export class SandboxMessenger extends MessageEncoder {
 		this.buffer = "";
 	}
 
+	/** 逐元素访问：分段元素（message/figure）前后各触发一次 flush，其余以字符串形式累积。 */
 	async visit(element: h) {
 		const { type, children } = element;
 		if (type === "message" || type === "figure") {

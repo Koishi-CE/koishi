@@ -28,6 +28,8 @@
 </template>
 
 <script lang="ts" setup>
+// 依赖图的单个节点：外圆为节点主体；分组（Group）/根节点额外叠加内圆；
+// 提供服务的节点叠加十字星形标记。isActive（悬停/拖拽焦点）放大图形。
 import type { Node } from "./utils";
 
 defineProps<{

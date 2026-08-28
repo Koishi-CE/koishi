@@ -32,6 +32,9 @@
 </template>
 
 <script lang="ts" setup>
+// 依赖图的单条连线：由四段 line 组成——一段透明的粗 hitbox（承接鼠标事件）、
+// 一段按类型着色的主线（solid 实线 / dashed 虚线）、两段箭头翼线。
+// 箭头几何由 arrow 计算属性按两端坐标与常量实时求出。
 import { computed } from "vue";
 import { constants, type Link } from "./utils";
 
@@ -41,6 +44,10 @@ const props = defineProps<{
 
 defineEmits(["mouseenter", "mouseleave"]);
 
+/**
+ * 计算箭头的三个关键点：x0/y0 为箭头根部（沿连线方向从目标节点
+ * 缩进 arrowOffset），x1/y1 与 x2/y2 为向两侧张开 arrowAngle 的两翼端点。
+ */
 const arrow = computed(() => {
 	const { source, target } = props.link;
 	const dx = target.x - source.x;

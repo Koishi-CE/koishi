@@ -1,3 +1,9 @@
+/**
+ * locales 插件（浏览器侧入口）。
+ *
+ * 注册本地化管理页面（`/locales/:path*`，authority 4），
+ * 页面组件为 ./locales.vue；同时注册页面与语言选择器用到的两个图标。
+ */
 import { type Context, icons } from "@koishi-ce/client";
 import type { Dict, I18n } from "@koishi-ce/koishi";
 import {} from "@koishi-ce/plugin-locales";

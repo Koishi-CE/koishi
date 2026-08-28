@@ -1,3 +1,12 @@
+/**
+ * locales 插件（node 侧）：控制台的本地化文件管理。
+ *
+ * - 启动时扫描配置的各个根目录（root，靠后的优先级更高，倒序加载），
+ *   把每个 `<locale>.yml` 以 `$<locale>` 命名空间注册进 ctx.i18n；
+ * - 注册 l10n 监听器：浏览器端编辑翻译后回传数据，更新 i18n 并
+ *   写回第一个根目录的 `<locale>.yml`；
+ * - i18n 数据变化时防抖刷新 console entry，供前端展示全部翻译。
+ */
 import type { DataService } from "@koishi-ce/console";
 import {
 	type Context,
@@ -27,6 +36,7 @@ const logger = new Logger("locales");
 
 export const name = "locales";
 
+/** 插件配置：本地化文件的根目录列表（字符串或字符串数组）。 */
 export interface Config {
 	root?: string[];
 }
@@ -45,6 +55,7 @@ export const Config: Schema<Config> = Schema.object({
 		.description("存放本地化文件的根目录。"),
 });
 
+/** 插件入口：加载各根目录的 yml 本地化文件，并在 console 就绪后注册编辑回写链路。 */
 export async function apply(ctx: Context, config: Config) {
 	// Schema default 保证 root 非空，此处兜底仅覆盖类型层面的可选性
 	const roots = config.root ?? [];
@@ -76,6 +87,8 @@ export async function apply(ctx: Context, config: Config) {
 			() => ctx.i18n._data,
 		);
 
+		// 浏览器端保存翻译:逐语言更新 i18n 并落盘为 yml;用户自定义的翻译
+		// 存于 `$` 前缀命名空间,与插件自带文案区分开
 		ctx.console.addListener(
 			"l10n",
 			async (data) => {
@@ -98,6 +111,7 @@ export async function apply(ctx: Context, config: Config) {
 			{ authority: 4 },
 		);
 
+		// i18n 任意变化(含本插件的 define)都在下一拍刷新 entry,推送最新翻译
 		const update = ctx.debounce(() => entry.refresh(), 0);
 		ctx.on("internal/i18n", update);
 	});

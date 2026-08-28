@@ -1,3 +1,13 @@
+/**
+ * sandbox 插件（node 侧）：网页控制台里的机器人调试沙盒。
+ *
+ * 核心思路是把"浏览器页面"伪装成一个聊天平台适配器：
+ * - 为每个打开沙盒页面的 console 连接创建一个 SandboxBot（见 ./bot.ts），
+ *   浏览器端发送的消息经此 bot 转成标准 session 派发，机器人的回复经
+ *   SandboxMessenger（见 ./message.ts）写回浏览器渲染；
+ * - 本文件注册浏览器侧可调用的 RPC 监听器（发消息 / 删消息 / 用户管理等），
+ *   以及可选的本地静态文件服务（fileServer 配置）。
+ */
 import { type Client, DataService } from "@koishi-ce/console";
 import {
 	$,
@@ -60,6 +70,7 @@ declare module "@koishi-ce/console" {
 	}
 }
 
+/** 沙盒消息：浏览器与 node 侧之间传递的一条聊天记录。 */
 export interface Message {
 	id: string;
 	user: string;
@@ -73,6 +84,7 @@ export const filter = false;
 export const name = "sandbox";
 export const inject = ["console", "server"];
 
+/** 沙盒插件配置（本地静态文件服务开关）。 */
 export interface Config {
 	fileServer: {
 		enabled: boolean;
@@ -89,6 +101,10 @@ export const Config: Schema<Config> = Schema.object({
 	}),
 });
 
+/**
+ * sandbox 数据服务：按平台统计绑定用户数（binding 表按 platform 分组计数），
+ * 供浏览器端展示沙盒平台列表。依赖 database。
+ */
 class SandboxService extends DataService<Dict<number>> {
 	static override inject = ["database"];
 
@@ -109,6 +125,7 @@ class SandboxService extends DataService<Dict<number>> {
 	}
 }
 
+/** 沙盒插件的入口：注册服务、页面入口与一组浏览器侧 RPC 监听器。 */
 export function apply(ctx: Context, config: Config) {
 	ctx.plugin(SandboxService);
 
@@ -128,6 +145,10 @@ export function apply(ctx: Context, config: Config) {
 
 	const bots: Dict<SandboxBot> = {};
 
+	/**
+	 * 构造一条标准化的 Universal.Event：
+	 * 私聊（channelId 形如 `@userId`）只带 channel，群聊额外附带同 id 的 guild。
+	 */
 	const createEvent = (userId: string, channelId: string) => {
 		const isDirect = channelId === "@" + userId;
 		// exactOptionalPropertyTypes 下可选属性不能显式携带 undefined，guild 按需附加
@@ -147,14 +168,17 @@ export function apply(ctx: Context, config: Config) {
 		return event;
 	};
 
+	/** 取平台对应的沙盒 bot：同一平台的 bot 全局唯一，不存在时才创建。 */
 	const ensureBot = (platform: string, client: Client) => {
-		// assert unique platform
+		// 保证平台唯一（同一 platform 只创建一个 SandboxBot 实例）
 		return (bots[platform] ||= new SandboxBot(ctx, client, {
 			platform,
 			selfId: "koishi",
 		}));
 	};
 
+	// 浏览器发来用户消息：先回显给浏览器立即上屏，再构造 message session
+	// 派发给本插件的机器人逻辑（含引用消息 quote 的透传）
 	ctx.console.addListener(
 		"sandbox/send-message",
 		async function (platform, userId, channel, content, quote) {
@@ -179,6 +203,7 @@ export function apply(ctx: Context, config: Config) {
 		{ authority: 4 },
 	);
 
+	// 浏览器删除消息：以 message-deleted 事件派发，触发相关的监听插件
 	ctx.console.addListener(
 		"sandbox/delete-message",
 		async function (platform, userId, channel, messageId) {
@@ -191,6 +216,7 @@ export function apply(ctx: Context, config: Config) {
 		{ authority: 4 },
 	);
 
+	// 查询沙盒用户：无绑定记录时按 authority 1 现场创建
 	ctx.console.addListener(
 		"sandbox/get-user",
 		async (platform, pid) => {
@@ -207,6 +233,8 @@ export function apply(ctx: Context, config: Config) {
 		{ authority: 4 },
 	);
 
+	// 写入沙盒用户：data 为空对象表示"用户进入频道"（guild-member-added），
+	// 为 null 表示删除用户（guild-member-added 的反向），其余按字段更新
 	ctx.console.addListener(
 		"sandbox/set-user",
 		async function (platform, pid, data) {
@@ -245,6 +273,7 @@ export function apply(ctx: Context, config: Config) {
 		{ authority: 4 },
 	);
 
+	// 浏览器对 sandbox/request 的应答：转成应用级事件,由 SandboxBot.request 的事件等待方消费
 	ctx.console.addListener(
 		"sandbox/response",
 		(nonce, data) => {
@@ -253,6 +282,7 @@ export function apply(ctx: Context, config: Config) {
 		{ authority: 4 },
 	);
 
+	// 新连接接入时清理其名下已失联的沙盒 bot（页面刷新 / 断线重连场景）
 	ctx.on("console/connection", async (client) => {
 		if (ctx.console.clients[client.id]) return;
 		for (const [platform, bot] of Object.entries(bots)) {
@@ -263,6 +293,8 @@ export function apply(ctx: Context, config: Config) {
 		}
 	});
 
+	// 可选的本地静态文件服务:把沙盒消息里引用的 file: 本地资源暴露为 HTTP,
+	// 供浏览器端展示(仅限本地调试,勿在公网环境开启)
 	if (config.fileServer.enabled) {
 		ctx.server.get("/sandbox/:url(file:.+)", async (koa) => {
 			const { url } = koa.params;
@@ -275,6 +307,7 @@ export function apply(ctx: Context, config: Config) {
 
 	ctx.i18n.define("zh-CN", zhCN);
 
+	// clear 命令仅对 sandbox: 平台的会话生效:通知浏览器清空当前频道的消息列表
 	ctx
 		.intersect((session) => session.platform.startsWith("sandbox:"))
 		.command("clear")
