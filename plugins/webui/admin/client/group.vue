@@ -175,7 +175,7 @@ const permissions = computed(() => {
 const renameItem = debounce(
 	1000,
 	(type: "group" | "track", id: number, name: string) => {
-		send(`admin/rename-${type}`, id, name);
+		void send(`admin/rename-${type}`, id, name);
 	},
 );
 
@@ -197,6 +197,7 @@ async function createItem() {
 }
 
 async function deleteItem() {
+	// biome-ignore lint/nursery/noFloatingPromises: 已在 async 回调中 await，nursery 规则对 .vue 内 send 调用的误报
 	await send(`admin/delete-${active.value.type}`, +active.value.id);
 	router.replace("/admin/");
 }
@@ -205,6 +206,7 @@ async function addPermission() {
 	const { permissions } = data.value[active.value.type][active.value.id];
 	permissions.push(permission.value);
 	permission.value = null;
+	// biome-ignore lint/nursery/noFloatingPromises: 已在 async 回调中 await，nursery 规则对 .vue 内 send 调用的误报
 	await send(
 		`admin/update-${active.value.type}`,
 		+active.value.id,
@@ -215,6 +217,7 @@ async function addPermission() {
 async function removePermission(index: number) {
 	const { permissions } = data.value[active.value.type][active.value.id];
 	permissions.splice(index, 1);
+	// biome-ignore lint/nursery/noFloatingPromises: 已在 async 回调中 await，nursery 规则对 .vue 内 send 调用的误报
 	await send(
 		`admin/update-${active.value.type}`,
 		+active.value.id,
@@ -224,6 +227,7 @@ async function removePermission(index: number) {
 
 async function addUser() {
 	try {
+		// biome-ignore lint/nursery/noFloatingPromises: 已在 async 回调中 await，nursery 规则对 .vue 内 send 调用的误报
 		await send(
 			"admin/add-user",
 			+activeGroup.value,
@@ -240,6 +244,7 @@ async function addUser() {
 
 async function removeUser() {
 	try {
+		// biome-ignore lint/nursery/noFloatingPromises: 已在 async 回调中 await，nursery 规则对 .vue 内 send 调用的误报
 		await send(
 			"admin/remove-user",
 			+activeGroup.value,

@@ -9,7 +9,7 @@ import {
 	type User,
 } from "@koishi-ce/koishi";
 
-declare module "koishi" {
+declare module "@koishi-ce/koishi" {
 	namespace Command {
 		interface Config {
 			admin?: Config.Admin;
@@ -48,10 +48,15 @@ export default function apply(ctx: Context) {
 		.alias("auth")
 		.userFields(["authority"])
 		.action(async ({ options, session }, authority) => {
-			if (!options["user"]) {
+			if (!session) return;
+			// -u 选项由下方 adminUser 动态注入,不在静态 options 类型中
+			const { user } = (options ?? {}) as Extend<{}, "user", string>;
+			if (!user) {
 				return session.text("admin.user-expected");
 			}
+			if (!session.user) return;
 			session.user.authority = authority;
+			return undefined;
 		});
 
 	ctx
@@ -72,7 +77,9 @@ export default function apply(ctx: Context) {
 		.channelFields(["assignee"])
 		.option("remove", "-r", { descPath: "admin.options.remove" })
 		.action(async ({ session, options }, value) => {
-			if (options.remove) {
+			if (!session) return;
+			if (!session.channel) return;
+			if (options?.remove) {
 				session.channel.assignee = "";
 			} else if (!value) {
 				session.channel.assignee = session.selfId;
@@ -83,6 +90,7 @@ export default function apply(ctx: Context) {
 				}
 				session.channel.assignee = userId;
 			}
+			return undefined;
 		});
 
 	ctx
@@ -99,7 +107,7 @@ function parsePlatform(target: string): [platform: string, id: string] {
 	const index = target.indexOf(":");
 	const platform = target.slice(0, index);
 	const id = target.slice(index + 1);
-	return [platform, id] as any;
+	return [platform, id] as [platform: string, id: string];
 }
 
 function adminUser(command: Command) {
@@ -109,15 +117,18 @@ function adminUser(command: Command) {
 		argv: Argv<"authority", never, any[], Extend<{}, "user", string>>,
 	) {
 		const { options, session } = argv;
-		const { user, app } = session;
+		if (!session) return undefined;
+		const { app } = session;
 		notFound = false;
 
 		// user not specified, use current user
-		if (!options.user) return;
+		if (!options?.user) return undefined;
 
 		// spectified user is identical to current user
 		const [platform, userId] = parsePlatform(options.user);
-		if (session.userId === userId && session.platform === platform) return;
+		if (session.userId === userId && session.platform === platform) {
+			return undefined;
+		}
 
 		// get target user
 		const fields = session.collect("user", argv);
@@ -125,7 +136,8 @@ function adminUser(command: Command) {
 
 		if (!data) {
 			notFound = true;
-			const temp = app.model.tables.user.create();
+			// user 表由内核启动时注册,运行时必然存在
+			const temp = app.model.tables["user"]!.create();
 			session.user = observe(
 				temp,
 				async (diff) => {
@@ -133,7 +145,7 @@ function adminUser(command: Command) {
 				},
 				`user ${options.user}`,
 			);
-		} else if (user.authority <= data.authority) {
+		} else if (session.user!.authority <= data.authority) {
 			return session.text("internal.low-authority");
 		} else {
 			session.user = observe(
@@ -144,6 +156,7 @@ function adminUser(command: Command) {
 				`user ${options.user}`,
 			);
 		}
+		return undefined;
 	}
 
 	return command
@@ -152,15 +165,18 @@ function adminUser(command: Command) {
 			descPath: "admin.user-option",
 		})
 		.userFields(["authority"])
-		.action(async (argv, ...args) => {
+		.action(async (argv, ..._args) => {
 			const { session, next } = argv;
-			const user = session.user;
+			if (!session) return;
+			// 该动作仅在会话中被触发,userFields 已保证 session.user 存在
+			const user = session.user!;
 			const output = await setTarget(argv);
 			if (output) return output;
+			if (!session.user) return;
 			try {
 				const diffKeys = Object.keys(session.user.$diff);
-				const result = await next();
-				if (notFound && !command.config.admin.upsert) {
+				const result = await next!();
+				if (notFound && !command.config.admin?.upsert) {
 					return session.text("admin.user-not-found");
 				} else if (typeof result === "string") {
 					return result;
@@ -189,28 +205,34 @@ function adminChannel(command: Command) {
 		argv: Argv<never, never, any[], Extend<{}, "channel", string>>,
 	) {
 		const { options, session } = argv;
+		if (!session) return undefined;
 		const { app } = session;
 		notFound = false;
 
 		// channel is required for private messages
-		if (session.isDirect && !options.channel) {
+		if (session.isDirect && !options?.channel) {
 			return session.text("admin.not-in-group");
 		}
 
 		// channel not specified or identical, use current channel
-		const { channel = session.cid } = options;
-		if (channel === session.cid && !session.channel["$detached"]) return;
+		const channel = options?.channel ?? session.cid;
+		// $detached 是 observe 运行时附加的标记(仅会赋 true),不在 Observed 类型中
+		const current = session.channel;
+		if (channel === session.cid && !(current && "$detached" in current)) {
+			return undefined;
+		}
 
 		// get target channel
 		const [platform, channelId] = parsePlatform(channel);
-		const fields = argv.session.collect("channel", argv);
+		const fields = session.collect("channel", argv);
 		const data = await app.database.getChannel(platform, channelId, [
 			...fields,
 		]);
 
 		if (!data) {
 			notFound = true;
-			const temp = app.model.tables.channel.create();
+			// channel 表由内核启动时注册,运行时必然存在
+			const temp = app.model.tables["channel"]!.create();
 			temp.platform = platform;
 			temp.id = channelId;
 			session.channel = observe(
@@ -229,6 +251,7 @@ function adminChannel(command: Command) {
 				`channel ${channel}`,
 			);
 		}
+		return undefined;
 	}
 
 	return command
@@ -236,15 +259,18 @@ function adminChannel(command: Command) {
 			authority: 3,
 			descPath: "admin.channel-option",
 		})
-		.action(async (argv, ...args) => {
+		.action(async (argv, ..._args) => {
 			const { session, next } = argv;
-			const channel = session.channel;
+			if (!session) return;
+			// 该动作仅在会话中被触发,channelFields 已保证 session.channel 存在
+			const channel = session.channel!;
 			const output = await setTarget(argv);
 			if (output) return output;
+			if (!session.channel) return;
 			try {
 				const diffKeys = Object.keys(session.channel.$diff);
-				const result = await next();
-				if (notFound && !command.config.admin.upsert) {
+				const result = await next!();
+				if (notFound && !command.config.admin?.upsert) {
 					return session.text("admin.channel-not-found");
 				} else if (typeof result === "string") {
 					return result;
@@ -272,8 +298,9 @@ function adminLocale<
 	return cmd
 		.option("remove", "-r", { descPath: "admin.options.remove" })
 		.action(async ({ session, options }, ...args) => {
+			if (!session) return;
 			const target = session[key] as { locales?: string[] };
-			if (options.remove) {
+			if (options?.remove) {
 				target.locales = [];
 			} else if (args[0]) {
 				target.locales = [args[0]];
@@ -284,5 +311,6 @@ function adminLocale<
 			} else {
 				return session.text("admin.no-locale");
 			}
+			return undefined;
 		});
 }

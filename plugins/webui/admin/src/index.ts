@@ -13,7 +13,7 @@ import zhCN from "./locales/zh-CN.yml";
 
 export * from "./command";
 
-declare module "koishi" {
+declare module "@koishi-ce/koishi" {
 	interface Context {
 		admin: Admin;
 	}
@@ -59,15 +59,22 @@ export interface PermTrack {
 }
 
 export class Admin extends Service {
+	// erasableSyntaxOnly:原 namespace Admin 中的运行时值迁至类静态成员
+	static inject = ["database"];
+
+	// biome-ignore lint/style/useNamingConvention: 插件 Schema 约定为 PascalCase 的 Config 静态属性
+	static Config: Schema<Admin.Config> = Schema.object({});
+
 	groups!: PermGroup[];
 	tracks!: PermTrack[];
-	entry?: Entry<Admin.Data>;
+	entry?: Entry<Admin.Data> | undefined;
 
-	constructor(
-		ctx: Context,
-		public config: Admin.Config,
-	) {
+	// erasableSyntaxOnly:参数属性改为显式字段;覆盖 Service 基类的 config
+	override config: Admin.Config;
+
+	constructor(ctx: Context, config: Admin.Config) {
 		super(ctx, "admin");
+		this.config = config;
 
 		ctx.i18n.define("zh-CN", zhCN);
 		ctx.plugin(command);
@@ -93,13 +100,13 @@ export class Admin extends Service {
 		);
 	}
 
-	async start() {
+	override async start() {
 		this.groups = await this.ctx.database.get("group", {});
 		this.tracks = await this.ctx.database.get("perm_track", {});
 		for (const item of this.groups) {
 			item.count =
 				(await this.ctx.database
-					.select("user", { permissions: { $el: "group:" + item.id } })
+					.select("user", { permissions: { ["$el"]: "group:" + item.id } })
 					.execute((row) => $.count(row.id))) || 0;
 			this.setupGroup(item);
 		}
@@ -111,16 +118,13 @@ export class Admin extends Service {
 			ctx.on("dispose", () => (this.entry = undefined));
 
 			this.entry = ctx.console.addEntry(
-				process.env.KOISHI_BASE
+				process.env["KOISHI_BASE"]
 					? [
-							process.env.KOISHI_BASE + "/dist/index.js",
-							process.env.KOISHI_BASE + "/dist/style.css",
+							process.env["KOISHI_BASE"] + "/dist/index.js",
+							process.env["KOISHI_BASE"] + "/dist/style.css",
 						]
-					: process.env.KOISHI_ENV === "browser"
-						? [
-								// @ts-expect-error
-								import.meta.url.replace(/\/src\/[^/]+$/, "/client/index.ts"),
-							]
+					: process.env["KOISHI_ENV"] === "browser"
+						? [import.meta.url.replace(/\/src\/[^/]+$/, "/client/index.ts")]
 						: {
 								dev: resolve(__dirname, "../client/index.ts"),
 								prod: resolve(__dirname, "../dist"),
@@ -221,6 +225,7 @@ export class Admin extends Service {
 		item.dispose = this.ctx.permissions.define("(name)", {
 			inherits: ({ name }) => {
 				if (item.permissions.includes(name)) return ["group:" + item.id];
+				return undefined;
 			},
 		});
 	}
@@ -229,7 +234,8 @@ export class Admin extends Service {
 		item.dispose = this.ctx.permissions.define("(name)", {
 			inherits: ({ name }) => {
 				const index = item.permissions.indexOf(name);
-				if (index > 0) return [item.permissions[index - 1]];
+				const prev = index > 0 ? item.permissions[index - 1] : undefined;
+				return prev !== undefined ? [prev] : undefined;
 			},
 		});
 	}
@@ -255,6 +261,7 @@ export class Admin extends Service {
 		const index = this.tracks.findIndex((track) => track.id === id);
 		if (index < 0) throw new Error("track not found");
 		const [item] = this.tracks.splice(index, 1);
+		if (!item) throw new Error("track not found");
 		item.dispose!();
 		this.entry?.refresh();
 		await this.ctx.database.remove("perm_track", id);
@@ -290,10 +297,11 @@ export class Admin extends Service {
 		const index = this.groups.findIndex((group) => group.id === id);
 		if (index < 0) throw new Error("group not found");
 		const [item] = this.groups.splice(index, 1);
+		if (!item) throw new Error("group not found");
 		item.dispose!();
 		const users = await this.ctx.database.get(
 			"user",
-			{ permissions: { $el: "group:" + id } },
+			{ permissions: { ["$el"]: "group:" + id } },
 			["id", "permissions"],
 		);
 		for (const user of users) {
@@ -352,12 +360,9 @@ export class Admin extends Service {
 	}
 }
 
+// erasableSyntaxOnly:仅保留纯类型 namespace,运行时值(inject / Config Schema)已迁至 Admin 类静态成员
 export namespace Admin {
-	export const inject = ["database"];
-
 	export type Config = {};
-
-	export const Config: Schema<Config> = Schema.object({});
 
 	export interface Data {
 		group: Dict<PermGroup>;
