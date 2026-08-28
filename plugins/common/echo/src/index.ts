@@ -1,5 +1,5 @@
 import { type Context, h, Schema } from "@koishi-ce/koishi";
-import zhCN from "./locales/zh-CN.yml";
+import zhCN from "../locales/zh-CN.yml";
 
 export function parsePlatform(target: string): [platform: string, id: string] {
 	const index = target.indexOf(":");

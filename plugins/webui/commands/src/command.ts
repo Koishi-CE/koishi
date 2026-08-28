@@ -1,6 +1,6 @@
 import type { Context } from "@koishi-ce/koishi";
 import type CommandManager from ".";
-import zhCN from "./locales/zh-CN.yml";
+import zhCN from "../locales/zh-CN.yml";
 
 export function remove<O, K extends keyof O>(object: O, key: K) {
 	const value = object[key];

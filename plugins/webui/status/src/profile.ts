@@ -8,7 +8,7 @@ import {
 	type Universal,
 } from "@koishi-ce/koishi";
 import { cpus, freemem, totalmem } from "os";
-import zhCN from "./locales/zh-CN.yml";
+import zhCN from "../locales/zh-CN.yml";
 
 declare module "@koishi-ce/koishi" {
 	interface Bot {

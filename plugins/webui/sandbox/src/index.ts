@@ -13,7 +13,7 @@ import { createReadStream } from "fs";
 import { extname, resolve } from "path";
 import { fileURLToPath } from "url";
 import { SandboxBot } from "./bot";
-import zhCN from "./locales/zh-CN.yml";
+import zhCN from "../locales/zh-CN.yml";
 
 // 模块增强必须指向本仓库的 @koishi-ce/koishi（上游包名 "koishi" 在此无法解析）
 declare module "@koishi-ce/koishi" {

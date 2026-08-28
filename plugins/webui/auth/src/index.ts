@@ -135,7 +135,7 @@ class AuthService extends Service {
 				.min(Time.minute),
 		}),
 	]).i18n({
-		"zh-CN": require("./locales/zh-CN"),
+		"zh-CN": require("../locales/zh-CN"),
 	});
 
 	// Service 基类已声明 config(T = any),此处覆盖为插件配置类型

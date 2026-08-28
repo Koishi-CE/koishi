@@ -14,7 +14,7 @@ import {
 	writeFile,
 } from "fs/promises";
 import { join, relative, resolve } from "path";
-import zhCN from "./locales/zh-CN.yml";
+import zhCN from "../locales/zh-CN.yml";
 
 declare module "@koishi-ce/console" {
 	namespace Console {

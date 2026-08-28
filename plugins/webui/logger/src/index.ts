@@ -10,7 +10,7 @@ import { DataService } from "@koishi-ce/plugin-console";
 import { mkdir, readdir, rm } from "fs/promises";
 import { resolve } from "path";
 import { FileWriter } from "./file";
-import zhCN from "./locales/zh-CN.yml";
+import zhCN from "../locales/zh-CN.yml";
 
 declare module "@koishi-ce/console" {
 	namespace Console {

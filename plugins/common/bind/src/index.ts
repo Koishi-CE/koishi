@@ -6,8 +6,8 @@ import {
 	type Session,
 	Time,
 } from "@koishi-ce/koishi";
-import enUS from "./locales/en-US.yml";
-import zhCN from "./locales/zh-CN.yml";
+import enUS from "../locales/en-US.yml";
+import zhCN from "../locales/zh-CN.yml";
 
 export interface Config {
 	tokenPrefix?: string;

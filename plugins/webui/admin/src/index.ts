@@ -9,7 +9,7 @@ import {
 } from "@koishi-ce/koishi";
 import { resolve } from "path";
 import command from "./command";
-import zhCN from "./locales/zh-CN.yml";
+import zhCN from "../locales/zh-CN.yml";
 
 export * from "./command";
 

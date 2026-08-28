@@ -359,7 +359,7 @@ class NodeConsole extends Console {
 			dev: NodeConsole.Dev,
 		}),
 	]).i18n({
-		"zh-CN": require("./locales/zh-CN"),
+		"zh-CN": require("../../locales/zh-CN"),
 	});
 }
 

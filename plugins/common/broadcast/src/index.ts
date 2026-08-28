@@ -1,5 +1,5 @@
 import { Channel, type Context, Schema } from "@koishi-ce/koishi";
-import zhCN from "./locales/zh-CN.yml";
+import zhCN from "../locales/zh-CN.yml";
 
 export type Config = {};
 

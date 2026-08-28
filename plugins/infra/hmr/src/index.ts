@@ -69,7 +69,7 @@ class Watcher {
 		]).default(["**/node_modules/**", "**/.git/**", "**/logs/**"]),
 		debounce: Schema.natural().role("ms").default(100),
 	}).i18n({
-		"zh-CN": require("./locales/zh-CN"),
+		"zh-CN": require("../locales/zh-CN"),
 	});
 
 	private base: string;

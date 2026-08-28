@@ -3,8 +3,8 @@ import { h, Logger, Schema } from "@satorijs/core";
 import { type Dict, isNullable } from "cosmokit";
 import { distance } from "fastest-levenshtein";
 import type { Context } from "./context";
-import enUS from "./locales/en-US.yml";
-import zhCN from "./locales/zh-CN.yml";
+import enUS from "../locales/en-US.yml";
+import zhCN from "../locales/zh-CN.yml";
 
 const logger = new Logger("i18n");
 const kTemplate = Symbol("template");
