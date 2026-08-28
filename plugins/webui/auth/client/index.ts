@@ -10,6 +10,14 @@ import {
 	store,
 	useConfig,
 } from "@koishi-ce/client";
+import type { Binding } from "@koishi-ce/koishi";
+import type {
+	Auth,
+	LoginToken,
+	UserLogin,
+	UserUpdate,
+} from "@koishi-ce/plugin-auth";
+import type { DataService } from "@koishi-ce/plugin-console";
 import { defineComponent, h, resolveComponent, watch } from "vue";
 import BindDialog from "./bind-dialog.vue";
 import At from "./icons/at.vue";
@@ -25,6 +33,33 @@ import { shared, showLoginDialog, showSyncDialog } from "./utils";
 
 import "virtual:uno.css";
 
+// 浏览器侧协议事件与数据服务的类型增强:send()/store 的类型来自
+// @koishi-ce/client 内置的 "@koishi-ce/plugin-console" 手写垫片(见
+// packages/web/client/client/shims.d.ts),因此这里增强的是该垫片模块,
+// 与服务端 src/index.ts 对 "@koishi-ce/console" 的增强一一对应。
+interface AuthData extends Auth {
+	tokens: Omit<LoginToken, "token" | "id">[];
+	bindings: Omit<Binding, "aid">[];
+}
+
+declare module "@koishi-ce/plugin-console" {
+	interface Events {
+		"login/platform"(platform: string, pid: string): Promise<UserLogin>;
+		"login/password"(name: string, password: string): void;
+		"login/token"(id: number, token: string): void;
+		"user/delete-token"(inc: number): void;
+		"user/unbind"(platform: string, pid: string): void;
+		"user/update"(data: UserUpdate): void;
+		"user/logout"(): void;
+	}
+
+	namespace Console {
+		export interface Services {
+			user: DataService<AuthData>;
+		}
+	}
+}
+
 icons.register("at", At);
 icons.register("check", Check);
 icons.register("lock", Lock);
@@ -33,17 +68,16 @@ icons.register("sign-out", SignOut);
 icons.register("user-full", UserFull);
 
 export default (ctx: Context) => {
-	if (shared.value.token && shared.value.expiredAt > Date.now()) {
-		send("login/token", shared.value.id, shared.value.token).catch((e) =>
+	// 本地登录态的 id/token/expiredAt 由同一批 pick 写入,同时存在
+	if (shared.value.token && shared.value.expiredAt! > Date.now()) {
+		send("login/token", shared.value.id!, shared.value.token).catch((e) =>
 			message.error(e.message),
 		);
 	}
 
 	ctx.on("activity", (data) => {
-		return (
-			data.authority > 0 &&
-			(!store.user || store.user.authority < data.authority)
-		);
+		const authority = data.authority ?? 0;
+		return authority > 0 && (!store.user || store.user.authority < authority);
 	});
 
 	ctx.scope.disposables.push(
@@ -51,14 +85,18 @@ export default (ctx: Context) => {
 			const { activity } = route.meta;
 			if (!activity) return;
 			if (
-				(activity.authority || activity.fields.includes("user")) &&
+				(activity.authority || (activity.fields ?? []).includes("user")) &&
 				!store.user
 			) {
 				// handle router.back()
 				return history.state.forward === "/login" ? "/" : "/login";
 			}
 
-			if (activity.authority && activity.authority > store.user.authority) {
+			if (
+				activity.authority &&
+				store.user &&
+				activity.authority > store.user.authority
+			) {
 				message.error("权限不足。");
 				return false;
 			}
@@ -114,6 +152,8 @@ export default (ctx: Context) => {
 	const config = useConfig();
 
 	function checkSync() {
+		// 两处调用点均已确保 store.user 存在,此处仅作收窄守卫
+		if (!store.user) return;
 		if (deepEqual(store.user.config, config.value)) return;
 		showSyncDialog.value = true;
 	}
@@ -124,6 +164,7 @@ export default (ctx: Context) => {
 			config,
 			async (value) => {
 				if (!value || !store.user || !shared.value.sync) return;
+				// biome-ignore lint/nursery/noFloatingPromises: 已在 async 回调中 await，nursery 规则对 send 调用的误报
 				await send("user/update", { config: value });
 			},
 			{ deep: true },
