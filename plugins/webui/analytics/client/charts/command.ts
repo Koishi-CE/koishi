@@ -8,6 +8,8 @@ export default (ctx: Context) => {
 			title: "指令调用频率",
 			fields: ["analytics"],
 			options({ analytics }) {
+				// render 侧已按 fields 守卫,此处仅为收窄可选的 store 键
+				if (!analytics) return;
 				const data = Object.entries(analytics.commandRate)
 					.sort((a, b) => b[1] - a[1])
 					.map(([name, value]) => ({ name, value }));

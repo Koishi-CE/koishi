@@ -12,19 +12,18 @@ export default (ctx: Context) => {
 			fields: ["analytics"],
 			showTab: true,
 			options({ analytics }, tab) {
+				// render 侧已按 fields 守卫,此处仅为收窄可选的 store 键
+				if (!analytics) return;
 				if (analytics.messageByHour.every((val) => !val[tab])) return;
 				return {
-					tooltip: Tooltip.axis<number[]>((params) => {
-						const [
-							{
-								data: [x],
-								dataIndex,
-							},
-						] = params;
+					tooltip: Tooltip.axis<number[]>(([first]) => {
+						if (!first) return "";
+						const [x = 0] = first.data;
+						const { dataIndex } = first;
 						const source = analytics.messageByHour[dataIndex];
 						const output = [
 							`${formatHour(x)}`,
-							`日均消息数量：${+(source[tab] || 0).toFixed(1)}`,
+							`日均消息数量：${+(source?.[tab] || 0).toFixed(1)}`,
 						];
 						return output.join("<br>");
 					}),

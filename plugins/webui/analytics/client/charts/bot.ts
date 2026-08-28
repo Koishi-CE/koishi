@@ -9,6 +9,8 @@ export default (ctx: Context) => {
 			fields: ["analytics"],
 			showTab: true,
 			options({ analytics }, tab) {
+				// render 侧已按 fields 守卫,此处仅为收窄可选的 store 键
+				if (!analytics) return;
 				const data = Object.entries(analytics.messageByBot).map(
 					([key, value]) => ({
 						name: key,

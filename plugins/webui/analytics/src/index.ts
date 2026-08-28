@@ -7,7 +7,6 @@ import {
 	Logger,
 	pick,
 	type Query,
-	type Row,
 	Schema,
 	type Session,
 	Time,
@@ -15,7 +14,7 @@ import {
 } from "@koishi-ce/koishi";
 import { resolve } from "path";
 
-declare module "koishi" {
+declare module "@koishi-ce/koishi" {
 	interface Tables {
 		"analytics.message": Analytics.Message;
 		"analytics.command": Analytics.Command;
@@ -38,21 +37,39 @@ export interface MessageStats {
 const logger = new Logger("analytics");
 
 class Analytics extends DataService<Analytics.Payload> {
-	static inject = ["database", "console"];
+	static override inject = ["database", "console"];
+
+	// 原本位于 namespace Analytics 的 export const Config;erasableSyntaxOnly
+	// 禁止携带运行时值的 namespace,迁为类静态成员(loader 从插件类上读取静态 Config)
+	static Config: Schema<Analytics.Config> = Schema.object({
+		statsInternal: Schema.natural()
+			.role("ms")
+			.description("统计数据推送的时间间隔。")
+			.default(Time.minute * 10),
+		recentDayCount: Schema.natural()
+			.description("统计最近几天的数据。")
+			.default(7),
+	});
+
+	// 基类 Service 声明了 config: unknown;此处收敛为必填并在构造时归一化
+	// (loader 经 Schema.default 注入,归一化仅兜底,不改变运行时取值)
+	override config: Required<Analytics.Config>;
 
 	lastUpdate = new Date();
 	updateHour = this.lastUpdate.getHours();
-	cachedDate: number;
-	cachedData: Promise<Analytics.Payload>;
+	cachedDate?: number;
+	cachedData!: Promise<Analytics.Payload>;
 
 	private messages: Analytics.Message[] = [];
 	private commands: Analytics.Command[] = [];
 
-	constructor(
-		ctx: Context,
-		public config: Analytics.Config = {},
-	) {
+	constructor(ctx: Context, config: Analytics.Config = {}) {
 		super(ctx, "analytics");
+
+		this.config = {
+			statsInternal: config.statsInternal ?? Time.minute * 10,
+			recentDayCount: config.recentDayCount ?? 7,
+		};
 
 		ctx.model.extend(
 			"analytics.message",
@@ -117,11 +134,16 @@ class Analytics extends DataService<Analytics.Payload> {
 		});
 
 		ctx.any().before("command/execute", ({ command, session }) => {
+			if (!command || !session) return;
+			// biome-ignore lint/suspicious/noExplicitAny: Session<never,...> 的 user
+			// 观察字段在类型上不可索引,按宽泛视图读取(与 createIndex 同理)
+			const user = (session as Session<any, any, any>).user;
 			this.addAudit(this.commands, {
 				...this.createIndex(session),
 				name: command.name,
-				userId: session.user["id"] || 0,
-				channelId: session.channelId,
+				// 库表列声明为 integer,而 user.id 为字符串,这里按数值归一
+				userId: +(user?.["id"] || 0),
+				channelId: session.channelId ?? "",
 			});
 			this.upload();
 		});
@@ -132,7 +154,9 @@ class Analytics extends DataService<Analytics.Payload> {
 		});
 	}
 
-	private createIndex(session: Session): Analytics.Index {
+	// biome-ignore lint/suspicious/noExplicitAny: Session 泛型在 user 观察字段上
+	// 不协变,各事件回调处的具体泛型互不相同,内部工具方法统一放宽
+	private createIndex(session: Session<any, any, any>): Analytics.Index {
 		return {
 			selfId: session.selfId,
 			platform: session.platform,
@@ -155,9 +179,12 @@ class Analytics extends DataService<Analytics.Payload> {
 		}
 	}
 
-	private async uploadAudit(table: string, buffer: Analytics.Audit[]) {
+	private async uploadAudit(
+		table: "analytics.message" | "analytics.command",
+		buffer: (Analytics.Message | Analytics.Command)[],
+	) {
 		if (!buffer.length) return;
-		await this.ctx.database.upsert(table as any, (row: Row<Analytics.Audit>) =>
+		await this.ctx.database.upsert(table, (row) =>
 			buffer.map((audit) => ({
 				...audit,
 				count: $.add($.ifNull(row.count, 0), audit.count),
@@ -236,14 +263,17 @@ class Analytics extends DataService<Analytics.Payload> {
 			})
 			.execute();
 		const length = await lengthTask;
-		const result = {} as Dict<Dict<MessageStats & Universal.User>>;
+		// 机器人资料(bot.user)运行时可能缺席,按 Partial 记录
+		const result = {} as Dict<Dict<MessageStats & Partial<Universal.User>>>;
 		data.forEach((stat) => {
+			const bot = this.ctx.bots[`${stat.platform}:${stat.selfId}`];
 			const entry = ((result[stat.platform] ||= {})[stat.selfId] ||= {
-				...this.ctx.bots[`${stat.platform}:${stat.selfId}`]?.user,
+				...(bot?.user ?? {}),
 				send: 0,
 				receive: 0,
 			});
-			entry[stat.type] = stat.count / length;
+			// type 列的取值集合由写入端约定为 send / receive 两种
+			entry[stat.type as "send" | "receive"] = stat.count / length;
 		});
 		return result;
 	}
@@ -262,7 +292,7 @@ class Analytics extends DataService<Analytics.Payload> {
 		const result: MessageStats[] = [];
 		data.forEach((stat) => {
 			const entry = (result[today - stat.date] ||= { send: 0, receive: 0 });
-			entry[stat.type] = stat.count;
+			entry[stat.type as "send" | "receive"] = stat.count;
 		});
 		for (let i = 0; i < result.length; i++) {
 			result[i] ||= { send: 0, receive: 0 };
@@ -284,7 +314,9 @@ class Analytics extends DataService<Analytics.Payload> {
 			.fill(null)
 			.map(() => ({ send: 0, receive: 0 }));
 		data.forEach((stat) => {
-			result[stat.hour][stat.type] = stat.count / length;
+			const entry = result[stat.hour];
+			if (!entry) return;
+			entry[stat.type as "send" | "receive"] = stat.count / length;
 		});
 		return result;
 	}
@@ -314,12 +346,12 @@ class Analytics extends DataService<Analytics.Payload> {
 			}),
 			this.ctx.database.eval(
 				"channel",
-				(row) => $.sum(1),
+				() => $.sum(1),
 				(row) => $.eq(row.id, row.guildId),
 			),
 			this.ctx.database.eval(
 				"channel",
-				(row) => $.sum(1),
+				() => $.sum(1),
 				(row) =>
 					$.and(
 						$.eq(row.id, row.guildId),
@@ -346,7 +378,7 @@ class Analytics extends DataService<Analytics.Payload> {
 		};
 	}
 
-	async get() {
+	override async get() {
 		const date = new Date();
 		const dateNumber = Time.getDateNumber(date, date.getTimezoneOffset());
 		if (dateNumber !== this.cachedDate) {
@@ -389,7 +421,7 @@ namespace Analytics {
 		guildIncrement: number;
 		dauHistory: number[];
 		commandRate: Dict<number>;
-		messageByBot: Dict<Dict<MessageStats & Universal.User>>;
+		messageByBot: Dict<Dict<MessageStats & Partial<Universal.User>>>;
 		messageByDate: MessageStats[];
 		messageByHour: MessageStats[];
 	}
@@ -398,16 +430,6 @@ namespace Analytics {
 		statsInternal?: number;
 		recentDayCount?: number;
 	}
-
-	export const Config: Schema<Config> = Schema.object({
-		statsInternal: Schema.natural()
-			.role("ms")
-			.description("统计数据推送的时间间隔。")
-			.default(Time.minute * 10),
-		recentDayCount: Schema.natural()
-			.description("统计最近几天的数据。")
-			.default(7),
-	});
 }
 
 export default Analytics;

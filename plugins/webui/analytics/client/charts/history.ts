@@ -11,11 +11,15 @@ export default (ctx: Context) => {
 			fields: ["analytics"],
 			showTab: true,
 			options({ analytics }, tab) {
+				// render 侧已按 fields 守卫,此处仅为收窄可选的 store 键
+				if (!analytics) return;
 				if (!analytics.messageByDate.length) return;
 				const data = analytics.messageByDate.slice(1);
 
 				return {
-					tooltip: Tooltip.axis(([{ name, value }]) => {
+					tooltip: Tooltip.axis(([first]) => {
+						if (!first) return "";
+						const { name, value } = first;
 						const day = new Date(name).getDay();
 						return `${name} 星期${week[day]}<br>消息数量：${value}`;
 					}),
