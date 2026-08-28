@@ -6,7 +6,6 @@ export default defineConfig({
 	dts: true,
 	platform: "node",
 	outDir: "lib",
-	unbundled: false,
 	fixedExtension: false,
 	clean: true,
 });
