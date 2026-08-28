@@ -7,15 +7,15 @@
 import type { Awaitable, Fragment } from "@satorijs/core";
 import type { Channel, User } from "../database";
 import type { Session } from "../session";
-import type { Command } from "./command";
-import type { Commander } from "./commander";
+import type { Command } from "./command/command";
+import type { Commander } from "./commander/commander";
 import type { Argv } from "./parser";
 
-export * from "./command";
-export * from "./commander";
-export { CommanderCore } from "./commander-core";
-export { CommanderRegister } from "./commander-register";
-export { CommanderResolve } from "./commander-resolve";
+export * from "./command/command";
+export * from "./commander/commander";
+export { CommanderCore } from "./commander/core";
+export { CommanderRegister } from "./commander/register";
+export { CommanderResolve } from "./commander/resolve";
 export * from "./parser";
 export * from "./validate";
 

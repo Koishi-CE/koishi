@@ -10,11 +10,11 @@
  */
 
 import { camelize, remove } from "cosmokit";
-import type { Channel, User } from "../database";
-import type { FieldCollector, Session } from "../session";
+import type { Channel, User } from "../../database";
+import type { FieldCollector, Session } from "../../session";
 import type { Command } from "./command";
-import { CommandCore } from "./command-core";
-import type { Argv } from "./parser";
+import { CommandCore } from "./core";
+import type { Argv } from "../parser";
 
 export class CommandDefinition<
 	U extends User.Field = never,

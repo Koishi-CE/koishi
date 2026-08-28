@@ -12,12 +12,12 @@
 
 import type { Universal } from "@satorijs/core";
 import { defineProperty } from "cosmokit";
-import { Context } from "../context";
-import { Command } from "./command";
+import { Context } from "../../context";
+import { Command } from "../command/command";
 import type { Commander } from "./commander";
-import { commandOptionSchema, registerBuiltinDomains } from "./domains";
-import { Argv } from "./parser";
-import validate from "./validate";
+import { commandOptionSchema, registerBuiltinDomains } from "../domains";
+import { Argv } from "../parser";
+import validate from "../validate";
 
 /** Commander 的构造期装配：绑定事件监听、schema 扩展与内置参数类型 */
 export function setupCommander(cmdr: Commander, ctx: Context) {

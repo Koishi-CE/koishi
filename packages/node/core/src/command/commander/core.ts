@@ -8,13 +8,13 @@
  */
 
 import { type Bot, h } from "@satorijs/core";
-import type { Context } from "../context";
-import type { Computed } from "../filter";
-import type { Session } from "../session";
-import type { Command } from "./command";
-import { parseDecl, parseValue, resolveDomain } from "./declaration";
-import { normalizeCommand } from "./normalize";
-import type { Argv } from "./parser";
+import type { Context } from "../../context";
+import type { Computed } from "../../filter";
+import type { Session } from "../../session";
+import type { Command } from "../command/command";
+import { parseDecl, parseValue, resolveDomain } from "../declaration";
+import { normalizeCommand } from "../normalize";
+import type { Argv } from "../parser";
 
 /** 命令服务配置 */
 export interface CommanderConfig {

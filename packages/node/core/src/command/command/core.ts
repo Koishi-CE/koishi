@@ -8,10 +8,10 @@
  */
 
 import { type Dict, remove } from "cosmokit";
-import { Context } from "../context";
+import { Context } from "../../context";
 import type { Command } from "./command";
-import { normalizeCommand } from "./normalize";
-import { CommandBase } from "./parser";
+import { normalizeCommand } from "../normalize";
+import { CommandBase } from "../parser";
 
 export class CommandCore extends CommandBase<Command.Config> {
 	/** 子命令列表（parent setter 维护双向关系） */

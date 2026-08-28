@@ -15,7 +15,7 @@ import type { Channel, User } from "../../database";
 import type { Next } from "../../middleware";
 import type { Permissions } from "../../permission";
 import type { Session } from "../../session";
-import type { Command } from "../command";
+import type { Command } from "../command/command";
 import { bracs, interpolate, Tokenizer, whitespace } from "./tokenizer";
 
 /** tokenizer 产出的最小词法单元 */

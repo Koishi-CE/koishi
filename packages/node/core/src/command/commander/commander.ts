@@ -6,10 +6,10 @@
  * 之后由 core 实例化并挂到 Context 上。
  */
 
-import type { Context } from "../context";
-import type { CommanderConfig } from "./commander-core";
-import { CommanderRegister } from "./commander-register";
-import { setupCommander } from "./commander-setup";
+import type { Context } from "../../context";
+import type { CommanderConfig } from "./core";
+import { CommanderRegister } from "./register";
+import { setupCommander } from "./setup";
 
 export class Commander extends CommanderRegister {
 	constructor(ctx: Context, config: Commander.Config = {}) {
