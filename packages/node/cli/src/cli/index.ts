@@ -1,5 +1,12 @@
 #!/usr/bin/env bun
 
+/**
+ * Koishi 命令行入口。
+ *
+ * 基于 cac 构建名为 `koishi` 的命令行程序，注册 `start`（别名 `run`）子命令后解析
+ * 进程参数。若用户未输入任何子命令（且未请求帮助），则自动打印帮助信息退出。
+ */
+
 import { cac } from "cac";
 import { version } from "../../package.json" with { type: "json" };
 import registerStartCommand from "./start";
@@ -10,6 +17,7 @@ registerStartCommand(cli);
 
 const argv = cli.parse();
 
+// 未匹配到子命令且未请求 --help 时，主动输出帮助信息，避免静默退出
 if (!cli.matchedCommand && !argv.options["help"]) {
 	cli.outputHelp();
 }

@@ -1,5 +1,17 @@
+/**
+ * 观察器（observe）：对普通对象做深度变更追踪的 Proxy 实现。
+ *
+ * observe() 返回原对象的代理（Observed），任何赋值/删除/数组变异/Date 变更
+ * 都会被记录到 $diff 中；调用 $update() 可取出变更并交由回调消费（如写回
+ * 数据库）。Koishi 的 ORM（minato）据此实现"取出实体 -> 修改 -> 落盘"的差量更新。
+ *
+ * 注意：Date / RegExp / Set / Map 等内建类型只能作为被观察的属性值，
+ * 不能作为 observe() 的直接目标（会抛错，见 builtin 列表）。
+ */
+
 import { defineProperty, is, noop } from "cosmokit";
 
+/** 不可作为观察属性的原语类型（值不可变，无需代理） */
 const immutable = [
 	"number",
 	"string",
@@ -8,8 +20,15 @@ const immutable = [
 	"symbol",
 	"function",
 ];
+/** 不允许直接观察的内建类型（Object.prototype.toString 的类型标签） */
 const builtin = ["Date", "RegExp", "Set", "Map", "WeakSet", "WeakMap", "Array"];
 
+/**
+ * 按值的实际类型选择对应的观察包装：Date / 数组 / 普通对象各走一路。
+ *
+ * @param value 被读取到的属性值
+ * @param update 上层传入的变更通知回调
+ */
 function observeProperty(value: any, update: any) {
 	if (is("Date", value)) {
 		return observeDate(value, update);
@@ -20,10 +39,22 @@ function observeProperty(value: any, update: any) {
 	}
 }
 
+/**
+ * 判断键是否不参与变更追踪：symbol 键与 `$` 前缀键（内部保留属性）。
+ */
 function untracked(key: string | symbol) {
 	return typeof key === "symbol" || key.startsWith("$");
 }
 
+/**
+ * 观察普通对象：返回记录属性级变更的 Proxy。
+ *
+ * @param target 目标对象
+ * @param notify 变更通知回调；未提供时（根观察）改为把变更写入 target.$diff
+ *
+ * 读取时对可观察的属性值惰性递归包装（嵌套对象/数组/Date），
+ * 写入/删除时值未变化则不通知。
+ */
 function observeObject<T extends object>(
 	target: T,
 	notify?: (key: string | symbol) => void,
@@ -43,6 +74,7 @@ function observeObject<T extends object>(
 			const value = Reflect.get(target, key);
 			if (!value || immutable.includes(typeof value) || untracked(key))
 				return value;
+			// 深层包装：子对象的变更需冒泡通知到上层键（update 优先，缺省时记入本层键）
 			return observeProperty(value, update || (() => notify(key)));
 		},
 		set(target, key, value) {
@@ -64,6 +96,7 @@ function observeObject<T extends object>(
 	return proxy;
 }
 
+/** 会修改数组本身、需要包装上报的变异方法 */
 const arrayProxyMethods: Record<string, (...args: any[]) => any> = {
 	pop: Array.prototype.pop,
 	shift: Array.prototype.shift,
@@ -71,6 +104,10 @@ const arrayProxyMethods: Record<string, (...args: any[]) => any> = {
 	sort: Array.prototype.sort,
 };
 
+/**
+ * 观察数组：包装四个变异方法为"先上报再执行"，并通过 Proxy
+ * 拦截数字下标的写入，检测到元素变化时上报。
+ */
 function observeArray<T>(target: T[], update: () => void) {
 	const proxy: Record<string | symbol, unknown> = {};
 
@@ -85,6 +122,7 @@ function observeArray<T>(target: T[], update: () => void) {
 		get(target, key) {
 			if (key in proxy) return proxy[key];
 			const value = Reflect.get(target, key);
+			// 非数字下标（length、方法名等）与不可变值直接透传
 			if (
 				!value ||
 				immutable.includes(typeof value) ||
@@ -106,6 +144,10 @@ function observeArray<T>(target: T[], update: () => void) {
 	});
 }
 
+/**
+ * 观察日期：劫持 Date 原型上除 valueOf 外的全部方法，
+ * 以时间戳是否变化为准——变更才上报，纯读取（如 getFullYear）不上报。
+ */
 function observeDate(target: Date, update: () => void) {
 	for (const method of Object.getOwnPropertyNames(Date.prototype)) {
 		if (method === "valueOf") continue;
@@ -123,12 +165,22 @@ function observeDate(target: Date, update: () => void) {
 	return target;
 }
 
+/**
+ * 观察对象的类型：在原类型基础上附加差量与操作接口。
+ *
+ * @typeparam T 原对象类型
+ * @typeparam R $update 回调的返回类型
+ */
 export type Observed<T, R = any> = T & {
+	/** 已记录但尚未消费的变更 */
 	$diff: Partial<T>;
+	/** 消费变更：有 diff 时调用回调并清空，无变更则返回 undefined */
 	$update: () => R;
+	/** 直接合并外部数据（要求与现有 diff 无重叠键） */
 	$merge: (value: Partial<T>) => Observed<T, R>;
 };
 
+/** $update 的回调形态：接收本次变更差量 */
 type UpdateFunction<T, R> = (diff: Partial<T>) => R;
 
 export function observe<T extends object>(
@@ -140,6 +192,13 @@ export function observe<T extends object, R>(
 	update: UpdateFunction<T, R>,
 	label?: string | number,
 ): Observed<T, R>;
+/**
+ * 创建目标对象的深度观察代理（重载实现）。
+ *
+ * @param target 要观察的普通对象（不可为 null、原语或内建类型实例）
+ * @param updateOrLabel 变更消费回调（传入函数时）或调试标签
+ * @returns 带有 $diff / $update / $merge 的代理对象
+ */
 export function observe<T extends object, R>(
 	target: T,
 	updateOrLabel?: UpdateFunction<T, R> | string | number,
@@ -161,6 +220,10 @@ export function observe<T extends object, R>(
 
 	const observer = observeObject(target) as Observed<T, R>;
 
+	/**
+	 * 取出并清空 $diff，交由 update 回调消费。
+	 * 无变更时不触发回调。
+	 */
 	defineProperty(observer, "$update", function $update(this: Observed<T, R>):
 		| R
 		| undefined {
@@ -173,6 +236,10 @@ export function observe<T extends object, R>(
 		return update(diff);
 	});
 
+	/**
+	 * 合并外部数据到目标对象（绕过 diff 记录）。
+	 * 与现有 diff 键重叠时抛错，防止外部数据静默覆盖未落盘的变更。
+	 */
 	defineProperty(
 		observer,
 		"$merge",

@@ -3,7 +3,9 @@ import { mock as jest } from "node:test";
 import { type Dict, noop, observe } from "@koishi-ce/koishi";
 import { expect } from "chai";
 
+/** 观察器 API（observe.ts）的单元测试 */
 describe("Observer API", () => {
+	// 验证对原语、null、内建类型实例等非法目标调用 observe 均抛错
 	it("type checks", () => {
 		expect(() => observe(1 as never)).to.throw();
 		expect(() => observe("2" as never)).to.throw();
@@ -23,6 +25,7 @@ describe("Observer API", () => {
 		expect(() => observe(new WeakMap())).to.throw();
 	});
 
+	// 验证顶层属性的赋值与删除均被记录进 $diff，且重复赋同值不产生 diff
 	it("observe property", () => {
 		const target: Dict<number> = { a: 1, b: 2 };
 		const object = observe(target, "foo");
@@ -49,6 +52,7 @@ describe("Observer API", () => {
 		expect(object.$diff).to.deep.equal({ a: 2, b: undefined, c: undefined });
 	});
 
+	// 验证嵌套对象/数组的深层变更会以顶层键为单位汇总进 $diff
 	it("deep observe", () => {
 		const object = observe<any>({
 			a: { b: 1 },
@@ -115,6 +119,7 @@ describe("Observer API", () => {
 		});
 	});
 
+	// 验证 $update 消费 diff 后，新写入的深层属性仍能被继续追踪
 	it("deep observe new property", () => {
 		const object = observe<any>({
 			a: [],
@@ -135,6 +140,7 @@ describe("Observer API", () => {
 		});
 	});
 
+	// 验证 Date 属性的读取不触发 diff、变更方法（setFullYear）才触发
 	it("observe date", () => {
 		const object = observe({ foo: new Date() });
 		object.foo.getFullYear();
@@ -143,6 +149,7 @@ describe("Observer API", () => {
 		expect(object.$diff).to.have.property("foo");
 	});
 
+	// 验证 $update 按批消费变更：无 diff 不回调、消费后 diff 清空
 	it("flush changes", () => {
 		const flush = jest.fn();
 		const object = observe({ a: 1, b: [2] }, flush);
@@ -172,6 +179,7 @@ describe("Observer API", () => {
 		expect(object.$diff).to.deep.equal({});
 	});
 
+	// 验证 $merge 合并外部数据不影响既有 diff，且键冲突时抛错拒绝合并
 	it("merge properties", () => {
 		const object = observe<any>({ a: 1 });
 		expect(object.$diff).to.deep.equal({});

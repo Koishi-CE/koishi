@@ -5,10 +5,12 @@ import mock from "@koishi-ce/plugin-mock";
 import { expect } from "chai";
 import Loader from "./utils";
 
+/** loader 的加载与配置联动行为测试（配合 TestLoader 测试桩） */
 describe("@koishi-ce/loader", () => {
 	const loader = new Loader();
 	loader.writable = true;
 
+	// 验证 createApp 能按配置表正确挂载插件并传递配置
 	it("loader.createApp()", async () => {
 		loader.config = {
 			prefix: ["."],
@@ -31,6 +33,7 @@ describe("@koishi-ce/loader", () => {
 		expect(app.registry.get(loader.data.bar)?.config).to.deep.equal({ a: 1 });
 	});
 
+	// 验证更新根配置后：$if 为假的插件被卸载、其余插件按新配置重载
 	it("app.scope.update()", async () => {
 		const { app } = loader;
 		loader.config = {
@@ -63,6 +66,7 @@ describe("@koishi-ce/loader", () => {
 		expect(app.registry.get(loader.data.baz)?.config).to.deep.equal({});
 	});
 
+	// 验证运行期更新插件配置会同步回写 loader 的配置对象
 	it("plugin update", async () => {
 		const { app } = loader;
 		const runtime = app.registry.get(loader.data.bar);
@@ -86,6 +90,7 @@ describe("@koishi-ce/loader", () => {
 		});
 	});
 
+	// 验证 $filter 元属性生成的会话过滤器能按用户/频道条件拦截事件
 	it("filter", async () => {
 		const { app } = loader;
 		app.plugin(mock);
