@@ -1,7 +1,7 @@
 import { describe, it } from "bun:test";
 import { type Command, Context } from "@koishi-ce/koishi";
 import { expect, use } from "chai";
-import { shape } from "../../../../scripts/testing/chai-shape";
+import { shape } from "../../../../../scripts/testing/chai-shape";
 
 use(shape);
 

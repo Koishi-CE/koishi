@@ -12,7 +12,7 @@ import mock from "@koishi-ce/plugin-mock";
 import { expect, use } from "chai";
 import promise from "chai-as-promised";
 import { inspect } from "util";
-import { shape } from "../../../../scripts/testing/chai-shape";
+import { shape } from "../../../../../scripts/testing/chai-shape";
 
 use(shape);
 use(promise);
