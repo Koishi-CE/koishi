@@ -1,7 +1,7 @@
 {
 	"name": "@koishi-ce/plugin-admin",
 	"description": "Permission Manager for Koishi",
-	"version": "2.0.0",
+	"version": "1.0.0",
 	"main": "lib/index.mjs",
 	"typings": "lib/index.d.ts",
 	"files": [
@@ -10,7 +10,10 @@
 		"src",
 		"locales"
 	],
-	"author": "Shigma <shigma10826@gmail.com>",
+	"contributors": [
+		"Shigma <shigma10826@gmail.com>",
+		"Oppenheymu <oppenheymu@gmail.com>"
+	],
 	"license": "AGPL-3.0",
 	"repository": {
 		"type": "git",

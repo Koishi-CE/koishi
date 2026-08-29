@@ -1,7 +1,7 @@
 {
 	"name": "@koishi-ce/plugin-http",
 	"description": "HTTP and WebSocket client for Koishi",
-	"version": "0.6.3",
+	"version": "1.0.0",
 	"type": "module",
 	"exports": {
 		".": {
@@ -14,7 +14,10 @@
 		"index.mjs",
 		"index.d.ts"
 	],
-	"author": "Shigma <shigma10826@gmail.com>",
+	"contributors": [
+		"Shigma <shigma10826@gmail.com>",
+		"Oppenheymu <oppenheymu@gmail.com>"
+	],
 	"license": "MIT",
 	"repository": {
 		"type": "git",

@@ -1,7 +1,7 @@
 {
 	"name": "@koishi-ce/scripts",
 	"description": "Scaffolding and release scripts for Koishi plugin development",
-	"version": "5.0.0",
+	"version": "1.0.0",
 	"type": "module",
 	"main": "lib/index.mjs",
 	"module": "lib/index.mjs",
@@ -13,7 +13,10 @@
 		"lib",
 		"src"
 	],
-	"author": "Shigma <shigma10826@gmail.com>",
+	"contributors": [
+		"Shigma <shigma10826@gmail.com>",
+		"Oppenheymu <oppenheymu@gmail.com>"
+	],
 	"license": "MIT",
 	"repository": {
 		"type": "git",
