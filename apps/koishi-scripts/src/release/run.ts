@@ -28,8 +28,8 @@ export function runCommand(
 ): number {
 	const [realCmd, realArgs] = wrapWin(cmd, args);
 	// cwd / bin 源自 process.cwd() 与目录枚举——本地发布工具，运行者即环境控制者，
-	// 参数经数组传递不经 shell 展开，无真实注入面（行尾 codeql 抑制为误报标注）
-	const res = spawnSync(realCmd, realArgs, { cwd, stdio: "inherit" }); // codeql[js/shell-command-injection-from-environment]
+	// 参数经数组传递不经 shell 展开，无真实注入面（CodeQL 该告警属误报）
+	const res = spawnSync(realCmd, realArgs, { cwd, stdio: "inherit" });
 	if (res.error !== undefined) {
 		process.stderr.write(`[run] ⚠️ 无法启动 ${cmd}: ${res.error.message}\n`);
 		return 1;
@@ -44,7 +44,7 @@ export function captureCommand(
 	args: readonly string[],
 ): string | null {
 	const [realCmd, realArgs] = wrapWin(cmd, args);
-	const res = spawnSync(realCmd, realArgs, { cwd, encoding: "utf8" }); // codeql[js/shell-command-injection-from-environment]
+	const res = spawnSync(realCmd, realArgs, { cwd, encoding: "utf8" });
 	if (res.error !== undefined || res.status !== 0) {
 		return null;
 	}

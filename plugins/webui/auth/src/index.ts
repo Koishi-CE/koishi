@@ -164,9 +164,10 @@ function verifyPassword(password: string, stored: string): boolean {
 	}
 	// 旧格式：裸 SHA-256 十六进制。
 	// 无盐 SHA-256 只用于存量密码的**校验**（不可删，删了旧用户无法登录），
-	// 命中后由调用方透明升级为 PBKDF2；新建密码一律走 toHash（pbkdf2$ 格式）。
+	// 命中后由调用方透明升级为 PBKDF2；新建密码一律走 toHash（pbkdf2$ 格式），
+	// 故此处非弱哈希存储，属误报（Default setup 不支持注释抑制，须在平台 dismiss）。
 	if (!/^[0-9a-f]{64}$/i.test(stored)) return false;
-	const actual = createHash("sha256").update(password).digest(); // codeql[js/insufficient-password-hash] 历史格式兼容校验，非新建哈希
+	const actual = createHash("sha256").update(password).digest();
 	return timingSafeEqual(actual, Buffer.from(stored, "hex"));
 }
 
