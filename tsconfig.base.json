@@ -17,7 +17,7 @@
 			"@koishi-ce/utils": ["./packages/node/utils/src"],
 			"@koishi-ce/client": ["./packages/web/client/src"],
 			"@koishi-ce/client/lib": ["./packages/web/client/src"],
-			"@koishi-ce/components": ["./packages/web/components/src"],
+			"@koishi-ce/components": ["./packages/web/components/client"],
 			"@koishi-ce/market": ["./packages/web/market/src"],
 			"@koishi-ce/plugin-bind": ["./plugins/common/bind/src"],
 			"@koishi-ce/plugin-broadcast": ["./plugins/common/broadcast/src"],
