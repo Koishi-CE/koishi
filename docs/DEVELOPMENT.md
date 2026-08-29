@@ -80,7 +80,7 @@ cd apps/online          && bun run build   # koishi.online 网站（src/build.ts
 - 模块：target ES2025、`module: esnext`、`moduleResolution: bundler`、`verbatimModuleSyntax`、`isolatedModules`、`erasableSyntaxOnly`、`allowImportingTsExtensions`（配合 noEmit）。
 - **类型导入一律 `import type`**（verbatimModuleSyntax 强制）；重导出用 `export type {`。
 - JSX：`react-jsx`，`jsxImportSource: @satorijs/element`（core/插件中的消息元素渲染）。
-- `.yml` 导入的类型由 `typings/yml.d.ts` 提供。
+- `.yml` 导入的类型由 `packages/node/core/src/i18n/yml.d.ts` 提供（由 tsconfig.base 的 files 全局注入；web 侧对应声明在 `packages/web/client/global.d.ts`）。
 - Vue 客户端代码 extends `tsconfig.client.json`（`jsx: preserve`、DOM lib、`types: []`）。
 
 ### 命名空间纪律

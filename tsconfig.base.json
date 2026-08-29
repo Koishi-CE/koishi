@@ -1,6 +1,6 @@
 {
 	"$schema": "https://json.schemastore.org/tsconfig",
-	"files": ["typings/yml.d.ts"],
+	"files": ["packages/node/core/src/i18n/yml.d.ts"],
 	"compilerOptions": {
 		"target": "ES2025",
 		"module": "esnext",

@@ -55,7 +55,7 @@ bun packages/web/client/src/bin.ts build <插件目录>  # 单个 webui 插件�
 
 ## 已知坑（历史经验，别再踩）
 
-- `.yml` 导入链路：类型来自 `typings/yml.d.ts`，测试 / Bun 运行时靠 Bun 原生 yml 支持；构建期由 tsdown copy loader 原样拷入产物并改写引用路径。
+- `.yml` 导入链路：类型来自 `packages/node/core/src/i18n/yml.d.ts`（由 tsconfig.base 的 files 全局注入），测试 / Bun 运行时靠 Bun 原生 yml 支持；构建期由 tsdown copy loader 原样拷入产物并改写引用路径。
 - **裸 `bun test`（仓库根）当前会挂起**：bun test 的发现规则包含 `*.test.ts`，会把 gitignored 的 `plugins/webui/market/`（vitest 用例，`i18n.test.ts` 处挂死）卷进来。跑测试用上面带过滤参数的全量命令或按包定向（`bun test packages/node/core`）；market 对齐完成、用例迁为 `*.spec.ts` 后此坑消除。
 - 测试断言**新标准是 `bun:test` 的 `expect`**（Jest/Vitest 风格 API）；core 与 echo 已完成迁移（shape 断言用 `packages/node/core/tests/shape.ts` 注册的 `toHaveShape` 自定义 matcher，import 该文件一次即注册）。存量 chai 用例（loader / utils / i18n-utils / broadcast / help / admin / commands）逐步迁移，**不要新增 chai 断言**；`chai-as-promised` 的 `.eventually` / `.be.rejected` 写法对应 `await expect(p).resolves / .rejects`。
 - 前端构建**没有 vite 配置文件**，全部是编程式 `vite.build()`：宿主控制台总装在 `packages/web/client/scripts/client.ts`（产物路径硬编码到 `plugins/webui/console/dist`）；单插件用 `packages/web/client/src/index.ts` 的 `build(root)`（内置 `collectWorkspaceAliases()`——未被依赖的 workspace 包不会出现在 node_modules 链接里，必须显式映射才能被 bundler 解析）。
