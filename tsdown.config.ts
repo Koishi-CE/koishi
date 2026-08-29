@@ -15,9 +15,9 @@ import { defineConfig } from "tsdown";
  * - packages/web/components、market 仅作为客户端源码被 console 打包器消费，
  *   无独立运行时产物；webui 插件的 .vue 部分由 vite 构建。
  * - 例外（不走本配置）：vendored 三包（plugins/infra/{http,proxy-agent,
- *   server}，预编译产物包，见 workspace.exclude）；apps/koishi-create 有
- *   自己的 CJS tsdown 配置（npx 直执行的脚手架，待后续单独迁移）；
- *   apps/online 为 vite 编程式构建。
+ *   server}，预编译产物包，见 workspace.exclude）；apps/online 为 vite
+ *   编程式构建。apps/koishi-create 与 apps/koishi-scripts 走本配置，仅以
+ *   包级 tsdown.config.ts 补 bin 入口（产物 lib/bin.mjs，首行 bun shebang）。
  */
 // 模块解析扩展名顺序：显式包含 .yml，让无扩展名的 locale 相对导入
 // （如 `../locales/zh-CN`）能在构建时解析到 .yml 文件并触发 copy loader
@@ -45,6 +45,7 @@ const workspace = {
 		"packages/web/*",
 		"apps/registry",
 		"apps/koishi-scripts",
+		"apps/koishi-create",
 		"plugins/common/*",
 		"plugins/infra/*",
 		"plugins/webui/*",

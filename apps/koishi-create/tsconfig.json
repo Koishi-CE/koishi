@@ -1,12 +1,4 @@
 {
-	"compilerOptions": {
-		"strict": true,
-		"target": "es2022",
-		"module": "esnext",
-		"skipLibCheck": true,
-		"esModuleInterop": true,
-		"moduleResolution": "bundler",
-		"noEmit": true
-	},
+	"extends": "../../tsconfig.base",
 	"include": ["src"]
 }

@@ -1,15 +1,23 @@
 /**
- * create-koishi-ce 脚手架入口（npm 包名 create-koishi-ce，目录名为
+ * create-koishi-ce 脚手架（npm 包名 create-koishi-ce，目录名为
  * apps/koishi-create，二者不一致是历史遗留，以目录名为准）。
  *
- * 通过 `npx create-koishi-ce [name]` 交互式创建 Koishi 机器人应用项目：
- * 确定项目名 → 准备目标目录 → 从 npm registry 下载模板包（默认
+ * 通过 `bunx create-koishi-ce [name]`（npx 亦可）交互式创建 Koishi 机器人
+ * 应用项目：确定项目名 → 准备目标目录 → 从 npm registry 下载模板包（默认
  * @koishijs/boilerplate，刻意沿用上游官方模板以保持与上游插件生态一致）
- * 并解包 → 改写 package.json / .env → 按需初始化 git → 询问是否立即
- * 安装依赖并启动。由仓库根的 bin.js 经 require("./lib") 进入。
+ * 并解包 → 改写 package.json → 按需初始化 git → 询问是否立即安装依赖并
+ * 启动。CLI 可执行入口在 src/bin.ts（构建产物 lib/bin.mjs，bin 字段指向
+ * 它）；本文件只承载主流程与可单测的纯函数（范式对齐 @koishi-ce/scripts）。
  */
-import { execSync } from "node:child_process";
-import * as fs from "node:fs";
+import { spawnSync } from "node:child_process";
+import {
+	existsSync,
+	mkdirSync,
+	readdirSync,
+	readFileSync,
+	rmSync,
+	writeFileSync,
+} from "node:fs";
 import { basename, join, relative } from "node:path";
 import { Readable } from "node:stream";
 import type { ReadableStream as NodeWebReadableStream } from "node:stream/web";
@@ -17,31 +25,53 @@ import getRegistry from "get-registry";
 import kleur from "kleur";
 import prompts from "prompts";
 import { extract } from "tar";
-import { whichPMRuns } from "which-pm-runs";
 import parse from "yargs-parser";
+import { version } from "../package.json" with { type: "json" };
 
-/** 项目目录名（rootDir 的最后一段，写入生成项目的 package.json 的 name） */
-let project: string;
-/** 目标目录的绝对路径（由用户输入的项目名拼接 cwd 得到） */
-let rootDir: string;
+/** CLI 参数（yargs-parser 解析，别名映射见 bin 帮助文本） */
+interface Args {
+	_: Array<string | number>;
+	registry?: string;
+	ref?: string;
+	forced?: boolean;
+	git?: boolean;
+	prod?: boolean;
+	template?: string;
+	yes?: boolean;
+	help?: boolean;
+}
+
+/**
+ * 模板项目的 package.json（改写目标）：只需要类型化本流程触碰的字段，
+ * 其余字段经 index signature 原样保留。
+ */
+export interface Manifest {
+	name?: string;
+	private?: boolean;
+	version?: string;
+	workspaces?: unknown;
+	devDependencies?: unknown;
+	[key: string]: unknown;
+}
+
+/** registry 包元数据中本流程消费的字段 */
+interface RegistryMeta {
+	"dist-tags": Record<string, string>;
+	versions: Record<string, { dist?: { tarball?: string } }>;
+}
 
 /** fetch 请求非 2xx 时抛出的错误，携带 HTTP 状态码与状态文本 */
 class HttpError extends Error {
-	constructor(
-		public status: number,
-		public statusText: string,
-	) {
+	status: number;
+	statusText: string;
+	constructor(status: number, statusText: string) {
 		super(`HTTP ${status} ${statusText}`);
+		this.status = status;
+		this.statusText = statusText;
 	}
 }
 
-// 自身版本号，取自 package.json（构建产物为 CJS，require 可用）
-const { version } = require("../package.json");
-
-// 执行脚手架时所在的工作目录，作为项目目录的基准
-const cwd = process.cwd();
-
-// 命令行参数（yargs-parser 解析），别名见 help 输出
+// 命令行参数（顶层解析；无副作用，单测导入本文件不会触发主流程）
 const argv = parse(process.argv.slice(2), {
 	alias: {
 		ref: ["r"],
@@ -52,57 +82,75 @@ const argv = parse(process.argv.slice(2), {
 		yes: ["y"],
 		help: ["h"],
 	},
-});
+}) as Args;
 
-/** 静默执行命令探测其是否可用（如 `git --version`），失败即视为不可用 */
-function supports(command: string) {
-	try {
-		execSync(command, { stdio: "ignore" });
-		return true;
-	} catch {
-		return false;
-	}
+/** 项目目录名（rootDir 的最后一段，写入生成项目的 package.json 的 name） */
+let project: string;
+/** 目标目录的绝对路径（由用户输入的项目名拼接 cwd 得到） */
+let rootDir: string;
+
+// 执行脚手架时所在的工作目录，作为项目目录的基准
+const cwd = process.cwd();
+
+/**
+ * 探测后续安装/启动使用的包管理器（Bun-first）：yarn / pnpm 用户跟随其
+ * 生态习惯；其余场景（npm、bun 及探测不到 user-agent）一律走 bun——
+ * 本 CLI 自身以 bun 为运行时（bin shebang），能执行即已具备 bun 环境。
+ */
+export function detectAgent(): string {
+	const ua = process.env["npm_config_user_agent"] ?? "";
+	if (ua.startsWith("yarn")) return "yarn";
+	if (ua.startsWith("pnpm")) return "pnpm";
+	return "bun";
+}
+
+/** 静默执行命令探测其是否可用（如 git --version），失败即视为不可用 */
+function supports(command: readonly string[]) {
+	return (
+		spawnSync(command[0] ?? "", command.slice(1), { stdio: "ignore" })
+			.status === 0
+	);
+}
+
+/** 读 git 全局配置单项（读不到 → 空串） */
+function gitConfig(key: string): string {
+	const res = spawnSync("git", ["config", "--get", key], { encoding: "utf8" });
+	return res.status === 0 ? (res.stdout?.trim() ?? "") : "";
 }
 
 /**
  * 获取项目名：优先取第一个位置参数，否则交互式询问（默认 koishi-app）。
+ * 用户取消或输入为空时直接退出（不强行兜底默认值）。
  */
-async function getName() {
+async function getName(): Promise<string> {
 	if (argv._[0]) return `${argv._[0]}`;
-	const { name } = await prompts({
+	const answer = (await prompts({
 		type: "text",
 		name: "name",
-		message: "Project name:",
+		message: "项目名：",
 		initial: "koishi-app",
-	});
-	return name.trim() as string;
+	})) as { name?: string };
+	const trimmed = answer.name?.trim();
+	if (!trimmed) process.exit(0);
+	return trimmed;
 }
 
-/**
- * 递归清空目录内容（目录本身保留）。
- * 注意：基线运行环境是 Node 12，用不了 fs.rmSync，只能递归删除。
- */
+/** 递归清空目录内容（目录本身保留）。 */
 function emptyDir(root: string) {
-	for (const file of fs.readdirSync(root)) {
-		const abs = join(root, file);
-		if (fs.lstatSync(abs).isDirectory()) {
-			emptyDir(abs);
-			fs.rmdirSync(abs);
-		} else {
-			fs.unlinkSync(abs);
-		}
+	for (const file of readdirSync(root)) {
+		rmSync(join(root, file), { recursive: true, force: true });
 	}
 }
 
-/** 交互式确认框：返回用户是否选择了「是」 */
+/** 交互式确认框：返回用户是否选择了「是」（取消视为否） */
 async function confirm(message: string) {
-	const { yes } = await prompts({
+	const answer = (await prompts({
 		type: "confirm",
 		name: "yes",
-		initial: "Y",
+		initial: true,
 		message,
-	});
-	return yes as boolean;
+	})) as { yes?: boolean };
+	return answer.yes === true;
 }
 
 /**
@@ -110,20 +158,51 @@ async function confirm(message: string) {
  * 会先提示目录非空并询问是否清空后继续，用户拒绝则直接退出。
  */
 async function prepare() {
-	if (!fs.existsSync(rootDir)) {
-		return fs.mkdirSync(rootDir, { recursive: true });
+	if (!existsSync(rootDir)) {
+		mkdirSync(rootDir, { recursive: true });
+		return;
 	}
 
-	const files = fs.readdirSync(rootDir);
+	const files = readdirSync(rootDir);
 	if (!files.length) return;
 
 	if (!argv.forced && !argv.yes) {
-		console.log(kleur.yellow(`  Target directory "${project}" is not empty.`));
-		const yes = await confirm("Remove existing files and continue?");
+		console.log(kleur.yellow(`  目标目录 "${project}" 非空。`));
+		const yes = await confirm("清空现有文件并继续？");
 		if (!yes) process.exit(0);
 	}
 
 	emptyDir(rootDir);
+}
+
+/**
+ * 改写模板的 package.json（纯函数，导出供单测）：替换项目名、标记
+ * private、版本归零。
+ */
+export function renderManifest(
+	source: Manifest,
+	project: string,
+	prod: boolean,
+): string {
+	const meta: Manifest = { ...source };
+	meta["name"] = project;
+	meta["private"] = true;
+	meta["version"] = "0.0.0";
+	if (prod) {
+		// https://github.com/koishijs/koishi/issues/994
+		// 生产模式不借助 NODE_ENV 或 --production 标志，
+		// 而是直接删掉 devDependencies 与 workspaces 字段。
+		delete meta["workspaces"];
+		delete meta["devDependencies"];
+	}
+	return `${JSON.stringify(meta, null, 2)}\n`;
+}
+
+/** 把改写结果写回生成项目的 package.json */
+function writePackageJson() {
+	const filename = join(rootDir, "package.json");
+	const meta = JSON.parse(readFileSync(filename, "utf8")) as Manifest;
+	writeFileSync(filename, renderManifest(meta, project, argv.prod === true));
 }
 
 /**
@@ -132,27 +211,32 @@ async function prepare() {
  * 2. 拉取模板包元数据，按 dist-tags 解析目标版本（--ref，默认 latest）；
  * 3. 流式下载 tarball 并解包到目标目录（strip: 1 去掉包根目录层级），
  *    网络错误统一以 HttpError 提示后退出；
- * 4. 最后改写 package.json 并刷新 .env。
+ * 4. 最后改写 package.json。
  */
 async function scaffold() {
-	console.log(
-		kleur.dim("  Scaffolding project in ") + project + kleur.dim(" ..."),
-	);
+	console.log(kleur.dim("  正在 ") + project + kleur.dim(" 中生成项目 ..."));
 
 	const registry = (
 		argv.registry ||
 		(await getRegistry()) ||
 		"https://registry.npmjs.org"
 	).replace(/\/$/, "");
-	console.log(kleur.dim(`  Using registry: ${registry}\n`));
+	console.log(kleur.dim(`  使用 registry：${registry}\n`));
 	const template = argv.template || "@koishijs/boilerplate";
+	const ref = argv.ref || "latest";
 
 	try {
 		const metaRes = await fetch(`${registry}/${template}`);
 		if (!metaRes.ok) throw new HttpError(metaRes.status, metaRes.statusText);
-		const remote = await metaRes.json();
-		const version = remote["dist-tags"][argv.ref || "latest"];
-		const url = remote.versions[version].dist.tarball;
+		const remote = (await metaRes.json()) as RegistryMeta;
+		const version = remote["dist-tags"][ref];
+		const url =
+			version === undefined
+				? undefined
+				: remote.versions[version]?.dist?.tarball;
+		if (url === undefined) {
+			throw new HttpError(404, `模板 ${template}@${ref} 不存在`);
+		}
 		const tarballRes = await fetch(url);
 		const body = tarballRes.body;
 		if (!tarballRes.ok || !body) {
@@ -168,74 +252,50 @@ async function scaffold() {
 	} catch (err) {
 		if (!(err instanceof HttpError)) throw err;
 		console.log(
-			`${kleur.red("error")} request failed with status code ${err.status} ${err.statusText}`,
+			`${kleur.red("error")} 请求失败：HTTP ${err.status} ${err.statusText}`,
 		);
 		process.exit(1);
 	}
 
 	writePackageJson();
-	writeEnvironment();
 
-	console.log(kleur.green("  Done.\n"));
+	console.log(kleur.green("  完成。\n"));
 }
 
 /**
- * 改写模板的 package.json：替换项目名、标记 private、版本归零。
- */
-function writePackageJson() {
-	const filename = join(rootDir, "package.json");
-	const meta = require(filename);
-	meta.name = project;
-	meta.private = true;
-	meta.version = "0.0.0";
-	if (argv.prod) {
-		// https://github.com/koishijs/koishi/issues/994
-		// 生产模式不借助 NODE_ENV 或 --production 标志，
-		// 而是直接删掉 devDependencies 与 workspaces 字段。
-		delete meta.workspaces;
-		delete meta.devDependencies;
-	}
-	fs.writeFileSync(filename, `${JSON.stringify(meta, null, 2)}\n`);
-}
-
-/**
- * 模板自带 .env 时原样读入并写回一次（无 .env 则跳过）。
- */
-function writeEnvironment() {
-	const filename = join(rootDir, ".env");
-	if (!fs.existsSync(filename)) return;
-	const content = fs.readFileSync(filename, "utf8");
-	fs.writeFileSync(filename, content);
-}
-
-/**
- * 初始化 git 仓库：仅在显式传入 --git 且本机装有 git 时执行。
+ * 初始化 git 仓库：仅在显式传入 --git 且本机装有 git 时执行，分支名取
+ * git 的 init.defaultBranch（未配置则 main）。
  */
 async function initGit() {
-	if (!argv.git || !supports("git --version")) return;
-	execSync("git init", { stdio: "ignore", cwd: rootDir });
-	console.log(kleur.green("  Done.\n"));
+	if (!argv.git || !supports(["git", "--version"])) return;
+	const branch = gitConfig("init.defaultBranch") || "main";
+	spawnSync("git", ["init", "-b", branch], { stdio: "ignore", cwd: rootDir });
+	console.log(kleur.green(`  已初始化 git 仓库（分支 ${branch}）。\n`));
 }
 
 /**
- * 收尾交互：询问是否立即安装依赖并启动。包管理器通过 whichPMRuns()
- * 探测当前进程的宿主 agent（npm / yarn / pnpm …），探测不到则退回 npm；
- * 用户拒绝时打印后续手动安装与启动的命令。
+ * 收尾交互：询问是否立即安装依赖并启动，包管理器由 detectAgent()
+ * Bun-first 探测；用户拒绝时打印后续手动安装与启动的命令。
  */
 async function install() {
 	// 指定 -y 时跳过依赖安装（供 CI 等需要静默生成的场景）
 	if (argv.yes) return;
 
-	const agent = whichPMRuns()?.name || "npm";
-	const yes = await confirm("Install and start it now?");
+	const agent = detectAgent();
+	const startArgs = agent === "yarn" ? ["start"] : ["run", "start"];
+	const yes = await confirm("现在安装依赖并启动吗？");
 	if (yes) {
-		execSync([agent, "install"].join(" "), { stdio: "inherit", cwd: rootDir });
-		execSync([agent, "run", "start"].join(" "), {
+		const installed = spawnSync(agent, ["install"], {
 			stdio: "inherit",
 			cwd: rootDir,
 		});
+		if (installed.status !== 0) {
+			console.log(kleur.red("  依赖安装失败，请检查上方日志。"));
+			return;
+		}
+		spawnSync(agent, startArgs, { stdio: "inherit", cwd: rootDir });
 	} else {
-		console.log(kleur.dim("  You can start it later by:\n"));
+		console.log(kleur.dim("  稍后可以这样启动：\n"));
 		if (rootDir !== cwd) {
 			const related = relative(cwd, rootDir);
 			console.log(kleur.blue(`  cd ${kleur.bold(related)}`));
@@ -244,7 +304,7 @@ async function install() {
 			kleur.blue(`  ${agent === "yarn" ? "yarn" : `${agent} install`}`),
 		);
 		console.log(
-			kleur.blue(`  ${agent === "yarn" ? "yarn start" : `${agent} run start`}`),
+			kleur.blue(`  ${agent === "yarn" ? "yarn" : `${agent} run`} start`),
 		);
 		console.log();
 	}
@@ -254,20 +314,20 @@ async function install() {
  * CLI 主流程：--help 打印用法后即返回；否则依次执行
  * 项目名询问 → prepare（目录准备）→ scaffold（模板解包）→ initGit → install。
  */
-async function start() {
+export async function start() {
 	if (argv.help) {
 		console.log(`
-  Usage: create-koishi [name] [options]
+  用法：create-koishi-ce [名称] [选项]
 
-  Options:
-    -t, --template <name>  Template to use (default: @koishijs/boilerplate)
-    -r, --ref <ref>        Reference to use (default: latest)
-    -f, --forced           Force overwrite target directory
-    -g, --git              Initialize git repository
-        --registry <url>   Use specific registry (e.g., https://registry.npmmirror.com)
-    -p, --prod             Production mode
-    -y, --yes              Skip prompts
-    -h, --help             Show this help message
+  选项：
+    -t, --template <名称>   模板包名（默认 @koishijs/boilerplate）
+    -r, --ref <引用>        模板版本引用（默认 latest）
+    -f, --forced            强制清空目标目录
+    -g, --git               初始化 git 仓库
+        --registry <地址>   指定 npm registry（如 https://registry.npmmirror.com）
+    -p, --prod              生产模式（移除 devDependencies 与 workspaces）
+    -y, --yes               跳过全部询问
+    -h, --help              显示本帮助
 `);
 		return;
 	}
@@ -285,8 +345,3 @@ async function start() {
 	await initGit();
 	await install();
 }
-
-// 入口：直接执行顶层流程，异常统一打到 stderr
-start().catch((e) => {
-	console.error(e);
-});
