@@ -49,9 +49,7 @@
 		"@koishi-ce/plugin-mock": "workspace:*",
 		"@minatojs/driver-memory": "^3.7.0",
 		"@koishi-ce/koishi": "workspace:*",
-		"minato": "^3.7.0",
-		"@types/chai": "^4.3.16",
-		"chai": "^6.2.2"
+		"minato": "^3.7.0"
 	},
 	"exports": {
 		".": {

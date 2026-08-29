@@ -2,13 +2,11 @@
  * broadcast 插件测试：用两个 mock bot 验证全局广播、
  * 仅本 bot 广播（-o）与静默频道过滤（-f）的目标频道集合。
  */
-import { beforeAll, describe, it } from "bun:test";
-import { mock as jest } from "node:test";
-import { App, Bot, Channel } from "@koishi-ce/koishi";
+import { beforeAll, describe, expect, it, jest } from "bun:test";
+import { App, type Bot, Channel } from "@koishi-ce/koishi";
 import * as broadcast from "@koishi-ce/plugin-broadcast";
 import mock from "@koishi-ce/plugin-mock";
 import memory from "@minatojs/driver-memory";
-import { expect } from "chai";
 
 const app = new App({
 	delay: { broadcast: 0 },
@@ -33,34 +31,35 @@ beforeAll(async () => {
 describe("@koishi-ce/plugin-broadcast", () => {
 	// 拦截各 bot 的 sendMessage，断言广播命中了正确的频道且静默频道被正确跳过或强制发送
 	it("basic support", async () => {
-		const send1 = jest.method(
-			app.bots.find((bot) => bot.selfId === "514")!,
-			"sendMessage",
-		);
-		const send2 = jest.method(
-			app.bots.find((bot) => bot.selfId === "114")!,
-			"sendMessage",
-		);
-
+		// 在拦截前验证缺参数提示（此时回复链路完整，消息能送达 mock 客户端）
 		await client.shouldReply("broadcast", "请输入要发送的文本。");
-		expect(send1.mock.calls).to.have.length(1);
-		send1.mock.resetCalls();
+
+		// 替换 sendMessage 为仅记录参数的 mock；返回空 ID 列表以维持 bot.broadcast 的展开推送
+		const send1 = (app.bots.find((bot) => bot.selfId === "514")!.sendMessage =
+			jest.fn<Bot["sendMessage"]>(async () => []));
+		const send2 = (app.bots.find((bot) => bot.selfId === "114")!.sendMessage =
+			jest.fn<Bot["sendMessage"]>(async () => []));
 
 		await client.shouldNotReply("broadcast foo");
-		expect(send1.mock.calls).to.have.length(1);
-		expect(send1.mock.calls[0].arguments[0]).to.equal("222");
-		expect(send2.mock.calls).to.have.length(1);
-		expect(send2.mock.calls[0].arguments[0]).to.equal("111");
-		send1.mock.resetCalls();
+		// 全局广播：两个 bot 各发送被指派的频道，静默频道 333 被跳过
+		expect(send1.mock.calls).toHaveLength(1);
+		expect(send1.mock.calls[0]?.[0]).toBe("222");
+		expect(send2.mock.calls).toHaveLength(1);
+		expect(send2.mock.calls[0]?.[0]).toBe("111");
+		send1.mockClear();
+		send2.mockClear();
 
 		await client.shouldNotReply("broadcast -o foo");
-		expect(send1.mock.calls).to.have.length(1);
-		expect(send1.mock.calls[0].arguments[0]).to.equal("222");
-		send1.mock.resetCalls();
+		// 仅本 bot：只发送当前 bot（514）被指派的频道，114 不发送
+		expect(send1.mock.calls).toHaveLength(1);
+		expect(send1.mock.calls[0]?.[0]).toBe("222");
+		expect(send2.mock.calls).toHaveLength(0);
+		send1.mockClear();
 
 		await client.shouldNotReply("broadcast -of foo");
-		expect(send1.mock.calls).to.have.length(2);
-		expect(send1.mock.calls[0].arguments[0]).to.equal("222");
-		expect(send1.mock.calls[1].arguments[0]).to.equal("333");
+		// 强制模式：静默频道 333 也被发送
+		expect(send1.mock.calls).toHaveLength(2);
+		expect(send1.mock.calls[0]?.[0]).toBe("222");
+		expect(send1.mock.calls[1]?.[0]).toBe("333");
 	});
 });
