@@ -14,8 +14,9 @@ Snapshot started from:
 | `packages/node/cli` | koishi `packages/koishi` (renamed to `@koishi-ce/koishi`) |
 | `packages/node/{core,loader,utils,i18n-utils}` | koishi `packages/*` (unchanged) |
 | `packages/node/console` | webui `packages/console` |
+| `packages/node/registry` | webui `packages/registry` |
 | `packages/web/{client,components,market}` | webui `packages/*` |
-| `apps/{online,registry}` | webui `packages/*` |
+| `apps/online` | webui `packages/online` |
 | `plugins/infra/{http,server,hmr,mock,proxy-agent}` | koishi `plugins/*` |
 | `plugins/common/{bind,broadcast,callme,echo,help,inspect}` | koishi `plugins/common/*` |
 | the 16 `plugins/webui/*` | webui `plugins/*` |

@@ -1,5 +1,5 @@
 /**
- * 插件市场扫描器（apps/registry）的类型定义：覆盖 npm registry 协议里
+ * 插件市场扫描器（packages/node/registry）的类型定义：覆盖 npm registry 协议里
  * 用到的各层数据结构——package.json（本地与远程形态）、Koishi 清单
  * （manifest，来自 package.json 的 koishi 字段与约定关键词）、搜索结果
  * 与最终产出的 SearchObject。Scanner（index.ts）与 LocalScanner

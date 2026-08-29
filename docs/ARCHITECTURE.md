@@ -17,7 +17,7 @@ koishi/（Bun workspaces：packages/node/* · packages/web/* · plugins/{common,
 ├── plugins/common/  通用 bot 插件（MIT）
 ├── plugins/infra/   基础设施插件（http/proxy-agent/server 为 vendored 预编译）
 ├── plugins/webui/   控制台插件 ×16（src/=Node 侧，client/=Vue 侧）
-├── apps/            可部署应用（online / registry / koishi-create / koishi-scripts）
+├── apps/            可部署应用（online / koishi-create / koishi-scripts）
 └── tooling/         维护脚本 + 上游 yakumo 配置存档
 ```
 
@@ -31,6 +31,7 @@ koishi/（Bun workspaces：packages/node/* · packages/web/* · plugins/{common,
 | `console` | `@koishi-ce/console` | 5.30.11 | Console 服务 node 侧（协议 / 频道抽象），来自 webui；src 分 `node/` 与 `browser/` |
 | `utils` | `@koishi-ce/utils` | 7.2.1 | 通用工具（cosmokit、inaba） |
 | `i18n-utils` | `@koishi-ce/i18n-utils` | 1.0.1 | i18n 回退与工具 |
+| `registry` | `@koishi-ce/registry` | 7.0.3 | npm 插件市场扫描库（来自 webui）：SearchResult / SearchObject 等类型 + Scanner / LocalScanner；被 config（LocalScanner）与 market（类型 + Scanner）消费 |
 
 ### packages/web/*（浏览器侧）
 
@@ -67,7 +68,6 @@ node 侧在 `src/`、Vue 侧在 `client/`（上游约定），`koishi.public: ["
 | 目录 | 包名 | 构建 | 说明 |
 |---|---|---|---|
 | `online` | `@koishi-ce/online` | `src/build.ts`（vite 编程式） | koishi.online 网站 + Online Loader（AGPL；`vercel.json` 部署；内置模块改写为 registry.koishi.chat 在线加载） |
-| `registry` | `@koishi-ce/registry` | 根 tsdown（workspace.include 单列） | npm 插件扫描库（MIT） |
 | `koishi-create` | `create-koishi-ce`（无 scope） | 自己的 tsdown.config.ts | 脚手架 CLI（prompts + tar 7）。⚠️ 目录名与旧引用 `apps/create-koishi-ce` 不一致，以 `apps/koishi-create` 为准 |
 | `koishi-scripts` | `@koishi-ce/scripts` | 根 tsdown（包级配置补 bin 入口） | 插件开发 CLI（`koishi-scripts`，Bun-only ESM，v5 起内嵌 TS7+tsdown+biome+Changesets 脚手架模板与 version/build/publish 发布链） |
 
@@ -101,7 +101,7 @@ node 侧在 `src/`、Vue 侧在 `client/`（上游约定），`koishi.public: ["
 
 根 `tsdown.config.ts` 用 workspace 模式一次构建所有 node 侧包：
 
-- `workspace.include`：`packages/node/*`、`apps/registry`、`apps/koishi-scripts`、`plugins/common/*`、`plugins/infra/*`、`plugins/webui/*`；`exclude`：vendored 三包。
+- `workspace.include`：`packages/node/*`、`apps/koishi-scripts`、`plugins/common/*`、`plugins/infra/*`、`plugins/webui/*`；`exclude`：vendored 三包。
 - **单遍 ESM-only 构建**：`index.mjs` + `index.d.ts`。本仓库运行时目标是 Bun，其 `require()` 可直接加载 ESM，各包 exports 以 `default` 条件兜底，CJS 双格式产物已退役（各包 package.json 逐个收敛 ESM-only，core / cli / `@koishi-ce/scripts` 已完成）。
 - `deps.neverBundle: [/^@koishi-ce\//]`：workspace 内互相引用按包名外部化（运行时由 node_modules workspace 链接提供）；dts 不内联外部类型。
 - `loader: { ".yml": "copy" }`：locale yml 原样拷入产物，引用路径自动改写。
@@ -132,6 +132,6 @@ node 侧在 `src/`、Vue 侧在 `client/`（上游约定），`koishi.public: ["
 |---|---|
 | `packages/node/{core,loader,utils,i18n-utils,cli}`、`plugins/infra/{http,server,proxy-agent}`、`plugins/common/*` | MIT |
 | `packages/web/{client,components}`、`plugins/webui/*`（除 console）、`apps/online` | **AGPL-3.0** |
-| `packages/node/console`、`apps/registry` | MIT（上游各包 package.json 声明） |
+| `packages/node/console`、`packages/node/registry` | MIT（上游各包 package.json 声明） |
 
 在 AGPL 目录新增文件同样受 AGPL 约束；分发组合作品或提供网络服务会触发 AGPL 义务（含源码披露）。原版权归属 Shigma 与 Koishijs 贡献者（2019-present）。

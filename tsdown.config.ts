@@ -43,7 +43,6 @@ const workspace = {
 	include: [
 		"packages/node/*",
 		"packages/web/*",
-		"apps/registry",
 		"apps/koishi-scripts",
 		"apps/koishi-create",
 		"plugins/common/*",
