@@ -80,9 +80,10 @@
         :schema="{ ...schema.list[0], meta: { ...schema.meta, ...schema.list[0].meta, description: null } }"
         :disabled="disabled"
         :initial="initial?.$switch ? initial.$switch.default : initial"
-        #title
       >
-        <span>其他情况下</span>
+        <template #title>
+          <span>其他情况下</span>
+        </template>
       </k-schema>
     </template>
   </k-schema>
@@ -103,13 +104,29 @@ import {
 import { computed, type PropType } from "vue";
 import KFilterButton from "./k-filter-button.vue";
 
+/** $switch 分支：case 为过滤条件（k-filter 结构），then 为命中时取的配置值 */
+interface SwitchBranch {
+	case: unknown;
+	then: unknown;
+	[key: string]: unknown;
+}
+
+/** 计算属性值的展开形态：各分支命中取 then，其余走 default */
+interface SwitchValue {
+	$switch: {
+		branches: SwitchBranch[];
+		default?: unknown;
+	};
+}
+
 const props = defineProps({
 	schema: {} as PropType<Schema>,
-	modelValue: {} as PropType<any>,
+	// 未展开时是任意普通配置值（运行时不受约束），展开后为 $switch 结构
+	modelValue: {} as PropType<SwitchValue | null>,
 	disabled: {} as PropType<boolean>,
 	prefix: {} as PropType<string>,
-	initial: {} as PropType<any>,
-	extra: {} as PropType<any>,
+	initial: {} as PropType<unknown>,
+	extra: {} as PropType<unknown>,
 });
 
 const emit = defineEmits(["update:modelValue"]);
@@ -149,7 +166,7 @@ const actions = {
 			emit("update:modelValue", props.modelValue.$switch["default"]);
 		}
 	},
-	update(index: number, key: string, value: any) {
+	update(index: number, key: string, value: unknown) {
 		const branches = props.modelValue.$switch.branches.slice();
 		branches[index] = { ...branches[index], [key]: value };
 		emit("update:modelValue", {
@@ -173,7 +190,7 @@ const actions = {
 			});
 		}
 	},
-	default(value: any) {
+	default(value: unknown) {
 		emit("update:modelValue", {
 			$switch: { ...props.modelValue.$switch, default: value },
 		});

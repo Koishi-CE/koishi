@@ -17,11 +17,11 @@ export function parsePlatform(target: string): [platform: string, id: string] {
 	const index = target.indexOf(":");
 	const platform = target.slice(0, index);
 	const id = target.slice(index + 1);
-	return [platform, id] as any;
+	return [platform, id];
 }
 
 /** 配置项（当前无可用配置） */
-export type Config = {};
+export type Config = Record<never, never>;
 
 export const name = "echo";
 export const Config: Schema<Config> = Schema.object({});
@@ -41,7 +41,7 @@ export function apply(ctx: Context, _config: Config) {
 			if (!message) return session.text(".expect-text");
 
 			// 用数组包裹，避免返回内容在发送环节再被反转义
-			let content: any = [message];
+			let content: h.Fragment = [message];
 			if (options.unescape) {
 				content = h.parse(message);
 			} else if (options.escape) {

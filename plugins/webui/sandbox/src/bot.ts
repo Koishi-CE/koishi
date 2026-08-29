@@ -36,7 +36,7 @@ export class SandboxBot<C extends Context = Context> extends Bot<
 		this.selfId = config.selfId;
 		this.platform = config.platform;
 		// selfId 访问器（defineAccessor）赋值时会确保 user 对象已创建
-		this.user!.name = "koishi";
+		if (this.user) this.user.name = "koishi";
 	}
 
 	/**
@@ -49,14 +49,15 @@ export class SandboxBot<C extends Context = Context> extends Bot<
 	 * @param data 传给该方法的载荷
 	 * @returns 浏览器侧方法的返回值
 	 */
-	async request<T = any>(method: string, data = {}) {
+	async request<T = unknown>(method: string, data = {}) {
 		const nonce = Math.random().toString(36).slice(2);
 		return new Promise<T>((resolve, reject) => {
 			const dispose1 = this.ctx.on("sandbox/response", (nonce2, data) => {
 				if (nonce !== nonce2) return;
 				dispose1();
 				dispose2();
-				resolve(data);
+				// 应答载荷由浏览器端提供,按调用方声明的 T 收窄
+				resolve(data as T);
 			});
 			const dispose2 = this.ctx.setTimeout(() => {
 				dispose1();
@@ -82,35 +83,49 @@ export class SandboxBot<C extends Context = Context> extends Bot<
 	// ---- 以下获取类 API 均为 request() 的薄封装，实际数据由浏览器端提供 ----
 
 	override async deleteMessage(channelId: string, messageId: string) {
-		return this.request("deleteMessage", { channelId, messageId });
+		return this.request<void>("deleteMessage", { channelId, messageId });
 	}
 
 	override async getMessage(channelId: string, messageId: string) {
-		return this.request("getMessage", { channelId, messageId });
+		return this.request<Universal.Message>("getMessage", {
+			channelId,
+			messageId,
+		});
 	}
 
 	override async getChannel(channelId: string, guildId?: string) {
-		return this.request("getChannel", { channelId, guildId });
+		return this.request<Universal.Channel>("getChannel", {
+			channelId,
+			guildId,
+		});
 	}
 
 	override async getChannelList(guildId: string) {
-		return this.request("getChannelList", { guildId });
+		return this.request<Universal.List<Universal.Channel>>("getChannelList", {
+			guildId,
+		});
 	}
 
 	override async getGuild(guildId: string) {
-		return this.request("getGuild", { guildId });
+		return this.request<Universal.Guild>("getGuild", { guildId });
 	}
 
 	override async getGuildList() {
-		return this.request("getGuildList");
+		return this.request<Universal.List<Universal.Guild>>("getGuildList");
 	}
 
 	override async getGuildMember(guildId: string, userId: string) {
-		return this.request("getGuildMember", { guildId, userId });
+		return this.request<Universal.GuildMember>("getGuildMember", {
+			guildId,
+			userId,
+		});
 	}
 
 	override async getGuildMemberList(guildId: string) {
-		return this.request("getGuildMemberList", { guildId });
+		return this.request<Universal.List<Universal.GuildMember>>(
+			"getGuildMemberList",
+			{ guildId },
+		);
 	}
 }
 

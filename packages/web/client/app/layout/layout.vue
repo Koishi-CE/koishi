@@ -64,7 +64,7 @@ defineProps<{
 	right?: string;
 	container?: string;
 	menu?: string | LegacyMenuItem[];
-	menuData?: any;
+	menuData?: unknown;
 }>();
 
 const slots = useSlots();

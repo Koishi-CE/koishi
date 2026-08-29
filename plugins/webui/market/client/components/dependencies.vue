@@ -61,7 +61,7 @@ watch(
 			(object) => {
 				Object.keys(object).forEach(async (name) => {
 					if (store.dependencies[name]) return;
-					addManual(name);
+					void addManual(name);
 				});
 			},
 			{ immediate: true, deep: true },

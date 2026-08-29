@@ -17,12 +17,12 @@ import zhCN from "../locales/zh-CN.yml";
 // 模块增强：新增 common/callme 事件，监听者返回字符串即可拦截昵称修改
 declare module "@koishi-ce/koishi" {
 	interface Events {
-		"common/callme"(name: string, session: Session): string | void;
+		"common/callme"(name: string, session: Session): string | undefined;
 	}
 }
 
 /** 配置项（当前无可用配置） */
-export type Config = {};
+export type Config = Record<never, never>;
 
 export const name = "callme";
 export const inject = ["database"];

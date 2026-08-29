@@ -37,9 +37,10 @@ export async function copyToClipboard(text: string) {
 		document.execCommand("copy");
 		document.body.removeChild(element);
 
-		if (originalRange) {
-			selection!.removeAllRanges(); // originalRange 为真时 selection 必然存在
-			selection!.addRange(originalRange);
+		// originalRange 为真时 selection 必然存在,一并判断以收窄类型
+		if (originalRange && selection) {
+			selection.removeAllRanges();
+			selection.addRange(originalRange);
 		}
 
 		// 将焦点还给此前聚焦的元素（若有）

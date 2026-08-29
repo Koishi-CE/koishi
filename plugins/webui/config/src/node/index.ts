@@ -5,8 +5,9 @@
  * 配置才支持网页编辑），随后挂载三个数据服务（插件包元数据、服务状态、
  * 配置写入器），并把 client 目录注册为控制台前端入口。
  */
+
+import { resolve } from "node:path";
 import { type Context, Schema } from "@koishi-ce/koishi";
-import { resolve } from "path";
 import { ConfigWriter, ServiceProvider } from "../shared";
 import { PackageProvider } from "./packages";
 
@@ -15,7 +16,7 @@ export * from "../shared";
 export const name = "config";
 export const inject = ["console"];
 
-export type Config = {};
+export type Config = Record<never, never>;
 
 export const Config: Schema<Config> = Schema.object({});
 

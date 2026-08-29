@@ -7,6 +7,9 @@
  *   写回第一个根目录的 `<locale>.yml`；
  * - i18n 数据变化时防抖刷新 console entry，供前端展示全部翻译。
  */
+
+import { mkdir, readdir, readFile, writeFile } from "node:fs/promises";
+import { resolve } from "node:path";
 import type { DataService } from "@koishi-ce/console";
 import {
 	type Context,
@@ -15,10 +18,8 @@ import {
 	Logger,
 	Schema,
 } from "@koishi-ce/koishi";
-import {} from "@koishi-ce/plugin-console";
-import { mkdir, readdir, readFile, writeFile } from "fs/promises";
+import type {} from "@koishi-ce/plugin-console";
 import { dump, load } from "js-yaml";
-import { resolve } from "path";
 
 declare module "@koishi-ce/console" {
 	namespace Console {
@@ -67,7 +68,8 @@ export async function apply(ctx: Context, config: Config) {
 			if (!file.endsWith(".yml")) continue;
 			logger.debug("loading locale %s", file);
 			const content = await readFile(resolve(folder, file), "utf8");
-			ctx.i18n.define("$" + file.split(".")[0], load(content) as any);
+			// yml 文件为嵌套的翻译字典,按 I18n.Store 形态断言后注册
+			ctx.i18n.define(`$${file.split(".")[0]}`, load(content) as I18n.Store);
 		}
 	}
 
@@ -75,8 +77,8 @@ export async function apply(ctx: Context, config: Config) {
 		const entry = ctx.console.addEntry(
 			process.env["KOISHI_BASE"]
 				? [
-						process.env["KOISHI_BASE"] + "/dist/index.js",
-						process.env["KOISHI_BASE"] + "/dist/style.css",
+						`${process.env["KOISHI_BASE"]}/dist/index.js`,
+						`${process.env["KOISHI_BASE"]}/dist/style.css`,
 					]
 				: process.env["KOISHI_ENV"] === "browser"
 					? [import.meta.url.replace(/\/src\/[^/]+$/, "/client/index.ts")]
@@ -100,10 +102,10 @@ export async function apply(ctx: Context, config: Config) {
 				for (const locale in data) {
 					const store = data[locale];
 					if (!store) continue;
-					ctx.i18n.define("$" + locale, store);
+					ctx.i18n.define(`$${locale}`, store);
 					const content = dump(store);
 					await writeFile(
-						resolve(ctx.baseDir, primary, locale + ".yml"),
+						resolve(ctx.baseDir, primary, `${locale}.yml`),
 						content,
 					);
 				}

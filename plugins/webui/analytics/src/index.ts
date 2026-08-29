@@ -8,6 +8,8 @@
  * 3. 前端拉取时（get → download）对近 recentDayCount 天的数据做分组聚合，
  *    产出数值指标与各图表所需的 Payload 推送给控制台。
  */
+
+import { resolve } from "node:path";
 import { DataService } from "@koishi-ce/console";
 import {
 	$,
@@ -22,7 +24,6 @@ import {
 	Time,
 	type Universal,
 } from "@koishi-ce/koishi";
-import { resolve } from "path";
 
 declare module "@koishi-ce/koishi" {
 	interface Tables {

@@ -42,11 +42,11 @@ import { store } from "../data";
 
 const props = defineProps({
 	schema: {} as PropType<Schema>,
-	modelValue: {} as PropType<any>,
+	modelValue: {} as PropType<unknown>,
 	disabled: {} as PropType<boolean>,
 	prefix: {} as PropType<string>,
-	initial: {} as PropType<any>,
-	extra: {} as PropType<any>,
+	initial: {} as PropType<unknown>,
+	extra: {} as PropType<unknown>,
 });
 
 defineEmits(["update:modelValue"]);

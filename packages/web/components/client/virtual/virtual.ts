@@ -149,7 +149,9 @@ export default class Virtual {
 	 * 向上滚动交给 handleFront，向下交给 handleBehind。
 	 */
 	handleScroll(offset: number) {
-		this.direction = Math.sign(offset - this.offset) as any;
+		// Math.sign 对有限数返回 -1/0/1，按三态映射回 direction（NaN 亦归 0）
+		const sign = Math.sign(offset - this.offset);
+		this.direction = sign > 0 ? 1 : sign < 0 ? -1 : 0;
 		this.offset = offset;
 
 		if (this.direction < 0) {
@@ -191,9 +193,9 @@ export default class Virtual {
 		const offset = this.offset - (this.sizes.get("header") ?? 0);
 		if (offset <= 0) return 0;
 
-		// 定长模式可以直接整除得出
+		// 定长模式可以直接整除得出（定长态 getEstimateSize 即实测固定值）
 		if (this.isFixedType()) {
-			return Math.floor(offset / this.fixedSizeValue!);
+			return Math.floor(offset / this.getEstimateSize());
 		}
 
 		let low = 0;
@@ -233,9 +235,9 @@ export default class Virtual {
 
 		let offset = 0;
 		for (let index = 0; index < givenIndex; index++) {
-			offset =
-				offset +
-				(this.sizes.get(this.param.uids[index]!) ?? this.getEstimateSize());
+			// 下标恒在 uids 界内；越界（不可能发生）按未测量兜底到估算值
+			const uid = this.param.uids[index] ?? "";
+			offset = offset + (this.sizes.get(uid) ?? this.getEstimateSize());
 		}
 
 		// 记录已精确计算到的最大下标（getPadBehind 据此判断能否精确取值）
@@ -293,7 +295,8 @@ export default class Virtual {
 	/** 渲染范围之前的总占位高度 */
 	getPadFront() {
 		if (this.isFixedType()) {
-			return this.fixedSizeValue! * this.range.start;
+			// 定长态 getEstimateSize 即实测固定值
+			return this.getEstimateSize() * this.range.start;
 		} else {
 			return this.getOffset(this.range.start);
 		}
@@ -305,7 +308,8 @@ export default class Virtual {
 		const lastIndex = this.getLastIndex();
 
 		if (this.isFixedType()) {
-			return (lastIndex - end) * this.fixedSizeValue!;
+			// 定长态 getEstimateSize 即实测固定值
+			return (lastIndex - end) * this.getEstimateSize();
 		}
 
 		// 已全部精确计算过时返回精确值
@@ -319,8 +323,10 @@ export default class Virtual {
 
 	/** 取当前估算的项高：定长取实测值，动态取首范围平均值，再退到初始预估 */
 	getEstimateSize() {
-		return this.isFixedType()
-			? this.fixedSizeValue!
-			: this.firstRangeAverageSize || this.param.estimated;
+		// FIXED 态下 fixedSizeValue 必然已写入（delete 仅发生在转入 DYNAMIC 时）
+		if (this.isFixedType() && this.fixedSizeValue !== undefined) {
+			return this.fixedSizeValue;
+		}
+		return this.firstRangeAverageSize || this.param.estimated;
 	}
 }

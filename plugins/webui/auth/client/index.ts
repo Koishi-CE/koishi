@@ -79,10 +79,14 @@ icons.register("user-full", UserFull);
 export default (ctx: Context) => {
 	// 本地登录态的 id/token/expiredAt 由同一批 pick 写入,同时存在。
 	// 刷新页面后用未过期的令牌向服务端静默续期登录
-	if (shared.value.token && shared.value.expiredAt! > Date.now()) {
-		send("login/token", shared.value.id!, shared.value.token).catch((e) =>
-			message.error(e.message),
-		);
+	const { token, id, expiredAt } = shared.value;
+	if (
+		token &&
+		id !== undefined &&
+		expiredAt !== undefined &&
+		expiredAt > Date.now()
+	) {
+		send("login/token", id, token).catch((e) => message.error(e.message));
 	}
 
 	// 声明各活动（页面）的可见性：要求权限高于当前登录态时隐藏
@@ -161,7 +165,8 @@ export default (ctx: Context) => {
 					}).description("同步设置"),
 					initial: shared.value,
 					modelValue: shared.value,
-					"onUpdate:modelValue": (value: any) => (shared.value = value),
+					"onUpdate:modelValue": (value: typeof shared.value) =>
+						(shared.value = value),
 				}),
 		),
 	});

@@ -37,7 +37,7 @@ defineProps({
 	modelValue: {} as PropType<string>,
 	disabled: {} as PropType<boolean>,
 	prefix: {} as PropType<string>,
-	initial: {} as PropType<{}>,
+	initial: {} as PropType<Record<never, never>>,
 });
 
 defineEmits(["update:modelValue"]);
@@ -57,7 +57,7 @@ function addNode(nodes: CascaderOption[], path: string[], prefix = "") {
 		nodes.push(node);
 	}
 	if (!path.length) return;
-	addNode((node.children ||= []), path, prefix + name + ":");
+	addNode((node.children ||= []), path, `${prefix + name}:`);
 }
 
 // 由全部权限名构建级联选项树

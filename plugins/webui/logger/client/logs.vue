@@ -43,8 +43,8 @@ const props = defineProps<{
 const converter = new AnsiUp();
 
 /** 生成一段 ANSI 颜色转义序列（8/16 色码 + 可选装饰，如加粗 ";1"）。 */
-function renderColor(code: number, value: any, decoration = "") {
-	return `\u001b[3${code < 8 ? code : "8;5;" + code}${decoration}m${value}\u001b[0m`;
+function renderColor(code: number, value: string, decoration = "") {
+	return `\u001b[3${code < 8 ? code : `8;5;${code}`}${decoration}m${value}\u001b[0m`;
 }
 
 const showTime = "yyyy-MM-dd hh:mm:ss";
@@ -78,7 +78,7 @@ function renderLine(record: LogRecord) {
 	const label = renderColor(code, record.name, ";1");
 	const padLength = label.length - record.name.length;
 	output += prefix + space + label.padEnd(padLength) + space;
-	output += record.content.replace(/\n/g, "\n" + " ".repeat(indent));
+	output += record.content.replace(/\n/g, `\n${" ".repeat(indent)}`);
 	return converter.ansi_to_html(output);
 }
 </script>

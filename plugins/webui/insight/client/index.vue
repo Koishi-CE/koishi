@@ -61,8 +61,10 @@ const dragged = ref<Node>(null);
 const fNode = ref<Node>(null);
 const fLink = ref<Link>(null);
 
-const nodes = reactive<Node[]>(store.insight.nodes as any);
-const links = computed<Link[]>(() => store.insight.edges as any);
+// 服务端数据为 Insight.Node/Insight.Link 形态;d3 初始化会把节点/连线的
+// 模拟字段与对象引用就地写入同一批对象,故按客户端形态断言使用
+const nodes = reactive<Node[]>(store.insight.nodes as Node[]);
+const links = computed<Link[]>(() => store.insight.edges as unknown as Link[]);
 
 /**
  * 计算外层 svg 的尺寸与 transform：先求出全部节点的包围盒，
@@ -93,8 +95,8 @@ const svgAttrs = computed(() => {
 		transform = `scale(${scale}) translateY(${(height.value - realHeight) / 2 / scale}px)`;
 	}
 	return {
-		width: vpWidth + "px",
-		height: vpHeight + "px",
+		width: `${vpWidth}px`,
+		height: `${vpHeight}px`,
 		viewBox: `${minX - 100} ${minY - 100} ${vpWidth} ${vpHeight}`,
 		style: {
 			transform,
@@ -200,7 +202,7 @@ watch(
 			}
 		}
 		simulation.nodes(nodes);
-		forceLink.links(value.edges as any);
+		forceLink.links(value.edges as unknown as Link[]);
 		simulation.alpha(0.3).restart();
 	},
 );
@@ -213,9 +215,9 @@ useEventListener("touchend", onDragEnd);
 /** 悬停节点：记录焦点节点并弹出 tooltip（插件名 + 提供的服务列表）。 */
 function onMouseEnterNode(node: Node, event: MouseEvent) {
 	fNode.value = node;
-	const result = ["插件：" + node.name];
+	const result = [`插件：${node.name}`];
 	if (node.services) {
-		result.push("提供服务：" + node.services.join("，"));
+		result.push(`提供服务：${node.services.join("，")}`);
 	}
 	tooltip.activate(result.join("\n"), event);
 }

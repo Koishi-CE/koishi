@@ -8,9 +8,10 @@
  * 本文件负责注册控制台前端资源入口、以子插件形式挂载上述两个服务，
  * 并合并两者的 Config Schema 作为插件整体配置。
  */
-import {} from "@koishi-ce/console";
+
+import { resolve } from "node:path";
+import type {} from "@koishi-ce/console";
 import { type Context, Schema } from "@koishi-ce/koishi";
-import { resolve } from "path";
 import EnvInfoProvider from "./envinfo";
 import ProfileProvider from "./profile";
 

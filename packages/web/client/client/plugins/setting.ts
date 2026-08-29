@@ -52,7 +52,7 @@ export let useStorage = <T extends object>(
 		__version__?: number | undefined;
 	};
 	initial.__version__ = version;
-	const storage = useLocalStorage("koishi.console." + key, initial);
+	const storage = useLocalStorage(`koishi.console.${key}`, initial);
 	if (storage.value.__version__ !== version) {
 		storage.value = initial;
 	}
@@ -76,7 +76,7 @@ export function createStorage<T extends object>(
 	fallback?: () => T,
 ) {
 	const storage = useLocalStorage(
-		"koishi.console." + key,
+		`koishi.console.${key}`,
 		{} as StorageData<T>,
 	);
 	const initial = fallback ? fallback() : ({} as T);
@@ -191,7 +191,8 @@ export default class SettingService extends Service {
 	 * 返回取消注册函数。
 	 */
 	extendSchema(extension: SchemaBase.Extension) {
-		extension.component = this.ctx.wrapComponent(extension.component)!;
+		const component = this.ctx.wrapComponent(extension.component);
+		if (component) extension.component = component;
 		return this.ctx.effect(() => {
 			SchemaBase.extensions.add(extension);
 			return () => SchemaBase.extensions.delete(extension);

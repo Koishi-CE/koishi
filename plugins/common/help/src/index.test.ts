@@ -68,7 +68,7 @@ describe("@koishi-ce/plugin-help", () => {
 		app.command("foo1", "DESCRIPTION").alias("foo");
 		app.command("foo3", "DESCRIPTION").shortcut(/foobar/);
 		app.command("foo4", "DESCRIPTION").usage("USAGE TEXT");
-		app.command("foo5", "DESCRIPTION").usage(({ userId }) => "" + userId);
+		app.command("foo5", "DESCRIPTION").usage(({ userId }) => `${userId}`);
 		app.command("foo6", "DESCRIPTION").example("EXAMPLE TEXT");
 		app.command("foo7", "DESCRIPTION", { authority: 3 });
 
@@ -134,7 +134,7 @@ describe("@koishi-ce/plugin-help", () => {
 	it("subcommand", async () => {
 		const foo2 = app.command("foo2", "DESCRIPTION", { authority: 0 });
 		const foo1 = foo2.subcommand("foo1");
-		const foo3 = foo1.subcommand("foo3");
+		foo1.subcommand("foo3");
 
 		await client.shouldReply(
 			"help foo2",

@@ -54,7 +54,7 @@ export interface AnalyzeConfig {
 	/** 单个包分析成功后调用 */
 	onSuccess?(object: SearchObject, versions: RemotePackage[]): Awaitable<void>;
 	/** 单个包分析抛错后调用（该包会被标记 ignored） */
-	onFailure?(name: string, reason: any): Awaitable<void>;
+	onFailure?(name: string, reason: unknown): Awaitable<void>;
 	/** 单个包因无兼容版本被跳过后调用（该包会被标记 ignored） */
 	onSkipped?(name: string): Awaitable<void>;
 	/** 每个对象结束分析（无论成败）后调用 */
@@ -205,9 +205,12 @@ export default class Scanner {
 		object.manifest = manifest;
 		if (manifest.insecure !== undefined) object.insecure = manifest.insecure;
 		if (manifest.category !== undefined) object.category = manifest.category;
-		// compatible 非空保证 times 非空
-		object.createdAt = times[0]!;
-		object.updatedAt = times[times.length - 1]!;
+		// versions 非空保证 compatible / times 非空（noUncheckedIndexedAccess 下显式收窄）
+		const createdAt = times[0];
+		const updatedAt = times[times.length - 1];
+		if (createdAt === undefined || updatedAt === undefined) return;
+		object.createdAt = createdAt;
+		object.updatedAt = updatedAt;
 		object.package.contributors ??= latest.author ? [latest.author] : [];
 		object.package.keywords = (latest.keywords ?? [])
 			.map((keyword) => keyword.toLowerCase())

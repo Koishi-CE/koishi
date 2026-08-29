@@ -1,5 +1,5 @@
 <template>
-  <k-comment v-for="item in notifiers" :type="item.type">
+  <k-comment v-for="(item, index) in notifiers" :key="index" :type="item.type">
     <render :children="segment.parse(item.content)"></render>
   </k-comment>
 </template>
@@ -20,11 +20,12 @@ import {
 	type FunctionalComponent,
 	h,
 	inject,
+	type Ref,
 	resolveComponent,
 } from "vue";
 
-// manager 注入的当前插件配置对象(含 path 字段标识插件来源)
-const current: any = inject("manager.settings.current");
+// 由配置管理面板注入的「当前插件」信息（此处仅需 path 字段）
+const current = inject<Ref<{ path: string }>>("manager.settings.current");
 
 const data = useRpc<NotifierService.Data>();
 

@@ -1,23 +1,29 @@
+import {
+	type Context,
+	type Dict,
+	type HTTP,
+	Schema,
+	Time,
+} from "@koishi-ce/koishi";
 import Scanner, {
 	type SearchObject,
 	type SearchResult,
 } from "@koishi-ce/registry";
-import { type Context, type Dict, type HTTP, Schema, Time } from "koishi";
 import { MarketProvider as BaseMarketProvider } from "../shared";
 
 class MarketProvider extends BaseMarketProvider {
-	private http: HTTP;
+	private http?: HTTP;
 	private failed: string[] = [];
-	private scanner: Scanner;
+	private scanner!: Scanner;
 	private fullCache: Dict<SearchObject> = {};
 	private tempCache: Dict<SearchObject> = {};
 	private flushData: () => void;
 
-	constructor(
-		ctx: Context,
-		public config: MarketProvider.Config,
-	) {
+	override config: MarketProvider.Config;
+
+	constructor(ctx: Context, config: MarketProvider.Config) {
 		super(ctx);
+		this.config = config;
 		if (config.endpoint) this.http = ctx.http.extend(config);
 		this.flushData = ctx.throttle(() => {
 			ctx.console.broadcast("market/patch", {
@@ -30,7 +36,7 @@ class MarketProvider extends BaseMarketProvider {
 		}, 500);
 	}
 
-	async start(refresh = false) {
+	override async start(refresh = false) {
 		this.failed = [];
 		this.fullCache = {};
 		this.tempCache = {};
@@ -39,7 +45,7 @@ class MarketProvider extends BaseMarketProvider {
 		super.start();
 	}
 
-	async collect() {
+	override async collect() {
 		const { timeout } = this.config;
 		const registry = this.ctx.installer.http;
 
@@ -49,9 +55,9 @@ class MarketProvider extends BaseMarketProvider {
 			const result = await this.http.get<SearchResult>("");
 			this.scanner.objects = result.objects.filter((object) => !object.ignored);
 			this.scanner.total = this.scanner.objects.length;
-			this.scanner.version = result.version;
+			if (result.version !== undefined) this.scanner.version = result.version;
 		} else {
-			await this.scanner.collect({ timeout });
+			await this.scanner.collect(timeout !== undefined ? { timeout } : {});
 		}
 
 		if (!this.scanner.version) {
@@ -60,7 +66,7 @@ class MarketProvider extends BaseMarketProvider {
 				onFailure: (name, reason) => {
 					this.failed.push(name);
 					if (
-						registry.config.endpoint.startsWith(
+						registry.config.endpoint?.startsWith(
 							"https://registry.npmmirror.com",
 						)
 					) {
@@ -75,10 +81,10 @@ class MarketProvider extends BaseMarketProvider {
 				onRegistry: (registry, versions) => {
 					this.ctx.installer.setPackage(registry.name, versions);
 				},
-				onSuccess: (object, versions) => {
+				onSuccess: (object, _versions) => {
 					// npmmirror lacks `links` field
 					object.package.links ||= {
-						npm: `${registry.config.endpoint.replace("registry.", "www.")}/package/${object.package.name}`,
+						npm: `${registry.config.endpoint?.replace("registry.", "www.") ?? ""}/package/${object.package.name}`,
 					};
 					this.fullCache[object.package.name] = this.tempCache[
 						object.package.name
@@ -88,12 +94,13 @@ class MarketProvider extends BaseMarketProvider {
 			});
 		}
 
-		return null;
+		return undefined;
 	}
 
-	async get() {
+	override async get() {
 		await this.prepare();
 		if (this._error) return { data: {}, failed: 0, total: 0, progress: 0 };
+		const gravatar = process.env["GRAVATAR_MIRROR"];
 		return this.scanner.version
 			? {
 					registry: this.ctx.installer.endpoint,
@@ -103,7 +110,7 @@ class MarketProvider extends BaseMarketProvider {
 					failed: 0,
 					total: this.scanner.total,
 					progress: this.scanner.total,
-					gravatar: process.env.GRAVATAR_MIRROR,
+					gravatar,
 				}
 			: {
 					registry: this.ctx.installer.endpoint,
@@ -111,24 +118,26 @@ class MarketProvider extends BaseMarketProvider {
 					failed: this.failed.length,
 					total: this.scanner.total,
 					progress: this.scanner.progress,
-					gravatar: process.env.GRAVATAR_MIRROR,
+					gravatar,
 				};
 	}
-}
 
-namespace MarketProvider {
-	export interface Config {
-		endpoint?: string;
-		timeout?: number;
-	}
-
-	export const Config: Schema<Config> = Schema.object({
+	// erasableSyntaxOnly 禁止含运行时值的 namespace，
+	// 原 namespace 内的 Config 常量移到此处的静态字段，对外形状不变
+	static Config: Schema<MarketProvider.Config> = Schema.object({
 		endpoint: Schema.string().role("link"),
 		timeout: Schema.number()
 			.role("time")
 			.default(Time.second * 30),
 		proxyAgent: Schema.string().role("link"),
 	});
+}
+
+declare namespace MarketProvider {
+	export interface Config {
+		endpoint?: string;
+		timeout?: number;
+	}
 }
 
 export default MarketProvider;

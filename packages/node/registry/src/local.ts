@@ -9,9 +9,9 @@
  */
 /// <reference types="@types/node" />
 
+import { readdir, readFile } from "node:fs/promises";
+import { dirname } from "node:path";
 import { type Dict, defineProperty, isNonNullable, pick } from "cosmokit";
-import { readdir, readFile } from "fs/promises";
-import { dirname } from "path";
 import type { PackageJson, SearchObject, SearchResult } from "./types";
 import { conclude } from "./utils";
 
@@ -69,13 +69,13 @@ export class LocalScanner {
 	 * 作用域目录则只看 @koishi-ce / @koishijs 下的 plugin-* 子包。
 	 */
 	private async loadDirectory(baseDir: string) {
-		const base = baseDir + "/node_modules";
+		const base = `${baseDir}/node_modules`;
 		const files = await readdir(base).catch(() => []);
 		for (const name of files) {
 			if (name.startsWith("koishi-plugin-")) {
 				this.cache[name] ||= this.loadPackage(name);
 			} else if (name.startsWith("@")) {
-				const base2 = base + "/" + name;
+				const base2 = `${base}/${name}`;
 				const files = await readdir(base2).catch(() => []);
 				for (const name2 of files) {
 					if (
@@ -83,8 +83,8 @@ export class LocalScanner {
 							name2.startsWith("plugin-")) ||
 						name2.startsWith("koishi-plugin-")
 					) {
-						this.cache[name + "/" + name2] ||= this.loadPackage(
-							name + "/" + name2,
+						this.cache[`${name}/${name2}`] ||= this.loadPackage(
+							`${name}/${name2}`,
 						);
 					}
 				}
@@ -108,7 +108,7 @@ export class LocalScanner {
 	 * node_modules 时说明是包管理器的 workspace 链接（本仓库源码形态）。
 	 */
 	private async loadManifest(name: string) {
-		const filename = require.resolve(name + "/package.json");
+		const filename = require.resolve(`${name}/package.json`);
 		const meta: PackageJson = JSON.parse(await readFile(filename, "utf8"));
 		meta.peerDependencies ||= {};
 		meta.peerDependenciesMeta ||= {};

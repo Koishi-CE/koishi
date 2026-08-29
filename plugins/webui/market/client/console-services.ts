@@ -1,39 +1,65 @@
 /**
  * market 客户端的 console 服务类型注入。
  *
- * store.market / store.dependencies / store.registry 与 market/* 事件的键
- * 类型来自 @koishi-ce/console 的 Console.Services / Console.Events 接口，
- * 服务端侧的声明在 src/node/index.ts（经产物 d.ts 扩散）。client 工程的
- * 类型检查无法经产物 d.ts 链完成合并，故在此显式镜像一份；本文件以对
- * Console 的具名类型导入激活增强（TS7 下空绑定 import type 不触发），
- * 两处声明须保持同步。
+ * 浏览器端工程对 console 类型的消费走 packages/web/client/client/shims.d.ts
+ * 手写的 "@koishi-ce/plugin-console" 骨架（浏览器端没有指向真实插件的
+ * node_modules 链接与 paths），因此本文件向同一模块名镜像 market 侧注入的
+ * Services / Events / store 载荷。载荷一律用骨架自带的 DataService<T> 包装，
+ * 保证 client 侧 Store 映射类型（Services[K] extends DataService<infer T>）
+ * 能推导出真实负载数据。类型实体取自各包 lib 产物 d.ts（本 tsconfig 的
+ * paths 已指向产物）。node 侧真实声明位于 src/node/index.ts 与
+ * src/shared/index.ts，两处须保持同步（含下方内联的 Dict / Dependency 镜像）。
  */
 
-import type { Dict } from "@koishi-ce/client";
-import type { Console } from "@koishi-ce/console";
-import type {
-	DependencyProvider,
-	MarketProvider,
-	RegistryProvider,
-} from "@koishi-ce/plugin-market";
-import type { DependencyMetaKey, RemotePackage } from "@koishi-ce/registry";
+declare module "@koishi-ce/plugin-console" {
+	/** cosmokit.Dict 镜像（浏览器端工程无 cosmokit 链接） */
+	type Dict<T> = { [key: string]: T };
 
-declare module "@koishi-ce/console" {
+	/** src/node/installer.ts 的 Dependency 镜像（严格同步） */
+	interface Dependency {
+		request: string;
+		resolved?: string | undefined;
+		workspace?: boolean | undefined;
+		invalid?: boolean | undefined;
+		latest?: string | undefined;
+	}
+
 	namespace Console {
 		interface Services {
-			market: MarketProvider;
-			dependencies: DependencyProvider;
-			registry: RegistryProvider;
+			market: DataService<
+				import("@koishi-ce/plugin-market").MarketProvider.Payload
+			>;
+			dependencies: DataService<Dict<Dependency>>;
+			registry: DataService<
+				Dict<
+					Dict<
+						Pick<
+							import("@koishi-ce/registry").RemotePackage,
+							import("@koishi-ce/registry").DependencyMetaKey
+						>
+					>
+				>
+			>;
+			packages: DataService<
+				Dict<import("@koishi-ce/plugin-config").PackageProvider.Data>
+			>;
 		}
 	}
 
 	interface Events {
+		"market/refresh"(): void;
 		"market/install"(deps: Dict<string>, forced?: boolean): Promise<number>;
 		"market/registry"(
 			names: string[],
-		): Promise<Dict<Dict<Pick<RemotePackage, DependencyMetaKey>>>>;
+		): Promise<
+			Dict<
+				Dict<
+					Pick<
+						import("@koishi-ce/registry").RemotePackage,
+						import("@koishi-ce/registry").DependencyMetaKey
+					>
+				>
+			>
+		>;
 	}
 }
-
-// 引用 Console 以满足导入使用约束（否则 noUnusedLocals 报未使用导入）
-export type ConsoleServices = Console.Services;

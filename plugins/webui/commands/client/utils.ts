@@ -7,7 +7,7 @@ import { Schema, store } from "@koishi-ce/client";
  * @param schema 目标 Schema
  * @param value 与该 Schema 对应的数据
  */
-export function assignSchema(schema: Schema, value: any) {
+export function assignSchema(schema: Schema, value: object) {
 	if (schema.type === "intersect" || schema.type === "union") {
 		for (const item of schema.list ?? []) {
 			assignSchema(item, value);
@@ -17,7 +17,7 @@ export function assignSchema(schema: Schema, value: any) {
 		for (const key in value) {
 			const item = dict[key];
 			if (!item) continue;
-			dict[key] = item.default(value[key]);
+			dict[key] = item.default((value as Record<string, unknown>)[key]);
 		}
 	}
 }
@@ -28,7 +28,7 @@ export function assignSchema(schema: Schema, value: any) {
  * @param value 该 Schema 对应的初始数据；传入时自动回填默认值
  * @returns 可直接交给 k-form 渲染的 Schema 实例
  */
-export function createSchema(name: string, value: any) {
+export function createSchema(name: string, value: object) {
 	// store 中缺失时回退到空对象，与 new Schema(undefined) 的运行时行为一致（空 schema）
 	const result = new Schema(store.schema?.[name] ?? {});
 	if (!value) return result;

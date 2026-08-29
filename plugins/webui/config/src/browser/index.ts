@@ -16,7 +16,7 @@ export * from "../shared";
 export const name = "config";
 export const inject = ["console", "loader"];
 
-export type Config = {};
+export type Config = Record<never, never>;
 
 export const Config: Schema<Config> = Schema.object({});
 
@@ -28,8 +28,8 @@ export function apply(ctx: Context) {
 	ctx.console.addEntry(
 		process.env["KOISHI_BASE"]
 			? [
-					process.env["KOISHI_BASE"] + "/dist/index.js",
-					process.env["KOISHI_BASE"] + "/dist/style.css",
+					`${process.env["KOISHI_BASE"]}/dist/index.js`,
+					`${process.env["KOISHI_BASE"]}/dist/style.css`,
 				]
 			: [import.meta.url.replace(/\/src\/[^/]+\/[^/]+$/, "/client/index.ts")],
 	);

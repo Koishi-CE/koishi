@@ -8,8 +8,10 @@
     <template #left>
       <el-scrollbar class="command-tree w-full h-full overflow-auto" ref="root">
         <div class="search">
-          <el-input v-model="keyword" #suffix>
-            <k-icon name="search"></k-icon>
+          <el-input v-model="keyword">
+            <template #suffix>
+              <k-icon name="search"></k-icon>
+            </template>
           </el-input>
         </div>
         <el-tree
@@ -107,7 +109,7 @@ const active = computed<string>({
 	},
 	set(name) {
 		if (!(name in data.value)) name = "";
-		router.replace("/commands/" + name.replace(/\./g, "/"));
+		router.replace(`/commands/${name.replace(/\./g, "/")}`);
 	},
 });
 

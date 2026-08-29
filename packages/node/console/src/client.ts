@@ -5,6 +5,7 @@
  * 以及在连接建立时拉取全部数据服务的当前值推送给前端（完成首屏数据同步）。
  */
 
+import type { IncomingMessage } from "node:http";
 import {
 	Context,
 	coerce,
@@ -23,10 +24,17 @@ export class Client {
 	readonly ctx: Context;
 	/** 底层 WebSocket 连接 */
 	public socket: Universal.WebSocket;
+	/** WebSocket 升级请求（握手期的 HTTP 请求对象，可取头信息与来源地址） */
+	public request: IncomingMessage;
 
-	constructor(ctx: Context, socket: Universal.WebSocket) {
+	constructor(
+		ctx: Context,
+		socket: Universal.WebSocket,
+		request: IncomingMessage,
+	) {
 		this.ctx = ctx;
 		this.socket = socket;
+		this.request = request;
 		socket.addEventListener("message", this.receive);
 		// 宿主上下文销毁时同步解绑消息监听，避免向已关闭的套接字投递
 		ctx.on("dispose", () => {

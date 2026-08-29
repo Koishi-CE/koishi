@@ -17,10 +17,14 @@ import { active } from "../utils";
 
 const router = useRouter();
 
-const current = inject<WritableComputedRef<any>>("manager.settings.current");
+// 由配置管理面板注入的「当前插件」信息（此处仅需 name 字段）
+const current = inject<WritableComputedRef<{ name: string }>>(
+	"manager.settings.current",
+);
 
 const fullname = computed(() => {
-	const { name } = current.value;
+	const name = current.value?.name;
+	if (!name) return;
 	const candidates = name.startsWith("@")
 		? [name.replace(/\//, "/koishi-plugin-")]
 		: [`@koishijs/plugin-${name}`, `koishi-plugin-${name}`];
@@ -28,6 +32,6 @@ const fullname = computed(() => {
 });
 
 function gotoMarket() {
-	router.push("/market?keyword=" + current.value.name);
+	router.push(`/market?keyword=${current.value?.name ?? ""}`);
 }
 </script>

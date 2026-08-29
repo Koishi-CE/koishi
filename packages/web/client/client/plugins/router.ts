@@ -182,7 +182,7 @@ export default class RouterService extends Service {
 	/** 各插槽（按 type 分组）的视图列表 */
 	public views = reactive<Dict<SlotOptions[]>>({});
 	/** 页面 id → 最近访问的完整路径（用于"返回上次位置"） */
-	public cache = reactive<Record<keyof any, string>>({});
+	public cache = reactive<Record<PropertyKey, string>>({});
 	/** 已注册的全部 activity 页面 */
 	public pages = reactive<Dict<Activity>>({});
 	public router = createRouter({
@@ -250,7 +250,8 @@ export default class RouterService extends Service {
 	 */
 	slot(options: SlotOptions) {
 		options.order ??= 0;
-		options.component = this.ctx.wrapComponent(options.component)!;
+		const component = this.ctx.wrapComponent(options.component);
+		if (component) options.component = component;
 		if (options.when) {
 			const { when } = options;
 			options.disabled = () => !when();
@@ -267,7 +268,8 @@ export default class RouterService extends Service {
 
 	/** 注册 activity 页面（自动挂到 vue-router 与侧栏）；返回取消注册函数 */
 	page(options: Activity.Options) {
-		options.component = this.ctx.wrapComponent(options.component)!;
+		const component = this.ctx.wrapComponent(options.component);
+		if (component) options.component = component;
 		return this.ctx.effect(() => {
 			const activity = new Activity(this.ctx, options);
 			return () => activity.dispose();

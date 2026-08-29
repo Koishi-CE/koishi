@@ -7,12 +7,6 @@
  * 浏览器端对应实现在 ../client/（index.vue 文件树 + monaco 编辑器）。
  */
 
-import { DataService } from "@koishi-ce/console";
-import { type Context, type Dict, Schema } from "@koishi-ce/koishi";
-import anymatch, { type Tester } from "anymatch";
-import { detect } from "chardet";
-import type { FSWatcher } from "chokidar";
-import { fileTypeFromBuffer } from "file-type";
 import {
 	mkdir,
 	readdir,
@@ -21,8 +15,14 @@ import {
 	rename,
 	rm,
 	writeFile,
-} from "fs/promises";
-import { join, relative, resolve } from "path";
+} from "node:fs/promises";
+import { join, relative, resolve } from "node:path";
+import { DataService } from "@koishi-ce/console";
+import { type Context, type Dict, Schema } from "@koishi-ce/koishi";
+import anymatch, { type Tester } from "anymatch";
+import { detect } from "chardet";
+import type { FSWatcher } from "chokidar";
+import { fileTypeFromBuffer } from "file-type";
 import zhCN from "../locales/zh-CN.yml";
 
 declare module "@koishi-ce/console" {
@@ -87,7 +87,6 @@ export interface Entry {
 class Explorer extends DataService<Entry[]> {
 	// 配置 schema 的值侧由类静态承载(erasableSyntaxOnly 不允许 namespace 内运行时值),
 	// 类型侧见下方 namespace Explorer 的 Config
-	// biome-ignore lint/style/useNamingConvention: 插件 Schema 约定为 PascalCase 的 Config 静态属性
 	static Config: Schema<Explorer.Config> = Schema.object({
 		root: Schema.string().default(""),
 		ignored: Schema.array(String)
@@ -111,8 +110,8 @@ class Explorer extends DataService<Entry[]> {
 		ctx.console.addEntry(
 			process.env["KOISHI_BASE"]
 				? [
-						process.env["KOISHI_BASE"] + "/dist/index.js",
-						process.env["KOISHI_BASE"] + "/dist/style.css",
+						`${process.env["KOISHI_BASE"]}/dist/index.js`,
+						`${process.env["KOISHI_BASE"]}/dist/style.css`,
 					]
 				: process.env["KOISHI_ENV"] === "browser"
 					? [import.meta.url.replace(/\/src\/[^/]+$/, "/client/index.ts")]

@@ -11,7 +11,7 @@
       <div><slot name="header"></slot></div>
     </virtual-item>
     <component :is="tag" class="virtual-list-wrapper" :style="wrapperStyle">
-      <virtual-item v-for="(item, index) in dataShown"
+      <virtual-item v-for="(item, index) in dataShown" :key="getKey(item)"
         @resize="virtual.saveSize(getKey(item), $event)">
         <slot v-bind="item" :index="index + range.start"></slot>
       </virtual-item>
@@ -62,9 +62,7 @@ const props = defineProps({
 });
 
 // 实际渲染的数据切片（Virtual.range 决定的可视窗口）
-const dataShown = computed<any[]>(() =>
-	props.data.slice(range.start, range.end),
-);
+const dataShown = computed(() => props.data.slice(range.start, range.end));
 
 const root = ref<typeof ElScrollbar>();
 

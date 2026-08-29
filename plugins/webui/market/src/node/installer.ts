@@ -1,14 +1,6 @@
-import {} from "@koishi-ce/console";
-import {} from "@koishi-ce/loader";
-import Scanner, {
-	type DependencyMetaKey,
-	type PackageJson,
-	type Registry,
-	type RemotePackage,
-} from "@koishi-ce/registry";
-import spawn from "execa";
-import { promises as fsp, readFileSync } from "fs";
-import getRegistry from "get-registry";
+import { readFileSync } from "node:fs";
+import { resolve } from "node:path";
+import type {} from "@koishi-ce/console";
 import {
 	type Context,
 	type Dict,
@@ -20,12 +12,20 @@ import {
 	Service,
 	Time,
 	valueMap,
-} from "koishi";
+} from "@koishi-ce/koishi";
+import type {} from "@koishi-ce/loader";
+import Scanner, {
+	type DependencyMetaKey,
+	type PackageJson,
+	type Registry,
+	type RemotePackage,
+} from "@koishi-ce/registry";
+import spawn from "execa";
+import getRegistry from "get-registry";
 import pMap from "p-map";
-import { resolve } from "path";
 import { compare, satisfies, valid } from "semver";
 import which from "which-pm-runs";
-import {} from ".";
+import type {} from ".";
 
 const logger = new Logger("market");
 
@@ -39,13 +39,13 @@ export interface Dependency {
 	 * installed package version
 	 * @example `1.2.5`
 	 */
-	resolved?: string;
+	resolved?: string | undefined;
 	/** whether it is a workspace package */
-	workspace?: boolean;
+	workspace?: boolean | undefined;
 	/** valid (unsupported) syntax */
-	invalid?: boolean;
+	invalid?: boolean | undefined;
 	/** latest version */
-	latest?: string;
+	latest?: string | undefined;
 }
 
 export interface YarnLog {
@@ -60,15 +60,17 @@ const levelMap = {
 	info: "info",
 	warning: "debug",
 	error: "warn",
-};
+} as const;
 
 export interface LocalPackage extends PackageJson {
 	private?: boolean;
 	$workspace?: boolean;
+	/** loadManifest 归一化保证 dependencies 必有 */
+	dependencies: Record<string, string>;
 }
 
 export function loadManifest(name: string) {
-	const filename = require.resolve(name + "/package.json");
+	const filename = require.resolve(`${name}/package.json`);
 	const meta: LocalPackage = JSON.parse(readFileSync(filename, "utf8"));
 	meta.dependencies ||= {};
 	defineProperty(meta, "$workspace", !filename.includes("node_modules"));
@@ -94,8 +96,8 @@ function getVersions(versions: RemotePackage[]) {
 }
 
 class Installer extends Service {
-	public http: HTTP;
-	public endpoint: string;
+	declare http: HTTP;
+	declare endpoint: string | undefined;
 	public fullCache: Dict<Dict<Pick<RemotePackage, DependencyMetaKey>>> = {};
 	public tempCache: Dict<Dict<Pick<RemotePackage, DependencyMetaKey>>> = {};
 
@@ -103,15 +105,15 @@ class Installer extends Service {
 		Promise<Dict<Pick<RemotePackage, DependencyMetaKey>>>
 	> = {};
 	private agent = which();
-	private manifest: PackageJson;
-	private depTask: Promise<Dict<Dependency>>;
+	private manifest: LocalPackage;
+	private declare depTask: Promise<Dict<Dependency>>;
 	private flushData: () => void;
 
-	constructor(
-		public ctx: Context,
-		public config: Installer.Config,
-	) {
+	override config: Installer.Config;
+
+	constructor(ctx: Context, config: Installer.Config) {
 		super(ctx, "installer");
+		this.config = config;
 		this.manifest = loadManifest(this.cwd);
 		this.flushData = ctx.throttle(() => {
 			ctx.get("console")?.broadcast("market/registry", this.tempCache);
@@ -123,13 +125,13 @@ class Installer extends Service {
 		return this.ctx.baseDir;
 	}
 
-	async start() {
+	override async start() {
 		const { endpoint, timeout } = this.config;
-		this.endpoint = endpoint || (await getRegistry());
-		this.http = this.ctx.http.extend({
-			endpoint: this.endpoint,
-			timeout,
-		});
+		this.endpoint = endpoint ?? (await getRegistry());
+		const options: HTTP.Config = {};
+		if (this.endpoint) options.endpoint = this.endpoint;
+		if (timeout !== undefined) options.timeout = timeout;
+		this.http = this.ctx.http.extend(options);
 	}
 
 	resolveName(name: string) {
@@ -148,27 +150,32 @@ class Installer extends Service {
 			names.map(async (name) => {
 				try {
 					const versions = Object.entries(await this.getPackage(name));
-					if (!versions.length) return;
-					return { [name]: versions[0][0] };
-				} catch (e) {}
+					const [latest] = versions;
+					if (!latest) return undefined;
+					return { [name]: latest[0] };
+				} catch {
+					return undefined;
+				}
 			}),
 		);
-		return entries.find(Boolean);
+		return entries.find((entry): entry is Dict<string> => entry !== undefined);
 	}
 
 	private async _getPackage(name: string) {
 		try {
 			const registry = await this.http.get<Registry>(`/${name}`);
-			this.fullCache[name] = this.tempCache[name] = getVersions(
+			const versions = getVersions(
 				Object.values(registry.versions).filter((remote) => {
 					if (name === "koishi") return satisfies(remote.version, "4");
 					return !Scanner.isPlugin(name) || Scanner.isCompatible("4", remote);
 				}),
 			);
+			this.fullCache[name] = this.tempCache[name] = versions;
 			this.flushData();
-			return this.fullCache[name];
-		} catch (e) {
-			logger.warn(e.message);
+			return versions;
+		} catch (error) {
+			logger.warn(error);
+			return {};
 		}
 	}
 
@@ -189,20 +196,22 @@ class Installer extends Service {
 		await pMap(
 			Object.keys(result),
 			async (name) => {
+				const dep = result[name];
+				if (!dep) return;
 				try {
 					// some dependencies may be left with no local installation
 					const meta = loadManifest(name);
-					result[name].resolved = meta.version;
-					result[name].workspace = meta.$workspace;
+					dep.resolved = meta.version;
+					dep.workspace = meta.$workspace;
 					if (meta.$workspace) return;
 				} catch {}
 
-				if (!valid(result[name].request)) {
-					result[name].invalid = true;
+				if (!valid(dep.request)) {
+					dep.invalid = true;
 				}
 
 				const versions = await this.getPackage(name);
-				if (versions) result[name].latest = Object.keys(versions)[0];
+				if (versions) dep.latest = Object.keys(versions)[0];
 			},
 			{ concurrency: 10 },
 		);
@@ -229,29 +238,29 @@ class Installer extends Service {
 
 	async exec(args: string[]) {
 		const name = this.agent?.name ?? "npm";
-		const useJson = name === "yarn" && this.agent.version >= "2";
+		const useJson = name === "yarn" && (this.agent?.version ?? "1") >= "2";
 		if (name !== "yarn") args.unshift("install");
 		return new Promise<number>((resolve) => {
 			if (useJson) args.push("--json");
 			const child = spawn(name, args, { cwd: this.cwd });
-			child.on("exit", (code) => resolve(code));
+			child.on("exit", (code) => resolve(code ?? -1));
 			child.on("error", () => resolve(-1));
 
 			let stderr = "";
-			child.stderr.on("data", (data) => {
+			child.stderr?.on("data", (data) => {
 				data = stderr + data.toString();
 				const lines = data.split("\n");
-				stderr = lines.pop()!;
+				stderr = lines.pop() ?? "";
 				for (const line of lines) {
 					logger.warn(line);
 				}
 			});
 
 			let stdout = "";
-			child.stdout.on("data", (data) => {
+			child.stdout?.on("data", (data) => {
 				data = stdout + data.toString();
 				const lines = data.split("\n");
-				stdout = lines.pop()!;
+				stdout = lines.pop() ?? "";
 				for (const line of lines) {
 					if (!useJson || line[0] !== "{") {
 						logger.info(line);
@@ -259,7 +268,9 @@ class Installer extends Service {
 					}
 					try {
 						const { type, data } = JSON.parse(line) as YarnLog;
-						logger[levelMap[type] ?? "info"](data);
+						const level =
+							type in levelMap ? levelMap[type as keyof typeof levelMap] : null;
+						(level ? logger[level] : logger.info)(data);
 					} catch (error) {
 						logger.warn(line);
 						logger.warn(error);
@@ -269,7 +280,7 @@ class Installer extends Service {
 		});
 	}
 
-	async override(deps: Dict<string>) {
+	async override(deps: Dict<string | null>) {
 		const filename = resolve(this.cwd, "package.json");
 		for (const key in deps) {
 			if (deps[key]) {
@@ -283,21 +294,18 @@ class Installer extends Service {
 				a[0].localeCompare(b[0]),
 			),
 		);
-		await fsp.writeFile(
-			filename,
-			JSON.stringify(this.manifest, null, 2) + "\n",
-		);
+		await Bun.write(filename, `${JSON.stringify(this.manifest, null, 2)}\n`);
 	}
 
 	private _install() {
 		const args: string[] = [];
-		if (this.config.endpoint) {
+		if (this.endpoint) {
 			args.push("--registry", this.endpoint);
 		}
 		return this.exec(args);
 	}
 
-	private _getLocalDeps(override: Dict<string>) {
+	private _getLocalDeps(override: Dict<string | null>) {
 		return valueMap(override, (request, name) => {
 			const dep = { request } as Dependency;
 			try {
@@ -309,24 +317,26 @@ class Installer extends Service {
 		});
 	}
 
-	async install(deps: Dict<string>, forced?: boolean) {
+	async install(deps: Dict<string | null>, forced?: boolean) {
 		const localDeps = this._getLocalDeps(deps);
 		await this.override(deps);
 
+		let shouldInstall = forced === true;
 		for (const name in deps) {
-			const { resolved, workspace } = localDeps[name] || {};
+			const request = deps[name];
+			const local = localDeps[name];
 			if (
-				workspace ||
-				(deps[name] &&
-					resolved &&
-					satisfies(resolved, deps[name], { includePrerelease: true }))
+				local?.workspace ||
+				(request &&
+					local?.resolved &&
+					satisfies(local.resolved, request, { includePrerelease: true }))
 			)
 				continue;
-			forced = true;
+			shouldInstall = true;
 			break;
 		}
 
-		if (forced) {
+		if (shouldInstall) {
 			const code = await this._install();
 			if (code) return code;
 		}
@@ -334,9 +344,10 @@ class Installer extends Service {
 		this.refresh();
 		const newDeps = await this.getDeps();
 		for (const name in localDeps) {
-			const { resolved, workspace } = localDeps[name];
-			if (workspace || !newDeps[name]) continue;
-			if (newDeps[name].resolved === resolved) continue;
+			const local = localDeps[name];
+			const newDep = newDeps[name];
+			if (!local || !newDep || local.workspace) continue;
+			if (newDep.resolved === local.resolved) continue;
 			try {
 				if (!(require.resolve(name) in require.cache)) continue;
 			} catch (error) {
@@ -350,20 +361,22 @@ class Installer extends Service {
 
 		return 0;
 	}
-}
 
-namespace Installer {
-	export interface Config {
-		endpoint?: string;
-		timeout?: number;
-	}
-
-	export const Config: Schema<Config> = Schema.object({
+	// erasableSyntaxOnly 禁止含运行时值的 namespace，
+	// 原 namespace 内的 Config 常量移到此处的静态字段，对外形状不变
+	static Config: Schema<Installer.Config> = Schema.object({
 		endpoint: Schema.string().role("link"),
 		timeout: Schema.number()
 			.role("time")
 			.default(Time.second * 5),
 	}); // TODO .hidden()
+}
+
+declare namespace Installer {
+	export interface Config {
+		endpoint?: string;
+		timeout?: number;
+	}
 }
 
 export default Installer;

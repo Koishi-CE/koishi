@@ -14,11 +14,11 @@ declare module "*.vue" {
 }
 
 declare module "*.yaml" {
-	const content: {};
+	const content: Record<never, never>;
 	export default content;
 }
 
 declare module "*.yml" {
-	const content: {};
+	const content: Record<never, never>;
 	export default content;
 }

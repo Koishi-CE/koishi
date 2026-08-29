@@ -50,7 +50,7 @@ export interface ActionOptions {
 	/** 返回 true 时禁用该动作（快捷键与菜单均不触发） */
 	disabled?: (scope: Flatten<ActionContext>) => boolean;
 	/** 动作本体，传入当前作用域执行 */
-	action: (scope: Flatten<ActionContext>) => any;
+	action: (scope: Flatten<ActionContext>) => unknown;
 }
 
 /** 旧版菜单项写法（字段与 ActionOptions 部分重叠），仅为兼容保留 */
@@ -202,7 +202,13 @@ export default class ActionService extends Service {
 		value: MaybeRefOrGetter<ActionContext[K]>,
 	) {
 		return this.ctx.effect(() => {
-			this.ctx.internal.scope[key] = value as any;
+			// 泛型键直写映射属性会被要求交叉类型，经字符串索引视图写入；
+			// 载荷以 unknown 收纳，具体类型由 ActionContext 的声明合并保证
+			const scope = this.ctx.internal.scope as Record<
+				string,
+				MaybeRefOrGetter<unknown>
+			>;
+			scope[key as string] = value;
 			return () => delete this.ctx.internal.scope[key];
 		});
 	}
@@ -234,9 +240,9 @@ function createScope(
 			const source = scope as Record<string, MaybeRefOrGetter<unknown>>;
 			if (key in scope) return toValue(source[key]);
 			// 键本身不存在，但存在以其为前缀的子键：返回子级作用域代理
-			const _prefix = key + ".";
+			const _prefix = `${key}.`;
 			if (Object.keys(scope).some((k) => k.startsWith(_prefix))) {
-				return createScope(scope, key + ".");
+				return createScope(scope, `${key}.`);
 			}
 			// 完全未命中：显式返回 undefined（noImplicitReturns）
 			return undefined;

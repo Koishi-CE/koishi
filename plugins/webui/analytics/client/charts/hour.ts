@@ -41,7 +41,7 @@ export default (ctx: Context) => {
 						minInterval: 1,
 						maxInterval: 4,
 						axisLabel: {
-							formatter: (value) => value + ":00",
+							formatter: (value) => `${value}:00`,
 						},
 						axisPointer: {
 							label: {

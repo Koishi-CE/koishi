@@ -72,7 +72,7 @@ const path = computed({
 	},
 	set(value) {
 		if (!(value in ctx.internal.settings)) value = "";
-		router.replace("/settings/" + value);
+		void router.replace(`/settings/${value}`);
 	},
 });
 </script>

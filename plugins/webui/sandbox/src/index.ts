@@ -8,6 +8,10 @@
  * - 本文件注册浏览器侧可调用的 RPC 监听器（发消息 / 删消息 / 用户管理等），
  *   以及可选的本地静态文件服务（fileServer 配置）。
  */
+
+import { createReadStream } from "node:fs";
+import { extname, resolve } from "node:path";
+import { fileURLToPath } from "node:url";
 import { type Client, DataService } from "@koishi-ce/console";
 import {
 	$,
@@ -18,17 +22,14 @@ import {
 	type Universal,
 	type User,
 } from "@koishi-ce/koishi";
-import {} from "@koishi-ce/plugin-server";
-import { createReadStream } from "fs";
-import { extname, resolve } from "path";
-import { fileURLToPath } from "url";
+import type {} from "@koishi-ce/plugin-server";
 import zhCN from "../locales/zh-CN.yml";
 import { SandboxBot } from "./bot";
 
 // 模块增强必须指向本仓库的 @koishi-ce/koishi（上游包名 "koishi" 在此无法解析）
 declare module "@koishi-ce/koishi" {
 	interface Events {
-		"sandbox/response"(nonce: string, data: any): void;
+		"sandbox/response"(nonce: string, data: unknown): void;
 	}
 }
 
@@ -40,7 +41,7 @@ declare module "@koishi-ce/console" {
 	}
 
 	interface Events {
-		"sandbox/response"(this: Client, nonce: string, data?: any): void;
+		"sandbox/response"(this: Client, nonce: string, data?: unknown): void;
 		"sandbox/send-message"(
 			this: Client,
 			platform: string,
@@ -132,8 +133,8 @@ export function apply(ctx: Context, config: Config) {
 	ctx.console.addEntry(
 		process.env["KOISHI_BASE"]
 			? [
-					process.env["KOISHI_BASE"] + "/dist/index.js",
-					process.env["KOISHI_BASE"] + "/dist/style.css",
+					`${process.env["KOISHI_BASE"]}/dist/index.js`,
+					`${process.env["KOISHI_BASE"]}/dist/style.css`,
 				]
 			: process.env["KOISHI_ENV"] === "browser"
 				? [import.meta.url.replace(/\/src\/[^/]+$/, "/client/index.ts")]
@@ -150,7 +151,7 @@ export function apply(ctx: Context, config: Config) {
 	 * 私聊（channelId 形如 `@userId`）只带 channel，群聊额外附带同 id 的 guild。
 	 */
 	const createEvent = (userId: string, channelId: string) => {
-		const isDirect = channelId === "@" + userId;
+		const isDirect = channelId === `@${userId}`;
 		// exactOptionalPropertyTypes 下可选属性不能显式携带 undefined，guild 按需附加
 		const event: Partial<Universal.Event> = {
 			user: { id: userId, name: userId },

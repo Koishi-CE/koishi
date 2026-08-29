@@ -110,7 +110,7 @@ import { dialogFork, envMap, name, plugins, type Tree } from "./utils";
 
 const props = defineProps<{
 	current: Tree;
-	modelValue: any;
+	modelValue: Record<string, unknown>;
 }>();
 
 const emit = defineEmits(["update:modelValue"]);
@@ -134,7 +134,7 @@ watch(
 	local,
 	(value) => {
 		if (!value || value.runtime) return;
-		send("config/request-runtime", value.name);
+		void send("config/request-runtime", value.name);
 	},
 	{ immediate: true },
 );

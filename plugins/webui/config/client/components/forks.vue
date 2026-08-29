@@ -83,9 +83,9 @@ async function configure(key?: string) {
 	const target = shortname.value;
 	if (!key) {
 		key = Math.random().toString(36).slice(2, 8);
-		send("manager/unload", "", target + ":" + key, {});
+		void send("manager/unload", "", `${target}:${key}`, {});
 	}
-	await router.push("/plugins/" + key);
+	await router.push(`/plugins/${key}`);
 	dialogFork.value = null;
 }
 </script>

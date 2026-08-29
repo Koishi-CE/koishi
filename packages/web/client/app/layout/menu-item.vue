@@ -11,13 +11,17 @@
 </template>
 
 <script lang="ts" setup>
-import { type MaybeGetter, useContext } from "@koishi-ce/client";
+import {
+	type LegacyMenuItem,
+	type MaybeGetter,
+	useContext,
+} from "@koishi-ce/client";
 import { computed } from "vue";
 
 const props = defineProps<{
-	item: any;
+	item: LegacyMenuItem;
 	menuKey?: string;
-	menuData?: any;
+	menuData?: unknown;
 }>();
 
 const ctx = useContext();
@@ -45,10 +49,12 @@ const scope = computed(() =>
 // label / icon 等字段可能是静态值或以 scope 为参的 getter，这里统一解包
 function toValue<T>(getter: MaybeGetter<T>): T {
 	if (typeof getter !== "function") return getter;
-	return (getter as any)(scope.value);
+	// 收窄到 MaybeGetter 的函数分支（以作用域为参的 getter）
+	return (getter as (current: typeof scope.value) => T)(scope.value);
 }
 
 function trigger() {
-	return props.item.action(scope.value);
+	// disabled 计算属性已保证无 action 的按钮不可点击，这里做空值防护
+	return props.item.action?.(scope.value);
 }
 </script>

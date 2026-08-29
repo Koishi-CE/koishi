@@ -24,7 +24,7 @@ import { computed } from "vue";
 const props = defineProps<{ rate: LoadRate; title: string }>();
 
 function percentage(value: number, digits = 1) {
-	return +(value * 100).toFixed(digits) + "%";
+	return `${+(value * 100).toFixed(digits)}%`;
 }
 
 const types = ["used", "app", "free"] as const;

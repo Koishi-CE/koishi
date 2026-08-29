@@ -7,7 +7,7 @@
  */
 import { type Context, Schema } from "@koishi-ce/koishi";
 
-export type Config = {};
+export type Config = Record<never, never>;
 
 export const Config: Schema<Config> = Schema.object({});
 

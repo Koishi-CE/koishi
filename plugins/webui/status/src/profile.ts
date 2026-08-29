@@ -8,6 +8,8 @@
  *
  * 另提供 `status` 指令，在聊天环境内以文本形式输出各机器人状态摘要。
  */
+
+import { cpus, freemem, totalmem } from "node:os";
 import { DataService } from "@koishi-ce/console";
 import {
 	type Bot,
@@ -17,7 +19,6 @@ import {
 	Time,
 	type Universal,
 } from "@koishi-ce/koishi";
-import { cpus, freemem, totalmem } from "os";
 import zhCN from "../locales/zh-CN.yml";
 
 declare module "@koishi-ce/koishi" {
@@ -223,7 +224,6 @@ class ProfileProvider extends DataService<ProfileProvider.Payload> {
 
 	// erasableSyntaxOnly 禁止含运行时值的 namespace，
 	// 原 namespace 内的 Config 常量移到此处的静态字段，对外形状不变
-	// biome-ignore lint/style/useNamingConvention: 插件 Schema 约定为 PascalCase 的 Config 静态属性
 	static Config: Schema<ProfileProvider.Config> = Schema.object({
 		tickInterval: Schema.natural()
 			.role("ms")

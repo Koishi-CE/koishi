@@ -34,18 +34,19 @@
 </template>
 
 <script lang="ts" setup>
-import { useMenu } from "@koishi-ce/client";
+import { type ActionContext, useMenu } from "@koishi-ce/client";
 import { useRoute } from "vue-router";
 
 const props = defineProps<{
 	isLeftAsideOpen: boolean;
 	isRightAsideOpen: boolean;
 	menuKey?: string;
-	menuData?: any;
+	menuData?: unknown;
 }>();
 
 // 溢出菜单按钮的点击触发器：打开 menuKey 对应的上下文菜单
-const trigger = useMenu(props.menuKey as any);
+// （menuKey 为运行期字符串，这里断言为菜单键类型以复用字面量重载）
+const trigger = useMenu(props.menuKey as keyof ActionContext);
 
 defineEmits(["update:isLeftAsideOpen", "update:isRightAsideOpen"]);
 

@@ -10,7 +10,7 @@
  * 并注册本插件的前端设置项 mergeThreshold（状态灯合并显示阈值）。
  */
 import { type Context, Schema } from "@koishi-ce/client";
-import {} from "@koishi-ce/plugin-status";
+import type {} from "@koishi-ce/plugin-status";
 import Analytics from "./analytics.vue";
 import Bots from "./bots";
 import Config from "./config.vue";

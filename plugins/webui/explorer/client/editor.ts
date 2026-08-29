@@ -32,7 +32,7 @@ declare global {
 window.monaco = monaco;
 
 window.MonacoEnvironment = {
-	getWorker(_: string, label: string) {
+	getWorker(_: string, _label: string) {
 		// label 为 monaco 语言 id，如需启用语言服务，在此按 label 分发到
 		// 上面注释掉的各专用 worker
 		// if (label === 'typescript' || label === 'javascript') return new TsWorker()

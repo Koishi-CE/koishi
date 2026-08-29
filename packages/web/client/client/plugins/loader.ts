@@ -1,5 +1,5 @@
 import type { EntryData } from "@koishi-ce/plugin-console";
-import type { EffectScope } from "cordis";
+import type { EffectScope, Plugin } from "cordis";
 import type { Dict } from "cosmokit";
 import { type Ref, ref, shallowReactive, watch } from "vue";
 import type { Context } from "../context";
@@ -24,8 +24,9 @@ export function defineExtension(callback: Extension) {
 }
 
 /** 兼容 rollup 与 vite 两种产物：优先取 default 导出 */
-export function unwrapExports(module: any) {
-	return module?.default || module;
+export function unwrapExports(module: unknown): Plugin {
+	const record = module as { default?: unknown } | null | undefined;
+	return (record?.default || module) as Plugin;
 }
 
 /** 按文件后缀分发的加载器：样式表插入 <link>，其余按动态模块导入 */
@@ -47,7 +48,8 @@ const loaders: Dict<(ctx: Context, url: string) => Promise<void>> = {
 	},
 	async [``](ctx, url) {
 		const exports = await import(/* @vite-ignore */ url);
-		ctx.plugin(unwrapExports(exports), ctx.extension?.data);
+		// 扩展入口均为函数式插件；断言到 Function 形状以走 config 可选的重载
+		ctx.plugin(unwrapExports(exports) as Plugin.Function, ctx.extension?.data);
 	},
 };
 
@@ -68,7 +70,7 @@ export interface LoadResult {
  */
 export default class LoaderService extends Service {
 	/** 最近一次见到的后端实例 id（用于检测服务端重启） */
-	private backendId: any;
+	private backendId: string | undefined;
 
 	/** 当前已加载扩展的 id → LoadResult 映射 */
 	public extensions: Dict<LoadResult> = shallowReactive({} as Dict<LoadResult>);
@@ -78,7 +80,7 @@ export default class LoaderService extends Service {
 
 		// 服务端推送扩展入口的随附数据（entry-data）：
 		// 同步到 store.entry 并刷新已加载扩展的 data ref
-		receive("entry-data", ({ id, data }) => {
+		receive<{ id: string; data: unknown }>("entry-data", ({ id, data }) => {
 			const entry = store.entry?.[id];
 			if (!entry) return;
 			entry.data = data;
@@ -96,7 +98,9 @@ export default class LoaderService extends Service {
 			() => store.entry,
 			async (newValue, oldValue) => {
 				// _id 标识后端实例：变化说明服务端已重启，页面状态不再可信
-				const { _id, ...rest } = (newValue || {}) as Dict<EntryData>;
+				const { _id, ...rest } = (newValue || {}) as Dict<EntryData> & {
+					_id?: string | undefined;
+				};
 				if (this.backendId && _id && this.backendId !== _id) {
 					window.location.reload();
 					return;
@@ -133,7 +137,8 @@ export default class LoaderService extends Service {
 								return undefined;
 							}),
 						);
-						task.finally(() => {
+						// 加载完成即标记 done（扩展加载失败不阻塞界面可用性）
+						void task.finally(() => {
 							const extension = this.extensions[key];
 							if (extension) extension.done.value = true;
 						});

@@ -32,17 +32,33 @@
 <script lang="ts" setup>
 import { computed, ref, watch } from "vue";
 
+/** 单条表达式的操作数：[{ $: 实体名 }, 比较值] */
+type Operand = [{ $: string }, unknown];
+
+/** minato 过滤表达式：单条 { [运算符]: 操作数 }，或 $and / $or 逻辑组合 */
+interface FilterExpr {
+	$and?: FilterExpr[];
+	$or?: FilterExpr[];
+	[operator: string]: FilterExpr[] | Operand | undefined;
+}
+
+/** 过滤器宿主选项：userFields 声明可选的自定义用户字段（user.* 实体开关） */
+interface FilterOptions {
+	userFields?: string[];
+}
+
 const props = defineProps<{
-	modelValue: any;
+	modelValue: FilterExpr | null;
 	disabled?: boolean;
-	options?: any;
+	options?: FilterOptions;
 }>();
 
 const emit = defineEmits(["update:modelValue"]);
 
 const entity = ref<string>();
 const operator = ref<string>();
-const value = ref<any>();
+// 比较值：文本输入为 string，权限字段为 number，解析外部值时也可能是其余类型
+const value = ref<unknown>();
 // isDirect（是否私聊）用的开关量
 const boolean = ref<boolean>(false);
 
@@ -59,7 +75,7 @@ function isValid(key: string) {
 }
 
 // 实体字段的中文文案（与 k-filter-button 共用同一套键名）
-const entities = {
+const entities: Record<string, string> = {
 	isDirect: "是否私聊",
 	userId: "用户 ID",
 	guildId: "群组 ID",
@@ -70,7 +86,7 @@ const entities = {
 };
 
 // 运算符的中文文案
-const operators = {
+const operators: Record<string, string> = {
 	$in: "属于",
 	$nin: "不属于",
 	$eq: "等于",
@@ -92,15 +108,15 @@ const availableOps = computed(() => {
 // 外部 modelValue 变化时反向解析出三段状态（数组值拼回逗号分隔文本）
 watch(
 	() => props.modelValue,
-	() => {
-		operator.value = Object.keys(props.modelValue)[0];
-		const exprValue = props.modelValue[operator.value];
+	(modelValue) => {
+		operator.value = Object.keys(modelValue ?? {})[0];
+		const exprValue = modelValue?.[operator.value ?? ""] as Operand | undefined;
 		if (!exprValue) return;
-		entity.value = exprValue[0].$;
+		entity.value = exprValue[0]?.$;
 		value.value = Array.isArray(exprValue[1])
 			? exprValue[1].join(", ")
 			: entity.value === "user.authority"
-				? +exprValue[1]
+				? Number(exprValue[1])
 				: exprValue[1];
 	},
 	{ immediate: true },
@@ -125,18 +141,20 @@ watch(entity, () => {
 watch(
 	[entity, operator, value, boolean],
 	([entity, operator, value, boolean]) => {
-		if (!entities[entity]) return;
+		if (!entity || !entities[entity]) return;
 		if (entity === "isDirect") {
 			return emit("update:modelValue", {
 				$eq: [{ $: entity }, boolean],
 			});
 		}
-		if (!operators[operator] || !value) return;
-		let result: any = value;
+		if (!operator || !operators[operator] || !value) return;
+		let result: unknown = value;
 		if (["$in", "$nin"].includes(operator)) {
-			result = value.split(/\s*,\s*/g).filter(Boolean);
+			result = String(value)
+				.split(/\s*,\s*/g)
+				.filter(Boolean);
 		} else if (entity === "user.authority") {
-			result = +value;
+			result = Number(value);
 		}
 		emit("update:modelValue", {
 			[operator]: [{ $: entity }, result],

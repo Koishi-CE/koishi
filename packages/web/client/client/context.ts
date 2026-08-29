@@ -111,7 +111,7 @@ export class Context extends cordis.Context {
 	 */
 	addEventListener<K extends keyof WindowEventMap>(
 		type: K,
-		listener: (this: Window, ev: WindowEventMap[K]) => any,
+		listener: (this: Window, ev: WindowEventMap[K]) => unknown,
 		options?: boolean | AddEventListenerOptions,
 	) {
 		return this.effect(() => {

@@ -39,9 +39,12 @@ export function withProxy(url: string) {
 /** 当前与服务端的 WebSocket 连接（未连接时为 null） */
 export const socket = ref<Universal.WebSocket | null>(null);
 /** 按事件名登记的推送监听器（receive 注册） */
-const listeners: Record<string, (data: any) => void> = {};
+const listeners: Record<string, (data: unknown) => void> = {};
 /** 按报文 id 暂存的 RPC 应答钩子 [resolve, reject]（send 写入） */
-const responseHooks: Record<string, [Function, Function]> = {};
+const responseHooks: Record<
+	string,
+	[(value: unknown) => void, (reason?: unknown) => void]
+> = {};
 
 /**
  * 向服务端发起一次 RPC 调用。
@@ -55,7 +58,7 @@ export function send<T extends keyof Events>(
 	type: T,
 	...args: Parameters<Events[T]>
 ): Promisify<ReturnType<Events[T]>>;
-export function send(type: string, ...args: any[]) {
+export function send(type: string, ...args: unknown[]) {
 	if (!socket.value) return;
 	console.debug("↑%c", "color:brown", type, args);
 	const id = Math.random().toString(36).slice(2, 9);
@@ -73,35 +76,48 @@ export function send(type: string, ...args: any[]) {
  * 注册服务端主动推送事件的监听器（每类事件仅保留最后一个监听）。
  * @param event 事件名，如 "data" / "patch" / "response" / "entry-data"
  */
-export function receive<T = any>(event: string, listener: (data: T) => void) {
-	listeners[event] = listener;
+export function receive<T = unknown>(
+	event: string,
+	listener: (data: T) => void,
+) {
+	// 注册表按 unknown 分发实际报文，监听器的载荷类型由调用方以泛型参数自行声明
+	listeners[event] = listener as (data: unknown) => void;
 }
 
+/** Store 各键负载数据的联合（服务端推送的合法取值集合） */
+type StoreValue = Store[keyof Store];
+
 // 服务端整表推送：直接覆盖 store 中对应键
-receive<{ key: keyof Store; value: any }>("data", ({ key, value }) => {
-	store[key] = value;
+// （key 为联合类型时直写 store[key] 会被要求交叉类型，故经 Record 视图写入）
+receive<{ key: keyof Store; value: unknown }>("data", ({ key, value }) => {
+	(store as Record<keyof Store, StoreValue>)[key] = value as StoreValue;
 });
 
 // 服务端增量推送：数组做追加，对象做浅合并
-receive<{ key: keyof Store; value: any }>("patch", ({ key, value }) => {
-	if (Array.isArray(store[key])) {
-		store[key].push(...value);
-	} else if (store[key]) {
-		Object.assign(store[key], value);
+receive<{ key: keyof Store; value: unknown }>("patch", ({ key, value }) => {
+	const current = store[key];
+	if (Array.isArray(current)) {
+		(current as unknown[]).push(...(value as unknown[]));
+	} else if (current) {
+		Object.assign(current, value);
 	}
 });
 
 // RPC 应答分发：按报文 id 找到 send() 留下的 resolve/reject 并结算
-receive("response", ({ id, value, error }) => {
-	if (!responseHooks[id]) return;
-	const [resolve, reject] = responseHooks[id];
-	delete responseHooks[id];
-	if (error) {
-		reject(error);
-	} else {
-		resolve(value);
-	}
-});
+receive<{ id: string; value?: unknown; error?: unknown }>(
+	"response",
+	({ id, value, error }) => {
+		const hooks = responseHooks[id];
+		if (!hooks) return;
+		delete responseHooks[id];
+		const [resolve, reject] = hooks;
+		if (error) {
+			reject(error);
+		} else {
+			resolve(value);
+		}
+	},
+);
 
 /**
  * 建立 WebSocket 连接并维护其生命周期。

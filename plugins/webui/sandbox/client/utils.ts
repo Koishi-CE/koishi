@@ -52,7 +52,7 @@ export const config: RemovableRef<SandboxConfig> = useStorage<SandboxConfig>(
 	"sandbox",
 	1.1,
 	() => ({
-		platform: "sandbox:" + Math.random().toString(36).slice(2),
+		platform: `sandbox:${Math.random().toString(36).slice(2)}`,
 		user: "",
 		index: 0,
 		messages: {},
@@ -63,7 +63,7 @@ export const config: RemovableRef<SandboxConfig> = useStorage<SandboxConfig>(
 /** 当前会话的频道 id：群聊固定为 `#`，私聊为 `@当前用户`。 */
 export const channel = computed(() => {
 	if (config.value.panelType === "guild") return "#";
-	return "@" + config.value.user;
+	return `@${config.value.user}`;
 });
 
 // 机器人回复到达:归属本平台的消息按频道归档上屏

@@ -42,7 +42,7 @@ bun packages/web/client/src/bin.ts build <插件目录>  # 单个 webui 插件�
 ```
 
 - `apps/koishi-create` 有自己的 tsdown.config.ts，进目录 `bun run build`（koishi-scripts 已并入根构建）；`apps/online` 用 `src/build.ts`（vite 编程式，PPA 在线化）。
-- **类型检查现状（进行中）**：严格模式错误清理已完成 `packages/node/*` 六包（0 错误）；webui 插件 `client/` 侧、`packages/web/*`、`apps/online` 及部分插件 `src/` 仍有存量错误。最低要求：**改哪个包，保证该包所在 project 不新增错误**；`packages/node/*` 保持 0。`plugins/webui/market` 两个 project 在 TS6（`node_modules/typescript`）基准下为 0 错误，TS7 下的存量报告全是下方 augmentation 缺陷的假错误。
+- **类型检查现状**：全仓 50 个 project 在 TS7 下 0 错误（含 `packages/web/*`、`apps/online` 与 market 两个 project）。最低要求：**改哪个包，保证该包所在 project 不新增错误**。
 - 上游同步（port 上游改动）按 `UPSTREAM.md` 的映射表手动 diff 移植，完成后跑 `bun run build` + `bun test`。
 
 ## 代码风格
@@ -55,8 +55,10 @@ bun packages/web/client/src/bin.ts build <插件目录>  # 单个 webui 插件�
 ## 已知坑（历史经验，别再踩）
 
 - `.yml` 导入链路：类型来自 `packages/node/core/src/i18n/yml.d.ts`（由 tsconfig.base 的 files 全局注入），测试 / Bun 运行时靠 Bun 原生 yml 支持；构建期由 tsdown copy loader 原样拷入产物并改写引用路径。
-- **TS7 native 的跨文件 `declare module` 增强不生效**（`@typescript/native` 7.0.2 实证：同一增强在 TS6 下正常合并、TS7 下静默失效，同文件内引用不受影响）。依赖声明合并的类型（如 console 的 `Console.Services` 服务注入）在 TS7 全量 typecheck 里会假报缺键。market 的解法是 `plugins/webui/market/client/console-services.ts` 显式镜像 node 侧声明——**node 侧声明变更时须同步该文件**。
-- market 迁入的类型链细节：client 基座 `tsconfig.client.json` 的 paths 把 `@koishi-ce/plugin-market` / `@koishi-ce/plugin-config` 指到 **lib 产物 d.ts**（等效 npm 生态 exports types 解析；指向 src 会把 node 侧源码混进 client 检查）；`collectWorkspaceAliases()` 新增 `<包名>/client` 子路径映射（跨插件引用彼此 client API 的解析通道，如 market 引 config 的 EnvInfo）。
+- **TS7 native 的跨文件 `declare module` 增强对"经 lib 产物 d.ts 的模块骨架"不生效**：浏览器端工程对 console 类型的消费走 `packages/web/client/client/shims.d.ts` 手写的 `"@koishi-ce/plugin-console"` 骨架（无 node_modules 链接与 paths 指向真实插件），各插件 client 工程须向**同一模块名**镜像自己的 Services / Events 注入，且载荷要用骨架自带的 `DataService<T>` 包装（client 侧 Store 映射按 `Services[K] extends DataService<infer T>` 推导）。market 的镜像是 `plugins/webui/market/client/console-services.ts`（Dict / Dependency 为内联镜像，类型实体经 `market/client/tsconfig.json` 指向各包 lib 产物 d.ts 解析）——**node 侧声明变更时须同步该文件**。
+- market 迁入的类型链细节：client 基座 `tsconfig.client.json` 的 paths 把 `@koishi-ce/plugin-market` / `@koishi-ce/plugin-config` 指到 **lib 产物 d.ts**（等效 npm 生态 exports types 解析；指向 src 会把 node 侧源码混进 client 检查）；`market/client/tsconfig.json` 在此基础上补了 `@koishi-ce/{koishi,console,registry}` 的产物 d.ts paths（镜像文件类型引用的解析通道，勿指 src——会引入源码连锁）；`collectWorkspaceAliases()` 新增 `<包名>/client` 子路径映射（跨插件引用彼此 client API 的解析通道，如 market 引 config 的 EnvInfo）。
+- biome 对 `.vue` 只解析 script 块、**不追踪模板引用**：biome.json 已对 `**/*.vue` 关闭 noUnusedVariables / noUnusedImports / noUnusedFunctionParameters / useVueMultiWordComponentNames / useImportType（模板使用会假阳性，useImportType 会把模板组件的值导入改回 `import type` 使运行时失注册）；模板语义检查归 eslint（`bun run lint:client`）。
+- 显式 `any` 全仓为 0，保持住：动态边界（JSON.parse / socket 消息 / 第三方回调）用 `unknown` + 收窄，不要回退 `any`；`{}` 类型用 `Record<never, never>`。
 - 测试断言**新标准是 `bun:test` 的 `expect`**（Jest/Vitest 风格 API）；core 与 echo 已完成迁移（shape 断言用 `packages/node/core/tests/shape.ts` 注册的 `toHaveShape` 自定义 matcher，import 该文件一次即注册）。存量 chai 用例（loader / utils / i18n-utils / broadcast / help / admin / commands）逐步迁移，**不要新增 chai 断言**；`chai-as-promised` 的 `.eventually` / `.be.rejected` 写法对应 `await expect(p).resolves / .rejects`。
 - 前端构建**没有 vite 配置文件**，全部是编程式 `vite.build()`：宿主控制台总装在 `packages/web/client/scripts/client.ts`（产物路径硬编码到 `plugins/webui/console/dist`）；单插件用 `packages/web/client/src/index.ts` 的 `build(root)`（内置 `collectWorkspaceAliases()`——未被依赖的 workspace 包不会出现在 node_modules 链接里，必须显式映射才能被 bundler 解析）。
 - `tooling/scripts/typecheck.ts` 递归扫描 packages / plugins / apps 下**所有** `tsconfig.json`（不读 .gitignore），无排除项（koishi-scripts 的脚手架模板已内嵌进源码，无独立模板工程）。

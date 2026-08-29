@@ -8,6 +8,8 @@
  * 配置同步对话框）。
  */
 
+import { createHash } from "node:crypto";
+import { resolve } from "node:path";
 import type { Client, DataService } from "@koishi-ce/console";
 import {
 	type Binding,
@@ -18,8 +20,7 @@ import {
 	Time,
 	type User,
 } from "@koishi-ce/koishi";
-import { createHash } from "crypto";
-import { resolve } from "path";
+import zhCN from "../locales/zh-CN.yml";
 
 declare module "@koishi-ce/koishi" {
 	interface Context {
@@ -28,7 +29,8 @@ declare module "@koishi-ce/koishi" {
 
 	interface User {
 		password: string;
-		config: any;
+		/** 客户端控制台配置的 JSON 快照（内容仅由浏览器端解释，服务端透传；建表初始为 null） */
+		config: object | null;
 	}
 
 	interface Tables {
@@ -141,7 +143,6 @@ class AuthService extends Service {
 	// 的导出值迁为静态成员(合并到 class 的 namespace 本就编译为静态属性,运行时等价)
 	static filter = false;
 
-	// biome-ignore lint/style/useNamingConvention: cordis 的 resolveConfig 按 plugin["Config"] 读取静态成员,Koishi 插件生态约定 Schema 静态导出为 PascalCase
 	static Admin: Schema<AuthService.Admin> = Schema.intersect([
 		Schema.object({
 			enabled: Schema.boolean().default(true),
@@ -156,7 +157,6 @@ class AuthService extends Service {
 		]),
 	]);
 
-	// biome-ignore lint/style/useNamingConvention: 同上,cordis 按 plugin["Config"] 读取
 	static Config: Schema<AuthService.Config> = Schema.intersect([
 		Schema.object({
 			admin: AuthService.Admin,
@@ -172,7 +172,7 @@ class AuthService extends Service {
 				.min(Time.minute),
 		}),
 	]).i18n({
-		"zh-CN": require("../locales/zh-CN"),
+		"zh-CN": zhCN,
 	});
 
 	// Service 基类已声明 config(T = any),此处覆盖为插件配置类型
@@ -224,13 +224,15 @@ class AuthService extends Service {
 		const { enabled, username, password } = this.config.admin;
 		if (!enabled) return;
 		this.ctx.logger.info("creating admin account");
-		// enabled 分支的 Schema 已保证 username/password 存在(默认 admin / required)
+		// enabled 分支的 Schema 已保证 username/password 存在(默认 admin / required),
+		// 此处守卫仅用于类型收窄
+		if (!username || !password) return;
 		await this.ctx.database.upsert("user", [
 			{
 				id: 0,
-				name: username!,
+				name: username,
 				authority: 5,
-				password: toHash(password!),
+				password: toHash(password),
 				createdAt: new Date(),
 			},
 		]);
@@ -277,7 +279,7 @@ class AuthService extends Service {
 		user: Pick<User, "id" | "name" | "authority" | "config">,
 	) {
 		// WebSocket 升级连接必带 HTTP 请求对象(见 console 服务端构造 Client 处)
-		const { headers, socket } = client.request!;
+		const { headers, socket } = client.request;
 		const createdAt = new Date();
 		const lastUsedAt = new Date();
 		const userAgent = headers["user-agent"]?.toString();
@@ -293,8 +295,8 @@ class AuthService extends Service {
 			token,
 			createdAt,
 			lastUsedAt,
-			userAgent: userAgent!,
-			address: address!,
+			userAgent: userAgent as string,
+			address: address as string,
 		});
 		await this.setAuth(client, { ...user, expiredAt, token });
 	}
@@ -445,10 +447,11 @@ class AuthService extends Service {
 		ctx.console.addListener("user/unbind", async function (platform, pid) {
 			if (!this.auth) throw new Error("请先登录。");
 			const bindings = await ctx.database.get("binding", { aid: this.auth.id });
-			// 客户端仅对已列出的绑定发起解绑,查找必命中
+			// 客户端仅对已列出的绑定发起解绑,查找必命中,未命中视为异常状态
 			const binding = bindings.find(
 				(item) => item.platform === platform && item.pid === pid,
-			)!;
+			);
+			if (!binding) throw new Error("绑定不存在。");
 			if (binding.aid !== binding.bid) {
 				await ctx.database.set(
 					"binding",

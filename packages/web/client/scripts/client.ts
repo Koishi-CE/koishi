@@ -43,7 +43,7 @@ function findModulePath(id: string) {
 // 源码 scripts/ 与打包后 lib/ 到仓库根的深度一致（四级），两种运行
 // 形态下相对定位结果相同
 const cwd = resolve(import.meta.dir, "../../../..");
-const dist = cwd + "/plugins/webui/console/dist";
+const dist = `${cwd}/plugins/webui/console/dist`;
 
 /**
  * 通用构建函数：以 `root` 为构建根目录打一个 ES 模块包到 console dist。
@@ -63,7 +63,7 @@ export async function build(
 	return (await vite.build({
 		root,
 		build: {
-			outDir: cwd + "/plugins/webui/console/dist",
+			outDir: `${cwd}/plugins/webui/console/dist`,
 			emptyOutDir: true,
 			// 样式合并为单个 style.css，方便服务端一次性下发
 			cssCodeSplit: false,
@@ -74,10 +74,10 @@ export async function build(
 				// 各 root 下预置的共享包文件（vue.js / client.js 等）视为外部依赖，
 				// 产物以相对路径引用它们而非打包进来
 				external: [
-					root + "/vue.js",
-					root + "/vue-router.js",
-					root + "/client.js",
-					root + "/vueuse.js",
+					`${root}/vue.js`,
+					`${root}/vue-router.js`,
+					`${root}/client.js`,
+					`${root}/vueuse.js`,
 				],
 				output: {
 					format: "module",
@@ -91,15 +91,14 @@ export async function build(
 		plugins: [vue(), yaml(), ...(config.plugins || [])],
 		resolve: {
 			alias: {
-				vue: root + "/vue.js",
-				"vue-router": root + "/vue-router.js",
-				"@vueuse/core": root + "/vueuse.js",
-				"@koishi-ce/client": root + "/client.js",
+				vue: `${root}/vue.js`,
+				"vue-router": `${root}/vue-router.js`,
+				"@vueuse/core": `${root}/vueuse.js`,
+				"@koishi-ce/client": `${root}/client.js`,
 				// 虚拟子路径的运行时载体（补齐真实包缺失的 SchemaBase 具名
 				// 导出，见 packages/web/components/client/schemastery-vue-runtime.ts）；
 				// 类型面由根 tsconfig.client.json 的 paths 解析到类型载体
-				"schemastery-vue/client":
-					cwd + "/packages/web/components/client/schemastery-vue-runtime.ts",
+				"schemastery-vue/client": `${cwd}/packages/web/components/client/schemastery-vue-runtime.ts`,
 				...(isClient
 					? {
 							// client 组件库本体需要真实打包 vue-i18n：直接别名到官方
@@ -111,7 +110,7 @@ export async function build(
 						}
 					: {
 							// 其余构建（主应用等）不打包 vue-i18n，运行时复用宿主的 client.js
-							"vue-i18n": root + "/client.js",
+							"vue-i18n": `${root}/client.js`,
 						}),
 			},
 		},
@@ -120,7 +119,7 @@ export async function build(
 
 export default async function () {
 	// 第一步：构建控制台主应用（入口为 app/index.html，产物 index.js）
-	const { output } = await build(cwd + "/packages/web/client/app", {
+	const { output } = await build(`${cwd}/packages/web/client/app`, {
 		plugins: [
 			unocss({
 				presets: [
@@ -138,17 +137,16 @@ export default async function () {
 	// preserveEntrySignatures: "strict" 保留入口导出签名供具名导入
 	await Promise.all([
 		Bun.write(
-			dist + "/vue.js",
-			Bun.file(findModulePath("vue") + "/dist/vue.runtime.esm-browser.prod.js"),
+			`${dist}/vue.js`,
+			Bun.file(`${findModulePath("vue")}/dist/vue.runtime.esm-browser.prod.js`),
 		),
-		build(findModulePath("vue-router") + "/dist", {
+		build(`${findModulePath("vue-router")}/dist`, {
 			build: {
 				outDir: dist,
 				emptyOutDir: false,
 				rollupOptions: {
 					input: {
-						"vue-router":
-							findModulePath("vue-router") + "/dist/vue-router.esm-browser.js",
+						"vue-router": `${findModulePath("vue-router")}/dist/vue-router.esm-browser.js`,
 					},
 					preserveEntrySignatures: "strict",
 				},
@@ -162,7 +160,7 @@ export default async function () {
 					// @vueuse/core v14 的 ESM 入口位于 dist/index.js
 					// （v11 时代是包根的 index.mjs）
 					input: {
-						vueuse: findModulePath("@vueuse/core") + "/dist/index.js",
+						vueuse: `${findModulePath("@vueuse/core")}/dist/index.js`,
 					},
 					preserveEntrySignatures: "strict",
 				},
@@ -173,14 +171,14 @@ export default async function () {
 	// 第三步：构建 client 组件库（isClient = true，打包真实 vue-i18n）；
 	// element-plus 体积大，单独拆为 element chunk
 	await build(
-		cwd + "/packages/web/client/client",
+		`${cwd}/packages/web/client/client`,
 		{
 			build: {
 				outDir: dist,
 				emptyOutDir: false,
 				rollupOptions: {
 					input: {
-						client: cwd + "/packages/web/client/client/index.ts",
+						client: `${cwd}/packages/web/client/client/index.ts`,
 					},
 					output: {
 						// element-plus 体积大，单独拆为 element chunk
@@ -201,7 +199,7 @@ export default async function () {
 	for (const file of output) {
 		if (file.type === "asset" && file.name === "style.css") {
 			if (file.source === undefined) continue;
-			await appendFile(dist + "/style.css", file.source);
+			await appendFile(`${dist}/style.css`, file.source);
 		}
 	}
 }

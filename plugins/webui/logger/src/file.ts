@@ -1,6 +1,6 @@
+import { Buffer } from "node:buffer";
+import { type FileHandle, open } from "node:fs/promises";
 import type { Logger } from "@koishi-ce/koishi";
-import { Buffer } from "buffer";
-import { type FileHandle, open } from "fs/promises";
 
 /**
  * 追加式日志文件写入器（每行一条 JSON）。

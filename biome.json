@@ -49,15 +49,28 @@
 	},
 	"overrides": [
 		{
-			"includes": [
-				"**/tests/**",
-				"**/*.{spec,test}.*"
-			],
+			"includes": ["**/tests/**", "**/*.{spec,test}.*"],
 			"linter": {
 				"rules": {
 					"style": {
 						"useNamingConvention": "off",
 						"noNonNullAssertion": "off"
+					}
+				}
+			}
+		},
+		{
+			"includes": ["**/*.vue"],
+			"linter": {
+				"rules": {
+					"correctness": {
+						"noUnusedVariables": "off",
+						"noUnusedImports": "off",
+						"noUnusedFunctionParameters": "off"
+					},
+					"style": {
+						"useVueMultiWordComponentNames": "off",
+						"useImportType": "off"
 					}
 				}
 			}

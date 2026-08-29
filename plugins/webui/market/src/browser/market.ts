@@ -1,4 +1,4 @@
-import {} from "@koishi-ce/plugin-config";
+import type {} from "@koishi-ce/plugin-config";
 import { MarketProvider as BaseMarketProvider } from "../shared";
 
 export default class MarketProvider extends BaseMarketProvider {
@@ -6,7 +6,7 @@ export default class MarketProvider extends BaseMarketProvider {
 		return this.ctx.loader.market;
 	}
 
-	async get() {
+	override async get() {
 		const market = await this.prepare();
 		if (!market) return { data: {}, failed: 0, total: 0, progress: 0 };
 		return {

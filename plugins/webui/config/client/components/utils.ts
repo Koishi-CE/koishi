@@ -47,22 +47,22 @@ export interface EnvInfo {
 // src/shared/index.ts、src/shared/writer.ts 对 "@koishi-ce/console" 的声明一一对应
 declare module "@koishi-ce/plugin-console" {
 	interface Events {
-		"manager/app-reload"(config: any): void;
+		"manager/app-reload"(config: unknown): void;
 		"manager/teleport"(
 			source: string,
 			key: string,
 			target: string,
 			index: number,
 		): void;
-		"manager/reload"(parent: string, key: string, config: any): void;
+		"manager/reload"(parent: string, key: string, config: unknown): void;
 		"manager/unload"(
 			parent: string,
 			key: string,
-			config: any,
+			config: unknown,
 			index?: number,
 		): void;
 		"manager/remove"(parent: string, key: string): void;
-		"manager/meta"(ident: string, config: any): void;
+		"manager/meta"(ident: string, config: unknown): void;
 	}
 
 	namespace Console {
@@ -96,8 +96,8 @@ export const coreDeps = [
 export function hasCoreDeps(tree: Tree) {
 	if (
 		tree.name &&
-		(coreDeps.includes("@koishi-ce/plugin-" + tree.name) ||
-			coreDeps.includes("@koishijs/plugin-" + tree.name))
+		(coreDeps.includes(`@koishi-ce/plugin-${tree.name}`) ||
+			coreDeps.includes(`@koishijs/plugin-${tree.name}`))
 	)
 		return true;
 	if (tree.children) return tree.children.some(hasCoreDeps);
@@ -196,7 +196,7 @@ export interface Tree {
 	/** 用户自定义标签（$label），展示时代替插件名 */
 	label?: string;
 	/** 该节点的原始配置对象 */
-	config?: any;
+	config?: unknown;
 	parent?: Tree;
 	/** 是否处于停用状态（配置键带 ~ 前缀） */
 	disabled?: boolean;
@@ -262,11 +262,16 @@ export const type = computed(() => {
  * @param plugins 当前层级的 plugins 配置对象
  * @returns 节点列表（保持配置文件中的书写顺序）
  */
-function getTree(parent: Tree, plugins: any): Tree[] {
+function getTree(
+	parent: Tree,
+	plugins: Record<string, unknown> | undefined,
+): Tree[] {
 	const trees: Tree[] = [];
+	if (!plugins) return trees;
 	for (let key in plugins) {
 		if (key.startsWith("$")) continue;
-		const config = plugins[key];
+		// 配置值本质是任意 JSON 对象（插件配置或嵌套分组），此处按字典收窄使用
+		const config = plugins[key] as Record<string, unknown> | undefined;
 		const node = { config, parent } as Tree;
 		if (key.startsWith("~")) {
 			node.disabled = true;
@@ -275,7 +280,8 @@ function getTree(parent: Tree, plugins: any): Tree[] {
 		node.name = key.split(":", 1)[0] ?? "";
 		node.id = key;
 		node.path = key.slice(node.name.length + 1);
-		node.label = config?.$label;
+		const label = config?.$label as string | undefined;
+		if (label !== undefined) node.label = label;
 		if (key.startsWith("group:")) {
 			node.children = getTree(node, config);
 		}
@@ -312,7 +318,9 @@ export const plugins = computed(() => {
 	}
 	/** 收集展开状态、fork 索引与路径索引。 */
 	function traverse(tree: Tree) {
-		if (!tree.config?.$collapsed && tree.children) {
+		const collapsed = (tree.config as Record<string, unknown> | undefined)
+			?.$collapsed;
+		if (!collapsed && tree.children) {
 			expanded.push(tree.path);
 		}
 		(forks[tree.name] ||= []).push(tree.path);
@@ -354,6 +362,7 @@ export function getStatus(tree: Tree) {
  * @param tree 待移除的配置树节点
  */
 export async function removeItem(tree: Tree) {
-	void send("manager/remove", tree.parent?.path ?? "", tree.id);
-	await router.replace("/plugins/" + tree.parent!.path);
+	const parent = tree.parent?.path ?? "";
+	void send("manager/remove", parent, tree.id);
+	await router.replace(`/plugins/${parent}`);
 }

@@ -36,7 +36,7 @@ watch(
 				entry.filename = prefix + entry.name;
 				files[entry.filename] = entry;
 				delete oldFiles[entry.filename];
-				traverse(entry.children, entry.filename + "/");
+				traverse(entry.children, `${entry.filename}/`);
 			}
 		}
 		traverse(store.explorer);

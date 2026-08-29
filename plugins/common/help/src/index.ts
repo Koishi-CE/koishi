@@ -139,7 +139,7 @@ export function apply(ctx: Context, config: Config) {
 	// 指令执行前的拦截：带 -h 或指令本身没有 action 时，转而输出帮助
 	ctx.before(
 		"command/execute",
-		(argv: Argv<never, never, any[], { help?: boolean }>) => {
+		(argv: Argv<never, never, unknown[], { help?: boolean }>) => {
 			const { command, options, session } = argv;
 			if (!command || !session || !options) return;
 			if (options["help"] && command._options["help"]) {
@@ -317,9 +317,8 @@ async function formatCommands(
 
 	const prefix = session.resolve(session.app.koishi.config.prefix)?.[0] ?? "";
 	const output = children.map(({ name, displayName, config }) => {
-		let output = "    " + prefix + displayName.replace(/\./g, " ");
-		output +=
-			"  " + session.text([`commands.${name}.description`, ""], config.params);
+		let output = `    ${prefix}${displayName.replace(/\./g, " ")}`;
+		output += `  ${session.text([`commands.${name}.description`, ""], config.params)}`;
 		return output;
 	});
 	const hints: string[] = [];
@@ -364,9 +363,9 @@ function getOptions(
 				option.descPath ?? [`commands.${command.name}.options.${name}`, ""],
 				option.params,
 			);
-			if (description) line += "  " + description;
+			if (description) line += `  ${description}`;
 			line = command.ctx.chain("help/option", line, option, command, session);
-			output.push("    " + line);
+			output.push(`    ${line}`);
 		}
 
 		// 无值选项直接输出；带值选项再逐个输出其语法变体
@@ -442,7 +441,7 @@ async function showHelp(
 	if (command._examples.length) {
 		output.push(
 			session.text(".command-examples"),
-			...command._examples.map((example) => "    " + example),
+			...command._examples.map((example) => `    ${example}`),
 		);
 	} else {
 		const text = session.text(
@@ -452,7 +451,7 @@ async function showHelp(
 		if (text)
 			output.push(
 				session.text(".command-examples"),
-				...text.split("\n").map((line) => "    " + line),
+				...text.split("\n").map((line) => `    ${line}`),
 			);
 	}
 

@@ -22,7 +22,7 @@ class PackageScanner extends LocalScanner {
 	}
 
 	/** 单个包解析失败时仅记录警告，不中断整体扫描。 */
-	override async onError(error: any, name: string) {
+	override async onError(error: unknown, name: string) {
 		logger.warn("failed to resolve %c", name);
 		logger.warn(error);
 	}

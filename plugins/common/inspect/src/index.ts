@@ -11,7 +11,7 @@ import zhCN from "../locales/zh-CN.yml";
 export const name = "inspect";
 
 /** 配置项（当前无可用配置） */
-export type Config = {};
+export type Config = Record<never, never>;
 
 export const Config: Schema<Config> = Schema.object({});
 

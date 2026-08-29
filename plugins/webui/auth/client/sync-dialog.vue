@@ -21,7 +21,13 @@
  * 由用户选择上传本地、下载云端或关闭同步。对话框不可点击遮罩关闭，
  * 强制用户做出选择（关闭即视为关闭同步）。
  */
-import { message, send, store, useConfig } from "@koishi-ce/client";
+import {
+	type Config,
+	message,
+	send,
+	store,
+	useConfig,
+} from "@koishi-ce/client";
 import { shared, showSyncDialog } from "./utils";
 
 const config = useConfig();
@@ -32,7 +38,8 @@ async function setMode(value?: "upload" | "download") {
 	showSyncDialog.value = false;
 	if (!value) return;
 	if (value === "download") {
-		config.value = store.user.config;
+		// 云端 user.config 服务端透传存储,此处按客户端配置形状收窄使用
+		config.value = store.user.config as Config;
 		return;
 	}
 	try {

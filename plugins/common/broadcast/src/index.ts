@@ -10,7 +10,7 @@ import { Channel, type Context, Schema } from "@koishi-ce/koishi";
 import zhCN from "../locales/zh-CN.yml";
 
 /** 配置项（当前无可用配置） */
-export type Config = {};
+export type Config = Record<never, never>;
 
 export const name = "broadcast";
 export const inject = ["database"];

@@ -58,7 +58,7 @@ export default function apply(ctx: Context) {
 		.action(async ({ options, session }, authority) => {
 			if (!session) return;
 			// -u 选项由下方 adminUser 动态注入,不在静态 options 类型中
-			const { user } = (options ?? {}) as Extend<{}, "user", string>;
+			const { user } = (options ?? {}) as Extend<object, "user", string>;
 			if (!user) {
 				return session.text("admin.user-expected");
 			}
@@ -133,7 +133,7 @@ function adminUser(command: Command) {
 	 * 目标权限不低于操作者时拒绝操作。
 	 */
 	async function setTarget(
-		argv: Argv<"authority", never, unknown[], Extend<{}, "user", unknown>>,
+		argv: Argv<"authority", never, unknown[], Extend<object, "user", unknown>>,
 	) {
 		const { options, session } = argv;
 		if (!session) return undefined;
@@ -155,8 +155,10 @@ function adminUser(command: Command) {
 
 		if (!data) {
 			notFound = true;
-			// user 表由内核启动时注册,运行时必然存在
-			const temp = app.model.tables["user"]!.create();
+			// user 表由内核启动时注册,运行时必然存在,缺失视为致命错误
+			const table = app.model.tables["user"];
+			if (!table) throw new Error("table user is not registered");
+			const temp = table.create();
 			session.user = observe(
 				temp,
 				async (diff) => {
@@ -164,7 +166,7 @@ function adminUser(command: Command) {
 				},
 				`user ${options.user}`,
 			);
-		} else if (session.user!.authority <= data.authority) {
+		} else if (session.user && session.user.authority <= data.authority) {
 			return session.text("internal.low-authority");
 		} else {
 			session.user = observe(
@@ -188,13 +190,14 @@ function adminUser(command: Command) {
 			const { session, next } = argv;
 			if (!session) return;
 			// 该动作仅在会话中被触发,userFields 已保证 session.user 存在
-			const user = session.user!;
+			if (!session.user) return;
+			const user = session.user;
 			const output = await setTarget(argv);
 			if (output) return output;
 			if (!session.user) return;
 			try {
 				const diffKeys = Object.keys(session.user.$diff);
-				const result = await next!();
+				const result = await next?.();
 				if (notFound && !command.config.admin?.upsert) {
 					return session.text("admin.user-not-found");
 				} else if (typeof result === "string") {
@@ -230,7 +233,7 @@ function adminChannel(command: Command) {
 	 * 目标不存在时用空模板创建观察者（配合 upsert 决定是报错还是建档）。
 	 */
 	async function setTarget(
-		argv: Argv<never, never, unknown[], Extend<{}, "channel", unknown>>,
+		argv: Argv<never, never, unknown[], Extend<object, "channel", unknown>>,
 	) {
 		const { options, session } = argv;
 		if (!session) return undefined;
@@ -259,8 +262,10 @@ function adminChannel(command: Command) {
 
 		if (!data) {
 			notFound = true;
-			// channel 表由内核启动时注册,运行时必然存在
-			const temp = app.model.tables["channel"]!.create();
+			// channel 表由内核启动时注册,运行时必然存在,缺失视为致命错误
+			const table = app.model.tables["channel"];
+			if (!table) throw new Error("table channel is not registered");
+			const temp = table.create();
 			temp.platform = platform;
 			temp.id = channelId;
 			session.channel = observe(
@@ -290,14 +295,15 @@ function adminChannel(command: Command) {
 		.action(async (argv, ..._args) => {
 			const { session, next } = argv;
 			if (!session) return;
-			// 该动作仅在会话中被触发,channelFields 已保证 session.channel 存在
-			const channel = session.channel!;
+			// 私聊可能没有频道上下文（此时交由 setTarget 的 isDirect 分支报错），
+			// channel 仅作为执行完毕后的恢复引用，可空保存
+			const channel = session.channel;
 			const output = await setTarget(argv);
 			if (output) return output;
 			if (!session.channel) return;
 			try {
 				const diffKeys = Object.keys(session.channel.$diff);
-				const result = await next!();
+				const result = await next?.();
 				if (notFound && !command.config.admin?.upsert) {
 					return session.text("admin.channel-not-found");
 				} else if (typeof result === "string") {
@@ -310,7 +316,13 @@ function adminChannel(command: Command) {
 				await session.channel.$update();
 				return session.text("admin.channel-updated");
 			} finally {
-				session.channel = channel;
+				if (channel !== undefined) {
+					session.channel = channel;
+				} else {
+					// 私聊原本就没有频道上下文，清除 setTarget 可能换上的观察代理
+					// （exactOptionalPropertyTypes 下可选属性的 undefined 恢复写法）
+					delete session.channel;
+				}
 			}
 		}, true);
 }
@@ -326,7 +338,7 @@ type Key = "user" | "channel";
 function adminLocale<
 	U extends User.Field,
 	G extends Channel.Field,
-	A extends any[],
+	A extends unknown[],
 	O extends {},
 >(cmd: Command<U, G, A, O>, key: Key) {
 	return cmd
@@ -336,7 +348,7 @@ function adminLocale<
 			const target = session[key] as { locales?: string[] };
 			if (options?.remove) {
 				target.locales = [];
-			} else if (args[0]) {
+			} else if (typeof args[0] === "string") {
 				target.locales = [args[0]];
 			} else if (target.locales?.length) {
 				return session.text("admin.current-locale", [

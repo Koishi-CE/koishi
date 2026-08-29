@@ -1,8 +1,10 @@
 <template>
   <el-scrollbar class="plugin-tree" ref="root">
     <div class="search">
-      <el-input v-model="keyword" #suffix>
-        <k-icon name="search"></k-icon>
+      <el-input v-model="keyword">
+        <template #suffix>
+          <k-icon name="search"></k-icon>
+        </template>
       </el-input>
     </div>
     <el-tree
@@ -91,14 +93,14 @@ async function activate() {
 defineExpose({ activate });
 
 onActivated(async () => {
-	activate();
+	void activate();
 	isActivating.value = false;
 });
 
 /** 节点 DOM 挂载回调：初次激活后新增的节点会触发一次滚动定位。 */
 function handleItemMount(itemEl: HTMLElement) {
 	if (!itemEl || isActivating.value) return;
-	activate();
+	void activate();
 }
 
 /** el-tree 的节点对象（utils.Tree 之外还带展开状态、父子关系等）。 */
@@ -114,7 +116,7 @@ interface Node {
 /** 节点显示文案：分组用"分组：xxx"，普通插件用 $label 或短名，待添加节点显示占位符。 */
 function getLabel(node: Node) {
 	if (node.data.name === "group") {
-		return "分组：" + (node.label || node.data.path);
+		return `分组：${node.label || node.data.path}`;
 	} else {
 		return node.label || node.data.name || "待添加";
 	}
@@ -145,7 +147,7 @@ function allowDrop(
 function handleClick(
 	tree: Tree,
 	target: Node,
-	instance: any,
+	instance: InstanceType<typeof ElTree>,
 	event: MouseEvent,
 ) {
 	emit("update:modelValue", tree.path);
@@ -157,12 +159,12 @@ function handleClick(
 
 /** 展开分组：把 $collapsed 置为 null（即删除该键）。 */
 function handleExpand(data: Tree, target: Node, instance) {
-	send("manager/meta", data.path, { $collapsed: null });
+	void send("manager/meta", data.path, { $collapsed: null });
 }
 
 /** 收起分组：写入 $collapsed: true 并持久化。 */
 function handleCollapse(data: Tree, target: Node, instance) {
-	send("manager/meta", data.path, { $collapsed: true });
+	void send("manager/meta", data.path, { $collapsed: true });
 }
 
 /**
@@ -180,7 +182,7 @@ function handleDrop(
 		(node) => node.data.path === source.data.path,
 	);
 	if (!parent.data.path) index -= 1; // 根层级不含全局设置节点,序号减一
-	send(
+	void send(
 		"manager/teleport",
 		source.data.parent?.path ?? "",
 		source.data.id,

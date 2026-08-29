@@ -28,12 +28,8 @@
 			"@koishi-ce/plugin-config/client": [
 				"./plugins/webui/config/client/index.ts"
 			],
-			"@koishi-ce/plugin-config": [
-				"./plugins/webui/config/lib/index.d.ts"
-			],
-			"@koishi-ce/plugin-market": [
-				"./plugins/webui/market/lib/index.d.ts"
-			]
+			"@koishi-ce/plugin-config": ["./plugins/webui/config/lib/index.d.ts"],
+			"@koishi-ce/plugin-market": ["./plugins/webui/market/lib/index.d.ts"]
 		}
 	}
 }

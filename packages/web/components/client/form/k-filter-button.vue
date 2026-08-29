@@ -16,10 +16,25 @@
 import { computed, ref } from "vue";
 import KFilter from "./k-filter.vue";
 
+/** 单条表达式的操作数：[{ $: 实体名 }, 比较值] */
+type Operand = [{ $: string }, unknown];
+
+/** minato 过滤表达式：单条 { [运算符]: 操作数 }，或 $and / $or 逻辑组合 */
+interface FilterExpr {
+	$and?: FilterExpr[];
+	$or?: FilterExpr[];
+	[operator: string]: FilterExpr[] | Operand | undefined;
+}
+
+/** 过滤器宿主选项：userFields 声明可选的自定义用户字段（user.* 实体开关） */
+interface FilterOptions {
+	userFields?: string[];
+}
+
 const props = defineProps<{
-	modelValue: any;
+	modelValue: FilterExpr | null;
 	disabled?: boolean;
-	options?: any;
+	options?: FilterOptions;
 }>();
 
 const emit = defineEmits(["update:modelValue"]);
@@ -33,7 +48,7 @@ const config = computed({
 });
 
 // 实体字段（查询对象的左侧）的中文文案，键与 k-filter-expr 保持一致
-const entities = {
+const entities: Record<string, string> = {
 	userId: "用户 ID",
 	guildId: "群组 ID",
 	channelId: "频道 ID",
@@ -43,7 +58,7 @@ const entities = {
 };
 
 // 比较运算符（查询对象的右侧）的中文文案
-const operators = {
+const operators: Record<string, string> = {
 	$in: "属于",
 	$nin: "不属于",
 	$eq: "等于",
@@ -58,7 +73,7 @@ const operators = {
  * 把 minato 风格的过滤表达式递归转成中文摘要，
  * 如「用户 ID 属于 123 且 平台 等于 discord」。
  */
-function toDesc(expr: any) {
+function toDesc(expr: FilterExpr | null | undefined): string {
 	if (!expr) return "";
 	if (expr.$and) {
 		return expr.$and.map(toDesc).filter(Boolean).join(" 且 ");
@@ -66,8 +81,9 @@ function toDesc(expr: any) {
 		return expr.$or.map(toDesc).filter(Boolean).join(" 或 ");
 	} else {
 		const op = Object.keys(expr)[0];
-		if (!expr[op]) return "";
-		const [entity, value] = expr[op];
+		const operand = op ? expr[op] : undefined;
+		if (!op || !operand) return "";
+		const [entity, value] = operand as Operand;
 		return `${entities[entity.$]} ${operators[op]} ${value}`;
 	}
 }

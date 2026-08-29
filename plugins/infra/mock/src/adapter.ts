@@ -110,6 +110,16 @@ export class MockAdapter<C extends Context = Context> extends Adapter<
 		ctx.provide("mock", this, true);
 	}
 
+	/**
+	 * 第一个 bot。mock 的装配流程（MockBot 构造时注册自身）保证至少存在
+	 * 一个 bot；取不到说明装配被破坏，显式抛错与原先的非空断言行为一致。
+	 */
+	private get firstBot(): MockBot<C> {
+		const bot = this.bots[0];
+		if (!bot) throw new Error("mock 服务下没有已注册的 bot");
+		return bot;
+	}
+
 	/** 在数据库中预置一个 mock 平台用户 */
 	async initUser(id: string, authority = 1, data?: Partial<User>) {
 		await this.ctx.root.database.createUser("mock", id, { authority, ...data });
@@ -118,7 +128,7 @@ export class MockAdapter<C extends Context = Context> extends Adapter<
 	/** 在数据库中预置一个 mock 平台频道（默认指派给第一个 bot） */
 	async initChannel(
 		id: string,
-		assignee = this.bots[0]!.selfId,
+		assignee = this.firstBot.selfId,
 		data?: Partial<Channel>,
 	) {
 		await this.ctx.root.database.createChannel("mock", id, {
@@ -129,20 +139,20 @@ export class MockAdapter<C extends Context = Context> extends Adapter<
 
 	/** 在第一个 bot 上创建消息客户端 */
 	client(userId: string, channelId?: string) {
-		return this.bots[0]!.client(userId, channelId);
+		return this.firstBot.client(userId, channelId);
 	}
 
 	/** 让第一个 bot 派发一条事件 */
 	receive(event: Partial<Universal.Event>, client?: MessageClient) {
-		return this.bots[0]!.receive(event, client);
+		return this.firstBot.receive(event, client);
 	}
 
 	/** 让第一个 bot 构造一个会话（不派发） */
 	session(event: Partial<Universal.Event>) {
-		return this.bots[0]!.session(event);
+		return this.firstBot.session(event);
 	}
 }
 
 export namespace MockAdapter {
-	export type Config = {};
+	export type Config = Record<never, never>;
 }

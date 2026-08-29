@@ -18,11 +18,15 @@
       </h1>
 
       <template v-if="store.user || shared.authType === 1">
-        <el-input placeholder="平台名" v-model="shared.platform" #prefix>
-          <k-icon name="at"></k-icon>
+        <el-input placeholder="平台名" v-model="shared.platform">
+          <template #prefix>
+            <k-icon name="at"></k-icon>
+          </template>
         </el-input>
-        <el-input placeholder="账号" v-model="shared.userId" @keypress.enter.stop="loginWithAccount" #prefix>
-          <k-icon name="user"></k-icon>
+        <el-input placeholder="账号" v-model="shared.userId" @keypress.enter.stop="loginWithAccount">
+          <template #prefix>
+            <k-icon name="user"></k-icon>
+          </template>
         </el-input>
         <p class="error" v-if="error">{{ error }}</p>
         <div class="control">
@@ -32,8 +36,10 @@
       </template>
 
       <template v-else>
-        <el-input placeholder="用户名" v-model="shared.name" #prefix>
-          <k-icon name="user"></k-icon>
+        <el-input placeholder="用户名" v-model="shared.name">
+          <template #prefix>
+            <k-icon name="user"></k-icon>
+          </template>
         </el-input>
         <el-input placeholder="密码" v-model="shared.password" @keypress.enter.stop="loginWithPassword"
           :type="showPassword ? 'text' : 'password'">

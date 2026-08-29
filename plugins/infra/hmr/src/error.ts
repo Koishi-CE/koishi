@@ -12,8 +12,21 @@ import type { Logger } from "@koishi-ce/koishi";
 import type { BuildFailure } from "esbuild";
 
 /** 判断异常是否为 esbuild 构建失败（errors 数组且每项都带 text 字段） */
-function isBuildFailure(e: any): e is BuildFailure {
-	return Array.isArray(e?.errors) && e.errors.every((error: any) => error.text);
+function isBuildFailure(e: unknown): e is BuildFailure {
+	return (
+		typeof e === "object" &&
+		e !== null &&
+		"errors" in e &&
+		Array.isArray(e.errors) &&
+		e.errors.every((error) => {
+			return (
+				typeof error === "object" &&
+				error !== null &&
+				"text" in error &&
+				Boolean(error.text)
+			);
+		})
+	);
 }
 
 /**
@@ -23,7 +36,7 @@ function isBuildFailure(e: any): e is BuildFailure {
  *
  * 普通异常直接告警；esbuild 构建失败则逐项输出带代码帧的位置信息
  */
-export function handleError(e: any, logger: Logger) {
+export function handleError(e: unknown, logger: Logger) {
 	if (!isBuildFailure(e)) {
 		logger.warn(e);
 		return;

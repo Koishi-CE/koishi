@@ -50,6 +50,9 @@ const icon = computed(() => toValue(props.icon));
 // label / icon 等字段可能是静态值或以 action scope 为参的 getter，统一解包
 function toValue<T>(getter: MaybeGetter<T>): T {
 	if (typeof getter !== "function") return getter;
-	return (getter as any)(ctx.$action.createScope());
+	// 收窄到 MaybeGetter 的函数分支（以作用域为参的 getter）
+	return (getter as (current: ReturnType<typeof ctx.$action.createScope>) => T)(
+		ctx.$action.createScope(),
+	);
 }
 </script>

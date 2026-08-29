@@ -9,8 +9,10 @@
       <slot name="title" :packages="packages">
         <span class="title">选择插件</span>
       </slot>
-      <el-input ref="input" v-model="keyword" #suffix>
-        <k-icon name="search"></k-icon>
+      <el-input ref="input" v-model="keyword">
+        <template #suffix>
+          <k-icon name="search"></k-icon>
+        </template>
       </el-input>
     </template>
     <slot name="tabs" :packages="packages"></slot>
@@ -71,8 +73,8 @@ function configure(shortname: string) {
 	const ident = Math.random().toString(36).slice(2, 8);
 	dialogSelect.value = null;
 	keyword.value = "";
-	send("manager/unload", path, shortname + ":" + ident, {});
-	router.push("/plugins/" + ident);
+	void send("manager/unload", path, `${shortname}:${ident}`, {});
+	router.push(`/plugins/${ident}`);
 }
 
 // 弹窗打开后自动聚焦搜索框

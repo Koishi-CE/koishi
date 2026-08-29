@@ -113,14 +113,14 @@ function createUser() {
 		config.value.index %= length;
 	} while (users.value.includes(name));
 	config.value.user = name;
-	config.value.messages["@" + name] = [];
+	config.value.messages[`@${name}`] = [];
 	void send("sandbox/set-user", config.value.platform, config.value.user, {});
 }
 
 /** 删除用户：清掉本地消息并通知 node 侧移除数据，被删的是当前用户时切换选中项。 */
 function removeUser(name: string) {
 	const index = users.value.indexOf(name);
-	delete config.value.messages["@" + name];
+	delete config.value.messages[`@${name}`];
 	void send("sandbox/set-user", config.value.platform, config.value.user, null);
 	if (config.value.user === name) {
 		config.value.user = users.value[index] || "";

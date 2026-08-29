@@ -11,6 +11,7 @@
  * WebSocket 的实际接入（HTTP 升级、鉴权等）由派生类实现。
  */
 
+import type { IncomingMessage } from "node:http";
 import {
 	type Awaitable,
 	type Context,
@@ -142,8 +143,8 @@ export abstract class Console extends Service {
 	 * 接收一个已建立的 WebSocket 连接。
 	 * 由派生类在握手完成时调用；此处登记客户端并在连接关闭时清理。
 	 */
-	protected accept(socket: Universal.WebSocket) {
-		const client = new Client(this.ctx, socket);
+	protected accept(socket: Universal.WebSocket, request: IncomingMessage) {
+		const client = new Client(this.ctx, socket, request);
 		socket.addEventListener("close", () => {
 			delete this.clients[client.id];
 			this.ctx.emit("console/connection", client);

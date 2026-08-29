@@ -197,7 +197,7 @@ const version = computed({
 const selectVersion = computed({
 	get() {
 		if (store.dependencies?.[active.value]?.request === version.value) {
-			return version.value + " (当前)";
+			return `${version.value} (当前)`;
 		} else {
 			return version.value;
 		}
@@ -269,7 +269,7 @@ const danger = computed(() => {
 	if (workspace.value) return;
 	const deprecated =
 		store.registry?.[active.value]?.[version.value]?.deprecated;
-	if (deprecated) return "此版本已废弃：" + deprecated;
+	if (deprecated) return `此版本已废弃：${deprecated}`;
 	if (store.market?.data[active.value]?.insecure) {
 		return "警告：从此插件的最新版本中检测出安全性问题。安装或升级此插件可能导致严重问题。";
 	}

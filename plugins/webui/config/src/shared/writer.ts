@@ -18,22 +18,22 @@ import { Loader, type LoaderScope } from "@koishi-ce/loader";
 // 服务端在构造函数中为每个事件注册监听器，见下方 ConfigWriter 构造函数。
 declare module "@koishi-ce/console" {
 	interface Events {
-		"manager/app-reload"(config: any): void;
+		"manager/app-reload"(config: unknown): void;
 		"manager/teleport"(
 			source: string,
 			key: string,
 			target: string,
 			index: number,
 		): void;
-		"manager/reload"(parent: string, key: string, config: any): void;
+		"manager/reload"(parent: string, key: string, config: unknown): void;
 		"manager/unload"(
 			parent: string,
 			key: string,
-			config: any,
+			config: unknown,
 			index?: number,
 		): void;
 		"manager/remove"(parent: string, key: string): void;
-		"manager/meta"(ident: string, config: any): void;
+		"manager/meta"(ident: string, config: unknown): void;
 	}
 }
 
@@ -50,8 +50,8 @@ const logger = new Logger("loader");
  * @param rest 需要让位的既有键名列表
  */
 function insertKey(
-	object: Record<string, any>,
-	temp: Record<string, any>,
+	object: Record<string, unknown>,
+	temp: Record<string, unknown>,
 	rest: string[],
 ) {
 	for (const key of rest) {
@@ -69,13 +69,18 @@ function insertKey(
  * @param neo 新键名
  * @param value 新键对应的值
  */
-function rename(object: any, old: string, neo: string, value: any) {
+function rename(
+	object: Record<string, unknown>,
+	old: string,
+	neo: string,
+	value: unknown,
+) {
 	const keys = Object.keys(object);
-	const index = keys.findIndex((key) => key === old || key === "~" + old);
+	const index = keys.findIndex((key) => key === old || key === `~${old}`);
 	const rest = index < 0 ? [] : keys.slice(index + 1);
 	const temp = { [neo]: value };
 	delete object[old];
-	delete object["~" + old];
+	delete object[`~${old}`];
 	insertKey(object, temp, rest);
 }
 
@@ -86,9 +91,9 @@ function rename(object: any, old: string, neo: string, value: any) {
  * @param plugins 插件配置对象
  * @param name 插件键名
  */
-function dropKey(plugins: Record<string, any>, name: string) {
+function dropKey(plugins: Record<string, unknown>, name: string) {
 	if (!(name in plugins)) {
-		name = "~" + name;
+		name = `~${name}`;
 	}
 	const value = plugins[name];
 	delete plugins[name];
@@ -111,7 +116,8 @@ export class ConfigWriter extends DataService<Context.Config> {
 		ctx.console.addListener(
 			"manager/app-reload",
 			(config) => {
-				return this.reloadApp(config);
+				// 前端提交的整份应用配置（全局设置表单的产物），按声明收窄
+				return this.reloadApp(config as Context.Config);
 			},
 			{ authority: 4 },
 		);
@@ -126,7 +132,7 @@ export class ConfigWriter extends DataService<Context.Config> {
 		] as const) {
 			ctx.console.addListener(
 				`manager/${key}`,
-				async (...args: any[]) => {
+				async (...args: unknown[]) => {
 					try {
 						// 五个方法签名各异,统一视为泛化调用目标后 apply
 						const action = this[key] as (...args: unknown[]) => Promise<void>;
@@ -154,14 +160,15 @@ export class ConfigWriter extends DataService<Context.Config> {
 	 * @param plugins 某层上下文的 plugins 配置对象
 	 * @param ctx 该层对应的运行时上下文（用于查找 fork 记录）
 	 */
-	getGroup(plugins: any, ctx: Context) {
+	getGroup(plugins: Record<string, unknown> | undefined, ctx: Context) {
 		const result = { ...plugins };
-		for (const key in plugins) {
+		for (const key in plugins ?? {}) {
 			if (key.startsWith("$")) continue;
-			const value = plugins[key];
+			// 配置值本质是任意 JSON 对象（插件配置或嵌套分组），此处按字典收窄使用
+			const value = plugins?.[key] as Record<string, unknown> | undefined;
 			const name = (key.split(":", 1)[0] ?? "").replace(/^~/, "");
 
-			if (!this.loader.isTruthyLike(value?.$if)) {
+			if (!this.loader.isTruthyLike(value?.["$if"])) {
 				// $if-disabled 的插件不应显示在配置树中
 				// https://github.com/koishijs/webui/issues/249
 				delete result[key];
@@ -191,8 +198,8 @@ export class ConfigWriter extends DataService<Context.Config> {
 	 *
 	 * @param config 前端提交的应用级配置（不含 plugins）
 	 */
-	async reloadApp(config: any) {
-		delete config.$paths;
+	async reloadApp(config: Context.Config) {
+		delete (config as Record<string, unknown>)["$paths"];
 		const plugins = this.loader.config.plugins;
 		this.loader.config = config;
 		// exactOptionalPropertyTypes 禁止向可选属性显式赋 undefined,
@@ -232,15 +239,20 @@ export class ConfigWriter extends DataService<Context.Config> {
 	 */
 	private resolveConfig(
 		ident: string,
-		config = this.loader.config.plugins,
-	): [any, string] {
-		for (const key in config) {
-			const name = key.split(":", 1)[0] ?? "";
-			if (key.slice(name.length + 1) === ident) return [config, key];
-			if (name === "group" || name === "~group") {
-				try {
-					return this.resolveConfig(ident, config[key]);
-				} catch {}
+		config: Record<string, unknown> | undefined = this.loader.config.plugins,
+	): [Record<string, unknown>, string] {
+		if (config) {
+			for (const key in config) {
+				const name = key.split(":", 1)[0] ?? "";
+				if (key.slice(name.length + 1) === ident) return [config, key];
+				if (name === "group" || name === "~group") {
+					try {
+						return this.resolveConfig(
+							ident,
+							config[key] as Record<string, unknown> | undefined,
+						);
+					} catch {}
+				}
 			}
 		}
 		throw new Error("plugin not found");
@@ -255,9 +267,9 @@ export class ConfigWriter extends DataService<Context.Config> {
 	 * @param ident 插件路径标识
 	 * @param config 待合并的元数据键值对
 	 */
-	async meta(ident: string, config: any) {
+	async meta(ident: string, config: Record<string, unknown>) {
 		const [parent, key] = this.resolveConfig(ident);
-		const target = parent[key];
+		const target = parent[key] as Record<string, unknown>;
 		for (const key of Object.keys(config)) {
 			delete target[key];
 			if (config[key] === null) {
@@ -275,7 +287,7 @@ export class ConfigWriter extends DataService<Context.Config> {
 	 * @param key 插件键名（形如 `name:ident`）
 	 * @param config 新的插件配置
 	 */
-	async reload(parent: string, key: string, config: any) {
+	async reload(parent: string, key: string, config: unknown) {
 		const scope = this.resolveFork(parent);
 		if (!scope) throw new Error("plugin not found");
 		await this.loader.reload(scope.ctx, key, config);
@@ -293,15 +305,20 @@ export class ConfigWriter extends DataService<Context.Config> {
 	 * @param config 停用时保留的插件配置
 	 * @param index 可选的目标插入位置（在父配置的键序列中的序号）
 	 */
-	async unload(parent: string, key: string, config = {}, index?: number) {
+	async unload(
+		parent: string,
+		key: string,
+		config: Record<string, unknown> = {},
+		index?: number,
+	) {
 		const scope = this.resolveFork(parent);
 		if (!scope) throw new Error("plugin not found");
 		this.loader.unload(scope.ctx, key);
 		if (index) {
 			const rest = Object.keys(scope.config).slice(index);
-			insertKey(scope.config, { ["~" + key]: config }, rest);
+			insertKey(scope.config, { [`~${key}`]: config }, rest);
 		} else {
-			rename(scope.config, key, "~" + key, config);
+			rename(scope.config, key, `~${key}`, config);
 		}
 		await this.loader.writeConfig();
 	}
@@ -316,9 +333,9 @@ export class ConfigWriter extends DataService<Context.Config> {
 		const scope = this.resolveFork(parent);
 		if (!scope) throw new Error("plugin not found");
 		this.loader.unload(scope.ctx, key);
-		const config = scope.config as Record<string, any>;
+		const config = scope.config as Record<string, unknown>;
 		delete config[key];
-		delete config["~" + key];
+		delete config[`~${key}`];
 		await this.loader.writeConfig();
 	}
 

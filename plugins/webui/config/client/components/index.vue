@@ -16,7 +16,7 @@
     </template>
 
     <template #left>
-      <tree-view ref="tree" v-model="path"></tree-view>
+      <TreeView ref="tree" v-model="path"></TreeView>
     </template>
 
     <k-content class="plugin-view" :key="path">
@@ -96,7 +96,7 @@ import { useRoute, useRouter } from "vue-router";
 import GlobalSettings from "./global.vue";
 import GroupSettings from "./group.vue";
 import PluginSettings from "./plugin.vue";
-import type TreeView from "./tree.vue";
+import TreeView from "./tree.vue";
 import {
 	current,
 	dialogFork,
@@ -122,7 +122,7 @@ const path = computed<string>({
 	},
 	set(name) {
 		if (!(name in plugins.value.paths)) name = "";
-		router.replace("/plugins/" + name);
+		router.replace(`/plugins/${name}`);
 	},
 });
 
@@ -184,8 +184,8 @@ ctx.action("config.tree.add-group", {
 /** 在当前分组下创建子分组（随机 ident）并跳转过去。 */
 function createGroup($label: string) {
 	const ident = Math.random().toString(36).slice(2, 8);
-	send(`manager/reload`, groupCreate.value, `group:${ident}`, { $label });
-	router.replace("/plugins/" + ident);
+	void send(`manager/reload`, groupCreate.value, `group:${ident}`, { $label });
+	router.replace(`/plugins/${ident}`);
 	groupCreate.value = null;
 }
 
@@ -198,7 +198,7 @@ ctx.action("config.tree.clone", {
 			: plugins.value.data.slice(1);
 		const index = children.findIndex((tree) => tree.path === config.tree.path);
 		const ident = Math.random().toString(36).slice(2, 8);
-		send(
+		void send(
 			"manager/unload",
 			config.tree.parent?.path ?? "",
 			`${config.tree.name}:${ident}`,
@@ -291,7 +291,7 @@ ctx.action("config.tree.toggle", {
 
 /** 把启停/重载事件连同编辑副本一并发送给服务端。 */
 async function execute(tree: Tree, event: "unload" | "reload") {
-	await send(
+	return await send(
 		`manager/${event}`,
 		tree.parent?.path ?? "",
 		tree.id,
@@ -303,7 +303,7 @@ async function execute(tree: Tree, event: "unload" | "reload") {
 function renameItem(tree: Tree, name: string) {
 	showRename.value = false;
 	tree.label = name;
-	send("manager/meta", tree.path, { $label: name || null });
+	void send("manager/meta", tree.path, { $label: name || null });
 }
 </script>
 

@@ -1,3 +1,5 @@
+import { mkdir, readdir, rm } from "node:fs/promises";
+import { resolve } from "node:path";
 import {
 	Context,
 	type Dict,
@@ -7,8 +9,6 @@ import {
 	Time,
 } from "@koishi-ce/koishi";
 import { DataService } from "@koishi-ce/plugin-console";
-import { mkdir, readdir, rm } from "fs/promises";
-import { resolve } from "path";
 import zhCN from "../locales/zh-CN.yml";
 import { FileWriter } from "./file";
 

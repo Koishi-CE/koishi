@@ -24,6 +24,7 @@ import {
 } from "@koishi-ce/koishi";
 import { Loader, type LoaderScope, unwrapExports } from "@koishi-ce/loader";
 import { type ChokidarOptions, type FSWatcher, watch } from "chokidar";
+import zhCN from "../locales/zh-CN.yml";
 import { handleError } from "./error";
 
 declare module "@koishi-ce/koishi" {
@@ -93,7 +94,7 @@ class Watcher {
 		]).default(["**/node_modules/**", "**/.git/**", "**/logs/**"]),
 		debounce: Schema.natural().role("ms").default(100),
 	}).i18n({
-		"zh-CN": require("../locales/zh-CN"),
+		"zh-CN": zhCN,
 	});
 
 	private base: string;
@@ -366,11 +367,12 @@ class Watcher {
 			}
 		}
 
-		// 尝试重新加载各插件入口（TS 源码此时由 loader 借 esbuild 即时编译）
-		const attempts: Dict<any> = {};
+		// 重新加载各插件入口的产物缓存（TS 源码此时由 loader 借 esbuild 即时编译）；
+		// 刚 require 出的模块形态由运行时决定，断言为 Plugin 交由后续流程校验
+		const attempts: Dict<Plugin> = {};
 		try {
 			for (const [, { filename }] of reloads) {
-				attempts[filename] = unwrapExports(this.require(filename));
+				attempts[filename] = unwrapExports(this.require(filename)) as Plugin;
 			}
 		} catch (e) {
 			handleError(e, this.logger);
@@ -388,17 +390,21 @@ class Watcher {
 					this.ctx.registry.delete(plugin);
 				} catch (err) {
 					this.logger.warn(
-						"failed to dispose plugin at %c\n" + coerce(err),
+						`failed to dispose plugin at %c\n${coerce(err)}`,
 						path,
 					);
 				}
 
 				// 替换 loader 缓存，保证 keyFor 等方法取到新插件
-				this.ctx.loader.replace(plugin, attempts[filename]);
+				// （attempts 的键集与 reloads 完全一致，上方循环保证已写入，断言安全）
+				this.ctx.loader.replace(plugin, attempts[filename] as Plugin);
 
 				try {
 					for (const [state, name] of children) {
-						const fork = state.parent.plugin(attempts[filename], state.config);
+						const fork = state.parent.plugin(
+							attempts[filename] as Plugin,
+							state.config,
+						);
 						const key = (state as LoaderScope).key;
 						if (key !== undefined) (fork as LoaderScope).key = key;
 						if (name) {
@@ -411,7 +417,7 @@ class Watcher {
 					this.logger.info("reload plugin at %c", path);
 				} catch (err) {
 					this.logger.warn(
-						"failed to reload plugin at %c\n" + coerce(err),
+						`failed to reload plugin at %c\n${coerce(err)}`,
 						path,
 					);
 					throw err;
@@ -422,7 +428,7 @@ class Watcher {
 			rollback();
 			for (const [plugin, { filename, children }] of reloads) {
 				try {
-					this.ctx.registry.delete(attempts[filename]);
+					this.ctx.registry.delete(attempts[filename] as Plugin);
 					for (const [state, name] of children) {
 						const fork = state.parent.plugin(plugin, state.config);
 						const key = (state as LoaderScope).key;

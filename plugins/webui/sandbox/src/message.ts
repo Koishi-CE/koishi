@@ -53,7 +53,8 @@ export class SandboxMessenger extends MessageEncoder {
 			},
 		});
 		// messageId 访问器（defineAccessor）赋值时会确保 event.message 已创建
-		this.results.push(session.event.message!);
+		const { message } = session.event;
+		if (message) this.results.push(message);
 		this.buffer = "";
 	}
 

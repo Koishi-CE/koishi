@@ -12,19 +12,29 @@ import type { Manifest, PackageJson } from "./types";
  * 或回退值（两个重载）。
  */
 export interface Ensure<T> {
-	(value: any): T | undefined;
-	(value: any, fallback: T): T;
+	(value: unknown): T | undefined;
+	(value: unknown, fallback: T): T;
 }
 
+// 实现重载签名的惯用写法：无回退时实际返回 undefined，
+// 该情形由 Ensure 的第一个重载（T | undefined）如实表达，
+// 故回退分支断言为 T 不影响对外类型的安全。
 /** 清洗为数组：仅当输入确为 string[] 时返回，否则取回退值 */
-const ensureArray: Ensure<string[]> = (value: any, fallback?: any) => {
-	if (!Array.isArray(value)) return fallback;
-	return value.filter((x) => typeof x === "string");
+const ensureArray: Ensure<string[]> = (
+	value: unknown,
+	fallback?: string[],
+): string[] => {
+	if (!Array.isArray(value)) return fallback as string[];
+	return value.filter((x): x is string => typeof x === "string");
 };
 
 /** 清洗为字符串字典：丢弃值不是 string 的键，类型不符时取回退值 */
-const ensureDict: Ensure<Dict<string>> = (value: any, fallback?: any) => {
-	if (typeof value !== "object" || value === null) return fallback;
+const ensureDict: Ensure<Dict<string>> = (
+	value: unknown,
+	fallback?: Dict<string>,
+): Dict<string> => {
+	if (typeof value !== "object" || value === null)
+		return fallback as Dict<string>;
 	return Object.entries(value).reduce<Dict<string>>((dict, [key, value]) => {
 		if (typeof value === "string") dict[key] = value;
 		return dict;
@@ -36,9 +46,10 @@ const ensureDict: Ensure<Dict<string>> = (value: any, fallback?: any) => {
 /** 原始类型守卫工厂：按传入的 typeof 结果名校验 boolean / number / string */
 const primitive =
 	<T>(type: string): Ensure<T> =>
-	(value: any, fallback?: T) => {
-		if (typeof value !== type) return fallback;
-		return value;
+	(value: unknown, fallback?: T): T => {
+		if (typeof value !== type) return fallback as T;
+		// typeof 已按 type 名校验通过，断言为 T 是安全的
+		return value as T;
 	};
 
 /** Ensure 系列守卫的统一出口，消费方经 Ensure.array(...) 等调用 */

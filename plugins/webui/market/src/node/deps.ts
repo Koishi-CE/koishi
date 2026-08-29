@@ -1,26 +1,26 @@
 import { DataService } from "@koishi-ce/console";
+import type { Context, Dict } from "@koishi-ce/koishi";
 import type { DependencyMetaKey, RemotePackage } from "@koishi-ce/registry";
-import type { Context, Dict } from "koishi";
 import type { Dependency } from "./installer";
 
-export class DependencyProvider extends DataService<Dict<Dependency>> {
-	constructor(public ctx: Context) {
+class DependencyProvider extends DataService<Dict<Dependency>> {
+	constructor(ctx: Context) {
 		super(ctx, "dependencies", { authority: 4 });
 	}
 
-	async get() {
+	override async get() {
 		return this.ctx.installer.getDeps();
 	}
 }
 
-export class RegistryProvider extends DataService<
+class RegistryProvider extends DataService<
 	Dict<Dict<Pick<RemotePackage, DependencyMetaKey>>>
 > {
-	constructor(public ctx: Context) {
+	constructor(ctx: Context) {
 		super(ctx, "registry", { authority: 4 });
 	}
 
-	async get() {
+	override async get() {
 		return this.ctx.installer.fullCache;
 	}
 }

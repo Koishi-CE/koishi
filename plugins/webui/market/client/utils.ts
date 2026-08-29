@@ -7,8 +7,12 @@ export const active = ref("");
 export function hasUpdate(name: string) {
 	const versions = store.registry?.[name];
 	const local = store.dependencies?.[name];
-	if (!versions || local?.workspace) return;
+	if (!versions || !local || local.workspace) return;
+	const [latest] = Object.keys(versions);
+	if (latest === undefined || local.resolved === undefined) return;
 	try {
-		return gt(Object.keys(versions)[0], local.resolved);
-	} catch {}
+		return gt(latest, local.resolved);
+	} catch {
+		return undefined;
+	}
 }

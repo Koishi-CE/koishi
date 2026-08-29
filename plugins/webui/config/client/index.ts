@@ -146,10 +146,10 @@ export default class ConfigWriter extends Service {
 		const forks = plugins.value.forks[shortname];
 		if (!forks?.length) {
 			const key = Math.random().toString(36).slice(2, 8);
-			void send("manager/unload", "", shortname + ":" + key, {});
-			if (!passive) router.push("/plugins/" + key);
+			void send("manager/unload", "", `${shortname}:${key}`, {});
+			if (!passive) router.push(`/plugins/${key}`);
 		} else if (forks.length === 1) {
-			if (!passive) router.push("/plugins/" + forks[0]);
+			if (!passive) router.push(`/plugins/${forks[0]}`);
 		} else {
 			if (!passive) dialogFork.value = name;
 		}

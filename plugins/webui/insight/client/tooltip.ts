@@ -52,8 +52,8 @@ export function useTooltip() {
 			};
 		}
 		return {
-			left: left.value + "px",
-			top: top.value + "px",
+			left: `${left.value}px`,
+			top: `${top.value}px`,
 		};
 	});
 

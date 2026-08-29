@@ -5,10 +5,11 @@
  * 三组分节字符串字典，供控制台前端在状态栏展示与一键复制。
  * 环境信息在进程生命周期内不会变化，因此采集结果以 Promise 形式永久缓存。
  */
+
+import { readFile } from "node:fs/promises";
 import { DataService } from "@koishi-ce/console";
 import { type Context, type Dict, Schema, version } from "@koishi-ce/koishi";
 import { helpers } from "envinfo";
-import { readFile } from "fs/promises";
 import { whichPMRuns } from "which-pm-runs";
 
 class EnvInfoProvider extends DataService<Dict<Dict<string>>> {
@@ -73,7 +74,7 @@ class EnvInfoProvider extends DataService<Dict<Dict<string>>> {
 }
 
 namespace EnvInfoProvider {
-	export type Config = {};
+	export type Config = Record<never, never>;
 }
 
 export default EnvInfoProvider;

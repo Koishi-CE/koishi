@@ -29,7 +29,7 @@ const isDragging = ref(false);
 function handleDragStart(event: DragEvent) {
 	isDragging.value = true;
 	// 约定的拖拽协议：以 "activity:" 前缀 + 活动 id 标识被拖动的活动项
-	event.dataTransfer.setData("text/plain", "activity:" + props.data.id);
+	event.dataTransfer.setData("text/plain", `activity:${props.data.id}`);
 }
 
 function handleDragEnd(event: DragEvent) {

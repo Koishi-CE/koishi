@@ -24,8 +24,10 @@
     <template #left>
       <el-scrollbar>
         <div class="search">
-          <el-input v-model="keyword" #suffix>
-            <k-icon name="search"></k-icon>
+          <el-input v-model="keyword">
+            <template #suffix>
+              <k-icon name="search"></k-icon>
+            </template>
           </el-input>
         </div>
         <el-tree
@@ -101,7 +103,7 @@ const active = computed<string>({
 	},
 	set(name) {
 		if (!(name in data.value.map)) name = "";
-		router.replace("/locales/" + name.replace(/\./g, "/"));
+		router.replace(`/locales/${name.replace(/\./g, "/")}`);
 	},
 });
 
@@ -165,7 +167,7 @@ const data = computed(() => {
 		let children = data;
 		let depth = Math.min(parts.length - 1, 2);
 		for (let i = parts.length - 1; i >= depth; i--) {
-			if (paths.value.includes(parts.slice(0, i).join(".") + ".$")) {
+			if (paths.value.includes(`${parts.slice(0, i).join(".")}.$`)) {
 				depth = i;
 				break;
 			}
@@ -199,7 +201,7 @@ const update = useDebounceFn(() => {
 
 /** 编辑某个键的某语言翻译：写入 `$<locale>` 命名空间（空值置 null 以删除），并触发防抖提交。 */
 function handleUpdate(locale: string, path: string, value: string) {
-	const root = (store.locales["$" + locale] ??= {});
+	const root = (store.locales[`$${locale}`] ??= {});
 	if (value) {
 		root[`${active.value}.${path}`] = value;
 	} else {

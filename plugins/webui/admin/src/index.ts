@@ -1,3 +1,4 @@
+import { resolve } from "node:path";
 import type { Entry } from "@koishi-ce/console";
 import {
 	$,
@@ -7,7 +8,6 @@ import {
 	Schema,
 	Service,
 } from "@koishi-ce/koishi";
-import { resolve } from "path";
 import zhCN from "../locales/zh-CN.yml";
 import command from "./command";
 
@@ -81,7 +81,6 @@ export class Admin extends Service {
 	// erasableSyntaxOnly:原 namespace Admin 中的运行时值迁至类静态成员
 	static inject = ["database"];
 
-	// biome-ignore lint/style/useNamingConvention: 插件 Schema 约定为 PascalCase 的 Config 静态属性
 	static Config: Schema<Admin.Config> = Schema.object({});
 
 	groups!: PermGroup[];
@@ -129,7 +128,7 @@ export class Admin extends Service {
 		for (const item of this.groups) {
 			item.count =
 				(await this.ctx.database
-					.select("user", { permissions: { ["$el"]: "group:" + item.id } })
+					.select("user", { permissions: { ["$el"]: `group:${item.id}` } })
 					.execute((row) => $.count(row.id))) || 0;
 			this.setupGroup(item);
 		}
@@ -143,8 +142,8 @@ export class Admin extends Service {
 			this.entry = ctx.console.addEntry(
 				process.env["KOISHI_BASE"]
 					? [
-							process.env["KOISHI_BASE"] + "/dist/index.js",
-							process.env["KOISHI_BASE"] + "/dist/style.css",
+							`${process.env["KOISHI_BASE"]}/dist/index.js`,
+							`${process.env["KOISHI_BASE"]}/dist/style.css`,
 						]
 					: process.env["KOISHI_ENV"] === "browser"
 						? [import.meta.url.replace(/\/src\/[^/]+$/, "/client/index.ts")]
@@ -251,7 +250,7 @@ export class Admin extends Service {
 	private setupGroup(item: PermGroup) {
 		item.dispose = this.ctx.permissions.define("(name)", {
 			inherits: ({ name }) => {
-				if (item.permissions.includes(name)) return ["group:" + item.id];
+				if (item.permissions.includes(name)) return [`group:${item.id}`];
 				return undefined;
 			},
 		});
@@ -296,7 +295,7 @@ export class Admin extends Service {
 		if (index < 0) throw new Error("track not found");
 		const [item] = this.tracks.splice(index, 1);
 		if (!item) throw new Error("track not found");
-		item.dispose!();
+		item.dispose?.();
 		this.entry?.refresh();
 		await this.ctx.database.remove("perm_track", id);
 	}
@@ -340,20 +339,20 @@ export class Admin extends Service {
 		if (index < 0) throw new Error("group not found");
 		const [item] = this.groups.splice(index, 1);
 		if (!item) throw new Error("group not found");
-		item.dispose!();
+		item.dispose?.();
 		// 找出所有 permissions 含 group:<id> 的成员用户，逐个移除该引用后批量回写
 		const users = await this.ctx.database.get(
 			"user",
-			{ permissions: { ["$el"]: "group:" + id } },
+			{ permissions: { ["$el"]: `group:${id}` } },
 			["id", "permissions"],
 		);
 		for (const user of users) {
-			remove(user.permissions, "group:" + id);
+			remove(user.permissions, `group:${id}`);
 		}
 		await this.ctx.database.upsert("user", users);
 		// 其它用户组若把本组当作权限引用，同样清理掉
 		const updates = this.groups.filter((group) => {
-			return remove(group.permissions, "group:" + id);
+			return remove(group.permissions, `group:${id}`);
 		});
 		await this.ctx.database.upsert("group", updates);
 		await this.ctx.database.remove("group", id);
@@ -384,9 +383,9 @@ export class Admin extends Service {
 			"permissions",
 		]);
 		if (!data) throw new Error("user not found");
-		if (!data.permissions.includes("group:" + item.id)) {
-			data.permissions.push("group:" + item.id);
-			item.count!++;
+		if (!data.permissions.includes(`group:${item.id}`)) {
+			data.permissions.push(`group:${item.id}`);
+			item.count = (item.count ?? 0) + 1;
 			await this.ctx.database.set("user", data.id, {
 				permissions: data.permissions,
 			});
@@ -406,8 +405,8 @@ export class Admin extends Service {
 			"permissions",
 		]);
 		if (!data) throw new Error("user not found");
-		if (remove(data.permissions, "group:" + item.id)) {
-			item.count!--;
+		if (remove(data.permissions, `group:${item.id}`)) {
+			item.count = (item.count ?? 0) - 1;
 			await this.ctx.database.set("user", data.id, {
 				permissions: data.permissions,
 			});
@@ -418,7 +417,7 @@ export class Admin extends Service {
 
 // erasableSyntaxOnly:仅保留纯类型 namespace,运行时值(inject / Config Schema)已迁至 Admin 类静态成员
 export namespace Admin {
-	export type Config = {};
+	export type Config = Record<never, never>;
 
 	/** 下发给前端的数据形状：以 id 为键的用户组 / 路线字典。 */
 	export interface Data {

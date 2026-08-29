@@ -5,7 +5,7 @@
   <k-status v-if="store.envinfo" class="version" @click="copyInfo">
     Koishi v{{ store.envinfo.koishi.Core }}
     <template #tooltip>
-      <div class="section" v-for="(data, key) in store.envinfo">
+      <div class="section" v-for="(data, key) in store.envinfo" :key="key">
         <p class="title">{{ capitalize(key) }}:</p>
         <p class="info" v-for="(value, key) in data" :key="key">
           {{ key }}: {{ value }}

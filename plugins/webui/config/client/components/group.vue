@@ -13,7 +13,7 @@ import type { Tree } from "./utils";
 
 const props = defineProps<{
 	current: Tree;
-	modelValue: any;
+	modelValue: Record<string, unknown>;
 }>();
 
 const emit = defineEmits(["update:modelValue"]);

@@ -115,7 +115,7 @@ export function apply(ctx: Context, config: Config = {}) {
 		// 令牌在同一账号上被重复使用：提示不要在同一平台输入
 		if (data[0] === session.platform && data[1] === session.userId) {
 			return session.text(
-				"commands.bind.messages.self-" + (data[2] < 0 ? "2" : "1"),
+				`commands.bind.messages.self-${data[2] < 0 ? "2" : "1"}`,
 			);
 		}
 		delete tokens[token];

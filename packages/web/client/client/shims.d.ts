@@ -35,13 +35,13 @@ declare module "@koishi-ce/plugin-console" {
 	}
 
 	/** 服务端数据服务的类型骨架（仅类型层面使用，浏览器端无实现） */
-	export abstract class DataService<T = any> {}
+	export abstract class DataService<T = unknown> {}
 
 	/** 扩展入口描述：由服务端 entry 服务推送，loader 据此动态加载扩展 */
 	export interface EntryData {
 		files: string[];
 		paths?: string[];
-		data: () => any;
+		data: unknown;
 	}
 
 	export namespace Console {

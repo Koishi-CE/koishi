@@ -10,6 +10,8 @@
  * 回调无法跨进程序列化，故登记到 actions 表、以随机 key 传给浏览器，
  * 浏览器点击时经 notifier/button 事件回调。
  */
+
+import { resolve } from "node:path";
 import {
 	type Context,
 	type Dict,
@@ -20,7 +22,6 @@ import {
 	Service,
 } from "@koishi-ce/koishi";
 import type { Entry } from "@koishi-ce/plugin-console";
-import { resolve } from "path";
 
 declare module "@koishi-ce/koishi" {
 	interface Context {
@@ -147,7 +148,6 @@ class NotifierService extends Service {
 
 	// 配置 schema 的值侧由类静态承载（erasableSyntaxOnly 不允许 namespace 内运行时值），
 	// 类型侧见下方 namespace NotifierService 的 Config
-	// biome-ignore lint/style/useNamingConvention: 插件 Schema 约定为 PascalCase 的 Config 静态属性
 	static Config: Schema<NotifierService.Config> = Schema.object({});
 
 	public store: Notifier[] = [];
@@ -214,7 +214,7 @@ namespace NotifierService {
 	}
 
 	/** 插件配置类型（当前无可用配置项）。 */
-	export type Config = {};
+	export type Config = Record<never, never>;
 }
 
 export default NotifierService;

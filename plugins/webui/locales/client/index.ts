@@ -6,7 +6,7 @@
  */
 import { type Context, icons } from "@koishi-ce/client";
 import type { Dict, I18n } from "@koishi-ce/koishi";
-import {} from "@koishi-ce/plugin-locales";
+import type {} from "@koishi-ce/plugin-locales";
 import Activity from "./icons/activity.vue";
 import Globe from "./icons/globe.vue";
 import Locales from "./locales.vue";

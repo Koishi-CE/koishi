@@ -36,10 +36,10 @@ import { computed, type PropType } from "vue";
 
 defineProps({
 	schema: {} as PropType<Schema>,
-	modelValue: {} as PropType<any[]>,
+	modelValue: {} as PropType<unknown[]>,
 	disabled: {} as PropType<boolean>,
 	prefix: {} as PropType<string>,
-	initial: {} as PropType<{}>,
+	initial: {} as PropType<Record<never, never>>,
 });
 
 const emit = defineEmits(["update:modelValue"]);

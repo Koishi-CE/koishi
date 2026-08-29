@@ -14,7 +14,7 @@
 import { computed } from "vue";
 
 const props = defineProps<{
-	modelValue: any;
+	modelValue: Record<string, unknown>;
 }>();
 
 const emit = defineEmits(["update:modelValue"]);

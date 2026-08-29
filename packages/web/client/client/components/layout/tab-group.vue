@@ -19,7 +19,7 @@ import { computed } from "vue";
 const props = defineProps<{
 	data: object;
 	modelValue?: string;
-	filter?: (item: any) => boolean;
+	filter?: (item: unknown) => boolean;
 }>();
 
 const emits = defineEmits(["update:modelValue"]);

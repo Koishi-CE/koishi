@@ -1,5 +1,5 @@
 import { type Context, icons } from "@koishi-ce/client";
-import {} from "@koishi-ce/plugin-admin";
+import type {} from "@koishi-ce/plugin-admin";
 import UserGroup from "./group.vue";
 import Activity from "./icons/activity.vue";
 import TrashCan from "./icons/trash-can.vue";

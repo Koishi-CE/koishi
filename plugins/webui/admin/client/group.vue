@@ -26,8 +26,10 @@
     <template #left>
       <el-scrollbar class="user-groups" ref="root">
         <div class="search">
-          <el-input v-model="keyword" #suffix>
-            <k-icon name="search"></k-icon>
+          <el-input v-model="keyword">
+            <template #suffix>
+              <k-icon name="search"></k-icon>
+            </template>
           </el-input>
         </div>
         <div class="k-tab-group-title">用户组</div>
@@ -160,7 +162,7 @@ const activeGroup = computed<string>({
 	},
 	set(id) {
 		if (!(id in data.value.group)) id = "";
-		router.replace("/admin/group/" + id);
+		router.replace(`/admin/group/${id}`);
 	},
 });
 
@@ -171,7 +173,7 @@ const activeTrack = computed<string>({
 	},
 	set(id) {
 		if (!(id in data.value.track)) id = "";
-		router.replace("/admin/track/" + id);
+		router.replace(`/admin/track/${id}`);
 	},
 });
 
@@ -202,7 +204,7 @@ const renameInput = computed<string>({
 async function createItem() {
 	showCreateDialog.value = false;
 	const id = await send(`admin/create-${createType.value}`, createInput.value);
-	router.replace(`/admin/${createType.value}/` + id);
+	router.replace(`/admin/${createType.value}/${id}`);
 	createInput.value = "";
 }
 

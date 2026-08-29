@@ -28,7 +28,8 @@ const el = ref<HTMLElement>();
 const getStyle = () => {
 	if (!el.value) return { visibility: "hidden" };
 	const { height, width } = el.value.getBoundingClientRect();
-	const style: any = {};
+	const style: Partial<Record<"top" | "right" | "bottom" | "left", string>> =
+		{};
 	if (props.relative.right + width > window.innerWidth) {
 		style.right = `${window.innerWidth - props.relative.left}px`;
 	} else {

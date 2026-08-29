@@ -67,7 +67,7 @@ const props = defineProps({
 	modelValue: {} as PropType<string>,
 	disabled: {} as PropType<boolean>,
 	prefix: {} as PropType<string>,
-	initial: {} as PropType<{}>,
+	initial: {} as PropType<unknown>,
 });
 
 const config = SchemaBase.useModel<string>();
@@ -128,7 +128,7 @@ const entries = computed(() => {
 function handleClick(entry: Entry) {
 	if (entry.filename === current.value) return;
 	if (entry.type === "directory") {
-		current.value = current.value + entry.name + "/";
+		current.value = `${current.value + entry.name}/`;
 	} else {
 		config.value = current.value.slice(1) + entry.name;
 		showDialog.value = false;
@@ -178,7 +178,7 @@ function cancelRename() {
 const target = computed(() => {
 	if (isNullable(config.value)) return;
 	if (!config.value) return "根目录";
-	const entry = files["/" + config.value];
+	const entry = files[`/${config.value}`];
 	if (!entry) return config.value;
 	return (entry.type === "file" ? "文件：" : "目录：") + entry.name;
 });

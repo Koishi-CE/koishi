@@ -1,6 +1,12 @@
 import { DataService } from "@koishi-ce/console";
+import {
+	type Awaitable,
+	type Context,
+	type Dict,
+	Logger,
+	Time,
+} from "@koishi-ce/koishi";
 import type { SearchObject, SearchResult } from "@koishi-ce/registry";
-import { type Awaitable, type Context, type Dict, Logger, Time } from "koishi";
 
 declare module "@koishi-ce/console" {
 	interface Events {
@@ -17,9 +23,9 @@ declare module "@koishi-ce/console" {
 const logger = new Logger("market");
 
 export abstract class MarketProvider extends DataService<MarketProvider.Payload> {
-	private _task: Promise<any>;
+	private _task: Promise<SearchResult | undefined> | null = null;
 	private _timestamp = 0;
-	protected _error: any;
+	protected _error: unknown;
 
 	constructor(ctx: Context) {
 		super(ctx, "market", { authority: 4 });
@@ -37,30 +43,31 @@ export abstract class MarketProvider extends DataService<MarketProvider.Payload>
 		});
 	}
 
-	start(refresh = false): Awaitable<void> {
+	override start(_refresh = false): Awaitable<void> {
 		this._task = null;
 		this._error = null;
 		this._timestamp = Date.now();
 		this.refresh();
 	}
 
-	abstract collect(): Promise<void | SearchResult>;
+	abstract collect(): Promise<SearchResult | undefined>;
 
-	async prepare(): Promise<SearchResult> {
-		return (this._task ||= this.collect().catch((error) => {
+	async prepare(): Promise<SearchResult | undefined> {
+		return (this._task ||= this.collect().catch((error: unknown) => {
 			logger.warn(error);
 			this._error = error;
+			return undefined;
 		}));
 	}
 }
 
 export namespace MarketProvider {
 	export interface Payload {
-		registry?: string;
+		registry?: string | undefined;
 		data: Dict<SearchObject>;
 		total: number;
 		failed: number;
 		progress: number;
-		gravatar?: string;
+		gravatar?: string | undefined;
 	}
 }

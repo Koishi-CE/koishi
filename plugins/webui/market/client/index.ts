@@ -9,7 +9,8 @@ import {
 	store,
 	useConfig,
 } from "@koishi-ce/client";
-import type {} from "@koishi-ce/plugin-market";
+import type { MarketProvider } from "@koishi-ce/plugin-market";
+import type { DependencyMetaKey, RemotePackage } from "@koishi-ce/registry";
 import { defineComponent, h, watch } from "vue";
 import Confirm from "./components/confirm.vue";
 import Dependencies from "./components/dependencies.vue";
@@ -35,7 +36,8 @@ interface MarketConfig {
 	gravatar?: string;
 }
 
-receive("market/patch", (data) => {
+// 载荷类型与 node 侧 market 服务 throttle 广播的字段保持一致
+receive("market/patch", (data: MarketProvider.Payload) => {
 	store.market = {
 		...data,
 		data: {
@@ -45,12 +47,15 @@ receive("market/patch", (data) => {
 	};
 });
 
-receive("market/registry", (data) => {
-	store.registry = {
-		...store.registry,
-		...data,
-	};
-});
+receive(
+	"market/registry",
+	(data: Dict<Dict<Pick<RemotePackage, DependencyMetaKey>>>) => {
+		store.registry = {
+			...store.registry,
+			...data,
+		};
+	},
+);
 
 export default (ctx: Context) => {
 	ctx.plugin(extensions);
@@ -133,15 +138,15 @@ export default (ctx: Context) => {
 
 	ctx.action("market.refresh", {
 		shortcut: "ctrl+r",
-		disabled: () =>
-			!["market", "dependencies"].includes(
-				router.currentRoute.value?.meta?.activity.id,
-			),
-		action: (scope) => send("market/refresh"),
+		disabled: () => {
+			const id = router.currentRoute.value?.meta?.activity?.id;
+			return id !== "market" && id !== "dependencies";
+		},
+		action: (_scope) => send("market/refresh"),
 	});
 
 	ctx.action("market.install", {
-		disabled: () => !Object.keys(config.value.market.override).length,
+		disabled: () => !Object.keys(config.value.market.override ?? {}).length,
 		action() {
 			showConfirm.value = true;
 		},

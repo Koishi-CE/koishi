@@ -7,6 +7,8 @@
  * 监听 internal/fork、internal/runtime、internal/service、internal/status
  * 等内部事件，并在下一拍防抖触发整体刷新。
  */
+
+import { resolve } from "node:path";
 import { DataService } from "@koishi-ce/console";
 import {
 	Context,
@@ -18,8 +20,7 @@ import {
 	Schema,
 	type ScopeStatus,
 } from "@koishi-ce/koishi";
-import {} from "@koishi-ce/loader";
-import { resolve } from "path";
+import type {} from "@koishi-ce/loader";
 
 declare module "@koishi-ce/console" {
 	namespace Console {
@@ -64,7 +65,6 @@ function getSourceId(child: ForkScope) {
 class Insight extends DataService<Insight.Payload> {
 	// 配置 schema 的值侧由类静态承载(erasableSyntaxOnly 不允许 namespace 内运行时值),
 	// 类型侧见下方 namespace Insight 的 Config
-	// biome-ignore lint/style/useNamingConvention: 插件 Schema 约定为 PascalCase 的 Config 静态属性
 	static Config: Schema<Insight.Config> = Schema.object({});
 
 	constructor(ctx: Context) {
@@ -73,8 +73,8 @@ class Insight extends DataService<Insight.Payload> {
 		ctx.console.addEntry(
 			process.env["KOISHI_BASE"]
 				? [
-						process.env["KOISHI_BASE"] + "/dist/index.js",
-						process.env["KOISHI_BASE"] + "/dist/style.css",
+						`${process.env["KOISHI_BASE"]}/dist/index.js`,
+						`${process.env["KOISHI_BASE"]}/dist/style.css`,
 					]
 				: process.env["KOISHI_ENV"] === "browser"
 					? [import.meta.url.replace(/\/src\/[^/]+$/, "/client/index.ts")]
@@ -251,7 +251,7 @@ namespace Insight {
 	}
 
 	/** 插件配置类型（当前无可用配置项）。 */
-	export type Config = {};
+	export type Config = Record<never, never>;
 }
 
 export default Insight;

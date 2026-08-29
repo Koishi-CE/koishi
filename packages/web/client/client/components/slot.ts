@@ -45,7 +45,9 @@ export const KSlot = defineComponent({
 						.filter((node) => node.type === KSlotItem)
 						.map((node) => ({ node, order: node.props?.["order"] || 0 }));
 			// external：ctx.slot() 注册的视图，disabled 的不渲染
-			const external = [...(ctx.$router.views[props.name!] || [])]
+			const external = [
+				...(props.name ? ctx.$router.views[props.name] || [] : []),
+			]
 				.filter((item) => !item.disabled?.())
 				.map((item) => ({
 					node: h(item.component, { ...props.data }, slots),

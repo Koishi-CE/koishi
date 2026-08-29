@@ -94,7 +94,8 @@ const VirtualItem = defineComponent({
 
 		return () => {
 			const head = findFirstLegitChild(slots["default"]?.(attrs));
-			return withDirectives(head!, [[directive]]);
+			// 插槽无真实子节点时不渲染（防御；正常使用必有内容）
+			return head ? withDirectives(head, [[directive]]) : null;
 		};
 	},
 });

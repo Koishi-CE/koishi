@@ -95,10 +95,10 @@ function setImage(el: HTMLImageElement) {
 function moveToOrigin(el: HTMLImageElement, origin = shared.overlayImage) {
 	const { height, width } = origin;
 	const { left, top } = origin.getBoundingClientRect();
-	el.style.width = width + "px";
-	el.style.height = height + "px";
-	el.style.left = left + "px";
-	el.style.top = top + "px";
+	el.style.width = `${width}px`;
+	el.style.height = `${height}px`;
+	el.style.left = `${left}px`;
+	el.style.top = `${top}px`;
 	el.style.transition = "0.3s ease";
 }
 
@@ -112,10 +112,10 @@ function moveToCenter(el: HTMLImageElement) {
 	const scale = defaultScale.value;
 	const width = naturalWidth * scale;
 	const height = naturalHeight * scale;
-	el.style.width = width + "px";
-	el.style.height = height + "px";
-	el.style.left = (innerWidth - width) / 2 + "px";
-	el.style.top = (innerHeight - height) / 2 + "px";
+	el.style.width = `${width}px`;
+	el.style.height = `${height}px`;
+	el.style.left = `${(innerWidth - width) / 2}px`;
+	el.style.top = `${(innerHeight - height) / 2}px`;
 }
 
 onMounted(() => {

@@ -28,10 +28,27 @@
 import { computed } from "vue";
 import KFilterExpr from "./k-filter-expr.vue";
 
+/** minato 过滤表达式：单条 { [运算符]: [{ $: 实体 }, 值] }，或 $and / $or 组合 */
+interface FilterExpr {
+	$and?: FilterExpr[];
+	$or?: FilterExpr[];
+	[operator: string]: unknown;
+}
+
+/** 过滤器宿主选项：userFields 声明可选的自定义用户字段（user.* 实体开关） */
+interface FilterOptions {
+	userFields?: string[];
+}
+
+/** 收窄辅助：判断值是否为普通对象（过滤表达式的载体） */
+function isRecord(value: unknown): value is Record<string, unknown> {
+	return typeof value === "object" && value !== null;
+}
+
 const props = defineProps<{
-	modelValue: any;
+	modelValue: FilterExpr | null;
 	disabled?: boolean;
-	options?: any;
+	options?: FilterOptions;
 }>();
 
 const emit = defineEmits(["update:modelValue"]);
@@ -50,10 +67,10 @@ const invalid = computed(() => {
  * 从 modelValue 中按层级键（$or / $and）展开出数组：
  * 缺省返回空数组，单项包裹返回该项，已是数组则原样返回。
  */
-function extract(value: any, type: string) {
+function extract(value: unknown, type: string): unknown[] {
 	if (!value) {
 		return [];
-	} else if (Array.isArray(value[type])) {
+	} else if (isRecord(value) && Array.isArray(value[type])) {
 		return value[type];
 	} else {
 		return [value];
@@ -64,7 +81,7 @@ function extract(value: any, type: string) {
  * extract 的逆操作：过滤空项后，0 项返回 undefined、1 项脱去包裹键、
  * 多项重新包成 { [type]: values }，保证 modelValue 始终最简。
  */
-function format(values: any, type: string) {
+function format(values: unknown[], type: string) {
 	values = values.filter(Boolean);
 	if (!values.length) {
 		return;
@@ -77,7 +94,7 @@ function format(values: any, type: string) {
 
 /** 替换指定位置（外层 outerKey / 内层 innerKey）的表达式并整体重排 emit */
 function update(
-	expr: any,
+	expr: unknown,
 	innerKey: string | number,
 	outerKey: string | number,
 ) {

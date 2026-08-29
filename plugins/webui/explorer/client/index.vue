@@ -8,8 +8,10 @@
     <template #left>
       <el-scrollbar ref="root" @contextmenu.stop="trigger($event, rootEntry)">
         <div class="search">
-          <el-input v-model="keyword" #suffix>
-            <k-icon name="search"></k-icon>
+          <el-input v-model="keyword">
+            <template #suffix>
+              <k-icon name="search"></k-icon>
+            </template>
           </el-input>
         </div>
         <el-tree
@@ -158,7 +160,7 @@ ctx.action("explorer.tree.create-directory", {
 // 上传：记录目标目录并弹出全局上传对话框（upload.vue 接管拖拽/粘贴）
 ctx.action("explorer.tree.upload", {
 	disabled: ({ explorer }) => explorer.tree.type !== "directory",
-	action: ({ explorer }) => (uploading.value = explorer.tree.filename + "/"),
+	action: ({ explorer }) => (uploading.value = `${explorer.tree.filename}/`),
 });
 
 // 下载：仅文件可下载
@@ -243,7 +245,7 @@ watch(editor, () => {
 	if (!editor.value) return (instance = null);
 	instance = monaco.editor.create(editor.value, {
 		model,
-		theme: "vs-" + mode.value,
+		theme: `vs-${mode.value}`,
 		tabSize: 2,
 	});
 });
@@ -257,7 +259,7 @@ watch([width, height], () => {
 
 // 明暗主题切换
 watch(mode, () => {
-	monaco.editor.setTheme("vs-" + mode.value);
+	monaco.editor.setTheme(`vs-${mode.value}`);
 });
 
 // 当前激活文件：取路由 /files/ 之后的路径段；不在 files 索引中则回退空串
@@ -268,7 +270,7 @@ const active = computed<string>({
 	},
 	set(name) {
 		if (!(name in files)) name = "";
-		router.replace("/files" + name);
+		router.replace(`/files${name}`);
 	},
 });
 
@@ -290,7 +292,7 @@ function filterNode(value: string, data: TreeEntry) {
  */
 function createEntry(entry: TreeEntry, type: "file" | "symlink" | "directory") {
 	cancelRename();
-	renaming.value = entry.filename + "/";
+	renaming.value = `${entry.filename}/`;
 	files[renaming.value] = {
 		type,
 		name: "",

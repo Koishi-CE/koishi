@@ -6,7 +6,7 @@
  *   离开当前路由时自动关闭（effect 清理）。
  */
 import { type Context, message } from "@koishi-ce/client";
-import {} from "@koishi-ce/plugin-notifier";
+import type {} from "@koishi-ce/plugin-notifier";
 import Config from "./config.vue";
 
 import "virtual:uno.css";

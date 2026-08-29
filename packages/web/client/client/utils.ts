@@ -22,9 +22,12 @@ export interface Ordered {
  */
 export function insert<T extends Ordered>(list: T[], item: T) {
 	markRaw(item);
-	// 非空断言仅为通过 noUncheckedIndexedAccess;比较表达式本身不变,
-	// 运行时对 undefined 的比较结果(false)与原实现完全一致
-	const index = list.findIndex((a) => a.order! < item.order!);
+	// order 为可选属性：任一侧缺失（undefined）时数值比较结果恒为 false，
+	// 与原实现（直接比较）在所有输入下的求值结果一致，这里显式判空以通过严格空检查
+	const index = list.findIndex(
+		(a) =>
+			a.order !== undefined && item.order !== undefined && a.order < item.order,
+	);
 	if (index >= 0) {
 		list.splice(index, 0, item);
 	} else {

@@ -29,14 +29,14 @@ export interface PeerInfo {
 export function analyzeVersions(
 	name: string,
 	getVersion: (name: string) => string,
-): Dict<AnalyzeResult> {
+): Dict<AnalyzeResult> | undefined {
 	const versions = store.registry?.[name] || manualDeps[name]?.versions;
-	if (!versions) return;
+	if (!versions) return undefined;
 	return valueMap(versions, (item) => {
 		const peers = valueMap({ ...item.peerDependencies }, (request, name) => {
 			const resolved =
 				(getVersion ? getVersion(name) : null) ??
-				store.dependencies[name]?.resolved ??
+				store.dependencies?.[name]?.resolved ??
 				store.packages?.[name]?.package.version;
 			const result: ResultType = !resolved
 				? item.peerDependenciesMeta?.[name]?.optional
@@ -65,7 +65,7 @@ export function analyzeVersions(
 export const manualDeps = reactive<Dict<Registry>>({});
 
 export async function addManual(name: string) {
-	const response = await fetch(`${store.market.registry}/${name}`);
+	const response = await fetch(`${store.market?.registry}/${name}`);
 	const data: Registry = await response.json();
 	data.versions = Object.fromEntries(
 		Object.entries(data.versions).sort((a, b) => compare(b[0], a[0])),
@@ -95,7 +95,9 @@ export async function install(
 		if (code) {
 			message.error("安装失败！");
 		} else {
-			await callback?.();
+			// callback 可能返回 void 或 Promise（Awaitable），
+			// 统一经 Promise.resolve 归一后等待
+			await Promise.resolve(callback?.());
 			message.success("安装成功！");
 		}
 	} catch (err) {

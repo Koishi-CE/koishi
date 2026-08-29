@@ -1,3 +1,4 @@
+import { resolve } from "node:path";
 import type { Entry } from "@koishi-ce/console";
 import {
 	type Argv,
@@ -11,7 +12,6 @@ import {
 	remove,
 	Schema,
 } from "@koishi-ce/koishi";
-import { resolve } from "path";
 import CommandExtension from "./command";
 
 /**
@@ -61,7 +61,7 @@ const Override: Schema<Override> = Schema.object({
 					filter: Schema.any(),
 				}),
 				Schema.transform(false, () => ({ filter: false })),
-			]).default({} as any),
+			]).default({} as never),
 		),
 		Schema.transform(Schema.array(String), (aliases) => {
 			return Object.fromEntries(aliases.map((name) => [name, {}]));
@@ -127,7 +127,9 @@ export interface CommandData {
  */
 export class CommandManager {
 	static filter = false;
-	static schema: Schema<Dict<string | Config>, Dict<Config>> =
+	// cordis 运行时等价读取 static Config 与 static schema（Config 优先），
+	// 此处对齐 koishi 插件惯例改挂 Config，使 ctx.plugin 的 config 形参获得类型推断
+	static Config: Schema<Dict<string | Config>, Dict<Config>> =
 		Schema.dict(Config).hidden();
 
 	private _tasks: Dict<() => void> = Object.create(null);
@@ -143,9 +145,9 @@ export class CommandManager {
 
 	/**
 	 * @param ctx 运行上下文
-	 * @param config 插件配置：以指令名为键的覆盖字典
+	 * @param config 插件配置：以指令名为键的覆盖字典（字符串简写由插件 Schema 在运行时归一化）
 	 */
-	constructor(ctx: Context, config: Dict<Config>) {
+	constructor(ctx: Context, config: Dict<Config> = {}) {
 		this.ctx = ctx;
 		this.config = config;
 		this.refresh = this.ctx.debounce(() => {
@@ -239,7 +241,8 @@ export class CommandManager {
 	 */
 	ensure(name: string, create?: boolean, patch?: boolean) {
 		// 调用方均保证该名称的指令存在（缺失时行为与原先一致，运行时抛错）
-		const command = this.ctx.$commander.get(name)!;
+		const command = this.ctx.$commander.get(name);
+		if (!command) throw new Error(`command not found: ${name}`);
 		const snapshot = this.snapshots[command.name];
 		if (patch && snapshot) {
 			// 别名与选项可能已被其它插件修改，先把新出现的部分并入初始状态
@@ -291,7 +294,8 @@ export class CommandManager {
 	 */
 	teleport(command: Command, name: string, write = false) {
 		// 调用前均已通过 ensure 建立快照
-		const snapshot = this.snapshots[command.name]!;
+		const snapshot = this.snapshots[command.name];
+		if (!snapshot) throw new Error(`snapshot not found: ${command.name}`);
 		snapshot.pending = null;
 		const parent = this.ctx.$commander.get(name);
 		if (name && !parent) {
@@ -316,7 +320,8 @@ export class CommandManager {
 	 */
 	alias(command: Command, aliases: Dict<Command.Alias>, write = false) {
 		// 调用前均已通过 ensure 建立快照
-		const snapshot = this.snapshots[command.name]!;
+		const snapshot = this.snapshots[command.name];
+		if (!snapshot) throw new Error(`snapshot not found: ${command.name}`);
 		const { initial, override } = snapshot;
 		command._aliases = override.aliases = aliases;
 
@@ -342,7 +347,8 @@ export class CommandManager {
 		write = false,
 	) {
 		// 调用前均已通过 ensure 建立快照
-		const snapshot = this.snapshots[command.name]!;
+		const snapshot = this.snapshots[command.name];
+		if (!snapshot) throw new Error(`snapshot not found: ${command.name}`);
 		const { initial, override } = snapshot;
 		override.config = data.config || {};
 		override.options = data.options || {};
@@ -460,7 +466,7 @@ export class CommandManager {
 			}
 			// name：与实际归属一致时不再保留（未改动父级的证据）
 			if (override.name) {
-				const initial = (snapshot.parent?.name || "") + "/" + command.name;
+				const initial = `${snapshot.parent?.name || ""}/${command.name}`;
 				if (override.name === initial || override.name === command.name) {
 					delete override.name;
 				}
@@ -487,8 +493,8 @@ export class CommandManager {
 			this.entry = ctx.console.addEntry(
 				process.env["KOISHI_BASE"]
 					? [
-							process.env["KOISHI_BASE"] + "/dist/index.js",
-							process.env["KOISHI_BASE"] + "/dist/style.css",
+							`${process.env["KOISHI_BASE"]}/dist/index.js`,
+							`${process.env["KOISHI_BASE"]}/dist/style.css`,
 						]
 					: process.env["KOISHI_ENV"] === "browser"
 						? [import.meta.url.replace(/\/src\/[^/]+$/, "/client/index.ts")]
@@ -574,7 +580,8 @@ export class CommandManager {
 
 			ctx.console.addListener("command/parse", (name, source) => {
 				// 客户端仅对已存在的指令发起解析请求
-				const command = this.ctx.$commander.get(name)!;
+				const command = this.ctx.$commander.get(name);
+				if (!command) throw new Error(`command not found: ${name}`);
 				return command.parse(source);
 			});
 		});

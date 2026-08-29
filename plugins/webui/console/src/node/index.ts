@@ -8,6 +8,16 @@
  *   提供 @plugin-* 插件产物，生产模式下重写裸导入并注入 KOISHI_CONFIG；
  * - devMode 下另起 Vite 开发服务器（/vite 路径）实现插件前端热更新。
  */
+
+import {
+	createReadStream,
+	existsSync,
+	promises as fs,
+	type Stats,
+} from "node:fs";
+import { createRequire } from "node:module";
+import { extname, resolve } from "node:path";
+import { fileURLToPath, pathToFileURL } from "node:url";
 import { Console, type Entry } from "@koishi-ce/console";
 import {
 	type Context,
@@ -17,15 +27,13 @@ import {
 	noop,
 	Schema,
 	Time,
+	type Universal,
 } from "@koishi-ce/koishi";
 import type { WebSocketLayer } from "@koishi-ce/plugin-server";
-import {} from "@koishijs/plugin-server-proxy";
-import { createReadStream, existsSync, promises as fs, type Stats } from "fs";
-import { createRequire } from "module";
+import type {} from "@koishijs/plugin-server-proxy";
 import open from "open";
-import { extname, resolve } from "path";
-import { fileURLToPath, pathToFileURL } from "url";
 import type { FileSystemServeOptions, ViteDevServer } from "vite";
+import zhCN from "../../locales/zh-CN.yml";
 
 // 上游此处以 `declare module "koishi"` 给 EnvData 增加 clientCount 字段；
 // 本仓 @koishi-ce/core 将 EnvData 定义为 type alias（无法做 interface 合并），
@@ -71,10 +79,14 @@ class NodeConsole extends Console {
 		this.ctx = ctx;
 		this.config = config;
 
-		this.layer = ctx.server.ws(config.apiPath ?? "/status", (socket) => {
-			// @types/ws 未为 `dispatchEvent` 提供类型声明，故整体断言为 any
-			this.accept(socket as any);
-		});
+		this.layer = ctx.server.ws(
+			config.apiPath ?? "/status",
+			(socket, request) => {
+				// @types/ws 未为 `dispatchEvent` 提供类型声明，
+				// ws 的 WebSocket 与 Universal.WebSocket 结构不一致，故经 unknown 双重断言
+				this.accept(socket as unknown as Universal.WebSocket, request);
+			},
+		);
 
 		// 连接数变化时同步到 loader.envData，供 koishi-scripts 等外部工具感知
 		ctx.on("console/connection", () => {
@@ -121,7 +133,7 @@ class NodeConsole extends Console {
 		if (heartbeat !== undefined) global.heartbeat = heartbeat;
 		global.endpoint = selfUrl + apiPath;
 		const proxy = this.ctx.get("server.proxy");
-		if (proxy) global.proxyBase = proxy.config.path + "/";
+		if (proxy) global.proxyBase = `${proxy.config.path}/`;
 		return global;
 	}
 
@@ -167,14 +179,14 @@ class NodeConsole extends Console {
 		const filenames: string[] = [];
 		for (const local of makeArray(this.getFiles(files))) {
 			const filename = devMode
-				? "/vite/@fs/" + local
-				: uiPath + "/@plugin-" + key;
+				? `/vite/@fs/${local}`
+				: `${uiPath}/@plugin-${key}`;
 			if (extname(local)) {
 				filenames.push(filename);
 			} else {
-				filenames.push(filename + "/index.js");
-				if (existsSync(local + "/style.css")) {
-					filenames.push(filename + "/style.css");
+				filenames.push(`${filename}/index.js`);
+				if (existsSync(`${local}/style.css`)) {
+					filenames.push(`${filename}/style.css`);
 				}
 			}
 		}
@@ -190,13 +202,13 @@ class NodeConsole extends Console {
 	private serveAssets() {
 		const { uiPath = "" } = this.config;
 
-		this.ctx.server.get(uiPath + "(.*)", async (ctx, next) => {
+		this.ctx.server.get(`${uiPath}(.*)`, async (ctx, next) => {
 			await next();
 			if (ctx.body || ctx.response.body) return;
 
 			// 访问 uiPath 本身时补上末尾斜杠并重定向（保证相对路径资源正确解析）
 			if (ctx.path === uiPath && !uiPath.endsWith("/")) {
-				return ctx.redirect(ctx.path + "/");
+				return ctx.redirect(`${ctx.path}/`);
 			}
 
 			const name = ctx.path.slice(uiPath.length).replace(/^\/+/, "");
@@ -300,7 +312,7 @@ class NodeConsole extends Console {
 				.join("");
 			headInjection += `<${tag}${attrString}>${content ?? ""}</${tag}>`;
 		}
-		return template.replace("<title>", headInjection + "<title>");
+		return template.replace("<title>", `${headInjection}<title>`);
 	}
 
 	/**
@@ -310,8 +322,8 @@ class NodeConsole extends Console {
 	 */
 	private async createVite() {
 		const { cacheDir = "cache/vite", dev } = this.config;
-		const { createServer } =
-			require("@koishi-ce/client/lib") as typeof import("@koishi-ce/client/lib");
+		// 惰性动态加载：避免生产环境（非 devMode）加载 vite 依赖
+		const { createServer } = await import("@koishi-ce/client/lib");
 
 		this.vite = await createServer(this.ctx.baseDir, {
 			cacheDir: resolve(this.ctx.baseDir, cacheDir),
@@ -406,7 +418,7 @@ class NodeConsole extends Console {
 			dev: NodeConsole.Dev,
 		}),
 	]).i18n({
-		"zh-CN": require("../../locales/zh-CN"),
+		"zh-CN": zhCN,
 	});
 }
 

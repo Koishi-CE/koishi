@@ -74,9 +74,9 @@ describe("@koishi-ce/plugin-commands", () => {
 
 		it("edit command", async () => {
 			// 通过 `command` 聊天指令增删别名，改动应同步写入插件配置
-			const fork = app.plugin(commands);
+			const fork = app.plugin(commands, {});
 
-			const cmd = app.command("bar").action(() => "test");
+			app.command("bar").action(() => "test");
 			await client.shouldNotReply("baz");
 			await client.shouldReply("command bar -a baz", "已更新指令配置。");
 			await client.shouldReply("baz", "test");
@@ -97,7 +97,7 @@ describe("@koishi-ce/plugin-commands", () => {
 		it("leaf to root", async () => {
 			// 配置写法：把子指令提升为顶层指令并追加别名
 			const foo = app.command("foo");
-			const bar = app.command("foo/bar").action(() => "test");
+			app.command("foo/bar").action(() => "test");
 			expect(foo.children).to.have.length(1);
 
 			const fork = app.plugin(commands, {
@@ -117,7 +117,7 @@ describe("@koishi-ce/plugin-commands", () => {
 		it("root to leaf", async () => {
 			// 配置写法：把顶层指令挂到其它指令之下并追加别名
 			const foo = app.command("foo");
-			const bar = app.command("bar").action(() => "test");
+			app.command("bar").action(() => "test");
 			expect(foo.children).to.have.length(0);
 
 			const fork = app.plugin(commands, {
@@ -138,7 +138,7 @@ describe("@koishi-ce/plugin-commands", () => {
 			// 配置写法：把子指令挂到尚未注册的父指令下（pending 补挂），
 			// 父指令被销毁后应回到原父级
 			const bar = app.command("bar");
-			const foo = app.command("bar/foo").action(() => "test");
+			app.command("bar/foo").action(() => "test");
 			expect(bar.children).to.have.length(1);
 
 			const fork = app.plugin(commands, {
@@ -166,10 +166,10 @@ describe("@koishi-ce/plugin-commands", () => {
 		it("leaf to root", async () => {
 			// 聊天指令写法：-P 提升为顶层，-a 追加别名
 			const foo = app.command("foo");
-			const bar = app.command("foo/bar").action(() => "test");
+			app.command("foo/bar").action(() => "test");
 			expect(foo.children).to.have.length(1);
 
-			const fork = app.plugin(commands);
+			const fork = app.plugin(commands, {});
 			await client.shouldReply("command bar -P -a baz", "已更新指令配置。");
 			expect(foo.children).to.have.length(0);
 			await client.shouldReply("bar", "test");
@@ -184,10 +184,10 @@ describe("@koishi-ce/plugin-commands", () => {
 		it("root to leaf", async () => {
 			// 聊天指令写法：-p 指定父指令并追加别名
 			const foo = app.command("foo");
-			const bar = app.command("bar").action(() => "test");
+			app.command("bar").action(() => "test");
 			expect(foo.children).to.have.length(0);
 
-			const fork = app.plugin(commands);
+			const fork = app.plugin(commands, {});
 			await client.shouldReply("command bar -p foo -a baz", "已更新指令配置。");
 			expect(foo.children).to.have.length(1);
 			await client.shouldReply("bar", "test");
@@ -203,10 +203,10 @@ describe("@koishi-ce/plugin-commands", () => {
 			// 聊天指令写法：目标父指令尚不存在，待其注册后补挂；
 			// 父指令销毁后回到原父级
 			const bar = app.command("bar");
-			const foo = app.command("bar/foo").action(() => "test");
+			app.command("bar/foo").action(() => "test");
 			expect(bar.children).to.have.length(1);
 
-			const fork = app.plugin(commands);
+			const fork = app.plugin(commands, {});
 			await client.shouldReply("command foo -p baz", "已更新指令配置。");
 			expect(bar.children).to.have.length(1);
 			const baz = app.command("baz");
@@ -251,7 +251,7 @@ describe("@koishi-ce/plugin-commands", () => {
 			// 聊天指令 -c 创建新指令；父指令不存在时先报错，创建后子指令补挂
 			app.command("bar").action(() => "test");
 
-			const fork = app.plugin(commands);
+			const fork = app.plugin(commands, {});
 			await client.shouldReply("command bar -p foo -n baz", "已更新指令配置。");
 			await client.shouldReply("command foo", "指令不存在。");
 			await client.shouldReply("command foo -c", "已创建指令。");

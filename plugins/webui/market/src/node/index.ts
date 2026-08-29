@@ -1,16 +1,18 @@
+import { resolve } from "node:path";
+import { type Context, type Dict, pick, Schema } from "@koishi-ce/koishi";
 import type { DependencyMetaKey, RemotePackage } from "@koishi-ce/registry";
-import { type Context, type Dict, pick, Schema } from "koishi";
-import { resolve } from "path";
 import { gt } from "semver";
 import { DependencyProvider, RegistryProvider } from "./deps";
 import Installer from "./installer";
+import messageZhCN from "./locales/message.zh-CN.yml";
+import schemaZhCN from "./locales/schema.zh-CN.yml";
 import MarketProvider from "./market";
 
 export * from "../shared";
 
 export { DependencyProvider, Installer, RegistryProvider };
 
-declare module "koishi" {
+declare module "@koishi-ce/koishi" {
 	interface Context {
 		installer: Installer;
 	}
@@ -64,7 +66,7 @@ export const Config: Schema<Config> = Schema.object({
 	registry: Installer.Config,
 	search: MarketProvider.Config,
 }).i18n({
-	"zh-CN": require("./locales/schema.zh-CN"),
+	"zh-CN": schemaZhCN,
 });
 
 export function apply(ctx: Context, config: Config) {
@@ -79,19 +81,20 @@ export function apply(ctx: Context, config: Config) {
 	ctx.plugin(Installer, config.registry);
 
 	ctx.inject(["installer"], (ctx) => {
-		ctx.i18n.define("zh-CN", require("./locales/message.zh-CN"));
+		ctx.i18n.define("zh-CN", messageZhCN);
 
 		ctx
 			.command("plugin.install <name>", { authority: 4 })
 			.alias(".i")
 			.action(async ({ session }, name) => {
+				if (!session) return;
 				if (!name) return session.text(".expect-name");
 
 				// check local dependencies
 				const names = ctx.installer.resolveName(name);
 				const deps = await ctx.installer.getDeps();
-				name = names.find((name) => deps[name]);
-				if (name) return session.text(".already-installed");
+				if (names.find((name) => deps[name]))
+					return session.text(".already-installed");
 
 				// find proper version
 				const result = await ctx.installer.findVersion(names);
@@ -111,15 +114,16 @@ export function apply(ctx: Context, config: Config) {
 			.command("plugin.uninstall <name>", { authority: 4 })
 			.alias(".r")
 			.action(async ({ session }, name) => {
+				if (!session) return;
 				if (!name) return session.text(".expect-name");
 
 				// check local dependencies
 				const names = ctx.installer.resolveName(name);
 				const deps = await ctx.installer.getDeps();
-				name = names.find((name) => deps[name]);
-				if (!name) return session.text(".not-installed");
+				const installed = names.find((name) => deps[name]);
+				if (!installed) return session.text(".not-installed");
 
-				await ctx.installer.install({ [name]: null });
+				await ctx.installer.install({ [installed]: null });
 				return session.text(".success");
 			});
 
@@ -128,39 +132,46 @@ export function apply(ctx: Context, config: Config) {
 			.alias(".update", ".up")
 			.option("self", "-s, --koishi")
 			.action(async ({ session, options }, ...names) => {
+				if (!session) return;
+
 				async function getPackages(names: string[]) {
 					if (!names.length) return Object.keys(deps);
-					names = names
+					const resolved = names
 						.map((name) => {
 							const names = ctx.installer.resolveName(name);
 							return names.find((name) => deps[name]);
 						})
-						.filter(Boolean);
-					if (options.self) names.push("koishi");
-					return names;
+						.filter((name): name is string => name !== undefined);
+					if (options?.self) resolved.push("koishi");
+					return resolved;
 				}
 
 				// refresh dependencies
 				ctx.installer.refresh(true);
 				const deps = await ctx.installer.getDeps();
-				names = await getPackages(names);
-				names = names.filter((name) => {
-					const { latest, resolved, invalid } = deps[name];
+				names = (
+					await getPackages(names.filter((name): name is string => !!name))
+				).filter((name) => {
+					const { latest, resolved, invalid } = deps[name] ?? {};
+					if (latest === undefined || resolved === undefined) return false;
 					try {
 						return !invalid && gt(latest, resolved);
-					} catch {}
+					} catch {
+						return false;
+					}
 				});
 				if (!names.length) return session.text(".all-updated");
 
 				const output = names.map((name) => {
-					const { latest, resolved } = deps[name];
+					const { latest, resolved } = deps[name] ?? {};
 					return `${name}: ${resolved} -> ${latest}`;
 				});
 				output.unshift(session.text(".available"));
 				output.push(session.text(".prompt"));
 				await session.send(output.join("\n"));
 				const result = await session.prompt();
-				if (!["Y", "y"].includes(result?.trim())) {
+				const answer = result?.trim();
+				if (answer !== "Y" && answer !== "y") {
 					return session.text(".cancelled");
 				}
 
@@ -169,8 +180,9 @@ export function apply(ctx: Context, config: Config) {
 					content: session.text(".success"),
 				};
 				await ctx.installer.install(
-					names.reduce((result, name) => {
-						result[name] = deps[name].latest;
+					names.reduce<Dict<string | null>>((result, name) => {
+						const latest = deps[name]?.latest;
+						if (latest !== undefined) result[name] = latest;
 						return result;
 					}, {}),
 				);

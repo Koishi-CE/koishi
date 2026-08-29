@@ -20,7 +20,7 @@ import {
 	type ScopeStatus,
 } from "@koishi-ce/koishi";
 import type { LoaderScope } from "@koishi-ce/loader";
-import {} from "@koishi-ce/plugin-hmr";
+import type {} from "@koishi-ce/plugin-hmr";
 import type {
 	PackageJson,
 	SearchObject,
@@ -142,7 +142,8 @@ export abstract class PackageProvider extends DataService<
 				schema: Context.Config,
 			},
 			package: { name: "" },
-		} as any as PackageProvider.Data);
+			// 全局设置条目不带市场元数据字段，用双断言放宽必填约束
+		} as unknown as PackageProvider.Data);
 		return Object.fromEntries(objects.map((data) => [data.name, data]));
 	}
 

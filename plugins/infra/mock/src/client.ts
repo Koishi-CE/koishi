@@ -6,6 +6,9 @@
  * MockMessageEncoder 则把机器人的发送内容序列化为纯文本，
  * 经会话上挂载的 session.client 写回 MessageClient，形成闭环。
  */
+
+import assert from "node:assert";
+import { format } from "node:util";
 import {
 	type Context,
 	clone,
@@ -17,8 +20,6 @@ import {
 	type Session,
 	type Universal,
 } from "@koishi-ce/koishi";
-import assert from "assert";
-import { format } from "util";
 import type { MockBot } from "./adapter";
 
 // 断言失败时的错误提示模板（%s 为 util.format 占位符）
@@ -75,14 +76,14 @@ export class MockMessageEncoder extends MessageEncoder {
 					key = hyphenate(key);
 					if (value === true) return ` ${key}`;
 					if (value === false) return ` no-${key}`;
-					return ` ${key}="${h.escape("" + value, true)}"`;
+					return ` ${key}="${h.escape(`${value}`, true)}"`;
 				})
 				.join("");
 			this.buffer += `<${type}${attrString}>`;
 			const length = this.buffer.length;
 			await this.render(children);
 			if (this.buffer.length === length) {
-				this.buffer = this.buffer.slice(0, -1) + `/>`;
+				this.buffer = `${this.buffer.slice(0, -1)}/>`;
 			} else {
 				this.buffer += `</${type}>`;
 			}
@@ -127,7 +128,7 @@ export class MessageClient {
 			platform: "mock",
 			type: "message",
 			selfId: bot.selfId,
-			user: { id: userId, name: "" + userId },
+			user: { id: userId, name: `${userId}` },
 		} as Universal.Event;
 
 		if (channelId) {
@@ -138,7 +139,7 @@ export class MessageClient {
 			};
 		} else {
 			this.event.channel = {
-				id: "private:" + userId,
+				id: `private:${userId}`,
 				type: 1 satisfies Universal.Channel.Type,
 			};
 		}
@@ -196,7 +197,7 @@ export class MessageClient {
 			}
 			// exactOptionalPropertyTypes 下可选属性 quote 不能显式携带 undefined，按需附加
 			const message: Universal.Message = {
-				id: ++counter + "",
+				id: `${++counter}`,
 				content,
 				elements,
 			};
