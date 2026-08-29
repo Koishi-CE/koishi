@@ -337,7 +337,6 @@ class NodeConsole extends Console {
 	// erasableSyntaxOnly 禁止含运行时值的 namespace：以下三个 Schema 常量改挂为类的静态属性
 	// （NodeConsole.Dev / NodeConsole.Head / NodeConsole.Config 的取值不变），
 	// 类型声明保留在文末仅含类型的 namespace 中，以维持 `NodeConsole.Config` 等的类型访问
-	// biome-ignore lint/style/useNamingConvention: 插件 Schema 约定为 PascalCase 的静态属性（与类型 namespace 同名合并）
 	static Dev: Schema<NodeConsole.Dev> = Schema.object({
 		fs: Schema.object({
 			strict: Schema.boolean().default(true),
@@ -347,7 +346,6 @@ class NodeConsole extends Console {
 		}).hidden(),
 	});
 
-	// biome-ignore lint/style/useNamingConvention: 插件 Schema 约定为 PascalCase 的静态属性（与类型 namespace 同名合并）
 	static Head: Schema<NodeConsole.Head> = Schema.intersect([
 		Schema.object({
 			tag: Schema.union([
@@ -390,7 +388,6 @@ class NodeConsole extends Console {
 		]),
 	]);
 
-	// biome-ignore lint/style/useNamingConvention: 插件 Schema 约定为 PascalCase 的静态属性（与类型 namespace 同名合并）
 	static Config: Schema<NodeConsole.Config> = Schema.intersect([
 		Schema.object({
 			uiPath: Schema.string().default(""),

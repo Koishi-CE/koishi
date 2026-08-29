@@ -12,7 +12,6 @@ import {} from "@koishi-ce/loader";
 export * from "@koishi-ce/console";
 
 class BrowserConsole extends Console {
-	// biome-ignore lint/style/useNamingConvention: 插件 Schema 约定为 PascalCase 的静态属性（与类型 namespace 同名合并）
 	static Config: Schema<BrowserConsole.Config> = Schema.object({});
 
 	/**
