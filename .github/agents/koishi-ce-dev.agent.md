@@ -11,7 +11,7 @@ user-invocable: true
 
 - **项目**：[koishijs/koishi](https://github.com/koishijs/koishi)（MIT）+ [koishijs/webui](https://github.com/koishijs/webui)（部分 AGPL-3.0）的文件级合并 fork，包作用域统一 `@koishi-ce`，运行时目标 Bun，npm 组织 Koishi-CE。与 Koishijs 组织无隶属关系。
 - **技术栈**：TypeScript（TS7 类型检查 + typescript6 供 eslint）/ Bun workspaces + bun:test + chai（存量，逐步迁移）/ tsdown（node 侧库打包，ESM-only）/ vite 8（前端，编程式 `vite.build()` 无配置文件）/ biome 2 + eslint（仅 .vue）。
-- **布局**：`packages/node/*`（运行时核心库，根 tsdown 统一构建）、`packages/web/*`（浏览器侧，源码直出）、`plugins/common|infra|webui/*`（插件：`src/` 为 Node 侧、`client/` 为 Vue 侧）、`apps/*`（online 网站、registry 扫描库、koishi-create 脚手架、koishi-scripts 插件开发 CLI）、`tooling/`（上游 yakumo 配置存档）。
+- **布局**：`packages/node/*`（运行时核心库，根 tsdown 统一构建）、`packages/web/*`（浏览器侧，源码直出）、`plugins/common|infra|webui/*`（插件：`src/` 为 Node 侧、`client/` 为 Vue 侧）、`apps/*`（online 网站、registry 扫描库、koishi-create 脚手架、koishi-scripts 插件开发 CLI）、`tooling/`（维护脚本与上游 yakumo 配置存档）。
 - **docs/**：开发依据是 `docs/DEVELOPMENT.md` 与 `docs/ARCHITECTURE.md`（以实际代码为准）；依赖升级的决策记录在 `docs/upgrade-plan.md`（含 Phase 5 cordis 4 阻塞结论）与 `docs/dependency-audit.md`。
 
 ## 约束
@@ -21,7 +21,7 @@ user-invocable: true
 - **cordis 生态冻结在 3.x**：cordis / minato / @cordisjs/* / @satorijs/* 不得跳 4.x / 1.x（Phase 5 已实证被 `@satorijs/core` 双 cordis 问题阻塞并回退，重启条件见 `docs/upgrade-plan.md`）。
 - **vendored 三包不动**：`plugins/infra/{http,proxy-agent,server}` 是无源码的预编译产物包，被根 tsdown 显式 exclude。
 - **ESM-only 产物 + Bun 运行时**：根 tsdown 单遍构建只出 ESM（`index.mjs` + `index.d.ts`），exports 以 `default` 条件兜底 require 解析（Bun 的 require() 可直接加载 ESM）；**不要恢复 CJS 双格式产物**。
-- **`plugins/webui/market/` 被 .gitignore 临时忽略**（迁入对齐期间），但 `scripts/typecheck.mjs` 与 `bun test` 不读 .gitignore，报告错误时先分辨来源。
+- **`plugins/webui/market/` 被 .gitignore 临时忽略**（迁入对齐期间），但 `tooling/scripts/typecheck.ts` 与 `bun test` 不读 .gitignore，报告错误时先分辨来源。
 - **不要在 Biome 的 JSON 行尾不可见字符上浪费 Token**：已知、正常、无害，看到即跳过。
 - 除以上约束外，不要过度解读本提示词——其余行为遵循默认 Agent 规则。
 

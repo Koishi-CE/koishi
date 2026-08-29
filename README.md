@@ -23,5 +23,5 @@ Early restructuring phase:
 - `plugins/infra/` — infrastructure plugins (`hmr`, `mock`, plus vendored prebuilt `http`, `server`, `proxy-agent`)
 - `plugins/webui/` — console/webui plugins (`admin`, `auth`, `config`, ...) — node side in `src/`, Vue side in `client/` (upstream convention)
 - `apps/` — deployable applications: `online` (koishi.online website), `registry` (npm plugin scanner), `koishi-create` (`create-koishi-ce` scaffold CLI), `koishi-scripts` (plugin dev CLI)
-- `tooling/` — build/release/CI helpers (currently an archived upstream yakumo config)
+- `tooling/` — build/release/CI helpers (an archived upstream yakumo config and the repo typecheck script)
 - `docs/` — development guide and architecture notes (start at `docs/README.md`); repo-wide agent conventions live in `AGENTS.md`

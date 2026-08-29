@@ -18,7 +18,7 @@ koishi/（Bun workspaces：packages/node/* · packages/web/* · plugins/{common,
 ├── plugins/infra/   基础设施插件（http/proxy-agent/server 为 vendored 预编译）
 ├── plugins/webui/   控制台插件 ×16（src/=Node 侧，client/=Vue 侧）
 ├── apps/            可部署应用（online / registry / koishi-create / koishi-scripts）
-└── tooling/         上游 yakumo 配置存档（scripts 为空）
+└── tooling/         维护脚本 + 上游 yakumo 配置存档
 ```
 
 ### packages/node/*（运行时核心，全部走根 tsdown）
@@ -74,7 +74,7 @@ node 侧在 `src/`、Vue 侧在 `client/`（上游约定），`koishi.public: ["
 ### tooling/
 
 - `upstream-yakumo-config.json`：删除 yakumo 前从各包抽取的构建配置存档（记录了 client 构建脚本位置：`@koishi-ce/client → ./scripts/client.ts`、analytics / explorer `→ ./build/client.ts`、online `→ ./src/build.ts`）。
-- `scripts/`：空目录（预留）。
+- `scripts/`：仓库维护脚本（TS7 全量类型检查 `typecheck.ts`）。
 
 ### 预留位
 
@@ -117,7 +117,7 @@ node 侧在 `src/`、Vue 侧在 `client/`（上游约定），`koishi.public: ["
 ### 类型检查体系
 
 - 根 `tsconfig.json` 是 **paths-only 壳**（`files: []`），`tsconfig.base.json` 的 paths 把 35 个 `@koishi-ce/*` 指向各自 `src/`（无 project references）。
-- 实际检查由 `scripts/typecheck.mjs` 逐 tsconfig 并行跑 TS7（`@typescript/native`）完成；扫描范围 = packages / plugins / apps 下所有 `tsconfig.json`（不读 gitignore，无排除项）。
+- 实际检查由 `tooling/scripts/typecheck.ts` 逐 tsconfig 并行跑 TS7（`@typescript/native`）完成；扫描范围 = packages / plugins / apps 下所有 `tsconfig.json`（不读 gitignore，无排除项）。
 - Vue 客户端代码 extends `tsconfig.client.json`；各 `client/tsconfig.json` 形如 `{"extends": "../../../../tsconfig.client", "include": ["."]}`。
 
 ## 5. 测试体系

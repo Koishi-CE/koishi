@@ -17,7 +17,7 @@
 		"lint": "biome check .",
 		"lint:client": "eslint \"packages/web/*/client/**/*.vue\" \"plugins/webui/*/client/**/*.vue\"",
 		"format": "biome format --write .",
-		"typecheck": "bun scripts/typecheck.mjs",
+		"typecheck": "bun tooling/scripts/typecheck.ts",
 		"typecheck:legacy": "tsc6 --noEmit -p tsconfig.json",
 		"ts7": "node node_modules/@typescript/native/bin/tsc",
 		"build": "tsdown",
