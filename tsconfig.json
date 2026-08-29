@@ -6,6 +6,12 @@
 {
 	"$schema": "https://json.schemastore.org/tsconfig",
 	"extends": "./tsconfig.base",
+	"compilerOptions": {
+		// 增量类型检查缓存放 node_modules（.gitignore 已同时忽略 node_modules/ 与 **/*.tsbuildinfo）。
+		// 本文件与 tsconfig.web.json 的文件集合不同，buildinfo 必须各用各的，共用会互相判失效。
+		"incremental": true,
+		"tsBuildInfoFile": "./node_modules/.cache/tsc/node.tsbuildinfo"
+	},
 	"include": [
 		"apps/koishi-create/src",
 		"apps/koishi-scripts/src",

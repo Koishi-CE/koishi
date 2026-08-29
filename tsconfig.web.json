@@ -30,6 +30,9 @@
 	],
 	"exclude": ["packages/web/components/client/schemastery-vue-runtime.ts"],
 	"compilerOptions": {
+		// 与 tsconfig.json（node 侧）各自独立一份 buildinfo，共用会互相判失效（见该文件头注释）。
+		"incremental": true,
+		"tsBuildInfoFile": "./node_modules/.cache/tsc/web.tsbuildinfo",
 		"paths": {
 			"schemastery-vue/client": [
 				"./packages/web/components/client/schemastery-vue-client.ts"
