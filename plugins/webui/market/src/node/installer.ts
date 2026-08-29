@@ -1,4 +1,5 @@
 import { readFileSync } from "node:fs";
+import { createRequire } from "node:module";
 import { resolve } from "node:path";
 import type {} from "@koishi-ce/console";
 import {
@@ -24,10 +25,15 @@ import spawn from "execa";
 import getRegistry from "get-registry";
 import pMap from "p-map";
 import { compare, satisfies, valid } from "semver";
-import which from "which-pm-runs";
 import type {} from ".";
 
 const logger = new Logger("market");
+
+// 经 createRequire 加载 CJS 包并就地断言签名：不走 ESM 导入互操作，
+// 规避多包合并类型检查（大一统 tsconfig）下 export = 交织失效问题
+const whichPMRuns = createRequire(import.meta.url)("which-pm-runs") as () =>
+	| undefined
+	| { name: string; version: string };
 
 export interface Dependency {
 	/**
@@ -104,7 +110,7 @@ class Installer extends Service {
 	private pkgTasks: Dict<
 		Promise<Dict<Pick<RemotePackage, DependencyMetaKey>>>
 	> = {};
-	private agent = which();
+	private agent = whichPMRuns();
 	private manifest: LocalPackage;
 	private declare depTask: Promise<Dict<Dependency>>;
 	private flushData: () => void;

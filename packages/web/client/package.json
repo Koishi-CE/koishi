@@ -46,7 +46,6 @@
 	],
 	"dependencies": {
 		"@koishi-ce/components": "workspace:*",
-		"@maikolib/vite-plugin-yaml": "^1.0.1",
 		"@satorijs/protocol": "^1.7.0",
 		"@vitejs/plugin-vue": "^6.0.8",
 		"@vueuse/core": "^14.4.0",

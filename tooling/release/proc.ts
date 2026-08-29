@@ -8,7 +8,7 @@
  * run.ts 同一结论）。bun / git 是真实可执行文件，直接 spawn。
  *
  * 捕获型查询走 spawnSync：Bun.spawn 的管道在 win32 高并发下存在读端
- * EOF 不送达的竞态（见 tooling/scripts/typecheck.ts 注释），查询类调用
+ * EOF 不送达的竞态（本仓 typecheck 因此弃用 Bun.spawn 管道并发），查询类调用
  * 低频且需要返回值，同步执行最稳；直通型执行走 Bun.spawn（stdio 无管道，
  * 无该竞态），支持异步等待以便并发编排。
  */

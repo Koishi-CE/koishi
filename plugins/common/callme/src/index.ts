@@ -5,19 +5,19 @@
  * 查询或修改当前用户的昵称（写入数据库 user.name）。
  * 其他插件可监听 `common/callme` 事件校验或拒绝昵称修改。
  */
-import {
-	type Context,
-	h,
-	RuntimeError,
-	Schema,
-	type Session,
-} from "@koishi-ce/koishi";
+import { type Context, h, RuntimeError, Schema } from "@koishi-ce/koishi";
 import zhCN from "../locales/zh-CN.yml";
 
-// 模块增强：新增 common/callme 事件，监听者返回字符串即可拦截昵称修改
+// 模块增强：新增 common/callme 事件，监听者返回字符串即可拦截昵称修改。
+// Session 用内联 import() 类型引用：本文件对 Session 的唯一使用就在此
+// 增强块内，顶层 type import 在多包合并检查（大一统 tsconfig）下会被
+// noUnusedLocals 误判为未使用。
 declare module "@koishi-ce/koishi" {
 	interface Events {
-		"common/callme"(name: string, session: Session): string | undefined;
+		"common/callme"(
+			name: string,
+			session: import("@koishi-ce/koishi").Session,
+		): string | undefined;
 	}
 }
 

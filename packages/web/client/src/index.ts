@@ -10,9 +10,9 @@
 import { existsSync } from "node:fs";
 import { mkdir, rm } from "node:fs/promises";
 import { resolve } from "node:path";
-import yaml from "@maikolib/vite-plugin-yaml";
 import vue from "@vitejs/plugin-vue";
 import * as vite from "vite";
+import { yaml } from "./yaml";
 
 // vite 8 基于 rolldown,rollup 已不在依赖树中;这里按实际消费的字段
 // 局部声明构建产物类型(替代原先的 `import type { RollupOutput }`)

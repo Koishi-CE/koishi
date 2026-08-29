@@ -33,7 +33,7 @@ bun install                     # 安装依赖（Bun workspaces，产出 bun.loc
 bun run check                   # 全量门禁 = lint + lint:client + typecheck
 bun run lint                    # biome check .（格式 + lint 唯一权威）
 bun run lint:client             # eslint 仅查 *.vue（biome 亦解析 .vue 但只做格式，模板语义仍归 eslint）
-bun run typecheck               # TS7 逐 tsconfig 并行类型检查（bun tooling/scripts/typecheck.ts）
+bun run typecheck               # TS7 大一统类型检查 = 两条 bunx tsc（node 侧 tsconfig.json + client 侧 tsconfig.web.json）
 bun run build                   # 根 tsdown：全部 node 侧包 → lib/（ESM-only：index.mjs + index.d.ts）
 bun test packages plugins/common plugins/webui/admin plugins/webui/commands
                                 # 全量自有用例（24 文件 / 185 用例）；裸 `bun test` 已可正常跑通
@@ -61,7 +61,7 @@ bun packages/web/client/src/bin.ts build <插件目录>  # 单个 webui 插件�
 - 显式 `any` 全仓为 0，保持住：动态边界（JSON.parse / socket 消息 / 第三方回调）用 `unknown` + 收窄，不要回退 `any`；`{}` 类型用 `Record<never, never>`。
 - 测试断言**新标准是 `bun:test` 的 `expect`**（Jest/Vitest 风格 API）；core 与 echo 已完成迁移（shape 断言用 `packages/node/core/tests/shape.ts` 注册的 `toHaveShape` 自定义 matcher，import 该文件一次即注册）。存量 chai 用例（loader / utils / i18n-utils / broadcast / help / admin / commands）逐步迁移，**不要新增 chai 断言**；`chai-as-promised` 的 `.eventually` / `.be.rejected` 写法对应 `await expect(p).resolves / .rejects`。
 - 前端构建**没有 vite 配置文件**，全部是编程式 `vite.build()`：宿主控制台总装在 `packages/web/client/scripts/client.ts`（产物路径硬编码到 `plugins/webui/console/dist`）；单插件用 `packages/web/client/src/index.ts` 的 `build(root)`（内置 `collectWorkspaceAliases()`——未被依赖的 workspace 包不会出现在 node_modules 链接里，必须显式映射才能被 bundler 解析）。
-- `tooling/scripts/typecheck.ts` 递归扫描 packages / plugins / apps 下**所有** `tsconfig.json`（不读 .gitignore），无排除项（koishi-scripts 的脚手架模板已内嵌进源码，无独立模板工程）。
+- 类型检查是**两条纯 `bunx tsc` 串行**：node 侧大一统 `tsconfig.json`（include = 原 31 个 node 工程并集）+ client 侧大一统 `tsconfig.web.json`（include = 16 个 client 工程并集，paths 为各工程覆盖的合并、exclude 含 schemastery-vue-runtime.ts——第三方源码不进类型程序）。**不要恢复逐 tsconfig 并行 spawn**：50 进程并发在 win32 下有 Bun.spawn 竞态且无必要；新增 client 工程时须同步 tsconfig.web.json 的 include/paths。
 - 目录名 `apps/koishi-create` 与包名 `create-koishi-ce` 不一致；biome override、该包 repository.directory、根 tsdown 注释等处仍写着旧名 `apps/create-koishi-ce`（失效路径，勿效仿引用，以 `apps/koishi-create` 为准）。
 - 特殊构建 hack，动对应构建链必须复核：analytics 的 "fuck-echarts"（echarts chunk 内 `Symbol` 重命名）、explorer 的 monaco manualChunks、online 的内置模块改写为 `registry.koishi.chat` 在线加载、client 构建的 vue-i18n esm-browser.prod 别名。
 - hmr 插件的 esbuild 是**运行时依赖**（TS 即时编译），不是 devDep。

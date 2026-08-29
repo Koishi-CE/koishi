@@ -74,7 +74,7 @@ node 侧在 `src/`、Vue 侧在 `client/`（上游约定），`koishi.public: ["
 ### tooling/
 
 - `upstream-yakumo-config.json`：删除 yakumo 前从各包抽取的构建配置存档（记录了 client 构建脚本位置：`@koishi-ce/client → ./scripts/client.ts`、analytics / explorer `→ ./build/client.ts`、online `→ ./src/build.ts`）。
-- `scripts/`：仓库维护脚本（TS7 全量类型检查 `typecheck.ts`）。
+- `scripts/`：仓库维护脚本；`release/`：changesets 发布流程（changeset / release 入口在根 package.json）。
 
 ### 预留位
 
@@ -116,9 +116,9 @@ node 侧在 `src/`、Vue 侧在 `client/`（上游约定），`koishi.public: ["
 
 ### 类型检查体系
 
-- 根 `tsconfig.json` 是 **paths-only 壳**（`files: []`），`tsconfig.base.json` 的 paths 把 35 个 `@koishi-ce/*` 指向各自 `src/`（无 project references）。
-- 实际检查由 `tooling/scripts/typecheck.ts` 逐 tsconfig 并行跑 TS7（`@typescript/native`）完成；扫描范围 = packages / plugins / apps 下所有 `tsconfig.json`（不读 gitignore，无排除项）。
-- Vue 客户端代码 extends `tsconfig.client.json`；各 `client/tsconfig.json` 形如 `{"extends": "../../../../tsconfig.client", "include": ["."]}`。
+- `tsconfig.base.json` 的 paths 把 35 个 `@koishi-ce/*` 指向各自 `src/`（无 project references）；`tsconfig.client.json` 为 Vue 客户端基座（DOM lib、types 空）。
+- 实际检查 = 两条纯 `bunx tsc` 串行（TS7 native）：node 侧大一统 `tsconfig.json`（include 为原 31 个 node 工程的并集）+ client 侧大一统 `tsconfig.web.json`（include 为 16 个 client 工程并集，paths 为各工程 paths 覆盖的合并，exclude 挡住 `schemastery-vue-runtime.ts`——其引入的第三方源码不满足超严格配置）。旧「逐 tsconfig 并行 50 进程」方案因 win32 下 Bun.spawn 竞态且无必要而废弃。
+- 各 `client/tsconfig.json` 形如 `{"extends": "../../../../tsconfig.client", "include": ["."]}`；新增 client 工程时须同步 `tsconfig.web.json` 的 include/paths。
 
 ## 5. 测试体系
 

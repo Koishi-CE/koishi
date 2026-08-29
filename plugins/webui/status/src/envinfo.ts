@@ -7,10 +7,17 @@
  */
 
 import { readFile } from "node:fs/promises";
+import { createRequire } from "node:module";
 import { DataService } from "@koishi-ce/console";
 import { type Context, type Dict, Schema, version } from "@koishi-ce/koishi";
 import { helpers } from "envinfo";
-import { whichPMRuns } from "which-pm-runs";
+
+// 经 createRequire 加载 CJS 包并就地断言签名：不走 ESM 导入互操作，
+// 规避多包合并类型检查（大一统 tsconfig）下 export = 交织失效问题
+// （此前具名导入在 Bun 运行时下本就拿不到具名导出，属顺带修复）
+const whichPMRuns = createRequire(import.meta.url)("which-pm-runs") as () =>
+	| undefined
+	| { name: string; version: string };
 
 class EnvInfoProvider extends DataService<Dict<Dict<string>>> {
 	/** 采集任务的缓存：get() 首次调用时创建，之后始终复用同一 Promise。 */

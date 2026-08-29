@@ -1,0 +1,49 @@
+// client 侧大一统类型检查入口：浏览器端工程（extends tsconfig.client 的
+// 16 个 client tsconfig.json）的 include 并集，与 tsconfig.json（node 侧）
+// 一同构成全量类型检查的两条 bunx tsc 指令。基座 tsconfig.client.json
+// 保持纯净（仅被 extends，不带 include）。
+//
+// paths 为各工程 paths 覆盖的合并（extends 的 paths 会被整体替换，故须
+// 重写基座已有映射）；exclude 收录各工程 exclude 的并集——
+// schemastery-vue-runtime.ts 引入的第三方源码不满足超严格配置，原工程
+// 即显式排除，只允许进入打包管线（见该文件头注释）。
+{
+	"$schema": "https://json.schemastore.org/tsconfig",
+	"extends": "./tsconfig.client",
+	"include": [
+		"packages/web/client/app",
+		"packages/web/client/client",
+		"packages/web/components/client",
+		"plugins/webui/admin/client",
+		"plugins/webui/analytics/client",
+		"plugins/webui/auth/client",
+		"plugins/webui/commands/client",
+		"plugins/webui/config/client",
+		"plugins/webui/explorer/client",
+		"plugins/webui/insight/client",
+		"plugins/webui/locales/client",
+		"plugins/webui/logger/client",
+		"plugins/webui/market/client",
+		"plugins/webui/notifier/client",
+		"plugins/webui/sandbox/client",
+		"plugins/webui/status/client"
+	],
+	"exclude": ["packages/web/components/client/schemastery-vue-runtime.ts"],
+	"compilerOptions": {
+		"paths": {
+			"schemastery-vue/client": [
+				"./packages/web/components/client/schemastery-vue-client.ts"
+			],
+			"@koishi-ce/plugin-config/client": [
+				"./plugins/webui/config/client/index.ts"
+			],
+			"@koishi-ce/plugin-config": ["./plugins/webui/config/lib/index.d.ts"],
+			"@koishi-ce/plugin-market": ["./plugins/webui/market/lib/index.d.ts"],
+			"vue": ["./packages/web/client/node_modules/vue"],
+			"@vueuse/core": ["./packages/web/client/node_modules/@vueuse/core"],
+			"@koishi-ce/console": ["./packages/node/console/lib/index.d.ts"],
+			"@koishi-ce/registry": ["./packages/node/registry/lib/index.d.ts"],
+			"@koishi-ce/koishi": ["./packages/node/cli/lib/index.d.ts"]
+		}
+	}
+}

@@ -47,10 +47,10 @@
 	},
 	"devDependencies": {
 		"@koishi-ce/client": "workspace:*",
+		"@koishi-ce/koishi": "workspace:*",
 		"@koishi-ce/plugin-analytics": "workspace:*",
 		"@koishi-ce/plugin-config": "workspace:*",
-		"@types/envinfo": "^7.8.3",
-		"@koishi-ce/koishi": "workspace:*"
+		"@types/envinfo": "^7.8.3"
 	},
 	"dependencies": {
 		"@koishi-ce/console": "workspace:*",

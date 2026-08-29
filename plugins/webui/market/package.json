@@ -61,7 +61,6 @@
 		"@koishi-ce/plugin-config": "workspace:*",
 		"@koishijs/market": "^4.2.10",
 		"@types/semver": "^7.5.8",
-		"@types/which-pm-runs": "^1.0.2",
 		"vue": "^3.5.12"
 	},
 	"dependencies": {

@@ -54,12 +54,10 @@
 		"@koishi-ce/client": "workspace:*",
 		"@koishi-ce/plugin-console": "workspace:*",
 		"@koishi-ce/plugin-mock": "workspace:*",
-		"@types/js-yaml": "^4.0.9",
 		"@koishi-ce/koishi": "workspace:*"
 	},
 	"dependencies": {
-		"@koishi-ce/console": "workspace:*",
-		"js-yaml": "^5.4.1"
+		"@koishi-ce/console": "workspace:*"
 	},
 	"exports": {
 		".": {

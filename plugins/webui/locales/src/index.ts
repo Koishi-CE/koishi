@@ -19,7 +19,6 @@ import {
 	Schema,
 } from "@koishi-ce/koishi";
 import type {} from "@koishi-ce/plugin-console";
-import { dump, load } from "js-yaml";
 
 declare module "@koishi-ce/console" {
 	namespace Console {
@@ -69,7 +68,10 @@ export async function apply(ctx: Context, config: Config) {
 			logger.debug("loading locale %s", file);
 			const content = await readFile(resolve(folder, file), "utf8");
 			// yml 文件为嵌套的翻译字典,按 I18n.Store 形态断言后注册
-			ctx.i18n.define(`$${file.split(".")[0]}`, load(content) as I18n.Store);
+			ctx.i18n.define(
+				`$${file.split(".")[0]}`,
+				Bun.YAML.parse(content) as I18n.Store,
+			);
 		}
 	}
 
@@ -103,7 +105,7 @@ export async function apply(ctx: Context, config: Config) {
 					const store = data[locale];
 					if (!store) continue;
 					ctx.i18n.define(`$${locale}`, store);
-					const content = dump(store);
+					const content = Bun.YAML.stringify(store);
 					await writeFile(
 						resolve(ctx.baseDir, primary, `${locale}.yml`),
 						content,

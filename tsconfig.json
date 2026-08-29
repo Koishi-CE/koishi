@@ -1,6 +1,46 @@
-// 根配置仅作为兼容入口：全量类型检查由 tooling/scripts/typecheck.ts 逐项目执行。
-// 保留此文件供 typecheck:legacy 和 koishi-scripts 生成的 monorepo 使用。
+// 根配置 = node 侧大一统类型检查入口：全量类型检查由两条 bunx tsc 完成
+// （本文件 + tsconfig.web.json），不再逐 tsconfig 并行 spawn 50 个进程。
+// include 为原各工程（extends tsconfig.base 的 node 侧 tsconfig.json）的
+// include 并集，检查范围与旧方案逐工程检查完全一致。
+// 保留供 typecheck:legacy 与 koishi-scripts 生成的 monorepo 使用。
 {
 	"$schema": "https://json.schemastore.org/tsconfig",
-	"extends": "./tsconfig.base"
+	"extends": "./tsconfig.base",
+	"include": [
+		"apps/koishi-create/src",
+		"apps/koishi-scripts/src",
+		"packages/node/cli/src",
+		"packages/node/console/src",
+		"packages/node/core/src",
+		"packages/node/core/tests",
+		"packages/node/i18n-utils/src",
+		"packages/node/loader/src",
+		"packages/node/registry/src",
+		"packages/node/utils/src",
+		"packages/web/client/src",
+		"plugins/common/bind/src",
+		"plugins/common/broadcast/src",
+		"plugins/common/callme/src",
+		"plugins/common/echo/src",
+		"plugins/common/help/src",
+		"plugins/common/inspect/src",
+		"plugins/infra/hmr/src",
+		"plugins/infra/mock/src",
+		"plugins/webui/actions/src",
+		"plugins/webui/admin/src",
+		"plugins/webui/analytics/src",
+		"plugins/webui/auth/src",
+		"plugins/webui/commands/src",
+		"plugins/webui/config/src",
+		"plugins/webui/console/src",
+		"plugins/webui/explorer/src",
+		"plugins/webui/insight/src",
+		"plugins/webui/locales/src",
+		"plugins/webui/logger/src",
+		"plugins/webui/market/src",
+		"plugins/webui/notifier/src",
+		"plugins/webui/oobe/src",
+		"plugins/webui/sandbox/src",
+		"plugins/webui/status/src"
+	]
 }

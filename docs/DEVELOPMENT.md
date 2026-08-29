@@ -7,7 +7,7 @@
 | 工具 | 版本 | 用途 |
 |---|---|---|
 | Bun | ≥ 1.4 | 包管理（workspaces + `bun.lock`）、测试运行器（`bun test`）、主要运行时（yml 导入等原生能力） |
-| Node | ≥ 24（辅助） | 个别辅助脚本；`typecheck` 已纯 Bun 化（Bun.spawn 直连 tsc），不再依赖 Node |
+| Node | ≥ 24（辅助） | 个别辅助脚本；`typecheck` 为两条纯 `bunx tsc`（native tsc 的 node 启动器），不再依赖 Node 脚本编排 |
 | 包管理器 | 仅 Bun | 不要引入 pnpm / yarn / npm 的锁文件 |
 
 - TypeScript **双版本**：根 `devDependencies.typescript` 实为 `npm:@typescript/typescript6@6.0.2`（供 @typescript-eslint/parser，其对 TS7 的支持尚未落地，见 eslint.config.ts 头部注释）；真正的类型检查用 `@typescript/native`（TS 7.0.2 原生编译器，`bun run ts7` 可直接调用其 tsc）。
@@ -21,8 +21,8 @@ bun run check                      # 全量门禁 = lint + lint:client + typeche
 bun run lint                       # biome check .（格式 + lint）
 bun run lint:client                # eslint 仅查 *.vue
 bun run format                     # biome format --write .
-bun run typecheck                  # TS7 逐 tsconfig 并行类型检查
-bun run typecheck:legacy           # tsc6 --noEmit -p tsconfig.json（paths-only 根壳，基本只查根级）
+bun run typecheck                  # TS7 大一统类型检查（node 侧 + client 侧两条 bunx tsc 串行）
+bun run typecheck:legacy           # tsc6 --noEmit -p tsconfig.json（node 侧大一统，tsc6 对照用）
 bun run build                      # 根 tsdown：全部 node 侧包 → 各包 lib/
 bun test packages plugins/common plugins/webui/admin plugins/webui/commands
                                    # 全量自有用例（20 文件 / 145 用例，勿裸跑 `bun test`，见已知坑 3）
