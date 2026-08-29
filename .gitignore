@@ -50,3 +50,5 @@ archive/
 .pnpm-store
 .repo/
 
+# 配置
+koishi.yml
