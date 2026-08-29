@@ -1,9 +1,4 @@
 {
-  "extends": "../../../tsconfig.client",
-  "compilerOptions": {
-    "rootDir": ".",
-  },
-  "include": [
-    ".",
-  ],
+	"extends": "../../../../tsconfig.client",
+	"include": ["."]
 }

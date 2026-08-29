@@ -45,10 +45,14 @@ async function collectWorkspaceAliases(): Promise<Record<string, string>> {
 				const { name } = await Bun.file(`${dir}/package.json`).json();
 				if (!name) continue;
 				// 控制台前端语境下,裸包名对到浏览器端入口(替代上游 lib 的 browser
-				// 导出条件);`<name>/src` 子路径对到源码目录,供共享代码引用。
+				// 导出条件);`<name>/src` 子路径对到源码目录,供共享代码引用;
+				// `<name>/client` 子路径对到浏览器端入口(上游生态以该子路径跨插件
+				// 引用彼此的 client API,如 market 引用 config 的 EnvInfo 类型,
+				// 上游与 npm 产物的 exports 均未声明它,同样靠仓库内别名解析)。
 				// 子路径键必须先插入——别名解析按插入序取首个命中项
 				const clientEntry = `${dir}/client/index.ts`;
 				if (existsSync(`${dir}/src`)) aliases[`${name}/src`] = `${dir}/src`;
+				if (existsSync(clientEntry)) aliases[`${name}/client`] = clientEntry;
 				aliases[name] = existsSync(clientEntry) ? clientEntry : `${dir}/src`;
 			} catch {}
 		}
@@ -138,6 +142,11 @@ export async function build(root: string, config: vite.UserConfig = {}) {
 						// 组件库同样经由宿主 client 包提供，避免每个插件
 						// 都把整套组件库重复打进产物
 						"@koishi-ce/components": "@koishi-ce/client",
+						// market 插件的 client 依赖 npm 包 @koishijs/market（上游以
+						// 源码发布的组件库），其内部以 npm 名引用组件库；重定向到
+						// 本仓库同版本（1.5.22）components 源码，避免 npm 版整套
+						// 组件库被打进插件产物
+						"@koishijs/components": workspaceAliases["@koishi-ce/components"],
 						// 虚拟子路径的运行时载体（补齐真实包缺失的 SchemaBase
 						// 具名导出）；类型面由 tsconfig.client.json 的 paths
 						// 解析到 schemastery-vue-client.ts

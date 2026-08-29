@@ -24,7 +24,7 @@
 4. **vendored 三包不动**：`plugins/infra/{http,proxy-agent,server}` 是预编译产物包（无 `src/`、不走 tsdown、根 tsdown 配置显式 exclude），分别内联再导出 `@cordisjs/plugin-*`。
 5. **ESM-only 产物 + Bun 运行时**：本仓库全面拥抱 Bun——根 tsdown 单遍构建只出 ESM（`index.mjs` + `index.d.ts`），各包 exports 以 `default` 条件兜底；Bun 的 `require()` 可直接加载 ESM，loader 的插件加载链（`require → 插件 lib/index.mjs → @koishi-ce/*`）据此工作，**不要恢复 CJS 双格式产物**。运行时以 Bun 为准（Node 仅支持 ≥22.12 的 require(esm)，不作兼容目标）；`.yml` locale 走 copy loader 原样拷入产物，Bun 原生支持 yml 导入。已收敛 `"type": "module"` 的包：core、cli、`@koishi-ce/scripts`；其余包后续逐个迁移。
 6. **许可证分区**：`packages/web/*`、`plugins/webui/*`（console 插件为 MIT，其余 AGPL）、`apps/online` 为 AGPL-3.0，其余目录 MIT——以 `NOTICE` 表格为准；在 AGPL 目录新增文件同样受 AGPL 约束。
-7. **`plugins/webui/market/`（`@koishi-ce/plugin-marketn`）当前被 .gitignore 临时忽略**（迁入对齐期间）；注意 `tooling/scripts/typecheck.ts` 与 `bun test` **不读 .gitignore**，仍会把它卷进检查范围，定位错误时先分辨是否来自该目录。
+7. **market 插件为上游原版再分发**：`plugins/webui/market/`（`@koishi-ce/plugin-market`）对齐自上游 webui `plugins/market`（原版 v2.11.11），社区版 `plugin-marketn` 已被其取代并移除。client 侧依赖 npm 包 `@koishijs/market`（上游以源码发布的组件库，直接打入插件 dist），其中的 npm 名 `@koishijs/components` 由单插件构建的 alias 重定向到本仓库 workspace 版，避免双实例。
 
 ## 门禁与工作流
 
@@ -32,18 +32,17 @@
 bun install                     # 安装依赖（Bun workspaces，产出 bun.lock）
 bun run check                   # 全量门禁 = lint + lint:client + typecheck
 bun run lint                    # biome check .（格式 + lint 唯一权威）
-bun run lint:client             # eslint 仅查 *.vue（biome 不解析 .vue）
+bun run lint:client             # eslint 仅查 *.vue（biome 亦解析 .vue 但只做格式，模板语义仍归 eslint）
 bun run typecheck               # TS7 逐 tsconfig 并行类型检查（bun tooling/scripts/typecheck.ts）
 bun run build                   # 根 tsdown：全部 node 侧包 → lib/（ESM-only：index.mjs + index.d.ts）
 bun test packages plugins/common plugins/webui/admin plugins/webui/commands
-                                # 全量自有用例（20 文件 / 145 用例）；
-                                # 裸 `bun test` 会卷入 gitignored 的 market（*.test.ts）并挂起，见已知坑
+                                # 全量自有用例（24 文件 / 185 用例）；裸 `bun test` 已可正常跑通
 bun packages/web/client/src/bin.ts build            # 宿主控制台前端 → plugins/webui/console/dist
 bun packages/web/client/src/bin.ts build <插件目录>  # 单个 webui 插件的前端
 ```
 
 - `apps/koishi-create` 有自己的 tsdown.config.ts，进目录 `bun run build`（koishi-scripts 已并入根构建）；`apps/online` 用 `src/build.ts`（vite 编程式，PPA 在线化）。
-- **类型检查现状（进行中）**：严格模式错误清理已完成 `packages/node/*` 六包（0 错误）；webui 插件 `client/` 侧、`packages/web/*`、`apps/online` 及部分插件 `src/` 仍有存量错误。最低要求：**改哪个包，保证该包所在 project 不新增错误**；`packages/node/*` 保持 0。
+- **类型检查现状（进行中）**：严格模式错误清理已完成 `packages/node/*` 六包（0 错误）；webui 插件 `client/` 侧、`packages/web/*`、`apps/online` 及部分插件 `src/` 仍有存量错误。最低要求：**改哪个包，保证该包所在 project 不新增错误**；`packages/node/*` 保持 0。`plugins/webui/market` 两个 project 在 TS6（`node_modules/typescript`）基准下为 0 错误，TS7 下的存量报告全是下方 augmentation 缺陷的假错误。
 - 上游同步（port 上游改动）按 `UPSTREAM.md` 的映射表手动 diff 移植，完成后跑 `bun run build` + `bun test`。
 
 ## 代码风格
@@ -56,7 +55,8 @@ bun packages/web/client/src/bin.ts build <插件目录>  # 单个 webui 插件�
 ## 已知坑（历史经验，别再踩）
 
 - `.yml` 导入链路：类型来自 `packages/node/core/src/i18n/yml.d.ts`（由 tsconfig.base 的 files 全局注入），测试 / Bun 运行时靠 Bun 原生 yml 支持；构建期由 tsdown copy loader 原样拷入产物并改写引用路径。
-- **裸 `bun test`（仓库根）当前会挂起**：bun test 的发现规则包含 `*.test.ts`，会把 gitignored 的 `plugins/webui/market/`（vitest 用例，`i18n.test.ts` 处挂死）卷进来。跑测试用上面带过滤参数的全量命令或按包定向（`bun test packages/node/core`）；market 对齐完成、用例迁为 `*.spec.ts` 后此坑消除。
+- **TS7 native 的跨文件 `declare module` 增强不生效**（`@typescript/native` 7.0.2 实证：同一增强在 TS6 下正常合并、TS7 下静默失效，同文件内引用不受影响）。依赖声明合并的类型（如 console 的 `Console.Services` 服务注入）在 TS7 全量 typecheck 里会假报缺键。market 的解法是 `plugins/webui/market/client/console-services.ts` 显式镜像 node 侧声明——**node 侧声明变更时须同步该文件**。
+- market 迁入的类型链细节：client 基座 `tsconfig.client.json` 的 paths 把 `@koishi-ce/plugin-market` / `@koishi-ce/plugin-config` 指到 **lib 产物 d.ts**（等效 npm 生态 exports types 解析；指向 src 会把 node 侧源码混进 client 检查）；`collectWorkspaceAliases()` 新增 `<包名>/client` 子路径映射（跨插件引用彼此 client API 的解析通道，如 market 引 config 的 EnvInfo）。
 - 测试断言**新标准是 `bun:test` 的 `expect`**（Jest/Vitest 风格 API）；core 与 echo 已完成迁移（shape 断言用 `packages/node/core/tests/shape.ts` 注册的 `toHaveShape` 自定义 matcher，import 该文件一次即注册）。存量 chai 用例（loader / utils / i18n-utils / broadcast / help / admin / commands）逐步迁移，**不要新增 chai 断言**；`chai-as-promised` 的 `.eventually` / `.be.rejected` 写法对应 `await expect(p).resolves / .rejects`。
 - 前端构建**没有 vite 配置文件**，全部是编程式 `vite.build()`：宿主控制台总装在 `packages/web/client/scripts/client.ts`（产物路径硬编码到 `plugins/webui/console/dist`）；单插件用 `packages/web/client/src/index.ts` 的 `build(root)`（内置 `collectWorkspaceAliases()`——未被依赖的 workspace 包不会出现在 node_modules 链接里，必须显式映射才能被 bundler 解析）。
 - `tooling/scripts/typecheck.ts` 递归扫描 packages / plugins / apps 下**所有** `tsconfig.json`（不读 .gitignore），无排除项（koishi-scripts 的脚手架模板已内嵌进源码，无独立模板工程）。
