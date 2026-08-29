@@ -262,5 +262,17 @@ Object.assign(satori.Session.prototype, {
 	},
 });
 
+// bot 销毁防护：cordis 卸载 fiber 按注册顺序进行，satori 服务在 Context 构造时
+// 最早注册、也最先卸载，其后业务插件（如 adapter / mock）的 bot dispose 回调
+// 再读 this.ctx.bots 已是 undefined，而 satori 4.6.0 的 Bot.dispose 未像 status
+// setter 那样做可选链防护，导致 app.stop() 时抛 TypeError（已实证）。
+// 包一层防护：bots 服务仍在位时走原逻辑，否则跳过列表摘除直接停机。
+// 若后续升级 @satorijs/core 修复了该缺陷，可移除本补丁。
+const botDispose = satori.Bot.prototype.dispose;
+satori.Bot.prototype.dispose = function (this: satori.Bot) {
+	if (!this.ctx.bots) return this.stop();
+	return botDispose.call(this);
+};
+
 // 向后兼容：历史上应用类名为 App
 export { Context as App };

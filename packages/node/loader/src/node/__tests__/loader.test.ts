@@ -4,9 +4,17 @@
  * 桩不触碰文件系统：import 以内存注册表按名惰性生成 mock 插件，
  * saveConfig 只记录调用；createApp / update / filter 走真实装配链路。
  */
-import { describe, expect, it, type Mock, mock } from "bun:test";
+import {
+	afterAll,
+	beforeAll,
+	describe,
+	expect,
+	it,
+	type Mock,
+	mock,
+} from "bun:test";
 import type { Plugin } from "@koishi-ce/core";
-import { Context, type Dict, sleep } from "@koishi-ce/koishi";
+import { Context, type Dict, Logger, sleep } from "@koishi-ce/koishi";
 import mockClient from "@koishi-ce/plugin-mock";
 import type { ResolvedConfigFile } from "../../base/config-file.ts";
 import { Loader } from "../index.ts";
@@ -65,6 +73,17 @@ class TestLoader extends Loader {
 describe("@koishi-ce/loader", () => {
 	const loader = new TestLoader();
 	loader.writable = true;
+
+	beforeAll(() => {
+		// foo 插件 apply 抛错是预期场景；app 域日志在此只会产生 [E]/[I] 噪声，
+		// 静默之（阈值 0 = SILENT），不影响 "loader" 域的 [I] 输出
+		(Logger.levels as Record<string, number>)["app"] = 0;
+	});
+
+	afterAll(() => {
+		// 恢复域级配置，避免同一进程内后续测试文件被连带静默
+		delete (Logger.levels as Record<string, number>)["app"];
+	});
 
 	// 验证 createApp 能按配置表正确挂载插件并传递配置
 	it("loader.createApp()", async () => {
