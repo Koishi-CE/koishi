@@ -2,6 +2,7 @@
 	"name": "@koishi-ce/plugin-notifier",
 	"description": "Notifier service for Koishi",
 	"version": "1.0.0",
+	"type": "module",
 	"main": "lib/index.mjs",
 	"types": "lib/index.d.ts",
 	"exports": {

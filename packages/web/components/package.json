@@ -2,6 +2,7 @@
 	"name": "@koishi-ce/components",
 	"description": "Client components for Koishi",
 	"version": "1.0.0",
+	"type": "module",
 	"main": "client/index.ts",
 	"files": [
 		"client",

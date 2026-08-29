@@ -2,6 +2,7 @@
 	"name": "@koishi-ce/plugin-mock",
 	"description": "Test Mocker for Koishi",
 	"version": "1.0.0",
+	"type": "module",
 	"main": "lib/index.mjs",
 	"typings": "lib/index.d.ts",
 	"files": [

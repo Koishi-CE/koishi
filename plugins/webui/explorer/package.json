@@ -2,6 +2,7 @@
 	"name": "@koishi-ce/plugin-explorer",
 	"description": "File explorer and editor for Koishi",
 	"version": "1.0.0",
+	"type": "module",
 	"main": "lib/index.mjs",
 	"types": "lib/index.d.ts",
 	"exports": {

@@ -2,6 +2,7 @@
 	"name": "@koishi-ce/plugin-market",
 	"description": "Manage your bots and plugins with console",
 	"version": "1.0.0",
+	"type": "module",
 	"main": "lib/index.mjs",
 	"typings": "lib/index.d.ts",
 	"files": [

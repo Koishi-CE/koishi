@@ -2,6 +2,7 @@
 	"name": "@koishi-ce/registry",
 	"description": "Scan Package Manager for Koishi Plugins",
 	"version": "1.0.0",
+	"type": "module",
 	"main": "lib/index.mjs",
 	"typings": "lib/index.d.ts",
 	"files": [

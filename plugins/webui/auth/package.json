@@ -2,6 +2,7 @@
 	"name": "@koishi-ce/plugin-auth",
 	"description": "Console User Authentication",
 	"version": "1.0.0",
+	"type": "module",
 	"main": "lib/index.mjs",
 	"typings": "lib/index.d.ts",
 	"files": [

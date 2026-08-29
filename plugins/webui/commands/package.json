@@ -2,6 +2,7 @@
 	"name": "@koishi-ce/plugin-commands",
 	"description": "Override Command Config for Koishi",
 	"version": "1.0.0",
+	"type": "module",
 	"main": "lib/index.mjs",
 	"typings": "lib/index.d.ts",
 	"files": [
