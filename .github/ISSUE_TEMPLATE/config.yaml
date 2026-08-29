@@ -1,0 +1,14 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Koishi-CE 讨论区
+    url: https://github.com/Koishi-CE/koishi/discussions
+    about: 在讨论区提问或交流使用问题
+  - name: Koishi 官方论坛
+    url: https://forum.koishi.xyz
+    about: 在官方论坛寻求帮助
+  - name: 上游 koishijs/koishi 仓库
+    url: https://github.com/koishijs/koishi/issues
+    about: 上游本身的问题请到上游反馈
+  - name: 更多社区渠道
+    url: https://koishi.chat/about/contact.html
+    about: 加入官方 QQ 群、Discord 频道等
