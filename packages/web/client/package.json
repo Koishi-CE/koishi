@@ -12,7 +12,6 @@
 		"./global": "./global.d.ts",
 		"./bin": "./lib/bin.mjs",
 		"./lib": "./lib/index.mjs",
-		"./lib/yakumo": "./lib/yakumo.mjs",
 		"./package.json": "./package.json"
 	},
 	"files": [
