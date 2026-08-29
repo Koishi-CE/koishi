@@ -16,7 +16,7 @@ import pkg from "../package.json" with { type: "json" };
 
 const { version } = pkg;
 
-import { build } from "@koishi-ce/client";
+import { build } from "./index.ts";
 
 const help = `koishi-console/${version}
 
