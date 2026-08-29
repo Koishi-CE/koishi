@@ -11,8 +11,19 @@
 
 import type { Dict } from "@koishi-ce/core";
 
-/** 进程启动时即已存在的环境变量键（env 文件不得覆盖这些键） */
-const initialKeys = Object.getOwnPropertyNames(process.env);
+/** 进程启动时即已存在的环境变量键（env 文件不得覆盖这些键）。
+ *
+ * Windows 的环境块大小写不敏感：进程实际携带的键名可能是注册表里的
+ * 原始形式（如 PowerShell 会话下的 "Path"），而 env 文件里写的往往是
+ * 大写 "PATH"——直接按字面比对会漏判，把既有变量当新键注入并覆盖。
+ * 因此 win32 下统一大写归一后比对；POSIX 严格区分大小写，保持原样。 */
+const foldKey =
+	process.platform === "win32"
+		? (key: string): string => key.toUpperCase()
+		: (key: string): string => key;
+const initialKeys = new Set(
+	Object.getOwnPropertyNames(process.env).map(foldKey),
+);
 
 /** 找到带引号值的闭合引号位置（跳过转义字符），未闭合返回 -1 */
 function findQuoteClose(raw: string, quote: string): number {
@@ -90,7 +101,7 @@ export async function parseEnvFiles(filenames: readonly string[]) {
 export function injectEnv(parsed: Dict<string>) {
 	const keys: string[] = [];
 	for (const key in parsed) {
-		if (initialKeys.includes(key)) continue;
+		if (initialKeys.has(foldKey(key))) continue;
 		process.env[key] = parsed[key];
 		keys.push(key);
 	}
