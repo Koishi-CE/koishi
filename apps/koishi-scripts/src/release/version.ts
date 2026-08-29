@@ -14,8 +14,8 @@
  */
 import { existsSync, readdirSync, statSync } from "node:fs";
 import { join } from "node:path";
-import { cwd } from "../index";
-import { runCommand } from "./run";
+import { cwd } from "../index.ts";
+import { runCommand } from "./run.ts";
 
 /** 列出 external/ 下含 package.json 的项目目录（按目录名排序，输出稳定）。 */
 function listProjects(): string[] {

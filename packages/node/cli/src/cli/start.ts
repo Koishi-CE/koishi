@@ -9,7 +9,7 @@
 import { hyphenate, isInteger } from "@koishi-ce/utils";
 import type { CAC } from "cac";
 import kleur from "kleur";
-import type { Config } from "../worker/daemon";
+import type { Config } from "../worker/daemon.ts";
 
 /** 子进程通过 IPC 通道发来的消息类型（并集） */
 type Event = Event.Start | Event.Env | Event.Heartbeat;

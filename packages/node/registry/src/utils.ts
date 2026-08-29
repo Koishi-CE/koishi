@@ -4,7 +4,7 @@
  * package.json 的 koishi 字段与约定关键词汇总成结构化 Manifest）。
  */
 import type { Dict } from "cosmokit";
-import type { Manifest, PackageJson } from "./types";
+import type { Manifest, PackageJson } from "./types.ts";
 
 // 与 `Ensure` 常量同名：接口占据类型空间，常量占据值空间，二者合并声明
 /**

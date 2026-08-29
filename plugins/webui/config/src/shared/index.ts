@@ -6,9 +6,9 @@
  * 注册进 console 的 Services 接口，使浏览器端能以类型安全的方式
  * 访问 `store.packages`、`store.services`、`store.config`。
  */
-import type { PackageProvider } from "./packages";
-import type { ServiceProvider } from "./services";
-import type { ConfigWriter } from "./writer";
+import type { PackageProvider } from "./packages.ts";
+import type { ServiceProvider } from "./services.ts";
+import type { ConfigWriter } from "./writer.ts";
 
 declare module "@koishi-ce/console" {
 	namespace Console {
@@ -20,6 +20,6 @@ declare module "@koishi-ce/console" {
 	}
 }
 
-export * from "./packages";
-export * from "./services";
-export * from "./writer";
+export * from "./packages.ts";
+export * from "./services.ts";
+export * from "./writer.ts";

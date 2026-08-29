@@ -8,8 +8,11 @@
  */
 
 import { cac } from "cac";
-import { version } from "../../package.json" with { type: "json" };
-import registerStartCommand from "./start";
+import pkg from "../../package.json" with { type: "json" };
+
+const { version } = pkg;
+
+import registerStartCommand from "./start.ts";
 
 const cli = cac("koishi").help().version(version);
 

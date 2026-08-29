@@ -19,7 +19,14 @@ import {
 import { join, relative, resolve } from "node:path";
 import { DataService } from "@koishi-ce/console";
 import { type Context, type Dict, Schema } from "@koishi-ce/koishi";
-import anymatch, { type Tester } from "anymatch";
+import type { Tester } from "anymatch";
+import * as anymatchModule from "anymatch";
+
+// anymatch 的 d.ts 为 ESM 形态而实现为 CJS，nodenext 互操作视图会给 default 多包一层；
+// 运行时 namespace.default 即真实的 matchers => Tester 函数（module.exports），断言穿透取用
+const anymatch =
+	anymatchModule.default as unknown as typeof anymatchModule.default.default;
+
 import { detect } from "chardet";
 import type { FSWatcher } from "chokidar";
 import { fileTypeFromBuffer } from "file-type";

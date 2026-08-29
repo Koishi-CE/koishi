@@ -20,15 +20,15 @@ import {
 	type Universal,
 	valueMap,
 } from "@koishi-ce/koishi";
-import { Client } from "./client";
-import { Entry } from "./entry";
-import { PermissionProvider } from "./permission";
-import { SchemaProvider } from "./schema";
-import { DataService } from "./service";
+import { Client } from "./client.ts";
+import { Entry } from "./entry.ts";
+import { PermissionProvider } from "./permission.ts";
+import { SchemaProvider } from "./schema.ts";
+import { DataService } from "./service.ts";
 
-export * from "./client";
-export * from "./entry";
-export * from "./service";
+export * from "./client.ts";
+export * from "./entry.ts";
+export * from "./service.ts";
 
 // 通过模块合并向全局类型注入 console 服务与相关事件
 declare module "@koishi-ce/koishi" {

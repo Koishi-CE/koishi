@@ -9,9 +9,9 @@ import {
 	Service,
 } from "@koishi-ce/koishi";
 import zhCN from "../locales/zh-CN.yml";
-import command from "./command";
+import command from "./command.ts";
 
-export * from "./command";
+export * from "./command.ts";
 
 /**
  * @koishi-ce/plugin-admin 的 node 侧入口。

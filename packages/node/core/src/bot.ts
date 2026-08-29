@@ -12,8 +12,8 @@
 import { sleep } from "@koishi-ce/utils";
 import { Adapter, Bot, type Fragment } from "@satorijs/core";
 import { type Dict, defineProperty } from "cosmokit";
-import type { Context } from "./context";
-import type { Session } from "./session";
+import type { Context } from "./context/index.ts";
+import type { Session } from "./session/index.ts";
 
 declare module "@satorijs/core" {
 	interface Bot {

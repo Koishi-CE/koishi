@@ -8,10 +8,10 @@
  *    client 源码（供开发调试用）。
  */
 import { type Context, Schema } from "@koishi-ce/koishi";
-import { ConfigWriter, ServiceProvider } from "../shared";
-import { PackageProvider } from "./packages";
+import { ConfigWriter, ServiceProvider } from "../shared/index.ts";
+import { PackageProvider } from "./packages.ts";
 
-export * from "../shared";
+export * from "../shared/index.ts";
 
 export const name = "config";
 export const inject = ["console", "loader"];

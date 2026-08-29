@@ -8,8 +8,8 @@ import { describe, expect, it, type Mock, mock } from "bun:test";
 import type { Plugin } from "@koishi-ce/core";
 import { Context, type Dict, sleep } from "@koishi-ce/koishi";
 import mockClient from "@koishi-ce/plugin-mock";
-import type { ResolvedConfigFile } from "../../base/config-file";
-import { Loader } from "../index";
+import type { ResolvedConfigFile } from "../../base/config-file.ts";
+import { Loader } from "../index.ts";
 
 // 声明测试用事件，让 emit 调用走类型化的重载
 declare module "@koishi-ce/core" {

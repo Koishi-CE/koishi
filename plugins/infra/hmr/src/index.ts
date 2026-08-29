@@ -25,7 +25,7 @@ import {
 import { Loader, type LoaderScope, unwrapExports } from "@koishi-ce/loader";
 import { type ChokidarOptions, type FSWatcher, watch } from "chokidar";
 import zhCN from "../locales/zh-CN.yml";
-import { handleError } from "./error";
+import { handleError } from "./error.ts";
 
 declare module "@koishi-ce/koishi" {
 	interface Context {

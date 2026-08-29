@@ -2,7 +2,12 @@ import { beforeAll, describe, it } from "bun:test";
 import { App } from "@koishi-ce/koishi";
 import admin from "@koishi-ce/plugin-admin";
 import mock from "@koishi-ce/plugin-mock";
-import memory from "@koishijs/plugin-database-memory";
+import * as memoryModule from "@koishijs/plugin-database-memory";
+
+// 同 anymatch：CJS 实现配 ESM 声明，nodenext 互操作视图多包一层 default，断言穿透取真实类
+const memory =
+	memoryModule.default as unknown as typeof memoryModule.default.default;
+
 import { expect, use } from "chai";
 import promise from "chai-as-promised";
 

@@ -5,7 +5,7 @@
  */
 import { Logger } from "@koishi-ce/koishi";
 import { LocalScanner } from "@koishi-ce/registry";
-import * as shared from "../shared";
+import * as shared from "../shared/index.ts";
 
 const logger = new Logger("config");
 

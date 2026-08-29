@@ -10,7 +10,7 @@ import {
 } from "@koishi-ce/koishi";
 import { DataService } from "@koishi-ce/plugin-console";
 import zhCN from "../locales/zh-CN.yml";
-import { FileWriter } from "./file";
+import { FileWriter } from "./file.ts";
 
 /**
  * @koishi-ce/plugin-logger 的 node 侧入口。

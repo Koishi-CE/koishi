@@ -30,7 +30,7 @@ import {
 } from "node:fs";
 import { dirname, join } from "node:path";
 import { createInterface } from "node:readline/promises";
-import { cwd, loadHostManifest } from "./index";
+import { cwd, loadHostManifest } from "./index.ts";
 
 /** koishi 生态依赖版本兜底（宿主清单缺失时使用；一律上游名，维持生态兼容） */
 const FALLBACK_VERSIONS = {

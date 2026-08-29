@@ -8,9 +8,9 @@
  */
 
 import { camelCase, type Dict } from "cosmokit";
-import type { Command } from "../command/command";
-import { Argv } from "./argv";
-import type { CommandBase } from "./base";
+import type { Command } from "../command/command.ts";
+import { Argv } from "./argv.ts";
+import type { CommandBase } from "./base.ts";
 
 /** CommandBase.parse 的算法实现（纯函数化，便于与选项注册逻辑分离） */
 export function parseCommand(

@@ -8,10 +8,10 @@
  */
 import * as satori from "@satorijs/core";
 import * as cordis from "cordis";
-import BotMixin from "../bot";
-import DatabaseMixin from "../database";
-import SessionMixin from "../session";
-import { Context } from "./index";
+import BotMixin from "../bot.ts";
+import DatabaseMixin from "../database/index.ts";
+import SessionMixin from "../session/index.ts";
+import { Context } from "./index.ts";
 
 /**
  * Koishi 应用服务：持有根配置与三大 Mixin 实例。

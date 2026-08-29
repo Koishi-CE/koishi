@@ -13,9 +13,9 @@
 import { h } from "@satorijs/core";
 import type { Disposable } from "cordis";
 import { paramCase } from "cosmokit";
-import type { Context } from "../../context";
-import type { Argv } from "./argv";
-import { parseCommand } from "./parse";
+import type { Context } from "../../context/index.ts";
+import type { Argv } from "./argv.ts";
+import { parseCommand } from "./parse.ts";
 
 export namespace CommandBase {
 	export interface Config {

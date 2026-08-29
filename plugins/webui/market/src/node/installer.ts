@@ -15,6 +15,7 @@ import {
 	valueMap,
 } from "@koishi-ce/koishi";
 import type {} from "@koishi-ce/loader";
+import type {} from "@koishi-ce/plugin-market";
 import Scanner, {
 	type DependencyMetaKey,
 	type PackageJson,
@@ -25,7 +26,6 @@ import spawn from "execa";
 import getRegistry from "get-registry";
 import pMap from "p-map";
 import { compare, satisfies, valid } from "semver";
-import type {} from ".";
 
 const logger = new Logger("market");
 

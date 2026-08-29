@@ -4,7 +4,7 @@
  */
 
 import type { Context, Plugin } from "@koishi-ce/core";
-import { kRecord, type LoaderScope } from "./types";
+import { kRecord, type LoaderScope } from "./types.ts";
 
 export const group: Plugin.Object<Context> = {
 	name: "group",

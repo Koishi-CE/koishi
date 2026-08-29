@@ -1,5 +1,5 @@
 import { describe, expect, it } from "bun:test";
-import { fallback, LocaleTree } from "./index";
+import { fallback, LocaleTree } from "./index.ts";
 
 /** i18n-utils（语言环境树与回退序列）的单元测试 */
 describe("@koishi-ce/i18n-utils", () => {

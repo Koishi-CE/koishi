@@ -14,8 +14,8 @@
  */
 import { Schema } from "@satorijs/core";
 import { type Dict, defineProperty, remove } from "cosmokit";
-import { Context } from "./context";
-import type { Computed } from "./filter";
+import { Context } from "./context/index.ts";
+import type { Computed } from "./filter.ts";
 
 declare global {
 	interface Schemastery<S, T> {

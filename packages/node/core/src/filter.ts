@@ -11,9 +11,9 @@
  */
 import { defineProperty } from "cosmokit";
 import type { Eval } from "minato";
-import { Context } from "./context";
-import type { Channel, User } from "./database";
-import type { Session } from "./session";
+import { Context } from "./context/index.ts";
+import type { Channel, User } from "./database/index.ts";
+import type { Session } from "./session/index.ts";
 
 /** 计算属性的附加选项。 */
 export namespace Computed {

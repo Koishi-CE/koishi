@@ -9,8 +9,8 @@
  */
 
 import { isNullable } from "cosmokit";
-import type { Context } from "../context";
-import type { Argv } from "./parser";
+import type { Context } from "../context/index.ts";
+import type { Argv } from "./parser/index.ts";
 
 export default function validate(ctx: Context) {
 	// 命令级权限：依赖 = 显式 dependencies + 父命令权限；继承 = config.permissions

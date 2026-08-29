@@ -6,7 +6,7 @@ import { describe, expect, it } from "bun:test";
 import { promises as fs } from "node:fs";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
-import { pluginCandidates, resolvePlugin } from "../resolve";
+import { pluginCandidates, resolvePlugin } from "../resolve.ts";
 
 describe("pluginCandidates", () => {
 	it("裸短名：本组织优先，其次上游官方，最后社区前缀", () => {

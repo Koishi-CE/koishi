@@ -7,8 +7,8 @@
  * 未入库的"游离"数据带 $detached 标记，写回前被拦截。
  */
 import { observe } from "@koishi-ce/utils";
-import type { Channel, User } from "../database";
-import { SessionMessaging } from "./messaging";
+import type { Channel, User } from "../database/index.ts";
+import { SessionMessaging } from "./messaging.ts";
 
 /** 会话数据装配层：频道与用户数据的获取、创建与观察缓存 */
 export class SessionObservable extends SessionMessaging {

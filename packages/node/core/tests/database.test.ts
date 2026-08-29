@@ -9,7 +9,7 @@ import { afterAll, beforeAll, describe, expect, it } from "bun:test";
 import { App } from "@koishi-ce/koishi";
 import mock, { DEFAULT_SELF_ID } from "@koishi-ce/plugin-mock";
 import memory from "@minatojs/driver-memory";
-import "./shape";
+import "./shape.ts";
 
 const app = new App();
 

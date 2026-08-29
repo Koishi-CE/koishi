@@ -12,8 +12,8 @@
 import { resolve } from "node:path";
 import type {} from "@koishi-ce/console";
 import { type Context, Schema } from "@koishi-ce/koishi";
-import EnvInfoProvider from "./envinfo";
-import ProfileProvider from "./profile";
+import EnvInfoProvider from "./envinfo.ts";
+import ProfileProvider from "./profile.ts";
 
 /** 频道活跃度记录：键为小时数（0~23），值为该小时内触发频道的次数。 */
 export type Activity = Record<number, number>;
@@ -34,8 +34,8 @@ declare module "@koishi-ce/console" {
 	}
 }
 
-export * from "./envinfo";
-export * from "./profile";
+export * from "./envinfo.ts";
+export * from "./profile.ts";
 export { EnvInfoProvider, ProfileProvider };
 
 export const name = "status";

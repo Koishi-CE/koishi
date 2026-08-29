@@ -2,13 +2,13 @@ import { resolve } from "node:path";
 import { type Context, type Dict, pick, Schema } from "@koishi-ce/koishi";
 import type { DependencyMetaKey, RemotePackage } from "@koishi-ce/registry";
 import { gt } from "semver";
-import { DependencyProvider, RegistryProvider } from "./deps";
-import Installer from "./installer";
+import { DependencyProvider, RegistryProvider } from "./deps.ts";
+import Installer from "./installer.ts";
 import messageZhCN from "./locales/message.zh-CN.yml";
 import schemaZhCN from "./locales/schema.zh-CN.yml";
-import MarketProvider from "./market";
+import MarketProvider from "./market.ts";
 
-export * from "../shared";
+export * from "../shared/index.ts";
 
 export { DependencyProvider, Installer, RegistryProvider };
 

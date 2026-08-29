@@ -6,7 +6,7 @@
  */
 
 import type { Dict, EffectScope, ForkScope } from "@koishi-ce/core";
-import type { Loader } from "./index";
+import type { Loader } from "./index.ts";
 
 // 通过模块合并向全局类型注入 loader 服务、相关事件与配置项
 declare module "@koishi-ce/core" {

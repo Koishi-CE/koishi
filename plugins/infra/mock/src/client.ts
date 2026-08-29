@@ -20,7 +20,7 @@ import {
 	type Session,
 	type Universal,
 } from "@koishi-ce/koishi";
-import type { MockBot } from "./adapter";
+import type { MockBot } from "./adapter.ts";
 
 // 断言失败时的错误提示模板（%s 为 util.format 占位符）
 const RECEIVED_UNEXPECTED = 'expected "%s" to be not replied but received "%s"';

@@ -9,12 +9,15 @@
  * - version / build / publish：发布链三环（跨仓库 changeset version、
  *   全工作区串行构建、registry 比对后逐包 npm publish）。
  */
-import { version } from "../package.json" with { type: "json" };
-import runClone from "./clone";
-import runBuild from "./release/build";
-import runPublish from "./release/publish";
-import runVersion from "./release/version";
-import runSetup from "./setup";
+import pkg from "../package.json" with { type: "json" };
+
+const { version } = pkg;
+
+import runClone from "./clone.ts";
+import runBuild from "./release/build.ts";
+import runPublish from "./release/publish.ts";
+import runVersion from "./release/version.ts";
+import runSetup from "./setup.ts";
 
 const HELP = `koishi-scripts v${version} —— Koishi 插件脚手架与发布链
 

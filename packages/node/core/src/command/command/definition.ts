@@ -11,11 +11,11 @@
 
 import type { Fragment } from "@satorijs/core";
 import { type Awaitable, camelize, remove } from "cosmokit";
-import type { Channel, User } from "../../database";
-import type { FieldCollector, Session } from "../../session";
-import type { Argv } from "../parser";
-import type { Command, Extend } from "./command";
-import { CommandCore } from "./core";
+import type { Channel, User } from "../../database/index.ts";
+import type { FieldCollector, Session } from "../../session/index.ts";
+import type { Argv } from "../parser/index.ts";
+import type { Command, Extend } from "./command.ts";
+import { CommandCore } from "./core.ts";
 
 /**
  * 命令内部存储的擦除形态。

@@ -6,7 +6,7 @@
  * 事件推回浏览器上屏；媒体资源若为 file: 协议，改写到沙盒静态文件服务。
  */
 import { type Dict, h, MessageEncoder, Random } from "@koishi-ce/koishi";
-import type { SandboxBot } from "./bot";
+import type { SandboxBot } from "./bot.ts";
 
 // 不携带类型参数：上游 Bot 的静态 MessageEncoder 签名以默认 Context 的 Bot 为参数，
 // 若以 koishi Context 或 SandboxBot 为类型参数会产生构造参数逆变冲突（TS2417），见 mock 包同款处理

@@ -13,7 +13,7 @@ import {
 	Random,
 	type Universal,
 } from "@koishi-ce/koishi";
-import type { DataService } from "./service";
+import type { DataService } from "./service.ts";
 
 const logger = new Logger("console");
 

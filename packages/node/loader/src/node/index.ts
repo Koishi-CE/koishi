@@ -15,16 +15,16 @@
 
 import { resolve } from "node:path";
 import { type Dict, Logger } from "@koishi-ce/core";
-import Loader from "../base";
-import type { ResolvedConfigFile } from "../base/config-file";
-import { locateConfig, parseConfig, saveConfig } from "./config-file";
-import { injectEnv, parseEnvFiles, revertEnv } from "./env";
-import { migrateManifest } from "./migration";
-import { resolvePlugin } from "./resolve";
+import type { ResolvedConfigFile } from "../base/config-file.ts";
+import Loader from "../base/index.ts";
+import { locateConfig, parseConfig, saveConfig } from "./config-file.ts";
+import { injectEnv, parseEnvFiles, revertEnv } from "./env.ts";
+import { migrateManifest } from "./migration.ts";
+import { resolvePlugin } from "./resolve.ts";
 
-export { Loader } from "../base";
-export type { LoaderScope, SharedData, StartMessage } from "../base/types";
-export { unwrapExports } from "../base/utils";
+export { Loader } from "../base/index.ts";
+export type { LoaderScope, SharedData, StartMessage } from "../base/types.ts";
+export { unwrapExports } from "../base/utils.ts";
 
 const logger = new Logger("app");
 

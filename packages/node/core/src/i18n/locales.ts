@@ -6,7 +6,7 @@
  */
 import enUS from "../../locales/en-US.yml";
 import zhCN from "../../locales/zh-CN.yml";
-import type { I18n } from "./index";
+import type { I18n } from "./index.ts";
 
 /** 装载内置语言包（空键位、简体中文、英语） */
 export function defineBuiltInLocales(i18n: I18n) {

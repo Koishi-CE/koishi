@@ -1,6 +1,6 @@
 import type { Context } from "@koishi-ce/koishi";
+import type CommandManager from "@koishi-ce/plugin-commands";
 import zhCN from "../locales/zh-CN.yml";
-import type CommandManager from ".";
 
 /**
  * 从对象中摘除一个键，返回被摘除的值（无则返回 undefined）。

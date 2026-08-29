@@ -13,7 +13,7 @@
 import { escapeRegExp } from "@koishi-ce/utils";
 import { h } from "@satorijs/core";
 import type { Dict } from "cosmokit";
-import { Argv, type Token } from "./argv";
+import { Argv, type Token } from "./argv.ts";
 
 /** 左引号字符表（直引号 + 中文弯引号），与 rightQuotes 按下标配对 */
 export const leftQuotes = `"'“‘`;

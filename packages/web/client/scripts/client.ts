@@ -14,7 +14,7 @@ import vue from "@vitejs/plugin-vue";
 import mini from "unocss/preset-mini";
 import unocss from "unocss/vite";
 import * as vite from "vite";
-import { yaml } from "../src/yaml";
+import { yaml } from "../src/yaml.ts";
 
 // vite 8 基于 rolldown,rollup 已不在依赖树中;这里按实际消费的字段
 // 局部声明构建产物类型(与 src/index.ts 的 BuildResult 同构)

@@ -8,7 +8,7 @@
  */
 import { Random } from "@koishi-ce/utils";
 import { Time } from "cosmokit";
-import type { Context } from "../context";
+import type { Context } from "../context/index.ts";
 
 /** 注册内置消息组件（execute / prompt / i18n / random / plural / i18n:time）。 */
 export function registerComponents(ctx: Context) {

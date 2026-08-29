@@ -8,7 +8,7 @@
  */
 import type { Client } from "@koishi-ce/console";
 import { Bot, type Context, Time, type Universal } from "@koishi-ce/koishi";
-import { SandboxMessenger } from "./message";
+import { SandboxMessenger } from "./message.ts";
 
 export namespace SandboxBot {
 	export interface Config {

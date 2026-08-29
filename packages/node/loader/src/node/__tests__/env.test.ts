@@ -5,7 +5,7 @@ import { afterEach, describe, expect, it } from "bun:test";
 import { promises as fs } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { injectEnv, parseEnv, parseEnvFiles, revertEnv } from "../env";
+import { injectEnv, parseEnv, parseEnvFiles, revertEnv } from "../env.ts";
 
 describe("parseEnv", () => {
 	it("基础键值与空白处理", () => {

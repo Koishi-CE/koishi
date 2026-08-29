@@ -7,8 +7,8 @@
  */
 import { h } from "@satorijs/core";
 import { type Awaitable, makeArray } from "cosmokit";
-import type { Channel, User } from "../database";
-import { SessionObservable } from "./observe";
+import type { Channel, User } from "../database/index.ts";
+import { SessionObservable } from "./observe.ts";
 
 /** 会话本地化层：作用域管理与 i18n 渲染 */
 export interface SessionLocalized extends SessionObservable {}

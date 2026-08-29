@@ -8,8 +8,8 @@
  */
 
 import { h, Schema, Time } from "@satorijs/core";
-import type { Commander } from "./index";
-import type { Argv } from "./parser";
+import type { Commander } from "./index.ts";
+import type { Argv } from "./parser/index.ts";
 
 /**
  * 注册一种「元素属性」domain：把输入解析为指定类型的消息元素

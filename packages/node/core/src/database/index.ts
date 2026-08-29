@@ -14,12 +14,12 @@ import type { Fragment } from "@satorijs/core";
 import type { Dict, MaybeArray } from "cosmokit";
 import type { Driver, FlatKeys, FlatPick, Update } from "minato";
 import * as minato from "minato";
-import { Context } from "../context";
-import { broadcastDatabase } from "./broadcast";
-import { registerModels } from "./models";
-import type { Channel, Tables, Types, User } from "./tables";
+import { Context } from "../context/index.ts";
+import { broadcastDatabase } from "./broadcast.ts";
+import { registerModels } from "./models.ts";
+import type { Channel, Tables, Types, User } from "./tables.ts";
 
-export * from "./tables";
+export * from "./tables.ts";
 
 // 增强目标写包根名而非相对路径，理由见 filter.ts 同款注释
 declare module "@koishi-ce/core" {

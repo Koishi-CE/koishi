@@ -7,8 +7,8 @@
  */
 import type { Fragment, Universal } from "@satorijs/core";
 import type { Dict } from "cosmokit";
-import type KoishiDatabase from "./index";
-import { Channel } from "./tables";
+import type KoishiDatabase from "./index.ts";
+import { Channel } from "./tables.ts";
 
 /**
  * 全量广播消息：向所有受让人匹配的频道发送内容

@@ -9,7 +9,7 @@ import Scanner, {
 	type SearchObject,
 	type SearchResult,
 } from "@koishi-ce/registry";
-import { MarketProvider as BaseMarketProvider } from "../shared";
+import { MarketProvider as BaseMarketProvider } from "../shared/index.ts";
 
 class MarketProvider extends BaseMarketProvider {
 	private http?: HTTP;

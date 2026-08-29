@@ -21,12 +21,12 @@ import type {
 	RemotePackage,
 	SearchObject,
 	SearchResult,
-} from "./types";
-import { conclude } from "./utils";
+} from "./types.ts";
+import { conclude } from "./utils.ts";
 
-export * from "./local";
-export * from "./types";
-export * from "./utils";
+export * from "./local.ts";
+export * from "./types.ts";
+export * from "./utils.ts";
 
 /** collect 阶段（分页搜索）的配置 */
 export interface CollectConfig {

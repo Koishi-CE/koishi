@@ -11,12 +11,12 @@
 
 import type { h } from "@satorijs/core";
 import type { Dict } from "cosmokit";
-import type { Channel, User } from "../../database";
-import type { Next } from "../../middleware";
-import type { Permissions } from "../../permission";
-import type { Session } from "../../session";
-import type { Command } from "../command/command";
-import { bracs, interpolate, Tokenizer, whitespace } from "./tokenizer";
+import type { Channel, User } from "../../database/index.ts";
+import type { Next } from "../../middleware/index.ts";
+import type { Permissions } from "../../permission.ts";
+import type { Session } from "../../session/index.ts";
+import type { Command } from "../command/command.ts";
+import { bracs, interpolate, Tokenizer, whitespace } from "./tokenizer.ts";
 
 /** tokenizer 产出的最小词法单元 */
 export interface Token {

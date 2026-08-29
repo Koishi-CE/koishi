@@ -6,7 +6,7 @@
  * 浏览器侧消费者需自行实现基类声明的平台缝隙。具体实现见各子模块。
  */
 
-export { default, Loader } from "./base";
-export { extensions } from "./base/config-file";
-export type { LoaderScope, SharedData, StartMessage } from "./base/types";
-export { unwrapExports } from "./base/utils";
+export { extensions } from "./base/config-file.ts";
+export { default, Loader } from "./base/index.ts";
+export type { LoaderScope, SharedData, StartMessage } from "./base/types.ts";
+export { unwrapExports } from "./base/utils.ts";

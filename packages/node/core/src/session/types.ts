@@ -10,11 +10,11 @@ import type * as satori from "@satorijs/core";
 import type { Fragment, h, Universal } from "@satorijs/core";
 import type { Awaitable } from "cosmokit";
 import type { Eval } from "minato";
-import type { Argv } from "../command";
-import type { Context } from "../context";
-import type { Channel, Tables, User } from "../database";
-import type { CompareOptions } from "../i18n";
-import type { Middleware, Next } from "../middleware";
+import type { Argv } from "../command/index.ts";
+import type { Context } from "../context/index.ts";
+import type { Channel, Tables, User } from "../database/index.ts";
+import type { CompareOptions } from "../i18n/index.ts";
+import type { Middleware, Next } from "../middleware/index.ts";
 
 /** 一次性提问（session.prompt）的选项。 */
 export interface PromptOptions {

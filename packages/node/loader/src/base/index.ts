@@ -25,11 +25,20 @@ import {
 	valueMap,
 	version,
 } from "@koishi-ce/core";
-import { extensions, type ResolvedConfigFile } from "./config-file";
-import { group } from "./group";
-import { kRecord, kUpdate, type LoaderScope, type SharedData } from "./types";
-import { separate, unwrapExports } from "./utils";
-import { handleStartMessage, logPluginUpdate, wireAppEvents } from "./wiring";
+import { extensions, type ResolvedConfigFile } from "./config-file.ts";
+import { group } from "./group.ts";
+import {
+	kRecord,
+	kUpdate,
+	type LoaderScope,
+	type SharedData,
+} from "./types.ts";
+import { separate, unwrapExports } from "./utils.ts";
+import {
+	handleStartMessage,
+	logPluginUpdate,
+	wireAppEvents,
+} from "./wiring.ts";
 
 /**
  * Loader 抽象基类：负责配置生命周期管理、插件按配置加载与配置回写。

@@ -12,8 +12,8 @@
 import { readdir, readFile } from "node:fs/promises";
 import { dirname } from "node:path";
 import { type Dict, defineProperty, isNonNullable, pick } from "cosmokit";
-import type { PackageJson, SearchObject, SearchResult } from "./types";
-import { conclude } from "./utils";
+import type { PackageJson, SearchObject, SearchResult } from "./types.ts";
+import { conclude } from "./utils.ts";
 
 /** 本地扫描结果：结构与远程 SearchResult 一致，部分字段（score 等）不填 */
 export interface LocalScanner extends SearchResult {}

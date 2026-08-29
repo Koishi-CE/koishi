@@ -15,8 +15,8 @@ import {
 	type Universal,
 	type User,
 } from "@koishi-ce/koishi";
-import { MessageClient, MockMessageEncoder } from "./client";
-import { Webhook } from "./webhook";
+import { MessageClient, MockMessageEncoder } from "./client.ts";
+import { Webhook } from "./webhook.ts";
 
 // 模块增强必须指向本仓库的 @koishi-ce/koishi（上游包名 "koishi" 在此无法解析）
 declare module "@koishi-ce/koishi" {

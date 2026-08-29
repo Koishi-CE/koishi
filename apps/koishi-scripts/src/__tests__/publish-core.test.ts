@@ -9,7 +9,7 @@ import {
 	rewriteWorkspaceProtocol,
 	topoSort,
 	type WorkspacePkg,
-} from "../release/publish-core";
+} from "../release/publish-core.ts";
 
 /** 快速构造 WorkspacePkg。 */
 function pkg(name: string, deps: Record<string, string> = {}): WorkspacePkg {

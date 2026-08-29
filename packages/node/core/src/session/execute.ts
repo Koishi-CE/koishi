@@ -7,13 +7,13 @@
  * 数据预取 -> 进入指令 i18n 作用域执行 -> 发送结果。
  */
 import { h, Logger } from "@satorijs/core";
-import { Argv } from "../command";
-import type { Context } from "../context";
-import type { Tables } from "../database";
-import type { Next } from "../middleware";
-import { SessionLocalized } from "./locale";
-import type { FieldCollector } from "./types";
-import { collectFields } from "./types";
+import { Argv } from "../command/index.ts";
+import type { Context } from "../context/index.ts";
+import type { Tables } from "../database/index.ts";
+import type { Next } from "../middleware/index.ts";
+import { SessionLocalized } from "./locale.ts";
+import type { FieldCollector } from "./types.ts";
+import { collectFields } from "./types.ts";
 
 const logger = new Logger("session");
 

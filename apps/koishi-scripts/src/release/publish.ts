@@ -27,16 +27,16 @@
  */
 import { readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
-import { cwd } from "../index";
-import type { WorkspacePkg } from "./publish-core";
+import { cwd } from "../index.ts";
+import type { WorkspacePkg } from "./publish-core.ts";
 import {
 	discoverPackages,
 	isDowngrade,
 	planPublish,
 	rewriteWorkspaceProtocol,
 	topoSort,
-} from "./publish-core";
-import { captureCommand, runCommand } from "./run";
+} from "./publish-core.ts";
+import { captureCommand, runCommand } from "./run.ts";
 
 const REGISTRY =
 	process.env["RELEASE_REGISTRY"] ?? "https://registry.npmjs.org";

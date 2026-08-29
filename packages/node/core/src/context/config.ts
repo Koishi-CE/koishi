@@ -7,8 +7,8 @@
  */
 import { HTTP, Schema } from "@satorijs/core";
 import { defineProperty, Time } from "cosmokit";
-import { I18n } from "../i18n";
-import type { Context } from "./index";
+import { I18n } from "../i18n/index.ts";
+import type { Context } from "./index.ts";
 
 declare module "cordis" {
 	namespace Plugin {

@@ -1,5 +1,5 @@
 import { expect, test } from "bun:test";
-import { detectAgent, type Manifest, renderManifest } from "../index";
+import { detectAgent, type Manifest, renderManifest } from "../index.ts";
 
 test("renderManifest 基础改写：替换项目名、标记 private、版本归零", () => {
 	const source: Manifest = {

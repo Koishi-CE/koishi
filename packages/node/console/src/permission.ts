@@ -6,7 +6,7 @@
  */
 
 import type { Context } from "@koishi-ce/koishi";
-import { DataService } from "./service";
+import { DataService } from "./service.ts";
 
 export class PermissionProvider extends DataService<string[]> {
 	constructor(ctx: Context) {

@@ -6,7 +6,7 @@
  * - 权限系统：权限名模板的匹配与参数捕获（见 permission.ts）；
  * - 指令纠错：遍历全部文案路径，找出与用户输入相近的条目（findMatches）。
  */
-import type { I18n } from "./index";
+import type { I18n } from "./index.ts";
 
 /** 模糊比对选项。 */
 export interface CompareOptions {

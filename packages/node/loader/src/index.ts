@@ -9,7 +9,7 @@
  *   env 文件注入、清单迁移）。
  */
 
-export { extensions } from "./base/config-file";
-export type { LoaderScope, SharedData, StartMessage } from "./base/types";
-export { unwrapExports } from "./base/utils";
-export { default, Loader } from "./node";
+export { extensions } from "./base/config-file.ts";
+export type { LoaderScope, SharedData, StartMessage } from "./base/types.ts";
+export { unwrapExports } from "./base/utils.ts";
+export { default, Loader } from "./node/index.ts";

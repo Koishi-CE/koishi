@@ -7,10 +7,10 @@
  * （作用域销毁时命令随之销毁）。
  */
 
-import { Context } from "../../context";
-import { Command } from "../command/command";
-import { normalizeCommand } from "../normalize";
-import { CommanderResolve } from "./resolve";
+import { Context } from "../../context/index.ts";
+import { Command } from "../command/command.ts";
+import { normalizeCommand } from "../normalize.ts";
+import { CommanderResolve } from "./resolve.ts";
 
 export class CommanderRegister extends CommanderResolve {
 	/**

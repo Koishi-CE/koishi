@@ -15,11 +15,11 @@ import { fallback, LocaleTree } from "@koishi-ce/i18n-utils";
 import { h, Logger, Schema } from "@satorijs/core";
 import { type Dict, isNullable } from "cosmokit";
 import { distance } from "fastest-levenshtein";
-import type { Context } from "../context";
-import { defineBuiltInLocales } from "./locales";
-import { type CompareOptions, findMatches, type MatchResult } from "./match";
+import type { Context } from "../context/index.ts";
+import { defineBuiltInLocales } from "./locales.ts";
+import { type CompareOptions, findMatches, type MatchResult } from "./match.ts";
 
-export * from "./match";
+export * from "./match.ts";
 
 const logger = new Logger("i18n");
 /** Store 节点上的内部符号：指向预置渲染器名（_presets 的 key） */

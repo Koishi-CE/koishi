@@ -8,8 +8,8 @@
  */
 import { existsSync, readdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
-import { cwd } from "../index";
-import { runCommand } from "./run";
+import { cwd } from "../index.ts";
+import { runCommand } from "./run.ts";
 
 interface Project {
 	/** 项目目录绝对路径。 */

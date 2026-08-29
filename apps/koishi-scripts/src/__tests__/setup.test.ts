@@ -4,7 +4,7 @@ import {
 	normalizeName,
 	parseFlags,
 	renderPackageJson,
-} from "../setup";
+} from "../setup.ts";
 
 const VERSIONS = {
 	koishi: "^4.18.11",

@@ -1,4 +1,4 @@
-import * as shared from "../shared";
+import * as shared from "../shared/index.ts";
 
 export class PackageProvider extends shared.PackageProvider {
 	async collect(_forced: boolean) {

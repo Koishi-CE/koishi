@@ -8,7 +8,7 @@
  */
 import type { Fragment } from "@satorijs/core";
 import { type Awaitable, type Dict, makeArray } from "cosmokit";
-import type { Session } from "../session";
+import type { Session } from "../session/index.ts";
 
 /**
  * 会话级业务错误：message 是 i18n 路径而非用户可读文本。

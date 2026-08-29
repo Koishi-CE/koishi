@@ -7,9 +7,9 @@
  */
 
 import type { Context, Universal } from "@koishi-ce/core";
-import type { Loader } from "./index";
-import { kRecord, kUpdate, type LoaderScope } from "./types";
-import { rename, separate } from "./utils";
+import type { Loader } from "./index.ts";
+import { kRecord, kUpdate, type LoaderScope } from "./types.ts";
+import { rename, separate } from "./utils.ts";
 
 /** 记录一条插件生命周期日志（apply / unload / reload） */
 export function logPluginUpdate(app: Context, type: string, key: string) {

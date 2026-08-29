@@ -6,7 +6,7 @@
  */
 import { type Fragment, h, Logger, type Universal } from "@satorijs/core";
 import { isNullable } from "cosmokit";
-import { SessionCore } from "./core";
+import { SessionCore } from "./core.ts";
 
 const logger = new Logger("session");
 

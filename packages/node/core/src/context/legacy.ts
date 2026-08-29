@@ -5,7 +5,7 @@
  * 作为下一个的首个参数，最终返回链末结果。区别仅在于同步 / 异步。
  * 新代码应使用 cordis 原生的 `ctx.serial`（异步串行）/ `ctx.bail`（短路）。
  */
-import type { Context } from "./index";
+import type { Context } from "./index.ts";
 
 /**
  * 解析重载参数：若首参是对象或函数则视为 thisArg 并从参数列表中移除，

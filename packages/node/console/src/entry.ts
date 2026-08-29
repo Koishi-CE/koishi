@@ -6,8 +6,8 @@
  * 入口信息最终经 EntryProvider 下发到前端，驱动浏览器加载对应脚本。
  */
 
+import type { Client } from "@koishi-ce/console";
 import type { Context } from "@koishi-ce/koishi";
-import type { Client } from ".";
 
 export namespace Entry {
 	/**

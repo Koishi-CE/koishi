@@ -9,8 +9,8 @@
  *   用户可读的错误文案写入 argv.error（不抛异常）。
  */
 
-import type { Context } from "../context";
-import type { Argv } from "./parser";
+import type { Context } from "../context/index.ts";
+import type { Argv } from "./parser/index.ts";
 
 // https://github.com/microsoft/TypeScript/issues/17002
 // 上游 TS 缺陷长期未修：内置 Array.isArray 对含 readonly 数组的联合类型

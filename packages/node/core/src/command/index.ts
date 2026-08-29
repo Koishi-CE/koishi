@@ -5,19 +5,19 @@
  */
 
 import type { Awaitable, Fragment } from "@satorijs/core";
-import type { Channel, User } from "../database";
-import type { Session } from "../session";
-import type { Command } from "./command/command";
-import type { Commander } from "./commander/commander";
-import type { Argv } from "./parser";
+import type { Channel, User } from "../database/index.ts";
+import type { Session } from "../session/index.ts";
+import type { Command } from "./command/command.ts";
+import type { Commander } from "./commander/commander.ts";
+import type { Argv } from "./parser/index.ts";
 
-export * from "./command/command";
-export * from "./commander/commander";
-export { CommanderCore } from "./commander/core";
-export { CommanderRegister } from "./commander/register";
-export { CommanderResolve } from "./commander/resolve";
-export * from "./parser";
-export * from "./validate";
+export * from "./command/command.ts";
+export * from "./commander/commander.ts";
+export { CommanderCore } from "./commander/core.ts";
+export { CommanderRegister } from "./commander/register.ts";
+export { CommanderResolve } from "./commander/resolve.ts";
+export * from "./parser/index.ts";
+export * from "./validate.ts";
 
 // 增强目标写包根名而非相对路径，理由见 filter.ts 同款注释
 declare module "@koishi-ce/core" {

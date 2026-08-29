@@ -12,8 +12,11 @@
 
 import { existsSync } from "node:fs";
 import { resolve } from "node:path";
-import { version } from "../package.json";
-import { build } from ".";
+import pkg from "../package.json" with { type: "json" };
+
+const { version } = pkg;
+
+import { build } from "@koishi-ce/client";
 
 const help = `koishi-console/${version}
 

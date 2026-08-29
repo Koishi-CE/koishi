@@ -5,10 +5,10 @@
  * 同时执行准入过滤（被忽略的频道/用户、非受理且未 @ 机器人的消息
  * 在此被丢弃）。这是消息进入指令系统的前置关卡。
  */
-import type { Context } from "../context";
-import { Channel, User } from "../database";
-import type { Session } from "../session";
-import type { Next } from "./next";
+import type { Context } from "../context/index.ts";
+import { Channel, User } from "../database/index.ts";
+import type { Session } from "../session/index.ts";
+import type { Next } from "./next.ts";
 
 /** 消息attach 流程：装配频道 / 用户数据并触发相应事件 */
 export async function attachSession(

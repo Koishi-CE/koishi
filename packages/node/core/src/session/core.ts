@@ -7,8 +7,8 @@
  * - username：发送者显示名。
  */
 import { type Eval, executeEval, isEvalExpr } from "minato";
-import type { User } from "../database";
-import type { Session, Stripped } from "./types";
+import type { User } from "../database/index.ts";
+import type { Session, Stripped } from "./types.ts";
 
 /** 会话基础层：来源解析与消息前缀/称呼剥离 */
 export interface SessionCore extends Session {

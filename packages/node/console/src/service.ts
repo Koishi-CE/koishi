@@ -9,9 +9,9 @@
  * 每次推送都会带上 options 参与 console/intercept 拦截判断。
  */
 
+import type Console from "@koishi-ce/console";
+import type { Client } from "@koishi-ce/console";
 import { type Context, Service } from "@koishi-ce/koishi";
-import type Console from ".";
-import type { Client } from ".";
 
 export namespace DataService {
 	/** 数据服务选项 */

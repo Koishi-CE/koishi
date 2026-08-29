@@ -6,9 +6,9 @@
  * 匹配与 prompt，实现"您要找的是不是……回复句号确认"的交互。
  */
 import { type Awaitable, isNullable } from "cosmokit";
-import type { Middleware } from "../middleware";
-import { SessionExecutable } from "./execute";
-import type { PromptOptions, Session, SuggestOptions } from "./types";
+import type { Middleware } from "../middleware/index.ts";
+import { SessionExecutable } from "./execute.ts";
+import type { PromptOptions, Session, SuggestOptions } from "./types.ts";
 
 /** 会话交互层：会话级中间件、追问与建议确认 */
 export interface SessionInteractive extends SessionExecutable {}

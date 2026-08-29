@@ -11,16 +11,16 @@
  * 公共接口与辅助类型在 types.ts；本文件负责组装最终类并通过
  * ctx.mixin 把方法注册为 `session.*` 服务方法，导出面保持不变。
  */
-import type { Context } from "../context";
-import { SessionInteractive } from "./interact";
+import type { Context } from "../context/index.ts";
+import { SessionInteractive } from "./interact.ts";
 
-export { SessionCore } from "./core";
-export { SessionExecutable } from "./execute";
-export { SessionInteractive } from "./interact";
-export { SessionLocalized } from "./locale";
-export { SessionMessaging } from "./messaging";
-export { SessionObservable } from "./observe";
-export * from "./types";
+export { SessionCore } from "./core.ts";
+export { SessionExecutable } from "./execute.ts";
+export { SessionInteractive } from "./interact.ts";
+export { SessionLocalized } from "./locale.ts";
+export { SessionMessaging } from "./messaging.ts";
+export { SessionObservable } from "./observe.ts";
+export * from "./types.ts";
 
 /** Koishi 会话最终类：继承全部能力层，构造时完成服务方法注册。 */
 class KoishiSession<C extends Context> extends SessionInteractive {

@@ -6,7 +6,7 @@
  */
 
 import type { Context, Dict, Schema } from "@koishi-ce/koishi";
-import { DataService } from "./service";
+import { DataService } from "./service.ts";
 
 export class SchemaProvider extends DataService<Dict<Schema>> {
 	constructor(ctx: Context) {

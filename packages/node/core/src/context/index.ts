@@ -18,16 +18,16 @@ import type * as cordis from "cordis";
 import type { GetEvents, Parameters, ReturnType, ThisType } from "cordis";
 import type { Promisify } from "cosmokit";
 import * as minato from "minato";
-import { Commander } from "../command";
-import { type Computed, FilterService } from "../filter";
-import { I18n } from "../i18n";
-import { Processor } from "../middleware";
-import { Permissions } from "../permission";
-import { SchemaService } from "../schema";
-import type { Session } from "../session";
-import { defineContextConfig } from "./config";
-import { chainImpl, waterfallImpl } from "./legacy";
-import Koishi from "./runtime";
+import { Commander } from "../command/index.ts";
+import { type Computed, FilterService } from "../filter.ts";
+import { I18n } from "../i18n/index.ts";
+import { Processor } from "../middleware/index.ts";
+import { Permissions } from "../permission.ts";
+import { SchemaService } from "../schema.ts";
+import type { Session } from "../session/index.ts";
+import { defineContextConfig } from "./config.ts";
+import { chainImpl, waterfallImpl } from "./legacy.ts";
+import Koishi from "./runtime.ts";
 
 /** cordis 副作用作用域（本框架 Context 特化） */
 export type EffectScope = cordis.EffectScope<Context>;
@@ -193,8 +193,8 @@ export class Context extends satori.Context {
 	}
 }
 
-export * from "./runtime";
-export { default } from "./runtime";
+export * from "./runtime.ts";
+export { default } from "./runtime.ts";
 
 export namespace Context {
 	/** 应用根配置（基础 + 高级 + i18n / 延迟 / 网络请求）。 */

@@ -1,8 +1,8 @@
 import { type Context, Schema } from "@koishi-ce/koishi";
-import MarketProvider from "./market";
+import MarketProvider from "./market.ts";
 
-export * from "../shared";
-export * from "./market";
+export * from "../shared/index.ts";
+export * from "./market.ts";
 
 export { MarketProvider };
 

@@ -26,7 +26,9 @@ import kleur from "kleur";
 import prompts from "prompts";
 import { extract } from "tar";
 import parse from "yargs-parser";
-import { version } from "../package.json" with { type: "json" };
+import pkg from "../package.json" with { type: "json" };
+
+const { version } = pkg;
 
 /** CLI 参数（yargs-parser 解析，别名映射见 bin 帮助文本） */
 interface Args {

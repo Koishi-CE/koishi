@@ -12,7 +12,7 @@ import {
 	remove,
 	Schema,
 } from "@koishi-ce/koishi";
-import CommandExtension from "./command";
+import CommandExtension from "./command.ts";
 
 /**
  * @koishi-ce/plugin-commands 的 node 侧入口。

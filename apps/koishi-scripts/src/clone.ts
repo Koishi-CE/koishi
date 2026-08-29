@@ -7,7 +7,7 @@
 import { spawnSync } from "node:child_process";
 import { join } from "node:path";
 import { createInterface } from "node:readline/promises";
-import { cwd } from "./index";
+import { cwd } from "./index.ts";
 
 /** 交互式读取一行输入（Ctrl+C 退出由 readline 自行处理）。 */
 async function ask(message: string): Promise<string> {

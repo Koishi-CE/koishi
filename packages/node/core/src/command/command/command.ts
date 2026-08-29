@@ -12,14 +12,14 @@
 import { coerce } from "@koishi-ce/utils";
 import { type Fragment, Logger, Schema, type Universal } from "@satorijs/core";
 import { type Awaitable, type Dict, isNullable, remove } from "cosmokit";
-import type { Channel, User } from "../../database";
-import type { Computed } from "../../filter";
-import { Next, SessionError } from "../../middleware";
-import type { Permissions } from "../../permission";
-import type { Session } from "../../session";
-import { normalizeCommand } from "../normalize";
-import type { Argv, CommandBase } from "../parser";
-import { CommandDefinition } from "./definition";
+import type { Channel, User } from "../../database/index.ts";
+import type { Computed } from "../../filter.ts";
+import { Next, SessionError } from "../../middleware/index.ts";
+import type { Permissions } from "../../permission.ts";
+import type { Session } from "../../session/index.ts";
+import { normalizeCommand } from "../normalize.ts";
+import type { Argv, CommandBase } from "../parser/index.ts";
+import { CommandDefinition } from "./definition.ts";
 
 const logger = new Logger("command");
 

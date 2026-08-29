@@ -14,7 +14,7 @@ import {
 	extensions,
 	type ResolvedConfigFile,
 	writable,
-} from "../base/config-file";
+} from "../base/config-file.ts";
 
 /** 探测文件是否可写（不可写则运行期不回盘） */
 async function isWritable(filename: string) {

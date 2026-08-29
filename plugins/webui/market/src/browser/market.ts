@@ -1,5 +1,5 @@
 import type {} from "@koishi-ce/plugin-config";
-import { MarketProvider as BaseMarketProvider } from "../shared";
+import { MarketProvider as BaseMarketProvider } from "../shared/index.ts";
 
 export default class MarketProvider extends BaseMarketProvider {
 	async collect() {

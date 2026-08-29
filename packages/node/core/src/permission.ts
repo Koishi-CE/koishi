@@ -15,10 +15,10 @@
  */
 import { Logger } from "@satorijs/core";
 import { type Awaitable, defineProperty, remove } from "cosmokit";
-import { Context } from "./context";
-import type { Channel, User } from "./database";
-import { createMatch, type MatchResult } from "./i18n";
-import type { Session } from "./session";
+import { Context } from "./context/index.ts";
+import type { Channel, User } from "./database/index.ts";
+import { createMatch, type MatchResult } from "./i18n/index.ts";
+import type { Session } from "./session/index.ts";
 
 const logger = new Logger("app");
 

@@ -7,8 +7,8 @@
  */
 import { type Fragment, h } from "@satorijs/core";
 import type { Awaitable } from "cosmokit";
-import type { Context } from "../context";
-import type { Session } from "../session";
+import type { Context } from "../context/index.ts";
+import type { Session } from "../session/index.ts";
 
 /** 一条快捷对话：模式 + 回复 + 选项 + 所属上下文。 */
 export interface Matcher extends Matcher.Options {

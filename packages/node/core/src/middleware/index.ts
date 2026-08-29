@@ -12,18 +12,18 @@
 import { coerce } from "@koishi-ce/utils";
 import type { EventOptions, Hook } from "@satorijs/core";
 import { type Awaitable, type Dict, defineProperty } from "cosmokit";
-import { Context } from "../context";
-import type { Channel, User } from "../database";
-import type { Session } from "../session";
-import { attachSession } from "./attach";
-import { registerComponents } from "./components";
-import { executeMatcher, type Matcher } from "./matcher";
-import type { Middleware } from "./next";
-import { Next, SessionError } from "./next";
+import { Context } from "../context/index.ts";
+import type { Channel, User } from "../database/index.ts";
+import type { Session } from "../session/index.ts";
+import { attachSession } from "./attach.ts";
+import { registerComponents } from "./components.ts";
+import { executeMatcher, type Matcher } from "./matcher.ts";
+import type { Middleware } from "./next.ts";
+import { Next, SessionError } from "./next.ts";
 
-export * from "./matcher";
-export * from "./next";
-export * from "./shared-cache";
+export * from "./matcher.ts";
+export * from "./next.ts";
+export * from "./shared-cache.ts";
 
 // 增强目标写包根名而非相对路径，理由见 filter.ts 同款注释
 declare module "@koishi-ce/core" {

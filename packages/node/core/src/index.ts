@@ -10,19 +10,21 @@
  * 使用方（插件、loader 等）只需 `import { Context, ... } from "@koishi-ce/core"`
  * 即可拿到全部核心类型与实现，无需关心内部目录拆分。
  */
-import { version } from "../package.json";
+import pkg from "../package.json" with { type: "json" };
+
+const { version } = pkg;
 
 export * from "@koishi-ce/utils";
 export * from "minato";
-export * from "./command";
-export * from "./context";
-export type { Tables, Types } from "./database";
-export * from "./database";
-export * from "./filter";
-export * from "./i18n";
-export * from "./middleware";
-export * from "./permission";
-export * from "./schema";
-export * from "./session";
+export * from "./command/index.ts";
+export * from "./context/index.ts";
+export type { Tables, Types } from "./database/index.ts";
+export * from "./database/index.ts";
+export * from "./filter.ts";
+export * from "./i18n/index.ts";
+export * from "./middleware/index.ts";
+export * from "./permission.ts";
+export * from "./schema.ts";
+export * from "./session/index.ts";
 
 export { version };

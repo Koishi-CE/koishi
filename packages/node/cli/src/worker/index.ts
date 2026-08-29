@@ -9,8 +9,8 @@
 
 import { Context, type Dict, Logger, Schema, Time } from "@koishi-ce/core";
 import Loader from "@koishi-ce/loader";
-import * as daemon from "./daemon";
-import * as logger from "./logger";
+import * as daemon from "./daemon.ts";
+import * as logger from "./logger.ts";
 
 // 以相对导入 re-export 包主入口（上游同款写法）：worker 产物本身属于本包，
 // 若写包名自引用，作为 main entry 直接执行时会触发 Bun 的自引用解析问题
