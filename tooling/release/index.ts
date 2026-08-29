@@ -468,7 +468,11 @@ async function runPublishSteps(options: Options): Promise<number> {
 			);
 		}
 		try {
-			const code = await runNpm(["publish", "--access", "public"], pkg.dir);
+			// stdin 直通终端：npm 的 OTP 浏览器认证要求 stdin/stdout 双 TTY，
+			// 断开 stdin 会直接抛 EOTP（逐包弹浏览器逐包认证，属预期流程）
+			const code = await runNpm(["publish", "--access", "public"], pkg.dir, {
+				stdin: "inherit",
+			});
 			if (code !== 0) {
 				console.log(
 					`[publish] ❌ 发布失败 ${pkg.name}@${pkg.version}（退出码 ${code}），已中断`,

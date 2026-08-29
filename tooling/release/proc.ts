@@ -9,8 +9,13 @@
  *
  * 捕获型查询走 spawnSync：Bun.spawn 的管道在 win32 高并发下存在读端
  * EOF 不送达的竞态（本仓 typecheck 因此弃用 Bun.spawn 管道并发），查询类调用
- * 低频且需要返回值，同步执行最稳；直通型执行走 Bun.spawn（stdio 无管道，
- * 无该竞态），支持异步等待以便并发编排。
+ * 低频且需要返回值，同步执行最稳；直通型执行走 Bun.spawn，stdio 全程不经
+ * 捕获管道，无该竞态，支持异步等待以便并发编排。注意 Bun.spawn 的
+ * stdout/stderr 默认是无人读取的管道而非继承终端，输出会被整体丢弃，
+ * 必须显式 "inherit"；stdin 默认保持 "ignore"（构建 / git 类命令不读
+ * 标准输入），需要交互认证的命令显式传 { stdin: "inherit" }——npm 的
+ * OTP 浏览器认证（otplease）要求 stdin/stdout 双 TTY 才会弹浏览器并
+ * 轮询等待，stdin 断开时直接抛 EOTP。
  */
 import { spawnSync } from "node:child_process";
 
@@ -22,13 +27,25 @@ function wrapCmdShim(cmd: string, args: readonly string[]): [string, string[]] {
 	return ["cmd.exe", ["/d", "/s", "/c", cmd, ...args]];
 }
 
-/** 执行命令（bun / git 等真实可执行文件），stdio 直通当前进程；返回退出码。 */
+/** 直通执行的选项。 */
+export type RunOptions = {
+	/** 子进程 stdin；默认 "ignore"，需要交互认证（如 npm publish 的 OTP 浏览器认证）时传 "inherit"。 */
+	stdin?: "ignore" | "inherit";
+};
+
+/** 执行命令（bun / git 等真实可执行文件），三路 stdio 直通当前进程；返回退出码。 */
 export async function run(
 	cmd: string,
 	args: readonly string[],
 	cwd: string,
+	options?: RunOptions,
 ): Promise<number> {
-	const proc = Bun.spawn([cmd, ...args], { cwd, stdin: "ignore" });
+	const proc = Bun.spawn([cmd, ...args], {
+		cwd,
+		stdin: options?.stdin ?? "ignore",
+		stdout: "inherit",
+		stderr: "inherit",
+	});
 	return await proc.exited;
 }
 
@@ -36,9 +53,10 @@ export async function run(
 export async function runNpm(
 	args: readonly string[],
 	cwd: string,
+	options?: RunOptions,
 ): Promise<number> {
 	const [cmd, wrapped] = wrapCmdShim("npm", args);
-	return await run(cmd, wrapped, cwd);
+	return await run(cmd, wrapped, cwd, options);
 }
 
 /** 执行命令并捕获 stdout（查询用）；非零退出或启动失败 → null。 */
