@@ -61,7 +61,8 @@
 		"@koishi-ce/client": "workspace:*",
 		"@koishi-ce/plugin-console": "workspace:*",
 		"@koishi-ce/plugin-server": "workspace:*",
-		"@satorijs/components-vue": "^0.7.8"
+		"@satorijs/components-vue": "^0.7.8",
+		"@satorijs/element": "^3.2.0"
 	},
 	"dependencies": {
 		"@koishi-ce/console": "workspace:*"
