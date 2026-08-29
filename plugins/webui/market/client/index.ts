@@ -1,87 +1,182 @@
-/**
- * @file market-next console 前端的入口装配模块。
- *
- * 模块职责:
- * - 作为 Koishi console 插件的默认导出,在注册时完成 i18n 注册、页面注册
- *   (setupPages)与全局动作/菜单注册(setupActions);
- * - 挂载三组全局 watch:防止 store.market.data 被 Vue 深代理(性能保护)、
- *   修复服务端推送冲掉的快照数据(restoreMarketSnapshot)、快照换版后
- *   重放按需 lookup(refreshMarketLookups)。
- *
- * 消费方:由 Koishi console 按客户端入口约定加载(whole/共享 bundle 均指向此处)。
- */
+import { defineComponent, h, watch } from 'vue'
+import { Context, Dict, global, receive, router, Schema, send, store, useConfig } from '@koishijs/client'
+import type {} from '@koishijs/plugin-market'
+import { showConfirm, showManual } from './components/utils'
+import extensions from './extensions'
+import Dependencies from './components/dependencies.vue'
+import Install from './components/install.vue'
+import Confirm from './components/confirm.vue'
+import Market from './components/market.vue'
+import Progress from './components/progress.vue'
+import './icons'
 
-import { type Context, global, store } from "@koishi-ce/client";
-import { isReactive, markRaw, toRaw, watch } from "vue";
-import { setupActions } from "./app/actions";
-import { setupPages } from "./app/pages";
-import { refreshMarketLookups, restoreMarketSnapshot } from "./market/state";
-import { registerMarketNextI18n } from "./shared/i18n";
-import "./shared/icons";
-import "./shared/styles/scrollbars.scss";
-import "./shared/styles/version-select.scss";
+import 'virtual:uno.css'
 
-import "virtual:uno.css";
+declare module '@koishijs/client' {
+  interface Config {
+    market: MarketConfig
+  }
+}
 
-/** console 插件注册入口:注册 i18n → 挂全局 watch → 装配页面与动作。 */
+interface MarketConfig {
+  bulkMode?: boolean
+  removeConfig?: boolean
+  override?: Dict<string>
+  gravatar?: string
+}
+
+receive('market/patch', (data) => {
+  store.market = {
+    ...data,
+    data: {
+      ...store.market?.data,
+      ...data.data,
+    },
+  }
+})
+
+receive('market/registry', (data) => {
+  store.registry = {
+    ...store.registry,
+    ...data,
+  }
+})
+
 export default (ctx: Context) => {
-	registerMarketNextI18n(ctx);
+  ctx.plugin(extensions)
 
-	// 开发模式下打印入口注册/卸载耗时,便于排查热重载问题
-	if (global.devMode) {
-		const registeredAt = performance.now();
-		console.info("[market-next] console entry registered");
-		ctx.effect(() => () => {
-			console.info(
-				`[market-next] console entry disposed after ${Math.round(performance.now() - registeredAt)}ms`,
-			);
-		});
-	}
+  ctx.slot({
+    type: 'welcome-choice',
+    component: defineComponent(() => () => h('div', {
+      class: 'choice',
+      onClick: () => router.push('/market'),
+    }, [
+      h('h2', '浏览插件'),
+      h('p', '浏览插件市场中的插件，并根据自己的需要安装和配置。'),
+    ])),
+  })
 
-	// Market indexes contain thousands of nested objects. Keep the index raw so
-	// opening market-next does not turn the entire Console store into deep Vue proxies.
-	ctx.effect(() =>
-		watch(
-			() => store.market?.data,
-			(data) => {
-				if (!data || !isReactive(data)) return;
-				const raw = markRaw(toRaw(data));
-				if (store.market) store.market.data = raw;
-			},
-			{ immediate: true, flush: "sync" },
-		),
-	);
+  ctx.slot({
+    type: 'global',
+    component: Install,
+  })
 
-	// 服务端全量推送 store.market 时可能把 data 换成新的可代理对象:
-	// 此处兜底恢复 shallowRef 里的完整快照(见 market/state.ts 的 restoreMarketSnapshot)
-	ctx.effect(() =>
-		watch(
-			() => store.market,
-			() => {
-				restoreMarketSnapshot();
-			},
-			{ immediate: true, flush: "sync" },
-		),
-	);
+  ctx.slot({
+    type: 'global',
+    component: Confirm,
+  })
 
-	// 快照 dataVersion 变化(服务端刷新了市场索引)后,把历史 lookup 请求全部重放
-	ctx.effect(() =>
-		watch(
-			() => store.market?.dataVersion,
-			(version, previous) => {
-				if (version == null || previous == null || version === previous) return;
-				void refreshMarketLookups().catch((error) => {
-					console.error(
-						"[market-next] failed to refresh market lookups",
-						error,
-					);
-				});
-			},
-		),
-	);
+  ctx.page({
+    id: 'market',
+    path: '/market',
+    name: '插件市场',
+    icon: 'activity:market',
+    order: 750,
+    authority: 4,
+    component: Market,
+  })
 
-	// 装配市场/依赖两个页面与全部全局对话框 slot
-	setupPages(ctx);
-	// 注册全局动作(ctrl+r 刷新等)与页面右上角菜单、pending override 清理 watch
-	setupActions(ctx);
-};
+  ctx.settings({
+    id: 'market',
+    title: '插件市场设置',
+    schema: Schema.object({
+      market: Schema.object({
+        bulkMode: Schema.boolean().default(false).description('批量操作模式。'),
+        removeConfig: Schema.union([
+          Schema.const(undefined).description('每次询问'),
+          Schema.const(true).description('总是'),
+          Schema.const(false).description('从不'),
+        ]).description('移除插件时是否移除其已经存在的配置。'),
+        override: Schema.dict(String).hidden(),
+        gravatar: Schema.string().description('Gravatar 镜像地址。'),
+      }),
+    }),
+  })
+
+  const config = useConfig()
+
+  if (!global.static) {
+    ctx.slot({
+      type: 'status-right',
+      component: Progress,
+      order: 10,
+    })
+
+    ctx.page({
+      id: 'dependencies',
+      path: '/dependencies',
+      name: '依赖管理',
+      icon: 'activity:deps',
+      order: 700,
+      authority: 4,
+      fields: ['dependencies', 'registry'],
+      component: Dependencies,
+    })
+  }
+
+  ctx.action('market.refresh', {
+    shortcut: 'ctrl+r',
+    disabled: () => !['market', 'dependencies'].includes(router.currentRoute.value?.meta?.activity.id),
+    action: (scope) => send('market/refresh'),
+  })
+
+  ctx.action('market.install', {
+    disabled: () => !Object.keys(config.value.market.override).length,
+    action() {
+      showConfirm.value = true
+    },
+  })
+
+  ctx.action('dependencies.manual', {
+    action() {
+      showManual.value = true
+    },
+  })
+
+  ctx.menu('market', [{
+    id: '.install',
+    icon: 'check',
+    label: '应用更改',
+  }, {
+    id: '.refresh',
+    icon: 'refresh',
+    label: '刷新',
+    type: () => !store.market || store.market.progress < store.market.total ? 'spin disabled' : '',
+  }])
+
+  ctx.menu('dependencies', [{
+    id: '.upgrade',
+    icon: 'rocket',
+    label: '全部更新',
+  }, {
+    id: 'market.install',
+    icon: 'check',
+    label: '应用更改',
+  }, {
+    id: '.manual',
+    icon: 'add',
+    label: '手动添加',
+  }, {
+    id: 'market.refresh',
+    icon: 'refresh',
+    label: '刷新',
+    type: () => !store.market || store.market.progress < store.market.total ? 'spin disabled' : '',
+  }])
+
+  ctx.effect(() => {
+    return watch(() => store.dependencies, (value) => {
+      if (!value || !config.value.market) return
+      for (const key in config.value.market.override) {
+        if (value[key]?.workspace) {
+          delete config.value.market.override[key]
+        } else if (!config.value.market.override[key] && !value[key]) {
+          // package to be removed has been removed
+          delete config.value.market.override[key]
+        } else if (value[key]?.request === config.value.market.override[key]) {
+          // package has been installed to the right version
+          delete config.value.market.override[key]
+        }
+      }
+    }, { immediate: true })
+  })
+}
