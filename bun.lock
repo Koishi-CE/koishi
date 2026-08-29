@@ -4,6 +4,12 @@
   "workspaces": {
     "": {
       "name": "koishi",
+      "dependencies": {
+        "@koishi-ce/plugin-console": "workspace:*",
+        "@koishi-ce/plugin-http": "workspace:*",
+        "@koishi-ce/plugin-proxy-agent": "workspace:*",
+        "@koishi-ce/plugin-server": "workspace:*",
+      },
       "devDependencies": {
         "@biomejs/biome": "^2.5.10",
         "@koishi-ce/koishi": "workspace:*",
