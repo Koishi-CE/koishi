@@ -57,7 +57,7 @@ import {
 	send,
 	store,
 } from "@koishi-ce/client";
-import {} from "@koishi-ce/koishi";
+import type {} from "@koishi-ce/koishi";
 import type { Entry } from "@koishi-ce/plugin-explorer";
 import { computed, type PropType, ref } from "vue";
 import { files, uploading, vFocus } from "./store";

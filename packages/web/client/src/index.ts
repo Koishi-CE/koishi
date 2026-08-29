@@ -105,6 +105,17 @@ export async function build(root: string, config: vite.UserConfig = {}) {
 					},
 					rollupOptions: {
 						makeAbsoluteExternalsRelative: true,
+						// unocss 全局模式插件在扫描阶段会对 "virtual:uno.css" 二次
+						// resolve 并误报为多文件导入（单构建内即触发，与并发无关），
+						// 仓库侧无法根治，直接静默
+						onwarn(warning, warn) {
+							if (
+								warning.message.includes("is being imported multiple times")
+							) {
+								return;
+							}
+							warn(warning);
+						},
 						// 运行时由宿主控制台提供的共享依赖（vue.js / client.js 等），
 						// 不打入插件产物，插件在浏览器中向宿主索取
 						external: [

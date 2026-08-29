@@ -11,7 +11,7 @@
 
 <script setup lang="ts">
 import { store } from "@koishi-ce/client";
-import {} from "@koishi-ce/plugin-analytics/src";
+import type {} from "@koishi-ce/plugin-analytics/src";
 import { computed, inject } from "vue";
 
 const AnalyticNumber = inject("component:analytic-number");

@@ -27,7 +27,7 @@
 
 <script setup lang="ts">
 import { store } from "@koishi-ce/client";
-import {} from "@koishi-ce/plugin-analytics/src";
+import type {} from "@koishi-ce/plugin-analytics/src";
 import { computed, provide } from "vue";
 import Numeric from "./numeric.vue";
 

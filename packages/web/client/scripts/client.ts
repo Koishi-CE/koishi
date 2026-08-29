@@ -67,6 +67,9 @@ export async function build(
 			emptyOutDir: true,
 			// 样式合并为单个 style.css，方便服务端一次性下发
 			cssCodeSplit: false,
+			// element-plus 全家桶打出的 element.js 约 870 kB，默认 500 kB 的
+			// 上报阈值对这个体量的控制台总装必然触发，放宽到 1 MB
+			chunkSizeWarningLimit: 1024,
 			...config.build,
 			rollupOptions: {
 				...rollupOptions,
