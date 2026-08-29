@@ -69,7 +69,6 @@ class EnvInfoProvider extends DataService<Dict<Dict<string>>> {
 
 	// erasableSyntaxOnly 禁止含运行时值的 namespace，
 	// 原 namespace 内的 Config 常量移到此处的静态字段，对外形状不变
-	// biome-ignore lint/style/useNamingConvention: 插件 Schema 约定为 PascalCase 的 Config 静态属性
 	static Config: Schema<EnvInfoProvider.Config> = Schema.object({});
 }
 
