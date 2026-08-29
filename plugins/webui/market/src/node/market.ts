@@ -61,15 +61,21 @@ class MarketProvider extends BaseMarketProvider {
 		}
 
 		if (!this.scanner.version) {
+			// npmmirror 的 404 需要静默忽略；origin 精确比对防止
+			// "https://registry.npmmirror.com.evil.io" 之类前缀伪造绕过
+			let isNpmmirror = false;
+			try {
+				isNpmmirror =
+					new URL(registry.config.endpoint ?? "").origin ===
+					"https://registry.npmmirror.com";
+			} catch {
+				// endpoint 缺失或非合法 URL：按非 npmmirror 处理
+			}
 			this.scanner.analyze({
 				version: "4",
 				onFailure: (name, reason) => {
 					this.failed.push(name);
-					if (
-						registry.config.endpoint?.startsWith(
-							"https://registry.npmmirror.com",
-						)
-					) {
+					if (isNpmmirror) {
 						if (
 							this.ctx.http.isError(reason) &&
 							reason.response?.status === 404

@@ -43,7 +43,7 @@ const REGISTRY =
 
 /** 查询单个 npm 包在 registry 的所有已发布版本。404 → 空集；其他非 200 → 抛错。 */
 async function fetchPublishedVersions(pkgName: string): Promise<Set<string>> {
-	const url = `${REGISTRY}/${pkgName.replace("/", "%2F")}`;
+	const url = `${REGISTRY}/${pkgName.replaceAll("/", "%2F")}`;
 	let lastError: unknown = new Error("unreachable");
 	for (let attempt = 1; attempt <= 3; attempt += 1) {
 		try {

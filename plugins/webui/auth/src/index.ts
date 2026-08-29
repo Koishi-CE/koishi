@@ -8,7 +8,12 @@
  * 配置同步对话框）。
  */
 
-import { createHash } from "node:crypto";
+import {
+	createHash,
+	pbkdf2Sync,
+	randomBytes,
+	timingSafeEqual,
+} from "node:crypto";
 import { resolve } from "node:path";
 import type { Client, DataService } from "@koishi-ce/console";
 import {
@@ -124,9 +129,43 @@ export interface UserLogin extends Pick<User, "id" | "name"> {
 /** user/update 事件允许修改的用户字段。 */
 export type UserUpdate = Partial<Pick<User, "name" | "password" | "config">>;
 
-/** 密码哈希：SHA-256 十六进制（user.password 的存储格式）。 */
+/** PBKDF2-HMAC-SHA256 迭代次数（OWASP 2023 建议 600k；登录低频，开销可接受） */
+const PBKDF2_ROUNDS = 600_000;
+
+/** 新格式密码哈希：`pbkdf2$<rounds>$<salt-hex>$<dk-hex>`（加盐 + 慢哈希）。 */
 function toHash(password: string) {
-	return createHash("sha256").update(password).digest("hex");
+	const salt = randomBytes(16);
+	const dk = pbkdf2Sync(password, salt, PBKDF2_ROUNDS, 32, "sha256");
+	return `pbkdf2$${PBKDF2_ROUNDS}$${salt.toString("hex")}$${dk.toString("hex")}`;
+}
+
+/**
+ * 校验明文密码与库中存储是否匹配。
+ *
+ * 兼容两种存储格式：
+ * - `pbkdf2$...` 新格式：按存储的盐与迭代次数重派生，恒定时间比较；
+ * - 64 位十六进制旧格式：历史上无盐 SHA-256，仅用于校验（命中后由调用方
+ *   透明升级为 PBKDF2），同样以恒定时间比较。
+ */
+function verifyPassword(password: string, stored: string): boolean {
+	if (stored.startsWith("pbkdf2$")) {
+		const [, rounds, saltHex, dkHex] = stored.split("$");
+		if (!rounds || !saltHex || !dkHex) return false;
+		const expected = Buffer.from(dkHex, "hex");
+		const actual = pbkdf2Sync(
+			password,
+			Buffer.from(saltHex, "hex"),
+			Number(rounds),
+			expected.length,
+			"sha256",
+		);
+		// 长度已按 expected.length 派生，恒定时间比较不会抛错
+		return timingSafeEqual(actual, expected);
+	}
+	// 旧格式：裸 SHA-256 十六进制
+	if (!/^[0-9a-f]{64}$/i.test(stored)) return false;
+	const actual = createHash("sha256").update(password).digest();
+	return timingSafeEqual(actual, Buffer.from(stored, "hex"));
 }
 
 /**
@@ -309,9 +348,9 @@ class AuthService extends Service {
 		// 值为 [验证码, 过期时间, 发起登录的客户端]
 		const states: Record<string, [string, number, Client]> = {};
 
-		// 用户密码登录：校验通过后签发新令牌
+		// 用户密码登录：校验通过后签发新令牌；
+		// 命中旧的无盐 SHA-256 存储时透明升级为 PBKDF2
 		ctx.console.addListener("login/password", async function (name, password) {
-			password = toHash(password);
 			const [user] = await ctx.database.get("user", { name }, [
 				"password",
 				"name",
@@ -319,8 +358,13 @@ class AuthService extends Service {
 				"authority",
 				"config",
 			]);
-			if (!user || user.password !== password)
+			if (!user?.password || !verifyPassword(password, user.password))
 				throw new Error("用户名或密码错误。");
+			if (!user.password.startsWith("pbkdf2$")) {
+				await ctx.database.set("user", user.id, {
+					password: toHash(password),
+				});
+			}
 			await self.createToken(this, "password", omit(user, ["password"]));
 		});
 

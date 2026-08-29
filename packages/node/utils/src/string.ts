@@ -20,33 +20,48 @@ const evaluate = new Function(
 ) as (context: object, expr: string) => unknown;
 
 /**
- * 对模板字符串中的 `{{ expr }}`（或自定义 pattern）占位符求值并替换。
+ * 对模板字符串中的 `{{ expr }}` 占位符求值并替换。
  *
  * - 整个字符串恰为一个占位符时，直接返回求值结果的原始类型（可非字符串）；
  * - 否则求值结果以字符串形式拼接；求值失败或结果为空值时替换为空串。
  *
+ * 扫描用单调前进的 indexOf 实现（定界符成对查找），
+ * 不使用带回溯的正则，避免模板含大量 `{` 时的平方级回溯。
+ *
  * @param template 模板字符串
  * @param context 表达式求值的作用域对象
- * @param pattern 占位符匹配正则（默认 `{{ ... }}`）
+ * @param start 占位符起始定界符（默认 `{{`）
+ * @param end 占位符结束定界符（默认 `}}`）
  */
 export function interpolate(
 	template: string,
 	context: object,
-	pattern = /\{\{([\s\S]+?)\}\}/g,
+	start = "{{",
+	end = "}}",
 ): unknown {
-	let capture: RegExpExecArray | null;
-	let result = "",
-		lastIndex = 0;
-	while ((capture = pattern.exec(template))) {
-		// 整串就是单个占位符：保留求值结果的原始类型
-		if (capture[0] === template) {
-			return evaluate(context, capture[1] ?? "");
+	let result = "";
+	let from = 0;
+	let index = template.indexOf(start);
+	while (index >= 0) {
+		const close = template.indexOf(end, index + start.length);
+		// 无闭合定界符：剩余部分原样保留
+		if (close < 0) break;
+		const content = template.slice(index + start.length, close);
+		if (!content) {
+			// 空内容不构成占位符（原 `+?` 量词要求至少一个字符），从下一字符继续找
+			index = template.indexOf(start, index + 1);
+			continue;
 		}
-		result += template.slice(lastIndex, capture.index);
-		result += String(evaluate(context, capture[1] ?? "") ?? "");
-		lastIndex = capture.index + capture[0].length;
+		// 整串就是单个占位符：保留求值结果的原始类型
+		if (index === 0 && close + end.length === template.length) {
+			return evaluate(context, content);
+		}
+		result += template.slice(from, index);
+		result += String(evaluate(context, content) ?? "");
+		from = close + end.length;
+		index = template.indexOf(start, from);
 	}
-	return result + template.slice(lastIndex);
+	return result + template.slice(from);
 }
 
 /**

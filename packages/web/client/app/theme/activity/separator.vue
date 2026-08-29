@@ -39,6 +39,17 @@ function handleDragLeave(event: DragEvent) {
 const config = useConfig();
 const ctx = useContext();
 
+// 原型链保留键：这类键在普通对象上会触发原型链存取器，禁止作为配置键读写
+// （id 来自拖拽事件的 dataTransfer 文本，属外部输入）
+const UNSAFE_KEYS = new Set(["__proto__", "constructor", "prototype"]);
+
+/** 取某活动的覆盖配置（不存在则创建）；保留键返回一次性空对象，防原型污染 */
+function ensureOverride(id: string): Record<string, unknown> {
+	const activities = (config.value.activities ??= {});
+	if (UNSAFE_KEYS.has(id)) return {};
+	return (activities[id] ??= {});
+}
+
 function handleDrop(event: DragEvent) {
 	hasDragOver.value = false;
 	const text = event.dataTransfer.getData("text/plain");
@@ -67,7 +78,7 @@ function handleDrop(event: DragEvent) {
 		list.splice(index, 0, item);
 	}
 
-	const override = ((config.value.activities ??= {})[id] ??= {});
+	const override = ensureOverride(id);
 	// 拖拽落在条目之间意味着脱离原分组，清除父项；
 	// 位置（top / bottom）与注册默认不同才记录覆盖，相同则删掉以保持配置干净
 	delete override.parent;
@@ -92,7 +103,7 @@ function handleDrop(event: DragEvent) {
 		} else {
 			let order = list[anchorR].options.order;
 			for (let index = anchorR - 1; index >= 0; index--) {
-				const override = (config.value.activities[list[index].id] ??= {});
+				const override = ensureOverride(list[index].id);
 				override.order = order += 100;
 			}
 		}
@@ -100,14 +111,14 @@ function handleDrop(event: DragEvent) {
 		if (anchorR === -1) {
 			let order = list[anchorL].options.order;
 			for (let index = anchorL + 1; index < list.length; index++) {
-				const override = (config.value.activities[list[index].id] ??= {});
+				const override = ensureOverride(list[index].id);
 				override.order = order -= 100;
 			}
 		} else {
 			let orderL = list[anchorL].options.order;
 			let orderR = list[anchorR].options.order;
 			for (let index = anchorL + 1; index < anchorR; index++) {
-				const override = (config.value.activities[list[index].id] ??= {});
+				const override = ensureOverride(list[index].id);
 				override.order =
 					orderL +
 					((orderR - orderL) * (index - anchorL)) / (anchorR - anchorL);
@@ -116,7 +127,7 @@ function handleDrop(event: DragEvent) {
 	}
 
 	// 覆盖配置为空对象时删除该键，避免残留无意义的配置项
-	if (!Object.keys(override).length) {
+	if (!Object.keys(override).length && !UNSAFE_KEYS.has(id)) {
 		delete config.value.activities[id];
 	}
 }

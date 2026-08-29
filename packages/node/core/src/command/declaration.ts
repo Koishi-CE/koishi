@@ -17,9 +17,6 @@ import type { Argv } from "./parser";
 // 会把 false 分支也收窄进数组，只能用 unknown 版谓词断言绕过
 const isArray = Array.isArray as (arg: unknown) => arg is readonly unknown[];
 
-// 匹配声明中的一段参数：<...>（必填）或 [...]（可选）
-const BRACKET_REGEXP = /<[^>]+>|\[[^\]]+\]/g;
-
 /** parseDecl 的产出：声明列表 + 剥离类型标注后的展示形式 */
 export interface DeclarationList extends Array<Argv.Declaration> {
 	/** 原始声明串；贪婪类型（如 text）的标注替换为 "..."，其余类型标注删除 */
@@ -96,24 +93,40 @@ export function parseValue(
  * 供 help 与选项语法串拼接使用。
  */
 export function parseDecl(ctx: Context, source: string): DeclarationList {
-	let cap: RegExpExecArray | null;
 	const result: DeclarationList = Object.assign([], { stripped: "" });
-	// eslint-disable-next-line no-cond-assign
-	while ((cap = BRACKET_REGEXP.exec(source))) {
-		let rawName = cap[0].slice(1, -1);
-		let variadic = false;
-		if (rawName.startsWith("...")) {
-			rawName = rawName.slice(3);
-			variadic = true;
+	// 括号段提取用单调前进的游标 + 最近定界符指针实现：
+	// 带回溯的 `<[^>]+>|[...]` 在连续 '<' / '[' 输入下是平方级复杂度。
+	// 不变式：gt / rb 分别是 index 之后第一个 '>' / ']' 的下标（无则 -1），
+	// 语义与原正则逐位尝试两个分支完全一致。
+	let index = 0;
+	let gt = source.indexOf(">");
+	let rb = source.indexOf("]");
+	while (index < source.length) {
+		const ch = source.charAt(index);
+		const close = ch === "<" ? gt : ch === "[" ? rb : -1;
+		if (close >= index + 2) {
+			let rawName = source.slice(index + 1, close);
+			let variadic = false;
+			if (rawName.startsWith("...")) {
+				rawName = rawName.slice(3);
+				variadic = true;
+			}
+			const [name, rawType] = rawName.split(":");
+			const type = rawType ? (rawType.trim() as Argv.DomainType) : undefined;
+			result.push({
+				variadic,
+				required: ch === "<",
+				...(name !== undefined ? { name } : {}),
+				...(type !== undefined ? { type } : {}),
+			});
+			index = close + 1;
+			gt = source.indexOf(">", index);
+			rb = source.indexOf("]", index);
+			continue;
 		}
-		const [name, rawType] = rawName.split(":");
-		const type = rawType ? (rawType.trim() as Argv.DomainType) : undefined;
-		result.push({
-			variadic,
-			required: cap[0][0] === "<",
-			...(name !== undefined ? { name } : {}),
-			...(type !== undefined ? { type } : {}),
-		});
+		index++;
+		if (gt !== -1 && gt < index) gt = source.indexOf(">", index);
+		if (rb !== -1 && rb < index) rb = source.indexOf("]", index);
 	}
 	result.stripped = source
 		.replace(/:[\w-]+(?=[>\]])/g, (str) => {

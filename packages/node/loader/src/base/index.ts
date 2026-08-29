@@ -244,7 +244,7 @@ export abstract class Loader {
 	 */
 	interpolate(source: unknown): unknown {
 		if (typeof source === "string") {
-			return interpolate(source, this.params, /\$\{\{(.+?)\}\}/g);
+			return interpolate(source, this.params, "${{", "}}");
 		} else if (!source || typeof source !== "object") {
 			return source;
 		} else if (Array.isArray(source)) {

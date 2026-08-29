@@ -705,7 +705,8 @@ ${check}
 
 function renderLicense(author: string): string {
 	const year = new Date().getFullYear();
-	const holder = author.replace(/\s*<.*>/, "").trim() || "（作者名）";
+	// 剥离全部 <...> 邮箱段：[^>] 防跨段吞并，g 防多段残留
+	const holder = author.replace(/\s*<[^>]*>/g, "").trim() || "（作者名）";
 	return `MIT License
 
 Copyright (c) ${year} ${holder}

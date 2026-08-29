@@ -20,13 +20,15 @@ export const LocaleTree = {
 	 * 例如 ["zh-CN", "zh-TW"] 得到 { zh: { "zh-CN": {}, "zh-TW": {} } }。
 	 */
 	from(locales: string[]) {
-		const tree: LocaleTree = {};
+		// null 原型对象：locale 片段来自外部字符串，防止 "__proto__" 等
+		// 保留键在普通对象上触发原型链存取器造成原型污染
+		const tree: LocaleTree = Object.create(null);
 		for (const locale of locales.filter(Boolean)) {
 			const tokens = locale.split("-");
 			let current = tree;
 			for (let i = 0; i < tokens.length; i++) {
 				const locale = tokens.slice(0, i + 1).join("-");
-				current = current[locale] = current[locale] || {};
+				current = current[locale] ||= Object.create(null);
 			}
 		}
 		return tree;

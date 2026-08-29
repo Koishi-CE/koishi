@@ -88,7 +88,8 @@ export class I18n {
 	}).description("国际化设置");
 
 	/** 语言 -> { 路径 -> 模板 } 的扁平化字典 */
-	_data: Dict<Dict<string>> = {};
+	// null 原型：locale 与 path 键来自外部输入，防 "__proto__" 等保留键污染原型链
+	_data: Dict<Dict<string>> = Object.create(null);
 	/** 预置渲染器名 -> 渲染函数 */
 	_presets: Dict<I18n.Renderer> = {};
 
@@ -156,7 +157,7 @@ export class I18n {
 		} else if (prefix.includes("@")) {
 			throw new Error("preset is deprecated");
 		} else if (typeof value === "string") {
-			const dict = (this._data[locale] ??= {});
+			const dict = (this._data[locale] ??= Object.create(null));
 			const path = prefix.slice(0, -1);
 			if (
 				!isNullable(dict[path]) &&
@@ -168,7 +169,7 @@ export class I18n {
 			dict[path] = value;
 			yield path;
 		} else {
-			const dict = (this._data[locale] ??= {});
+			const dict = (this._data[locale] ??= Object.create(null));
 			delete dict[prefix.slice(0, -1)];
 		}
 	}
@@ -180,7 +181,7 @@ export class I18n {
 	define(locale: string, dict: I18n.Store): () => void;
 	define(locale: string, key: string, value: I18n.Node): () => void;
 	define(locale: string, dictOrKey: I18n.Store | string, value?: I18n.Node) {
-		const dict = (this._data[locale] ??= {});
+		const dict = (this._data[locale] ??= Object.create(null));
 		const paths = [
 			...(typeof dictOrKey === "string"
 				? this.set(locale, `${dictOrKey}.`, value ?? "")

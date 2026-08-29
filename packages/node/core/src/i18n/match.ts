@@ -37,10 +37,24 @@ export function createMatch<P extends string>(
 	pattern: P,
 ): (string: string) => undefined | MatchResult<P> {
 	const groups: string[] = [];
-	const source = pattern.replace(/\(([^)]+)\)/g, (_, name) => {
-		groups.push(name);
-		return "(.+)";
-	});
+	// 捕获组替换用单调前进的 indexOf 扫描实现：
+	// 带回溯的 `/\(([^)]+)\)/g` 在连续 '(' 输入下是平方级复杂度
+	let source = "";
+	let from = 0;
+	let index = pattern.indexOf("(");
+	while (index >= 0) {
+		const close = pattern.indexOf(")", index + 1);
+		if (close < index + 2) {
+			// 空捕获组不参与匹配（原 `[^)]+` 要求至少一个字符），从下一字符继续找
+			index = pattern.indexOf("(", index + 1);
+			continue;
+		}
+		groups.push(pattern.slice(index + 1, close));
+		source += `${pattern.slice(from, index)}(.+)`;
+		from = close + 1;
+		index = pattern.indexOf("(", from);
+	}
+	source += pattern.slice(from);
 	const regexp = new RegExp(`^${source}$`);
 	return (string: string) => {
 		const capture = regexp.exec(string);

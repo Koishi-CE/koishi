@@ -78,6 +78,17 @@ function handleDragLeave(event: DragEvent) {
 
 const config = useConfig();
 
+// 原型链保留键：这类键在普通对象上会触发原型链存取器，禁止作为配置键读写
+// （id 来自拖拽事件的 dataTransfer 文本，属外部输入）
+const UNSAFE_KEYS = new Set(["__proto__", "constructor", "prototype"]);
+
+/** 取某活动的覆盖配置（不存在则创建）；保留键返回一次性空对象，防原型污染 */
+function ensureOverride(id: string): Record<string, unknown> {
+	const activities = (config.value.activities ??= {});
+	if (UNSAFE_KEYS.has(id)) return {};
+	return (activities[id] ??= {});
+}
+
 function handleDrop(event: DragEvent) {
 	hasDragOver.value = false;
 	const text = event.dataTransfer.getData("text/plain");
@@ -89,13 +100,16 @@ function handleDrop(event: DragEvent) {
 	if (target === id) return;
 	event.preventDefault();
 
-	const override = ((config.value.activities ??= {})[id] ??= {});
+	const override = ensureOverride(id);
 	if (override.parent === target) {
 		// 原本 id 已是 target 的子项：视为"拖出"，反转父子关系，
 		// 并让原父项（及其它子项）改挂到新的父项 id 之下
 		delete override.parent;
-		(config.value.activities[target] ??= {}).parent = id;
+		ensureOverride(target).parent = id;
 		for (const key in config.value.activities) {
+			// 跳过原型链保留键：JSON 配置可携带自有 "__proto__" 属性，
+			// 普通对象对其 [] 读取会命中原型链存取器
+			if (UNSAFE_KEYS.has(key)) continue;
 			const override = config.value.activities[key];
 			if (override?.parent === target) {
 				override.parent = id;
