@@ -124,7 +124,7 @@ node 侧在 `src/`、Vue 侧在 `client/`（上游约定），`koishi.public: ["
 
 - 运行器 `bun test`（Phase 4 从 mocha 迁移完成）；断言**新标准为 `bun:test` 的 `expect`**（core 与 echo 已迁移）；存量 chai ^6 用例（loader / utils / i18n-utils / broadcast / help / admin / commands）逐步迁移，不新增。shape 断言用 `packages/node/core/tests/shape.ts` 注册的 `toHaveShape` matcher（原 `scripts/testing/chai-shape.ts` 已随 scripts 目录删除）。
 - 20 个 `*.test.ts`：core（8：command / database / filter / middleware / parser / runtime / session / suggest）、loader（1）、utils（3）、i18n-utils（1）、common 插件（5）、webui admin / commands（2）。
-- 数据库用例用 `@koishijs/plugin-database-memory`；时间模拟用 `@sinonjs/fake-timers`。
+- 数据库用例用 `@koishijs/plugin-database-memory`；时间模拟用 `bun:test` 的 mock timers（`jest.useFakeTimers()` 等）。
 
 ## 6. 许可证分区（权威：`NOTICE`）
 

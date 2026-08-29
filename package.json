@@ -1,50 +1,47 @@
 {
-  "name": "koishi",
-  "version": "1.0.0",
-  "type": "module",
-  "private": true,
-  "workspaces": [
-    "packages/node/*",
-    "packages/web/*",
-    "plugins/common/*",
-    "plugins/infra/*",
-    "plugins/webui/*",
-    "apps/*",
-    "tooling/*"
-  ],
-  "scripts": {
-    "check": "bun run lint && bun run lint:client && bun run typecheck",
-    "lint": "biome check .",
-    "lint:client": "eslint \"packages/web/*/client/**/*.vue\" \"plugins/webui/*/client/**/*.vue\"",
-    "format": "biome format --write .",
-    "typecheck": "bun tooling/scripts/typecheck.ts",
-    "typecheck:legacy": "tsc6 --noEmit -p tsconfig.json",
-    "ts7": "node node_modules/@typescript/native/bin/tsc",
-    "build": "tsdown",
-    "test": "bun test"
-  },
-  "devDependencies": {
-    "@biomejs/biome": "^2.5.10",
-    "@koishi-ce/koishi": "workspace:*",
-    "@koishi-ce/plugin-help": "workspace:*",
-    "@koishi-ce/plugin-mock": "workspace:*",
-    "@sinonjs/fake-timers": "^15.4.0",
-    "@types/node": "^26.4.0",
-    "@typescript-eslint/parser": "^8.68.0",
-    "@typescript/native": "npm:typescript@7.0.2",
-    "bun-types": "^1.4.0",
-    "chai": "^6.2.2",
-    "chai-as-promised": "^8.0.2",
-    "eslint": "^10.9.1",
-    "eslint-plugin-vue": "^10.10.0",
-    "tsdown": "^0.22.14",
-    "typescript": "npm:@typescript/typescript6@6.0.2",
-    "vue-eslint-parser": "^10.4.1"
-  },
-  "dependencies": {
-    "@koishi-ce/plugin-console": "workspace:*",
-    "@koishi-ce/plugin-http": "workspace:*",
-    "@koishi-ce/plugin-proxy-agent": "workspace:*",
-    "@koishi-ce/plugin-server": "workspace:*"
-  }
+	"name": "koishi",
+	"version": "1.0.0",
+	"type": "module",
+	"private": true,
+	"workspaces": [
+		"packages/node/*",
+		"packages/web/*",
+		"plugins/common/*",
+		"plugins/infra/*",
+		"plugins/webui/*",
+		"apps/*",
+		"tooling/*"
+	],
+	"scripts": {
+		"check": "bun run lint && bun run lint:client && bun run typecheck",
+		"lint": "biome check .",
+		"lint:client": "eslint \"packages/web/*/client/**/*.vue\" \"plugins/webui/*/client/**/*.vue\"",
+		"format": "biome format --write .",
+		"typecheck": "bun tooling/scripts/typecheck.ts",
+		"typecheck:legacy": "tsc6 --noEmit -p tsconfig.json",
+		"ts7": "node node_modules/@typescript/native/bin/tsc",
+		"build": "tsdown",
+		"test": "bun test"
+	},
+	"devDependencies": {
+		"@biomejs/biome": "^2.5.10",
+		"@koishi-ce/koishi": "workspace:*",
+		"@koishi-ce/plugin-help": "workspace:*",
+		"@koishi-ce/plugin-mock": "workspace:*",
+		"@types/node": "^26.4.0",
+		"@typescript-eslint/parser": "^8.68.0",
+		"@typescript/native": "npm:typescript@7.0.2",
+		"bun-types": "^1.4.0",
+		"eslint": "^10.9.1",
+		"eslint-plugin-vue": "^10.10.0",
+		"tsdown": "^0.22.14",
+		"typescript": "npm:@typescript/typescript6@6.0.2",
+		"vue-eslint-parser": "^10.4.1"
+	},
+	"dependencies": {
+		"@koishi-ce/plugin-console": "workspace:*",
+		"@koishi-ce/plugin-http": "workspace:*",
+		"@koishi-ce/plugin-proxy-agent": "workspace:*",
+		"@koishi-ce/plugin-server": "workspace:*"
+	}
 }

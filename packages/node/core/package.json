@@ -30,8 +30,7 @@
 	"devDependencies": {
 		"@koishi-ce/plugin-mock": "workspace:*",
 		"@minatojs/driver-memory": "^3.7.0",
-		"@koishi-ce/koishi": "workspace:*",
-		"@sinonjs/fake-timers": "^15.4.0"
+		"@koishi-ce/koishi": "workspace:*"
 	},
 	"dependencies": {
 		"@koishi-ce/i18n-utils": "workspace:*",

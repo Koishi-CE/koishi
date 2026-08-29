@@ -28,7 +28,6 @@
 		"utilities"
 	],
 	"devDependencies": {
-		"@sinonjs/fake-timers": "^15.4.0",
 		"@koishi-ce/koishi": "workspace:*"
 	},
 	"dependencies": {

@@ -135,7 +135,7 @@ koishi-bun/
 | chai | ^5.1.1 | 根 + admin | 断言库 | 6.2.2 | 🔴 major |
 | chai-as-promised | ^7.1.1 | 根 + admin | Promise 断言扩展 | 8.0.2 | 🔴 major |
 | chai-shape | ^1.1.0 | core / echo | `.to.have.shape()` 部分匹配断言 | 1.1.0 | ✅(需验证 chai 6 兼容) |
-| @sinonjs/fake-timers | ^6.0.1 | 根 + utils | 时间模拟(runtime.spec) | 15.4.0 | 🔴 跨 9 major |
+| @sinonjs/fake-timers | ^6.0.1 | 根 + utils | 时间模拟(runtime.spec) | — | ✅ 已移除（bun:test mock timers 替代） |
 | @types/node | ^25.0.9(已装 25.9.5) | 根 | Node 类型 | 26.4.0 | 🔴 major |
 
 ### F. 类型包杂项

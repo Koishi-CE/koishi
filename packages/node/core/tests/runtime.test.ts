@@ -6,11 +6,10 @@
  * 中间件准入（用户/频道 ignore、受理人检查），
  * 以及指令校验（权限等级、参数数量、未知选项、选项类型、before 钩子）。
  */
-import { afterAll, beforeAll, describe, it } from "bun:test";
+import { afterAll, beforeAll, describe, it, jest } from "bun:test";
 import { App, Channel, sleep, User } from "@koishi-ce/koishi";
 import mock, { DEFAULT_SELF_ID } from "@koishi-ce/plugin-mock";
 import memory from "@minatojs/driver-memory";
-import { install } from "@sinonjs/fake-timers";
 
 const app = new App();
 
@@ -286,17 +285,16 @@ describe("Runtime", () => {
 
 		it("check arg count: timeout", async () => {
 			// 补参等待超时后提示缺少参数
-			// 仅伪造 setTimeout:默认 toFake 会连 queueMicrotask/nextTick 一起冻结,
-			// bun test 下导致 mock 客户端回复永远无法投递
-			const clock = install({ toFake: ["setTimeout", "clearTimeout"] });
+			// bun:test 的 mock timers 默认不冻结微任务,mock 客户端回复投递不受影响
+			jest.useFakeTimers();
 			cmd1.config.checkArgCount = true;
 			cmd1.config.showWarning = true;
 			await client4.shouldReply("cmd1", "请发送arg1。");
-			await clock.runAllAsync();
+			await jest.runAllTimers();
 			await client4.shouldReply("", "缺少参数，输入帮助以查看用法。");
 			cmd1.config.showWarning = false;
 			cmd1.config.checkArgCount = false;
-			clock.uninstall();
+			jest.useRealTimers();
 		});
 
 		it("check unknown option", async () => {
