@@ -74,7 +74,9 @@ const config: UserConfig = {
 	},
 	// locale 位于包根目录，源码中的相对导入会触发 yml 原样复制
 	loader: { ".yml": "copy" },
-	inputOptions: { resolve: { extensions } },
+	// pluginTimings 是 rolldown 默认开启的插件耗时统计：workspace 并行构建时
+	// 几十个包各刷一段 PLUGIN_TIMINGS（构建热身期 resolveId 占比高），纯噪音，关闭
+	inputOptions: { resolve: { extensions }, checks: { pluginTimings: false } },
 	// ESM 产物用 .mjs 扩展名（不依赖各包的 "type": "module" 逐步到位），
 	// 声明文件保持 .d.ts（各包 exports 的 types 条件均指向它）
 	outExtensions: () => ({ js: ".mjs", dts: ".d.ts" }),

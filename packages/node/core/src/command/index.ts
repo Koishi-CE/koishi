@@ -19,7 +19,8 @@ export { CommanderResolve } from "./commander/resolve";
 export * from "./parser";
 export * from "./validate";
 
-declare module "../context" {
+// 增强目标写包根名而非相对路径，理由见 filter.ts 同款注释
+declare module "@koishi-ce/core" {
 	interface Context {
 		/** 命令服务：全局唯一的命令注册表与解析入口 */
 		$commander: Commander;

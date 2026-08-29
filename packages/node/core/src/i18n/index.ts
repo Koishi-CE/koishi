@@ -25,7 +25,8 @@ const logger = new Logger("i18n");
 /** Store 节点上的内部符号：指向预置渲染器名（_presets 的 key） */
 const kTemplate = Symbol("template");
 
-declare module "../context" {
+// 增强目标写包根名而非相对路径，理由见 filter.ts 同款注释
+declare module "@koishi-ce/core" {
 	interface Context {
 		/** i18n 服务实例 */
 		i18n: I18n;

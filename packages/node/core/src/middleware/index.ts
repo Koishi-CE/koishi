@@ -25,7 +25,8 @@ export * from "./matcher";
 export * from "./next";
 export * from "./shared-cache";
 
-declare module "../context" {
+// 增强目标写包根名而非相对路径，理由见 filter.ts 同款注释
+declare module "@koishi-ce/core" {
 	interface Context {
 		/** 消息处理器服务：管理中间件与快捷对话 */
 		$processor: Processor;

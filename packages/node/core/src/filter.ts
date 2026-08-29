@@ -41,7 +41,10 @@ export type Computed<T> = T | Eval.Expr<T> | ((session: Session) => T);
  */
 export type Filter = (session: Session) => boolean;
 
-declare module "./context" {
+// 增强目标写包根名而非相对路径：产物 d.ts 是单文件 bundle，相对模块声明会
+// 脱离原文件而失效（rolldown-plugin-dts fake-js 警告）；包名在仓内经 tsconfig
+// paths 解析到 src/index.ts，发布后解析到 lib/index.d.ts 自身，两侧均可正确合并
+declare module "@koishi-ce/core" {
 	interface Context {
 		/** 过滤服务实例，提供过滤器组合的底层方法 */
 		$filter: FilterService;

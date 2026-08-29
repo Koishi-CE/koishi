@@ -2,6 +2,7 @@
 	"name": "@koishi-ce/plugin-console",
 	"description": "Web User Interface for Koishi",
 	"version": "1.0.0",
+	"type": "module",
 	"main": "lib/node/index.mjs",
 	"types": "lib/index.d.ts",
 	"exports": {

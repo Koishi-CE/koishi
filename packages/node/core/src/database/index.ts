@@ -21,7 +21,8 @@ import type { Channel, Tables, Types, User } from "./tables";
 
 export * from "./tables";
 
-declare module "../context" {
+// 增强目标写包根名而非相对路径，理由见 filter.ts 同款注释
+declare module "@koishi-ce/core" {
 	interface Context {
 		/** 向 minato 注册的运行时类型映射 */
 		[minato.Types]: Types;

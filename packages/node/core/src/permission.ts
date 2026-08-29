@@ -22,7 +22,8 @@ import type { Session } from "./session";
 
 const logger = new Logger("app");
 
-declare module "./context" {
+// 增强目标写包根名而非相对路径，理由见 filter.ts 同款注释
+declare module "@koishi-ce/core" {
 	interface Context {
 		/** 权限服务实例（别名 perms） */
 		permissions: Permissions;
