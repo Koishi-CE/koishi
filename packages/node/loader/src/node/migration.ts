@@ -13,6 +13,20 @@ interface PackageManifest {
 }
 
 /**
+ * 解析 koishi 元包的 manifest 路径。
+ * 候选顺序：本组织 @koishi-ce/koishi 优先，兼容上游原名 koishi；
+ * 全部落空时返回 undefined（此时迁移仅跳过依赖版本登记，不告警）。
+ */
+function resolveManifest(): string | undefined {
+	for (const name of ["@koishi-ce/koishi", "koishi"]) {
+		try {
+			return Bun.resolveSync(`${name}/package.json`, import.meta.dir);
+		} catch {}
+	}
+	return undefined;
+}
+
+/**
  * 配置文件级迁移：把历史上的内置功能改写为插件形式。
  *
  * 迁移项：request 配置 → http 插件；内置代理 → proxy-agent 插件；
@@ -26,15 +40,17 @@ export async function migrateManifest(config: Dict<unknown>) {
 	try {
 		let isDirty = false;
 		const meta = (await Bun.file("package.json").json()) as PackageManifest;
-		const manifest = Bun.resolveSync("koishi/package.json", import.meta.dir);
-		const deps = ((await Bun.file(manifest).json()) as PackageManifest)
-			.dependencies;
-
+		const manifest = resolveManifest();
+		const deps = manifest
+			? ((await Bun.file(manifest).json()) as PackageManifest).dependencies
+			: undefined;
 		meta.dependencies ??= {};
 		const dependencies = meta.dependencies;
-		/** 登记一个依赖并标记 package.json 已变更 */
+		/** 登记一个依赖并标记 package.json 已变更（版本未知时跳过登记） */
 		function addDep(name: string) {
-			dependencies[name] = deps?.[name];
+			const version = deps?.[name];
+			if (!version) return;
+			dependencies[name] = version;
 			isDirty = true;
 		}
 
