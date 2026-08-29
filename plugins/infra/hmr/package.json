@@ -54,6 +54,7 @@
 	},
 	"dependencies": {
 		"@babel/code-frame": "^8.0.0",
+		"@koishi-ce/loader": "workspace:*",
 		"chokidar": "^5.0.0"
 	},
 	"exports": {

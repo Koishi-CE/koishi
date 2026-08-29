@@ -3,14 +3,14 @@
 	"description": "Manage your bots and plugins with console",
 	"version": "1.0.0",
 	"type": "module",
-	"main": "lib/node/index.mjs",
+	"main": "lib/index.mjs",
 	"types": "lib/index.d.ts",
 	"exports": {
 		".": {
 			"source": "./src/index.ts",
 			"types": "./lib/index.d.ts",
-			"node": "./lib/node/index.mjs",
-			"browser": "./lib/browser/index.mjs"
+			"import": "./lib/index.mjs",
+			"default": "./lib/index.mjs"
 		},
 		"./shared": {
 			"import": "./lib/shared/index.mjs",
@@ -72,6 +72,7 @@
 	},
 	"dependencies": {
 		"@koishi-ce/console": "workspace:*",
+		"@koishi-ce/loader": "workspace:*",
 		"@koishi-ce/registry": "workspace:*"
 	}
 }
