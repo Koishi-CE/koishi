@@ -12,7 +12,10 @@ import Loader from "@koishi-ce/loader";
 import * as daemon from "./daemon";
 import * as logger from "./logger";
 
-export * from "@koishi-ce/koishi";
+// 以相对导入 re-export 包主入口（上游同款写法）：worker 产物本身属于本包，
+// 若写包名自引用，作为 main entry 直接执行时会触发 Bun 的自引用解析问题
+// （进程静默退出）；相对导入在构建期内联，运行时无自引用。
+export * from "../index.ts";
 
 // 通过模块合并向全局 Context.Config 追加本入口支持的配置项
 declare module "@koishi-ce/core" {
@@ -83,4 +86,7 @@ async function start() {
 	await app.start();
 }
 
-start().catch(handleException);
+// 顶层 await 启动：main entry 的模块求值须挂起至启动链推进完成——
+// 若以 start().catch(...) 形式让出，Bun 事件循环在无其他句柄时会随首个
+// await 立即退出（进程静默 exit 0，插件与 daemon 心跳均来不及注册保活）
+await start().catch(handleException);

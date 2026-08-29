@@ -114,6 +114,10 @@ function createWorker(options: WorkerOptions) {
 
 	child = Bun.spawn([process.execPath, worker, ...execArgv], {
 		ipc: handleMessage,
+		// Bun.spawn 的 stdio 默认为 ignore，须显式继承输出通道，
+		// 否则 worker 的全部日志都会被丢弃
+		stdout: "inherit",
+		stderr: "inherit",
 		onExit: (_, code, signal) => {
 			if (shouldExit(code, signal)) {
 				process.exit(code ?? 1);
