@@ -3,19 +3,14 @@
 	"description": "Proxy agent support for Koishi",
 	"version": "0.3.3",
 	"type": "module",
-	"main": "index.cjs",
-	"module": "index.mjs",
-	"types": "index.d.ts",
 	"exports": {
 		".": {
 			"types": "./index.d.ts",
-			"require": "./index.cjs",
-			"import": "./index.mjs"
+			"default": "./index.mjs"
 		},
 		"./package.json": "./package.json"
 	},
 	"files": [
-		"index.cjs",
 		"index.mjs",
 		"index.d.ts"
 	],

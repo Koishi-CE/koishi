@@ -6,13 +6,11 @@
 	"exports": {
 		".": {
 			"types": "./index.d.ts",
-			"require": "./index.cjs",
 			"default": "./index.mjs"
 		},
 		"./package.json": "./package.json"
 	},
 	"files": [
-		"index.cjs",
 		"index.mjs",
 		"index.d.ts"
 	],
