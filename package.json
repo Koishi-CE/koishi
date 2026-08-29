@@ -21,10 +21,13 @@
 		"typecheck:legacy": "tsc6 --noEmit -p tsconfig.json",
 		"ts7": "node node_modules/@typescript/native/bin/tsc",
 		"build": "tsdown",
-		"test": "bun test"
+		"test": "bun test",
+		"changeset": "changeset",
+		"release": "bun tooling/release/index.ts"
 	},
 	"devDependencies": {
 		"@biomejs/biome": "^2.5.10",
+		"@changesets/cli": "^3.0.1",
 		"@koishi-ce/koishi": "workspace:*",
 		"@koishi-ce/plugin-help": "workspace:*",
 		"@koishi-ce/plugin-mock": "workspace:*",
