@@ -705,8 +705,10 @@ ${check}
 
 function renderLicense(author: string): string {
 	const year = new Date().getFullYear();
-	// 剥离全部 <...> 邮箱段：[^>] 防跨段吞并，g 防多段残留
-	const holder = author.replace(/\s*<[^>]*>/g, "").trim() || "（作者名）";
+	// 许可证持有人只取姓名（`Name <email>` 格式中 `<` 之前的部分）：
+	// 截断而非剥离 <...> 段——后者对嵌套尖括号（如 `<<<>script>`）存在
+	// 清洗绕过，残留 `<script>` 标签（CodeQL incomplete-multi-character-sanitization）
+	const holder = (author.split("<")[0] ?? "").trim() || "（作者名）";
 	return `MIT License
 
 Copyright (c) ${year} ${holder}

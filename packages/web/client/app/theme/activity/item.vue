@@ -82,10 +82,13 @@ const config = useConfig();
 // （id 来自拖拽事件的 dataTransfer 文本，属外部输入）
 const UNSAFE_KEYS = new Set(["__proto__", "constructor", "prototype"]);
 
-/** 取某活动的覆盖配置（不存在则创建）；保留键返回一次性空对象，防原型污染 */
+/** 取某活动的覆盖配置（不存在则创建）；保留键返回一次性空对象，防原型污染。
+ * 守卫须用显式字符串比较（Set.has 形式 CodeQL 无法识别为阻断） */
 function ensureOverride(id: string): Record<string, unknown> {
 	const activities = (config.value.activities ??= {});
-	if (UNSAFE_KEYS.has(id)) return {};
+	if (id === "__proto__" || id === "constructor" || id === "prototype") {
+		return {};
+	}
 	return (activities[id] ??= {});
 }
 
