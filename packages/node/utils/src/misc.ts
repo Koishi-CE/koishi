@@ -6,7 +6,7 @@
 /**
  * 判断给定值是否为整数（不区分正负，不含无穷与 NaN）。
  */
-export function isInteger(source: any) {
+export function isInteger(source: unknown) {
 	return typeof source === "number" && Math.floor(source) === source;
 }
 
@@ -53,13 +53,13 @@ export function defineEnumProperty<T extends object>(
  * @returns 合并后的 head
  */
 export function merge<T extends object>(head: T, base: T): T {
-	const target = head as Record<string, any>;
+	const target = head as Record<string, unknown>;
 	Object.entries(base).forEach(([key, value]) => {
 		if (typeof target[key] === "undefined") return (target[key] = value);
 		// 键存在于原型链上但并非自有属性时跳过，防止原型污染攻击
 		if (!Object.hasOwn(target, key)) return;
 		if (typeof value === "object" && typeof target[key] === "object") {
-			target[key] = merge(target[key], value);
+			target[key] = merge(target[key] as object, value as object);
 		} else {
 			target[key] = value;
 		}
@@ -86,10 +86,11 @@ export function assertProperty<O, K extends keyof O & string>(
  * 将任意抛出值（Error 对象或字面量）格式化为带调用堆栈的文本。
  * 从堆栈中截取以错误消息结尾的首行起，去掉与抛出点无关的外层帧。
  */
-export function coerce(val: any) {
-	// 堆栈可能缺失（如携带 401 状态码的 axios 错误），此时包装为 Error 再取
+export function coerce(val: unknown) {
+	// 堆栈可能缺失（如携带 401 状态码的 axios 错误），此时包装为 Error 再取；
+	// 非 Error 抛出值经 String() 转为消息文本（等价于 Error 构造器内部的 ToString）
 	const { message, stack } =
-		val instanceof Error && val.stack ? val : new Error(val as any);
+		val instanceof Error && val.stack ? val : new Error(String(val));
 	const lines = stack?.split("\n") ?? [message];
 	const index = lines.findIndex((line) => line.endsWith(message));
 	return lines.slice(index).join("\n");
@@ -103,7 +104,7 @@ export function renameProperty<
 	K extends keyof O,
 	T extends string,
 >(config: O, key: K, oldKey: T) {
-	config[key] = Reflect.get(config, oldKey) as any;
+	config[key] = Reflect.get(config, oldKey) as O[K];
 	Reflect.deleteProperty(config, oldKey);
 }
 

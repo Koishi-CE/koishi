@@ -17,7 +17,7 @@ const evaluate = new Function(
     }
   } catch {}
 `,
-) as (context: object, expr: string) => any;
+) as (context: object, expr: string) => unknown;
 
 /**
  * 对模板字符串中的 `{{ expr }}`（或自定义 pattern）占位符求值并替换。
@@ -33,7 +33,7 @@ export function interpolate(
 	template: string,
 	context: object,
 	pattern = /\{\{([\s\S]+?)\}\}/g,
-) {
+): unknown {
 	let capture: RegExpExecArray | null;
 	let result = "",
 		lastIndex = 0;
@@ -43,7 +43,7 @@ export function interpolate(
 			return evaluate(context, capture[1] ?? "");
 		}
 		result += template.slice(lastIndex, capture.index);
-		result += evaluate(context, capture[1] ?? "") ?? "";
+		result += String(evaluate(context, capture[1] ?? "") ?? "");
 		lastIndex = capture.index + capture[0].length;
 	}
 	return result + template.slice(lastIndex);

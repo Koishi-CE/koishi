@@ -29,13 +29,13 @@ const builtin = ["Date", "RegExp", "Set", "Map", "WeakSet", "WeakMap", "Array"];
  * @param value 被读取到的属性值
  * @param update 上层传入的变更通知回调
  */
-function observeProperty(value: any, update: any) {
+function observeProperty(value: unknown, update: () => void) {
 	if (is("Date", value)) {
 		return observeDate(value, update);
 	} else if (Array.isArray(value)) {
 		return observeArray(value, update);
 	} else {
-		return observeObject(value, update);
+		return observeObject(value as object, update);
 	}
 }
 
@@ -75,7 +75,7 @@ function observeObject<T extends object>(
 			if (!value || immutable.includes(typeof value) || untracked(key))
 				return value;
 			// 深层包装：子对象的变更需冒泡通知到上层键（update 优先，缺省时记入本层键）
-			return observeProperty(value, update || (() => notify(key)));
+			return observeProperty(value, () => (update || notify)(key));
 		},
 		set(target, key, value) {
 			const unchanged = Reflect.get(target, key) === value;
@@ -96,13 +96,16 @@ function observeObject<T extends object>(
 	return proxy;
 }
 
-/** 会修改数组本身、需要包装上报的变异方法 */
-const arrayProxyMethods: Record<string, (...args: any[]) => any> = {
+/** 会修改数组本身、需要包装上报的变异方法（值保留原生签名，仅按键名迭代） */
+const arrayProxyMethods = {
 	pop: Array.prototype.pop,
 	shift: Array.prototype.shift,
 	splice: Array.prototype.splice,
 	sort: Array.prototype.sort,
 };
+
+/** 包装用的一致签名：运行时按各方法的原生语义调用，入参出参不做静态约束 */
+type ArrayMutator = (...args: unknown[]) => unknown;
 
 /**
  * 观察数组：包装四个变异方法为"先上报再执行"，并通过 Proxy
@@ -111,8 +114,12 @@ const arrayProxyMethods: Record<string, (...args: any[]) => any> = {
 function observeArray<T>(target: T[], update: () => void) {
 	const proxy: Record<string | symbol, unknown> = {};
 
-	for (const [method, methodFn] of Object.entries(arrayProxyMethods)) {
-		defineProperty(target, method, function (this: T[], ...args: any[]) {
+	for (const method of Object.keys(arrayProxyMethods)) {
+		// 原生方法与统一包装签名之间参数逆变不兼容，此处按运行时语义收窄
+		const methodFn = arrayProxyMethods[
+			method as keyof typeof arrayProxyMethods
+		] as ArrayMutator;
+		defineProperty(target, method, function (this: T[], ...args: unknown[]) {
 			update();
 			return methodFn.apply(this, args);
 		});
@@ -127,7 +134,7 @@ function observeArray<T>(target: T[], update: () => void) {
 				!value ||
 				immutable.includes(typeof value) ||
 				typeof key === "symbol" ||
-				isNaN(key as any)
+				Number.isNaN(Number(key))
 			)
 				return value;
 			return observeProperty(value, update);
@@ -135,7 +142,7 @@ function observeArray<T>(target: T[], update: () => void) {
 		set(target, key, value) {
 			if (
 				typeof key !== "symbol" &&
-				!isNaN(key as any) &&
+				!Number.isNaN(Number(key)) &&
 				Reflect.get(target, key) !== value
 			)
 				update();
@@ -152,10 +159,13 @@ function observeDate(target: Date, update: () => void) {
 	for (const method of Object.getOwnPropertyNames(Date.prototype)) {
 		if (method === "valueOf") continue;
 		const methodFn = (
-			Date.prototype as unknown as Record<string, (...args: any[]) => any>
+			Date.prototype as unknown as Record<
+				string,
+				(...args: unknown[]) => unknown
+			>
 		)[method];
 		if (typeof methodFn !== "function") continue;
-		defineProperty(target, method, function (this: Date, ...args: any[]) {
+		defineProperty(target, method, function (this: Date, ...args: unknown[]) {
 			const oldValue = target.valueOf();
 			const result = methodFn.apply(this, args);
 			if (target.valueOf() !== oldValue) update();
@@ -171,7 +181,7 @@ function observeDate(target: Date, update: () => void) {
  * @typeparam T 原对象类型
  * @typeparam R $update 回调的返回类型
  */
-export type Observed<T, R = any> = T & {
+export type Observed<T, R = unknown> = T & {
 	/** 已记录但尚未消费的变更 */
 	$diff: Partial<T>;
 	/** 消费变更：有 diff 时调用回调并清空，无变更则返回 undefined */
@@ -203,7 +213,7 @@ export function observe<T extends object, R>(
 	target: T,
 	updateOrLabel?: UpdateFunction<T, R> | string | number,
 	_label?: string | number,
-): Observed<T, any> {
+): Observed<T, R> {
 	if (immutable.includes(typeof target)) {
 		throw new Error(`cannot observe immutable type "${typeof target}"`);
 	} else if (!target) {

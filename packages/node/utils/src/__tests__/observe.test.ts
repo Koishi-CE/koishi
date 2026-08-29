@@ -2,6 +2,9 @@ import { describe, expect, it } from "bun:test";
 import { mock as jest } from "node:test";
 import { type Dict, noop, observe } from "@koishi-ce/koishi";
 
+/** 深层观察用例的动态键对象：键名运行时才确定，静态类型不约束属性值 */
+type Cell = { [key: string]: unknown };
+
 /** 观察器 API（observe.ts）的单元测试 */
 describe("Observer API", () => {
 	// 验证对原语、null、内建类型实例等非法目标调用 observe 均抛错
@@ -53,15 +56,15 @@ describe("Observer API", () => {
 
 	// 验证嵌套对象/数组的深层变更会以顶层键为单位汇总进 $diff
 	it("deep observe", () => {
-		const object = observe<any>({
+		const object = observe<{ a: Cell; c: Cell[]; x: unknown[] }>({
 			a: { b: 1 },
 			c: [{ d: 2 }],
 			x: [{ y: 3 }],
 		});
 		expect(object.$diff).toEqual({});
 
-		object.a.e = 3;
-		expect(object).toEqual({
+		object.a["e"] = 3;
+		expect(object).toEqual<{ a: Cell; c: Cell[]; x: unknown[] }>({
 			a: { b: 1, e: 3 },
 			c: [{ d: 2 }],
 			x: [{ y: 3 }],
@@ -71,7 +74,7 @@ describe("Observer API", () => {
 		});
 
 		object.c.push({ f: 4 });
-		expect(object).toEqual({
+		expect(object).toEqual<{ a: Cell; c: Cell[]; x: unknown[] }>({
 			a: { b: 1, e: 3 },
 			c: [{ d: 2 }, { f: 4 }],
 			x: [{ y: 3 }],
@@ -81,8 +84,9 @@ describe("Observer API", () => {
 			c: [{ d: 2 }, { f: 4 }],
 		});
 
-		object.x[0].y = 4;
-		expect(object).toEqual({
+		// 元素是动态键对象与数组的混合，静态类型用断言收窄
+		(object.x[0] as Cell)["y"] = 4;
+		expect(object).toEqual<{ a: Cell; c: Cell[]; x: unknown[] }>({
 			a: { b: 1, e: 3 },
 			c: [{ d: 2 }, { f: 4 }],
 			x: [{ y: 4 }],
@@ -94,7 +98,7 @@ describe("Observer API", () => {
 		});
 
 		object.x[1] = [5];
-		expect(object).toEqual({
+		expect(object).toEqual<{ a: Cell; c: Cell[]; x: unknown[] }>({
 			a: { b: 1, e: 3 },
 			c: [{ d: 2 }, { f: 4 }],
 			x: [{ y: 4 }, [5]],
@@ -105,8 +109,8 @@ describe("Observer API", () => {
 			x: [{ y: 4 }, [5]],
 		});
 
-		delete object.a.b;
-		expect(object).toEqual({
+		delete object.a["b"];
+		expect(object).toEqual<{ a: Cell; c: Cell[]; x: unknown[] }>({
 			a: { e: 3 },
 			c: [{ d: 2 }, { f: 4 }],
 			x: [{ y: 4 }, [5]],
@@ -120,7 +124,7 @@ describe("Observer API", () => {
 
 	// 验证 $update 消费 diff 后，新写入的深层属性仍能被继续追踪
 	it("deep observe new property", () => {
-		const object = observe<any>({
+		const object = observe<{ a: Cell[] }>({
 			a: [],
 		});
 		expect(object.$diff).toEqual({});
@@ -133,7 +137,7 @@ describe("Observer API", () => {
 		object.$update();
 		expect(object.$diff).toEqual({});
 
-		object.a[0].b = 2;
+		object.a[0]!["b"] = 2;
 		expect(object.$diff).toEqual({
 			a: [{ b: 2 }],
 		});
@@ -180,19 +184,19 @@ describe("Observer API", () => {
 
 	// 验证 $merge 合并外部数据不影响既有 diff，且键冲突时抛错拒绝合并
 	it("merge properties", () => {
-		const object = observe<any>({ a: 1 });
+		const object = observe<{ a: number; b?: number }>({ a: 1 });
 		expect(object.$diff).toEqual({});
 
 		object.a = 2;
-		expect(object).toEqual({ a: 2 });
+		expect(object).toEqual<{ a: number; b?: number }>({ a: 2 });
 		expect(object.$diff).toEqual({ a: 2 });
 
 		object.$merge({ b: 3 });
-		expect(object).toEqual({ a: 2, b: 3 });
+		expect(object).toEqual<{ a: number; b?: number }>({ a: 2, b: 3 });
 		expect(object.$diff).toEqual({ a: 2 });
 
 		expect(() => object.$merge({ a: 3 })).toThrow();
-		expect(object).toEqual({ a: 2, b: 3 });
+		expect(object).toEqual<{ a: number; b?: number }>({ a: 2, b: 3 });
 		expect(object.$diff).toEqual({ a: 2 });
 	});
 });
