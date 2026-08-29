@@ -39,7 +39,7 @@ export class SandboxMessenger extends MessageEncoder {
 		if (!this.buffer.trim()) return;
 		const content = await h.transformAsync(this.buffer.trim(), this.rules);
 		// 本编码器经 SandboxBot.MessageEncoder 挂载，运行时 this.bot 必为 SandboxBot
-		const bot = this.bot as SandboxBot;
+		const bot = this.bot as unknown as SandboxBot;
 		const session = bot.session(this.session.event);
 		session.messageId = Random.id();
 		bot.client.send({
