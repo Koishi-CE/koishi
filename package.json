@@ -15,7 +15,7 @@
 	"scripts": {
 		"check": "bun run lint && bun run lint:client && bun run typecheck",
 		"lint": "biome check .",
-		"lint:client": "eslint \"apps/koishi-scripts/template/client/**/*.vue\" \"packages/web/*/client/**/*.vue\" \"plugins/webui/*/client/**/*.vue\"",
+		"lint:client": "eslint \"packages/web/*/client/**/*.vue\" \"plugins/webui/*/client/**/*.vue\"",
 		"format": "biome format --write .",
 		"typecheck": "bun scripts/typecheck.mjs",
 		"typecheck:legacy": "tsc6 --noEmit -p tsconfig.json",

@@ -20,7 +20,6 @@ export default [
 		// 只圈定所有含 .vue 的 client / app 目录；.ts 一律归 biome 管
 		files: [
 			"apps/online/app/**/*.vue",
-			"apps/koishi-scripts/template/client/**/*.vue",
 			"packages/web/*/client/**/*.vue",
 			"plugins/webui/*/client/**/*.vue",
 		],

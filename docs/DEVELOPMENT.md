@@ -36,12 +36,12 @@ bun packages/web/client/src/bin.ts build                    # 宿主控制台前
 bun packages/web/client/src/bin.ts build plugins/webui/status   # 单个 webui 插件的前端
 ```
 
-独立构建的 apps（各有自己的 tsdown.config.ts）：
+独立构建的 apps（各有自己的构建入口）：
 
 ```bash
 cd apps/koishi-create   && bun run build   # create-koishi-ce 脚手架 CLI
-cd apps/koishi-scripts  && bun run build   # @koishi-ce/scripts 插件开发 CLI
 cd apps/online          && bun run build   # koishi.online 网站（src/build.ts）
+# apps/koishi-scripts 已并入根 tsdown workspace，无需单独构建
 ```
 
 ## 3. 门禁与现状
@@ -50,7 +50,7 @@ cd apps/online          && bun run build   # koishi.online 网站（src/build.ts
 
 1. **`lint`（biome）**：全仓格式 + lint。biome 尊重 `.gitignore`（`vcs.useIgnoreFile`），跳过 lib/dist/market 等。格式以 biome 为唯一权威——`.editorconfig` 声明的 4 空格缩进与代码现状（tab）不符，勿据此手改格式，统一 `bun run format`。
 2. **`lint:client`（eslint）**：只查 `.vue` 文件（biome 不解析 .vue），与 biome 零重叠；核心规则 `vue/no-undef-components`（忽略 `^K`、`^el-`、`^router-` 全局组件）。不做类型感知。
-3. **`typecheck`（TS7 逐项目）**：`scripts/typecheck.mjs` 递归扫描 packages / plugins / apps 下**所有** `tsconfig.json`，用 worker 池并行跑 `@typescript/native/bin/tsc --noEmit`。⚠️ **不读 .gitignore**——gitignored 的 `plugins/webui/market/` 也会被检查；仅排除 `apps/koishi-scripts/template/`。
+3. **`typecheck`（TS7 逐项目）**：`scripts/typecheck.mjs` 递归扫描 packages / plugins / apps 下**所有** `tsconfig.json`，用 worker 池并行跑 `@typescript/native/bin/tsc --noEmit`。⚠️ **不读 .gitignore**——gitignored 的 `plugins/webui/market/` 也会被检查；无其他排除项（koishi-scripts 的脚手架模板已内嵌进源码）。
 
 **类型检查现状（进行中，2026-08-29）**：严格模式错误清理已完成 `packages/node/*` 六包（0 错误）与 `packages/web/{client,components}` 的三个浏览器侧项目（`app`、`client/client`、`components/client`——已对齐 `tsconfig.base` 全部严格项并清零）。存量错误集中在：webui 插件各 `client/tsconfig.json`、部分插件 `src/`、以及 gitignored 的 market。**最低纪律：改哪个包，保证该包所在 project 不新增错误；`packages/node/*` 保持 0。**
 

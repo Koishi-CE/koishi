@@ -69,7 +69,7 @@ node 侧在 `src/`、Vue 侧在 `client/`（上游约定），`koishi.public: ["
 | `online` | `@koishi-ce/online` | `src/build.ts`（vite 编程式） | koishi.online 网站 + Online Loader（AGPL；`vercel.json` 部署；内置模块改写为 registry.koishi.chat 在线加载） |
 | `registry` | `@koishi-ce/registry` | 根 tsdown（workspace.include 单列） | npm 插件扫描库（MIT） |
 | `koishi-create` | `create-koishi-ce`（无 scope） | 自己的 tsdown.config.ts | 脚手架 CLI（prompts + tar 7）。⚠️ 目录名与旧引用 `apps/create-koishi-ce` 不一致，以 `apps/koishi-create` 为准 |
-| `koishi-scripts` | `@koishi-ce/scripts` | 自己的 tsdown.config.ts（bin+index 双入口） | 插件开发 CLI（`koishi-scripts`）；`template/` 是脚手架模板项目（typecheck / biome 均排除） |
+| `koishi-scripts` | `@koishi-ce/scripts` | 根 tsdown（包级配置补 bin 入口） | 插件开发 CLI（`koishi-scripts`，Bun-only ESM，v5 起内嵌 TS7+tsdown+biome+Changesets 脚手架模板与 version/build/publish 发布链） |
 
 ### tooling/
 
@@ -101,11 +101,11 @@ node 侧在 `src/`、Vue 侧在 `client/`（上游约定），`koishi.public: ["
 
 根 `tsdown.config.ts` 用 workspace 模式一次构建所有 node 侧包：
 
-- `workspace.include`：`packages/node/*`、`apps/registry`、`plugins/common/*`、`plugins/infra/*`、`plugins/webui/*`；`exclude`：vendored 三包。
-- **单遍 ESM-only 构建**：`index.mjs` + `index.d.ts`。本仓库运行时目标是 Bun，其 `require()` 可直接加载 ESM，各包 exports 以 `default` 条件兜底，CJS 双格式产物已退役（各包 package.json 逐个收敛 ESM-only，core / cli 已完成）。
+- `workspace.include`：`packages/node/*`、`apps/registry`、`apps/koishi-scripts`、`plugins/common/*`、`plugins/infra/*`、`plugins/webui/*`；`exclude`：vendored 三包。
+- **单遍 ESM-only 构建**：`index.mjs` + `index.d.ts`。本仓库运行时目标是 Bun，其 `require()` 可直接加载 ESM，各包 exports 以 `default` 条件兜底，CJS 双格式产物已退役（各包 package.json 逐个收敛 ESM-only，core / cli / `@koishi-ce/scripts` 已完成）。
 - `deps.neverBundle: [/^@koishi-ce\//]`：workspace 内互相引用按包名外部化（运行时由 node_modules workspace 链接提供）；dts 不内联外部类型。
 - `loader: { ".yml": "copy" }`：locale yml 原样拷入产物，引用路径自动改写。
-- 独立 tsdown 配置：`apps/koishi-create`、`apps/koishi-scripts`（npx 直执行 CLI，暂为 CJS 单格式）；`packages/node/cli` 已删除包级配置、走根构建（其 cli/worker 多入口产物待恢复）。
+- 独立 tsdown 配置：`apps/koishi-create`（npx 直执行 CLI，暂为 CJS 单格式）；`apps/koishi-scripts` 走根构建、包级配置仅补 bin 入口（ESM-only）；`packages/node/cli` 已删除包级配置、走根构建（其 cli/worker 多入口产物待恢复）。
 
 ### 前端：vite 编程式构建（无配置文件）
 
@@ -117,7 +117,7 @@ node 侧在 `src/`、Vue 侧在 `client/`（上游约定），`koishi.public: ["
 ### 类型检查体系
 
 - 根 `tsconfig.json` 是 **paths-only 壳**（`files: []`），`tsconfig.base.json` 的 paths 把 35 个 `@koishi-ce/*` 指向各自 `src/`（无 project references）。
-- 实际检查由 `scripts/typecheck.mjs` 逐 tsconfig 并行跑 TS7（`@typescript/native`）完成；扫描范围 = packages / plugins / apps 下所有 `tsconfig.json`（不读 gitignore，排除 koishi-scripts 模板）。
+- 实际检查由 `scripts/typecheck.mjs` 逐 tsconfig 并行跑 TS7（`@typescript/native`）完成；扫描范围 = packages / plugins / apps 下所有 `tsconfig.json`（不读 gitignore，无排除项）。
 - Vue 客户端代码 extends `tsconfig.client.json`；各 `client/tsconfig.json` 形如 `{"extends": "../../../../tsconfig.client", "include": ["."]}`。
 
 ## 5. 测试体系

@@ -22,7 +22,7 @@
 2. **代码内导入一律 `@koishi-ce/*`**（workspace 内部引用）；仅有的外部上游导入例外是测试用的 `@koishijs/plugin-database-memory` 与 console 的类型引用 `@koishijs/plugin-server-proxy`。
 3. **cordis 生态冻结在 3.x 内洽线**：cordis / minato / @cordisjs/* / @satorijs/* 不得跳 4.x / 1.x——Phase 5 已实证被 `@satorijs/core`（内部携带 cordis ^3，无 cordis 4 线）阻塞并整体回退，重启条件见 `docs/upgrade-plan.md` Phase 5 节。
 4. **vendored 三包不动**：`plugins/infra/{http,proxy-agent,server}` 是预编译产物包（无 `src/`、不走 tsdown、根 tsdown 配置显式 exclude），分别内联再导出 `@cordisjs/plugin-*`。
-5. **ESM-only 产物 + Bun 运行时**：本仓库全面拥抱 Bun——根 tsdown 单遍构建只出 ESM（`index.mjs` + `index.d.ts`），各包 exports 以 `default` 条件兜底；Bun 的 `require()` 可直接加载 ESM，loader 的插件加载链（`require → 插件 lib/index.mjs → @koishi-ce/*`）据此工作，**不要恢复 CJS 双格式产物**。运行时以 Bun 为准（Node 仅支持 ≥22.12 的 require(esm)，不作兼容目标）；`.yml` locale 走 copy loader 原样拷入产物，Bun 原生支持 yml 导入。已收敛 `"type": "module"` 的包：core、cli；其余包后续逐个迁移。
+5. **ESM-only 产物 + Bun 运行时**：本仓库全面拥抱 Bun——根 tsdown 单遍构建只出 ESM（`index.mjs` + `index.d.ts`），各包 exports 以 `default` 条件兜底；Bun 的 `require()` 可直接加载 ESM，loader 的插件加载链（`require → 插件 lib/index.mjs → @koishi-ce/*`）据此工作，**不要恢复 CJS 双格式产物**。运行时以 Bun 为准（Node 仅支持 ≥22.12 的 require(esm)，不作兼容目标）；`.yml` locale 走 copy loader 原样拷入产物，Bun 原生支持 yml 导入。已收敛 `"type": "module"` 的包：core、cli、`@koishi-ce/scripts`；其余包后续逐个迁移。
 6. **许可证分区**：`packages/web/*`、`plugins/webui/*`（console 插件为 MIT，其余 AGPL）、`apps/online` 为 AGPL-3.0，其余目录 MIT——以 `NOTICE` 表格为准；在 AGPL 目录新增文件同样受 AGPL 约束。
 7. **`plugins/webui/market/`（`@koishi-ce/plugin-marketn`）当前被 .gitignore 临时忽略**（迁入对齐期间）；注意 `scripts/typecheck.mjs` 与 `bun test` **不读 .gitignore**，仍会把它卷进检查范围，定位错误时先分辨是否来自该目录。
 
@@ -42,7 +42,7 @@ bun packages/web/client/src/bin.ts build            # 宿主控制台前端 → 
 bun packages/web/client/src/bin.ts build <插件目录>  # 单个 webui 插件的前端
 ```
 
-- `apps/koishi-create`、`apps/koishi-scripts` 各有自己的 tsdown.config.ts，进目录 `bun run build`；`apps/online` 用 `src/build.ts`（vite 编程式，PPA 在线化）。
+- `apps/koishi-create` 有自己的 tsdown.config.ts，进目录 `bun run build`（koishi-scripts 已并入根构建）；`apps/online` 用 `src/build.ts`（vite 编程式，PPA 在线化）。
 - **类型检查现状（进行中）**：严格模式错误清理已完成 `packages/node/*` 六包（0 错误）；webui 插件 `client/` 侧、`packages/web/*`、`apps/online` 及部分插件 `src/` 仍有存量错误。最低要求：**改哪个包，保证该包所在 project 不新增错误**；`packages/node/*` 保持 0。
 - 上游同步（port 上游改动）按 `UPSTREAM.md` 的映射表手动 diff 移植，完成后跑 `bun run build` + `bun test`。
 
@@ -59,7 +59,7 @@ bun packages/web/client/src/bin.ts build <插件目录>  # 单个 webui 插件�
 - **裸 `bun test`（仓库根）当前会挂起**：bun test 的发现规则包含 `*.test.ts`，会把 gitignored 的 `plugins/webui/market/`（vitest 用例，`i18n.test.ts` 处挂死）卷进来。跑测试用上面带过滤参数的全量命令或按包定向（`bun test packages/node/core`）；market 对齐完成、用例迁为 `*.spec.ts` 后此坑消除。
 - 测试断言**新标准是 `bun:test` 的 `expect`**（Jest/Vitest 风格 API）；core 与 echo 已完成迁移（shape 断言用 `packages/node/core/tests/shape.ts` 注册的 `toHaveShape` 自定义 matcher，import 该文件一次即注册）。存量 chai 用例（loader / utils / i18n-utils / broadcast / help / admin / commands）逐步迁移，**不要新增 chai 断言**；`chai-as-promised` 的 `.eventually` / `.be.rejected` 写法对应 `await expect(p).resolves / .rejects`。
 - 前端构建**没有 vite 配置文件**，全部是编程式 `vite.build()`：宿主控制台总装在 `packages/web/client/scripts/client.ts`（产物路径硬编码到 `plugins/webui/console/dist`）；单插件用 `packages/web/client/src/index.ts` 的 `build(root)`（内置 `collectWorkspaceAliases()`——未被依赖的 workspace 包不会出现在 node_modules 链接里，必须显式映射才能被 bundler 解析）。
-- `scripts/typecheck.mjs` 递归扫描 packages / plugins / apps 下**所有** `tsconfig.json`（不读 .gitignore），仅排除 `apps/koishi-scripts/template/`（模板面向终端用户，依赖不在本仓）。
+- `scripts/typecheck.mjs` 递归扫描 packages / plugins / apps 下**所有** `tsconfig.json`（不读 .gitignore），无排除项（koishi-scripts 的脚手架模板已内嵌进源码，无独立模板工程）。
 - 目录名 `apps/koishi-create` 与包名 `create-koishi-ce` 不一致；biome override、该包 repository.directory、根 tsdown 注释等处仍写着旧名 `apps/create-koishi-ce`（失效路径，勿效仿引用，以 `apps/koishi-create` 为准）。
 - 特殊构建 hack，动对应构建链必须复核：analytics 的 "fuck-echarts"（echarts chunk 内 `Symbol` 重命名）、explorer 的 monaco manualChunks、online 的内置模块改写为 `registry.koishi.chat` 在线加载、client 构建的 vue-i18n esm-browser.prod 别名。
 - hmr 插件的 esbuild 是**运行时依赖**（TS 即时编译），不是 devDep。

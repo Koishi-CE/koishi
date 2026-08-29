@@ -27,9 +27,6 @@ const projects = [
 	...walk(join(root, "apps")),
 ]
 	.map((file) => relative(root, file).replaceAll(sep, "/"))
-	// the scaffold template targets end-user projects whose dependencies are
-	// not installed inside this repository
-	.filter((file) => !file.startsWith("apps/koishi-scripts/template/"))
 	.sort();
 
 async function run(project) {

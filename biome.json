@@ -52,8 +52,7 @@
 			"includes": [
 				"**/tests/**",
 				"**/*.{spec,test}.*",
-				"apps/create-koishi-ce/templates/**",
-				"apps/koishi-scripts/template/**"
+				"apps/create-koishi-ce/templates/**"
 			],
 			"linter": {
 				"rules": {
