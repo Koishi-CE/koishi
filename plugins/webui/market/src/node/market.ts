@@ -6,6 +6,7 @@ import {
 	Time,
 } from "@koishi-ce/koishi";
 import Scanner, {
+	type RequestConfig,
 	type SearchObject,
 	type SearchResult,
 } from "@koishi-ce/registry";
@@ -50,7 +51,11 @@ class MarketProvider extends BaseMarketProvider {
 		const registry = this.ctx.installer.http;
 
 		this.failed = [];
-		this.scanner = new Scanner(registry.get);
+		// registry.get 是原型方法，裸取会丢失 this（其内部以 this(url, …) 调用
+		// 可调用的 HTTP 实例本身），须包一层保持绑定
+		this.scanner = new Scanner(<T>(url: string, config?: RequestConfig) =>
+			registry.get<T>(url, config),
+		);
 		if (this.http) {
 			const result = await this.http.get<SearchResult>("");
 			this.scanner.objects = result.objects.filter((object) => !object.ignored);

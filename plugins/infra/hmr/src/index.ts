@@ -66,6 +66,29 @@ function loadDependencies(filename: string, ignored: Set<string>) {
 	return dependencies;
 }
 
+/**
+ * 将「双星通配包裹单个目录名」的忽略规则（即默认 ignored 中的
+ * node_modules、.git、logs 三类条目的通配写法）编译为目录段剪枝函数
+ *
+ * chokidar 5 在 win32 下以待测的反斜杠原生路径调用匹配器且不做
+ * 规范化，glob 形式的 ignored 完全失效；且这种通配语义本身只丢弃
+ * 已枚举的条目、不阻止深入遍历目录本身——巨型 node_modules 仍会被
+ * 完整扫描，事件循环被 IO 回调风暴挤压，server 的请求长时间无响应。
+ * 段剪枝函数对目录本身返回 true，chokidar 便不再深入其下。其余
+ * 形式的忽略规则原样透传（类 unix 平台下 glob 依然生效）。
+ */
+function compileGlobToPrune(
+	pattern: string,
+): ((path: string) => boolean) | undefined {
+	const match = /^\*\*\/([^/*]+)\/\*\*$/.exec(pattern);
+	if (!match) return;
+	const name = match[1];
+	if (!name) return;
+	const escaped = name.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+	const regex = new RegExp(`[/\\\\]${escaped}([/\\\\]|$)`);
+	return (path: string) => regex.test(path);
+}
+
 /** 单个待重载插件的记录：入口文件名 + 各 fork 状态到引用名的映射 */
 interface Reload {
 	filename: string;
@@ -157,7 +180,9 @@ class Watcher {
 		this.watcher = watch(root ?? ["."], {
 			...this.config,
 			cwd: this.base,
-			ignored: makeArray(ignored),
+			ignored: makeArray(ignored).map(
+				(pattern) => compileGlobToPrune(pattern) ?? pattern,
+			),
 		});
 
 		// 框架自身（koishi 入口）的依赖集合：这些文件不属于任何插件，变动时只能整体重启

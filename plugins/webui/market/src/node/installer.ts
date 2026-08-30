@@ -46,13 +46,11 @@ function readNpmrcRegistry(file: string): string | undefined {
  * .npmrc > 用户 ~/.npmrc）。刻意不 spawn 子进程探测——原依赖
  * get-registry 按 user-agent 选 `bun config get registry`，而 Bun 没有
  * config 子命令，Bun 运行时下子进程退出码 1 直接炸掉 market 服务启动；
- * 读 npmrc 是零子进程的等价路径。任何一步都拿不到时返回 undefined，
- * 由调用方回落默认 endpoint。
+ * 读 npmrc 是零子进程的等价路径。任何一步都拿不到时回落 npm 官方
+ * 源（对齐被移除的 get-registry 的默认值），保证 http 恒有 endpoint
+ * 可拼接相对 URL——缺省时相对请求会在 resolveURL 抛 Invalid URL。
  */
-function getLocalRegistry(
-	cwd: string,
-	userHome: string = homedir(),
-): string | undefined {
+function getLocalRegistry(cwd: string, userHome: string = homedir()): string {
 	const candidates = [
 		process.env["npm_config_registry"],
 		readNpmrcRegistry(join(cwd, ".npmrc")),
@@ -63,7 +61,7 @@ function getLocalRegistry(
 			return candidate;
 		}
 	}
-	return undefined;
+	return "https://registry.npmjs.org/";
 }
 
 // 经 createRequire 加载 CJS 包并就地断言签名：不走 ESM 导入互操作，
