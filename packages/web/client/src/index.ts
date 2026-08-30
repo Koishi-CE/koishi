@@ -175,9 +175,13 @@ export async function build(root: string, config: vite.UserConfig = {}) {
 	// build.write: false 让构建结果留在内存里，由这里手动落盘，
 	// 以便对文件名和 JS 产物做后处理
 	for (const item of results[0]?.output ?? []) {
-		// lib es 格式的产物名是 index.mjs，统一改名为 index.js
-		// （rolldown 的 output 条目是冻结对象，不能原地改写）
-		const fileName = item.fileName === "index.mjs" ? "index.js" : item.fileName;
+		// lib es 格式的产物名是 index.mjs，统一改名为 index.js；css 产物
+		// 默认名是 index.css，统一改名为 style.css（console 服务端的
+		// resolveEntry 按该约定探测并下发）。rolldown 的 output 条目是
+		// 冻结对象，不能原地改写
+		let fileName = item.fileName;
+		if (fileName === "index.mjs") fileName = "index.js";
+		if (fileName === "index.css") fileName = "style.css";
 		const dest = `${root}/dist/${fileName}`;
 		if (item.type === "asset") {
 			if (item.source === undefined) continue;

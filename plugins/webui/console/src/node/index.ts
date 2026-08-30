@@ -16,7 +16,7 @@ import {
 	type Stats,
 } from "node:fs";
 import { createRequire } from "node:module";
-import { extname, resolve } from "node:path";
+import { extname, resolve, sep } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 import { Console, type Entry } from "@koishi-ce/console";
 import {
@@ -197,7 +197,8 @@ class NodeConsole extends Console {
 	 * 注册控制台前端的静态资源路由（挂在 uiPath 下）：
 	 * - `@plugin-<key>/...`：各 webui 插件的产物文件；
 	 * - 其余路径：控制台主体资源，未命中文件时回退 index.html（SPA 路由）；
-	 * 所有回读都限制在 root（或 node_modules）内以防路径穿越。
+	 * 插件产物的回读限制在其 entry 声明的产物路径内、主体资源限制在 root
+	 * 内，以防路径穿越。
 	 */
 	private serveAssets() {
 		const { uiPath = "" } = this.config;
@@ -221,12 +222,15 @@ class NodeConsole extends Console {
 				const [key] = name.slice(8).split("/", 1);
 				if (key !== undefined && this.entries[key]) {
 					const files = makeArray(this.getFiles(this.entries[key].files));
-					let filename = files[0] + name.slice(8 + key.length);
-					filename = resolve(this.root, filename);
-					if (
-						!filename.startsWith(this.root) &&
-						!filename.includes("node_modules")
-					) {
+					const file = files[0];
+					if (file === undefined) return (ctx.status = 404);
+					// 防路径穿越：产物只允许位于该 entry 自身声明的文件（或目录）之内。
+					// 上游以 console root / node_modules 为白名单基准，前提是插件装在
+					// node_modules 下；本仓库插件为 workspace 目录布局（plugins/**），
+					// 须以各 entry 的产物路径为基准，否则一律 403。
+					const base = resolve(file);
+					const filename = resolve(file + name.slice(8 + key.length));
+					if (filename !== base && !filename.startsWith(base + sep)) {
 						return (ctx.status = 403);
 					}
 					ctx.type = extname(filename);

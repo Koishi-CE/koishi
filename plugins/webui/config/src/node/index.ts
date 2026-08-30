@@ -35,8 +35,10 @@ export function apply(ctx: Context) {
 	ctx.plugin(ConfigWriter);
 
 	// 注册控制台前端资源:dev 模式直接指向 client 源码,prod 指向打包产物
+	// 路径相对 lib 产物（运行时执行形态）而非 src 源码：本文件在源码里位于
+	// src/node（两层），打包后位于 lib（一层），深度不一致，按 lib 计
 	ctx.console.addEntry({
-		dev: resolve(__dirname, "../../client/index.ts"),
-		prod: resolve(__dirname, "../../dist"),
+		dev: resolve(__dirname, "../client/index.ts"),
+		prod: resolve(__dirname, "../dist"),
 	});
 }
