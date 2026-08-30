@@ -8,5 +8,5 @@
 	"baseBranch": "main",
 	"updateInternalDependents": "out-of-band",
 	"bumpVersionsWithWorkspaceProtocolOnly": true,
-	"ignore": ["koishi"]
+	"ignore": ["koishi", "@koishi-ce/koishi-shim"]
 }

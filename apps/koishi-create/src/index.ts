@@ -3,11 +3,12 @@
  * apps/koishi-create，二者不一致是历史遗留，以目录名为准）。
  *
  * 通过 `bunx create-koishi-ce [name]`（npx 亦可）交互式创建 Koishi 机器人
- * 应用项目：确定项目名 → 准备目标目录 → 从 npm registry 下载模板包（默认
- * @koishijs/boilerplate，刻意沿用上游官方模板以保持与上游插件生态一致）
- * 并解包 → 改写 package.json → 按需初始化 git → 询问是否立即安装依赖并
- * 启动。CLI 可执行入口在 src/bin.ts（构建产物 lib/bin.mjs，bin 字段指向
- * 它）；本文件只承载主流程与可单测的纯函数（范式对齐 @koishi-ce/scripts）。
+ * 应用项目：确定项目名 → 准备目标目录 → 写入内置 @koishi-ce 模板（默认，
+ * 见 src/template.ts；--template <包名> 可改用 npm registry 远程模板，如
+ * 上游官方 @koishijs/boilerplate）→ 按需初始化 git → 询问是否立即安装
+ * 依赖并启动。CLI 可执行入口在 src/bin.ts（构建产物 lib/bin.mjs，bin 字段
+ * 指向它）；本文件只承载主流程与可单测的纯函数（范式对齐
+ * @koishi-ce/scripts）。
  */
 import { spawnSync } from "node:child_process";
 import {
@@ -27,6 +28,7 @@ import prompts from "prompts";
 import { extract } from "tar";
 import parse from "yargs-parser";
 import pkg from "../package.json" with { type: "json" };
+import { baseManifest, templateFiles } from "./template.ts";
 
 const { version } = pkg;
 
@@ -52,7 +54,8 @@ export interface Manifest {
 	private?: boolean;
 	version?: string;
 	workspaces?: unknown;
-	devDependencies?: unknown;
+	dependencies?: Record<string, string>;
+	devDependencies?: Record<string, string>;
 	[key: string]: unknown;
 }
 
@@ -250,23 +253,28 @@ function writePackageJson() {
 }
 
 /**
- * 模板下载与解包的主流程：
- * 1. 确定 npm registry（--registry 参数 > 本机 npm 配置 > 官方源）；
- * 2. 拉取模板包元数据，按 dist-tags 解析目标版本（--ref，默认 latest）；
- * 3. 流式下载 tarball 并解包到目标目录（strip: 1 去掉包根目录层级），
- *    网络错误统一以 HttpError 提示后退出；
- * 4. 最后改写 package.json。
+ * 写入内置模板（默认路径）：静态文件（src/template.ts 的 templateFiles）
+ * 加上由 baseManifest() 渲染出的 package.json。纯本地写入，无网络请求。
  */
-async function scaffold() {
-	console.log(kleur.dim("  正在 ") + project + kleur.dim(" 中生成项目 ..."));
+function scaffoldBuiltin() {
+	for (const [file, content] of Object.entries(templateFiles)) {
+		writeFileSync(join(rootDir, file), content);
+	}
+	writeFileSync(
+		join(rootDir, "package.json"),
+		renderManifest(baseManifest(), project, argv.prod === true),
+	);
+}
 
-	const registry = (
-		argv.registry ||
-		getLocalRegistry() ||
-		"https://registry.npmjs.org"
-	).replace(/\/$/, "");
-	console.log(kleur.dim(`  使用 registry：${registry}\n`));
-	const template = argv.template || "@koishijs/boilerplate";
+/**
+ * 远程模板下载与解包（--template 指定时）：
+ * 1. 拉取模板包元数据，按 dist-tags 解析目标版本（--ref，默认 latest）；
+ * 2. 流式下载 tarball 并解包到目标目录（strip: 1 去掉包根目录层级），
+ *    网络错误统一以 HttpError 提示后退出；
+ * 3. 最后改写 package.json。
+ */
+async function scaffoldRemote(registry: string) {
+	const template = argv.template as string;
 	const ref = argv.ref || "latest";
 
 	try {
@@ -302,6 +310,27 @@ async function scaffold() {
 	}
 
 	writePackageJson();
+}
+
+/**
+ * 生成项目的主入口：默认写内置 @koishi-ce 模板（scaffoldBuiltin）；
+ * --template <包名> 时改为从 npm registry 下载远程模板（scaffoldRemote），
+ * registry 取值 --registry 参数 > 本机 npm 配置 > 官方源。
+ */
+async function scaffold() {
+	console.log(kleur.dim("  正在 ") + project + kleur.dim(" 中生成项目 ..."));
+
+	if (argv.template) {
+		const registry = (
+			argv.registry ||
+			getLocalRegistry() ||
+			"https://registry.npmjs.org"
+		).replace(/\/$/, "");
+		console.log(kleur.dim(`  使用 registry：${registry}\n`));
+		await scaffoldRemote(registry);
+	} else {
+		scaffoldBuiltin();
+	}
 
 	console.log(kleur.green("  完成。\n"));
 }
@@ -364,8 +393,8 @@ export async function start() {
   用法：create-koishi-ce [名称] [选项]
 
   选项：
-    -t, --template <名称>   模板包名（默认 @koishijs/boilerplate）
-    -r, --ref <引用>        模板版本引用（默认 latest）
+    -t, --template <名称>   从 npm registry 下载指定模板包（默认使用内置 @koishi-ce 模板）
+    -r, --ref <引用>        远程模板版本引用（默认 latest）
     -f, --forced            强制清空目标目录
     -g, --git               初始化 git 仓库
         --registry <地址>   指定 npm registry（如 https://registry.npmmirror.com）

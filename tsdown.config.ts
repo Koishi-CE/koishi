@@ -58,6 +58,8 @@ const workspace = {
 		"packages/web/components",
 		// 上游包名 koishi 的兼容 shim（纯 JS 预编译，无 src/，见其 index.mjs 注释）
 		"packages/node/koishi",
+		// 同款 shim 的可发布版（@koishi-ce/koishi-shim，供下游项目 npm alias 占名）
+		"packages/node/koishi-shim",
 	],
 };
 

@@ -26,6 +26,8 @@
 6. **许可证分区**：`packages/web/*`、`plugins/webui/*`（console 插件为 MIT，其余 AGPL）、`apps/online` 为 AGPL-3.0，其余目录 MIT——以 `NOTICE` 表格为准；在 AGPL 目录新增文件同样受 AGPL 约束。
 7. **market 插件为上游原版再分发**：`plugins/webui/market/`（`@koishi-ce/plugin-market`）对齐自上游 webui `plugins/market`（原版 v2.11.11），社区版 `plugin-marketn` 已被其取代并移除。client 侧依赖 npm 包 `@koishijs/market`（上游以源码发布的组件库，直接打入插件 dist），其中的 npm 名 `@koishijs/components` 由单插件构建的 alias 重定向到本仓库 workspace 版，避免双实例。
 8. **`packages/node/koishi` 是 `koishi` 裸名的兼容 shim，不可删除或改名**：本仓框架包名是 `@koishi-ce/koishi`，而社区插件的 peerDependencies 指向上游名 `koishi`——该名字若无归属，市场运行时安装会把 npm 官方 koishi 写进根依赖，形成第二份框架副本（破坏 cordis 对象身份）。该 shim（纯 JS 预编译，不走 tsdown，根 tsdown 显式 exclude）把该名字指回 `@koishi-ce/koishi`；**根 package.json 的 dependencies 必须保留 `"koishi": "workspace:*"` 声明归属**（丢了它 shim 就形同虚设，peer 立即回归 npm 官方包），market 安装器的 `override()` 对 `workspace:` 声明亦有不可覆盖/删除的护栏。shim 版本号刻意为 `4.18.11`（上游 cordis 3.x 冻结线，用于满足 `koishi ^4.x` 形态的 peer 范围），**勿改为本仓 1.x 基线**。
+9. **下游项目用 `@koishi-ce/koishi-shim`（`packages/node/koishi-shim`，可发布）+ npm alias 占名，机制同上但形态不同**：下游非 workspace 项目无法用 workspace shim，改为在 package.json 声明 `"koishi": "npm:@koishi-ce/koishi-shim@^4.18.11"`——Bun 对 `npm:` alias 的 peer 判定看**落盘包的 version**，故该包版本同样冻结 `4.18.x` 线（**勿随 changesets bump**，不给它写 changeset）；market 安装器的 `isGuardedRequest()` 护栏把 `npm:@koishi-ce` 前缀的 alias 声明与 `workspace:` 同等保护（不可覆盖/删除）。
+10. **create-koishi-ce 的默认模板是内置的纯 `@koishi-ce` 模板**（`apps/koishi-create/src/template.ts`），不再下载上游官方 `@koishijs/boilerplate`——那会生成全官方生态的项目（正是被修掉的 bug）。`--template <包名>` 保留为远程模板逃生舱。模板要点：Bun 运行时、`koishi` 裸名 alias 钉 shim（见第 9 条）、依赖统一 `^1.0.0` 区间、不预装 adapter / database（本仓无再分发，官方版可后续从市场装，peer 已被 alias 钉住）。
 
 ## 门禁与工作流
 

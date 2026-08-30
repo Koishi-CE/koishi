@@ -30,6 +30,23 @@ import { compare, satisfies, valid } from "semver";
 
 const logger = new Logger("market");
 
+/**
+ * 判断依赖声明是否受护栏保护、不可被安装清单覆盖或删除。两类：
+ * - `workspace:` 声明是本仓库（monorepo）对上游裸名的归属（如 koishi
+ *   裸名 shim，见 packages/node/koishi）；
+ * - `npm:@koishi-ce/...` alias 是下游脚手架生成项目对上游名的归属
+ *   （如 "koishi": "npm:@koishi-ce/koishi-shim@^4.18.11"，见
+ *   packages/node/koishi-shim）。
+ * 两者被覆盖或删除都会让 peer 解析失去归属，重新拉下 npm 官方包形成
+ * 第二份框架副本。
+ */
+function isGuardedRequest(request: string | undefined): boolean {
+	return (
+		request?.startsWith("workspace:") === true ||
+		request?.startsWith("npm:@koishi-ce") === true
+	);
+}
+
 /** 从单个 .npmrc 文件提取 registry 配置项；文件不存在或读取出错一律视为未配置 */
 function readNpmrcRegistry(file: string): string | undefined {
 	try {
@@ -332,14 +349,11 @@ class Installer extends Service {
 		this.manifest.dependencies ||= {};
 		for (const key in deps) {
 			if (deps[key]) {
-				// workspace: 声明是本仓库对上游裸名的归属（如 koishi 裸名
-				// shim，见 packages/node/koishi），不可被安装清单覆盖成
-				// npm 版本，否则会拉下官方包形成第二份框架副本
-				if (this.manifest.dependencies[key]?.startsWith("workspace:")) {
+				if (isGuardedRequest(this.manifest.dependencies[key])) {
 					continue;
 				}
 				this.manifest.dependencies[key] = deps[key];
-			} else if (!this.manifest.dependencies[key]?.startsWith("workspace:")) {
+			} else if (!isGuardedRequest(this.manifest.dependencies[key])) {
 				delete this.manifest.dependencies[key];
 			}
 		}
