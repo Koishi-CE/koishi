@@ -7,8 +7,11 @@
  * 由父进程依据退出码决定是否重启。
  */
 
+import { existsSync, readFileSync } from "node:fs";
+import net from "node:net";
+import { dirname, resolve } from "node:path";
 import { Context, type Dict, Logger, Schema, Time } from "@koishi-ce/core";
-import Loader from "@koishi-ce/loader";
+import Loader, { resolvePlugin } from "@koishi-ce/loader";
 import * as daemon from "./daemon.ts";
 import * as logger from "./logger.ts";
 
@@ -65,12 +68,110 @@ process.on("unhandledRejection", (error) => {
 	new Logger("app").warn(error);
 });
 
+/** HTTP 服务器插件的包名集合（端口预检的识别目标，覆盖本仓 vendored 包与上下游命名） */
+const serverPackages = new Set([
+	"@koishi-ce/plugin-server",
+	"@koishijs/plugin-server",
+	"@cordisjs/plugin-server",
+]);
+
+/** 服务器插件声明的待检端口区间 */
+interface ServerPort {
+	host: string;
+	port: number;
+	maxPort: number;
+}
+
+/** 从模块入口路径向上查找最近的 package.json，返回其 name 字段 */
+function locatePackageName(filename: string): string | undefined {
+	let dir = dirname(filename);
+	while (true) {
+		const file = resolve(dir, "package.json");
+		if (existsSync(file)) {
+			try {
+				const manifest = JSON.parse(readFileSync(file, "utf8"));
+				if (typeof manifest?.name === "string") return manifest.name;
+			} catch {}
+		}
+		const parent = dirname(dir);
+		if (parent === dir) return undefined;
+		dir = parent;
+	}
+}
+
+/**
+ * 遍历插件配置表（含 group 嵌套），收集服务器插件声明的端口区间。
+ * 引用键格式与 loader 一致：首个冒号前为插件名；`$` 开头为元属性。
+ */
+function collectServerPorts(plugins: Dict, baseDir: string, out: ServerPort[]) {
+	for (const [key, source] of Object.entries(plugins)) {
+		if (key.startsWith("$") || source === null || typeof source !== "object") {
+			continue;
+		}
+		const [name = ""] = key.split(":", 1);
+		if (name === "group") {
+			collectServerPorts(source as Dict, baseDir, out);
+			continue;
+		}
+		try {
+			const pkgName = locatePackageName(resolvePlugin(name, baseDir));
+			if (!pkgName || !serverPackages.has(pkgName)) continue;
+			const { host, port, maxPort } = source as Record<string, unknown>;
+			if (typeof port !== "number") continue;
+			out.push({
+				host: typeof host === "string" ? host : "127.0.0.1",
+				port,
+				maxPort: typeof maxPort === "number" ? maxPort : port,
+			});
+		} catch {}
+	}
+}
+
+/** 探测端口当前是否可绑定（未被占用返回 true） */
+function probePort(port: number, host: string) {
+	return new Promise<boolean>((promiseResolve) => {
+		const server = net.createServer();
+		server.once("error", () => promiseResolve(false));
+		server.once("listening", () => server.close(() => promiseResolve(true)));
+		server.listen(port, host);
+	});
+}
+
+/**
+ * 端口预检：server 插件在应用启动期绑定失败会以 cordis 错误事件暴露，
+ * 连锁触发依赖 server 服务的全部插件 dispose，堆栈噪音远超问题本身；
+ * 这里在创建应用前先行探测，端口区间全部被占时只输出一行提示并以
+ * 退出码 1 结束（父守护进程未收到 start 消息，随之干净退出）。
+ */
+async function checkPorts(plugins: Dict, baseDir: string) {
+	const ports: ServerPort[] = [];
+	collectServerPorts(plugins, baseDir, ports);
+	for (const { host, port, maxPort } of ports) {
+		let available = false;
+		for (let current = port; current <= maxPort; current++) {
+			if (await probePort(current, host)) {
+				available = true;
+				break;
+			}
+		}
+		if (available) continue;
+		const range = port === maxPort ? `${port}` : `${port}-${maxPort}`;
+		new Logger("app").error(
+			`端口 ${range} 已被占用（可能已有 Koishi 实例在运行），启动中止`,
+		);
+		process.exit(1);
+	}
+}
+
 /** 应用启动主流程 */
 async function start() {
 	const loader = new Loader();
 	await loader.init(process.env["KOISHI_CONFIG_FILE"]);
 	const config = await loader.readConfig(true);
 	logger.prepare(config.logger);
+
+	// 端口预检须在日志配置生效后、应用创建前执行
+	await checkPorts(config.plugins ?? {}, loader.baseDir);
 
 	if (config.timezoneOffset !== undefined) {
 		Time.setTimezoneOffset(config.timezoneOffset);
