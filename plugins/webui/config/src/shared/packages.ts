@@ -26,6 +26,7 @@ import type {
 	SearchObject,
 	SearchResult,
 } from "@koishi-ce/registry";
+import { getPluginShortname } from "@koishi-ce/registry";
 
 declare module "@koishi-ce/loader" {
 	interface Loader {
@@ -46,6 +47,9 @@ export abstract class PackageProvider extends DataService<
 > {
 	cache: Dict<PackageProvider.RuntimeData> = {};
 	debouncedRefresh: () => void;
+
+	/** 完整包名 → 引用它的首个配置键（workspace 相对路径），由 node 端 collect 填充 */
+	pathKeys: Dict<string> = {};
 
 	override ctx: Context;
 
@@ -68,12 +72,24 @@ export abstract class PackageProvider extends DataService<
 		});
 
 		// 前端按需请求：某插件缺少运行时信息时（如刚安装尚未解析），
-		// 按短名解析其导出并立即推送
+		// 按其配置键（workspace 相对路径）或短名解析其导出并立即推送
 		ctx.console.addListener(
 			"config/request-runtime",
 			async (name) => {
-				name = name.replace(/(koishi-|^@koishijs\/)plugin-/, "");
-				this.cache[name] = await this.parseExports(name);
+				// 依次尝试：路径配置键 → 短名 → 原名，首个解析成功的为准
+				const candidates = [
+					this.pathKeys[name],
+					getPluginShortname(name),
+					name,
+				];
+				for (const key of candidates) {
+					if (!key) continue;
+					const result = await this.parseExports(key);
+					if (!result.failed) {
+						this.cache[key] = result;
+						break;
+					}
+				}
 				this.refresh(false);
 			},
 			{ authority: 4 },
@@ -130,7 +146,11 @@ export abstract class PackageProvider extends DataService<
 		const objects = (await this.collect(forced)).slice();
 		for (const object of objects) {
 			object.name = object.package?.name || "";
-			const cached = this.cache[object.shortname];
+			// 运行时缓存的键与写入方一致：workspace 包用配置键（./...），
+			// npm 包用短名；paths 为空时退回短名查找
+			const cached = [...(object.paths ?? []), object.shortname]
+				.map((key) => this.cache[key])
+				.find(Boolean);
 			if (!cached) continue;
 			object.runtime = cached;
 		}
@@ -211,6 +231,8 @@ export namespace PackageProvider {
 		> {
 		/** 完整包名 */
 		name?: string;
+		/** 引用本包的 koishi.yml 相对路径配置键（workspace 包专属，可多条） */
+		paths?: string[];
 		/** 运行时信息（schema、依赖、fork 状态等） */
 		runtime?: RuntimeData;
 		package: Pick<

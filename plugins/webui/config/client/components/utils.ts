@@ -94,12 +94,7 @@ export const coreDeps = [
  * @param tree 配置树节点
  */
 export function hasCoreDeps(tree: Tree) {
-	if (
-		tree.name &&
-		(coreDeps.includes(`@koishi-ce/plugin-${tree.name}`) ||
-			coreDeps.includes(`@koishijs/plugin-${tree.name}`))
-	)
-		return true;
+	if (tree.name && coreDeps.includes(getFullName(tree.name) ?? "")) return true;
 	if (tree.children) return tree.children.some(hasCoreDeps);
 }
 
@@ -207,23 +202,35 @@ export interface Tree {
 export const current = ref<Tree>();
 
 /**
- * 把插件短名还原为完整包名（在 store.packages 中实际存在的那一个），
- * 兼容 `@scope/name` 与无 scope 两种情况。
+ * 把配置树节点名还原为完整包名（在 store.packages 中实际存在的那一个）。
  *
- * @param shortname 插件短名
+ * 兼容三种形态：
+ * - `./plugins/...` 相对路径键（本仓库 koishi.yml 的统一写法）：
+ *   按服务端在 packages 数据中标注的 paths 精确匹配；
+ * - `@scope/name` 形式：为内层名补全社区前缀；
+ * - 裸短名：本组织 @koishi-ce 优先，其次上游 @koishijs 与社区前缀。
+ *
+ * @param shortname 配置树节点名（插件短名或相对路径）
  * @returns 完整包名；找不到时为 undefined
  */
 export function getFullName(shortname: string) {
 	if (!shortname) return shortname;
+	if (shortname.startsWith("./")) {
+		return Object.values(store.packages ?? {}).find((data) =>
+			data.paths?.includes(shortname),
+		)?.package?.name;
+	}
 	if (shortname.includes("/")) {
 		const [left, right] = shortname.split("/");
 		return [`${left}/koishi-plugin-${right}`].find(
 			(name) => name in (store.packages || {}),
 		);
 	}
-	return [`@koishijs/plugin-${shortname}`, `koishi-plugin-${shortname}`].find(
-		(name) => name in (store.packages || {}),
-	);
+	return [
+		`@koishi-ce/plugin-${shortname}`,
+		`@koishijs/plugin-${shortname}`,
+		`koishi-plugin-${shortname}`,
+	].find((name) => name in (store.packages || {}));
 }
 
 /** 当前选中插件的完整包名。 */

@@ -15,6 +15,14 @@ import { type Dict, defineProperty, isNonNullable, pick } from "cosmokit";
 import type { PackageJson, SearchObject, SearchResult } from "./types.ts";
 import { conclude } from "./utils.ts";
 
+/**
+ * 由插件包名剥离约定前缀得到短名，兼容本仓库 @koishi-ce/plugin-*、
+ * 上游 @koishijs/plugin-* 与社区 koishi-plugin-* 三种组织形式。
+ */
+export function getPluginShortname(name: string) {
+	return name.replace(/(koishi-|^@(?:koishijs|koishi-ce)\/)plugin-/, "");
+}
+
 /** 本地扫描结果：结构与远程 SearchResult 一致，部分字段（score 等）不填 */
 export interface LocalScanner extends SearchResult {}
 
@@ -110,21 +118,22 @@ export class LocalScanner {
 	private async loadManifest(name: string) {
 		const filename = require.resolve(`${name}/package.json`);
 		const meta: PackageJson = JSON.parse(await readFile(filename, "utf8"));
-		meta.peerDependencies ||= {};
-		meta.peerDependenciesMeta ||= {};
 		return [meta, !filename.includes("node_modules")] as const;
 	}
 
 	/**
-	 * 把本地 package.json 解析为 SearchObject：manifest 复用 conclude()，
+	 * 把 package.json 解析为 SearchObject：manifest 复用 conclude()，
 	 * package 只保留市场展示需要的四个字段。
+	 * @param data 已读取的包清单（原地补全 peer 依赖字段）
+	 * @param workspace 是否为 workspace 源码形态
 	 */
-	protected async parsePackage(name: string) {
-		const [data, workspace] = await this.loadManifest(name);
+	private toSearchObject(data: PackageJson, workspace: boolean) {
+		data.peerDependencies ||= {};
+		data.peerDependenciesMeta ||= {};
 		return {
 			workspace,
 			manifest: conclude(data),
-			shortname: data.name.replace(/(koishi-|^@koishijs\/)plugin-/, ""),
+			shortname: getPluginShortname(data.name),
 			package: pick(data, [
 				"name",
 				"version",
@@ -132,5 +141,31 @@ export class LocalScanner {
 				"peerDependenciesMeta",
 			]),
 		} as SearchObject;
+	}
+
+	/**
+	 * 按目录路径加载插件包，不要求包已链入 node_modules。
+	 * 用于 koishi.yml 中以相对路径键（./plugins/...）引用、且未随
+	 * workspace 链接出现在 node_modules 里的源码包。
+	 * @param dir 包目录的绝对路径
+	 */
+	async loadPath(dir: string): Promise<SearchObject | undefined> {
+		this.cache[dir] ||= (async () => {
+			try {
+				const data: PackageJson = JSON.parse(
+					await readFile(`${dir}/package.json`, "utf8"),
+				);
+				return this.toSearchObject(data, true);
+			} catch (error) {
+				this.onError(error, dir);
+				return undefined;
+			}
+		})();
+		return this.cache[dir];
+	}
+
+	protected async parsePackage(name: string) {
+		const [data, workspace] = await this.loadManifest(name);
+		return this.toSearchObject(data, workspace);
 	}
 }
