@@ -10,8 +10,7 @@
  *   version   消费 .changeset/ 条目（changeset version）+ bun install 刷新 lockfile
  *   build     根 tsdown → 宿主控制台总装（console/dist）→ 各 webui 插件前端 dist
  *   publish   registry 比对 → 所有权预检 → 拓扑序逐包 npm publish（workspace:* 改写）
- *   tag       为 registry 已有且本地一致的版本补 git 标签（name@version）
- *   pipeline  一条龙：preflight → version → 提交 → build → test → publish → tag → push
+ *   pipeline  一条龙：preflight → version → 提交 → build → test → publish → push
  *
  * 设计取向（同 qq-releases / koishi-scripts 工具先例）：任何一步失败立即
  * 中断并保留现场；重跑幂等（已发布版本经 registry 比对自动跳过）；
@@ -63,12 +62,11 @@ const HELP = `Koishi-CE 发布工具链（tooling/release）
   version           消费 .changeset/ 条目（changeset version + bun install）
   build             根 tsdown + 宿主控制台总装 + 各 webui 插件前端 dist
   publish           registry 比对 → 所有权预检 → 拓扑序逐包 npm publish
-  tag               为 registry 已有版本补 git 标签（name@version）
-  pipeline          一条龙：preflight → version → 提交 → build → test → publish → tag
+  pipeline          一条龙：preflight → version → 提交 → build → test → publish
 
 旗标：
   --dry-run         只看计划，不做任何变更
-  --push            pipeline 末尾推送 main 与新建标签
+  --push            pipeline 末尾推送 main
   --allow-dirty     跳过工作区洁净检查（版本提交仍只含版本相关文件）
   --skip-build      pipeline 跳过构建环
   --skip-test       pipeline 跳过测试环
@@ -490,40 +488,6 @@ async function runPublishSteps(options: Options): Promise<number> {
 	return 0;
 }
 
-/** tag 环：为 registry 已有且本地一致的版本补 git 标签（name@version）。 */
-async function runTagStep(options: Options): Promise<{
-	code: number;
-	created: string[];
-}> {
-	const created: string[] = [];
-	const pkgs = discoverPackages(ROOT);
-	const published = await fetchAllPublished(pkgs);
-	for (const pkg of pkgs) {
-		if (!(published.get(pkg.name)?.has(pkg.version) ?? false)) {
-			continue;
-		}
-		const tag = `${pkg.name}@${pkg.version}`;
-		const existing = capture("git", ["tag", "--list", tag], ROOT);
-		if (existing !== null && existing.trim() !== "") {
-			continue;
-		}
-		if (options.dryRun) {
-			console.log(`[tag] [dry-run] 将创建 ${tag}`);
-			continue;
-		}
-		const code = await run("git", ["tag", tag], ROOT);
-		if (code !== 0) {
-			console.log(`[tag] ❌ 创建标签失败 ${tag}（退出码 ${code}）`);
-			return { code, created };
-		}
-		created.push(tag);
-	}
-	if (!options.dryRun && created.length > 0) {
-		console.log(`[tag] ✅ 新建 ${created.length} 个标签`);
-	}
-	return { code: 0, created };
-}
-
 /** pipeline：一条龙。每环失败即中断；全部环节重跑幂等。 */
 async function cmdPipeline(options: Options): Promise<number> {
 	console.log(
@@ -607,39 +571,20 @@ async function cmdPipeline(options: Options): Promise<number> {
 	}
 
 	if (options.dryRun) {
-		await runTagStep(options);
 		console.log("[pipeline] [dry-run] 结束，未做任何变更");
 		return 0;
 	}
 
-	// tag 环 + 推送
-	const tag = await runTagStep(options);
-	if (tag.code !== 0) {
-		return tag.code;
-	}
+	// 推送
 	if (options.push) {
 		console.log("[pipeline] 📤 git push origin main");
-		let code = await run("git", ["push", "origin", "main"], ROOT);
+		const code = await run("git", ["push", "origin", "main"], ROOT);
 		if (code !== 0) {
 			console.log("[pipeline] ❌ push main 失败");
 			return code;
 		}
-		if (tag.created.length > 0) {
-			console.log(`[pipeline] 📤 推送 ${tag.created.length} 个标签`);
-			code = await run("git", ["push", "origin", ...tag.created], ROOT);
-			if (code !== 0) {
-				console.log("[pipeline] ❌ push 标签失败");
-				return code;
-			}
-		}
 	} else {
-		const pushTags =
-			tag.created.length === 0
-				? ""
-				: tag.created.length > 3
-					? " && git push origin --tags"
-					: ` && git push origin ${tag.created.join(" ")}`;
-		console.log(`[pipeline] 完成。尚未推送：git push origin main${pushTags}`);
+		console.log("[pipeline] 完成。尚未推送：git push origin main");
 	}
 	return 0;
 }
@@ -671,9 +616,6 @@ async function main(): Promise<number> {
 		}
 		case "publish": {
 			return await runPublishSteps(options);
-		}
-		case "tag": {
-			return (await runTagStep(options)).code;
 		}
 		case "pipeline": {
 			return await cmdPipeline(options);

@@ -5,8 +5,8 @@
 ## 日常流程
 
 1. **改动代码后**：跑 `bun run changeset`，按提示选择受影响的包与 bump 类型（patch / minor / major），写一段变更说明——会在本目录生成一个 md 条目，随代码一起提交。
-2. **发布**：跑 `bun run release pipeline`（一条龙：preflight → 消费条目升版本 → 提交 → 构建 → 测试 → 发布 → 打标签；加 `--push` 末尾推送 main 与标签，加 `--dry-run` 只看计划）。
-   也可分环执行：`bun run release status` / `version` / `build` / `publish` / `tag`。
+2. **发布**：跑 `bun run release pipeline`（一条龙：preflight → 消费条目升版本 → 提交 → 构建 → 测试 → 发布；加 `--push` 末尾推送 main，加 `--dry-run` 只看计划）。
+   也可分环执行：`bun run release status` / `version` / `build` / `publish`。
 
 ## 版本号约定
 
