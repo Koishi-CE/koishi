@@ -66,7 +66,7 @@ bun packages/web/client/src/bin.ts build <插件目录>  # 单个 webui 插件�
 - 目录名 `apps/koishi-create` 与包名 `create-koishi-ce` 不一致；biome override、该包 repository.directory、根 tsdown 注释等处仍写着旧名 `apps/create-koishi-ce`（失效路径，勿效仿引用，以 `apps/koishi-create` 为准）。
 - 特殊构建 hack，动对应构建链必须复核：analytics 的 "fuck-echarts"（echarts chunk 内 `Symbol` 重命名）、explorer 的 monaco manualChunks、online 的内置模块改写为 `registry.koishi.chat` 在线加载、client 构建的 vue-i18n esm-browser.prod 别名。
 - hmr 插件的 esbuild 是**运行时依赖**（TS 即时编译），不是 devDep。
-- **Bun 对失败解析按 specifier 做进程内负缓存**：`pkg/package.json` 形态在包落盘前解析失败过一次后，即使包已安装，同进程内该 specifier 永久解析失败（裸名 `pkg` 不受影响）。市场装完插件「尚未安装 / failed to resolve」即此因（上游 koishijs/webui#273 的 FIXME）。解法是 `@koishi-ce/registry` 导出的 `resolvePackageJson()`（裸名兜底），market 与 registry 的清单读取都走它；验证类实验务必用全新进程（`bun -e`）。
+- **Bun 对任何形态的失败解析都按 specifier 做进程内负缓存**：`pkg/package.json` 形态在包落盘前解析失败过一次后，即使包已安装，同进程内该 specifier 永久解析失败；裸名 `pkg` 形态**同样会被污染**（曾被「裸名不受影响」的结论误导过一轮）。市场装完插件「尚未安装 / failed to resolve」即此因（上游 koishijs/webui#273 的 FIXME）。解法是 `@koishi-ce/registry` 导出的 `resolvePackageJson()`——主路径失败后以**纯 fs 探测**（沿 node_modules 链 `existsSync`）兜底，绝不能再调解析 API；market 与 registry 的清单读取都走它。验证类实验务必用全新进程（`bun -e`）。
 
 ## git 提交流程
 

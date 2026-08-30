@@ -9,7 +9,7 @@
         "@koishi-ce/plugin-http": "workspace:*",
         "@koishi-ce/plugin-proxy-agent": "workspace:*",
         "@koishi-ce/plugin-server": "workspace:*",
-        "@koishijs/plugin-adapter-qq": "4.14.0",
+        "@koishijs/plugin-database-postgres": "2.7.0",
         "koishi": "workspace:*",
       },
       "devDependencies": {
@@ -122,7 +122,7 @@
     },
     "packages/node/registry": {
       "name": "@koishi-ce/registry",
-      "version": "1.0.1",
+      "version": "1.0.2",
       "dependencies": {
         "cosmokit": "^1.8.1",
         "p-map": "^7.0.6",
@@ -419,7 +419,7 @@
     },
     "plugins/webui/config": {
       "name": "@koishi-ce/plugin-config",
-      "version": "1.0.1",
+      "version": "1.0.2",
       "dependencies": {
         "@koishi-ce/console": "workspace:*",
         "@koishi-ce/loader": "workspace:*",
@@ -541,7 +541,7 @@
     },
     "plugins/webui/market": {
       "name": "@koishi-ce/plugin-market",
-      "version": "1.0.2",
+      "version": "1.0.3",
       "dependencies": {
         "@koishi-ce/console": "workspace:*",
         "@koishi-ce/registry": "workspace:*",
@@ -928,11 +928,11 @@
 
     "@koishijs/market": ["@koishijs/market@4.2.10", "", { "dependencies": { "@koishijs/components": "^1.5.22", "cosmokit": "^1.8.1", "spark-md5": "^3.0.2" }, "peerDependencies": { "vue": "^3", "vue-i18n": "^9" } }, "sha512-I65mSdeLaB18JmdLrKxUvzIIyyNgeUD/Rz94xhh5DN0CHq3dqZUAwAjhPiBtYn5gyqgfINbZDFteoLt1otmucA=="],
 
-    "@koishijs/plugin-adapter-qq": ["@koishijs/plugin-adapter-qq@4.14.0", "", { "dependencies": { "@satorijs/adapter-qq": "^4.14.0" }, "peerDependencies": { "koishi": "^4.18.11" } }, "sha512-8j0LUSud0KcVoCSSwe361m9O1Bybv1KiQgz52YWL6ijr5sVfEL52NS5o/kMbv3XrP+EwECn/jgezI90KFTlIfg=="],
-
     "@koishijs/plugin-console": ["@koishijs/plugin-console@5.30.11", "", { "dependencies": { "@koishijs/console": "^5.30.11", "open": "^8.4.2", "uuid": "^8.3.2", "ws": "^8.16.0" }, "peerDependencies": { "@koishijs/client": "^5.30.11", "koishi": "^4.18.9" }, "optionalPeers": ["@koishijs/client"] }, "sha512-K8CpYU4C+vfrX9VhFndS5jmJ9EqLxUYf7KKsM2RNxxQJ1NMk/hLyLQ82HPIY36lbyIbZsA0Mgxl6WIuewZKgQA=="],
 
     "@koishijs/plugin-database-memory": ["@koishijs/plugin-database-memory@3.7.0", "", { "dependencies": { "@minatojs/driver-memory": "^3.7.0" }, "peerDependencies": { "koishi": "^4.18.10" } }, "sha512-Yt7c95nFt/1UtgK7NrXZpCDGybVhPA+wVbThIW2EGckGZcmosefyekhfxr5minpTr0kcW1X6lfk93dZkPNbXtg=="],
+
+    "@koishijs/plugin-database-postgres": ["@koishijs/plugin-database-postgres@2.7.0", "", { "dependencies": { "@minatojs/driver-postgres": "^2.7.0" }, "peerDependencies": { "koishi": "^4.18.10" } }, "sha512-mMVtIttM31Xq3x02LI1L3fxPM0ALwDJuzvNGUr0u0FbAhTywsLUPmbUw67Fwq7JEW5Kv5G6CxUR8k3KqLIpkaA=="],
 
     "@koishijs/plugin-server-proxy": ["@koishijs/plugin-server-proxy@1.2.0", "", { "dependencies": { "@cordisjs/plugin-server-proxy": "^0.2.0" }, "peerDependencies": { "koishi": "^4.17.6" } }, "sha512-X0eCxDe1rTLAuVV0jnkV6MqKtl+1M6/MUTgS3rrg/BqEFyz34bo08vPOIABrYjSBgLAwdbx1UNBnS9HaUXPKaQ=="],
 
@@ -945,6 +945,10 @@
     "@manypkg/tools": ["@manypkg/tools@2.1.2", "", { "dependencies": { "jju": "^1.4.0", "tinyglobby": "^0.2.13", "yaml": "^2.9.0" } }, "sha512-6QEf6yqFbETdwGITKq57aYoPfX/3K8XFNwsAlx0C1M7o8cb79sv1M3w+tWuWvIcSbNqrLF7OD7YpZMVVz335hQ=="],
 
     "@minatojs/driver-memory": ["@minatojs/driver-memory@3.7.0", "", { "dependencies": { "cosmokit": "^1.6.3" }, "peerDependencies": { "minato": "^3.7.0" } }, "sha512-IOiLWm4KVxUS5cvL9YWn827tbnEeHku6CIMHLtO+smPFUInRnczJZ6kikpCzx2ynqMV/nPKu8kIAGrYKJhR5/Q=="],
+
+    "@minatojs/driver-postgres": ["@minatojs/driver-postgres@2.7.0", "", { "dependencies": { "@minatojs/sql-utils": "^5.6.0", "cosmokit": "^1.6.3", "postgres": "^3.4.4" }, "peerDependencies": { "minato": "^3.7.0" } }, "sha512-hEllIqn5Cz/vm9l6ah/5b58Ew2H2fWhm3G+AYaJXpeHH9VO6qjC5B4nwZ6rn0o0Ab692j1fpyhR4mWd4Brq17A=="],
+
+    "@minatojs/sql-utils": ["@minatojs/sql-utils@5.6.0", "", { "dependencies": { "cosmokit": "^1.6.3" }, "peerDependencies": { "minato": "^3.7.0" } }, "sha512-FD1HeSEqQnhXm/nG+LXZb8G8WelTB7tGR+zFaTZN0TmjMSyoJpKqOxeiZve464YgaAd3IxZMcfFE28nPXBWx/w=="],
 
     "@napi-rs/wasm-runtime": ["@napi-rs/wasm-runtime@1.2.3", "", { "dependencies": { "@tybys/wasm-util": "^0.10.3" }, "peerDependencies": { "@emnapi/core": "^1.7.1 || ^2.0.0-alpha.4", "@emnapi/runtime": "^1.7.1 || ^2.0.0-alpha.4" } }, "sha512-UMduMbqO5s5zF2NkNacMT/yK5Y5QiKvWr2+50bzIIxFDwVJ2h49b+oyjaCGPhJxd2/gC2x39EHv/gHVuu36x2Q=="],
 
@@ -1059,8 +1063,6 @@
     "@rolldown/binding-win32-x64-msvc": ["@rolldown/binding-win32-x64-msvc@1.2.6", "", { "os": "win32", "cpu": "x64" }, "sha512-np8iZSLfXlAD4kWhiyq/u0Yt8oZDtRQ8lGhQaCXo2rl37KNjeU0GjJuwr4P3oeZ++ROfofsKNBqR5LTO8aXyWQ=="],
 
     "@rolldown/pluginutils": ["@rolldown/pluginutils@1.0.1", "", {}, "sha512-2j9bGt5Jh8hj+vPtgzPtl72j0yRxHAyumoo6TNfAjsLB04UtpSvPbPcDcBMxz7n+9CYB0c1GxQFxYRg2jimqGw=="],
-
-    "@satorijs/adapter-qq": ["@satorijs/adapter-qq@4.14.0", "", { "peerDependencies": { "@satorijs/core": "^4.6.0" } }, "sha512-poe/T0XWGAyheBX/A5q4eaFx/59wlV1Bw2CPDt4tCH/WGwJpfJtINNcBwpt6ubh0eNAV7d9b2LzczSKZYP9bKQ=="],
 
     "@satorijs/components-vue": ["@satorijs/components-vue@0.7.8", "", { "dependencies": { "@satorijs/element": "^3.1.7" }, "peerDependencies": { "@vueuse/core": "*", "vue": "*" } }, "sha512-+cmO0xf3lKv3j3ZKh0/nQlitmw6oyxH0TR6S5+b6FE1sX+egFWYU/kQZekadB0IBkeFf5Hw7IkXvZd/AaQhDSQ=="],
 
@@ -1859,6 +1861,8 @@
     "postcss": ["postcss@8.5.26", "", { "dependencies": { "nanoid": "^3.3.17", "picocolors": "^1.1.1", "source-map-js": "^1.2.1" } }, "sha512-u82N74LFzG8ca+dD8puPnplTXoGH4fTPpVGuIbt36G3qvNlkvfD0lEAZSxaly3KX8TS/L1A1gsCEmvKmBcVbkQ=="],
 
     "postcss-selector-parser": ["postcss-selector-parser@7.1.5", "", { "dependencies": { "cssesc": "^3.0.0", "util-deprecate": "^1.0.2" } }, "sha512-KvvtD7SrlBP7dlgkBghEE3r84CABm5SmV2aNcG4oCA+qDnJ/tvKonFVvwWAyyWUEwxuNawdfEAZKP9zM3oZ2Uw=="],
+
+    "postgres": ["postgres@3.4.9", "", {}, "sha512-GD3qdB0x1z9xgFI6cdRD6xu2Sp2WCOEoe3mtnyB5Ee0XrrL5Pe+e4CCnJrRMnL1zYtRDZmQQVbvOttLnKDLnaw=="],
 
     "powershell-utils": ["powershell-utils@0.2.0", "", {}, "sha512-ZlsFlG7MtSFCoc5xreOvBAozCJ6Pf06opgJjh9ONEv418xpZSAzNjstD36C6+JwOnfSqOW/9uDkqKjezTdxZhw=="],
 

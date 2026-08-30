@@ -9,9 +9,9 @@
  */
 /// <reference types="@types/node" />
 
-import { readFileSync } from "node:fs";
+import { existsSync } from "node:fs";
 import { readdir, readFile } from "node:fs/promises";
-import { dirname, resolve } from "node:path";
+import { dirname, join, resolve } from "node:path";
 import { type Dict, defineProperty, isNonNullable, pick } from "cosmokit";
 import type { PackageJson, SearchObject, SearchResult } from "./types.ts";
 import { conclude } from "./utils.ts";
@@ -25,34 +25,23 @@ export function getPluginShortname(name: string) {
 }
 
 /**
- * 解析已安装包的 package.json 路径，主路径失败时以裸名解析兜底。
+ * 解析已安装包的 package.json 路径，主路径失败时以纯 fs 探测兜底。
  *
- * Bun 对失败解析按 specifier 做进程内负缓存：市场安装流程会在包落盘
- * 前以 `pkg/package.json` 形态探测过（此时必然失败），此后包虽已安装，
- * 同进程内该形态仍永久解析失败（上游 koishijs/webui#273 的 FIXME 即
- * 此现象）。裸名 `pkg` 形态不受该缓存影响——改解析裸名得到出口文件，
- * 向上查找 meta.name 命中的 package.json 即可绕开。
+ * Bun 对**任何形态**的失败解析都按 specifier 记进程内负缓存：市场安装
+ * 流程会在包落盘前探测「包是否已安装」（此时 `pkg/package.json` 必然
+ * 失败），此后包虽已安装，同进程内该形态仍永久解析失败（上游
+ * koishijs/webui#273 的 FIXME 即此现象）。兜底绝不能再用解析 API——
+ * 裸名 `pkg` 形态一旦在落盘前尝试同样会被污染——只能沿 node_modules
+ * 链用 existsSync 逐级探测（直接系统调用，不经过解析缓存）。
  */
-export function resolvePackageJson(name: string): string {
+export function resolvePackageJson(name: string, from = process.cwd()): string {
 	try {
 		return require.resolve(`${name}/package.json`);
 	} catch {}
-	let entry: string;
-	try {
-		entry = require.resolve(name);
-	} catch (error) {
-		throw new Error(`Cannot find module '${name}'`, { cause: error });
-	}
-	// 出口可能是包内深层产物（如 lib/index.mjs），向上限查 4 层
-	let dir = dirname(entry);
-	for (let depth = 0; depth < 4; depth++) {
-		const candidate = resolve(dir, "package.json");
-		try {
-			const meta = JSON.parse(readFileSync(candidate, "utf8")) as {
-				name?: string;
-			};
-			if (meta.name === name) return candidate;
-		} catch {}
+	let dir = resolve(from);
+	for (;;) {
+		const candidate = join(dir, "node_modules", name, "package.json");
+		if (existsSync(candidate)) return candidate;
 		const parent = dirname(dir);
 		if (parent === dir) break;
 		dir = parent;
