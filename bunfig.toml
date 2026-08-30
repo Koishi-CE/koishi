@@ -3,4 +3,9 @@
 
 [test]
 coverageSkipTestFiles = true
-coveragePathIgnorePatterns = ["/lib/", "/dist/", "/node_modules/", "AppData"]
+coveragePathIgnorePatterns = [
+    "**/lib/**",
+    "**/dist/**",
+    "**/node_modules/**",
+    "**/*AppData*/**",
+]
