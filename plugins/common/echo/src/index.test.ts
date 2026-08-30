@@ -47,4 +47,16 @@ describe("@koishi-ce/plugin-echo", () => {
 		expect(send2.mock.calls[0]?.[0]).toBe("200");
 		expect(send2.mock.calls[0]?.[1]).toStrictEqual(["foo"]);
 	});
+
+	// -e 转义：消息中的标签原样输出为转义文本
+	it("escape option", async () => {
+		// 存量用例曾以 jest.fn 覆盖实例属性，删除后回落到原型上的真实实现
+		delete (app.bots[0] as Partial<Bot>).sendMessage;
+		await client.shouldReply("echo -e <foo>", "&lt;foo/&gt;");
+	});
+
+	// -u 指向不存在的平台时提示找不到平台
+	it("platform not found", async () => {
+		await client.shouldReply("echo -u @nosuch:100 foo", "找不到指定的平台。");
+	});
 });

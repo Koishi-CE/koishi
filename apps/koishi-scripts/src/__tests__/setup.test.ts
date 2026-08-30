@@ -50,6 +50,9 @@ describe("normalizeName", () => {
 		expect(normalizeName("@scope/foo bar")).toBeNull();
 		expect(normalizeName("@Bad/foo")).toBe("@bad/koishi-plugin-foo");
 		expect(normalizeName("")).toBeNull();
+		// scope 段为空或不合法（仅 @）→ null；下划线会被规范化为连字符故仍合法
+		expect(normalizeName("@/foo")).toBeNull();
+		expect(normalizeName("@scope/")).toBeNull();
 	});
 });
 

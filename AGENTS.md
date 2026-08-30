@@ -38,8 +38,8 @@ bun run lint                    # biome check .（格式 + lint 唯一权威）
 bun run lint:client             # eslint 仅查 *.vue（biome 亦解析 .vue 但只做格式，模板语义仍归 eslint）
 bun run typecheck               # TS7 大一统类型检查 = 两条 bunx tsc（node 侧 tsconfig.json + client 侧 tsconfig.web.json）
 bun run build                   # 根 tsdown：全部 node 侧包 → lib/（ESM-only：index.mjs + index.d.ts）
-bun test packages plugins/common plugins/webui/admin plugins/webui/commands
-                                # 全量自有用例（24 文件 / 185 用例）；裸 `bun test` 已可正常跑通
+bun test                        # 全量自有用例（约 100 文件 / 755+ 用例，覆盖全部 node 侧包）
+bun test --coverage             # 覆盖率（src 源码口径，当前总体约 99.8% 行覆盖；统计依赖下述 paths 注入）
 bun packages/web/client/src/bin.ts build            # 宿主控制台前端 → plugins/webui/console/dist
 bun packages/web/client/src/bin.ts build <插件目录>  # 单个 webui 插件的前端
 ```
@@ -57,6 +57,7 @@ bun packages/web/client/src/bin.ts build <插件目录>  # 单个 webui 插件�
 
 ## 已知坑（历史经验，别再踩）
 
+- **测试进程对 workspace 包加载 src 而非 lib**：Bun 运行时按「离文件最近的 tsconfig.json」取 paths 且不跟随 extends——各包 tsconfig.json 里由 `tooling/sync-test-paths.ts` 注入的 paths 块（带生成标记）把 `@koishi-ce/*` 指到 src，覆盖率才能统计源码。**改 tsconfig.base.json 的 paths 后须重跑 `bun tooling/sync-test-paths.ts`**（幂等，自动 biome 格式化）；因此改 src 后跑测试**无需先 build**，测试验证的始终是源码。跨包借用的测试依赖统一走根 devDependencies（如 `@koishijs/plugin-database-memory`），不要写穿其他包 node_modules 的相对导入（会把上游 src 拉进类型程序）。
 - `.yml` 导入链路：类型来自 `packages/node/core/src/i18n/yml.d.ts`（由 tsconfig.base 的 files 全局注入），测试 / Bun 运行时靠 Bun 原生 yml 支持；构建期由 tsdown copy loader 原样拷入产物并改写引用路径。
 - **TS7 native 的跨文件 `declare module` 增强对"经 lib 产物 d.ts 的模块骨架"不生效**：浏览器端工程对 console 类型的消费走 `packages/web/client/client/shims.d.ts` 手写的 `"@koishi-ce/plugin-console"` 骨架（无 node_modules 链接与 paths 指向真实插件），各插件 client 工程须向**同一模块名**镜像自己的 Services / Events 注入，且载荷要用骨架自带的 `DataService<T>` 包装（client 侧 Store 映射按 `Services[K] extends DataService<infer T>` 推导）。market 的镜像是 `plugins/webui/market/client/console-services.ts`（Dict / Dependency 为内联镜像，类型实体经 `market/client/tsconfig.json` 指向各包 lib 产物 d.ts 解析）——**node 侧声明变更时须同步该文件**。
 - market 迁入的类型链细节：client 基座 `tsconfig.client.json` 的 paths 把 `@koishi-ce/plugin-market` / `@koishi-ce/plugin-config` 指到 **lib 产物 d.ts**（等效 npm 生态 exports types 解析；指向 src 会把 node 侧源码混进 client 检查）；`market/client/tsconfig.json` 在此基础上补了 `@koishi-ce/{koishi,console,registry}` 的产物 d.ts paths（镜像文件类型引用的解析通道，勿指 src——会引入源码连锁）；`collectWorkspaceAliases()` 新增 `<包名>/client` 子路径映射（跨插件引用彼此 client API 的解析通道，如 market 引 config 的 EnvInfo）。

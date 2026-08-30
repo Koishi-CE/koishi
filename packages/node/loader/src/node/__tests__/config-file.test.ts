@@ -60,6 +60,21 @@ describe("locateConfig", () => {
 			expect(resolved.baseDir).toBe(join(dir, "instance"));
 		});
 	});
+
+	it("只读配置文件标记为不可写", async () => {
+		await withDir(async (dir) => {
+			const filename = join(dir, "koishi.yml");
+			await Bun.write(filename, "plugins: {}");
+			await fs.chmod(filename, 0o444);
+			try {
+				const resolved = await locateConfig(dir);
+				expect(resolved.writable).toBe(false);
+			} finally {
+				// Windows 下只读属性会阻止删除，先恢复再交给 withDir 清理
+				await fs.chmod(filename, 0o666);
+			}
+		});
+	});
 });
 
 describe("parseConfig", () => {
@@ -92,6 +107,14 @@ describe("parseConfig", () => {
 				port: 5140,
 				plugins: {},
 			});
+		});
+	});
+
+	it("无 default 导出的模块以模块本身为配置（CJS）", async () => {
+		await withDir(async (dir) => {
+			const filename = join(dir, "koishi.config.cjs");
+			await Bun.write(filename, "module.exports = { port: 5140 }");
+			expect(await parseConfig(filename, undefined)).toEqual({ port: 5140 });
 		});
 	});
 });

@@ -161,6 +161,17 @@ describe("Command API", () => {
 			expect(() => app.command("c/b")).toThrow();
 			expect(() => app.command("a/d")).not.toThrow();
 		});
+
+		// subcommand 重载：带描述（desc 首参）与带配置（config 首参）两种形态
+		it("subcommand overloads", () => {
+			const a = app.command("over");
+			const withDesc = a.subcommand("b", "描述文本");
+			expect(withDesc.name).toBe("b");
+			expect(withDesc.parent).toBe(a);
+			const withConfig = a.subcommand("c", { authority: 2 });
+			expect(withConfig.name).toBe("c");
+			expect(withConfig.config.authority).toBe(2);
+		});
 	});
 
 	// 销毁命令：应级联销毁子命令、注销 matcher，并从命令列表移除
@@ -235,6 +246,13 @@ describe("Command API", () => {
 			await expect(
 				command.execute({ session, args: ["ping"] }, next),
 			).resolves.toBe("pong");
+			expect(next.mock.calls).toHaveLength(0);
+		});
+
+		// before 的 append 形态：校验钩子追加到队尾，返回非空值中止执行
+		it("checker append (before with append)", async () => {
+			command.before(() => "checked", true);
+			await expect(command.execute({ session }, next)).resolves.toBe("checked");
 			expect(next.mock.calls).toHaveLength(0);
 		});
 

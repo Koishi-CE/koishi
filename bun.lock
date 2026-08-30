@@ -18,6 +18,7 @@
         "@koishi-ce/koishi": "workspace:*",
         "@koishi-ce/plugin-help": "workspace:*",
         "@koishi-ce/plugin-mock": "workspace:*",
+        "@koishijs/plugin-database-memory": "^3.7.0",
         "@types/node": "^26.4.0",
         "@typescript-eslint/parser": "^8.68.0",
         "@typescript/native": "npm:typescript@7.0.2",
@@ -106,6 +107,13 @@
       "version": "4.18.11",
       "dependencies": {
         "@koishi-ce/koishi": "workspace:*",
+      },
+    },
+    "packages/node/koishi-shim": {
+      "name": "@koishi-ce/koishi-shim",
+      "version": "4.18.11",
+      "dependencies": {
+        "@koishi-ce/koishi": "^1.0.0",
       },
     },
     "packages/node/loader": {
@@ -851,6 +859,8 @@
     "@koishi-ce/i18n-utils": ["@koishi-ce/i18n-utils@workspace:packages/node/i18n-utils"],
 
     "@koishi-ce/koishi": ["@koishi-ce/koishi@workspace:packages/node/cli"],
+
+    "@koishi-ce/koishi-shim": ["@koishi-ce/koishi-shim@workspace:packages/node/koishi-shim"],
 
     "@koishi-ce/loader": ["@koishi-ce/loader@workspace:packages/node/loader"],
 

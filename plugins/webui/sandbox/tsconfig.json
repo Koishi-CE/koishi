@@ -1,4 +1,49 @@
 {
 	"extends": "../../../tsconfig.base",
-	"include": ["src"]
+	"include": ["src"],
+	"compilerOptions": {
+		// 由 tooling/sync-test-paths.ts 生成，勿手工编辑（源：tsconfig.base.json paths；Bun 测试运行时只认本文件直接声明的 paths）
+		"paths": {
+			"@koishi-ce/koishi": ["../../../packages/node/cli/src/index.ts"],
+			"@koishi-ce/console": ["../../../packages/node/console/src/index.ts"],
+			"@koishi-ce/core": ["../../../packages/node/core/src/index.ts"],
+			"@koishi-ce/i18n-utils": [
+				"../../../packages/node/i18n-utils/src/index.ts"
+			],
+			"@koishi-ce/loader": ["../../../packages/node/loader/src/index.ts"],
+			"@koishi-ce/registry": ["../../../packages/node/registry/src/index.ts"],
+			"@koishi-ce/utils": ["../../../packages/node/utils/src/index.ts"],
+			"@koishi-ce/client": ["../../../packages/web/client/src/index.ts"],
+			"@koishi-ce/client/lib": ["../../../packages/web/client/src/index.ts"],
+			"@koishi-ce/components": [
+				"../../../packages/web/components/client/index.ts"
+			],
+			"@koishi-ce/plugin-bind": ["../../common/bind/src/index.ts"],
+			"@koishi-ce/plugin-broadcast": ["../../common/broadcast/src/index.ts"],
+			"@koishi-ce/plugin-callme": ["../../common/callme/src/index.ts"],
+			"@koishi-ce/plugin-echo": ["../../common/echo/src/index.ts"],
+			"@koishi-ce/plugin-help": ["../../common/help/src/index.ts"],
+			"@koishi-ce/plugin-inspect": ["../../common/inspect/src/index.ts"],
+			"@koishi-ce/plugin-hmr": ["../../infra/hmr/src/index.ts"],
+			"@koishi-ce/plugin-mock": ["../../infra/mock/src/index.ts"],
+			"@koishi-ce/plugin-actions": ["../actions/src/index.ts"],
+			"@koishi-ce/plugin-admin": ["../admin/src/index.ts"],
+			"@koishi-ce/plugin-analytics": ["../analytics/src/index.ts"],
+			"@koishi-ce/plugin-auth": ["../auth/src/index.ts"],
+			"@koishi-ce/plugin-commands": ["../commands/src/index.ts"],
+			"@koishi-ce/plugin-config": ["../config/src/index.ts"],
+			"@koishi-ce/plugin-console": ["../console/src/index.ts"],
+			"@koishi-ce/plugin-explorer": ["../explorer/src/index.ts"],
+			"@koishi-ce/plugin-insight": ["../insight/src/index.ts"],
+			"@koishi-ce/plugin-locales": ["../locales/src/index.ts"],
+			"@koishi-ce/plugin-logger": ["../logger/src/index.ts"],
+			"@koishi-ce/plugin-market": ["../market/src/index.ts"],
+			"@koishi-ce/plugin-market/shared": ["../market/src/shared/index.ts"],
+			"@koishi-ce/plugin-config/client": ["../config/client/index.ts"],
+			"@koishi-ce/plugin-notifier": ["../notifier/src/index.ts"],
+			"@koishi-ce/plugin-oobe": ["../oobe/src/index.ts"],
+			"@koishi-ce/plugin-sandbox": ["./src/index.ts"],
+			"@koishi-ce/plugin-status": ["../status/src/index.ts"]
+		}
+	}
 }
