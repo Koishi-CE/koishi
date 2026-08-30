@@ -53,7 +53,7 @@
     },
     "packages/node/cli": {
       "name": "@koishi-ce/koishi",
-      "version": "1.0.0",
+      "version": "1.0.1",
       "bin": "lib/cli/index.mjs",
       "dependencies": {
         "@koishi-ce/core": "workspace:*",
@@ -101,7 +101,7 @@
     },
     "packages/node/loader": {
       "name": "@koishi-ce/loader",
-      "version": "1.0.0",
+      "version": "1.0.1",
       "devDependencies": {
         "@koishi-ce/core": "workspace:*",
         "@koishi-ce/koishi": "workspace:*",
@@ -113,7 +113,7 @@
     },
     "packages/node/registry": {
       "name": "@koishi-ce/registry",
-      "version": "1.0.0",
+      "version": "1.0.1",
       "dependencies": {
         "cosmokit": "^1.8.1",
         "p-map": "^7.0.6",
@@ -136,7 +136,7 @@
     },
     "packages/web/client": {
       "name": "@koishi-ce/client",
-      "version": "1.0.0",
+      "version": "1.0.1",
       "bin": {
         "koishi-console": "./lib/bin.mjs",
       },
@@ -243,7 +243,7 @@
     },
     "plugins/infra/hmr": {
       "name": "@koishi-ce/plugin-hmr",
-      "version": "1.0.0",
+      "version": "1.0.1",
       "dependencies": {
         "@babel/code-frame": "^8.0.0",
         "@koishi-ce/loader": "workspace:*",
@@ -410,7 +410,7 @@
     },
     "plugins/webui/config": {
       "name": "@koishi-ce/plugin-config",
-      "version": "1.0.0",
+      "version": "1.0.1",
       "dependencies": {
         "@koishi-ce/console": "workspace:*",
         "@koishi-ce/loader": "workspace:*",
@@ -428,7 +428,7 @@
     },
     "plugins/webui/console": {
       "name": "@koishi-ce/plugin-console",
-      "version": "1.0.0",
+      "version": "1.0.1",
       "dependencies": {
         "@koishi-ce/console": "workspace:*",
         "open": "^11.0.1",
@@ -532,7 +532,7 @@
     },
     "plugins/webui/market": {
       "name": "@koishi-ce/plugin-market",
-      "version": "1.0.0",
+      "version": "1.0.2",
       "dependencies": {
         "@koishi-ce/console": "workspace:*",
         "@koishi-ce/registry": "workspace:*",
