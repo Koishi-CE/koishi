@@ -29,7 +29,7 @@
     },
     "apps/koishi-create": {
       "name": "create-koishi-ce",
-      "version": "1.0.0",
+      "version": "1.0.1",
       "bin": {
         "create-koishi-ce": "./lib/bin.mjs",
       },
@@ -537,7 +537,6 @@
         "@koishi-ce/console": "workspace:*",
         "@koishi-ce/registry": "workspace:*",
         "execa": "^5.1.1",
-        "get-registry": "^1.2.0",
         "p-map": "^4.0.0",
         "semver": "^7.6.3",
         "which-pm-runs": "^1.1.0",
@@ -1581,8 +1580,6 @@
     "get-intrinsic": ["get-intrinsic@1.3.0", "", { "dependencies": { "call-bind-apply-helpers": "^1.0.2", "es-define-property": "^1.0.1", "es-errors": "^1.3.0", "es-object-atoms": "^1.1.1", "function-bind": "^1.1.2", "get-proto": "^1.0.1", "gopd": "^1.2.0", "has-symbols": "^1.1.0", "hasown": "^2.0.2", "math-intrinsics": "^1.1.0" } }, "sha512-9fSjSaos/fRIVIp+xSJlE6lfwhES7LNtKaCBIamHsjr2na1BiABJPo0mOjjz8GJDURarmCPGqaiVg5mfjb98CQ=="],
 
     "get-proto": ["get-proto@1.0.1", "", { "dependencies": { "dunder-proto": "^1.0.1", "es-object-atoms": "^1.0.0" } }, "sha512-sTSfBjoXBp89JvIKIefqw7U2CCebsc74kiY6awiGogKtoSGbgjYE/G/+l9sF3MWFPNc9IcoOC4ODfKHfxFmp0g=="],
-
-    "get-registry": ["get-registry@1.2.0", "", { "dependencies": { "which-pm-runs": "^1.1.0" } }, "sha512-U4j61Ga4PJfSpDEGAIP2ghy5wcziJ5Cni5EPKJKpJINZMFPiv0WUOXRE+YDPYA1WF/oXOQXQvwq4AU0trfhwcA=="],
 
     "get-stream": ["get-stream@6.0.1", "", {}, "sha512-ts6Wi+2j3jQjqi70w5AlN8DFnkSwC+MqmxEzdEALB2qXZYV3X/b1CTfgPLGJNMeAWxdPfU8FO1ms3NUfaHCPYg=="],
 

@@ -1,6 +1,7 @@
 import { readFileSync } from "node:fs";
 import { createRequire } from "node:module";
-import { resolve } from "node:path";
+import { homedir } from "node:os";
+import { join, resolve } from "node:path";
 import type {} from "@koishi-ce/console";
 import {
 	type Context,
@@ -23,11 +24,47 @@ import Scanner, {
 	type RemotePackage,
 } from "@koishi-ce/registry";
 import spawn from "execa";
-import getRegistry from "get-registry";
 import pMap from "p-map";
 import { compare, satisfies, valid } from "semver";
 
 const logger = new Logger("market");
+
+/** 从单个 .npmrc 文件提取 registry 配置项；文件不存在或读取出错一律视为未配置 */
+function readNpmrcRegistry(file: string): string | undefined {
+	try {
+		for (const line of readFileSync(file, "utf8").split(/\r?\n/)) {
+			const matched = /^\s*registry\s*=\s*(\S+)\s*$/.exec(line);
+			const value = matched?.[1];
+			if (value) return value;
+		}
+	} catch {}
+	return undefined;
+}
+
+/**
+ * 读取本机 npm registry 配置（优先级对齐 npm 自身：环境变量 > 项目
+ * .npmrc > 用户 ~/.npmrc）。刻意不 spawn 子进程探测——原依赖
+ * get-registry 按 user-agent 选 `bun config get registry`，而 Bun 没有
+ * config 子命令，Bun 运行时下子进程退出码 1 直接炸掉 market 服务启动；
+ * 读 npmrc 是零子进程的等价路径。任何一步都拿不到时返回 undefined，
+ * 由调用方回落默认 endpoint。
+ */
+function getLocalRegistry(
+	cwd: string,
+	userHome: string = homedir(),
+): string | undefined {
+	const candidates = [
+		process.env["npm_config_registry"],
+		readNpmrcRegistry(join(cwd, ".npmrc")),
+		readNpmrcRegistry(join(userHome, ".npmrc")),
+	];
+	for (const candidate of candidates) {
+		if (candidate?.startsWith("https://") || candidate?.startsWith("http://")) {
+			return candidate;
+		}
+	}
+	return undefined;
+}
 
 // 经 createRequire 加载 CJS 包并就地断言签名：不走 ESM 导入互操作，
 // 规避多包合并类型检查（大一统 tsconfig）下 export = 交织失效问题
@@ -133,7 +170,7 @@ class Installer extends Service {
 
 	override async start() {
 		const { endpoint, timeout } = this.config;
-		this.endpoint = endpoint ?? (await getRegistry());
+		this.endpoint = endpoint ?? getLocalRegistry(this.cwd);
 		const options: HTTP.Config = {};
 		if (this.endpoint) options.endpoint = this.endpoint;
 		if (timeout !== undefined) options.timeout = timeout;
