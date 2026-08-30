@@ -89,7 +89,7 @@ export class PackageProvider extends shared.PackageProvider {
 				async (key) => {
 					// 配置键形如 ./plugins/webui/config:uid，取 : 前的路径部分
 					const path = key.split(":", 1)[0];
-					if (!path || !path.startsWith("./")) return;
+					if (!path?.startsWith("./")) return;
 					const object = await this.scanner.loadPath(
 						resolve(this.scanner.baseDir, path),
 					);
