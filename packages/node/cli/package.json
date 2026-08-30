@@ -2,7 +2,7 @@
 	"name": "@koishi-ce/koishi",
 	"type": "module",
 	"description": "Cross-Platform Chatbot Framework Made with Love",
-	"version": "1.0.0",
+	"version": "1.0.1",
 	"main": "lib/index.mjs",
 	"module": "lib/index.mjs",
 	"types": "lib/index.d.ts",
