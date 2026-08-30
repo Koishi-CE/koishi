@@ -2,8 +2,11 @@
 "$schema" = "https://raw.githubusercontent.com/SchemaStore/schemastore/master/src/schemas/json/bunfig.json"
 
 [test]
+# 跳过测试文件本身，并忽略构建产物(lib/dist)、依赖包及系统临时目录，避免污染覆盖率报告
 coverageSkipTestFiles = true
 coveragePathIgnorePatterns = [
+    "**/tests/**",
+    "**/__tests__/**",
     "**/lib/**",
     "**/dist/**",
     "**/node_modules/**",
