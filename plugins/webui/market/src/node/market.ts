@@ -2,7 +2,9 @@ import {
 	type Context,
 	type Dict,
 	type HTTP,
+	Logger,
 	Schema,
+	sleep,
 	Time,
 } from "@koishi-ce/koishi";
 import Scanner, {
@@ -11,6 +13,16 @@ import Scanner, {
 	type SearchResult,
 } from "@koishi-ce/registry";
 import { MarketProvider as BaseMarketProvider } from "../shared/index.ts";
+
+const logger = new Logger("market");
+
+// registry 接口对无认证请求有速率限制：搜索接口（/-/v1/search）超频时
+// 返回 429，collect 首页搜索一旦失败会中断整个市场数据刷新（prepare
+// 置 _error，页面清空）。对限流与 5xx 瞬态错误做指数退避重试。
+/** 首次请求失败后的最大重试次数 */
+const maxRetries = 2;
+/** 重试的基础退避时长，按尝试次数指数放大 */
+const retryBaseDelay = Time.second;
 
 class MarketProvider extends BaseMarketProvider {
 	private http?: HTTP;
@@ -46,18 +58,62 @@ class MarketProvider extends BaseMarketProvider {
 		super.start();
 	}
 
+	/** 限流（429）与请求超时、服务端瞬态错误（408 / 5xx）可安全重试 */
+	private isRetryable(error: unknown): error is HTTP.Error {
+		if (!this.ctx.http.isError(error)) return false;
+		const { status } = error.response ?? {};
+		return (
+			status === 429 ||
+			status === 408 ||
+			(status !== undefined && status >= 500)
+		);
+	}
+
+	/**
+	 * 带退避重试的 registry 请求。优先遵循服务端的 Retry-After 响应头
+	 * （秒数），缺省时按基础时长指数退避。
+	 */
+	private async request<T>(
+		http: HTTP,
+		url: string,
+		config?: RequestConfig,
+	): Promise<T> {
+		for (let attempt = 0; ; attempt++) {
+			try {
+				// registry.get 是原型方法，裸取会丢失 this（其内部以 this(url, …) 调用
+				// 可调用的 HTTP 实例本身），须包一层保持绑定
+				return await http.get<T>(url, config);
+			} catch (error) {
+				if (attempt >= maxRetries || !this.isRetryable(error)) throw error;
+				const retryAfter = Number(
+					error.response?.headers.get("retry-after") ?? "",
+				);
+				const delay =
+					Number.isFinite(retryAfter) && retryAfter > 0
+						? retryAfter * Time.second
+						: retryBaseDelay * 2 ** attempt;
+				logger.debug(
+					"请求 %s 失败（%s），%d 秒后重试（第 %d 次）",
+					url,
+					error.message,
+					delay / Time.second,
+					attempt + 1,
+				);
+				await sleep(delay);
+			}
+		}
+	}
+
 	override async collect() {
 		const { timeout } = this.config;
 		const registry = this.ctx.installer.http;
 
 		this.failed = [];
-		// registry.get 是原型方法，裸取会丢失 this（其内部以 this(url, …) 调用
-		// 可调用的 HTTP 实例本身），须包一层保持绑定
 		this.scanner = new Scanner(<T>(url: string, config?: RequestConfig) =>
-			registry.get<T>(url, config),
+			this.request<T>(registry, url, config),
 		);
 		if (this.http) {
-			const result = await this.http.get<SearchResult>("");
+			const result = await this.request<SearchResult>(this.http, "");
 			this.scanner.objects = result.objects.filter((object) => !object.ignored);
 			this.scanner.total = this.scanner.objects.length;
 			if (result.version !== undefined) this.scanner.version = result.version;
