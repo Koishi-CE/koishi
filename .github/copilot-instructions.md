@@ -25,7 +25,7 @@
 5. **ESM-only 产物 + Bun 运行时**：本仓库全面拥抱 Bun——根 tsdown 单遍构建只出 ESM（`index.mjs` + `index.d.ts`），各包 exports 以 `default` 条件兜底；Bun 的 `require()` 可直接加载 ESM，loader 的插件加载链（`require → 插件 lib/index.mjs → @koishi-ce/*`）据此工作，**不要恢复 CJS 双格式产物**。运行时以 Bun 为准（Node 仅支持 ≥22.12 的 require(esm)，不作兼容目标）；`.yml` locale 走 copy loader 原样拷入产物，Bun 原生支持 yml 导入。全部 38 个 runtime 包均已收敛 `"type": "module"`，类型检查走 nodenext（相对导入一律带 `.ts` 扩展名）——ESM-only 收敛完成。
 6. **许可证分区**：`packages/web/*`、`plugins/webui/*`（console 插件为 MIT，其余 AGPL）、`apps/online` 为 AGPL-3.0，其余目录 MIT——以 `NOTICE` 表格为准；在 AGPL 目录新增文件同样受 AGPL 约束。
 7. **market 插件为上游原版再分发**：`plugins/webui/market/`（`@koishi-ce/plugin-market`）对齐自上游 webui `plugins/market`（原版 v2.11.11），社区版 `plugin-marketn` 已被其取代并移除。client 侧依赖 npm 包 `@koishijs/market`（上游以源码发布的组件库，直接打入插件 dist），其中的 npm 名 `@koishijs/components` 由单插件构建的 alias 重定向到本仓库 workspace 版，避免双实例。
-8. **`packages/node/koishi` 是 `koishi` 裸名的兼容 shim，不可删除或改名**：本仓框架包名是 `@koishi-ce/koishi`，而社区插件的 peerDependencies 指向上游名 `koishi`——market 运行时安装（根目录 `bun add`）时该名字若无归属，Bun 的 peer 自动安装会拉下 npm 官方 koishi，形成第二份框架副本（破坏 cordis 对象身份）。该 shim（纯 JS 预编译，不走 tsdown，根 tsdown 显式 exclude；根 package.json 以 `"koishi": "workspace:*"` 声明归属）把该名字指回 `@koishi-ce/koishi`。其版本号刻意为 `4.18.11`（上游 cordis 3.x 冻结线，用于满足 `koishi ^4.x` 形态的 peer 范围），**勿改为本仓 1.x 基线**。
+8. **`packages/node/koishi` 是 `koishi` 裸名的兼容 shim，不可删除或改名**：本仓框架包名是 `@koishi-ce/koishi`，而社区插件的 peerDependencies 指向上游名 `koishi`——该名字若无归属，市场运行时安装会把 npm 官方 koishi 写进根依赖，形成第二份框架副本（破坏 cordis 对象身份）。该 shim（纯 JS 预编译，不走 tsdown，根 tsdown 显式 exclude）把该名字指回 `@koishi-ce/koishi`；**根 package.json 的 dependencies 必须保留 `"koishi": "workspace:*"` 声明归属**（丢了它 shim 就形同虚设，peer 立即回归 npm 官方包），market 安装器的 `override()` 对 `workspace:` 声明亦有不可覆盖/删除的护栏。shim 版本号刻意为 `4.18.11`（上游 cordis 3.x 冻结线，用于满足 `koishi ^4.x` 形态的 peer 范围），**勿改为本仓 1.x 基线**。
 
 ## 门禁与工作流
 
@@ -66,6 +66,7 @@ bun packages/web/client/src/bin.ts build <插件目录>  # 单个 webui 插件�
 - 目录名 `apps/koishi-create` 与包名 `create-koishi-ce` 不一致；biome override、该包 repository.directory、根 tsdown 注释等处仍写着旧名 `apps/create-koishi-ce`（失效路径，勿效仿引用，以 `apps/koishi-create` 为准）。
 - 特殊构建 hack，动对应构建链必须复核：analytics 的 "fuck-echarts"（echarts chunk 内 `Symbol` 重命名）、explorer 的 monaco manualChunks、online 的内置模块改写为 `registry.koishi.chat` 在线加载、client 构建的 vue-i18n esm-browser.prod 别名。
 - hmr 插件的 esbuild 是**运行时依赖**（TS 即时编译），不是 devDep。
+- **Bun 对失败解析按 specifier 做进程内负缓存**：`pkg/package.json` 形态在包落盘前解析失败过一次后，即使包已安装，同进程内该 specifier 永久解析失败（裸名 `pkg` 不受影响）。市场装完插件「尚未安装 / failed to resolve」即此因（上游 koishijs/webui#273 的 FIXME）。解法是 `@koishi-ce/registry` 导出的 `resolvePackageJson()`（裸名兜底），market 与 registry 的清单读取都走它；验证类实验务必用全新进程（`bun -e`）。
 
 ## git 提交流程
 

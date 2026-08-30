@@ -9,8 +9,9 @@
  */
 /// <reference types="@types/node" />
 
+import { readFileSync } from "node:fs";
 import { readdir, readFile } from "node:fs/promises";
-import { dirname } from "node:path";
+import { dirname, resolve } from "node:path";
 import { type Dict, defineProperty, isNonNullable, pick } from "cosmokit";
 import type { PackageJson, SearchObject, SearchResult } from "./types.ts";
 import { conclude } from "./utils.ts";
@@ -21,6 +22,42 @@ import { conclude } from "./utils.ts";
  */
 export function getPluginShortname(name: string) {
 	return name.replace(/(koishi-|^@(?:koishijs|koishi-ce)\/)plugin-/, "");
+}
+
+/**
+ * 解析已安装包的 package.json 路径，主路径失败时以裸名解析兜底。
+ *
+ * Bun 对失败解析按 specifier 做进程内负缓存：市场安装流程会在包落盘
+ * 前以 `pkg/package.json` 形态探测过（此时必然失败），此后包虽已安装，
+ * 同进程内该形态仍永久解析失败（上游 koishijs/webui#273 的 FIXME 即
+ * 此现象）。裸名 `pkg` 形态不受该缓存影响——改解析裸名得到出口文件，
+ * 向上查找 meta.name 命中的 package.json 即可绕开。
+ */
+export function resolvePackageJson(name: string): string {
+	try {
+		return require.resolve(`${name}/package.json`);
+	} catch {}
+	let entry: string;
+	try {
+		entry = require.resolve(name);
+	} catch (error) {
+		throw new Error(`Cannot find module '${name}'`, { cause: error });
+	}
+	// 出口可能是包内深层产物（如 lib/index.mjs），向上限查 4 层
+	let dir = dirname(entry);
+	for (let depth = 0; depth < 4; depth++) {
+		const candidate = resolve(dir, "package.json");
+		try {
+			const meta = JSON.parse(readFileSync(candidate, "utf8")) as {
+				name?: string;
+			};
+			if (meta.name === name) return candidate;
+		} catch {}
+		const parent = dirname(dir);
+		if (parent === dir) break;
+		dir = parent;
+	}
+	throw new Error(`Cannot resolve '${name}/package.json'`);
 }
 
 /** 本地扫描结果：结构与远程 SearchResult 一致，部分字段（score 等）不填 */
@@ -116,7 +153,7 @@ export class LocalScanner {
 	 * node_modules 时说明是包管理器的 workspace 链接（本仓库源码形态）。
 	 */
 	private async loadManifest(name: string) {
-		const filename = require.resolve(`${name}/package.json`);
+		const filename = resolvePackageJson(name);
 		const meta: PackageJson = JSON.parse(await readFile(filename, "utf8"));
 		return [meta, !filename.includes("node_modules")] as const;
 	}

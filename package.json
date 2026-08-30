@@ -45,6 +45,8 @@
 		"@koishi-ce/plugin-console": "workspace:*",
 		"@koishi-ce/plugin-http": "workspace:*",
 		"@koishi-ce/plugin-proxy-agent": "workspace:*",
-		"@koishi-ce/plugin-server": "workspace:*"
+		"@koishi-ce/plugin-server": "workspace:*",
+		"@koishijs/plugin-adapter-qq": "4.14.0",
+		"koishi": "workspace:*"
 	}
 }

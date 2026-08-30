@@ -22,6 +22,7 @@ import Scanner, {
 	type PackageJson,
 	type Registry,
 	type RemotePackage,
+	resolvePackageJson,
 } from "@koishi-ce/registry";
 import spawn from "execa";
 import pMap from "p-map";
@@ -111,7 +112,9 @@ export interface LocalPackage extends PackageJson {
 }
 
 export function loadManifest(name: string) {
-	const filename = require.resolve(`${name}/package.json`);
+	// 经 resolvePackageJson 兜底：安装前对 `pkg/package.json` 形态的
+	// 探测会被 Bun 记入进程内负缓存，装完后主路径仍解析失败
+	const filename = resolvePackageJson(name);
 	const meta: LocalPackage = JSON.parse(readFileSync(filename, "utf8"));
 	meta.dependencies ||= {};
 	defineProperty(meta, "$workspace", !filename.includes("node_modules"));
@@ -323,10 +326,20 @@ class Installer extends Service {
 
 	async override(deps: Dict<string | null>) {
 		const filename = resolve(this.cwd, "package.json");
+		// 现读现写：this.manifest 原为构造期的启动快照，运行期间根
+		// package.json 可能已被外部更新，基于快照整体重写会抹掉变更
+		this.manifest = JSON.parse(readFileSync(filename, "utf8")) as LocalPackage;
+		this.manifest.dependencies ||= {};
 		for (const key in deps) {
 			if (deps[key]) {
+				// workspace: 声明是本仓库对上游裸名的归属（如 koishi 裸名
+				// shim，见 packages/node/koishi），不可被安装清单覆盖成
+				// npm 版本，否则会拉下官方包形成第二份框架副本
+				if (this.manifest.dependencies[key]?.startsWith("workspace:")) {
+					continue;
+				}
 				this.manifest.dependencies[key] = deps[key];
-			} else {
+			} else if (!this.manifest.dependencies[key]?.startsWith("workspace:")) {
 				delete this.manifest.dependencies[key];
 			}
 		}
@@ -335,7 +348,9 @@ class Installer extends Service {
 				a[0].localeCompare(b[0]),
 			),
 		);
-		await Bun.write(filename, `${JSON.stringify(this.manifest, null, 2)}\n`);
+		// 仓库格式权威是 biome（tab 缩进），按 tab 写出避免装插件后
+		// package.json 被重排成空格、lint 报格式漂移
+		await Bun.write(filename, `${JSON.stringify(this.manifest, null, "\t")}\n`);
 	}
 
 	private _install() {

@@ -9,6 +9,8 @@
         "@koishi-ce/plugin-http": "workspace:*",
         "@koishi-ce/plugin-proxy-agent": "workspace:*",
         "@koishi-ce/plugin-server": "workspace:*",
+        "@koishijs/plugin-adapter-qq": "4.14.0",
+        "koishi": "workspace:*",
       },
       "devDependencies": {
         "@biomejs/biome": "^2.5.10",
@@ -926,6 +928,8 @@
 
     "@koishijs/market": ["@koishijs/market@4.2.10", "", { "dependencies": { "@koishijs/components": "^1.5.22", "cosmokit": "^1.8.1", "spark-md5": "^3.0.2" }, "peerDependencies": { "vue": "^3", "vue-i18n": "^9" } }, "sha512-I65mSdeLaB18JmdLrKxUvzIIyyNgeUD/Rz94xhh5DN0CHq3dqZUAwAjhPiBtYn5gyqgfINbZDFteoLt1otmucA=="],
 
+    "@koishijs/plugin-adapter-qq": ["@koishijs/plugin-adapter-qq@4.14.0", "", { "dependencies": { "@satorijs/adapter-qq": "^4.14.0" }, "peerDependencies": { "koishi": "^4.18.11" } }, "sha512-8j0LUSud0KcVoCSSwe361m9O1Bybv1KiQgz52YWL6ijr5sVfEL52NS5o/kMbv3XrP+EwECn/jgezI90KFTlIfg=="],
+
     "@koishijs/plugin-console": ["@koishijs/plugin-console@5.30.11", "", { "dependencies": { "@koishijs/console": "^5.30.11", "open": "^8.4.2", "uuid": "^8.3.2", "ws": "^8.16.0" }, "peerDependencies": { "@koishijs/client": "^5.30.11", "koishi": "^4.18.9" }, "optionalPeers": ["@koishijs/client"] }, "sha512-K8CpYU4C+vfrX9VhFndS5jmJ9EqLxUYf7KKsM2RNxxQJ1NMk/hLyLQ82HPIY36lbyIbZsA0Mgxl6WIuewZKgQA=="],
 
     "@koishijs/plugin-database-memory": ["@koishijs/plugin-database-memory@3.7.0", "", { "dependencies": { "@minatojs/driver-memory": "^3.7.0" }, "peerDependencies": { "koishi": "^4.18.10" } }, "sha512-Yt7c95nFt/1UtgK7NrXZpCDGybVhPA+wVbThIW2EGckGZcmosefyekhfxr5minpTr0kcW1X6lfk93dZkPNbXtg=="],
@@ -1055,6 +1059,8 @@
     "@rolldown/binding-win32-x64-msvc": ["@rolldown/binding-win32-x64-msvc@1.2.6", "", { "os": "win32", "cpu": "x64" }, "sha512-np8iZSLfXlAD4kWhiyq/u0Yt8oZDtRQ8lGhQaCXo2rl37KNjeU0GjJuwr4P3oeZ++ROfofsKNBqR5LTO8aXyWQ=="],
 
     "@rolldown/pluginutils": ["@rolldown/pluginutils@1.0.1", "", {}, "sha512-2j9bGt5Jh8hj+vPtgzPtl72j0yRxHAyumoo6TNfAjsLB04UtpSvPbPcDcBMxz7n+9CYB0c1GxQFxYRg2jimqGw=="],
+
+    "@satorijs/adapter-qq": ["@satorijs/adapter-qq@4.14.0", "", { "peerDependencies": { "@satorijs/core": "^4.6.0" } }, "sha512-poe/T0XWGAyheBX/A5q4eaFx/59wlV1Bw2CPDt4tCH/WGwJpfJtINNcBwpt6ubh0eNAV7d9b2LzczSKZYP9bKQ=="],
 
     "@satorijs/components-vue": ["@satorijs/components-vue@0.7.8", "", { "dependencies": { "@satorijs/element": "^3.1.7" }, "peerDependencies": { "@vueuse/core": "*", "vue": "*" } }, "sha512-+cmO0xf3lKv3j3ZKh0/nQlitmw6oyxH0TR6S5+b6FE1sX+egFWYU/kQZekadB0IBkeFf5Hw7IkXvZd/AaQhDSQ=="],
 
