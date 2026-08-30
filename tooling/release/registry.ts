@@ -67,19 +67,27 @@ export function npmWhoami(cwd: string): string | null {
 
 /** 查询包 owner 用户名列表（查询失败视为空集）。 */
 export function npmOwners(cwd: string, name: string): string[] {
+	// npm 11 的 owner ls 忽略 --json 输出人读格式（user <email>），但保留
+	// 旗标：未来版本若恢复 JSON 输出走 JSON 分支，否则按行取首个空白段
 	const raw = captureNpm(["owner", "ls", "--json", name], cwd);
 	if (raw === null || raw === "") {
 		return [];
 	}
-	try {
-		const list = JSON.parse(raw) as { name?: unknown }[];
-		if (!Array.isArray(list)) {
+	if (raw.startsWith("[")) {
+		try {
+			const list = JSON.parse(raw) as { name?: unknown }[];
+			if (!Array.isArray(list)) {
+				return [];
+			}
+			return list
+				.map((item) => (typeof item.name === "string" ? item.name : ""))
+				.filter(Boolean);
+		} catch {
 			return [];
 		}
-		return list
-			.map((item) => (typeof item.name === "string" ? item.name : ""))
-			.filter(Boolean);
-	} catch {
-		return [];
 	}
+	return raw
+		.split("\n")
+		.map((line) => line.trim().split(/\s+/)[0] ?? "")
+		.filter((name) => name !== "" && !name.startsWith("<"));
 }
