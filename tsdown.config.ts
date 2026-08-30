@@ -56,6 +56,8 @@ const workspace = {
 		"plugins/infra/server",
 		"plugins/infra/file-type-compat",
 		"packages/web/components",
+		// 上游包名 koishi 的兼容 shim（纯 JS 预编译，无 src/，见其 index.mjs 注释）
+		"packages/node/koishi",
 	],
 };
 

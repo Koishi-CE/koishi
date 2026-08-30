@@ -25,6 +25,7 @@
 5. **ESM-only 产物 + Bun 运行时**：本仓库全面拥抱 Bun——根 tsdown 单遍构建只出 ESM（`index.mjs` + `index.d.ts`），各包 exports 以 `default` 条件兜底；Bun 的 `require()` 可直接加载 ESM，loader 的插件加载链（`require → 插件 lib/index.mjs → @koishi-ce/*`）据此工作，**不要恢复 CJS 双格式产物**。运行时以 Bun 为准（Node 仅支持 ≥22.12 的 require(esm)，不作兼容目标）；`.yml` locale 走 copy loader 原样拷入产物，Bun 原生支持 yml 导入。全部 38 个 runtime 包均已收敛 `"type": "module"`，类型检查走 nodenext（相对导入一律带 `.ts` 扩展名）——ESM-only 收敛完成。
 6. **许可证分区**：`packages/web/*`、`plugins/webui/*`（console 插件为 MIT，其余 AGPL）、`apps/online` 为 AGPL-3.0，其余目录 MIT——以 `NOTICE` 表格为准；在 AGPL 目录新增文件同样受 AGPL 约束。
 7. **market 插件为上游原版再分发**：`plugins/webui/market/`（`@koishi-ce/plugin-market`）对齐自上游 webui `plugins/market`（原版 v2.11.11），社区版 `plugin-marketn` 已被其取代并移除。client 侧依赖 npm 包 `@koishijs/market`（上游以源码发布的组件库，直接打入插件 dist），其中的 npm 名 `@koishijs/components` 由单插件构建的 alias 重定向到本仓库 workspace 版，避免双实例。
+8. **`packages/node/koishi` 是 `koishi` 裸名的兼容 shim，不可删除或改名**：本仓框架包名是 `@koishi-ce/koishi`，而社区插件的 peerDependencies 指向上游名 `koishi`——market 运行时安装（根目录 `bun add`）时该名字若无归属，Bun 的 peer 自动安装会拉下 npm 官方 koishi，形成第二份框架副本（破坏 cordis 对象身份）。该 shim（纯 JS 预编译，不走 tsdown，根 tsdown 显式 exclude；根 package.json 以 `"koishi": "workspace:*"` 声明归属）把该名字指回 `@koishi-ce/koishi`。其版本号刻意为 `4.18.11`（上游 cordis 3.x 冻结线，用于满足 `koishi ^4.x` 形态的 peer 范围），**勿改为本仓 1.x 基线**。
 
 ## 门禁与工作流
 
