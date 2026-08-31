@@ -1,7 +1,7 @@
 /**
- * registry 本地扫描测试：resolvePackageJson 的解析主路径与纯 fs 探测
- * 兜底（含 Bun 解析负缓存场景模拟）、LocalScanner 的目录扫描、同名包
- * 去重、失败上报与 loadPath 直读。
+ * registry 本地扫描测试：resolvePackageJson 的纯 fs 探测（含 Bun 父目录
+ * 快照缓存场景模拟）、isResidentInCache 的驻留判定、LocalScanner 的目录
+ * 扫描、同名包去重、失败上报与 loadPath 直读。
  */
 import { afterEach, describe, expect, it } from "bun:test";
 import { promises as fs } from "node:fs";
@@ -9,6 +9,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import {
 	getPluginShortname,
+	isResidentInCache,
 	LocalScanner,
 	resolvePackageJson,
 } from "../local.ts";
@@ -49,13 +50,7 @@ describe("getPluginShortname", () => {
 });
 
 describe("resolvePackageJson", () => {
-	it("主路径：require.resolve 可解析的包直接返回清单路径", () => {
-		const filename = resolvePackageJson("cosmokit");
-		// 解析到 .bun 实际路径或链接路径均可，仅验证定位到 cosmokit 的 package.json
-		expect(filename).toMatch(/cosmokit[/\\]package\.json$/);
-	});
-
-	it("兜底：主路径失败后沿 node_modules 链 existsSync 探测裸名形态", async () => {
+	it("直接命中 from 所在层 node_modules 的包", async () => {
 		await withDir(async (dir) => {
 			const pkgDir = join(dir, "node_modules", "resolve-fallback-demo");
 			await writePkg(pkgDir, { name: "resolve-fallback-demo" });
@@ -65,7 +60,7 @@ describe("resolvePackageJson", () => {
 		});
 	});
 
-	it("兜底：作用域包的子路径形态", async () => {
+	it("作用域包的子路径形态", async () => {
 		await withDir(async (dir) => {
 			const pkgDir = join(dir, "node_modules", "@scope", "scoped-demo");
 			await writePkg(pkgDir, { name: "@scope/scoped-demo" });
@@ -86,23 +81,30 @@ describe("resolvePackageJson", () => {
 		});
 	});
 
-	it("负缓存场景：落盘前失败过的解析，落盘后由 fs 兜底救回", async () => {
+	it("市场安装时序：装前探测零解析 API，落盘后同进程立即可读", async () => {
 		await withDir(async (dir) => {
-			// 包落盘前先制造一次必然失败的解析：Bun 会按 specifier 记
-			// 进程内负缓存，同进程内该形态（pkg/package.json）此后即使
-			// 包已存在也可能永久解析失败——兜底必须不依赖解析 API
-			let failed = false;
-			try {
-				require.resolve("negative-cache-demo/package.json");
-			} catch {
-				failed = true;
-			}
-			expect(failed).toBe(true);
+			// 预建 scope 目录（生产中 node_modules/@koishijs 恒存在——Bun
+			// 父目录快照缓存的触发条件：解析失败时父目录已存在）
+			await fs.mkdir(join(dir, "node_modules", "@scope"), { recursive: true });
+			// 市场装前探测：包未装，fs 探测落空即抛（全程不触碰解析 API）
+			expect(() => resolvePackageJson("@scope/late-install", dir)).toThrow(
+				"Cannot resolve '@scope/late-install/package.json'",
+			);
 
-			const pkgDir = join(dir, "node_modules", "negative-cache-demo");
-			await writePkg(pkgDir, { name: "negative-cache-demo" });
-			expect(resolvePackageJson("negative-cache-demo", dir)).toBe(
+			const pkgDir = join(dir, "node_modules", "@scope", "late-install");
+			await writePkg(pkgDir, {
+				name: "@scope/late-install",
+				main: "index.js",
+			});
+			await Bun.write(join(pkgDir, "index.js"), "module.exports = 1");
+			// 探测未污染解析缓存：同进程内裸名形态的解析 API 直接成功
+			// （旧实现经 require.resolve 主路径探测失败过一次后，此处与
+			// 下面的裸名解析都会永久失败——生产 "failed to resolve" 根因）
+			expect(resolvePackageJson("@scope/late-install", dir)).toBe(
 				join(pkgDir, "package.json"),
+			);
+			expect(Bun.resolveSync("@scope/late-install", dir)).toBe(
+				join(pkgDir, "index.js"),
 			);
 		});
 	});
@@ -114,6 +116,29 @@ describe("resolvePackageJson", () => {
 				"Cannot resolve 'definitely-missing-pkg/package.json'",
 			);
 		});
+	});
+});
+
+describe("isResidentInCache", () => {
+	afterEach(() => {
+		process.chdir(rootDir);
+	});
+
+	it("包未驻留 require.cache 时为 false，require 入口后为 true", async () => {
+		await withDir(async (dir) => {
+			const pkgDir = join(dir, "node_modules", "resident-demo");
+			await writePkg(pkgDir, { name: "resident-demo", main: "index.js" });
+			await Bun.write(join(pkgDir, "index.js"), "module.exports = 1");
+			// 驻留判定以进程工作目录为基准（与 market 调用方一致）
+			process.chdir(dir);
+			expect(isResidentInCache("resident-demo")).toBe(false);
+			require(join(pkgDir, "index.js"));
+			expect(isResidentInCache("resident-demo")).toBe(true);
+		});
+	});
+
+	it("包不存在时保守返回 true（宁可多重载不可漏判）", () => {
+		expect(isResidentInCache("definitely-absent-pkg")).toBe(true);
 	});
 });
 

@@ -10,7 +10,11 @@
  */
 import { resolve } from "node:path";
 import { Logger } from "@koishi-ce/koishi";
-import { getPluginShortname, LocalScanner } from "@koishi-ce/registry";
+import {
+	getPluginShortname,
+	isResidentInCache,
+	LocalScanner,
+} from "@koishi-ce/registry";
 import * as shared from "../shared/index.ts";
 
 const logger = new Logger("config");
@@ -40,10 +44,13 @@ class PackageScanner extends LocalScanner {
 	override async parsePackage(name: string) {
 		const result = await super.parsePackage(name);
 		try {
-			// require.resolve(name) 的结果可能与 require.resolve(path) 不同,
-			// 因为 tsconfig-paths 可能以不同方式解析路径
-			const entry = require.resolve(name);
-			if (require.cache[entry]) {
+			// 驻留判断不能用 require.resolve(name)：裸名形态可能已被市场
+			// 安装前的探测写入 Bun 的父目录快照缓存（装完插件后同进程内
+			// 必然失败，生产上报 "failed to resolve" 假警的根因）。改用
+			// isResidentInCache：纯 fs 取包目录 + require.cache 前缀扫描，
+			// 全程不触碰解析 API（比「入口模块驻留」稍宽：包目录下任何
+			// 模块驻留即视为可预热，多一次 parseExports 无副作用）。
+			if (isResidentInCache(name)) {
 				const shortname = getPluginShortname(name);
 				this.service.cache[shortname] =
 					await this.service.parseExports(shortname);

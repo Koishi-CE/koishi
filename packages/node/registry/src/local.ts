@@ -9,9 +9,9 @@
  */
 /// <reference types="@types/node" />
 
-import { existsSync } from "node:fs";
+import { existsSync, realpathSync } from "node:fs";
 import { readdir, readFile } from "node:fs/promises";
-import { dirname, join, resolve } from "node:path";
+import { dirname, isAbsolute, join, resolve, sep } from "node:path";
 import { type Dict, defineProperty, isNonNullable, pick } from "cosmokit";
 import type { PackageJson, SearchObject, SearchResult } from "./types.ts";
 import { conclude } from "./utils.ts";
@@ -25,19 +25,30 @@ export function getPluginShortname(name: string) {
 }
 
 /**
- * 解析已安装包的 package.json 路径，主路径失败时以纯 fs 探测兜底。
+ * 解析已安装包的 package.json 路径：纯 fs 沿 node_modules 链 existsSync
+ * 探测，全程不触碰解析 API。
  *
- * Bun 对**任何形态**的失败解析都按 specifier 记进程内负缓存：市场安装
- * 流程会在包落盘前探测「包是否已安装」（此时 `pkg/package.json` 必然
- * 失败），此后包虽已安装，同进程内该形态仍永久解析失败（上游
- * koishijs/webui#273 的 FIXME 即此现象）。兜底绝不能再用解析 API——
- * 裸名 `pkg` 形态一旦在落盘前尝试同样会被污染——只能沿 node_modules
- * 链用 existsSync 逐级探测（直接系统调用，不经过解析缓存）。
+ * Bun 的解析器对失败的查找按「父目录快照」做进程内缓存（2026-08 实证
+ * 修正，原以为是按 specifier 记负缓存）：解析 `pkg/package.json` 失败时，
+ * 只要包的直接父目录（node_modules 或 node_modules/@scope）已存在，该
+ * 目录的内容列表就被缓存——此后即使包已落盘，同进程内该包的**任何形
+ * 态**（`pkg/package.json`、裸名）经**任何解析 API**（createRequire.resolve、
+ * Bun.resolveSync）都永久失败；父目录不存在时无快照可缓存，落盘后即可
+ * 解析（同一现象「时而复现时而正常」的根源，上游 koishijs/webui#273 的
+ * FIXME 即此）。市场安装流程在包落盘前必然探测一次「是否已安装」，若
+ * 该探测走解析 API（此步必失败、必触发快照），装完插件后同进程内解析
+ * 持续失败、只能重启进程。因此这里必须 existsSync 直查（真实系统调用，
+ * 不经过解析缓存），落空即抛错；本仓运行时为 Bun + node_modules 布局，
+ * PnP 等无 node_modules 的形态不在支持面，无需解析 API 兜底。
  */
 export function resolvePackageJson(name: string, from = process.cwd()): string {
-	try {
-		return require.resolve(`${name}/package.json`);
-	} catch {}
+	// name 可能是宿主项目的目录路径（market 构造期读宿主清单的用法：
+	// loadManifest(cwd)），直接按路径解析其 package.json
+	if (isAbsolute(name) || name.startsWith("./") || name.startsWith("../")) {
+		const direct = resolve(from, name, "package.json");
+		if (existsSync(direct)) return direct;
+		throw new Error(`Cannot resolve '${name}/package.json'`);
+	}
 	let dir = resolve(from);
 	for (;;) {
 		const candidate = join(dir, "node_modules", name, "package.json");
@@ -47,6 +58,36 @@ export function resolvePackageJson(name: string, from = process.cwd()): string {
 		dir = parent;
 	}
 	throw new Error(`Cannot resolve '${name}/package.json'`);
+}
+
+/** 缓存键归一（win32 大小写不敏感），对齐 require.cache 键与探测路径的比对 */
+function normalizeCacheKey(path: string): string {
+	return process.platform === "win32" ? path.toLowerCase() : path;
+}
+
+/**
+ * 判断某依赖包是否有模块驻留在 require.cache（旧版本仍在内存）。
+ *
+ * 判定不走任何解析 API（Bun 的父目录快照缓存见 resolvePackageJson 注释，
+ * 原上游实现用 require.resolve(name)，装前探测污染后装完必失败）：经
+ * resolvePackageJson（fs 探测）取包目录后扫 require.cache 前缀；符号链
+ * 接布局下缓存键可能是 realpath 形态，两种前缀都查；任何环节失败都保守
+ * 返回 true——多一次重载只是进程重启，漏判才会让旧版本代码继续驻留。
+ */
+export function isResidentInCache(name: string): boolean {
+	try {
+		const dir = dirname(resolvePackageJson(name));
+		const prefixes = [normalizeCacheKey(dir + sep)];
+		try {
+			const real = realpathSync(dir);
+			if (real !== dir) prefixes.push(normalizeCacheKey(real + sep));
+		} catch {}
+		return Object.keys(require.cache).some((key) =>
+			prefixes.some((prefix) => normalizeCacheKey(key).startsWith(prefix)),
+		);
+	} catch {
+		return true;
+	}
 }
 
 /** 本地扫描结果：结构与远程 SearchResult 一致，部分字段（score 等）不填 */
@@ -192,6 +233,9 @@ export class LocalScanner {
 
 	protected async parsePackage(name: string) {
 		const [data, workspace] = await this.loadManifest(name);
+		// 上游名占位 shim（如 @koishijs/plugin-console）不是真实插件，
+		// 不进入本地已装列表（避免与 @koishi-ce 同类插件短名冲突）
+		if (data["koishi-ce"]?.upstreamShim) return undefined;
 		return this.toSearchObject(data, workspace);
 	}
 }

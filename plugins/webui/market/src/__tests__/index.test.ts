@@ -58,10 +58,9 @@ import type { RemotePackage } from "@koishi-ce/registry";
 const { Console } = await import("@koishi-ce/console");
 const { App, Service } = await import("@koishi-ce/koishi");
 const http = (await import("@koishi-ce/plugin-http")).default;
+const { isResidentInCache } = await import("@koishi-ce/registry");
 const market = await import("../node/index.ts");
-const { default: Installer, isResidentInCache } = await import(
-	"../node/installer.ts"
-);
+const { default: Installer } = await import("../node/installer.ts");
 const mockPlugin = (await import("@koishi-ce/plugin-mock")).default;
 // 加载包入口占位文件（纯 re-export，无独立逻辑），保证 src 全量被加载
 await import("../index.ts");

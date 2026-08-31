@@ -46,6 +46,8 @@ export interface PackageJson
 	exports?: PackageJson.Exports;
 	/** Koishi 插件清单字段（manifest 的原始来源） */
 	koishi?: Partial<Manifest>;
+	/** 本仓库私有标记字段：上游名占位 shim（upstreamShim）据此被本地扫描跳过 */
+	"koishi-ce"?: { upstreamShim?: boolean };
 	keywords: string[];
 	engines?: Dict<string>;
 	os?: string[];

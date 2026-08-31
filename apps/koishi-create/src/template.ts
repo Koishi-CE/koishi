@@ -107,7 +107,7 @@ bun run dev          # 启动（开发模式，启用 HMR 热更新）
 
 推荐在控制台「插件市场」页安装（已预配 registry.koishi.chat 镜像源）；也可以手动 \`bun add <包名>\` 后在 \`koishi.yml\` 中启用。
 
-上游官方 adapter（如 adapter-discord / adapter-telegram）、数据库插件（如 database-sqlite）与社区 koishi-plugin-* 插件均可直接安装：根依赖中的 \`"koishi": "npm:@koishi-ce/koishi-shim@^4.18.11"\` 已把上游生态对 \`koishi\` 的依赖钉回 @koishi-ce 框架（**请勿删除或改写该行**），不会形成第二份框架副本。analytics 等依赖数据库的插件请先安装数据库插件，再去掉配置中对应的 \`~\` 前缀启用。
+上游官方 adapter（如 adapter-discord / adapter-telegram）、数据库插件（如 database-sqlite）与社区 koishi-plugin-* 插件均可直接安装：根依赖中的四行 npm alias——\`"koishi": "npm:@koishi-ce/koishi-shim@^4.18.11"\`、\`"@koishijs/plugin-console": "npm:@koishi-ce/console-shim@^5.30.11"\`、\`"@koishijs/core": "npm:@koishi-ce/core-shim@4.18.11"\`、\`"@koishijs/loader": "npm:@koishi-ce/loader-shim@^4.6.11"\`——已把上游生态的 peer 依赖全部钉回 @koishi-ce 框架（**请勿删除或改写这四行**），不会形成第二份框架 / console / loader 副本。analytics 等依赖数据库的插件请先安装数据库插件，再去掉配置中对应的 \`~\` 前缀启用。
 
 ## 自定义插件
 
@@ -155,6 +155,14 @@ export function baseManifest(): Manifest {
 			// 上游裸名占位：npm alias 钉到 @koishi-ce 的 koishi shim（勿删，
 			// 语义见文件头注释）；版本必须保持 4.18.x 冻结线以满足 ^4 peer
 			koishi: "npm:@koishi-ce/koishi-shim@^4.18.11",
+			// 上游 console 名占位：CE 插件的 peer 声明上游名，无归属时 Bun
+			// 会自动装下 npm 官方 console 全家桶形成双实例；版本冻结 5.30.x
+			"@koishijs/plugin-console": "npm:@koishi-ce/console-shim@^5.30.11",
+			// 上游 core 名占位：@koishi-ce/loader 的 peer 精确锁 4.18.11，
+			// alias 须逐字相等（不带 ^），版本冻结勿 bump
+			"@koishijs/core": "npm:@koishi-ce/core-shim@4.18.11",
+			// 上游 loader 名占位：config / hmr 插件的 peer；版本冻结 4.6.x
+			"@koishijs/loader": "npm:@koishi-ce/loader-shim@^4.6.11",
 		},
 		devDependencies: {
 			"@koishi-ce/client": "^1.0.0",

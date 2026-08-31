@@ -48,6 +48,9 @@
 		"@koishi-ce/plugin-http": "workspace:*",
 		"@koishi-ce/plugin-proxy-agent": "workspace:*",
 		"@koishi-ce/plugin-server": "workspace:*",
+		"@koishijs/core": "workspace:*",
+		"@koishijs/loader": "workspace:*",
+		"@koishijs/plugin-console": "workspace:*",
 		"@koishijs/plugin-database-postgres": "2.7.0",
 		"koishi": "workspace:*"
 	}

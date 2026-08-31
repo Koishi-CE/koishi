@@ -1,7 +1,7 @@
-import { readFileSync, realpathSync } from "node:fs";
+import { readFileSync } from "node:fs";
 import { createRequire } from "node:module";
 import { homedir } from "node:os";
-import { dirname, join, resolve, sep } from "node:path";
+import { join, resolve } from "node:path";
 import type {} from "@koishi-ce/console";
 import {
 	type Context,
@@ -19,6 +19,7 @@ import type {} from "@koishi-ce/loader";
 import type {} from "@koishi-ce/plugin-market";
 import Scanner, {
 	type DependencyMetaKey,
+	isResidentInCache,
 	type PackageJson,
 	type Registry,
 	type RemotePackage,
@@ -129,44 +130,13 @@ export interface LocalPackage extends PackageJson {
 }
 
 export function loadManifest(name: string) {
-	// 经 resolvePackageJson 兜底：安装前对 `pkg/package.json` 形态的
-	// 探测会被 Bun 记入进程内负缓存，装完后主路径仍解析失败
+	// resolvePackageJson 以纯 fs 探测为主路径：市场安装流程在包落盘前的
+	// 探测不能触碰解析 API，否则触发 Bun 的父目录快照缓存（装完即失败）
 	const filename = resolvePackageJson(name);
 	const meta: LocalPackage = JSON.parse(readFileSync(filename, "utf8"));
 	meta.dependencies ||= {};
 	defineProperty(meta, "$workspace", !filename.includes("node_modules"));
 	return meta;
-}
-
-/** 缓存键归一（win32 大小写不敏感），对齐 require.cache 键与探测路径的比对 */
-function normalizeCacheKey(path: string): string {
-	return process.platform === "win32" ? path.toLowerCase() : path;
-}
-
-/**
- * 判断某依赖包是否有模块驻留在 require.cache（旧版本仍在内存）。
- *
- * 原上游实现用 require.resolve(name)（FIXME koishijs/webui#273 的报错
- * 源）：安装流程在包落盘前的探测已把该裸名记入 Bun 的进程内解析负缓
- * 存，装完后同进程内必然抛 ResolveMessage。改为经 resolvePackageJson
- * （fs 探测兜底）取包目录后扫 require.cache 前缀；任何环节失败都保守
- * 返回 true——多一次重载只是进程重启，漏判才会让旧版本代码继续驻留。
- */
-export function isResidentInCache(name: string): boolean {
-	try {
-		const dir = dirname(resolvePackageJson(name));
-		const prefixes = [normalizeCacheKey(dir + sep)];
-		// 符号链接布局下缓存键可能是 realpath 形态，两种前缀都查
-		try {
-			const real = realpathSync(dir);
-			if (real !== dir) prefixes.push(normalizeCacheKey(real + sep));
-		} catch {}
-		return Object.keys(require.cache).some((key) =>
-			prefixes.some((prefix) => normalizeCacheKey(key).startsWith(prefix)),
-		);
-	} catch {
-		return true;
-	}
 }
 
 function getVersions(versions: RemotePackage[]) {

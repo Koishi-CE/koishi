@@ -60,6 +60,15 @@ const workspace = {
 		"packages/node/koishi",
 		// 同款 shim 的可发布版（@koishi-ce/koishi-shim，供下游项目 npm alias 占名）
 		"packages/node/koishi-shim",
+		// 上游名 @koishijs/plugin-console 的 workspace 占位 shim 及其可发布版
+		"packages/node/upstream-plugin-console",
+		"packages/node/console-shim",
+		// 上游名 @koishijs/core 的 workspace 占位 shim 及其可发布版
+		"packages/node/upstream-core",
+		"packages/node/core-shim",
+		// 上游名 @koishijs/loader 的 workspace 占位 shim 及其可发布版
+		"packages/node/upstream-loader",
+		"packages/node/loader-shim",
 	],
 };
 
