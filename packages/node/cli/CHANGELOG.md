@@ -1,5 +1,17 @@
 # @koishi-ce/koishi
 
+## 1.0.3
+
+### Patch Changes
+
+- Updated dependencies [6f77b35]
+  - @koishi-ce/loader@1.0.3
+  - @koishi-ce/core@1.0.0
+  - @koishi-ce/utils@1.0.0
+  - @koishi-ce/plugin-http@1.0.0
+  - @koishi-ce/plugin-proxy-agent@1.0.0
+  - @koishi-ce/plugin-server@1.0.0
+
 ## 1.0.2
 
 ### Patch Changes

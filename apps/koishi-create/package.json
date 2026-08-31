@@ -1,7 +1,7 @@
 {
 	"name": "create-koishi-ce",
 	"description": "Setup a Koishi application",
-	"version": "1.1.0",
+	"version": "1.2.0",
 	"type": "module",
 	"main": "./lib/index.mjs",
 	"module": "./lib/index.mjs",
