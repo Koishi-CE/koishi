@@ -126,7 +126,11 @@ export default class LoaderService extends Service {
 							paths,
 							data: ref(data),
 						};
-						// 依次加载入口声明的全部文件，按后缀分发给对应 loader
+						// 依次加载入口声明的全部文件，按后缀分发给对应 loader；
+						// task 返回给外层 Promise.all，使 initTask 真正等到全部
+						// 入口文件 settle 后才放行（否则 router install 早于扩展
+						// 注册路由，初始导航会对当前路径报 no match）。
+						// 扩展加载失败不阻塞界面可用性
 						const task = Promise.all(
 							files.map((url) => {
 								for (const ext in loaders) {
@@ -137,11 +141,11 @@ export default class LoaderService extends Service {
 								return undefined;
 							}),
 						);
-						// 加载完成即标记 done（扩展加载失败不阻塞界面可用性）
 						void task.finally(() => {
 							const extension = this.extensions[key];
 							if (extension) extension.done.value = true;
 						});
+						return task.catch(() => {});
 					}),
 				);
 
