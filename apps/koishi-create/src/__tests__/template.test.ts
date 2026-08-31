@@ -37,11 +37,12 @@ test("内置模板钉住 console / core / loader 上游 peer 名，防 Bun 自�
 	);
 	// @koishi-ce/loader 的 peer 精确锁 4.18.11：alias 必须逐字相等（不带 ^）
 	expect(dependencies?.["@koishijs/core"]).toBe(
-		"npm:@koishi-ce/core-shim@4.18.11",
+		"npm:@koishi-ce/koishi-shim@4.18.11",
 	);
-	// config / hmr 插件的 loader peer：alias 版本冻结 4.6.x 线
+	// config / hmr 插件的 loader peer：koishi-shim 是 core + loader 的合并
+	// 再导出（与上游 koishi 主包同构），4.18.11 满足 ^4.6.11
 	expect(dependencies?.["@koishijs/loader"]).toBe(
-		"npm:@koishi-ce/loader-shim@^4.6.11",
+		"npm:@koishi-ce/koishi-shim@^4.18.11",
 	);
 });
 
@@ -81,9 +82,9 @@ test("renderManifest 渲染内置模板：常规改写生效，prod 模式保留
 		"npm:@koishi-ce/console-shim@^5.30.11",
 	);
 	expect(prod.dependencies["@koishijs/core"]).toBe(
-		"npm:@koishi-ce/core-shim@4.18.11",
+		"npm:@koishi-ce/koishi-shim@4.18.11",
 	);
 	expect(prod.dependencies["@koishijs/loader"]).toBe(
-		"npm:@koishi-ce/loader-shim@^4.6.11",
+		"npm:@koishi-ce/koishi-shim@^4.18.11",
 	);
 });

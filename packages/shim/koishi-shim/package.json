@@ -1,7 +1,7 @@
 {
 	"name": "@koishi-ce/koishi-shim",
 	"type": "module",
-	"description": "上游包名 koishi 的下游兼容 shim：供脚手架生成的项目以 npm alias（\"koishi\": \"npm:@koishi-ce/koishi-shim@^4.18.11\"）钉住裸名，将社区生态的 koishi 依赖指回 @koishi-ce/koishi",
+	"description": "上游包名 koishi / @koishijs/core / @koishijs/loader 三名共用的下游兼容 shim：供脚手架生成的项目以 npm alias 钉住上游名，将社区生态的依赖指回 @koishi-ce/koishi（core + loader 合并再导出）",
 	"version": "4.18.11",
 	"main": "./index.mjs",
 	"exports": {

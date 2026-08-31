@@ -35,7 +35,7 @@
     },
     "apps/koishi-create": {
       "name": "create-koishi-ce",
-      "version": "1.1.0",
+      "version": "1.2.0",
       "bin": {
         "create-koishi-ce": "./lib/bin.mjs",
       },
@@ -59,7 +59,7 @@
     },
     "packages/node/cli": {
       "name": "@koishi-ce/koishi",
-      "version": "1.0.2",
+      "version": "1.0.3",
       "bin": "lib/cli/index.mjs",
       "dependencies": {
         "@koishi-ce/core": "workspace:*",
@@ -80,13 +80,6 @@
         "koishi": "^4.18.11",
       },
     },
-    "packages/node/console-shim": {
-      "name": "@koishi-ce/console-shim",
-      "version": "5.30.11",
-      "dependencies": {
-        "@koishi-ce/plugin-console": "^1.0.0",
-      },
-    },
     "packages/node/core": {
       "name": "@koishi-ce/core",
       "version": "1.0.0",
@@ -105,13 +98,6 @@
         "@minatojs/driver-memory": "^3.7.0",
       },
     },
-    "packages/node/core-shim": {
-      "name": "@koishi-ce/core-shim",
-      "version": "4.18.11",
-      "dependencies": {
-        "@koishi-ce/core": "^1.0.0",
-      },
-    },
     "packages/node/i18n-utils": {
       "name": "@koishi-ce/i18n-utils",
       "version": "1.0.0",
@@ -126,16 +112,9 @@
         "@koishi-ce/koishi": "workspace:*",
       },
     },
-    "packages/node/koishi-shim": {
-      "name": "@koishi-ce/koishi-shim",
-      "version": "4.18.11",
-      "dependencies": {
-        "@koishi-ce/koishi": "^1.0.0",
-      },
-    },
     "packages/node/loader": {
       "name": "@koishi-ce/loader",
-      "version": "1.0.2",
+      "version": "1.0.3",
       "devDependencies": {
         "@koishi-ce/core": "workspace:*",
         "@koishi-ce/koishi": "workspace:*",
@@ -145,16 +124,9 @@
         "@koishijs/core": "4.18.11",
       },
     },
-    "packages/node/loader-shim": {
-      "name": "@koishi-ce/loader-shim",
-      "version": "4.6.11",
-      "dependencies": {
-        "@koishi-ce/loader": "^1.0.0",
-      },
-    },
     "packages/node/registry": {
       "name": "@koishi-ce/registry",
-      "version": "1.0.3",
+      "version": "1.0.4",
       "dependencies": {
         "cosmokit": "^1.8.1",
         "p-map": "^7.0.6",
@@ -162,27 +134,6 @@
       },
       "devDependencies": {
         "@types/semver": "^7.5.8",
-      },
-    },
-    "packages/node/upstream-core": {
-      "name": "@koishijs/core",
-      "version": "4.18.11",
-      "dependencies": {
-        "@koishi-ce/core": "workspace:*",
-      },
-    },
-    "packages/node/upstream-loader": {
-      "name": "@koishijs/loader",
-      "version": "4.6.11",
-      "dependencies": {
-        "@koishi-ce/loader": "workspace:*",
-      },
-    },
-    "packages/node/upstream-plugin-console": {
-      "name": "@koishijs/plugin-console",
-      "version": "5.30.11",
-      "dependencies": {
-        "@koishi-ce/plugin-console": "workspace:*",
       },
     },
     "packages/node/utils": {
@@ -194,6 +145,48 @@
       },
       "devDependencies": {
         "@koishi-ce/koishi": "workspace:*",
+      },
+    },
+    "packages/shim/console-shim": {
+      "name": "@koishi-ce/console-shim",
+      "version": "5.30.11",
+      "dependencies": {
+        "@koishi-ce/plugin-console": "^1.0.0",
+      },
+    },
+    "packages/shim/koishi": {
+      "name": "koishi",
+      "version": "4.18.11",
+      "dependencies": {
+        "@koishi-ce/koishi": "workspace:*",
+      },
+    },
+    "packages/shim/koishi-shim": {
+      "name": "@koishi-ce/koishi-shim",
+      "version": "4.18.11",
+      "dependencies": {
+        "@koishi-ce/koishi": "^1.0.0",
+      },
+    },
+    "packages/shim/upstream-core": {
+      "name": "@koishijs/core",
+      "version": "4.18.11",
+      "dependencies": {
+        "@koishi-ce/core": "workspace:*",
+      },
+    },
+    "packages/shim/upstream-loader": {
+      "name": "@koishijs/loader",
+      "version": "4.6.11",
+      "dependencies": {
+        "@koishi-ce/loader": "workspace:*",
+      },
+    },
+    "packages/shim/upstream-plugin-console": {
+      "name": "@koishijs/plugin-console",
+      "version": "5.30.11",
+      "dependencies": {
+        "@koishi-ce/plugin-console": "workspace:*",
       },
     },
     "packages/web/client": {
@@ -305,7 +298,7 @@
     },
     "plugins/infra/hmr": {
       "name": "@koishi-ce/plugin-hmr",
-      "version": "1.0.2",
+      "version": "1.0.3",
       "dependencies": {
         "@babel/code-frame": "^8.0.0",
         "@koishi-ce/loader": "workspace:*",
@@ -472,7 +465,7 @@
     },
     "plugins/webui/config": {
       "name": "@koishi-ce/plugin-config",
-      "version": "1.0.4",
+      "version": "1.0.5",
       "dependencies": {
         "@koishi-ce/console": "workspace:*",
         "@koishi-ce/loader": "workspace:*",
@@ -594,7 +587,7 @@
     },
     "plugins/webui/market": {
       "name": "@koishi-ce/plugin-market",
-      "version": "1.0.5",
+      "version": "1.0.6",
       "dependencies": {
         "@koishi-ce/console": "workspace:*",
         "@koishi-ce/registry": "workspace:*",
@@ -899,21 +892,17 @@
 
     "@koishi-ce/console": ["@koishi-ce/console@workspace:packages/node/console"],
 
-    "@koishi-ce/console-shim": ["@koishi-ce/console-shim@workspace:packages/node/console-shim"],
+    "@koishi-ce/console-shim": ["@koishi-ce/console-shim@workspace:packages/shim/console-shim"],
 
     "@koishi-ce/core": ["@koishi-ce/core@workspace:packages/node/core"],
-
-    "@koishi-ce/core-shim": ["@koishi-ce/core-shim@workspace:packages/node/core-shim"],
 
     "@koishi-ce/i18n-utils": ["@koishi-ce/i18n-utils@workspace:packages/node/i18n-utils"],
 
     "@koishi-ce/koishi": ["@koishi-ce/koishi@workspace:packages/node/cli"],
 
-    "@koishi-ce/koishi-shim": ["@koishi-ce/koishi-shim@workspace:packages/node/koishi-shim"],
+    "@koishi-ce/koishi-shim": ["@koishi-ce/koishi-shim@workspace:packages/shim/koishi-shim"],
 
     "@koishi-ce/loader": ["@koishi-ce/loader@workspace:packages/node/loader"],
-
-    "@koishi-ce/loader-shim": ["@koishi-ce/loader-shim@workspace:packages/node/loader-shim"],
 
     "@koishi-ce/plugin-actions": ["@koishi-ce/plugin-actions@workspace:plugins/webui/actions"],
 
@@ -979,13 +968,13 @@
 
     "@koishijs/components": ["@koishijs/components@1.5.22", "", { "dependencies": { "@satorijs/element": "^3.1.7", "cosmokit": "^1.7.2", "schemastery-vue": "^7.3.15" }, "peerDependencies": { "vue": "^3" } }, "sha512-1K8Qn12x0k2Em8MWRnH2JUq5QE+TRJZ6/kztCy8V56547sLPeuhsczi/16lPhwJ5NvBuUPFuFHfD5Pedtlo8UQ=="],
 
-    "@koishijs/core": ["@koishijs/core@workspace:packages/node/upstream-core"],
+    "@koishijs/core": ["@koishijs/core@workspace:packages/shim/upstream-core"],
 
-    "@koishijs/loader": ["@koishijs/loader@workspace:packages/node/upstream-loader"],
+    "@koishijs/loader": ["@koishijs/loader@workspace:packages/shim/upstream-loader"],
 
     "@koishijs/market": ["@koishijs/market@4.2.10", "", { "dependencies": { "@koishijs/components": "^1.5.22", "cosmokit": "^1.8.1", "spark-md5": "^3.0.2" }, "peerDependencies": { "vue": "^3", "vue-i18n": "^9" } }, "sha512-I65mSdeLaB18JmdLrKxUvzIIyyNgeUD/Rz94xhh5DN0CHq3dqZUAwAjhPiBtYn5gyqgfINbZDFteoLt1otmucA=="],
 
-    "@koishijs/plugin-console": ["@koishijs/plugin-console@workspace:packages/node/upstream-plugin-console"],
+    "@koishijs/plugin-console": ["@koishijs/plugin-console@workspace:packages/shim/upstream-plugin-console"],
 
     "@koishijs/plugin-database-memory": ["@koishijs/plugin-database-memory@3.7.0", "", { "dependencies": { "@minatojs/driver-memory": "^3.7.0" }, "peerDependencies": { "koishi": "^4.18.10" } }, "sha512-Yt7c95nFt/1UtgK7NrXZpCDGybVhPA+wVbThIW2EGckGZcmosefyekhfxr5minpTr0kcW1X6lfk93dZkPNbXtg=="],
 
@@ -1755,7 +1744,7 @@
 
     "koa-convert": ["koa-convert@2.0.0", "", { "dependencies": { "co": "^4.6.0", "koa-compose": "^4.1.0" } }, "sha512-asOvN6bFlSnxewce2e/DK3p4tltyfC4VM7ZwuTuepI7dEQVcvpyFuBcEARu1+Hxg8DIwytce2n7jrZtRlPrARA=="],
 
-    "koishi": ["koishi@workspace:packages/node/koishi"],
+    "koishi": ["koishi@workspace:packages/shim/koishi"],
 
     "launch-editor": ["launch-editor@2.14.1", "", { "dependencies": { "picocolors": "^1.1.1", "shell-quote": "^1.8.4" } }, "sha512-QWBrQsMpH7gPr965dsKD/3cKWiNoTjpATQf++Xq63N6sKRGMwlVXz41O1IZTMfZQgBctD/K5Zt06+/I6pP6+HA=="],
 

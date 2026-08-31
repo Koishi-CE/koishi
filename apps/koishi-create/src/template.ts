@@ -10,9 +10,10 @@
  * 模板要点：
  * - 运行时 Bun：koishi CLI（@koishi-ce/koishi 的 bin）与 loader 插件加载链
  *   均以 Bun 为准（ESM-only 产物，Bun 原生加载 TS / yml）；
- * - "koishi" 裸名用 npm alias 钉到 @koishi-ce/koishi-shim（4.18.x 冻结线，
- *   见 packages/node/koishi-shim）：上游官方 adapter / database 插件与社区
- *   koishi-plugin-* 的 peer `koishi ^4.x` 由此满足，不会拉入 npm 官方
+ * - "koishi" 裸名与 @koishijs/core / @koishijs/loader 上游名用 npm alias
+ *   钉到 @koishi-ce/koishi-shim（4.18.x 冻结线，见 packages/shim/koishi-shim）：
+ *   上游官方 adapter / database 插件与社区
+ *   koishi-plugin-* 的 peer `koishi ^4.x` 等由此满足，不会拉入 npm 官方
  *   koishi 形成第二份框架副本；市场安装亦不改写该声明（installer 的
  *   isGuardedRequest 护栏将 npm:@koishi-ce alias 与 workspace: 同等保护）；
  * - 本仓没有 adapter / database 插件的再分发，模板不预装这两类；依赖数据库
@@ -107,7 +108,7 @@ bun run dev          # 启动（开发模式，启用 HMR 热更新）
 
 推荐在控制台「插件市场」页安装（已预配 registry.koishi.chat 镜像源）；也可以手动 \`bun add <包名>\` 后在 \`koishi.yml\` 中启用。
 
-上游官方 adapter（如 adapter-discord / adapter-telegram）、数据库插件（如 database-sqlite）与社区 koishi-plugin-* 插件均可直接安装：根依赖中的四行 npm alias——\`"koishi": "npm:@koishi-ce/koishi-shim@^4.18.11"\`、\`"@koishijs/plugin-console": "npm:@koishi-ce/console-shim@^5.30.11"\`、\`"@koishijs/core": "npm:@koishi-ce/core-shim@4.18.11"\`、\`"@koishijs/loader": "npm:@koishi-ce/loader-shim@^4.6.11"\`——已把上游生态的 peer 依赖全部钉回 @koishi-ce 框架（**请勿删除或改写这四行**），不会形成第二份框架 / console / loader 副本。analytics 等依赖数据库的插件请先安装数据库插件，再去掉配置中对应的 \`~\` 前缀启用。
+上游官方 adapter（如 adapter-discord / adapter-telegram）、数据库插件（如 database-sqlite）与社区 koishi-plugin-* 插件均可直接安装：根依赖中的四行 npm alias——\`"koishi": "npm:@koishi-ce/koishi-shim@^4.18.11"\`、\`"@koishijs/plugin-console": "npm:@koishi-ce/console-shim@^5.30.11"\`、\`"@koishijs/core": "npm:@koishi-ce/koishi-shim@4.18.11"\`、\`"@koishijs/loader": "npm:@koishi-ce/koishi-shim@^4.18.11"\`——已把上游生态的 peer 依赖全部钉回 @koishi-ce 框架（前两行与后两行分别只涉及 koishi-shim / console-shim 两个包；**请勿删除或改写这四行**），不会形成第二份框架 / console / loader 副本。analytics 等依赖数据库的插件请先安装数据库插件，再去掉配置中对应的 \`~\` 前缀启用。
 
 ## 自定义插件
 
@@ -159,10 +160,13 @@ export function baseManifest(): Manifest {
 			// 会自动装下 npm 官方 console 全家桶形成双实例；版本冻结 5.30.x
 			"@koishijs/plugin-console": "npm:@koishi-ce/console-shim@^5.30.11",
 			// 上游 core 名占位：@koishi-ce/loader 的 peer 精确锁 4.18.11，
-			// alias 须逐字相等（不带 ^），版本冻结勿 bump
-			"@koishijs/core": "npm:@koishi-ce/core-shim@4.18.11",
-			// 上游 loader 名占位：config / hmr 插件的 peer；版本冻结 4.6.x
-			"@koishijs/loader": "npm:@koishi-ce/loader-shim@^4.6.11",
+			// alias 须逐字相等（不带 ^），版本冻结勿 bump。core 与 loader
+			// 两个名字共用 koishi-shim：@koishi-ce/koishi 是 core + loader
+			// 的合并再导出（与上游 koishi 主包同构），named 导出全覆盖
+			"@koishijs/core": "npm:@koishi-ce/koishi-shim@4.18.11",
+			// 上游 loader 名占位：config / hmr 插件的 peer；同样指向
+			// koishi-shim（4.18.11 满足 ^4.6.11），勿指回已废弃的 loader-shim
+			"@koishijs/loader": "npm:@koishi-ce/koishi-shim@^4.18.11",
 		},
 		devDependencies: {
 			"@koishi-ce/client": "^1.0.0",

@@ -270,6 +270,11 @@ export interface WorkspaceRewrite {
  * 返回改写文本与记录；无改写时原样返回（不改写不重排）。
  * 依赖不在版本表 / 出现 workspace:^ 等其他协议形式 → 抛错（发布链中断，
  * 禁止带 workspace 协议出包）。
+ *
+ * 改写后另有终局断言：依赖字段不得残留任何本地协议（workspace:/file:/
+ * link:）。2026-08-31 事故（config@1.0.5 / market@1.0.6 / hmr@1.0.3 带
+ * workspace:* 原样发布、下游 install 全炸）的教训——改写逻辑再完备也
+ * 防不住绕过发布链的手动 publish，但至少保证走发布链的包永远干净。
  */
 export function rewriteWorkspaceProtocol(
 	raw: string,
@@ -301,6 +306,21 @@ export function rewriteWorkspaceProtocol(
 			}
 			(deps as Record<string, string>)[dep] = `^${version}`;
 			changes.push({ field, dep, range: `^${version}` });
+		}
+	}
+	for (const field of DEP_FIELDS) {
+		const deps = manifest[field];
+		if (typeof deps !== "object" || deps === null) {
+			continue;
+		}
+		for (const [dep, range] of Object.entries(
+			deps as Record<string, unknown>,
+		)) {
+			if (typeof range === "string" && /^(workspace|file|link):/.test(range)) {
+				throw new Error(
+					`${field}.${dep} 改写后仍残留本地协议 ${range}，拒绝发布`,
+				);
+			}
 		}
 	}
 	const text =

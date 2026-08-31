@@ -13,6 +13,7 @@ This repository is a derivative work combining code from two upstream repositori
 | `plugins/webui/{actions,admin,analytics,auth,commands,config,console,explorer,insight,locales,logger,market,notifier,oobe,sandbox,status}` | [koishijs/webui](https://github.com/koishijs/webui) `plugins/*` | AGPL-3.0 — [LICENSES/webui-AGPL-3.0](./LICENSES/webui-AGPL-3.0.txt) |
 | `apps/online` | [koishijs/webui](https://github.com/koishijs/webui) `packages/online` | AGPL-3.0 — [LICENSES/webui-AGPL-3.0](./LICENSES/webui-AGPL-3.0.txt) |
 | `packages/node/{console,registry}` | [koishijs/webui](https://github.com/koishijs/webui) | MIT (declared in the upstream package.json of each package) |
+| `packages/shim/*` | Original work of this repository (upstream-name placeholder shims) | MIT — [LICENSE](./LICENSE) |
 
 Copyright (c) 2019-present Shigma and Koishijs contributors.
 

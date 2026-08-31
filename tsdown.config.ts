@@ -56,19 +56,12 @@ const workspace = {
 		"plugins/infra/server",
 		"plugins/infra/file-type-compat",
 		"packages/web/components",
-		// 上游包名 koishi 的兼容 shim（纯 JS 预编译，无 src/，见其 index.mjs 注释）
-		"packages/node/koishi",
-		// 同款 shim 的可发布版（@koishi-ce/koishi-shim，供下游项目 npm alias 占名）
-		"packages/node/koishi-shim",
-		// 上游名 @koishijs/plugin-console 的 workspace 占位 shim 及其可发布版
-		"packages/node/upstream-plugin-console",
-		"packages/node/console-shim",
-		// 上游名 @koishijs/core 的 workspace 占位 shim 及其可发布版
-		"packages/node/upstream-core",
-		"packages/node/core-shim",
-		// 上游名 @koishijs/loader 的 workspace 占位 shim 及其可发布版
-		"packages/node/upstream-loader",
-		"packages/node/loader-shim",
+		// packages/shim/* 全部是上游包名占位 shim（纯 JS 预编译、无 src/，
+		// 单行 re-export @koishi-ce 对应包，见各包 index.mjs 注释）：
+		// workspace 占位（koishi 裸名 / upstream-core / upstream-loader /
+		// upstream-plugin-console，private）与发布版（koishi-shim /
+		// console-shim，供下游项目 npm alias 占名）
+		"packages/shim/*",
 	],
 };
 

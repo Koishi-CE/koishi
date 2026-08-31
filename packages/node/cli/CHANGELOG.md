@@ -4,6 +4,7 @@
 
 ### Patch Changes
 
+- 补齐默认导出（NodeLoader），修复入口注释宣称 `export default` 而实现缺失的不一致；`packages/shim/koishi-shim` 据此一名兼任 `koishi` 裸名 / `@koishijs/core` / `@koishijs/loader` 三个上游名的下游 alias 目标
 - Updated dependencies [6f77b35]
   - @koishi-ce/loader@1.0.3
   - @koishi-ce/core@1.0.0

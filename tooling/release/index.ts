@@ -51,6 +51,8 @@ interface Options {
 	allowDirty: boolean;
 	skipBuild: boolean;
 	skipTest: boolean;
+	/** --only：仅发布名单内的包（逗号分隔包名；补发 / 重发场景）。 */
+	only: string[];
 }
 
 const HELP = `Koishi-CE 发布工具链（tooling/release）
@@ -66,6 +68,10 @@ const HELP = `Koishi-CE 发布工具链（tooling/release）
 
 旗标：
   --dry-run         只看计划，不做任何变更
+  --only <名单>     publish 仅发布名单内的包（逗号分隔包名）。补发漏发 /
+                    重发坏版本用（须先 bump 版本），同样走 workspace:*
+                    改写与终局断言——2026-08-31 事故（绕链手动发布把
+                    workspace:* 带上 npm、下游 install 全炸）后，禁止手动 npm publish
   --push            pipeline 末尾推送 main
   --allow-dirty     跳过工作区洁净检查（版本提交仍只含版本相关文件）
   --skip-build      pipeline 跳过构建环
@@ -74,7 +80,7 @@ const HELP = `Koishi-CE 发布工具链（tooling/release）
 
 环境变量：RELEASE_REGISTRY 可切换 registry 查询源（默认 registry.npmjs.org）。`;
 
-/** 解析旗标；遇到未知旗标返回 null。 */
+/** 解析旗标；遇到未知旗标 / --only 缺参返回 null。 */
 function parseOptions(args: readonly string[]): Options | null {
 	const options: Options = {
 		dryRun: false,
@@ -82,11 +88,25 @@ function parseOptions(args: readonly string[]): Options | null {
 		allowDirty: false,
 		skipBuild: false,
 		skipTest: false,
+		only: [],
 	};
-	for (const arg of args) {
+	for (let i = 0; i < args.length; i += 1) {
+		const arg = args[i];
 		switch (arg) {
 			case "--dry-run": {
 				options.dryRun = true;
+				break;
+			}
+			case "--only": {
+				const value = args[i + 1];
+				if (value === undefined || value.startsWith("--")) {
+					return null;
+				}
+				options.only = value
+					.split(",")
+					.map((name) => name.trim())
+					.filter((name) => name !== "");
+				i += 1;
 				break;
 			}
 			case "--push": {
@@ -402,6 +422,29 @@ async function runPublishSteps(options: Options): Promise<number> {
 			pkg,
 			reason: "本地版本低于 registry 已发布版本（源码落后，先同步源码）",
 		});
+	}
+	// --only：精确发布名单（补发漏发 / 重发坏版本）；名单外的待发布包
+	// 记入 skipped 本次不动。名单内拼写错误早报，避免静默漏发。
+	if (options.only.length > 0) {
+		const known = new Set(pkgs.map((pkg) => pkg.name));
+		const unknown = options.only.filter((name) => !known.has(name));
+		if (unknown.length > 0) {
+			process.stderr.write(
+				`[publish] ❌ --only 含未知包名：${unknown.join(", ")}\n`,
+			);
+			return 1;
+		}
+		const only = new Set(options.only);
+		const kept: PkgInfo[] = [];
+		for (const pkg of toPublish) {
+			if (only.has(pkg.name)) {
+				kept.push(pkg);
+			} else {
+				plan.skipped.push({ pkg, reason: "不在 --only 名单内" });
+			}
+		}
+		toPublish.length = 0;
+		toPublish.push(...kept);
 	}
 	// 所有权预检：别人的包（版本领先于 registry 的第三方插件）跳过而非 403 中断；
 	// 首发包不做预检（首个发布者自动成为 owner）

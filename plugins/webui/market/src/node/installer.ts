@@ -33,11 +33,11 @@ const logger = new Logger("market");
 
 /**
  * 判断依赖声明是否受护栏保护、不可被安装清单覆盖或删除。两类：
- * - `workspace:` 声明是本仓库（monorepo）对上游裸名的归属（如 koishi
- *   裸名 shim，见 packages/node/koishi）；
+ * - `workspace:` 声明是本仓库（monorepo）对上游名的归属（如 koishi
+ *   裸名 shim，见 packages/shim/koishi）；
  * - `npm:@koishi-ce/...` alias 是下游脚手架生成项目对上游名的归属
  *   （如 "koishi": "npm:@koishi-ce/koishi-shim@^4.18.11"，见
- *   packages/node/koishi-shim）。
+ *   packages/shim/koishi-shim）。
  * 两者被覆盖或删除都会让 peer 解析失去归属，重新拉下 npm 官方包形成
  * 第二份框架副本。
  */

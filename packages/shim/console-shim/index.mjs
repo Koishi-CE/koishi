@@ -7,7 +7,8 @@
  *
  *   "@koishijs/plugin-console": "npm:@koishi-ce/console-shim@^5.30.11"
  *
- * 机制与 koishi 裸名的 @koishi-ce/koishi-shim 相同：Bun 对 npm: alias
+ * 机制与 @koishi-ce/koishi-shim 相同（后者一名兼任 koishi 裸名 /
+ * @koishijs/core / @koishijs/loader 三个上游名）：Bun 对 npm: alias
  * 的 peer 判定看**落盘包的 version**，故本包版本冻结 5.30.x 线（满足
  * `^5.30.11` 形态的 peer 范围），勿随 changesets bump。没有该 alias 时，
  * 安装任何声明 `@koishijs/plugin-console` peer 的包都会让 Bun 自动装下

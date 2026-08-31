@@ -249,6 +249,11 @@ export interface WorkspaceRewrite {
  *
  * 返回改写后的 JSON 文本与改写记录；无 workspace:* 时原样返回（不改写不重排）。
  * 工作区内找不到对应包版本 → 抛错（无法生成真实范围，发布链中断）。
+ *
+ * 改写后另有终局断言：依赖字段不得残留任何本地协议（workspace:/file:/
+ * link:，含 workspace:^ 等非 * 形态——上方循环对它们是静默跳过的，全靠
+ * 这道断言兜底）。2026-08-31 事故教训：绕过改写链的发布会把 workspace:*
+ * 带上 npm，下游 install 直接炸。
  */
 export function rewriteWorkspaceProtocol(
 	raw: string,
@@ -275,6 +280,21 @@ export function rewriteWorkspaceProtocol(
 			}
 			(deps as Record<string, string>)[dep] = `^${version}`;
 			changes.push({ field, dep, range: `^${version}` });
+		}
+	}
+	for (const field of WORKSPACE_DEP_FIELDS) {
+		const deps = pkg[field];
+		if (typeof deps !== "object" || deps === null) {
+			continue;
+		}
+		for (const [dep, range] of Object.entries(
+			deps as Record<string, unknown>,
+		)) {
+			if (typeof range === "string" && /^(workspace|file|link):/.test(range)) {
+				throw new Error(
+					`${field}.${dep} 改写后仍残留本地协议 ${range}，拒绝发布`,
+				);
+			}
 		}
 	}
 	const text = changes.length > 0 ? `${JSON.stringify(pkg, null, 4)}\n` : raw;

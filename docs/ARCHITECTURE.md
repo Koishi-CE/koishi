@@ -11,8 +11,9 @@
 ## 2. 目录结构与包清单
 
 ```
-koishi/（Bun workspaces：packages/node/* · packages/web/* · plugins/{common,infra,webui}/* · apps/* · tooling/*）
+koishi/（Bun workspaces：packages/node/* · packages/shim/* · packages/web/* · plugins/{common,infra,webui}/* · apps/* · tooling/*）
 ├── packages/node/   Node 侧核心库（根 tsdown 统一构建 → lib/ ESM-only）
+├── packages/shim/   上游包名占位 shim（纯 JS 预编译，不走 tsdown）
 ├── packages/web/    浏览器侧库（源码直出，无独立构建产物）
 ├── plugins/common/  通用 bot 插件（MIT）
 ├── plugins/infra/   基础设施插件（http/proxy-agent/server 为 vendored 预编译）
@@ -32,6 +33,21 @@ koishi/（Bun workspaces：packages/node/* · packages/web/* · plugins/{common,
 | `utils` | `@koishi-ce/utils` | 7.2.1 | 通用工具（cosmokit、inaba） |
 | `i18n-utils` | `@koishi-ce/i18n-utils` | 1.0.1 | i18n 回退与工具 |
 | `registry` | `@koishi-ce/registry` | 7.0.3 | npm 插件市场扫描库（来自 webui）：SearchResult / SearchObject 等类型 + Scanner / LocalScanner；被 config（LocalScanner）与 market（类型 + Scanner）消费 |
+
+### packages/shim/*（上游包名占位 shim，全部纯 JS 预编译、不走 tsdown）
+
+上游生态（官方 adapter / database、koishi-plugin-*）与本仓部分包的 peerDependencies 声明上游名（`koishi` / `@koishijs/plugin-console` / `@koishijs/core` / `@koishijs/loader`）。这些名字若无归属，Bun 的 peer 自动安装会拉下 npm 官方全家桶，与 `@koishi-ce/*` 形成双实例、破坏 cordis 对象身份。占位机制分两层：
+
+| 目录 | 包名 | 版本冻结 | 形态 |
+|---|---|---|---|
+| `koishi` | `koishi`（裸名） | 4.18.11 | workspace 占位（private，根依赖 `workspace:*` 声明归属） |
+| `upstream-core` | `@koishijs/core` | 4.18.11 | 同上（loader 的 peer 精确锁 4.18.11） |
+| `upstream-loader` | `@koishijs/loader` | 4.6.11 | 同上 |
+| `upstream-plugin-console` | `@koishijs/plugin-console` | 5.30.11 | 同上 |
+| `koishi-shim` | `@koishi-ce/koishi-shim` | 4.18.11 | 可发布，下游 npm alias 目标；**一名兼任 koishi / @koishijs/core / @koishijs/loader 三个上游名**（`@koishi-ce/koishi` 是 core + loader 合并再导出，与上游 koishi 主包同构） |
+| `console-shim` | `@koishi-ce/console-shim` | 5.30.11 | 可发布，`@koishijs/plugin-console` 名的 alias 目标 |
+
+六包均在 changesets ignore（版本冻结、勿写 changeset）与根 tsdown exclude（通配 `packages/shim/*`）；三个 `upstream-*` 带 `"koishi-ce": { "upstreamShim": true }` 标记，registry 的 `LocalScanner` 据此跳过。下游项目的 alias 形态见 `apps/koishi-create/src/template.ts`（四行 alias、两个包）。
 
 ### packages/web/*（浏览器侧）
 
@@ -101,7 +117,7 @@ node 侧在 `src/`、Vue 侧在 `client/`（上游约定），`koishi.public: ["
 
 根 `tsdown.config.ts` 用 workspace 模式一次构建所有 node 侧包：
 
-- `workspace.include`：`packages/node/*`、`apps/koishi-scripts`、`plugins/common/*`、`plugins/infra/*`、`plugins/webui/*`；`exclude`：vendored 三包。
+- `workspace.include`：`packages/node/*`、`apps/koishi-scripts`、`plugins/common/*`、`plugins/infra/*`、`plugins/webui/*`；`exclude`：vendored 三包、`packages/web/components`、`packages/shim/*`（占位 shim 全部纯 JS 预编译）。
 - **单遍 ESM-only 构建**：`index.mjs` + `index.d.ts`。本仓库运行时目标是 Bun，其 `require()` 可直接加载 ESM，各包 exports 以 `default` 条件兜底，CJS 双格式产物已退役（各包 package.json 逐个收敛 ESM-only，core / cli / `@koishi-ce/scripts` 已完成）。
 - `deps.neverBundle: [/^@koishi-ce\//]`：workspace 内互相引用按包名外部化（运行时由 node_modules workspace 链接提供）；dts 不内联外部类型。
 - `loader: { ".yml": "copy" }`：locale yml 原样拷入产物，引用路径自动改写。
@@ -130,7 +146,7 @@ node 侧在 `src/`、Vue 侧在 `client/`（上游约定），`koishi.public: ["
 
 | 区域 | 许可证 |
 |---|---|
-| `packages/node/{core,loader,utils,i18n-utils,cli}`、`plugins/infra/{http,server,proxy-agent}`、`plugins/common/*` | MIT |
+| `packages/node/{core,loader,utils,i18n-utils,cli}`、`plugins/infra/{http,server,proxy-agent}`、`plugins/common/*`、`packages/shim/*`（占位 shim 均为本仓原创代码） | MIT |
 | `packages/web/{client,components}`、`plugins/webui/*`（除 console）、`apps/online` | **AGPL-3.0** |
 | `packages/node/console`、`packages/node/registry` | MIT（上游各包 package.json 声明） |
 
