@@ -94,7 +94,6 @@ async function loginWithAccount() {
 async function loginWithPassword() {
 	const { name, password } = shared.value;
 	try {
-		// biome-ignore lint/nursery/noFloatingPromises: 已在 async 回调中 await，nursery 规则对 send 调用的误报
 		await send("login/password", name, password);
 	} catch (e) {
 		error.value = e.message;

@@ -78,7 +78,6 @@ async function logout() {
 /** 提交资料修改：成功后同步本地 shared 与 store 中的用户信息。 */
 async function update() {
 	try {
-		// biome-ignore lint/nursery/noFloatingPromises: 已在 async 回调中 await，nursery 规则对 send 调用的误报
 		await send("user/update", diff.value);
 		message.success("修改成功！");
 		Object.assign(shared.value, diff.value);

@@ -52,6 +52,9 @@
 			"includes": ["**/tests/**", "**/*.{spec,test}.*"],
 			"linter": {
 				"rules": {
+					"suspicious": {
+						"noTemplateCurlyInString": "off"
+					},
 					"style": {
 						"useNamingConvention": "off",
 						"noNonNullAssertion": "off"

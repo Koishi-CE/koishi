@@ -253,7 +253,6 @@ async function onEnter() {
 	} else {
 		current.value.aliases[inputName.value] = {};
 	}
-	// biome-ignore lint/nursery/noFloatingPromises: 已在 async 回调中 await，nursery 规则对 .vue 内 send 调用的误报
 	await send("command/aliases", props.command.name, current.value.aliases);
 	showAliasDialog.value = false;
 	inputSource.value = "";

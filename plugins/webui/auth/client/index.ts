@@ -188,7 +188,6 @@ export default (ctx: Context) => {
 			config,
 			async (value) => {
 				if (!value || !store.user || !shared.value.sync) return;
-				// biome-ignore lint/nursery/noFloatingPromises: 已在 async 回调中 await，nursery 规则对 send 调用的误报
 				await send("user/update", { config: value });
 			},
 			{ deep: true },

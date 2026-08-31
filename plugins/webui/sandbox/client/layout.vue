@@ -184,7 +184,6 @@ watch(
 	model,
 	async (value) => {
 		if (deepEqual(value, user.value)) return;
-		// biome-ignore lint/nursery/noFloatingPromises: 已在 async 回调中 await，nursery 规则对 .vue 内 send 调用的误报
 		await send(
 			"sandbox/set-user",
 			config.value.platform,
@@ -212,7 +211,6 @@ function sendMessage(content: string) {
 
 /** 删除消息：通知 node 侧派发删除事件，并同步移除本地消息列表中的记录。 */
 async function deleteMessage(data: Message) {
-	// biome-ignore lint/nursery/noFloatingPromises: 已在 async 函数中 await，nursery 规则对 .vue 内 send 调用的误报
 	await send(
 		"sandbox/delete-message",
 		data.platform,

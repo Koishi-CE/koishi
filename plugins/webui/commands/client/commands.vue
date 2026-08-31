@@ -164,7 +164,6 @@ function handleDrop(
 }
 
 async function onEnter() {
-	// biome-ignore lint/nursery/noFloatingPromises: 已在 async 回调中 await，nursery 规则对 .vue 内 send 调用的误报
 	await send("command/create", inputText.value);
 	inputText.value = "";
 	showCreateDialog.value = false;

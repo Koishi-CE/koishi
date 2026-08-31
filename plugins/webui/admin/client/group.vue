@@ -210,7 +210,6 @@ async function createItem() {
 
 // 删除当前选中的用户组 / 路线并回到列表首页
 async function deleteItem() {
-	// biome-ignore lint/nursery/noFloatingPromises: 已在 async 回调中 await，nursery 规则对 .vue 内 send 调用的误报
 	await send(`admin/delete-${active.value.type}`, +active.value.id);
 	router.replace("/admin/");
 }
@@ -220,7 +219,6 @@ async function addPermission() {
 	const { permissions } = data.value[active.value.type][active.value.id];
 	permissions.push(permission.value);
 	permission.value = null;
-	// biome-ignore lint/nursery/noFloatingPromises: 已在 async 回调中 await，nursery 规则对 .vue 内 send 调用的误报
 	await send(
 		`admin/update-${active.value.type}`,
 		+active.value.id,
@@ -232,7 +230,6 @@ async function addPermission() {
 async function removePermission(index: number) {
 	const { permissions } = data.value[active.value.type][active.value.id];
 	permissions.splice(index, 1);
-	// biome-ignore lint/nursery/noFloatingPromises: 已在 async 回调中 await，nursery 规则对 .vue 内 send 调用的误报
 	await send(
 		`admin/update-${active.value.type}`,
 		+active.value.id,
@@ -243,7 +240,6 @@ async function removePermission(index: number) {
 // 按平台 + 账号把用户加入当前用户组（服务端报错时弹失败提示）
 async function addUser() {
 	try {
-		// biome-ignore lint/nursery/noFloatingPromises: 已在 async 回调中 await，nursery 规则对 .vue 内 send 调用的误报
 		await send(
 			"admin/add-user",
 			+activeGroup.value,
@@ -261,7 +257,6 @@ async function addUser() {
 // 按平台 + 账号把用户移出当前用户组
 async function removeUser() {
 	try {
-		// biome-ignore lint/nursery/noFloatingPromises: 已在 async 回调中 await，nursery 规则对 .vue 内 send 调用的误报
 		await send(
 			"admin/remove-user",
 			+activeGroup.value,
