@@ -1,5 +1,12 @@
 # @koishi-ce/plugin-config
 
+## 1.0.3
+
+### Patch Changes
+
+- Updated dependencies [f16283b]
+  - @koishi-ce/registry@1.0.3
+
 ## 1.0.2
 
 ### Patch Changes
