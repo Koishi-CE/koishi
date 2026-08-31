@@ -1,5 +1,13 @@
 # @koishi-ce/plugin-hmr
 
+## 1.0.2
+
+### Patch Changes
+
+- Updated dependencies [bcfbe4e]
+  - @koishi-ce/loader@1.0.2
+  - koishi@4.18.11
+
 ## 1.0.1
 
 ### Patch Changes
