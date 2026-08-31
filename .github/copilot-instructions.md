@@ -70,6 +70,7 @@ bun packages/web/client/src/bin.ts build <插件目录>  # 单个 webui 插件�
 - 特殊构建 hack，动对应构建链必须复核：analytics 的 "fuck-echarts"（echarts chunk 内 `Symbol` 重命名）、explorer 的 monaco manualChunks、online 的内置模块改写为 `registry.koishi.chat` 在线加载、client 构建的 vue-i18n esm-browser.prod 别名。
 - hmr 插件的 esbuild 是**运行时依赖**（TS 即时编译），不是 devDep。
 - **Bun 对任何形态的失败解析都按 specifier 做进程内负缓存**：`pkg/package.json` 形态在包落盘前解析失败过一次后，即使包已安装，同进程内该 specifier 永久解析失败；裸名 `pkg` 形态**同样会被污染**（曾被「裸名不受影响」的结论误导过一轮）。市场装完插件「尚未安装 / failed to resolve」即此因（上游 koishijs/webui#273 的 FIXME）。解法是 `@koishi-ce/registry` 导出的 `resolvePackageJson()`——主路径失败后以**纯 fs 探测**（沿 node_modules 链 `existsSync`）兜底，绝不能再调解析 API；market 与 registry 的清单读取都走它。验证类实验务必用全新进程（`bun -e`）。
+- **Bun 会把 exports 的 `"bun"` 条件用在 require 上**（Node 的 require 条件集不含它）：postgres@3.4.x 这类包（bun→ESM 源码、default→CJS 产物）在 Bun 下被 CJS 依赖链 require 到 ESM namespace，esbuild 产物 `__toESM(mod, 1)` 的 node 兼容 interop 无条件把整个 namespace 当 default，`@minatojs/driver-postgres` 的 start() 据此抛 "is not a function ... is an instance of Module"（原版 koishi 走 Node 无此问题）。修复在 loader 的 `node/interop.ts`：`NodeLoader.import` require 插件前遍历其依赖树，对「`require.resolve(spec, { paths: [消费方目录] })`（树内消费方的真实解析键、字面路径）≠ Node require 语义入口（`[require, node, default]` 条件序 + main 兜底）」的包，把 Node 语义入口的加载结果预置进 `require.cache`；ESM import 侧不读 require.cache（实证互不干扰），无分歧零副作用。另：market 装完插件报 `ResolveMessage: Cannot find module` 是负缓存族问题——安装器判断旧版本是否驻留内存原走 `require.resolve(name)`（上游 koishijs/webui#273 FIXME），装包前的探测已把裸名污染、装完必炸；现改走 `isResidentInCache()`（resolvePackageJson 取包目录 + require.cache 前缀扫描，异常保守视为驻留）。
 
 ## git 提交流程
 

@@ -59,7 +59,9 @@ const { Console } = await import("@koishi-ce/console");
 const { App, Service } = await import("@koishi-ce/koishi");
 const http = (await import("@koishi-ce/plugin-http")).default;
 const market = await import("../node/index.ts");
-const { default: Installer } = await import("../node/installer.ts");
+const { default: Installer, isResidentInCache } = await import(
+	"../node/installer.ts"
+);
 const mockPlugin = (await import("@koishi-ce/plugin-mock")).default;
 // 加载包入口占位文件（纯 re-export，无独立逻辑），保证 src 全量被加载
 await import("../index.ts");
@@ -328,6 +330,36 @@ describe("Installer 安装链路", () => {
 		nextSpawnError = false;
 		const code = await app.installer.exec(["install"]);
 		expect(code).toBe(0);
+	});
+});
+
+describe("isResidentInCache（装后重载判定）", () => {
+	/** 在临时 node_modules 放一个已安装包，返回其目录 */
+	function placePkg(name: string) {
+		const pkgDir = join(tmp, "node_modules", name);
+		mkdirSync(pkgDir, { recursive: true });
+		writeFileSync(
+			join(pkgDir, "package.json"),
+			JSON.stringify({ name, version: "1.0.0", main: "index.js" }),
+		);
+		writeFileSync(join(pkgDir, "index.js"), "module.exports = {}");
+		return pkgDir;
+	}
+
+	it("包目录下有模块驻留 require.cache 时返回 true", () => {
+		const pkgDir = placePkg("koishi-plugin-resident-check");
+		// 入口经 require 进入 require.cache，模拟旧版本驻留内存
+		require(join(pkgDir, "index.js"));
+		expect(isResidentInCache("koishi-plugin-resident-check")).toBe(true);
+	});
+
+	it("已安装但无模块驻留内存时返回 false", () => {
+		placePkg("koishi-plugin-idle-check");
+		expect(isResidentInCache("koishi-plugin-idle-check")).toBe(false);
+	});
+
+	it("包不存在时保守返回 true（宁可多重载不漏判）", () => {
+		expect(isResidentInCache("koishi-plugin-absent-check")).toBe(true);
 	});
 });
 

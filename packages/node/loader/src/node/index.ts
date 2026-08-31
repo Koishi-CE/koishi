@@ -1,9 +1,11 @@
 /**
  * NodeLoader：Loader 的 Bun/Node 环境实现。
  *
- * 相比基类，它补充了四块能力：
+ * 相比基类，它补充了五块能力：
  * - 借助 Bun.resolveSync 解析 `koishi-plugin-*` 插件的实际路径并以
  *   require 加载（Bun 的 require 可直接加载 ESM/TS，解析规则见 resolve.ts）；
+ * - 加载插件前预置依赖链的 CJS interop 种子（Bun 把 exports 的 "bun"
+ *   条件用在 require 上导致 ESM 入口分歧的修复，见 interop.ts）；
  * - 读取 .env / .env.local 并注入 process.env（记录注入键避免污染宿主
  *   环境，实现见 env.ts）；
  * - 配置文件的平台 I/O（定位 / 解析 / 原子写回，见 config-file.ts）；
@@ -19,6 +21,7 @@ import type { ResolvedConfigFile } from "../base/config-file.ts";
 import Loader from "../base/index.ts";
 import { locateConfig, parseConfig, saveConfig } from "./config-file.ts";
 import { injectEnv, parseEnvFiles, revertEnv } from "./env.ts";
+import { seedCjsInterop } from "./interop.ts";
 import { migrateManifest } from "./migration.ts";
 import { resolvePlugin } from "./resolve.ts";
 
@@ -112,6 +115,8 @@ export default class NodeLoader extends Loader {
 	 * 按名称导入插件：先解析出模块绝对路径（结果缓存），再以 require
 	 * 加载——Bun 的 require 可直接加载 ESM / TS 产物，且模块进入
 	 * require.cache，hmr 插件的模块图分析与缓存失效据此工作。
+	 * 加载前先经 seedCjsInterop 预置依赖链的 CJS interop 种子（"bun"
+	 * 导出条件导致 Bun require 命中 ESM 入口的分歧修复，见 interop.ts）。
 	 * 解析失败仅记录错误并返回 undefined。
 	 */
 	override async import(name: string) {
@@ -122,6 +127,7 @@ export default class NodeLoader extends Loader {
 			logger.error(err instanceof Error ? err.message : err);
 			return;
 		}
+		seedCjsInterop(filename);
 		return require(filename);
 	}
 
