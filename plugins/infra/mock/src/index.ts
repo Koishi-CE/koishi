@@ -1,3 +1,7 @@
+// SPDX-License-Identifier: MIT
+// Copyright (c) 2019-present Shigma and Koishijs contributors.
+// Copyright (c) 2026-present Koishi-CE contributors.
+
 /**
  * mock 插件入口：汇总再导出模拟适配器（adapter）、
  * 消息客户端（client）与 HTTP 测试工具（webhook）。

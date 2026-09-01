@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: MIT
+// Copyright (c) 2026-present Koishi-CE contributors.
+
 import { afterAll, beforeAll, describe, expect, it } from "bun:test";
 import { App } from "@koishi-ce/koishi";
 // memory 数据库经 admin 的 node_modules 深链导入源码形态（本包未声明该 devDep，

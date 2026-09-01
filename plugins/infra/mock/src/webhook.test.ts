@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: MIT
+// Copyright (c) 2026-present Koishi-CE contributors.
+
 import { describe, expect, it } from "bun:test";
 import { EventEmitter } from "node:events";
 import type { Context } from "@koishi-ce/koishi";

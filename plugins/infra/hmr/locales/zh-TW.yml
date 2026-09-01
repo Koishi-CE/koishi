@@ -1,3 +1,6 @@
+# SPDX-License-Identifier: MIT
+# Copyright (c) 2019-present Shigma and Koishijs contributors.
+
 base: 使用者顯示路徑的根目錄，默認為當前工作路徑。
 root: 要監聽的文件或目錄列表，相對於 `base` 路徑。
 ignored: 要忽略的文件或目錄。支持 [Glob Patterns](https://github.com/micromatch/micromatch) 語法。
