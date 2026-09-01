@@ -1,5 +1,30 @@
 # NOTICE
 
+## 中文
+
+**koishi** 是 [Koishi](https://koishi.chat) 聊天机器人框架的社区再分发版。它与 Koishijs 组织无隶属关系，不受其背书，也非由其维护。
+
+本仓库是由两个上游仓库的代码合并重构而成的衍生作品，组织为单一 monorepo。各目录的来源与许可证归属如下：
+
+| 目录 | 上游 | 许可证 |
+| --- | --- | --- |
+| `packages/node/{core,loader,utils,i18n-utils,cli}` | [koishijs/koishi](https://github.com/koishijs/koishi) `packages/*` | MIT — [LICENSE](./LICENSE) |
+| `plugins/infra/{http,server,hmr,mock,proxy-agent}` | [koishijs/koishi](https://github.com/koishijs/koishi) `plugins/*` | MIT — [LICENSE](./LICENSE) |
+| `plugins/common/{bind,broadcast,callme,echo,help,inspect}` | [koishijs/koishi](https://github.com/koishijs/koishi) `plugins/common/*` | MIT — [LICENSE](./LICENSE) |
+| `packages/web/{client,components,market}` | [koishijs/webui](https://github.com/koishijs/webui) `packages/*` | AGPL-3.0 — [LICENSES/webui-AGPL-3.0](./LICENSES/webui-AGPL-3.0.txt) |
+| `plugins/webui/{actions,admin,analytics,auth,commands,config,console,explorer,insight,locales,logger,market,notifier,oobe,sandbox,status}` | [koishijs/webui](https://github.com/koishijs/webui) `plugins/*` | AGPL-3.0 — [LICENSES/webui-AGPL-3.0](./LICENSES/webui-AGPL-3.0.txt) |
+| `apps/online` | [koishijs/webui](https://github.com/koishijs/webui) `packages/online` | AGPL-3.0 — [LICENSES/webui-AGPL-3.0](./LICENSES/webui-AGPL-3.0.txt) |
+| `packages/node/{console,registry}` | [koishijs/webui](https://github.com/koishijs/webui) | MIT（以各包上游 package.json 声明为准） |
+| `packages/shim/*` | 本仓库的原创作品（上游名占位 shim） | MIT — [LICENSE](./LICENSE) |
+
+版权所有（c）2019 至今 Shigma 及 Koishijs 贡献者。
+
+上述 AGPL-3.0 许可部分在本仓库中仍以 AGPL-3.0 授权，MIT 部分仍以 MIT 授权。分发本合并作品，或将其作为网络服务提供，将触发对 AGPL-3.0 部分的 AGPL-3.0 义务（包括公开源代码）。本声明仅供参考，不构成法律意见。
+
+---
+
+## English
+
 **koishi** is a community redistribution of the [Koishi](https://koishi.chat) chatbot framework. It is not affiliated with, endorsed by, or maintained by the Koishijs organization.
 
 This repository is a derivative work combining code from two upstream repositories, restructured into a single monorepo. Per-directory provenance and licensing:
