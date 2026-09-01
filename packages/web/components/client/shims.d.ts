@@ -1,19 +1,29 @@
-﻿// SPDX-License-Identifier: AGPL-3.0-only
+// SPDX-License-Identifier: AGPL-3.0-only
 // Copyright (c) 2026-present Koishi-CE contributors.
 
 /**
- * 绫诲瀷鍨墖:schemastery-vue 浠呬互 TS 婧愮爜鍙戝竷(main 鐩存帴鎸囧悜 src),鍏舵簮鐮? * 鏃犳硶閫氳繃鏈粨搴撶殑瓒呬弗鏍肩紪璇戦厤缃?verbatimModuleSyntax / noUncheckedIndexedAccess
- * 绛?杩涘叆绫诲瀷绋嬪簭銆傛祻瑙堝櫒绔唬鐮佺粺涓€浠?"schemastery-vue/client" 瀵煎叆:
- * 璇ュ瓙璺緞鍦ㄥ寘鍐呭苟涓嶅瓨鍦?绫诲瀷鐢辨湰 ambient 澹版槑鎻愪緵;杩愯鏃剁敱鏋勫缓鍣ㄥ埆鍚? * 鏄犲皠鍒板悓鐩綍 schemastery-vue-runtime.ts(琛ラ綈鐪熷疄鍖呯己澶辩殑 SchemaBase
- * 鍏峰悕瀵煎嚭,瑙?packages/web/client/src/index.ts 鐨?resolve.alias)銆? *
- * 鍙岃建璇存槑:vue 鐨?compiler-sfc 瑙ｆ瀽 .vue 鍐?defineProps 绛夌被鍨嬫椂璧? * TypeScript 妯″潡瑙ｆ瀽,鍙 tsconfig paths 鎸囧悜鐨勭湡瀹炴枃浠?鏃笉璁?vite
- * 鍒悕涔熶笉璁ゆ湰 ambient 澹版槑鈥斺€旀晠鍚屼竴濂楀疄浣撳湪 schemastery-vue-client.ts
- * (鐪熷疄妯″潡,渚?compiler-sfc 缁忔牴 tsconfig.client.json 鐨?paths 瑙ｆ瀽)
- * 鏈変竴浠介暅鍍?涓ゅ蹇呴』鍚屾淇敼銆傛敞鎰?declare module 鍐呯殑鐩稿瀵煎嚭涓嶅彲
- * 瑙ｆ瀽,鍙兘鍐呰仈澹版槑;閮ㄥ垎鎻掍欢 client tsconfig 鑷甫 paths 浼氭暣浣撹鐩? * 缁ф壙鐨?paths,鏁?tsc 渚т篃涓嶈兘鍙潬 paths 涓€濂楁満鍒躲€? *
- * 鏈枃浠剁粡 form/index.ts 鐨?/// reference 寮曞叆,鍑＄被鍨嬬▼搴忓寘鍚? * form/index.ts 鍗宠嚜鍔ㄧ敓鏁堛€俻ackages/web/client 鐨?client / app 椤圭洰
- * 閫氳繃 client/client/shims.d.ts 寮曠敤鏈枃浠躲€? *
- * Schema 绫诲瀷鍙栬嚜 "@koishi-ce/koishi"(鍏?lib 澹版槑鍐嶅鍑?schemastery 鐨? * Schema,涓庤鍖呰繍琛屾椂瀵煎嚭鐨勬槸鍚屼竴瀹炵幇)銆? */
+ * 类型垫片:schemastery-vue 仅以 TS 源码发布(main 直接指向 src),其源码
+ * 无法通过本仓库的超严格编译配置(verbatimModuleSyntax / noUncheckedIndexedAccess
+ * 等)进入类型程序。浏览器端代码统一从 "schemastery-vue/client" 导入:
+ * 该子路径在包内并不存在,类型由本 ambient 声明提供;运行时由构建器别名
+ * 映射到同目录 schemastery-vue-runtime.ts(补齐真实包缺失的 SchemaBase
+ * 具名导出,见 packages/web/client/src/index.ts 的 resolve.alias)。
+ *
+ * 双轨说明:vue 的 compiler-sfc 解析 .vue 内 defineProps 等类型时走
+ * TypeScript 模块解析,只认 tsconfig paths 指向的真实文件,既不认 vite
+ * 别名也不认本 ambient 声明——故同一套实体在 schemastery-vue-client.ts
+ * (真实模块,供 compiler-sfc 经根 tsconfig.client.json 的 paths 解析)
+ * 有一份镜像,两处必须同步修改。注意 declare module 内的相对导出不可
+ * 解析,只能内联声明;部分插件 client tsconfig 自带 paths 会整体覆盖
+ * 继承的 paths,故 tsc 侧也不能只靠 paths 一套机制。
+ *
+ * 本文件经 form/index.ts 的 /// reference 引入,凡类型程序包含
+ * form/index.ts 即自动生效。packages/web/client 的 client / app 项目
+ * 通过 client/client/shims.d.ts 引用本文件。
+ *
+ * Schema 类型取自 "@koishi-ce/koishi"(其 lib 声明再导出 schemastery 的
+ * Schema,与该包运行时导出的是同一实现)。
+ */
 declare module "schemastery-vue/client" {
 	import type { Schema } from "@koishi-ce/koishi";
 	import type { App, Component } from "vue";

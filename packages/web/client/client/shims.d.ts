@@ -1,14 +1,19 @@
-﻿// SPDX-License-Identifier: AGPL-3.0-only
+// SPDX-License-Identifier: AGPL-3.0-only
 // Copyright (c) 2026-present Koishi-CE contributors.
 
 /**
- * 娴忚鍣ㄧ绫诲瀷鍨墖(packages/web/client 鑷韩浣跨敤;app 椤圭洰閫氳繃
- * app/shims.d.ts 寮曠敤鏈枃浠?:
+ * 浏览器端类型垫片(packages/web/client 自身使用;app 项目通过
+ * app/shims.d.ts 引用本文件):
  *
- * 1. "schemastery-vue/client" 铏氭嫙瀛愯矾寰?鐢辨牴 tsconfig.client.json 鐨? *    paths 瑙ｆ瀽鍒?packages/web/components/client/schemastery-vue-client.ts
- *    (鐪熷疄妯″潡,鍗曚竴浜嬪疄婧?,杩愯鏃剁粡鏋勫缓鍣ㄥ埆鍚嶆槧灏勫洖鐪熷疄鍖呫€? * 2. "@koishi-ce/plugin-console":鏈寘 node_modules 涓病鏈夎鎻掍欢鐨勯摼鎺? *    (渚濊禆鏂瑰悜鐩稿弽,娴忚鍣ㄧ tsconfig 涔熸病鏈?paths),涓旇鎻掍欢婧愮爜鍚湁
- *    node 涓撳睘瀵煎叆,鏃犳硶鐩存帴杩涘叆娴忚鍣ㄧ▼搴?鏁呭湪姝ゆ寜鍏跺叕寮€闈㈡墜鍐欏０鏄庛€? *    瀛楁涓?plugins/webui/console/src/node/index.ts 鐨?ClientConfig 浠ュ強
- *    packages/node/console 鐨?DataService / Console.Services 淇濇寔涓€鑷淬€? */
+ * 1. "schemastery-vue/client" 虚拟子路径:由根 tsconfig.client.json 的
+ *    paths 解析到 packages/web/components/client/schemastery-vue-client.ts
+ *    (真实模块,单一事实源),运行时经构建器别名映射回真实包。
+ * 2. "@koishi-ce/plugin-console":本包 node_modules 中没有该插件的链接
+ *    (依赖方向相反,浏览器端 tsconfig 也没有 paths),且该插件源码含有
+ *    node 专属导入,无法直接进入浏览器程序,故在此按其公开面手写声明。
+ *    字段与 plugins/webui/console/src/node/index.ts 的 ClientConfig 以及
+ *    packages/node/console 的 DataService / Console.Services 保持一致。
+ */
 
 declare module "@koishi-ce/plugin-console" {
 	import type { Schema } from "@koishi-ce/koishi";
@@ -32,10 +37,10 @@ declare module "@koishi-ce/plugin-console" {
 		ping(): string;
 	}
 
-	/** 鏈嶅姟绔暟鎹湇鍔＄殑绫诲瀷楠ㄦ灦锛堜粎绫诲瀷灞傞潰浣跨敤锛屾祻瑙堝櫒绔棤瀹炵幇锛?*/
+	/** 服务端数据服务的类型骨架（仅类型层面使用，浏览器端无实现） */
 	export abstract class DataService<T = unknown> {}
 
-	/** 鎵╁睍鍏ュ彛鎻忚堪锛氱敱鏈嶅姟绔?entry 鏈嶅姟鎺ㄩ€侊紝loader 鎹鍔ㄦ€佸姞杞芥墿灞?*/
+	/** 扩展入口描述：由服务端 entry 服务推送，loader 据此动态加载扩展 */
 	export interface EntryData {
 		files: string[];
 		paths?: string[];
@@ -43,7 +48,7 @@ declare module "@koishi-ce/plugin-console" {
 	}
 
 	export namespace Console {
-		/** 鏈嶅姟绔彲鐢ㄦ暟鎹湇鍔＄殑娓呭崟锛孲tore 绫诲瀷鎹鎺ㄥ鍚勯敭鐨勮礋杞芥暟鎹?*/
+		/** 服务端可用数据服务的清单，Store 类型据此推导各键的负载数据 */
 		export interface Services {
 			entry: DataService<Dict<EntryData>>;
 			schema: DataService<Dict<Schema>>;
