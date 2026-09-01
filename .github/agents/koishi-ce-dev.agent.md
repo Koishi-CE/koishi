@@ -17,7 +17,7 @@ user-invocable: true
 ## 约束
 
 - **提交文本一律使用简体中文**：所有回复、代码注释、提交说明、生成的文档均使用简体中文。
-- **不要"顺手修复" peerDependencies 的上游名**：`koishi ^4.18.11`、`@koishijs/plugin-console`、`@koishijs/loader`、`@koishijs/client`、`@koishijs/core` 等指向上游是刻意的生态兼容设计（见 `UPSTREAM.md`）；代码内导入则一律 `@koishi-ce/*`。
+- **不要"顺手修复" peerDependencies 的上游名**：`koishi ^4.18.11`、`@koishijs/plugin-console`、`@koishijs/loader`、`@koishijs/client`、`@koishijs/core` 等指向上游是刻意的生态兼容设计（见 `docs/UPSTREAM.md`）；代码内导入则一律 `@koishi-ce/*`。
 - **cordis 生态冻结在 3.x**：cordis / minato / @cordisjs/* / @satorijs/* 不得跳 4.x / 1.x（Phase 5 已实证被 `@satorijs/core` 双 cordis 问题阻塞并回退，重启条件见 `docs/upgrade-plan.md`）。
 - **vendored 三包不动**：`plugins/infra/{http,proxy-agent,server}` 是无源码的预编译产物包，被根 tsdown 显式 exclude。
 - **ESM-only 产物 + Bun 运行时**：根 tsdown 单遍构建只出 ESM（`index.mjs` + `index.d.ts`），exports 以 `default` 条件兜底 require 解析（Bun 的 require() 可直接加载 ESM）；**不要恢复 CJS 双格式产物**。
@@ -40,10 +40,10 @@ bun packages/web/client/bin.js build [<插件目录>]   # 前端产物（缺省=
 
 ## 开发工作流
 
-1. 收到任务后，先以实际代码为准了解现状（目录映射与上游对应关系查 `UPSTREAM.md`，需要时查阅 `docs/`），再动手。
+1. 收到任务后，先以实际代码为准了解现状（目录映射与上游对应关系查 `docs/UPSTREAM.md`，需要时查阅 `docs/`），再动手。
 2. 逐模块实现，每完成一块跑一次 `bun run check`；改到构建链（tsdown / client 构建脚本）加跑 `bun run build` 与前端构建并复核已知 hack（fuck-echarts、monaco manualChunks、collectWorkspaceAliases 等，见 `AGENTS.md` 已知坑）。
 3. 修类型错误时按 project 推进（`bun run typecheck` 的输出按 tsconfig 分组），不要跨 project 大范围重排代码。
-4. port 上游改动：按 `UPSTREAM.md` 映射表手动 diff 移植，完成后 `bun run build` + `bun test` 验证。
+4. port 上游改动：按 `docs/UPSTREAM.md` 映射表手动 diff 移植，完成后 `bun run build` + `bun test` 验证。
 
 ## git 提交流程（写完代码后必须执行）
 

@@ -2,7 +2,7 @@
 
 A Bun-first community redistribution of [Koishi](https://koishi.chat) — the Koishi core and webui codebases restructured into a single monorepo. Published under the GitHub organization [Koishi-CE](https://github.com/Koishi-CE) and the npm scope `@koishi-ce`.
 
-> **Not affiliated with the Koishijs organization.** See [NOTICE.md](./NOTICE.md) for attribution and licensing (note: large parts originating from webui are AGPL-3.0), and [UPSTREAM.md](./UPSTREAM.md) for the upstream source mapping and sync workflow.
+> **Not affiliated with the Koishijs organization.** See [NOTICE.md](./NOTICE.md) for attribution and licensing (note: large parts originating from webui are AGPL-3.0), and [UPSTREAM.md](./docs/UPSTREAM.md) for the upstream source mapping and sync workflow.
 
 ## Status
 

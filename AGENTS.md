@@ -6,8 +6,8 @@
 
 ## 基本约束
 
-- **全程使用简体中文**：所有回复、代码注释、提交说明、生成的文档均使用简体中文（README / NOTICE / UPSTREAM.md 等面向公开受众的既有英文文档除外）。
-- **本仓库是上游 fork 合并仓**：[koishijs/koishi](https://github.com/koishijs/koishi)（MIT）与 [koishijs/webui](https://github.com/koishijs/webui)（部分 AGPL-3.0）的文件级合并重构，**未保留上游 git 历史**；目录映射与同步流程见 `UPSTREAM.md`，各目录许可证归属见 `NOTICE`。
+- **全程使用简体中文**：所有回复、代码注释、提交说明、生成的文档均使用简体中文（README / NOTICE / docs/UPSTREAM.md 等面向公开受众的既有英文文档除外）。
+- **本仓库是上游 fork 合并仓**：[koishijs/koishi](https://github.com/koishijs/koishi)（MIT）与 [koishijs/webui](https://github.com/koishijs/webui)（部分 AGPL-3.0）的文件级合并重构，**未保留上游 git 历史**；目录映射与同步流程见 `docs/UPSTREAM.md`，各目录许可证归属见 `NOTICE`。
 - **不要在 Biome 的 JSON 行尾不可见字符上浪费 Token**：这是已知的、正常的、无害的现象。看到即跳过，不要调查成因、不要试图修复、不要反复报告。
 - 除以上约束外，不要过度解读本指令——其余行为遵循默认 Agent 规则。
 
@@ -18,7 +18,7 @@
 
 ## 硬性约束（违反 = 错误）
 
-1. **peerDependencies 指向上游包名是刻意设计**：`koishi ^4.18.11`（约 28 个包）、`@koishijs/plugin-console ^5.30.11`、`@koishijs/loader`、`@koishijs/client`、`@koishijs/core`（loader 精确锁 `4.18.11`）等一律保留上游名，用于维持与上游插件生态的兼容（约定见 `UPSTREAM.md`）。**不要"顺手修复"成 `@koishi-ce` 名**。
+1. **peerDependencies 指向上游包名是刻意设计**：`koishi ^4.18.11`（约 28 个包）、`@koishijs/plugin-console ^5.30.11`、`@koishijs/loader`、`@koishijs/client`、`@koishijs/core`（loader 精确锁 `4.18.11`）等一律保留上游名，用于维持与上游插件生态的兼容（约定见 `docs/UPSTREAM.md`）。**不要"顺手修复"成 `@koishi-ce` 名**。
 2. **代码内导入一律 `@koishi-ce/*`**（workspace 内部引用）；仅有的外部上游导入例外是测试用的 `@koishijs/plugin-database-memory` 与 console 的类型引用 `@koishijs/plugin-server-proxy`。
 3. **cordis 生态冻结在 3.x 内洽线**：cordis / minato / @cordisjs/* / @satorijs/* 不得跳 4.x / 1.x——Phase 5 已实证被 `@satorijs/core`（内部携带 cordis ^3，无 cordis 4 线）阻塞并整体回退，重启条件见 `docs/upgrade-plan.md` Phase 5 节。
 4. **vendored 三包不动**：`plugins/infra/{http,proxy-agent,server}` 是预编译产物包（无 `src/`、不走 tsdown、根 tsdown 配置显式 exclude），分别内联再导出 `@cordisjs/plugin-*`。
@@ -47,7 +47,7 @@ bun packages/web/client/src/bin.ts build <插件目录>  # 单个 webui 插件�
 
 - `apps/koishi-create` 有自己的 tsdown.config.ts，进目录 `bun run build`（koishi-scripts 已并入根构建）；`apps/online` 用 `src/build.ts`（vite 编程式，PPA 在线化）。
 - **类型检查现状**：全仓 50 个 project 在 TS7 下 0 错误（含 `packages/web/*`、`apps/online` 与 market 两个 project）。最低要求：**改哪个包，保证该包所在 project 不新增错误**。
-- 上游同步（port 上游改动）按 `UPSTREAM.md` 的映射表手动 diff 移植，port 进来的源码相对导入须补 `.ts` 扩展名（nodenext 约束，上游是无后缀的 bundler 风格），完成后跑 `bun run build` + `bun test`。
+- 上游同步（port 上游改动）按 `docs/UPSTREAM.md` 的映射表手动 diff 移植，port 进来的源码相对导入须补 `.ts` 扩展名（nodenext 约束，上游是无后缀的 bundler 风格），完成后跑 `bun run build` + `bun test`。
 
 ## 代码风格
 

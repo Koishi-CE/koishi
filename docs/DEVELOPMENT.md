@@ -86,7 +86,7 @@ cd apps/online          && bun run build   # koishi.online 网站（src/build.ts
 ### 命名空间纪律
 
 - workspace 内部引用一律 `@koishi-ce/*`（tsconfig paths 已把 35 个包指向各自 `src/`）。
-- `peerDependencies` 保留上游名（`koishi`、`@koishijs/*`）是**刻意的生态兼容设计**，不要改成 `@koishi-ce`（详见 [UPSTREAM.md](../UPSTREAM.md) 与 [dependency-audit.md](./dependency-audit.md) §1）。
+- `peerDependencies` 保留上游名（`koishi`、`@koishijs/*`）是**刻意的生态兼容设计**，不要改成 `@koishi-ce`（详见 [UPSTREAM.md](./UPSTREAM.md) 与 [dependency-audit.md](./dependency-audit.md) §1）。
 - 外部上游包仅两处例外：测试用 `@koishijs/plugin-database-memory`、console 的类型引用 `@koishijs/plugin-server-proxy`。
 
 ### Biome / ESLint

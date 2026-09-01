@@ -6,7 +6,7 @@
 
 - **是什么**：[Koishi](https://koishi.chat) 聊天机器人框架的 **Bun-first 社区再分发**（community redistribution）。由 [koishijs/koishi](https://github.com/koishijs/koishi)（MIT）与 [koishijs/webui](https://github.com/koishijs/webui)（部分 AGPL-3.0）两个上游仓库**文件级合并**（无上游 git 历史）重构为单一 Bun workspace monorepo。
 - **发布身份**：GitHub 组织 [Koishi-CE](https://github.com/Koishi-CE)，npm 作用域 `@koishi-ce`（`koishi` → `@koishi-ce/koishi`，命令名不变；`@koishijs/X` → `@koishi-ce/X`）。与 Koishijs 组织无隶属关系（见 `NOTICE`）。
-- **上游同步**：按 [UPSTREAM.md](../UPSTREAM.md) 的映射表手动 diff 移植；`peerDependencies` 刻意指向上游已发布运行时（`koishi` / `@koishijs/*`），使本仓插件与上游生态保持兼容。
+- **上游同步**：按 [UPSTREAM.md](./UPSTREAM.md) 的映射表手动 diff 移植；`peerDependencies` 刻意指向上游已发布运行时（`koishi` / `@koishijs/*`），使本仓插件与上游生态保持兼容。
 
 ## 2. 目录结构与包清单
 

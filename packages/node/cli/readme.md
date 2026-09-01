@@ -17,7 +17,7 @@
 npm install -g @koishi-ce/koishi
 ```
 
-> 本项目与 Koishijs 官方组织无从属关系。感谢原作者 Shigma 及所有上游贡献者，相关声明见仓库根目录的 NOTICE 与 UPSTREAM 文件。
+> 本项目与 Koishijs 官方组织无从属关系。感谢原作者 Shigma 及所有上游贡献者，相关声明见仓库根目录的 NOTICE 与 docs/ 目录的 UPSTREAM 文件。
 
 ## 许可证
 

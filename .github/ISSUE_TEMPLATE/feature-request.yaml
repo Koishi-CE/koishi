@@ -9,7 +9,7 @@ body:
       label: 请求类型
       description: |
         本仓库是 [koishijs/koishi](https://github.com/koishijs/koishi) 的社区再分发仓库。
-        如果上游已经实现了你想要的功能,可以直接提出同步请求,我们会按 `UPSTREAM.md` 的流程移植。
+        如果上游已经实现了你想要的功能,可以直接提出同步请求,我们会按 `docs/UPSTREAM.md` 的流程移植。
       options:
         - 同步上游已有的功能
         - 对现有功能的改进
