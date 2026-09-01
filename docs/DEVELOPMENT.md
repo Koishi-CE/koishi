@@ -1,108 +1,105 @@
 # 开发指南（DEVELOPMENT）
 
-> 本文档是 `koishi`（Koishi-CE monorepo）的开发依据：环境、门禁命令、构建布局、编码约定、测试写法与已知坑。以实际代码为准，文档滞后时听代码的。仓库级常驻约定见根目录 [AGENTS.md](../AGENTS.md)，结构与构建体系详见 [ARCHITECTURE.md](ARCHITECTURE.md)。
+> 本文档是 `koishi`（Koishi-CE monorepo）的开发参考手册：环境、门禁命令、构建布局、编码约定、测试写法与已知坑。以实际代码为准，文档滞后时听代码的。仓库级常驻约束见根目录 [AGENTS.md](../AGENTS.md)；结构与包清单见 [ARCHITECTURE.md](./ARCHITECTURE.md)；发布流程见 [RELEASE.md](./RELEASE.md)。
 
 ## 1. 环境要求
 
 | 工具 | 版本 | 用途 |
 |---|---|---|
-| Bun | ≥ 1.4 | 包管理（workspaces + `bun.lock`）、测试运行器（`bun test`）、主要运行时（yml 导入等原生能力） |
-| Node | ≥ 24（辅助） | 个别辅助脚本；`typecheck` 为两条纯 `bunx tsc`（native tsc 的 node 启动器），不再依赖 Node 脚本编排 |
-| 包管理器 | 仅 Bun | 不要引入 pnpm / yarn / npm 的锁文件 |
+| [Bun](https://bun.sh) | ≥ 1.4（`packageManager` 钉 `bun@1.4.0`） | 唯一包管理器（workspaces + `bun.lock`）、测试运行器、主要运行时（`require(esm)`、原生 yml 导入） |
+| Node | ≥ 22.12（不作兼容目标） | 辅助场景；类型检查走 `bunx tsc`（`@typescript/native` 的 node 启动器） |
 
-- TypeScript **双版本**：根 `devDependencies.typescript` 实为 `npm:@typescript/typescript6@6.0.2`（供 @typescript-eslint/parser，其对 TS7 的支持尚未落地，见 eslint.config.ts 头部注释）；真正的类型检查用 `@typescript/native`（TS 7.0.2 原生编译器，`bun run ts7` 可直接调用其 tsc）。
-- 无全局安装要求，所有工具都在 workspace devDependencies 里。
+- 不要引入 pnpm / yarn / npm 的锁文件；无全局安装要求，所有工具都在 workspace devDependencies。
+- TypeScript 双版本：根 `devDependencies.typescript` 实为 `npm:@typescript/typescript6`（供 @typescript-eslint/parser，其对 TS7 的支持尚未落地，见 eslint.config.ts 头部注释）；真正的类型检查用 `@typescript/native`（TS7 原生编译器，`bun run ts7` 可直接调用）。
 
 ## 2. 常用命令
 
 ```bash
-bun install                        # 安装依赖（Bun workspaces）
-bun run check                      # 全量门禁 = lint + lint:client + typecheck
-bun run lint                       # biome check .（格式 + lint）
-bun run lint:client                # eslint 仅查 *.vue
-bun run format                     # biome format --write .
-bun run typecheck                  # TS7 大一统类型检查（node 侧 + client 侧两条 bunx tsc 串行）
-bun run typecheck:legacy           # tsc6 --noEmit -p tsconfig.json（node 侧大一统，tsc6 对照用）
-bun run build                      # 根 tsdown：全部 node 侧包 → 各包 lib/
-bun test packages plugins/common plugins/webui/admin plugins/webui/commands
-                                   # 全量自有用例（20 文件 / 145 用例，勿裸跑 `bun test`，见已知坑 3）
-bun test packages/node/core        # 定向跑某包测试
+bun install                     # 安装依赖（Bun workspaces，产出 bun.lock）
+bun run check                   # 全量门禁 = lint + lint:client + typecheck（提交前必跑）
+bun run lint                    # biome check .（格式 + lint 唯一权威）
+bun run lint:client             # eslint 仅查 *.vue 模板语义
+bun run format                  # biome format --write .
+bun run typecheck               # TS7 类型检查（node 侧 + client 侧两条 bunx tsc 串行）
+bun run build                   # 根 tsdown：全部 node 侧包 → 各包 lib/（ESM-only）
+bun test                        # 全量自有用例（97 个测试文件 / 约 800 用例，秒级）
+bun test packages/node/core     # 定向跑某包测试
+bun test --coverage             # 覆盖率（src 源码口径，总体约 99.8% 行覆盖）
 ```
 
 前端产物（vite，编程式构建，无配置文件）：
 
 ```bash
-bun packages/web/client/src/bin.ts build                    # 宿主控制台前端 → plugins/webui/console/dist
+bun packages/web/client/src/bin.ts build               # 宿主控制台前端 → plugins/webui/console/dist
 bun packages/web/client/src/bin.ts build plugins/webui/status   # 单个 webui 插件的前端
 ```
 
-独立构建的 apps（各有自己的构建入口）：
+独立构建与发布：
 
 ```bash
-cd apps/koishi-create   && bun run build   # create-koishi-ce 脚手架 CLI
-cd apps/online          && bun run build   # koishi.online 网站（src/build.ts）
-# apps/koishi-scripts 已并入根 tsdown workspace，无需单独构建
+cd apps/koishi-create && bun run build   # create-koishi-ce 脚手架 CLI（有自己的 tsdown.config.ts）
+bun run release status                   # 发布链概览（详见 RELEASE.md）
 ```
 
-## 3. 门禁与现状
+`apps/koishi-scripts` 已并入根 tsdown workspace，无需单独构建。
 
-`bun run check` 是提交前门禁，由三段组成：
+## 3. 门禁构成与现状
 
-1. **`lint`（biome）**：全仓格式 + lint。biome 尊重 `.gitignore`（`vcs.useIgnoreFile`），跳过 lib/dist/market 等。格式以 biome 为唯一权威——`.editorconfig` 声明的 4 空格缩进与代码现状（tab）不符，勿据此手改格式，统一 `bun run format`。
-2. **`lint:client`（eslint）**：只查 `.vue` 文件（biome 不解析 .vue），与 biome 零重叠；核心规则 `vue/no-undef-components`（忽略 `^K`、`^el-`、`^router-` 全局组件）。不做类型感知。
-3. **`typecheck`（TS7 逐项目）**：`tooling/scripts/typecheck.ts` 递归扫描 packages / plugins / apps 下**所有** `tsconfig.json`，全量 Promise.all 并发跑 `@typescript/native` 的 tsc（输出重定向临时文件再回读，绕开 Bun.spawn 管道高并发下的 EOF 竞态）。⚠️ **不读 .gitignore**——gitignored 的 `plugins/webui/market/` 也会被检查；无其他排除项（koishi-scripts 的脚手架模板已内嵌进源码）。
+`bun run check` 由三段组成：
 
-**类型检查现状（进行中，2026-08-29）**：严格模式错误清理已完成 `packages/node/*` 六包（0 错误）与 `packages/web/{client,components}` 的三个浏览器侧项目（`app`、`client/client`、`components/client`——已对齐 `tsconfig.base` 全部严格项并清零）。存量错误集中在：webui 插件各 `client/tsconfig.json`、部分插件 `src/`、以及 gitignored 的 market。**最低纪律：改哪个包，保证该包所在 project 不新增错误；`packages/node/*` 保持 0。**
+1. **lint（biome）**：全仓格式 + lint（`biome check .`）。biome 尊重 `.gitignore`（`vcs.useIgnoreFile`），跳过 lib/dist 等。格式以 biome 为唯一权威——`.editorconfig` 声明的 4 空格缩进与代码现状（tab）不符，勿据此手改，统一 `bun run format`。
+2. **lint:client（eslint）**：只查 `.vue` 文件，与 biome 零重叠；核心规则 `vue/no-undef-components`（忽略 `^K`、`^el-`、`^router-` 全局组件）。不做类型感知。
+3. **typecheck**：两条纯 `bunx tsc` 串行——node 侧大一统 `tsconfig.json`（include 为全部 node 工程 src 的并集）+ client 侧大一统 `tsconfig.web.json`（include 为全部 client 工程并集）。**不要恢复逐 tsconfig 并行 spawn**（旧方案 50 进程并发在 win32 下有 Bun.spawn 竞态且无必要）。两条链已开 `incremental`，buildinfo 分文件存 `node_modules/.cache/tsc/`（node / web / legacy 各一份，入口文件集合不同不能共用；删掉即全量重建）。新增 client 工程时须同步 `tsconfig.web.json` 的 include/paths。
 
-**`.vue` 的类型检查现状（2026-08-29 评估）**：tsc 侧经 `packages/web/client/global.d.ts` 把 `*.vue` 声明为不透明 `Component`，SFC 的 script / template **不进入 tsc 程序**——错误实际由构建期 vite（compiler-sfc，含 defineProps 类型解析）暴露，故前端构建是 `.vue` 的实际类型门禁。引入 vue-tsc 做全量 SFC 检查的成本：需要经典 TS 5.x 运行时（与本仓 TS7-native 策略冲突、形成第二套类型真相）+ 全部约 90 个 `.vue` 的独立检查遍，当前**结论是不引入**；待 Volar 工具链支持 TS7 后再评估。若把 web 三项目的严格项（`noPropertyAccessFromIndexSignature` 等 9 项）直接推到 `tsconfig.client` 全体客户端项目，模拟实测新增约 91 个错误（其中 84 个在 gitignored 的 market、7 个在受追踪插件 client），应配合 market 对齐逐步推进。
+**类型检查现状**：全仓在 TS7 下 0 错误（含 `packages/web/*` 与全部 webui 插件）。最低纪律：改哪个包，保证该包所在 project 不新增错误。
 
-**测试现状**：自有用例 = 20 个 `*.spec.ts` / 145 个用例，全通过（约 1 秒；mocha 已移除，Phase 4 迁移完成，见 [upgrade-plan.md](./upgrade-plan.md)）。⚠️ **裸 `bun test`（仓库根）当前会挂起**——bun test 的发现规则包含 `*.test.ts`，会把 gitignored 的 market 的 vitest 用例卷进来并在 `i18n.test.ts` 处挂死；全量跑用带过滤参数的命令（见 §2），或按包定向。market 对齐完成、用例迁为 `*.spec.ts` 后此坑消除。
+**`.vue` 的类型检查**：tsc 侧经 `packages/web/client/global.d.ts` 把 `*.vue` 声明为不透明 `Component`，SFC 的 script / template 不进入 tsc 程序——错误实际由构建期 vite（compiler-sfc，含 defineProps 类型解析）暴露，前端构建是 `.vue` 的实际类型门禁。vue-tsc 需要经典 TS 运行时、与本仓 TS7-native 策略冲突，不引入；待 Volar 工具链支持 TS7 后再评估。
 
 ## 4. 构建产物布局
 
 | 产物 | 位置 | 产生方式 |
 |---|---|---|
-| node 侧库产物 | 各包 `lib/`（`index.mjs` ESM + `index.d.ts`） | 根 `tsdown.config.ts` 一次构建所有 workspace 内的 node 包（单遍 ESM-only） |
+| node 侧库产物 | 各包 `lib/`（`index.mjs` ESM + `index.d.ts`） | 根 `tsdown.config.ts` 单遍构建所有 node 侧 workspace 包 |
 | `.yml` locale | 随 `lib/` 拷贝 | tsdown `loader: { ".yml": "copy" }` |
 | 宿主控制台前端 | `plugins/webui/console/dist/` | `packages/web/client/scripts/client.ts`（总装：app + vue runtime 外部块 + client） |
 | 各 webui 插件前端 | 各插件 `dist/`（`koishi.public` 声明） | `packages/web/client/src/index.ts` 的 `build(root)` API |
-| apps 产物 | 各 app `lib/` | 各自 tsdown / build 脚本 |
+| `apps/koishi-create` | `lib/` | 自己的 tsdown.config.ts |
 
-- **ESM-only + Bun 运行时**：根 tsdown 单遍构建只出 ESM（`index.mjs`，exports 以 `default` 条件兜底 require 解析）。Koishi loader 用 `require()` 加载插件（`packages/node/loader/src/index.ts` 的 `import(name)` 内部即 `require`），Bun 的 require() 可直接加载 ESM，插件加载链据此工作；运行时以 Bun 为准（Node 仅 ≥22.12 有 require(esm)，不作兼容目标）。
-- `**/lib/`、`**/dist/` 均被 .gitignore 忽略，不入库。
-- vendored 三包（`plugins/infra/{http,proxy-agent,server}`）的 `index.cjs/index.mjs/index.d.ts` 是**提交进仓库的**预编译产物（再导出 `@cordisjs/plugin-*`），不走 tsdown。
+- **ESM-only + Bun 运行时**：全部 46 个 workspace 包均为 `"type": "module"`，根 tsdown 只出 ESM（exports 以 `default` 条件兜底）。loader 用 `require()` 加载插件，Bun 的 `require()` 可直接加载 ESM，插件加载链据此工作；不要恢复 CJS 双格式产物。
+- `**/lib/`、`**/dist/` 均被 .gitignore 忽略，不入库。例外：vendored 三包（`plugins/infra/{http,proxy-agent,server}`）的 `index.cjs/index.mjs/index.d.ts` 是提交进仓库的预编译产物（再导出 `@cordisjs/plugin-*`），不走 tsdown。
+- 前端构建发布前现构建（dist 不入 git），由 `bun run release build` 编排。
 
 ## 5. 编码约定
 
 ### TypeScript（tsconfig.base.json，全 workspace 继承）
 
-- 严格全家桶：`strict`、`strictBindCallApply`、`alwaysStrict`、`noUncheckedIndexedAccess`、`noPropertyAccessFromIndexSignature`、`exactOptionalPropertyTypes`、`noUnusedLocals`、`noUnusedParameters`、`noImplicitReturns`、`noFallthroughCasesInSwitch`、`noImplicitOverride`、`allowUnreachableCode: false`、`allowUnusedLabels: false`。
-- 模块：target ES2025、`module: esnext`、`moduleResolution: bundler`、`verbatimModuleSyntax`、`isolatedModules`、`erasableSyntaxOnly`、`allowImportingTsExtensions`（配合 noEmit）。
+- 严格全家桶：`strict` + `noUncheckedIndexedAccess` + `noPropertyAccessFromIndexSignature` + `exactOptionalPropertyTypes` + `noUnusedLocals/Parameters` + `noImplicitReturns` + `noFallthroughCasesInSwitch` + `noImplicitOverride` 等。
+- 模块：target ES2025、`module/moduleResolution: NodeNext`（**相对导入一律带 `.ts` 扩展名**）、`verbatimModuleSyntax` + `isolatedModules` + `erasableSyntaxOnly`、`allowImportingTsExtensions`（配合 noEmit）。
 - **类型导入一律 `import type`**（verbatimModuleSyntax 强制）；重导出用 `export type {`。
-- JSX：`react-jsx`，`jsxImportSource: @satorijs/element`（core/插件中的消息元素渲染）。
-- `.yml` 导入的类型由 `packages/node/core/src/i18n/yml.d.ts` 提供（由 tsconfig.base 的 files 全局注入；web 侧对应声明在 `packages/web/client/global.d.ts`）。
+- JSX：`react-jsx`，`jsxImportSource: @satorijs/element`（消息元素渲染）。
+- `.yml` 导入的类型由 `packages/node/core/src/i18n/yml.d.ts` 提供（tsconfig.base 的 files 全局注入；web 侧对应声明在 `packages/web/client/global.d.ts`）。
 - Vue 客户端代码 extends `tsconfig.client.json`（`jsx: preserve`、DOM lib、`types: []`）。
 
-### 命名空间纪律
+### 命名空间与依赖纪律
 
-- workspace 内部引用一律 `@koishi-ce/*`（tsconfig paths 已把 35 个包指向各自 `src/`）。
-- `peerDependencies` 保留上游名（`koishi`、`@koishijs/*`）是**刻意的生态兼容设计**，不要改成 `@koishi-ce`（详见 [UPSTREAM.md](./UPSTREAM.md) 与 [dependency-audit.md](./dependency-audit.md) §1）。
-- 外部上游包仅两处例外：测试用 `@koishijs/plugin-database-memory`、console 的类型引用 `@koishijs/plugin-server-proxy`。
+- 代码内导入一律 `@koishi-ce/*`。外部上游导入仅有的例外：测试用 `@koishijs/plugin-database-memory`，console 的类型引用 `@koishijs/plugin-server-proxy`。
+- `peerDependencies` 一律指向 CE 包名（`@koishi-ce/koishi ^1.0.0` 等），不要写回上游名；详见 [ARCHITECTURE.md](./ARCHITECTURE.md) 依赖纪律节。
+- 依赖方向：`plugins/webui/* → @koishi-ce/console → @koishi-ce/core`；`plugins/common/* → @koishi-ce/core`；`packages/web/*`（浏览器侧）不依赖 node 侧运行时。
+- cordis 生态冻结在 3.x 内洽线（cordis / minato / @cordisjs/* / @satorijs/* 不得跳 4.x / 1.x），依据与重启条件见 [decisions/upgrade-plan.md](./decisions/upgrade-plan.md) Phase 5 节。
 
 ### Biome / ESLint
 
-- biome：recommended 基线；关停了若干与上游代码风格冲突的规则（`noRedeclare`、`noThenProperty` 等）；`style.useNamingConvention`（typeMember 允许 camelCase/snake_case/PascalCase，objectLiteralMember 允许 CONSTANT_CASE）；`nursery.noFloatingPromises: error`（异步调用必须 `await` 或显式 `.catch`）；assist 开 organizeImports。
-- tests / spec / 脚手架模板目录关 namingConvention。
-- eslint（仅 .vue）：模板指令合法性、编译宏正确性、`no-mutating-props` 等常见坑规则；组件引用检查忽略 `^K` / `^el-` / `^router-`。
+- biome：recommended 基线 + `useNamingConvention` + `noFloatingPromises`（error）+ organizeImports；tests / spec / 脚手架模板目录关 namingConvention。
+- eslint（仅 .vue）：模板指令合法性、编译宏正确性、`no-mutating-props` 等；组件引用检查忽略 `^K` / `^el-` / `^router-`。
 
 ### 格式
 
-- TS/JS/JSON：**tab 缩进、双引号、行尾分号**（biome 默认风格，实测代码现状）。
+- TS/JS/JSON：tab 缩进、双引号、行尾分号（biome 是唯一权威）。
 - `.vue`：2 空格缩进（上游 webui 惯例）。
 
 ## 6. 测试写法
 
-框架：`bun:test`（`describe` / `it` / `before` / `after` 从 `bun:test` 导入）+ **`bun:test` 的 `expect` 断言**（新标准；core 与 echo 已迁移，存量 chai 用例逐步迁移、不新增）。
+框架：`bun:test`（`describe` / `it` / `before` / `after` 从 `bun:test` 导入）+ **`bun:test` 的 `expect` 断言**（新标准）。存量 chai 用例（loader / utils / i18n-utils / broadcast / help / admin / commands）逐步迁移，不要新增 chai 断言。
 
 ```ts
 import { describe, expect, it } from "bun:test";
@@ -111,29 +108,31 @@ import { App } from "@koishi-ce/koishi";
 expect(app.database.getUser("mock", "A")).resolves.toHaveShape({ authority: 1 });
 ```
 
-- **shape 断言**（`toHaveShape`）由 `packages/node/core/tests/shape.ts` 注册（`expect.extend` 自定义 matcher，import 该文件一次即注册；语义与上游 chai-shape 一致：期望为实际的递归子集）。原 `scripts/testing/chai-shape.ts` 已随 scripts 目录删除。
-- chai 存量用例的 `chai-as-promised` 写法迁移对照：`await expect(p).eventually.to.eql(x)` → `await expect(p).resolves.toEqual(x)`；`.to.be.rejected` → `.rejects.toThrow()`。
-- 数据库用例用 `@koishijs/plugin-database-memory`（上游包）；时间模拟用 `bun:test` 的 mock timers（`jest.useFakeTimers()` / `jest.runAllTimers()` / `jest.useRealTimers()`；默认不冻结微任务链路，但会冻结 `Date.now()`）。
-- 测试文件分布：`packages/node/core/src/**/__tests__/`（8 个）、loader / utils / i18n-utils、`plugins/common/{bind,broadcast,echo,help,inspect}/src/__tests__/`、`plugins/webui/{admin,commands}/src/__tests__/`。
+- **shape 断言**（`toHaveShape`）由 `packages/node/core/tests/shape.ts` 注册（`expect.extend` 自定义 matcher，import 该文件一次即注册；语义：期望为实际的递归子集）。
+- chai 存量写法迁移对照：`await expect(p).eventually.to.eql(x)` → `await expect(p).resolves.toEqual(x)`；`.to.be.rejected` → `.rejects.toThrow()`。
+- 数据库用例用 `@koishijs/plugin-database-memory`（上游包，根 devDependencies）；时间模拟用 `bun:test` 的 mock timers（`jest.useFakeTimers()` 等；默认不冻结微任务链路，但会冻结 `Date.now()`）。
+- 测试文件分布在各包 `src/**/__tests__/` 与 `packages/node/core/tests/`，共 97 个测试文件、约 800 用例。
 - `.yml` locale 在测试中可直接 import（Bun 原生支持）。
 
 ## 7. 已知坑（历史经验，别再踩）
 
-1. **Bun 的 require(esm) 是插件加载链的根基**：根 tsdown 只出 ESM 产物（`index.mjs` + `index.d.ts`），loader 的 `require()` 直接加载 ESM 插件，各包 exports 以 `default` 条件兜底（见 §4）。不要恢复 CJS 双格式产物。
-2. **`.yml` 运行时链路**：Bun 原生支持 yml 导入（测试、开发、运行时均 OK）；构建期 tsdown copy loader 把 .yml 原样拷入产物并改写引用路径。根 tsdown 注释里"koishi 内置 yml-register"的说法与实际不符（全仓无该依赖）。
-3. **typecheck / bun test 不读 .gitignore**：gitignored 的 `plugins/webui/market/` 会被卷入——typecheck 侧其 tsconfig 有数百个存量错误；test 侧其 vitest 用例（`*.test.ts`）在 bun 下挂死（见 §3）。定位报错先看路径前缀。
-4. **`apps/koishi-create`（目录）≠ `create-koishi-ce`（包名）**；biome override、其 package.json `repository.directory`、根 tsdown 注释仍写旧名 `apps/create-koishi-ce`，是失效路径。引用一律以 `apps/koishi-create` 为准。
-5. **前端构建无 vite 配置文件**：全部编程式 `vite.build()`。宿主总装 `packages/web/client/scripts/client.ts` 把产物硬编码到 `plugins/webui/console/dist`（`cwd` 上跳 4 级）；单插件 `build(root)` 内置 `collectWorkspaceAliases()`——未被依赖的 workspace 包不在 node_modules 链接里，必须显式映射。
-6. **特殊构建 hack**（动到对应构建链必须复核）：
-   - analytics `build/client.ts` 的 "fuck-echarts"：echarts chunk 内 `Symbol` 重命名为 `FuckSymbol`，避免与宿主全局冲突；
-   - explorer 的 monaco manualChunks；
-   - online `src/build.ts` 把内置模块改写为 `https://registry.koishi.chat/modules/...` 在线加载；
-   - client 构建的 vue-i18n `esm-browser.prod` 别名。
-7. **hmr 的 esbuild 是运行时依赖**（TS 即时编译），不是 devDep，不能挪。
-8. **Biome 的 JSON 行尾不可见字符**：已知、正常、无害，看到即跳过，不调查、不修复、不报告。
-9. **上游同步**：本仓无上游 git 历史，port 上游改动按 `UPSTREAM.md` 映射表手动 diff 移植，完成后 `bun run build` + `bun test`。
+1. **测试进程对 workspace 包加载 src 而非 lib**：Bun 运行时按「离文件最近的 tsconfig.json」取 paths 且不跟随 extends——各包 tsconfig.json 里的 paths 块把 `@koishi-ce/*` 指到 src，覆盖率才能统计源码。该 paths 块**手工维护**（`tooling/sync-test-paths.ts` 已删除）：改 `tsconfig.base.json` 的 paths 后须同步各包 tsconfig。因此改 src 后跑测试无需先 build，测试验证的始终是源码。
+2. **workspace 包在测试之外的解析走 lib 产物**（exports 不含 source 条件的消费场景）：改 src 后要先 `bun run build` 才在运行时生效。
+3. **TS7 buildinfo 错误回声**：改根 tsconfig 或依赖结构后，旧错误会在增量运行中复活——先删 `node_modules/.cache/tsc/{node,web}.tsbuildinfo` 再跑。
+4. **Bun 对失败的解析按「父目录快照」做进程内缓存**：解析 `pkg/package.json` 失败时，只要包的直接父目录（node_modules 或 node_modules/@scope）已存在，该目录内容列表即被缓存——此后即使包已落盘，同进程内该包的任何形态经任何解析 API（createRequire.resolve、Bun.resolveSync）都永久失败；父目录不存在时无快照可缓存，落盘后即可正常解析。市场装完插件报 `failed to resolve` / `cannot resolve plugin`（重启即消）即此因。现行防御：`resolvePackageJson()`（@koishi-ce/registry）全程纯 fs；loader 的 `resolvePlugin()` 在 `Bun.resolveSync` 失败后纯 fs 沿 node_modules 链定位包目录、按 manifest 条件序计算入口绝对路径；`isResidentInCache()`（registry）同样纯 fs。**新增任何对「可能刚装上的包」的解析时，兜底一律不得走解析 API**。验证类实验务必用全新进程（`bun -e`）。
+5. **Bun 会把 exports 的 `"bun"` 条件用在 require 上**（Node 的 require 条件集不含它）：postgres@3.x 这类包（bun 条件指向 ESM 源码、default 指向 CJS 产物）在 Bun 下被 CJS 依赖链 require 到 ESM namespace，esbuild 产物的 node 兼容 interop 会把整个 namespace 当 default。修复在 loader 的 `node/interop.ts`：`NodeLoader.import` require 插件前遍历依赖树，把「Node require 语义入口的加载结果」预置进 `require.cache`。ESM import 侧不读 require.cache，无副作用。
+6. **biome 对 `.vue` 只解析 script 块、不追踪模板引用**：biome.json 已对 `**/*.vue` 关闭 noUnusedVariables / noUnusedImports / noUnusedFunctionParameters / useVueMultiWordComponentNames / useImportType（模板使用会假阳性，useImportType 会把模板组件的值导入改回 `import type` 使运行时失注册）；模板语义检查归 eslint。
+7. **显式 `any` 全仓为 0，保持住**：动态边界（JSON.parse / socket 消息 / 第三方回调）用 `unknown` + 收窄；`{}` 类型用 `Record<never, never>`。
+8. **TS7 的跨文件 `declare module` 增强对「经 lib 产物 d.ts 的模块骨架」不生效**：浏览器端工程对 console 类型的消费走 `packages/web/client/client/shims.d.ts` 手写的 `"@koishi-ce/plugin-console"` 骨架，各插件 client 工程须向同一模块名镜像自己的 Services / Events 注入，载荷要用骨架自带的 `DataService<T>` 包装。market 的镜像是 `plugins/webui/market/client/console-services.ts`（类型实体经 `market/client/tsconfig.json` 指向各包 lib 产物 d.ts 解析）——**node 侧声明变更时须同步该文件**。
+9. **前端构建没有 vite 配置文件**，全部编程式 `vite.build()`：宿主总装 `packages/web/client/scripts/client.ts`（产物硬编码到 `plugins/webui/console/dist`）；单插件 `build(root)` 内置 `collectWorkspaceAliases()`——未被依赖的 workspace 包不会出现在 node_modules 链接里，必须显式映射才能被 bundler 解析。
+10. **特殊构建 hack**（动对应构建链必须复核）：analytics 的 "fuck-echarts"（echarts chunk 内 `Symbol` 重命名）、explorer 的 monaco manualChunks、client 构建的 vue-i18n `esm-browser.prod` 别名。
+11. **hmr 的 esbuild 是运行时依赖**（TS 即时编译），不是 devDep，不能挪。
+12. **上游 port 须补 `.ts` 扩展名**：上游源码是无后缀的 bundler 风格相对导入，本仓 nodenext 类型检查要求相对导入带扩展名；port 流程见 [UPSTREAM.md](./UPSTREAM.md)。
+13. **Biome 的 JSON 行尾不可见字符**：已知、正常、无害，看到即跳过，不调查、不修复、不报告。
+14. **`apps/koishi-create`（目录）≠ `create-koishi-ce`（包名）**：历史遗留的命名不一致，引用一律以 `apps/koishi-create` 为准。
 
-## 8. 版本与发布现状
+## 8. 版本与发布
 
-- 版本号手动维护（各包 package.json 固定版本），尚未引入 changesets / release 工具链；`tooling/upstream-yakumo-config.json` 存档了删除 yakumo 前各包的构建配置，供未来参考。
-- npm 发布未建制（无 CI / 无 release 脚本）；发布策略变化时更新本节与 [ARCHITECTURE.md](./ARCHITECTURE.md)。
+- 全部可发布包统一 1.0.0 版本基线（不镜像上游版本号），shim 两包例外（版本冻结跟随上游线，见 [ARCHITECTURE.md](./ARCHITECTURE.md)）。
+- 版本与发布由 changesets + `bun run release` 发布链管理，禁止手动 `npm publish`——流程、命令与事故教训见 [RELEASE.md](./RELEASE.md)。
+- 面向发布的包改动随提交写 `.changeset/` 条目（见 [RELEASE.md](./RELEASE.md) 第 3 节）。

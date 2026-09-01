@@ -1,14 +1,16 @@
 # 依赖升级计划书
 
+> **状态：Phase 0-4 已完成（2026-08）；Phase 5（cordis 生态 4.x）已执行、被上游阻塞并整体回退**——实证结论与重启条件见 Phase 5 节，该节仍是活约束（仓库依赖纪律的依据）。本文是决策记录，文中命令与版本号为当时数据。
+>
 > 前置文档:[dependency-audit.md](./dependency-audit.md) · 日期:2026-08-27
 > 原则:**最现代、高性能、Bun 原生优先;允许破坏性更新;git 分阶段提交可回滚。**
-> 硬约束:所有面向上游运行时的 `peerDependencies`(`koishi`、`@koishijs/*`)**保持不动**(fork 兼容性设计,见审计 §1)。
+> 硬约束:所有面向上游运行时的 `peerDependencies`(`koishi`、`@koishijs/*`)**保持不动**(fork 兼容性设计,见审计 §1;该约束后已演变为「CE 包 peer 一律指向 CE 包名」，现行纪律见 [../ARCHITECTURE.md](../ARCHITECTURE.md) 依赖纪律节)。
 
 **已批准决策(2026-08-27 审阅):**
-1. ✅ **Phase 5(cordis 生态 4.x)立项执行**,在 RC 上先行,stable 后跟进收尾。
-2. ✅ **TypeScript 7 采用**(保留 typescript@^5.9 双版本兜底声明产出,若 TS7 实测可产出则移除)。
-3. ✅ **测试迁移到 `bun test`**。**明确不引入 vitest**:现有用例均为纯逻辑测试(core/parser/database/session 等),`bun test` 零依赖、原生速度、与 fork 的 Bun-first 目标一致;vitest 经 Bun 的 Node 兼容层跑反而更慢、依赖链重。若未来出现 Vue 组件/DOM 测试需求,再单独引入 vitest(+happy-dom)按包共存。
-4. ✅ **引入 tsdown ^0.22**(Rolldown Rust 内核的库打包器):替代两个 apps 的 `tsc -b`;Phase 5 重做 vendored `plugins/infra/server` 时用它从 `@cordisjs/plugin-server` 1.x 源码重建产物(含 d.ts);为仍声明 `main: lib/` 且不走 zero-build 的核心包提供统一 lib 构建出口。前端 console/website 的构建继续走 vite(tsdown 定位是 library bundler,不替代应用构建)。
+1. **Phase 5(cordis 生态 4.x)立项执行**,在 RC 上先行,stable 后跟进收尾。
+2. **TypeScript 7 采用**(保留 typescript@^5.9 双版本兜底声明产出,若 TS7 实测可产出则移除)。
+3. **测试迁移到 `bun test`**。**明确不引入 vitest**:现有用例均为纯逻辑测试(core/parser/database/session 等),`bun test` 零依赖、原生速度、与 fork 的 Bun-first 目标一致;vitest 经 Bun 的 Node 兼容层跑反而更慢、依赖链重。若未来出现 Vue 组件/DOM 测试需求,再单独引入 vitest(+happy-dom)按包共存。
+4. **引入 tsdown ^0.22**(Rolldown Rust 内核的库打包器):替代两个 apps 的 `tsc -b`;Phase 5 重做 vendored `plugins/infra/server` 时用它从 `@cordisjs/plugin-server` 1.x 源码重建产物(含 d.ts);为仍声明 `main: lib/` 且不走 zero-build 的核心包提供统一 lib 构建出口。前端 console/website 的构建继续走 vite(tsdown 定位是 library bundler,不替代应用构建)。
 
 ---
 

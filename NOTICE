@@ -2,56 +2,41 @@
 
 ## 中文
 
-**koishi** 是 [Koishi](https://koishi.chat) 聊天机器人框架的社区再分发版。它与 Koishijs 组织无隶属关系，不受其背书，也非由其维护。
+**koishi**（本仓库）是 [Koishi](https://koishi.chat) 聊天机器人框架的社区再分发版。它与 Koishijs 组织无隶属关系，不受其背书，也非由其维护。
 
-本仓库是由两个上游仓库的代码合并重构而成的衍生作品，组织为单一 monorepo。各目录的来源与许可证归属如下：
+本仓库由 [koishijs/koishi](https://github.com/koishijs/koishi) 与 [koishijs/webui](https://github.com/koishijs/webui) 两个上游仓库合并重构而成（未保留上游 git 历史），并再分发若干独立上游插件。各目录的来源与许可证归属见下方「Provenance & License」表格。
 
-| 目录 | 上游 | 许可证 |
-| --- | --- | --- |
-| `packages/node/{core,loader,utils,i18n-utils,cli}` | [koishijs/koishi](https://github.com/koishijs/koishi) `packages/*` | MIT — [LICENSE](./LICENSE) |
-| `packages/node/assets` | [koishijs/assets](https://github.com/koishijs/assets) `packages/core` | MIT — [LICENSE](./LICENSE) |
-| `plugins/infra/{http,server,hmr,mock,proxy-agent}` | [koishijs/koishi](https://github.com/koishijs/koishi) `plugins/*` | MIT — [LICENSE](./LICENSE) |
-| `plugins/infra/server-temp` | [cordiverse/server](https://github.com/cordiverse/server) `packages/temp`（`@cordisjs/plugin-server-temp`） | MIT — [LICENSE](./LICENSE) |
-| `plugins/common/{bind,broadcast,callme,echo,help,inspect}` | [koishijs/koishi](https://github.com/koishijs/koishi) `plugins/common/*` | MIT — [LICENSE](./LICENSE) |
-| `plugins/common/assets-local` | [koishijs/assets](https://github.com/koishijs/assets) `packages/local` | MIT — [LICENSE](./LICENSE) |
-| `plugins/common/rate-limit` | [koishijs/common](https://github.com/koishijs/common) `packages/rate-limit` | MIT — [LICENSE](./LICENSE) |
-| `plugins/webui/{dataview,theme-vanilla}` | [koishijs/koishi-plugin-dataview](https://github.com/koishijs/koishi-plugin-dataview) 与 [koishijs/theme-vanilla](https://github.com/koishijs/theme-vanilla) | AGPL-3.0 — [LICENSES/AGPL-3.0](./LICENSES/AGPL-3.0.txt) |
-| `packages/web/{client,components,market}` | [koishijs/webui](https://github.com/koishijs/webui) `packages/*` | AGPL-3.0 — [LICENSES/AGPL-3.0](./LICENSES/AGPL-3.0.txt) |
-| `plugins/webui/{actions,admin,analytics,auth,commands,config,console,explorer,insight,locales,logger,market,notifier,oobe,sandbox,status}` | [koishijs/webui](https://github.com/koishijs/webui) `plugins/*` | AGPL-3.0 — [LICENSES/AGPL-3.0](./LICENSES/AGPL-3.0.txt) |
-| `apps/online` | [koishijs/webui](https://github.com/koishijs/webui) `packages/online` | AGPL-3.0 — [LICENSES/AGPL-3.0](./LICENSES/AGPL-3.0.txt) |
-| `packages/node/{console,registry}` | [koishijs/webui](https://github.com/koishijs/webui) | MIT（以各包上游 package.json 声明为准） |
-| `packages/shim/*` | 本仓库的原创作品（上游名占位 shim） | MIT — [LICENSE](./LICENSE) |
+- 版权所有（c）2019 至今 Shigma 及 Koishijs 贡献者（源自上游的部分）。
+- 版权所有（c）2026 至今 Koishi-CE 贡献者（本仓库的重构与原创部分）。
 
-版权所有（c）2019 至今 Shigma 及 Koishijs 贡献者。
-版权所有（c）2026 至今 Koishi-CE 贡献者。
-
-上述 AGPL-3.0 许可部分在本仓库中仍以 AGPL-3.0 授权，MIT 部分仍以 MIT 授权。分发本合并作品，或将其作为网络服务提供，将触发对 AGPL-3.0 部分的 AGPL-3.0 义务（包括公开源代码）。本声明仅供参考，不构成法律意见。
-
----
+AGPL-3.0 部分在本仓库中仍以 AGPL-3.0 授权，MIT 部分仍以 MIT 授权。分发本合并作品，或将其作为网络服务提供，将触发 AGPL-3.0 部分的 AGPL-3.0 义务（包括公开相应源代码）。本声明仅供参考，不构成法律意见。
 
 ## English
 
-**koishi** is a community redistribution of the [Koishi](https://koishi.chat) chatbot framework. It is not affiliated with, endorsed by, or maintained by the Koishijs organization.
+**koishi** (this repository) is a community redistribution of the [Koishi](https://koishi.chat) chatbot framework. It is not affiliated with, endorsed by, or maintained by the Koishijs organization.
 
-This repository is a derivative work combining code from two upstream repositories, restructured into a single monorepo. Per-directory provenance and licensing:
+This repository is a derivative work combining [koishijs/koishi](https://github.com/koishijs/koishi) and [koishijs/webui](https://github.com/koishijs/webui) (no upstream git history preserved), plus a few plugins redistributed from standalone upstream repos. Per-directory provenance and licensing are listed in the "Provenance & License" table below.
+
+- Copyright (c) 2019-present Shigma and Koishijs contributors (portions originating upstream).
+- Copyright (c) 2026-present Koishi-CE contributors (restructuring and original work of this repository).
+
+The AGPL-3.0 portions remain under AGPL-3.0 in this repository; the MIT portions remain under MIT. Distributing this combined work, or offering it as a network service, triggers AGPL-3.0 obligations (including source disclosure) for the AGPL-3.0 portions. This notice is informational and is not legal advice.
+
+## Provenance & License（溯源与许可证）
 
 | Directory | Upstream | License |
 | --- | --- | --- |
-| `packages/node/{core,loader,utils,i18n-utils,cli}` | [koishijs/koishi](https://github.com/koishijs/koishi) `packages/*` | MIT — [LICENSE](./LICENSE) |
-| `packages/node/assets` | [koishijs/assets](https://github.com/koishijs/assets) `packages/core` | MIT — [LICENSE](./LICENSE) |
-| `plugins/infra/{http,server,hmr,mock,proxy-agent}` | [koishijs/koishi](https://github.com/koishijs/koishi) `plugins/*` | MIT — [LICENSE](./LICENSE) |
-| `plugins/infra/server-temp` | [cordiverse/server](https://github.com/cordiverse/server) `packages/temp`（`@cordisjs/plugin-server-temp`） | MIT — [LICENSE](./LICENSE) |
-| `plugins/common/{bind,broadcast,callme,echo,help,inspect}` | [koishijs/koishi](https://github.com/koishijs/koishi) `plugins/common/*` | MIT — [LICENSE](./LICENSE) |
-| `plugins/common/assets-local` | [koishijs/assets](https://github.com/koishijs/assets) `packages/local` | MIT — [LICENSE](./LICENSE) |
-| `plugins/common/rate-limit` | [koishijs/common](https://github.com/koishijs/common) `packages/rate-limit` | MIT — [LICENSE](./LICENSE) |
-| `plugins/webui/{dataview,theme-vanilla}` | [koishijs/koishi-plugin-dataview](https://github.com/koishijs/koishi-plugin-dataview) 与 [koishijs/theme-vanilla](https://github.com/koishijs/theme-vanilla) | AGPL-3.0 — [LICENSES/AGPL-3.0](./LICENSES/AGPL-3.0.txt) |
-| `packages/web/{client,components,market}` | [koishijs/webui](https://github.com/koishijs/webui) `packages/*` | AGPL-3.0 — [LICENSES/AGPL-3.0](./LICENSES/AGPL-3.0.txt) |
-| `plugins/webui/{actions,admin,analytics,auth,commands,config,console,explorer,insight,locales,logger,market,notifier,oobe,sandbox,status}` | [koishijs/webui](https://github.com/koishijs/webui) `plugins/*` | AGPL-3.0 — [LICENSES/AGPL-3.0](./LICENSES/AGPL-3.0.txt) |
-| `apps/online` | [koishijs/webui](https://github.com/koishijs/webui) `packages/online` | AGPL-3.0 — [LICENSES/AGPL-3.0](./LICENSES/AGPL-3.0.txt) |
-| `packages/node/{console,registry}` | [koishijs/webui](https://github.com/koishijs/webui) | MIT (declared in the upstream package.json of each package) |
-| `packages/shim/*` | Original work of this repository (upstream-name placeholder shims) | MIT — [LICENSE](./LICENSE) |
+| `packages/node/{core,loader,utils,i18n-utils,cli}` | [koishijs/koishi](https://github.com/koishijs/koishi) `packages/*` | [MIT](./LICENSE) |
+| `packages/node/assets` | [koishijs/assets](https://github.com/koishijs/assets) `packages/core` | [MIT](./LICENSE) |
+| `packages/node/{console,registry}` | [koishijs/webui](https://github.com/koishijs/webui) `packages/*` | [MIT](./LICENSE) \* |
+| `plugins/infra/{http,server,hmr,mock,proxy-agent}` | [koishijs/koishi](https://github.com/koishijs/koishi) `plugins/*` | [MIT](./LICENSE) |
+| `plugins/infra/server-temp` | [cordiverse/server](https://github.com/cordiverse/server) `packages/temp` | [MIT](./LICENSE) |
+| `plugins/common/{bind,broadcast,callme,echo,help,inspect}` | [koishijs/koishi](https://github.com/koishijs/koishi) `plugins/common/*` | [MIT](./LICENSE) |
+| `plugins/common/assets-local` | [koishijs/assets](https://github.com/koishijs/assets) `packages/local` | [MIT](./LICENSE) |
+| `plugins/common/rate-limit` | [koishijs/common](https://github.com/koishijs/common) `packages/rate-limit` | [MIT](./LICENSE) |
+| `packages/web/{client,components}` | [koishijs/webui](https://github.com/koishijs/webui) `packages/*` | [AGPL-3.0](./LICENSES/AGPL-3.0.txt) |
+| `plugins/webui/*`（其余 16 个） | [koishijs/webui](https://github.com/koishijs/webui) `plugins/*`（含 `market`，对齐原版 v2.11.11） | [AGPL-3.0](./LICENSES/AGPL-3.0.txt) |
+| `plugins/webui/{dataview,theme-vanilla}` | [koishijs/koishi-plugin-dataview](https://github.com/koishijs/koishi-plugin-dataview) · [koishijs/theme-vanilla](https://github.com/koishijs/theme-vanilla) | [AGPL-3.0](./LICENSES/AGPL-3.0.txt) |
+| `packages/shim/*`、`apps/*`、`tooling/*` 与根级文件 | 本仓库原创（original work of this repository） | [MIT](./LICENSE) |
 
-Copyright (c) 2019-present Shigma and Koishijs contributors.
-Copyright (c) 2026-present Koishi-CE contributors.
-
-The AGPL-3.0 licensed portions above remain under AGPL-3.0 in this repository; the MIT portions remain under MIT. Distributing this combined work, or offering it as a network service, triggers AGPL-3.0 obligations (including source disclosure) for the AGPL-3.0 portions. This notice is informational and is not legal advice.
+\* MIT as declared in the upstream `package.json` of each package.
