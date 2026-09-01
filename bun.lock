@@ -5,14 +5,6 @@
     "": {
       "name": "koishi",
       "dependencies": {
-        "@koishi-ce/plugin-console": "workspace:*",
-        "@koishi-ce/plugin-http": "workspace:*",
-        "@koishi-ce/plugin-proxy-agent": "workspace:*",
-        "@koishi-ce/plugin-server": "workspace:*",
-        "@koishijs/core": "workspace:*",
-        "@koishijs/loader": "workspace:*",
-        "@koishijs/plugin-console": "workspace:*",
-        "@koishijs/plugin-database-postgres": "2.7.0",
         "koishi": "workspace:*",
       },
       "devDependencies": {
@@ -35,7 +27,7 @@
     },
     "apps/koishi-create": {
       "name": "create-koishi-ce",
-      "version": "1.2.0",
+      "version": "1.2.1",
       "bin": {
         "create-koishi-ce": "./lib/bin.mjs",
       },
@@ -77,7 +69,7 @@
       "name": "@koishi-ce/console",
       "version": "1.0.0",
       "peerDependencies": {
-        "koishi": "^4.18.11",
+        "@koishi-ce/koishi": "^1.0.0",
       },
     },
     "packages/node/core": {
@@ -105,13 +97,6 @@
         "cosmokit": "^1.8.1",
       },
     },
-    "packages/node/koishi": {
-      "name": "koishi",
-      "version": "4.18.11",
-      "dependencies": {
-        "@koishi-ce/koishi": "workspace:*",
-      },
-    },
     "packages/node/loader": {
       "name": "@koishi-ce/loader",
       "version": "1.0.3",
@@ -121,7 +106,7 @@
         "@koishi-ce/plugin-mock": "workspace:*",
       },
       "peerDependencies": {
-        "@koishijs/core": "4.18.11",
+        "@koishi-ce/core": "^1.0.0",
       },
     },
     "packages/node/registry": {
@@ -166,27 +151,6 @@
       "version": "4.18.11",
       "dependencies": {
         "@koishi-ce/koishi": "^1.0.0",
-      },
-    },
-    "packages/shim/upstream-core": {
-      "name": "@koishijs/core",
-      "version": "4.18.11",
-      "dependencies": {
-        "@koishi-ce/core": "workspace:*",
-      },
-    },
-    "packages/shim/upstream-loader": {
-      "name": "@koishijs/loader",
-      "version": "4.6.11",
-      "dependencies": {
-        "@koishi-ce/loader": "workspace:*",
-      },
-    },
-    "packages/shim/upstream-plugin-console": {
-      "name": "@koishijs/plugin-console",
-      "version": "5.30.11",
-      "dependencies": {
-        "@koishi-ce/plugin-console": "workspace:*",
       },
     },
     "packages/web/client": {
@@ -234,7 +198,7 @@
         "minato": "^3.7.0",
       },
       "peerDependencies": {
-        "koishi": "^4.18.11",
+        "@koishi-ce/koishi": "^1.0.0",
       },
     },
     "plugins/common/broadcast": {
@@ -247,7 +211,7 @@
         "minato": "^3.7.0",
       },
       "peerDependencies": {
-        "koishi": "^4.18.11",
+        "@koishi-ce/koishi": "^1.0.0",
       },
     },
     "plugins/common/callme": {
@@ -258,7 +222,7 @@
         "@koishi-ce/plugin-mock": "workspace:*",
       },
       "peerDependencies": {
-        "koishi": "^4.18.11",
+        "@koishi-ce/koishi": "^1.0.0",
       },
     },
     "plugins/common/echo": {
@@ -269,7 +233,7 @@
         "@koishi-ce/plugin-mock": "workspace:*",
       },
       "peerDependencies": {
-        "koishi": "^4.18.11",
+        "@koishi-ce/koishi": "^1.0.0",
       },
     },
     "plugins/common/help": {
@@ -282,7 +246,7 @@
         "minato": "^3.7.0",
       },
       "peerDependencies": {
-        "koishi": "^4.18.11",
+        "@koishi-ce/koishi": "^1.0.0",
       },
     },
     "plugins/common/inspect": {
@@ -293,12 +257,12 @@
         "@koishi-ce/plugin-mock": "workspace:*",
       },
       "peerDependencies": {
-        "koishi": "^4.18.11",
+        "@koishi-ce/koishi": "^1.0.0",
       },
     },
     "plugins/infra/hmr": {
       "name": "@koishi-ce/plugin-hmr",
-      "version": "1.0.3",
+      "version": "1.0.4",
       "dependencies": {
         "@babel/code-frame": "^8.0.0",
         "@koishi-ce/loader": "workspace:*",
@@ -310,8 +274,8 @@
         "esbuild": "^0.28.2",
       },
       "peerDependencies": {
-        "@koishijs/loader": "^4.6.11",
-        "koishi": "^4.18.11",
+        "@koishi-ce/koishi": "^1.0.0",
+        "@koishi-ce/loader": "^1.0.0",
       },
     },
     "plugins/infra/http": {
@@ -324,7 +288,7 @@
         "@koishi-ce/koishi": "workspace:*",
       },
       "peerDependencies": {
-        "koishi": "^4.18.11",
+        "@koishi-ce/koishi": "^1.0.0",
       },
     },
     "plugins/infra/mock": {
@@ -335,7 +299,7 @@
         "@koishi-ce/plugin-server": "workspace:*",
       },
       "peerDependencies": {
-        "koishi": "^4.18.11",
+        "@koishi-ce/koishi": "^1.0.0",
       },
     },
     "plugins/infra/proxy-agent": {
@@ -349,7 +313,7 @@
         "cordis": "^3.18.1",
       },
       "peerDependencies": {
-        "koishi": "^4.18.11",
+        "@koishi-ce/koishi": "^1.0.0",
       },
     },
     "plugins/infra/server": {
@@ -363,7 +327,7 @@
         "cordis": "^3.18.1",
       },
       "peerDependencies": {
-        "koishi": "^4.18.11",
+        "@koishi-ce/koishi": "^1.0.0",
       },
     },
     "plugins/webui/actions": {
@@ -376,8 +340,8 @@
         "@koishi-ce/client": "workspace:*",
       },
       "peerDependencies": {
-        "@koishijs/plugin-console": "^5.30.11",
-        "koishi": "^4.18.11",
+        "@koishi-ce/koishi": "^1.0.0",
+        "@koishi-ce/plugin-console": "^1.0.0",
       },
     },
     "plugins/webui/admin": {
@@ -399,11 +363,11 @@
         "chai-as-promised": "^8.0.2",
       },
       "peerDependencies": {
-        "@koishijs/plugin-console": "^5.30.11",
-        "koishi": "^4.18.11",
+        "@koishi-ce/koishi": "^1.0.0",
+        "@koishi-ce/plugin-console": "^1.0.0",
       },
       "optionalPeers": [
-        "@koishijs/plugin-console",
+        "@koishi-ce/plugin-console",
       ],
     },
     "plugins/webui/analytics": {
@@ -420,8 +384,8 @@
         "vue-echarts": "^8.1.0",
       },
       "peerDependencies": {
-        "@koishijs/plugin-console": "^5.30.11",
-        "koishi": "^4.18.11",
+        "@koishi-ce/koishi": "^1.0.0",
+        "@koishi-ce/plugin-console": "^1.0.0",
       },
     },
     "plugins/webui/auth": {
@@ -434,8 +398,8 @@
         "@koishi-ce/client": "workspace:*",
       },
       "peerDependencies": {
-        "@koishijs/plugin-console": "^5.30.11",
-        "koishi": "^4.18.11",
+        "@koishi-ce/koishi": "^1.0.0",
+        "@koishi-ce/plugin-console": "^1.0.0",
       },
     },
     "plugins/webui/commands": {
@@ -456,16 +420,16 @@
         "chai": "^6.2.2",
       },
       "peerDependencies": {
-        "@koishijs/plugin-console": "^5.30.11",
-        "koishi": "^4.18.11",
+        "@koishi-ce/koishi": "^1.0.0",
+        "@koishi-ce/plugin-console": "^1.0.0",
       },
       "optionalPeers": [
-        "@koishijs/plugin-console",
+        "@koishi-ce/plugin-console",
       ],
     },
     "plugins/webui/config": {
       "name": "@koishi-ce/plugin-config",
-      "version": "1.0.5",
+      "version": "1.0.6",
       "dependencies": {
         "@koishi-ce/console": "workspace:*",
         "@koishi-ce/loader": "workspace:*",
@@ -476,9 +440,9 @@
         "@koishi-ce/plugin-hmr": "workspace:*",
       },
       "peerDependencies": {
-        "@koishijs/loader": "^4.6.11",
-        "@koishijs/plugin-console": "^5.30.11",
-        "koishi": "^4.18.11",
+        "@koishi-ce/koishi": "^1.0.0",
+        "@koishi-ce/loader": "^1.0.0",
+        "@koishi-ce/plugin-console": "^1.0.0",
       },
     },
     "plugins/webui/console": {
@@ -498,11 +462,11 @@
         "vite": "^8.2.2",
       },
       "peerDependencies": {
-        "@koishijs/client": "^5.30.11",
-        "koishi": "^4.18.11",
+        "@koishi-ce/client": "^1.0.0",
+        "@koishi-ce/koishi": "^1.0.0",
       },
       "optionalPeers": [
-        "@koishijs/client",
+        "@koishi-ce/client",
       ],
     },
     "plugins/webui/explorer": {
@@ -523,8 +487,8 @@
         "monaco-editor": "~0.56.0",
       },
       "peerDependencies": {
-        "@koishijs/plugin-console": "^5.30.11",
-        "koishi": "^4.18.11",
+        "@koishi-ce/koishi": "^1.0.0",
+        "@koishi-ce/plugin-console": "^1.0.0",
       },
     },
     "plugins/webui/insight": {
@@ -541,8 +505,8 @@
         "d3-force": "^3.0.0",
       },
       "peerDependencies": {
-        "@koishijs/plugin-console": "^5.30.11",
-        "koishi": "^4.18.11",
+        "@koishi-ce/koishi": "^1.0.0",
+        "@koishi-ce/plugin-console": "^1.0.0",
       },
     },
     "plugins/webui/locales": {
@@ -558,11 +522,11 @@
         "@koishi-ce/plugin-mock": "workspace:*",
       },
       "peerDependencies": {
-        "@koishijs/plugin-console": "^5.30.11",
-        "koishi": "^4.18.11",
+        "@koishi-ce/koishi": "^1.0.0",
+        "@koishi-ce/plugin-console": "^1.0.0",
       },
       "optionalPeers": [
-        "@koishijs/plugin-console",
+        "@koishi-ce/plugin-console",
       ],
     },
     "plugins/webui/logger": {
@@ -578,16 +542,16 @@
         "reggol": "^2.1.0",
       },
       "peerDependencies": {
-        "@koishijs/plugin-console": "^5.30.11",
-        "koishi": "^4.18.11",
+        "@koishi-ce/koishi": "^1.0.0",
+        "@koishi-ce/plugin-console": "^1.0.0",
       },
       "optionalPeers": [
-        "@koishijs/plugin-console",
+        "@koishi-ce/plugin-console",
       ],
     },
     "plugins/webui/market": {
       "name": "@koishi-ce/plugin-market",
-      "version": "1.0.6",
+      "version": "1.0.7",
       "dependencies": {
         "@koishi-ce/console": "workspace:*",
         "@koishi-ce/registry": "workspace:*",
@@ -605,11 +569,11 @@
         "vue": "^3.5.12",
       },
       "peerDependencies": {
-        "@koishijs/plugin-console": "^5.30.11",
-        "koishi": "^4.18.11",
+        "@koishi-ce/koishi": "^1.0.0",
+        "@koishi-ce/plugin-console": "^1.0.0",
       },
       "optionalPeers": [
-        "@koishijs/plugin-console",
+        "@koishi-ce/plugin-console",
       ],
     },
     "plugins/webui/notifier": {
@@ -620,8 +584,8 @@
         "@koishi-ce/plugin-config": "workspace:*",
       },
       "peerDependencies": {
-        "@koishijs/plugin-console": "^5.30.11",
-        "koishi": "^4.18.11",
+        "@koishi-ce/koishi": "^1.0.0",
+        "@koishi-ce/plugin-console": "^1.0.0",
       },
     },
     "plugins/webui/oobe": {
@@ -634,8 +598,8 @@
         "@koishi-ce/client": "workspace:*",
       },
       "peerDependencies": {
-        "@koishijs/plugin-console": "^5.30.11",
-        "koishi": "^4.18.11",
+        "@koishi-ce/koishi": "^1.0.0",
+        "@koishi-ce/plugin-console": "^1.0.0",
       },
     },
     "plugins/webui/sandbox": {
@@ -652,8 +616,8 @@
         "@satorijs/element": "^3.2.0",
       },
       "peerDependencies": {
-        "@koishijs/plugin-console": "^5.30.11",
-        "koishi": "^4.18.11",
+        "@koishi-ce/koishi": "^1.0.0",
+        "@koishi-ce/plugin-console": "^1.0.0",
       },
     },
     "plugins/webui/status": {
@@ -672,8 +636,8 @@
         "@types/envinfo": "^7.8.3",
       },
       "peerDependencies": {
-        "@koishijs/plugin-console": "^5.30.11",
-        "koishi": "^4.18.11",
+        "@koishi-ce/koishi": "^1.0.0",
+        "@koishi-ce/plugin-console": "^1.0.0",
       },
     },
   },
@@ -968,17 +932,9 @@
 
     "@koishijs/components": ["@koishijs/components@1.5.22", "", { "dependencies": { "@satorijs/element": "^3.1.7", "cosmokit": "^1.7.2", "schemastery-vue": "^7.3.15" }, "peerDependencies": { "vue": "^3" } }, "sha512-1K8Qn12x0k2Em8MWRnH2JUq5QE+TRJZ6/kztCy8V56547sLPeuhsczi/16lPhwJ5NvBuUPFuFHfD5Pedtlo8UQ=="],
 
-    "@koishijs/core": ["@koishijs/core@workspace:packages/shim/upstream-core"],
-
-    "@koishijs/loader": ["@koishijs/loader@workspace:packages/shim/upstream-loader"],
-
     "@koishijs/market": ["@koishijs/market@4.2.10", "", { "dependencies": { "@koishijs/components": "^1.5.22", "cosmokit": "^1.8.1", "spark-md5": "^3.0.2" }, "peerDependencies": { "vue": "^3", "vue-i18n": "^9" } }, "sha512-I65mSdeLaB18JmdLrKxUvzIIyyNgeUD/Rz94xhh5DN0CHq3dqZUAwAjhPiBtYn5gyqgfINbZDFteoLt1otmucA=="],
 
-    "@koishijs/plugin-console": ["@koishijs/plugin-console@workspace:packages/shim/upstream-plugin-console"],
-
     "@koishijs/plugin-database-memory": ["@koishijs/plugin-database-memory@3.7.0", "", { "dependencies": { "@minatojs/driver-memory": "^3.7.0" }, "peerDependencies": { "koishi": "^4.18.10" } }, "sha512-Yt7c95nFt/1UtgK7NrXZpCDGybVhPA+wVbThIW2EGckGZcmosefyekhfxr5minpTr0kcW1X6lfk93dZkPNbXtg=="],
-
-    "@koishijs/plugin-database-postgres": ["@koishijs/plugin-database-postgres@2.7.0", "", { "dependencies": { "@minatojs/driver-postgres": "^2.7.0" }, "peerDependencies": { "koishi": "^4.18.10" } }, "sha512-mMVtIttM31Xq3x02LI1L3fxPM0ALwDJuzvNGUr0u0FbAhTywsLUPmbUw67Fwq7JEW5Kv5G6CxUR8k3KqLIpkaA=="],
 
     "@koishijs/plugin-server-proxy": ["@koishijs/plugin-server-proxy@1.2.0", "", { "dependencies": { "@cordisjs/plugin-server-proxy": "^0.2.0" }, "peerDependencies": { "koishi": "^4.17.6" } }, "sha512-X0eCxDe1rTLAuVV0jnkV6MqKtl+1M6/MUTgS3rrg/BqEFyz34bo08vPOIABrYjSBgLAwdbx1UNBnS9HaUXPKaQ=="],
 
@@ -989,10 +945,6 @@
     "@manypkg/tools": ["@manypkg/tools@2.1.2", "", { "dependencies": { "jju": "^1.4.0", "tinyglobby": "^0.2.13", "yaml": "^2.9.0" } }, "sha512-6QEf6yqFbETdwGITKq57aYoPfX/3K8XFNwsAlx0C1M7o8cb79sv1M3w+tWuWvIcSbNqrLF7OD7YpZMVVz335hQ=="],
 
     "@minatojs/driver-memory": ["@minatojs/driver-memory@3.7.0", "", { "dependencies": { "cosmokit": "^1.6.3" }, "peerDependencies": { "minato": "^3.7.0" } }, "sha512-IOiLWm4KVxUS5cvL9YWn827tbnEeHku6CIMHLtO+smPFUInRnczJZ6kikpCzx2ynqMV/nPKu8kIAGrYKJhR5/Q=="],
-
-    "@minatojs/driver-postgres": ["@minatojs/driver-postgres@2.7.0", "", { "dependencies": { "@minatojs/sql-utils": "^5.6.0", "cosmokit": "^1.6.3", "postgres": "^3.4.4" }, "peerDependencies": { "minato": "^3.7.0" } }, "sha512-hEllIqn5Cz/vm9l6ah/5b58Ew2H2fWhm3G+AYaJXpeHH9VO6qjC5B4nwZ6rn0o0Ab692j1fpyhR4mWd4Brq17A=="],
-
-    "@minatojs/sql-utils": ["@minatojs/sql-utils@5.6.0", "", { "dependencies": { "cosmokit": "^1.6.3" }, "peerDependencies": { "minato": "^3.7.0" } }, "sha512-FD1HeSEqQnhXm/nG+LXZb8G8WelTB7tGR+zFaTZN0TmjMSyoJpKqOxeiZve464YgaAd3IxZMcfFE28nPXBWx/w=="],
 
     "@napi-rs/wasm-runtime": ["@napi-rs/wasm-runtime@1.2.3", "", { "dependencies": { "@tybys/wasm-util": "^0.10.3" }, "peerDependencies": { "@emnapi/core": "^1.7.1 || ^2.0.0-alpha.4", "@emnapi/runtime": "^1.7.1 || ^2.0.0-alpha.4" } }, "sha512-UMduMbqO5s5zF2NkNacMT/yK5Y5QiKvWr2+50bzIIxFDwVJ2h49b+oyjaCGPhJxd2/gC2x39EHv/gHVuu36x2Q=="],
 
@@ -1903,8 +1855,6 @@
     "postcss": ["postcss@8.5.26", "", { "dependencies": { "nanoid": "^3.3.17", "picocolors": "^1.1.1", "source-map-js": "^1.2.1" } }, "sha512-u82N74LFzG8ca+dD8puPnplTXoGH4fTPpVGuIbt36G3qvNlkvfD0lEAZSxaly3KX8TS/L1A1gsCEmvKmBcVbkQ=="],
 
     "postcss-selector-parser": ["postcss-selector-parser@7.1.5", "", { "dependencies": { "cssesc": "^3.0.0", "util-deprecate": "^1.0.2" } }, "sha512-KvvtD7SrlBP7dlgkBghEE3r84CABm5SmV2aNcG4oCA+qDnJ/tvKonFVvwWAyyWUEwxuNawdfEAZKP9zM3oZ2Uw=="],
-
-    "postgres": ["postgres@3.4.9", "", {}, "sha512-GD3qdB0x1z9xgFI6cdRD6xu2Sp2WCOEoe3mtnyB5Ee0XrrL5Pe+e4CCnJrRMnL1zYtRDZmQQVbvOttLnKDLnaw=="],
 
     "powershell-utils": ["powershell-utils@0.2.0", "", {}, "sha512-ZlsFlG7MtSFCoc5xreOvBAozCJ6Pf06opgJjh9ONEv418xpZSAzNjstD36C6+JwOnfSqOW/9uDkqKjezTdxZhw=="],
 
