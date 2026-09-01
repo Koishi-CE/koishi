@@ -18,6 +18,7 @@
 | `packages/shim/*` | 本仓库的原创作品（上游名占位 shim） | MIT — [LICENSE](./LICENSE) |
 
 版权所有（c）2019 至今 Shigma 及 Koishijs 贡献者。
+版权所有（c）2026 至今 Koishi-CE 贡献者。
 
 上述 AGPL-3.0 许可部分在本仓库中仍以 AGPL-3.0 授权，MIT 部分仍以 MIT 授权。分发本合并作品，或将其作为网络服务提供，将触发对 AGPL-3.0 部分的 AGPL-3.0 义务（包括公开源代码）。本声明仅供参考，不构成法律意见。
 
@@ -41,5 +42,6 @@ This repository is a derivative work combining code from two upstream repositori
 | `packages/shim/*` | Original work of this repository (upstream-name placeholder shims) | MIT — [LICENSE](./LICENSE) |
 
 Copyright (c) 2019-present Shigma and Koishijs contributors.
+Copyright (c) 2026-present Koishi-CE contributors.
 
 The AGPL-3.0 licensed portions above remain under AGPL-3.0 in this repository; the MIT portions remain under MIT. Distributing this combined work, or offering it as a network service, triggers AGPL-3.0 obligations (including source disclosure) for the AGPL-3.0 portions. This notice is informational and is not legal advice.
