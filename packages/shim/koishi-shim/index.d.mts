@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: MIT
+// Copyright (c) 2026-present Koishi-CE contributors.
+
 /**
  * 类型侧与运行时同构：把 `koishi` 裸名（及经同一 alias 到达本包的
  * `@koishijs/core` / `@koishijs/loader`）的类型解析指回 @koishi-ce/koishi。

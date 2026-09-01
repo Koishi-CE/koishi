@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: MIT
+// Copyright (c) 2026-present Koishi-CE contributors.
+
 /**
  * 上游包名 `koishi` / `@koishijs/core` / `@koishijs/loader` 三名共用的
  * 下游兼容 shim（纯 JS 预编译，不走根 tsdown 构建）。
