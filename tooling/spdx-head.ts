@@ -9,9 +9,10 @@
  *   both      —— 并列上游 + Koishi-CE 两行（本仓重构文件）
  *   ours      —— 只写 Koishi-CE 版权行（本仓原创文件）
  *
- * 支持扩展名：.ts / .mts / .tsx / .js / .mjs / .yml / .yaml / .vue
+ * 支持扩展名：.ts / .mts / .tsx / .js / .mjs / .yml / .yaml / .vue / .scss
  * - 代码文件头：`// SPDX-License-Identifier: <LIC>`
  * - yml 文件头：`# SPDX-License-Identifier: <LIC>`
+ * - vue 文件头：`<!-- SPDX-License-Identifier: <LIC> -->`（HTML 注释）
  */
 import {
 	existsSync,
@@ -28,8 +29,9 @@ const OURS_COPYRIGHT = "Copyright (c) 2026-present Koishi-CE contributors.";
 
 const [targetDir = "", mode = "both", license = "MIT"] = process.argv.slice(2);
 
-const codeExt = new Set([".ts", ".mts", ".tsx", ".js", ".mjs"]);
+const codeExt = new Set([".ts", ".mts", ".tsx", ".js", ".mjs", ".scss"]);
 const hashExt = new Set([".yml", ".yaml"]);
+const htmlExt = new Set([".vue"]);
 
 if (!existsSync(targetDir)) {
 	console.error(`目录不存在: ${targetDir}`);
@@ -54,7 +56,7 @@ function walk(dir: string) {
 	const st = lstatSync(dir);
 	if (st.isFile()) {
 		const ext = dir.slice(dir.lastIndexOf(".")).toLowerCase();
-		if (codeExt.has(ext) || hashExt.has(ext)) {
+		if (codeExt.has(ext) || hashExt.has(ext) || htmlExt.has(ext)) {
 			total++;
 			processFile(dir, ext);
 		}
@@ -70,7 +72,7 @@ function walk(dir: string) {
 			walk(full);
 		} else {
 			const ext = name.slice(name.lastIndexOf(".")).toLowerCase();
-			if (!codeExt.has(ext) && !hashExt.has(ext)) continue;
+			if (!codeExt.has(ext) && !hashExt.has(ext) && !htmlExt.has(ext)) continue;
 			total++;
 			processFile(full, ext);
 		}
@@ -83,11 +85,14 @@ function processFile(file: string, ext: string) {
 		skipped++;
 		return;
 	}
-	const comment = hashExt.has(ext) ? "#" : "//";
-	const header =
-		`${comment} SPDX-License-Identifier: ${license}\n` +
-		copyrightLines.map((line) => `${comment} ${line}`).join("\n") +
-		"\n\n";
+	const comment = htmlExt.has(ext) ? "<!--" : hashExt.has(ext) ? "#" : "//";
+	const header = htmlExt.has(ext)
+		? `${comment} SPDX-License-Identifier: ${license} -->\n` +
+			copyrightLines.map((line) => `${comment} ${line} -->`).join("\n") +
+			"\n\n"
+		: `${comment} SPDX-License-Identifier: ${license}\n` +
+			copyrightLines.map((line) => `${comment} ${line}`).join("\n") +
+			"\n\n";
 	// shebang 必须保持在第一行，头注释插入其后
 	const shebangMatch = content.match(/^#!.*\n/);
 	if (shebangMatch) {
