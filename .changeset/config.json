@@ -8,12 +8,5 @@
 	"baseBranch": "main",
 	"updateInternalDependents": "out-of-band",
 	"bumpVersionsWithWorkspaceProtocolOnly": true,
-	"ignore": [
-		"koishi",
-		"@koishijs/plugin-console",
-		"@koishijs/core",
-		"@koishijs/loader",
-		"@koishi-ce/koishi-shim",
-		"@koishi-ce/console-shim"
-	]
+	"ignore": ["koishi", "@koishi-ce/koishi-shim", "@koishi-ce/console-shim"]
 }
