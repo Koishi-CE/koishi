@@ -1,3 +1,7 @@
+// SPDX-License-Identifier: MIT
+// Copyright (c) 2019-present Shigma and Koishijs contributors.
+// Copyright (c) 2026-present Koishi-CE contributors.
+
 /**
  * Loader 抽象基类：Koishi 的配置文件驱动加载器（与运行环境无关的部分）。
  *

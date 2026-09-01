@@ -1,3 +1,7 @@
+// SPDX-License-Identifier: MIT
+// Copyright (c) 2019-present Shigma and Koishijs contributors.
+// Copyright (c) 2026-present Koishi-CE contributors.
+
 /**
  * Loader 抽象基类行为测试（内存桩，不触盘）：migrateEntry 的 group 键
  * 重建与随机标识、readConfig 的迁移/插值/回写决策、writeConfig 的合并

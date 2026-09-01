@@ -1,3 +1,7 @@
+// SPDX-License-Identifier: MIT
+// Copyright (c) 2019-present Shigma and Koishijs contributors.
+// Copyright (c) 2026-present Koishi-CE contributors.
+
 /**
  * 插件名解析测试：候选说明符生成规则（对齐历史 ns-require 语义）、
  * Bun.resolveSync 实际解析，以及纯 fs 兜底（Bun 父目录快照缓存场景，

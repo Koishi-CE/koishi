@@ -1,3 +1,7 @@
+// SPDX-License-Identifier: MIT
+// Copyright (c) 2019-present Shigma and Koishijs contributors.
+// Copyright (c) 2026-present Koishi-CE contributors.
+
 /**
  * Bun require 的 ESM 入口分歧种子测试：postgres 形态包的依赖链修复、
  * 无分歧与未知形态包零副作用、peer 链间接消费方、ESM import 侧不受

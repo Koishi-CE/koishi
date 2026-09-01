@@ -51,11 +51,20 @@ let skipped = 0;
 let total = 0;
 
 function walk(dir: string) {
+	const st = lstatSync(dir);
+	if (st.isFile()) {
+		const ext = dir.slice(dir.lastIndexOf(".")).toLowerCase();
+		if (codeExt.has(ext) || hashExt.has(ext)) {
+			total++;
+			processFile(dir, ext);
+		}
+		return;
+	}
 	for (const name of readdirSync(dir)) {
 		const full = join(dir, name);
-		const st = lstatSync(full);
-		if (st.isSymbolicLink()) continue;
-		if (st.isDirectory()) {
+		const child = lstatSync(full);
+		if (child.isSymbolicLink()) continue;
+		if (child.isDirectory()) {
 			if (["node_modules", "lib", "dist", ".changeset"].includes(name))
 				continue;
 			walk(full);
@@ -79,7 +88,16 @@ function processFile(file: string, ext: string) {
 		`${comment} SPDX-License-Identifier: ${license}\n` +
 		copyrightLines.map((line) => `${comment} ${line}`).join("\n") +
 		"\n\n";
-	writeFileSync(file, header + content);
+	// shebang 必须保持在第一行，头注释插入其后
+	const shebangMatch = content.match(/^#!.*\n/);
+	if (shebangMatch) {
+		writeFileSync(
+			file,
+			shebangMatch[0] + header + content.slice(shebangMatch[0].length),
+		);
+	} else {
+		writeFileSync(file, header + content);
+	}
 	added++;
 }
 

@@ -1,3 +1,7 @@
+// SPDX-License-Identifier: MIT
+// Copyright (c) 2019-present Shigma and Koishijs contributors.
+// Copyright (c) 2026-present Koishi-CE contributors.
+
 import { describe, expect, it } from "bun:test";
 import { mock as jest } from "node:test";
 import { type Dict, noop, observe } from "@koishi-ce/koishi";

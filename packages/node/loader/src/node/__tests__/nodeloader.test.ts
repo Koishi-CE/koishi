@@ -1,3 +1,7 @@
+// SPDX-License-Identifier: MIT
+// Copyright (c) 2019-present Shigma and Koishijs contributors.
+// Copyright (c) 2026-present Koishi-CE contributors.
+
 /**
  * NodeLoader 装配链测试：init 定位与 env 文件路径、readConfig 的 env
  * 注入/撤销与迁移回写、migrateEntry 数据库默认值、import 的解析缓存与

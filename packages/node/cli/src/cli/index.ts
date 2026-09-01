@@ -1,5 +1,9 @@
 #!/usr/bin/env bun
 
+// SPDX-License-Identifier: MIT
+// Copyright (c) 2019-present Shigma and Koishijs contributors.
+// Copyright (c) 2026-present Koishi-CE contributors.
+
 /**
  * Koishi 命令行入口。
  *

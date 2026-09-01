@@ -1,3 +1,7 @@
+// SPDX-License-Identifier: MIT
+// Copyright (c) 2019-present Shigma and Koishijs contributors.
+// Copyright (c) 2026-present Koishi-CE contributors.
+
 /**
  * NodeLoader 的清单迁移：把历史上的内置功能改写为对应插件的形式，
  * 并同步维护 package.json 依赖表。

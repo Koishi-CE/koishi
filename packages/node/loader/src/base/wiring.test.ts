@@ -1,3 +1,7 @@
+// SPDX-License-Identifier: MIT
+// Copyright (c) 2019-present Shigma and Koishijs contributors.
+// Copyright (c) 2026-present Koishi-CE contributors.
+
 /**
  * 应用装配测试：根上下文 dispose 触发整进程重载、CLI 透传的启动消息
  * 在目标机器人上线后送达一次（无 channelId 时仅注销监听）。

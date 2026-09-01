@@ -1,3 +1,7 @@
+// SPDX-License-Identifier: MIT
+// Copyright (c) 2019-present Shigma and Koishijs contributors.
+// Copyright (c) 2026-present Koishi-CE contributors.
+
 /**
  * 内置 group 插件：把一组插件配置作为一个可复用的单元挂载。
  * 组内的每个成员仍由 loader 逐个管理，`~` / `$` 前缀的键会被跳过。

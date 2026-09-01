@@ -1,3 +1,7 @@
+// SPDX-License-Identifier: MIT
+// Copyright (c) 2019-present Shigma and Koishijs contributors.
+// Copyright (c) 2026-present Koishi-CE contributors.
+
 /**
  * 杂项工具函数：类型判断、枚举处理、对象合并、错误格式化等
  * 不便归类的小工具。全部为纯函数，无副作用。

@@ -1,3 +1,7 @@
+// SPDX-License-Identifier: MIT
+// Copyright (c) 2019-present Shigma and Koishijs contributors.
+// Copyright (c) 2026-present Koishi-CE contributors.
+
 /**
  * 旧配置迁移测试：request / 代理 / 服务器配置改写为插件形式、http
  * 插件 proxyAgent 的提取与写回（含嵌套 group）、package.json 依赖登记
