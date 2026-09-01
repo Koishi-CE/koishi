@@ -1,3 +1,7 @@
+// SPDX-License-Identifier: MIT
+// Copyright (c) 2019-present Shigma and Koishijs contributors.
+// Copyright (c) 2026-present Koishi-CE contributors.
+
 /**
  * 插件市场扫描器（packages/node/registry）的类型定义：覆盖 npm registry 协议里
  * 用到的各层数据结构——package.json（本地与远程形态）、Koishi 清单

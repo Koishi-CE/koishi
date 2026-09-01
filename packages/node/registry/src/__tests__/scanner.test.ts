@@ -1,3 +1,7 @@
+// SPDX-License-Identifier: MIT
+// Copyright (c) 2019-present Shigma and Koishijs contributors.
+// Copyright (c) 2026-present Koishi-CE contributors.
+
 /**
  * registry 远程扫描器测试：isPlugin/isCompatible 静态判定、collect 分页
  * 搜索与条目过滤、process 单包分析（兼容版本筛选、清单填充、关键词

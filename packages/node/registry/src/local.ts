@@ -1,3 +1,7 @@
+// SPDX-License-Identifier: MIT
+// Copyright (c) 2019-present Shigma and Koishijs contributors.
+// Copyright (c) 2026-present Koishi-CE contributors.
+
 /**
  * npm 插件市场扫描器（本地侧）：扫描给定目录及其所有祖先目录的
  * node_modules，收集已安装的 Koishi 插件并解析出与远程扫描同构的

@@ -1,3 +1,7 @@
+// SPDX-License-Identifier: MIT
+// Copyright (c) 2019-present Shigma and Koishijs contributors.
+// Copyright (c) 2026-present Koishi-CE contributors.
+
 /**
  * registry 本地扫描测试：resolvePackageJson 的纯 fs 探测（含 Bun 父目录
  * 快照缓存场景模拟）、isResidentInCache 的驻留判定、LocalScanner 的目录

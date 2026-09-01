@@ -1,3 +1,7 @@
+// SPDX-License-Identifier: MIT
+// Copyright (c) 2019-present Shigma and Koishijs contributors.
+// Copyright (c) 2026-present Koishi-CE contributors.
+
 /**
  * registry 工具集测试：Ensure 系列类型守卫的清洗/回退语义，与
  * conclude() 把 package.json 的 koishi 字段及约定关键词折算成

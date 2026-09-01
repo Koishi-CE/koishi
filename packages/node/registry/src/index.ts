@@ -1,3 +1,7 @@
+// SPDX-License-Identifier: MIT
+// Copyright (c) 2019-present Shigma and Koishijs contributors.
+// Copyright (c) 2026-present Koishi-CE contributors.
+
 /**
  * npm 插件市场扫描器（远程侧）：面向 https://registry.npmjs.org 等
  * 兼容 npm registry 协议的源，完成「搜索收集 → 逐包分析」两阶段扫描，
