@@ -1,7 +1,7 @@
 {
 	"name": "@koishi-ce/plugin-theme-vanilla",
 	"description": "Vanilla themes for Koishi console",
-	"version": "1.0.0",
+	"version": "1.0.1",
 	"type": "module",
 	"main": "lib/index.mjs",
 	"typings": "lib/index.d.ts",
