@@ -22,7 +22,7 @@ Snapshot started from:
 | the 16 `plugins/webui/*` | webui `plugins/*` |
 | `tsconfig.client.json` | webui `tsconfig.client.json` |
 | `apps/online/vercel.json` | webui `vercel.json` |
-|  `LICENSES/webui-AGPL-3.0.txt` | webui `LICENSE` |
+|  `LICENSES/AGPL-3.0.txt` | webui `LICENSE` |
 | root `package.json`, `tsconfig.json`, `yakumo.yml` | rewritten (merged from both repo roots) |
 
 Local regrouping (upstream packages are flat `packages/*` / `plugins/*`): `packages/node` and `packages/web` split by runtime, `plugins/{common,infra,webui}` split by origin/role. Upstream package names map here to the `@koishi-ce` scope (`@koishijs/X` → `@koishi-ce/X`, `koishi` → `@koishi-ce/koishi`); dependencies on packages outside this monorepo keep their upstream names, and `peerDependencies` still target the published upstream runtime. Sync by mapping the upstream package name to its directory here via the table above.

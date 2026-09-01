@@ -11,9 +11,9 @@
 | `packages/node/{core,loader,utils,i18n-utils,cli}` | [koishijs/koishi](https://github.com/koishijs/koishi) `packages/*` | MIT — [LICENSE](./LICENSE) |
 | `plugins/infra/{http,server,hmr,mock,proxy-agent}` | [koishijs/koishi](https://github.com/koishijs/koishi) `plugins/*` | MIT — [LICENSE](./LICENSE) |
 | `plugins/common/{bind,broadcast,callme,echo,help,inspect}` | [koishijs/koishi](https://github.com/koishijs/koishi) `plugins/common/*` | MIT — [LICENSE](./LICENSE) |
-| `packages/web/{client,components,market}` | [koishijs/webui](https://github.com/koishijs/webui) `packages/*` | AGPL-3.0 — [LICENSES/webui-AGPL-3.0](./LICENSES/webui-AGPL-3.0.txt) |
-| `plugins/webui/{actions,admin,analytics,auth,commands,config,console,explorer,insight,locales,logger,market,notifier,oobe,sandbox,status}` | [koishijs/webui](https://github.com/koishijs/webui) `plugins/*` | AGPL-3.0 — [LICENSES/webui-AGPL-3.0](./LICENSES/webui-AGPL-3.0.txt) |
-| `apps/online` | [koishijs/webui](https://github.com/koishijs/webui) `packages/online` | AGPL-3.0 — [LICENSES/webui-AGPL-3.0](./LICENSES/webui-AGPL-3.0.txt) |
+| `packages/web/{client,components,market}` | [koishijs/webui](https://github.com/koishijs/webui) `packages/*` | AGPL-3.0 — [LICENSES/AGPL-3.0](./LICENSES/AGPL-3.0.txt) |
+| `plugins/webui/{actions,admin,analytics,auth,commands,config,console,explorer,insight,locales,logger,market,notifier,oobe,sandbox,status}` | [koishijs/webui](https://github.com/koishijs/webui) `plugins/*` | AGPL-3.0 — [LICENSES/AGPL-3.0](./LICENSES/AGPL-3.0.txt) |
+| `apps/online` | [koishijs/webui](https://github.com/koishijs/webui) `packages/online` | AGPL-3.0 — [LICENSES/AGPL-3.0](./LICENSES/AGPL-3.0.txt) |
 | `packages/node/{console,registry}` | [koishijs/webui](https://github.com/koishijs/webui) | MIT（以各包上游 package.json 声明为准） |
 | `packages/shim/*` | 本仓库的原创作品（上游名占位 shim） | MIT — [LICENSE](./LICENSE) |
 
@@ -34,9 +34,9 @@ This repository is a derivative work combining code from two upstream repositori
 | `packages/node/{core,loader,utils,i18n-utils,cli}` | [koishijs/koishi](https://github.com/koishijs/koishi) `packages/*` | MIT — [LICENSE](./LICENSE) |
 | `plugins/infra/{http,server,hmr,mock,proxy-agent}` | [koishijs/koishi](https://github.com/koishijs/koishi) `plugins/*` | MIT — [LICENSE](./LICENSE) |
 | `plugins/common/{bind,broadcast,callme,echo,help,inspect}` | [koishijs/koishi](https://github.com/koishijs/koishi) `plugins/common/*` | MIT — [LICENSE](./LICENSE) |
-| `packages/web/{client,components,market}` | [koishijs/webui](https://github.com/koishijs/webui) `packages/*` | AGPL-3.0 — [LICENSES/webui-AGPL-3.0](./LICENSES/webui-AGPL-3.0.txt) |
-| `plugins/webui/{actions,admin,analytics,auth,commands,config,console,explorer,insight,locales,logger,market,notifier,oobe,sandbox,status}` | [koishijs/webui](https://github.com/koishijs/webui) `plugins/*` | AGPL-3.0 — [LICENSES/webui-AGPL-3.0](./LICENSES/webui-AGPL-3.0.txt) |
-| `apps/online` | [koishijs/webui](https://github.com/koishijs/webui) `packages/online` | AGPL-3.0 — [LICENSES/webui-AGPL-3.0](./LICENSES/webui-AGPL-3.0.txt) |
+| `packages/web/{client,components,market}` | [koishijs/webui](https://github.com/koishijs/webui) `packages/*` | AGPL-3.0 — [LICENSES/AGPL-3.0](./LICENSES/AGPL-3.0.txt) |
+| `plugins/webui/{actions,admin,analytics,auth,commands,config,console,explorer,insight,locales,logger,market,notifier,oobe,sandbox,status}` | [koishijs/webui](https://github.com/koishijs/webui) `plugins/*` | AGPL-3.0 — [LICENSES/AGPL-3.0](./LICENSES/AGPL-3.0.txt) |
+| `apps/online` | [koishijs/webui](https://github.com/koishijs/webui) `packages/online` | AGPL-3.0 — [LICENSES/AGPL-3.0](./LICENSES/AGPL-3.0.txt) |
 | `packages/node/{console,registry}` | [koishijs/webui](https://github.com/koishijs/webui) | MIT (declared in the upstream package.json of each package) |
 | `packages/shim/*` | Original work of this repository (upstream-name placeholder shims) | MIT — [LICENSE](./LICENSE) |
 
