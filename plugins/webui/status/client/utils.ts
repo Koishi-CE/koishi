@@ -1,3 +1,7 @@
+// SPDX-License-Identifier: AGPL-3.0-only
+// Copyright (c) 2019-present Shigma and Koishijs contributors.
+// Copyright (c) 2026-present Koishi-CE contributors.
+
 /**
  * 将文本写入剪贴板：优先使用 Clipboard API，
  * 不可用（如非安全上下文 / 旧浏览器）时回退到隐藏 textarea + execCommand 的兼容方案。

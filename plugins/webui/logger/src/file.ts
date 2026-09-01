@@ -1,3 +1,7 @@
+// SPDX-License-Identifier: AGPL-3.0-only
+// Copyright (c) 2019-present Shigma and Koishijs contributors.
+// Copyright (c) 2026-present Koishi-CE contributors.
+
 import { Buffer } from "node:buffer";
 import { type FileHandle, open } from "node:fs/promises";
 import type { Logger } from "@koishi-ce/koishi";

@@ -1,3 +1,7 @@
+<!-- SPDX-License-Identifier: AGPL-3.0-only -->
+<!-- Copyright (c) 2019-present Shigma and Koishijs contributors. -->
+<!-- Copyright (c) 2026-present Koishi-CE contributors. -->
+
 <!-- 统计数值卡：左侧图标 + 右侧标题与主数值，可选页脚左右两栏（如"昨日增量"）。
      纯展示组件，数据由父级通过插槽注入。 -->
 <template>

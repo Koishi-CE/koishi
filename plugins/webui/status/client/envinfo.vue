@@ -1,3 +1,7 @@
+<!-- SPDX-License-Identifier: AGPL-3.0-only -->
+<!-- Copyright (c) 2019-present Shigma and Koishijs contributors. -->
+<!-- Copyright (c) 2026-present Koishi-CE contributors. -->
+
 <!-- 状态栏左侧的版本号徽标：显示 Koishi 核心版本，
      悬停展开 envinfo 服务采集的分组明细（系统 / 运行时 / Koishi 生态），
      点击将全部环境信息格式化为多行文本并复制到剪贴板。 -->

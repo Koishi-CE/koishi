@@ -1,3 +1,7 @@
+// SPDX-License-Identifier: AGPL-3.0-only
+// Copyright (c) 2019-present Shigma and Koishijs contributors.
+// Copyright (c) 2026-present Koishi-CE contributors.
+
 /**
  * status 插件的自定义图标注册：
  * 上 / 下箭头用于收发消息速率，platform 与 robot 用于机器人预览卡，

@@ -1,3 +1,7 @@
+<!-- SPDX-License-Identifier: AGPL-3.0-only -->
+<!-- Copyright (c) 2019-present Shigma and Koishijs contributors. -->
+<!-- Copyright (c) 2026-present Koishi-CE contributors. -->
+
 <template>
   <k-comment v-for="(item, index) in notifiers" :key="index" :type="item.type">
     <render :children="segment.parse(item.content)"></render>

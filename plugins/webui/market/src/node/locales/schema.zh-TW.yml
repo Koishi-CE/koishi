@@ -1,3 +1,7 @@
+# SPDX-License-Identifier: AGPL-3.0-only
+# Copyright (c) 2019-present Shigma and Koishijs contributors.
+# Copyright (c) 2026-present Koishi-CE contributors.
+
 registry:
   $description: 外掛程式源設定
   endpoint: 外掛程式的下載源。默認跟隨當前項目的 npm config。

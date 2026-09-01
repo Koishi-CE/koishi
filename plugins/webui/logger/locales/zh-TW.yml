@@ -1,3 +1,7 @@
+# SPDX-License-Identifier: AGPL-3.0-only
+# Copyright (c) 2019-present Shigma and Koishijs contributors.
+# Copyright (c) 2026-present Koishi-CE contributors.
+
 root: 存放輸出日誌的本地目錄。
 maxAge: 日誌文件保存的最大天數。
 maxSize: 單個日誌文件的最大大小。

@@ -1,3 +1,7 @@
+<!-- SPDX-License-Identifier: AGPL-3.0-only -->
+<!-- Copyright (c) 2019-present Shigma and Koishijs contributors. -->
+<!-- Copyright (c) 2026-present Koishi-CE contributors. -->
+
 <!-- 状态栏右侧的机器人概况：按在线状态聚合一排状态灯，
      同状态机器人过多（超过 mergeThreshold）时合并为"灯 + ×数量"；
      悬停展开每个机器人的预览卡，点击可跳转到对应插件配置页。

@@ -1,3 +1,7 @@
+<!-- SPDX-License-Identifier: AGPL-3.0-only -->
+<!-- Copyright (c) 2019-present Shigma and Koishijs contributors. -->
+<!-- Copyright (c) 2026-present Koishi-CE contributors. -->
+
 <template>
   <!-- 本地化页面的指令跳转插槽：正在编辑 commands.* 前缀的词条时显示「前往指令」入口 -->
   <div v-if="active && active.startsWith('commands.')" class="navigation flex flex-wrap gap-x-4 gap-y-2 my-8">

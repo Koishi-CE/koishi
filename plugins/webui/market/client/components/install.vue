@@ -1,3 +1,7 @@
+<!-- SPDX-License-Identifier: AGPL-3.0-only -->
+<!-- Copyright (c) 2019-present Shigma and Koishijs contributors. -->
+<!-- Copyright (c) 2026-present Koishi-CE contributors. -->
+
 <template>
   <el-dialog :model-value="!!active" @update:model-value="active = ''" class="install-panel" destroy-on-close>
     <template v-if="active" #header="{ titleId, titleClass }">
@@ -242,7 +246,7 @@ const local = computed(() => store.packages?.[active.value]);
 const showRemoveButton = computed(() => {
 	return (
 		current.value ||
-		store.dependencies[active.value] ||
+		store.dependencies?.[active.value] ||
 		(config.value.market.bulkMode && config.value.market.override[active.value])
 	);
 });
@@ -291,10 +295,13 @@ const warning = computed(() => {
 
 const result = computed(() => {
 	if (!version.value) return;
-	const { result } = data.value[version.value];
-	if (result === "danger" || danger.value) return "danger";
-	if (result === "warning" || warning.value) return "warning";
-	return result;
+	// version 可能来自 override 暂存或只剥了 ^/~ 的依赖 range，未必是
+	// analyzeVersions 以精确版本号为键的合法键，查不到时按未定级处理
+	const entry = data.value?.[version.value];
+	if (!entry) return;
+	if (entry.result === "danger" || danger.value) return "danger";
+	if (entry.result === "warning" || warning.value) return "warning";
+	return entry.result;
 });
 
 function shouldFetchRegistry(name: string) {

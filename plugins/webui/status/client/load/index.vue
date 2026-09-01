@@ -1,3 +1,7 @@
+<!-- SPDX-License-Identifier: AGPL-3.0-only -->
+<!-- Copyright (c) 2019-present Shigma and Koishijs contributors. -->
+<!-- Copyright (c) 2026-present Koishi-CE contributors. -->
+
 <!-- 状态栏右侧的负载概况：常驻显示整机 CPU / 内存占用百分比（各取 LoadRate 的第二项），
      悬停展开双条形图，进一步区分"本进程"与"整机"的占用分布。 -->
 <template>

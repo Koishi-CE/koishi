@@ -1,3 +1,7 @@
+<!-- SPDX-License-Identifier: AGPL-3.0-only -->
+<!-- Copyright (c) 2019-present Shigma and Koishijs contributors. -->
+<!-- Copyright (c) 2026-present Koishi-CE contributors. -->
+
 <template>
   <!-- navigation -->
   <div class="navigation flex flex-wrap gap-x-4 gap-y-2 my-8" v-if="object">

@@ -1,3 +1,7 @@
+<!-- SPDX-License-Identifier: AGPL-3.0-only -->
+<!-- Copyright (c) 2019-present Shigma and Koishijs contributors. -->
+<!-- Copyright (c) 2026-present Koishi-CE contributors. -->
+
 <!-- 插件配置页的机器人区块：挂在 plugin-details 插槽位。
      只展示其配置路径（paths）包含当前插件路径的机器人，
      即"由当前插件加载"的那些机器人，并以预览卡形式列出。 -->

@@ -1,3 +1,7 @@
+<!-- SPDX-License-Identifier: AGPL-3.0-only -->
+<!-- Copyright (c) 2019-present Shigma and Koishijs contributors. -->
+<!-- Copyright (c) 2026-present Koishi-CE contributors. -->
+
 <!-- 单个机器人的预览卡：头像（经代理加载）+ 右下角状态灯（悬停显示状态文案）、
      昵称、平台与最近一分钟的收发消息速率。用于状态栏悬停层与插件配置页。 -->
 <template>

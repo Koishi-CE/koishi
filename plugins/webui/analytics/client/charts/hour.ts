@@ -1,3 +1,7 @@
+// SPDX-License-Identifier: AGPL-3.0-only
+// Copyright (c) 2019-present Shigma and Koishijs contributors.
+// Copyright (c) 2026-present Koishi-CE contributors.
+
 /**
  * 每小时消息数量图：按时段汇总的柱状图（收 / 发页签切换），展示一天 24 小时
  * 的日均消息分布。x 轴是数值轴：第 i 小时的柱子画在 i + 0.5 处，

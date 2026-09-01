@@ -1,3 +1,7 @@
+<!-- SPDX-License-Identifier: AGPL-3.0-only -->
+<!-- Copyright (c) 2019-present Shigma and Koishijs contributors. -->
+<!-- Copyright (c) 2026-present Koishi-CE contributors. -->
+
 <!-- 负载条形图：将一条负载率（[本进程占比, 整机占比]）拆分为三段色带，
      依次为"其它进程"（used，主色）、"本进程"（app，警示色）与"空闲"（free，底色）。
      占比过半的段内嵌 "进程 / 整机" 百分比说明；无过半段时较宽的段各自标注自身占比。 -->

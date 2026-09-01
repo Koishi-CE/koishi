@@ -1,3 +1,7 @@
+<!-- SPDX-License-Identifier: AGPL-3.0-only -->
+<!-- Copyright (c) 2019-present Shigma and Koishijs contributors. -->
+<!-- Copyright (c) 2026-present Koishi-CE contributors. -->
+
 <template>
   <!-- 指令管理主页面：左侧为可搜索、可拖拽的指令树，右侧为选中指令的配置面板 -->
   <k-layout menu="command">

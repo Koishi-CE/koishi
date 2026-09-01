@@ -1,3 +1,7 @@
+<!-- SPDX-License-Identifier: AGPL-3.0-only -->
+<!-- Copyright (c) 2019-present Shigma and Koishijs contributors. -->
+<!-- Copyright (c) 2026-present Koishi-CE contributors. -->
+
 <!-- 当前 QPS 数值卡：挂到 analytic-number 插槽位，供 analytics 插件的数值网格复用。
      主值取全部机器人最近 60 秒接收消息的均值；页脚对比值取 analytics 服务
      最近 7 天按日统计的接收消息折算成的每秒均值。 -->

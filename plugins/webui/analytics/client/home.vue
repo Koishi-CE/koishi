@@ -1,3 +1,7 @@
+<!-- SPDX-License-Identifier: AGPL-3.0-only -->
+<!-- Copyright (c) 2019-present Shigma and Koishijs contributors. -->
+<!-- Copyright (c) 2026-present Koishi-CE contributors. -->
+
 <!-- 控制台首页的统计面板：上半部分为数值卡网格（用户 / 群组 / DAU），
      下半部分为 analytic-chart 插槽位承载的各图表卡片，样式按视口宽度分档适配。 -->
 <template>

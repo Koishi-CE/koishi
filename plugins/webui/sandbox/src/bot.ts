@@ -1,3 +1,7 @@
+// SPDX-License-Identifier: AGPL-3.0-only
+// Copyright (c) 2019-present Shigma and Koishijs contributors.
+// Copyright (c) 2026-present Koishi-CE contributors.
+
 /**
  * 沙盒机器人：把一个浏览器控制台连接（Client）包装成 Bot 适配器，
  * 让沙盒页面在 Koishi 眼中表现为一个真实的聊天平台。

@@ -1,3 +1,7 @@
+// SPDX-License-Identifier: AGPL-3.0-only
+// Copyright (c) 2019-present Shigma and Koishijs contributors.
+// Copyright (c) 2026-present Koishi-CE contributors.
+
 /**
  * config 插件浏览器端的共享工具与全局状态。
  *
@@ -99,6 +103,24 @@ export function hasCoreDeps(tree: Tree) {
 }
 
 /**
+ * 解析 peer 依赖名在 store.packages 中的实际条目。上游名（@koishijs/plugin-*）
+ * 在本生态里由 shim / npm alias 占名而非真实插件：仓内占位包被 LocalScanner
+ * 剔除、下游 alias 落盘后又以真实包名为键，字面名查不到时回退查对应的
+ * @koishi-ce/plugin-* 再分发名（两种形态下的真实提供者都是后者）。
+ */
+export function resolveProvider(
+	packages: Dict<PackageProvider.Data> | undefined,
+	name: string,
+): PackageProvider.Data | undefined {
+	const direct = packages?.[name];
+	if (direct) return direct;
+	if (!name.startsWith("@koishijs/plugin-")) return;
+	return packages?.[
+		`@koishi-ce/plugin-${name.slice("@koishijs/plugin-".length)}`
+	];
+}
+
+/**
  * 汇总单个插件的依赖环境信息（peer 依赖 / 实现的服务 / 注入的服务 /
  * 可重用性 / schema 声明），包不存在时返回空骨架。
  *
@@ -126,11 +148,12 @@ function getEnvInfo(name: string) {
 			!name.includes("koishi-plugin-")
 		)
 			continue;
-		if (coreDeps.includes(name)) continue;
+		const provider = resolveProvider(packages, name);
+		if (coreDeps.includes(provider?.name ?? name)) continue;
 		const required = !local.package.peerDependenciesMeta?.[name]?.optional;
-		const active = !!packages[name]?.runtime?.id;
+		const active = !!provider?.runtime?.id;
 		result.peer[name] = { required, active };
-		for (const service of packages[name]?.manifest?.service.implements ?? []) {
+		for (const service of provider?.manifest?.service.implements ?? []) {
 			services.add(service);
 		}
 	}

@@ -1,3 +1,7 @@
+// SPDX-License-Identifier: AGPL-3.0-only
+// Copyright (c) 2019-present Shigma and Koishijs contributors.
+// Copyright (c) 2026-present Koishi-CE contributors.
+
 /**
  * PackageProvider 的 Node 端实现：基于 LocalScanner 扫描本机
  * node_modules 中的插件包，并在扫描过程中顺带解析已加载插件的

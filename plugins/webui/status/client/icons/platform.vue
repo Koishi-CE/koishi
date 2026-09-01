@@ -1,3 +1,7 @@
+<!-- SPDX-License-Identifier: AGPL-3.0-only -->
+<!-- Copyright (c) 2019-present Shigma and Koishijs contributors. -->
+<!-- Copyright (c) 2026-present Koishi-CE contributors. -->
+
 <!-- 分层平台图标：机器人预览卡中标识所属平台。 -->
 <template>
   <svg class="k-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">

@@ -1,3 +1,7 @@
+// SPDX-License-Identifier: AGPL-3.0-only
+// Copyright (c) 2019-present Shigma and Koishijs contributors.
+// Copyright (c) 2026-present Koishi-CE contributors.
+
 /**
  * 图表组件聚合注册：把四个统计图表依次挂到 analytic-chart 插槽位
  * （最终展示顺序由各图表的注册顺序与 order 决定）：

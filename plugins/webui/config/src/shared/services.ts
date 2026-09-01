@@ -1,3 +1,7 @@
+// SPDX-License-Identifier: AGPL-3.0-only
+// Copyright (c) 2019-present Shigma and Koishijs contributors.
+// Copyright (c) 2026-present Koishi-CE contributors.
+
 /**
  * 服务状态提供器：以 `services` 数据服务的形式向浏览器端上报当前
  * 应用中每个已注册服务的提供者信息（服务名 → 提供该服务的上下文 uid）。

@@ -1,3 +1,7 @@
+<!-- SPDX-License-Identifier: AGPL-3.0-only -->
+<!-- Copyright (c) 2019-present Shigma and Koishijs contributors. -->
+<!-- Copyright (c) 2026-present Koishi-CE contributors. -->
+
 <template>
   <!-- 权限名称显示：指令 / 用户组前缀特殊处理，其余优先取本地化词条，缺省回退原始 id -->
   <template v-if="id.startsWith('command:')">

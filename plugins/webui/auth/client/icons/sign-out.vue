@@ -1,3 +1,7 @@
+<!-- SPDX-License-Identifier: AGPL-3.0-only -->
+<!-- Copyright (c) 2019-present Shigma and Koishijs contributors. -->
+<!-- Copyright (c) 2026-present Koishi-CE contributors. -->
+
 <template>
   <!-- 登出箭头图标：个人资料页"退出登录"菜单项 -->
   <svg class="k-icon k-icon-sign-out" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">

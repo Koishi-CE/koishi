@@ -1,3 +1,7 @@
+// SPDX-License-Identifier: AGPL-3.0-only
+// Copyright (c) 2019-present Shigma and Koishijs contributors.
+// Copyright (c) 2026-present Koishi-CE contributors.
+
 /**
  * 指令调用频率图：环形饼图，按日均调用次数降序排列各指令的占比
  * （数值来自 commandRate，无数据时不渲染）。

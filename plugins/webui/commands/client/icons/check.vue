@@ -1,3 +1,7 @@
+<!-- SPDX-License-Identifier: AGPL-3.0-only -->
+<!-- Copyright (c) 2019-present Shigma and Koishijs contributors. -->
+<!-- Copyright (c) 2026-present Koishi-CE contributors. -->
+
 <template>
   <!-- 对勾（勾选）图标 -->
   <svg class="k-icon check" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512">

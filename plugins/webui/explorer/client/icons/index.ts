@@ -1,3 +1,7 @@
+// SPDX-License-Identifier: AGPL-3.0-only
+// Copyright (c) 2019-present Shigma and Koishijs contributors.
+// Copyright (c) 2026-present Koishi-CE contributors.
+
 // 注册 explorer 插件用到的全部自定义 SVG 图标：
 // activity:explorer 为页面入口图标，其余为文件树节点类型图标与菜单动作图标
 import { icons } from "@koishi-ce/client";

@@ -1,3 +1,7 @@
+<!-- SPDX-License-Identifier: AGPL-3.0-only -->
+<!-- Copyright (c) 2019-present Shigma and Koishijs contributors. -->
+<!-- Copyright (c) 2026-present Koishi-CE contributors. -->
+
 <template>
   <svg class="k-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 384 512">
     <path fill="currentColor" d="M320 64H64c-35.35 0-64 28.65-64 64v255.1c0 35.35 28.65 64 64 64H320c35.35 0 64-28.65 64-64V128C384 92.65 355.3 64 320 64zM336 384c0 8.822-7.178 16-16 16H64c-8.822 0-16-7.178-16-16V128c0-8.822 7.178-16 16-16h256c8.822 0 16 7.178 16 16V384z"/>
