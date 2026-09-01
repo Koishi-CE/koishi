@@ -1,3 +1,6 @@
+# SPDX-License-Identifier: MIT
+# Copyright (c) 2019-present Shigma and Koishijs contributors.
+
 commands:
   inspect:
     description: 查看用户、频道或消息的详细信息

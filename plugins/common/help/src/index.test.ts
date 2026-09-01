@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: MIT
+// Copyright (c) 2026-present Koishi-CE contributors.
+
 /**
  * help 插件测试：覆盖帮助列表、指令属性（别名 / 用法 / 示例 / 权限）、
  * 选项展示、子指令、无数据库场景与 shortcut / options 配置开关。

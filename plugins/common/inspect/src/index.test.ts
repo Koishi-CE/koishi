@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: MIT
+// Copyright (c) 2026-present Koishi-CE contributors.
+
 /**
  * inspect 插件测试：验证当前会话、at / sharp 元素参数、
  * 非法参数与引用消息四类输入的元信息输出。

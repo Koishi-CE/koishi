@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: MIT
+// Copyright (c) 2026-present Koishi-CE contributors.
+
 import { afterAll, beforeAll, describe, expect, it } from "bun:test";
 import { App, Database, RuntimeError } from "@koishi-ce/koishi";
 import mock from "@koishi-ce/plugin-mock";

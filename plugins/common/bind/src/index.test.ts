@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: MIT
+// Copyright (c) 2026-present Koishi-CE contributors.
+
 /**
  * bind 插件测试：用两个 mock 客户端模拟跨平台用户，
  * 验证两步令牌绑定流程与解绑（含原初账号保护）。

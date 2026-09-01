@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: MIT
+// Copyright (c) 2026-present Koishi-CE contributors.
+
 /**
  * bind 插件补充用例（bun:test 断言）：
  * 私聊令牌一步完成绑定、原初绑定不止一个时解绑另建新用户承接、

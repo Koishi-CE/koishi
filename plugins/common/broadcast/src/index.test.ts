@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: MIT
+// Copyright (c) 2026-present Koishi-CE contributors.
+
 /**
  * broadcast 插件测试：用两个 mock bot 验证全局广播、
  * 仅本 bot 广播（-o）与静默频道过滤（-f）的目标频道集合。

@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: MIT
+// Copyright (c) 2026-present Koishi-CE contributors.
+
 /**
  * help 插件补充用例（bun:test 断言）：
  * 父指令对当前会话不可见时下钻子指令（getCommands else 分支）、

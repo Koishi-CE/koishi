@@ -1,3 +1,7 @@
+// SPDX-License-Identifier: MIT
+// Copyright (c) 2019-present Shigma and Koishijs contributors.
+// Copyright (c) 2026-present Koishi-CE contributors.
+
 /**
  * 全体广播插件（broadcast）。
  *
