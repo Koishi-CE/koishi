@@ -46,8 +46,8 @@
 		}
 	},
 	"peerDependencies": {
-		"@koishijs/plugin-console": "^5.30.11",
-		"koishi": "^4.18.11"
+		"@koishi-ce/plugin-console": "^1.0.0",
+		"@koishi-ce/koishi": "^1.0.0"
 	},
 	"devDependencies": {
 		"@koishi-ce/client": "workspace:*",

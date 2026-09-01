@@ -51,7 +51,7 @@
 		"config"
 	],
 	"peerDependencies": {
-		"@koishijs/core": "4.18.11"
+		"@koishi-ce/core": "^1.0.0"
 	},
 	"devDependencies": {
 		"@koishi-ce/core": "workspace:*",
