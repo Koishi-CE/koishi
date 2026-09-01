@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: MIT
+// Copyright (c) 2026-present Koishi-CE contributors.
+
 /**
  * `koishi-scripts publish`：npm 逐个发布 CLI（发布链最后一环）。
  *

@@ -1,4 +1,7 @@
 #!/usr/bin/env bun
+// SPDX-License-Identifier: MIT
+// Copyright (c) 2026-present Koishi-CE contributors.
+
 /**
  * Koishi-CE monorepo 构建发布一条龙（零第三方依赖，Bun 运行时）。
  *

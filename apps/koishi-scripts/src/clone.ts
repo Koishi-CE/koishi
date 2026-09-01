@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: MIT
+// Copyright (c) 2026-present Koishi-CE contributors.
+
 /**
  * `koishi-scripts clone` 子命令：把已有插件仓库克隆到宿主工作区的
  * external/ 目录下并安装依赖（bun install），便于本地联动开发第三方插件。

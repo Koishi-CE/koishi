@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: MIT
+// Copyright (c) 2026-present Koishi-CE contributors.
+
 /**
  * @koishi-ce/scripts 的共享工具模块：宿主项目 package.json 的最小类型、
  * 当前工作目录与宿主清单的懒加载读取。setup / clone / release 各子命令

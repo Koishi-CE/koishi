@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: MIT
+// Copyright (c) 2026-present Koishi-CE contributors.
+
 /**
  * 把 tsconfig.base.json 的 paths 同步注入各 workspace 包的 tsconfig.json。
  *

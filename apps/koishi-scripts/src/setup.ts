@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: MIT
+// Copyright (c) 2026-present Koishi-CE contributors.
+
 /**
  * `koishi-scripts setup` 子命令：按统一范式初始化插件项目脚手架，产物落在
  * 宿主项目的 external/ 目录下（取代上游 yakumo 老模板——那套模板零 scripts、

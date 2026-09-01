@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: MIT
+// Copyright (c) 2026-present Koishi-CE contributors.
+
 /**
  * create-koishi-ce 脚手架（npm 包名 create-koishi-ce，目录名为
  * apps/koishi-create，二者不一致是历史遗留，以目录名为准）。

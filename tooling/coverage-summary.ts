@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: MIT
+// Copyright (c) 2026-present Koishi-CE contributors.
+
 /**
  * 解析根目录 lcov.info，输出按行覆盖率升序的文件清单与总覆盖率。
  *

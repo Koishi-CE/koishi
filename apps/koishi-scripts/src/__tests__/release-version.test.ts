@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: MIT
+// Copyright (c) 2026-present Koishi-CE contributors.
+
 import { afterAll, beforeAll, describe, expect, it, mock } from "bun:test";
 import {
 	mkdirSync,

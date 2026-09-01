@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: MIT
+// Copyright (c) 2026-present Koishi-CE contributors.
+
 /**
  * `koishi-scripts build`：全工作区构建编排器（发布链第二环）。
  *
