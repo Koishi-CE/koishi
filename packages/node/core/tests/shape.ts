@@ -1,3 +1,7 @@
+// SPDX-License-Identifier: MIT
+// Copyright (c) 2019-present Shigma and Koishijs contributors.
+// Copyright (c) 2026-present Koishi-CE contributors.
+
 /**
  * 形状断言（bun:test 版，替代原根目录 scripts/testing/chai-shape 内联实现）：
  * 校验目标为期望形状的递归超集——数组仅校验期望侧索引、普通对象按键对齐

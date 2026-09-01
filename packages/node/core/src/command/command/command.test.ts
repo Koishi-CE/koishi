@@ -1,3 +1,7 @@
+// SPDX-License-Identifier: MIT
+// Copyright (c) 2019-present Shigma and Koishijs contributors.
+// Copyright (c) 2026-present Koishi-CE contributors.
+
 /**
  * Command API 集成测试：命令注册、子命令树、销毁与执行链（洋葱模型）。
  * 覆盖 Command 的公开行为与 Commander 的注册表管理，

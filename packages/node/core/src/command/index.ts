@@ -1,3 +1,7 @@
+// SPDX-License-Identifier: MIT
+// Copyright (c) 2019-present Shigma and Koishijs contributors.
+// Copyright (c) 2026-present Koishi-CE contributors.
+
 /**
  * 命令模块出口：汇总导出 Command / Commander 及解析器子模块，
  * 并通过模块补充（module augmentation）向 Context 注入

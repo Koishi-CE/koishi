@@ -1,3 +1,6 @@
+# SPDX-License-Identifier: MIT
+# Copyright (c) 2019-present Shigma and Koishijs contributors.
+
 general:
   $: 通用設定
   name: 中文

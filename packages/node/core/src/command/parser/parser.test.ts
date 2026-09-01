@@ -1,3 +1,7 @@
+// SPDX-License-Identifier: MIT
+// Copyright (c) 2019-present Shigma and Koishijs contributors.
+// Copyright (c) 2026-present Koishi-CE contributors.
+
 /**
  * Parser API 测试：命令参数与选项的解析行为。
  * 覆盖参数 / 选项的类型推导与强转、短选项连写、贪婪与严格模式、

@@ -1,3 +1,7 @@
+// SPDX-License-Identifier: MIT
+// Copyright (c) 2019-present Shigma and Koishijs contributors.
+// Copyright (c) 2026-present Koishi-CE contributors.
+
 /**
  * 命令声明解析（declaration）补充测试：
  * resolveDomain 对正则 / 枚举数组的归一与转换失败路径、
