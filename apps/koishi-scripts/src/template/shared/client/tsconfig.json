@@ -1,0 +1,13 @@
+{
+    "compilerOptions": {
+        "rootDir": ".",
+        "module": "esnext",
+        "moduleResolution": "bundler",
+        "jsx": "preserve",
+        "noEmit": true,
+        "skipLibCheck": true,
+        "strict": true,
+        "types": ["@koishijs/client/global"]
+    },
+    "include": ["."]
+}

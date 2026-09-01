@@ -1,0 +1,68 @@
+{
+	"name": "@koishi-ce/plugin-assets-local",
+	"description": "A classic assets provider for Koishi",
+	"version": "1.0.0",
+	"type": "module",
+	"main": "lib/index.mjs",
+	"typings": "lib/index.d.ts",
+	"files": [
+		"lib",
+		"src"
+	],
+	"contributors": [
+		"Shigma <shigma10826@gmail.com>",
+		"Oppenheymu <oppenheymu@gmail.com>"
+	],
+	"license": "MIT",
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/Koishi-CE/koishi.git",
+		"directory": "plugins/common/assets-local"
+	},
+	"bugs": {
+		"url": "https://github.com/Koishi-CE/koishi/issues"
+	},
+	"homepage": "https://assets.koishi.chat/plugins/local.html",
+	"keywords": [
+		"bot",
+		"chatbot",
+		"koishi",
+		"assets",
+		"server",
+		"local",
+		"storage"
+	],
+	"koishi": {
+		"category": "存储",
+		"description": {
+			"en": "Local assets service",
+			"zh": "使用本地目录存放资源文件"
+		},
+		"service": {
+			"implements": [
+				"assets"
+			]
+		}
+	},
+	"peerDependencies": {
+		"@koishi-ce/koishi": "^1.0.0",
+		"@koishi-ce/assets": "^1.0.0"
+	},
+	"devDependencies": {
+		"@koishi-ce/koishi": "workspace:*",
+		"@koishi-ce/plugin-server": "workspace:*"
+	},
+	"dependencies": {
+		"@koishi-ce/assets": "workspace:*",
+		"cosmokit": "^1.8.1",
+		"file-type": "^22.0.2"
+	},
+	"exports": {
+		".": {
+			"source": "./src/index.ts",
+			"types": "./lib/index.d.ts",
+			"import": "./lib/index.mjs",
+			"default": "./lib/index.mjs"
+		}
+	}
+}

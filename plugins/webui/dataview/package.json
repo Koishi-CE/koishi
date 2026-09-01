@@ -1,0 +1,70 @@
+{
+	"name": "@koishi-ce/plugin-dataview",
+	"description": "Data views for Koishi console",
+	"version": "1.0.0",
+	"type": "module",
+	"main": "lib/index.mjs",
+	"typings": "lib/index.d.ts",
+	"files": [
+		"lib",
+		"dist",
+		"src"
+	],
+	"contributors": [
+		"Shigma <shigma10826@gmail.com>"
+	],
+	"license": "AGPL-3.0",
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/Koishi-CE/koishi.git",
+		"directory": "plugins/webui/dataview"
+	},
+	"bugs": {
+		"url": "https://github.com/Koishi-CE/koishi/issues"
+	},
+	"homepage": "https://koishi.chat/plugins/console/dataview.html",
+	"keywords": [
+		"bot",
+		"chatbot",
+		"koishi",
+		"webui",
+		"console",
+		"database",
+		"minato"
+	],
+	"koishi": {
+		"public": [
+			"dist"
+		],
+		"description": {
+			"en": "View and manage database contents in console",
+			"zh": "在控制台中查看和管理数据库内容"
+		},
+		"service": {
+			"required": [
+				"console",
+				"database"
+			]
+		}
+	},
+	"peerDependencies": {
+		"@koishi-ce/plugin-console": "^1.0.0",
+		"@koishi-ce/koishi": "^1.0.0"
+	},
+	"devDependencies": {
+		"@koishi-ce/client": "workspace:*",
+		"@koishi-ce/koishi": "workspace:*"
+	},
+	"dependencies": {
+		"@koishi-ce/console": "workspace:*"
+	},
+	"exports": {
+		".": {
+			"source": "./src/index.ts",
+			"types": "./lib/index.d.ts",
+			"import": "./lib/index.mjs",
+			"default": "./lib/index.mjs"
+		},
+		"./package.json": "./package.json"
+	}
+}

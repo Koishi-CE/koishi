@@ -18,9 +18,13 @@
 			"@koishi-ce/loader": ["./packages/node/loader/src/index.ts"],
 			"@koishi-ce/registry": ["./packages/node/registry/src/index.ts"],
 			"@koishi-ce/utils": ["./packages/node/utils/src/index.ts"],
+			"@koishi-ce/assets": ["./packages/node/assets/src/index.ts"],
 			"@koishi-ce/client": ["./packages/web/client/src/index.ts"],
 			"@koishi-ce/client/lib": ["./packages/web/client/src/index.ts"],
 			"@koishi-ce/components": ["./packages/web/components/client/index.ts"],
+			"@koishi-ce/plugin-assets-local": [
+				"./plugins/common/assets-local/src/index.ts"
+			],
 			"@koishi-ce/plugin-bind": ["./plugins/common/bind/src/index.ts"],
 			"@koishi-ce/plugin-broadcast": [
 				"./plugins/common/broadcast/src/index.ts"
@@ -29,8 +33,14 @@
 			"@koishi-ce/plugin-echo": ["./plugins/common/echo/src/index.ts"],
 			"@koishi-ce/plugin-help": ["./plugins/common/help/src/index.ts"],
 			"@koishi-ce/plugin-inspect": ["./plugins/common/inspect/src/index.ts"],
+			"@koishi-ce/plugin-rate-limit": [
+				"./plugins/common/rate-limit/src/index.ts"
+			],
 			"@koishi-ce/plugin-hmr": ["./plugins/infra/hmr/src/index.ts"],
 			"@koishi-ce/plugin-mock": ["./plugins/infra/mock/src/index.ts"],
+			"@koishi-ce/plugin-server-temp": [
+				"./plugins/infra/server-temp/src/index.ts"
+			],
 			"@koishi-ce/plugin-actions": ["./plugins/webui/actions/src/index.ts"],
 			"@koishi-ce/plugin-admin": ["./plugins/webui/admin/src/index.ts"],
 			"@koishi-ce/plugin-analytics": ["./plugins/webui/analytics/src/index.ts"],
@@ -38,6 +48,7 @@
 			"@koishi-ce/plugin-commands": ["./plugins/webui/commands/src/index.ts"],
 			"@koishi-ce/plugin-config": ["./plugins/webui/config/src/index.ts"],
 			"@koishi-ce/plugin-console": ["./plugins/webui/console/src/index.ts"],
+			"@koishi-ce/plugin-dataview": ["./plugins/webui/dataview/src/index.ts"],
 			"@koishi-ce/plugin-explorer": ["./plugins/webui/explorer/src/index.ts"],
 			"@koishi-ce/plugin-insight": ["./plugins/webui/insight/src/index.ts"],
 			"@koishi-ce/plugin-locales": ["./plugins/webui/locales/src/index.ts"],
@@ -52,7 +63,10 @@
 			"@koishi-ce/plugin-notifier": ["./plugins/webui/notifier/src/index.ts"],
 			"@koishi-ce/plugin-oobe": ["./plugins/webui/oobe/src/index.ts"],
 			"@koishi-ce/plugin-sandbox": ["./plugins/webui/sandbox/src/index.ts"],
-			"@koishi-ce/plugin-status": ["./plugins/webui/status/src/index.ts"]
+			"@koishi-ce/plugin-status": ["./plugins/webui/status/src/index.ts"],
+			"@koishi-ce/plugin-theme-vanilla": [
+				"./plugins/webui/theme-vanilla/src/index.ts"
+			]
 		},
 		"jsx": "react-jsx",
 		"jsxImportSource": "@satorijs/element",

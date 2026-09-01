@@ -1,0 +1,22 @@
+// SPDX-License-Identifier: AGPL-3.0-only
+// Copyright (c) 2019-present Shigma and Koishijs contributors.
+// Copyright (c) 2026-present Koishi-CE contributors.
+
+@use 'sass:color';
+
+:root, .theme-root {
+  &[theme=solarized-dark] {
+    --bg1: #10252c;
+    --bg2: #10252c;
+    --bg3: #132c34;
+
+    @mixin apply-color($name, $base) {
+      --k-color-#{$name}: #{$base};
+      --k-color-#{$name}-shade: #{color.mix($base, #000, 80%)};
+      --k-color-#{$name}-tint: #{color.mix($base, #fff, 90%)};
+      --k-color-#{$name}-fade: #{color.adjust($base, $alpha: -0.9)};
+    }
+
+    @include apply-color(primary, #47cfc4);
+  }
+}

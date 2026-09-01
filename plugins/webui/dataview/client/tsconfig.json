@@ -1,0 +1,10 @@
+{
+	"extends": "../../../../tsconfig.client",
+	"include": ["."],
+	"compilerOptions": {
+		"paths": {
+			"@koishi-ce/plugin-dataview": ["../lib/index.d.ts"],
+			"@koishi-ce/koishi": ["../../../../packages/node/cli/lib/index.d.ts"]
+		}
+	}
+}

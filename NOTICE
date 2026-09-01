@@ -9,8 +9,13 @@
 | 目录 | 上游 | 许可证 |
 | --- | --- | --- |
 | `packages/node/{core,loader,utils,i18n-utils,cli}` | [koishijs/koishi](https://github.com/koishijs/koishi) `packages/*` | MIT — [LICENSE](./LICENSE) |
+| `packages/node/assets` | [koishijs/assets](https://github.com/koishijs/assets) `packages/core` | MIT — [LICENSE](./LICENSE) |
 | `plugins/infra/{http,server,hmr,mock,proxy-agent}` | [koishijs/koishi](https://github.com/koishijs/koishi) `plugins/*` | MIT — [LICENSE](./LICENSE) |
+| `plugins/infra/server-temp` | [cordiverse/server](https://github.com/cordiverse/server) `packages/temp`（`@cordisjs/plugin-server-temp`） | MIT — [LICENSE](./LICENSE) |
 | `plugins/common/{bind,broadcast,callme,echo,help,inspect}` | [koishijs/koishi](https://github.com/koishijs/koishi) `plugins/common/*` | MIT — [LICENSE](./LICENSE) |
+| `plugins/common/assets-local` | [koishijs/assets](https://github.com/koishijs/assets) `packages/local` | MIT — [LICENSE](./LICENSE) |
+| `plugins/common/rate-limit` | [koishijs/common](https://github.com/koishijs/common) `packages/rate-limit` | MIT — [LICENSE](./LICENSE) |
+| `plugins/webui/{dataview,theme-vanilla}` | [koishijs/koishi-plugin-dataview](https://github.com/koishijs/koishi-plugin-dataview) 与 [koishijs/theme-vanilla](https://github.com/koishijs/theme-vanilla) | AGPL-3.0 — [LICENSES/AGPL-3.0](./LICENSES/AGPL-3.0.txt) |
 | `packages/web/{client,components,market}` | [koishijs/webui](https://github.com/koishijs/webui) `packages/*` | AGPL-3.0 — [LICENSES/AGPL-3.0](./LICENSES/AGPL-3.0.txt) |
 | `plugins/webui/{actions,admin,analytics,auth,commands,config,console,explorer,insight,locales,logger,market,notifier,oobe,sandbox,status}` | [koishijs/webui](https://github.com/koishijs/webui) `plugins/*` | AGPL-3.0 — [LICENSES/AGPL-3.0](./LICENSES/AGPL-3.0.txt) |
 | `apps/online` | [koishijs/webui](https://github.com/koishijs/webui) `packages/online` | AGPL-3.0 — [LICENSES/AGPL-3.0](./LICENSES/AGPL-3.0.txt) |
@@ -33,8 +38,13 @@ This repository is a derivative work combining code from two upstream repositori
 | Directory | Upstream | License |
 | --- | --- | --- |
 | `packages/node/{core,loader,utils,i18n-utils,cli}` | [koishijs/koishi](https://github.com/koishijs/koishi) `packages/*` | MIT — [LICENSE](./LICENSE) |
+| `packages/node/assets` | [koishijs/assets](https://github.com/koishijs/assets) `packages/core` | MIT — [LICENSE](./LICENSE) |
 | `plugins/infra/{http,server,hmr,mock,proxy-agent}` | [koishijs/koishi](https://github.com/koishijs/koishi) `plugins/*` | MIT — [LICENSE](./LICENSE) |
+| `plugins/infra/server-temp` | [cordiverse/server](https://github.com/cordiverse/server) `packages/temp`（`@cordisjs/plugin-server-temp`） | MIT — [LICENSE](./LICENSE) |
 | `plugins/common/{bind,broadcast,callme,echo,help,inspect}` | [koishijs/koishi](https://github.com/koishijs/koishi) `plugins/common/*` | MIT — [LICENSE](./LICENSE) |
+| `plugins/common/assets-local` | [koishijs/assets](https://github.com/koishijs/assets) `packages/local` | MIT — [LICENSE](./LICENSE) |
+| `plugins/common/rate-limit` | [koishijs/common](https://github.com/koishijs/common) `packages/rate-limit` | MIT — [LICENSE](./LICENSE) |
+| `plugins/webui/{dataview,theme-vanilla}` | [koishijs/koishi-plugin-dataview](https://github.com/koishijs/koishi-plugin-dataview) 与 [koishijs/theme-vanilla](https://github.com/koishijs/theme-vanilla) | AGPL-3.0 — [LICENSES/AGPL-3.0](./LICENSES/AGPL-3.0.txt) |
 | `packages/web/{client,components,market}` | [koishijs/webui](https://github.com/koishijs/webui) `packages/*` | AGPL-3.0 — [LICENSES/AGPL-3.0](./LICENSES/AGPL-3.0.txt) |
 | `plugins/webui/{actions,admin,analytics,auth,commands,config,console,explorer,insight,locales,logger,market,notifier,oobe,sandbox,status}` | [koishijs/webui](https://github.com/koishijs/webui) `plugins/*` | AGPL-3.0 — [LICENSES/AGPL-3.0](./LICENSES/AGPL-3.0.txt) |
 | `apps/online` | [koishijs/webui](https://github.com/koishijs/webui) `packages/online` | AGPL-3.0 — [LICENSES/AGPL-3.0](./LICENSES/AGPL-3.0.txt) |

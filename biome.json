@@ -77,6 +77,15 @@
 					}
 				}
 			}
+		},
+		{
+			"includes": ["apps/*/src/template/**"],
+			"formatter": {
+				"enabled": false
+			},
+			"linter": {
+				"enabled": false
+			}
 		}
 	]
 }

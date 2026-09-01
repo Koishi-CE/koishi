@@ -4,9 +4,6 @@
   "workspaces": {
     "": {
       "name": "koishi",
-      "dependencies": {
-        "koishi": "workspace:*",
-      },
       "devDependencies": {
         "@biomejs/biome": "^2.5.10",
         "@changesets/cli": "^3.0.1",
@@ -14,6 +11,7 @@
         "@koishi-ce/plugin-help": "workspace:*",
         "@koishi-ce/plugin-mock": "workspace:*",
         "@koishijs/plugin-database-memory": "^3.7.0",
+        "@sinonjs/fake-timers": "^11.0.1",
         "@types/node": "^26.4.0",
         "@typescript-eslint/parser": "^8.68.0",
         "@typescript/native": "npm:typescript@7.0.2",
@@ -47,6 +45,19 @@
       "version": "1.0.0",
       "bin": {
         "koishi-scripts": "./lib/bin.mjs",
+      },
+    },
+    "packages/node/assets": {
+      "name": "@koishi-ce/assets",
+      "version": "1.0.0",
+      "dependencies": {
+        "file-type": "^22.0.2",
+      },
+      "devDependencies": {
+        "@koishi-ce/koishi": "workspace:*",
+      },
+      "peerDependencies": {
+        "@koishi-ce/koishi": "^1.0.0",
       },
     },
     "packages/node/cli": {
@@ -141,7 +152,6 @@
     },
     "packages/shim/koishi": {
       "name": "koishi",
-      "version": "4.18.11",
       "dependencies": {
         "@koishi-ce/koishi": "workspace:*",
       },
@@ -186,6 +196,23 @@
       },
       "peerDependencies": {
         "vue": "^3",
+      },
+    },
+    "plugins/common/assets-local": {
+      "name": "@koishi-ce/plugin-assets-local",
+      "version": "1.0.0",
+      "dependencies": {
+        "@koishi-ce/assets": "workspace:*",
+        "cosmokit": "^1.8.1",
+        "file-type": "^22.0.2",
+      },
+      "devDependencies": {
+        "@koishi-ce/koishi": "workspace:*",
+        "@koishi-ce/plugin-server": "workspace:*",
+      },
+      "peerDependencies": {
+        "@koishi-ce/assets": "^1.0.0",
+        "@koishi-ce/koishi": "^1.0.0",
       },
     },
     "plugins/common/bind": {
@@ -255,6 +282,20 @@
       "devDependencies": {
         "@koishi-ce/koishi": "workspace:*",
         "@koishi-ce/plugin-mock": "workspace:*",
+      },
+      "peerDependencies": {
+        "@koishi-ce/koishi": "^1.0.0",
+      },
+    },
+    "plugins/common/rate-limit": {
+      "name": "@koishi-ce/plugin-rate-limit",
+      "version": "1.0.0",
+      "devDependencies": {
+        "@koishi-ce/koishi": "workspace:*",
+        "@koishi-ce/plugin-help": "workspace:*",
+        "@koishi-ce/plugin-mock": "workspace:*",
+        "@minatojs/driver-memory": "^3.7.0",
+        "minato": "^3.7.0",
       },
       "peerDependencies": {
         "@koishi-ce/koishi": "^1.0.0",
@@ -330,6 +371,18 @@
         "@koishi-ce/koishi": "^1.0.0",
       },
     },
+    "plugins/infra/server-temp": {
+      "name": "@koishi-ce/plugin-server-temp",
+      "version": "1.0.0",
+      "devDependencies": {
+        "@koishi-ce/koishi": "workspace:*",
+        "@koishi-ce/plugin-http": "workspace:*",
+        "@koishi-ce/plugin-server": "workspace:*",
+      },
+      "peerDependencies": {
+        "@koishi-ce/koishi": "^1.0.0",
+      },
+    },
     "plugins/webui/actions": {
       "name": "@koishi-ce/plugin-actions",
       "version": "1.0.0",
@@ -377,9 +430,9 @@
         "@koishi-ce/console": "workspace:*",
       },
       "devDependencies": {
+        "@koishi-ce/assets": "workspace:*",
         "@koishi-ce/client": "workspace:*",
         "@koishi-ce/koishi": "workspace:*",
-        "@koishijs/assets": "^1.1.2",
         "echarts": "^6.1.0",
         "vue-echarts": "^8.1.0",
       },
@@ -468,6 +521,21 @@
       "optionalPeers": [
         "@koishi-ce/client",
       ],
+    },
+    "plugins/webui/dataview": {
+      "name": "@koishi-ce/plugin-dataview",
+      "version": "1.0.0",
+      "dependencies": {
+        "@koishi-ce/console": "workspace:*",
+      },
+      "devDependencies": {
+        "@koishi-ce/client": "workspace:*",
+        "@koishi-ce/koishi": "workspace:*",
+      },
+      "peerDependencies": {
+        "@koishi-ce/koishi": "^1.0.0",
+        "@koishi-ce/plugin-console": "^1.0.0",
+      },
     },
     "plugins/webui/explorer": {
       "name": "@koishi-ce/plugin-explorer",
@@ -634,6 +702,21 @@
         "@koishi-ce/plugin-analytics": "workspace:*",
         "@koishi-ce/plugin-config": "workspace:*",
         "@types/envinfo": "^7.8.3",
+      },
+      "peerDependencies": {
+        "@koishi-ce/koishi": "^1.0.0",
+        "@koishi-ce/plugin-console": "^1.0.0",
+      },
+    },
+    "plugins/webui/theme-vanilla": {
+      "name": "@koishi-ce/plugin-theme-vanilla",
+      "version": "1.0.0",
+      "dependencies": {
+        "@koishi-ce/console": "workspace:*",
+      },
+      "devDependencies": {
+        "@koishi-ce/client": "workspace:*",
+        "@koishi-ce/koishi": "workspace:*",
       },
       "peerDependencies": {
         "@koishi-ce/koishi": "^1.0.0",
@@ -850,6 +933,8 @@
 
     "@koa/router": ["@koa/router@10.1.1", "", { "dependencies": { "debug": "^4.1.1", "http-errors": "^1.7.3", "koa-compose": "^4.1.0", "methods": "^1.1.2", "path-to-regexp": "^6.1.0" } }, "sha512-ORNjq5z4EmQPriKbR0ER3k4Gh7YGNhWDL7JBW+8wXDrHLbWYKYSJaOJ9aN06npF5tbTxe2JBOsurpJDAvjiXKw=="],
 
+    "@koishi-ce/assets": ["@koishi-ce/assets@workspace:packages/node/assets"],
+
     "@koishi-ce/client": ["@koishi-ce/client@workspace:packages/web/client"],
 
     "@koishi-ce/components": ["@koishi-ce/components@workspace:packages/web/components"],
@@ -874,6 +959,8 @@
 
     "@koishi-ce/plugin-analytics": ["@koishi-ce/plugin-analytics@workspace:plugins/webui/analytics"],
 
+    "@koishi-ce/plugin-assets-local": ["@koishi-ce/plugin-assets-local@workspace:plugins/common/assets-local"],
+
     "@koishi-ce/plugin-auth": ["@koishi-ce/plugin-auth@workspace:plugins/webui/auth"],
 
     "@koishi-ce/plugin-bind": ["@koishi-ce/plugin-bind@workspace:plugins/common/bind"],
@@ -887,6 +974,8 @@
     "@koishi-ce/plugin-config": ["@koishi-ce/plugin-config@workspace:plugins/webui/config"],
 
     "@koishi-ce/plugin-console": ["@koishi-ce/plugin-console@workspace:plugins/webui/console"],
+
+    "@koishi-ce/plugin-dataview": ["@koishi-ce/plugin-dataview@workspace:plugins/webui/dataview"],
 
     "@koishi-ce/plugin-echo": ["@koishi-ce/plugin-echo@workspace:plugins/common/echo"],
 
@@ -916,19 +1005,23 @@
 
     "@koishi-ce/plugin-proxy-agent": ["@koishi-ce/plugin-proxy-agent@workspace:plugins/infra/proxy-agent"],
 
+    "@koishi-ce/plugin-rate-limit": ["@koishi-ce/plugin-rate-limit@workspace:plugins/common/rate-limit"],
+
     "@koishi-ce/plugin-sandbox": ["@koishi-ce/plugin-sandbox@workspace:plugins/webui/sandbox"],
 
     "@koishi-ce/plugin-server": ["@koishi-ce/plugin-server@workspace:plugins/infra/server"],
 
+    "@koishi-ce/plugin-server-temp": ["@koishi-ce/plugin-server-temp@workspace:plugins/infra/server-temp"],
+
     "@koishi-ce/plugin-status": ["@koishi-ce/plugin-status@workspace:plugins/webui/status"],
+
+    "@koishi-ce/plugin-theme-vanilla": ["@koishi-ce/plugin-theme-vanilla@workspace:plugins/webui/theme-vanilla"],
 
     "@koishi-ce/registry": ["@koishi-ce/registry@workspace:packages/node/registry"],
 
     "@koishi-ce/scripts": ["@koishi-ce/scripts@workspace:apps/koishi-scripts"],
 
     "@koishi-ce/utils": ["@koishi-ce/utils@workspace:packages/node/utils"],
-
-    "@koishijs/assets": ["@koishijs/assets@1.1.2", "", { "dependencies": { "file-type": "^16.5.4" }, "peerDependencies": { "koishi": "^4.17.7" } }, "sha512-3sH+F551ku8MMJ7ZuGMQqTh4znxb4QnFTt2c/SBExjAT7XgMUIN+nwzTuYNjjs/xqdZOqz9B45ky2GJa5/Yqmw=="],
 
     "@koishijs/components": ["@koishijs/components@1.5.22", "", { "dependencies": { "@satorijs/element": "^3.1.7", "cosmokit": "^1.7.2", "schemastery-vue": "^7.3.15" }, "peerDependencies": { "vue": "^3" } }, "sha512-1K8Qn12x0k2Em8MWRnH2JUq5QE+TRJZ6/kztCy8V56547sLPeuhsczi/16lPhwJ5NvBuUPFuFHfD5Pedtlo8UQ=="],
 
@@ -1067,6 +1160,10 @@
     "@satorijs/element": ["@satorijs/element@3.2.0", "", { "dependencies": { "cosmokit": "^1.8.1" } }, "sha512-33qcYGDmNNjG2zIDpOfMgUsxPK1EqAkiyz4O78X4G96P8RixBH14KeCyxl8ufEqDUQahGz1BIO3jk+TKpfw8jA=="],
 
     "@satorijs/protocol": ["@satorijs/protocol@1.7.0", "", { "dependencies": { "@satorijs/element": "^3.2.0", "cosmokit": "^1.8.1" } }, "sha512-ODSBVzdn7s9tw3XGFGYZ1MnjbA1jctwSleJTsyk/lAjyNziOFKNP5nIBAcw0r547dvXBweZNudnCqod6Ts+hqw=="],
+
+    "@sinonjs/commons": ["@sinonjs/commons@3.0.1", "", { "dependencies": { "type-detect": "4.0.8" } }, "sha512-K3mCHKQ9sVh8o1C9cxkwxaOmXoAMlDxC1mYyHrjqOWEcBjYr76t96zL2zlj5dUGZ3HSw240X1qgH3Mjf1yJWpQ=="],
+
+    "@sinonjs/fake-timers": ["@sinonjs/fake-timers@11.3.1", "", { "dependencies": { "@sinonjs/commons": "^3.0.1" } }, "sha512-EVJO7nW5M/F5Tur0Rf2z/QoMo+1Ia963RiMtapiQrEWvY0iBUvADo8Beegwjpnle5BHkyHuoxSTW3jF43H1XRA=="],
 
     "@standard-schema/spec": ["@standard-schema/spec@1.1.0", "", {}, "sha512-l2aFy5jALhniG5HgqrD6jXLi/rUWrKvqN/qJx6yoJsgKhblVd+iqqU4RCXavm/jPityDo5TCvKMnpjKnOriy0w=="],
 
@@ -2018,6 +2115,8 @@
 
     "type-check": ["type-check@0.4.0", "", { "dependencies": { "prelude-ls": "^1.2.1" } }, "sha512-XleUoc9uwGXqjWwXaUTZAmzMcFZ5858QA2vvx1Ur5xIcixXIP+8LnFDgRplU30us6teqdlskFfu+ae4K79Ooew=="],
 
+    "type-detect": ["type-detect@4.0.8", "", {}, "sha512-0fr/mIH1dlO+x7TlcMy+bIDqKPsw/70tVyeHW787goQjhmqaZe10uwLujubK9q9Lg6Fiho1KUKDYz0Z7k7g5/g=="],
+
     "type-is": ["type-is@1.6.18", "", { "dependencies": { "media-typer": "0.3.0", "mime-types": "~2.1.24" } }, "sha512-TkRKr9sUTxEH8MdfuCSP7VizJyzRNMjj2J2do2Jr3Kym598JVdEksuzPQCnlFPW4ky9Q+iA+ma9BGm06XQBy8g=="],
 
     "type-level-regexp": ["type-level-regexp@0.1.17", "", {}, "sha512-wTk4DH3cxwk196uGLK/E9pE45aLfeKJacKmcEgEOA/q5dnPGNxXt0cfYdFxb57L+sEpf1oJH4Dnx/pnRcku9jg=="],
@@ -2130,8 +2229,6 @@
 
     "@koishi-ce/registry/p-map": ["p-map@7.0.6", "", {}, "sha512-I4Prw6ivkd6p8PiYR1tXASOAOBzIJwu0TB7fqaX0c/8c3QAehNYmX57EijyGGGBt3c/BIowGwV03RVBtXvHEVg=="],
 
-    "@koishijs/assets/file-type": ["file-type@16.5.4", "", { "dependencies": { "readable-web-to-node-stream": "^3.0.0", "strtok3": "^6.2.4", "token-types": "^4.1.1" } }, "sha512-/yFHK0aGjFEgDJjEKP0pWCplsPFPhwyfwevf/pVxiN0tmE4L9LmwWxWukdJSHdoCli4VgQLehjJtwQBnqmsKcw=="],
-
     "@koishijs/market/vue-i18n": ["vue-i18n@9.14.5", "", { "dependencies": { "@intlify/core-base": "9.14.5", "@intlify/shared": "9.14.5", "@vue/devtools-api": "^6.5.0" }, "peerDependencies": { "vue": "^3.0.0" } }, "sha512-0jQ9Em3ymWngyiIkj0+c/k7WgaPO+TNzjKSNq9BvBQaKJECqn9cd9fL4tkDhB5G1QBskGl9YxxbDAhgbFtpe2g=="],
 
     "@tybys/wasm-util/tslib": ["tslib@2.8.1", "", {}, "sha512-oJFu94HQb+KVduSUQL7wnpmqnfmLsOA/nAh6b6EH0wCEoK0/mPeXU6c3wKDV83MkOuHPRHtSXKKU99IBazS/2w=="],
@@ -2195,10 +2292,6 @@
     "@cordisjs/plugin-http/file-type/strtok3": ["strtok3@6.3.0", "", { "dependencies": { "@tokenizer/token": "^0.3.0", "peek-readable": "^4.1.0" } }, "sha512-fZtbhtvI9I48xDSywd/somNqgUHl2L2cstmXCCif0itOf96jeW18MBSyrLuNicYQVkvpOxkZtkzujiTJ9LW5Jw=="],
 
     "@cordisjs/plugin-http/file-type/token-types": ["token-types@4.2.1", "", { "dependencies": { "@tokenizer/token": "^0.3.0", "ieee754": "^1.2.1" } }, "sha512-6udB24Q737UD/SDsKAHI9FCRP7Bqc9D/MQUV02ORQg5iskjtLJlZJNdN4kKtcdtwCeWIwIHDGaUsTsCCAa8sFQ=="],
-
-    "@koishijs/assets/file-type/strtok3": ["strtok3@6.3.0", "", { "dependencies": { "@tokenizer/token": "^0.3.0", "peek-readable": "^4.1.0" } }, "sha512-fZtbhtvI9I48xDSywd/somNqgUHl2L2cstmXCCif0itOf96jeW18MBSyrLuNicYQVkvpOxkZtkzujiTJ9LW5Jw=="],
-
-    "@koishijs/assets/file-type/token-types": ["token-types@4.2.1", "", { "dependencies": { "@tokenizer/token": "^0.3.0", "ieee754": "^1.2.1" } }, "sha512-6udB24Q737UD/SDsKAHI9FCRP7Bqc9D/MQUV02ORQg5iskjtLJlZJNdN4kKtcdtwCeWIwIHDGaUsTsCCAa8sFQ=="],
 
     "@koishijs/market/vue-i18n/@intlify/core-base": ["@intlify/core-base@9.14.5", "", { "dependencies": { "@intlify/message-compiler": "9.14.5", "@intlify/shared": "9.14.5" } }, "sha512-5ah5FqZG4pOoHjkvs8mjtv+gPKYU0zCISaYNjBNNqYiaITxW8ZtVih3GS/oTOqN8d9/mDLyrjD46GBApNxmlsA=="],
 

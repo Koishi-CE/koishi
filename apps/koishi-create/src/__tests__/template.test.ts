@@ -18,10 +18,21 @@ test("内置模板依赖纯度：不含任何 @koishijs / koishi-plugin 官方�
 	for (const key of Object.keys(dependencies ?? {})) {
 		expect(guarded.has(key) || key.startsWith("@koishi-ce/")).toBe(true);
 	}
-	const toolchain = new Set(["bun-types", "cross-env"]);
 	for (const key of Object.keys(devDependencies ?? {})) {
-		expect(key.startsWith("@koishi-ce/") || toolchain.has(key)).toBe(true);
+		expect(key === "bun-types" || key.startsWith("@koishi-ce/")).toBe(true);
 	}
+});
+
+test("内置模板 packageManager 钉 Bun，脚本用 Bun Shell 环境变量前缀", () => {
+	const manifest = baseManifest();
+	const { scripts } = manifest as unknown as {
+		scripts: Record<string, string>;
+	};
+	// 本项目只支持 Bun 运行时：packageManager 形如 bun@1.x.y
+	expect(manifest["packageManager"] ?? "").toMatch(/^bun@\d+\.\d+\.\d+/);
+	// cross-env 已移除：bun run 走 Bun Shell，环境变量前缀天然跨平台
+	expect(scripts["dev"]).toBe("NODE_ENV=development koishi start");
+	expect(JSON.stringify(manifest)).not.toContain("cross-env");
 });
 
 test("内置模板以 npm alias 钉住 koishi 裸名，版本保持 4.18.x 冻结线", () => {
@@ -62,8 +73,40 @@ test("内置模板静态文件齐备，koishi.yml 预配 market 镜像源", () =
 	expect(templateFiles["koishi.yml"]).toContain(
 		"endpoint: https://registry.koishi.chat/index.json",
 	);
-	// 模板不预装数据库，依赖数据库的插件保持 ~ 禁用
-	expect(templateFiles["koishi.yml"]).toContain("~analytics");
+});
+
+test("koishi.yml 预写策略对齐官方实例：CE 插件装而禁用，官方 adapter/database 只写不装", () => {
+	const yml = templateFiles["koishi.yml"] ?? "";
+	// 依赖数据库 / 暂无需启用的 CE 插件：预装但 ~ 禁用
+	for (const name of [
+		"~admin",
+		"~bind",
+		"~analytics",
+		"~auth",
+		"~dataview",
+		"~rate-limit",
+		"~inspect",
+		"~server-temp",
+	]) {
+		expect(yml).toContain(name);
+	}
+	// 无需数据库即可工作的 CE 插件：直接启用
+	for (const name of ["assets-local", "theme-vanilla", "status", "sandbox"]) {
+		expect(yml).toContain(name);
+	}
+	// 官方 adapter / database 只以 ~ 禁用条目预写（未预装，市场装后启用）
+	for (const name of [
+		"~adapter-discord",
+		"~adapter-telegram",
+		"~adapter-qq",
+		"~database-sqlite",
+		"~database-postgres",
+	]) {
+		expect(yml).toContain(name);
+	}
+	// 模板依赖里不得出现官方 adapter / database 包名（只预写不预装）
+	expect(JSON.stringify(baseManifest())).not.toContain("adapter-");
+	expect(JSON.stringify(baseManifest())).not.toContain("database-");
 });
 
 test("renderManifest 渲染内置模板：常规改写生效，prod 模式保留 koishi alias", () => {
@@ -72,6 +115,7 @@ test("renderManifest 渲染内置模板：常规改写生效，prod 模式保留
 	expect(output.private).toBe(true);
 	expect(output.version).toBe("0.0.0");
 	expect(output.scripts.start).toBe("koishi start");
+	expect(output.packageManager).toMatch(/^bun@/);
 	expect(output.dependencies.koishi).toBe(
 		"npm:@koishi-ce/koishi-shim@^4.18.11",
 	);

@@ -19,6 +19,7 @@
 		"plugins/webui/auth/client",
 		"plugins/webui/commands/client",
 		"plugins/webui/config/client",
+		"plugins/webui/dataview/client",
 		"plugins/webui/explorer/client",
 		"plugins/webui/insight/client",
 		"plugins/webui/locales/client",
@@ -26,7 +27,8 @@
 		"plugins/webui/market/client",
 		"plugins/webui/notifier/client",
 		"plugins/webui/sandbox/client",
-		"plugins/webui/status/client"
+		"plugins/webui/status/client",
+		"plugins/webui/theme-vanilla/client"
 	],
 	"exclude": ["packages/web/components/client/schemastery-vue-runtime.ts"],
 	"compilerOptions": {
@@ -42,6 +44,7 @@
 			],
 			"@koishi-ce/plugin-config": ["./plugins/webui/config/lib/index.d.ts"],
 			"@koishi-ce/plugin-market": ["./plugins/webui/market/lib/index.d.ts"],
+			"@koishi-ce/plugin-dataview": ["./plugins/webui/dataview/lib/index.d.ts"],
 			"vue": ["./packages/web/client/node_modules/vue"],
 			"@vueuse/core": ["./packages/web/client/node_modules/@vueuse/core"],
 			"@koishi-ce/console": ["./packages/node/console/lib/index.d.ts"],

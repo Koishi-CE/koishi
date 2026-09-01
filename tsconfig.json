@@ -19,6 +19,7 @@
 		"packages/node/console/src",
 		"packages/node/core/src",
 		"packages/node/core/tests",
+		"packages/node/assets/src",
 		"packages/node/i18n-utils/src",
 		"packages/node/loader/src",
 		"packages/node/registry/src",
@@ -30,8 +31,11 @@
 		"plugins/common/echo/src",
 		"plugins/common/help/src",
 		"plugins/common/inspect/src",
+		"plugins/common/assets-local/src",
+		"plugins/common/rate-limit/src",
 		"plugins/infra/hmr/src",
 		"plugins/infra/mock/src",
+		"plugins/infra/server-temp/src",
 		"plugins/webui/actions/src",
 		"plugins/webui/admin/src",
 		"plugins/webui/analytics/src",
@@ -39,6 +43,7 @@
 		"plugins/webui/commands/src",
 		"plugins/webui/config/src",
 		"plugins/webui/console/src",
+		"plugins/webui/dataview/src",
 		"plugins/webui/explorer/src",
 		"plugins/webui/insight/src",
 		"plugins/webui/locales/src",
@@ -47,6 +52,10 @@
 		"plugins/webui/notifier/src",
 		"plugins/webui/oobe/src",
 		"plugins/webui/sandbox/src",
-		"plugins/webui/status/src"
-	]
+		"plugins/webui/status/src",
+		"plugins/webui/theme-vanilla/src"
+	],
+	// koishi-scripts 的模板载荷是给下游脚手架项目的源文件（依赖 koishi /
+	// @koishijs/client 等下游包名），不参与本仓类型程序
+	"exclude": ["apps/koishi-scripts/src/template"]
 }

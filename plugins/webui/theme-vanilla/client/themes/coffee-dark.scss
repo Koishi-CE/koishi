@@ -1,0 +1,50 @@
+// SPDX-License-Identifier: AGPL-3.0-only
+// Copyright (c) 2019-present Shigma and Koishijs contributors.
+// Copyright (c) 2026-present Koishi-CE contributors.
+
+@use 'sass:color';
+
+:root, .theme-root {
+  &[theme=coffee-dark] {
+    --bg1: #231F1E;
+    --bg2: #262120;
+    --bg3: #292423;
+    --bg4: #342A27;
+
+    --k-card-bg: var(--bg3);
+    --k-hover-bg: var(--bg4);
+
+    --k-text-active: var(--k-color-primary);
+
+    --k-color-border: #52423D;
+    --k-color-border-light: #47342F;
+    --k-color-divider: #181615;
+
+    @mixin apply-color($name, $base) {
+      --k-color-#{$name}: #{$base};
+      --k-color-#{$name}-shade: #{color.mix($base, #000, 80%)};
+      --k-color-#{$name}-tint: #{color.mix($base, #fff, 90%)};
+      --k-color-#{$name}-fade: #{color.adjust($base, $alpha: -0.9)};
+    }
+
+    @include apply-color(primary, #F09176);
+    // @include apply-color(secondary, #6EDDD6);
+
+    .monaco-editor {
+      --vscode-editor-selectionBackground: #F0917730;
+      --vscode-editor-selectionForeground: #ceb5b0;
+      --vscode-editor-inactiveSelectionBackground: #F0917720;
+      --vscode-editor-selectionHighlightBorder: #F0917780;
+      --vscode-editor-selectionHighlightBackground: #F0917715;
+
+      --vscode-charts-foreground: #ceb5b0;
+      --vscode-charts-lines: #ceb5b0;
+      --vscode-charts-red: #f24343;
+      --vscode-charts-blue: #6EDDD6;
+      --vscode-charts-yellow: #f7d979;
+      --vscode-charts-orange: #ffa777;
+      --vscode-charts-green: #9DCC57;
+      --vscode-charts-purple: #E480AD;
+    }
+  }
+}

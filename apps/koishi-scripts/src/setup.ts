@@ -15,13 +15,16 @@
  * - 带控制台前端扩展的插件（--console，追加 client/ 目录并补充
  *   @koishijs/client 与 @koishijs/plugin-console 依赖声明）。
  *
- * 模板全部以内嵌字符串常量随源码发布（无独立 template/ 目录），用法：
+ * 模板的静态文本一律放在 src/template/ 下的真实文件里（shared/ 单包与
+ * monorepo 共用、single/ 单包专属、monorepo/ 集合仓库根专属），本模块只做
+ * 定位、@@TOKEN@@ 占位替换与写盘；package.json 等强结构化清单仍在此渲染。
+ * 用法：
  *   koishi-scripts setup [name]                     # 交互式问询
  *   koishi-scripts setup --name=foo --desc=... --owner=Oppenheymu   # 非交互
  *
  * 问询项：① 包名（自动补 koishi-plugin- 前缀）② 描述 ③ GitHub 所有者
  * （默认值从兄弟项目的 repository 字段众数探测）。生成后 git init，
- * 不自动 commit、不自动 install——结束时打印后续步骤。
+ * 不自动 commit、不自动 install——结束时打印后续步骤（包管理器一律 Bun）。
  */
 import { spawnSync } from "node:child_process";
 import {
@@ -33,6 +36,7 @@ import {
 } from "node:fs";
 import { dirname, join } from "node:path";
 import { createInterface } from "node:readline/promises";
+import { fileURLToPath } from "node:url";
 import { cwd, loadHostManifest } from "./index.ts";
 
 /** koishi 生态依赖版本兜底（宿主清单缺失时使用；一律上游名，维持生态兼容） */
@@ -50,9 +54,6 @@ const DEV_DEPENDENCIES = {
 	"@typescript/native": "npm:typescript@7.0.2",
 	tsdown: "^0.22.14",
 } as const;
-
-/** 模板里包名的占位符（渲染时替换为真实包名） */
-const PLUGIN_NAME_TOKEN = "@@PLUGIN_NAME@@";
 
 /** koishi / console 相关依赖的最终版本号（宿主清单优先，兜底常量） */
 export interface Versions {
@@ -79,15 +80,61 @@ interface Answers {
 }
 
 // ---------------------------------------------------------------------------
-// 参数与问询
+// 模板文件读取与渲染
+// ----------------------------------------------------------------------------
+
+/**
+ * 定位内置模板目录：src 直跑（开发 / 测试）与 lib 产物（npm 消费）两种
+ * 形态各按相对路径探测（发布包 files 含 src，lib 同级的 ../src/template
+ * 恒存在）。
+ */
+function locateTemplateDir(): string {
+	const base = dirname(fileURLToPath(import.meta.url));
+	for (const dir of [join(base, "template"), join(base, "../src/template")]) {
+		if (existsSync(dir)) return dir;
+	}
+	throw new Error("koishi-scripts 内置模板目录缺失（src/template）");
+}
+
+const templateDir = locateTemplateDir();
+
+/** 读取模板文件原文（相对模板目录的多段路径）。 */
+function readTemplate(...segments: string[]): string {
+	return readFileSync(join(templateDir, ...segments), "utf8");
+}
+
+/**
+ * 渲染模板：把 `@@KEY@@` 占位替换为给定值，未提供的占位原样保留
+ * （写盘后的测试会断言产物不含 @@ 残留）。
+ */
+function renderTemplate(
+	source: string,
+	tokens: Record<string, string>,
+): string {
+	return source.replace(/@@([A-Z_]+)@@/g, (raw, key: string) =>
+		Object.hasOwn(tokens, key) ? (tokens[key] ?? raw) : raw,
+	);
+}
+
+/**
+ * 从 git 署名行提取许可证持有人名。截断而非剥离 <...> 段——后者对嵌套
+ * 尖括号（如 `<<<>script>`）存在清洗绕过，会残留 `<script>` 标签
+ * （CodeQL incomplete-multi-character-sanitization）。
+ */
+function licenseHolder(author: string): string {
+	return (author.split("<")[0] ?? "").trim() || "（作者名）";
+}
+
 // ---------------------------------------------------------------------------
+// 参数与问询
+// ----------------------------------------------------------------------------
 
 /** 解析 --key=value 形式的命令行参数。 */
 export function parseFlags(argv: readonly string[]): Record<string, string> {
 	const flags: Record<string, string> = {};
 	for (const arg of argv) {
 		const match = /^--([a-zA-Z-]+)=(.*)$/.exec(arg);
-		if (match?.[1] !== undefined && match[2] !== undefined) {
+		if (match?.[1] !== undefined && match?.[2] !== undefined) {
 			flags[match[1]] = match[2];
 		}
 	}
@@ -228,7 +275,7 @@ async function resolveAnswers(flags: Record<string, string>): Promise<Answers> {
 
 // ---------------------------------------------------------------------------
 // 模板：项目清单
-// ---------------------------------------------------------------------------
+// ----------------------------------------------------------------------------
 
 /** 相对路径写入（按需建目录，统一 LF 结尾）。 */
 function writeFileRel(dir: string, relPath: string, content: string): void {
@@ -317,7 +364,7 @@ export function renderPackageJson(
 	return `${JSON.stringify(manifest, null, 2)}\n`;
 }
 
-/** monorepo 形态的仓库根 package.json（根级 changesets + foreach 编排）。 */
+/** monorepo 形态的仓库根 package.json（根级 changesets + --filter 编排）。 */
 function renderRootPackageJson(a: Answers, author: string): string {
 	const description = a.desc !== "" ? a.desc : "一个 Koishi 插件集合";
 	const manifest: Record<string, unknown> = {
@@ -331,11 +378,12 @@ function renderRootPackageJson(a: Answers, author: string): string {
 		type: "module",
 		workspaces: ["packages/*"],
 		scripts: {
-			build: "yarn workspaces foreach -A run build",
+			// 包管理器一律 Bun：根级批量构建走 bun run --filter
+			build: "bun run --filter './packages/*' build",
 			changeset: "changeset",
 			version: "changeset version",
 			release:
-				"changeset version && yarn workspaces foreach -A run build && changeset publish",
+				"changeset version && bun run --filter './packages/*' build && changeset publish",
 		},
 		devDependencies: { ...DEV_DEPENDENCIES },
 	};
@@ -343,529 +391,8 @@ function renderRootPackageJson(a: Answers, author: string): string {
 }
 
 // ---------------------------------------------------------------------------
-// 模板：TS / 构建 / lint 配置
-// ---------------------------------------------------------------------------
-
-/** 单包项目的 tsconfig（独立工程，NodeNext 解析 + strict 全家桶）。 */
-const TSCONFIG_JSON = `{
-  "$schema": "https://json.schemastore.org/tsconfig",
-  "compilerOptions": {
-    "target": "ES2025",
-    "module": "NodeNext",
-    "moduleResolution": "NodeNext",
-    "moduleDetection": "force",
-    "lib": [
-      "ES2025"
-    ],
-    "types": [
-      "node"
-    ],
-    "declaration": true,
-    "declarationMap": true,
-    "strict": true,
-    "noImplicitOverride": true,
-    "noFallthroughCasesInSwitch": true,
-    "noImplicitReturns": true,
-    "noUncheckedIndexedAccess": true,
-    "noPropertyAccessFromIndexSignature": true,
-    "exactOptionalPropertyTypes": true,
-    "noUnusedLocals": true,
-    "noUnusedParameters": true,
-    "allowUnreachableCode": false,
-    "allowUnusedLabels": false,
-    "verbatimModuleSyntax": true,
-    "erasableSyntaxOnly": true,
-    "isolatedModules": true,
-    "esModuleInterop": true,
-    "skipLibCheck": true,
-    "forceConsistentCasingInFileNames": true,
-    "noEmit": true,
-    "allowImportingTsExtensions": true
-  },
-  "include": [
-    "src"
-  ]
-}
-`;
-
-/** monorepo 形态的仓库根 tsconfig.base（无 include，由各子包继承）。 */
-const TSCONFIG_BASE_JSON = `{
-  "$schema": "https://json.schemastore.org/tsconfig",
-  "compilerOptions": {
-    "target": "ES2025",
-    "module": "NodeNext",
-    "moduleResolution": "NodeNext",
-    "moduleDetection": "force",
-    "lib": [
-      "ES2025"
-    ],
-    "types": [
-      "node"
-    ],
-    "declaration": true,
-    "declarationMap": true,
-    "strict": true,
-    "noImplicitOverride": true,
-    "noFallthroughCasesInSwitch": true,
-    "noImplicitReturns": true,
-    "noUncheckedIndexedAccess": true,
-    "noPropertyAccessFromIndexSignature": true,
-    "exactOptionalPropertyTypes": true,
-    "noUnusedLocals": true,
-    "noUnusedParameters": true,
-    "allowUnreachableCode": false,
-    "allowUnusedLabels": false,
-    "verbatimModuleSyntax": true,
-    "erasableSyntaxOnly": true,
-    "isolatedModules": true,
-    "esModuleInterop": true,
-    "skipLibCheck": true,
-    "forceConsistentCasingInFileNames": true,
-    "noEmit": true,
-    "allowImportingTsExtensions": true
-  }
-}
-`;
-
-/** monorepo 形态的仓库根 tsconfig（koishi-plugin-* 的 paths 映射，供编辑器解析包间源码引用）。 */
-function renderRootTsConfig(a: Answers): string {
-	return `${JSON.stringify(
-		{
-			extends: "./tsconfig.base",
-			compilerOptions: {
-				baseUrl: ".",
-				paths: {
-					[`koishi-plugin-${a.dirname}-*`]: ["packages/*/src"],
-					"koishi-plugin-*": ["packages/*/src"],
-				},
-			},
-		},
-		null,
-		2,
-	)}\n`;
-}
-
-/** monorepo 形态的子包 tsconfig（继承仓库根 base）。 */
-const PACKAGE_TSCONFIG_JSON = `{
-  "extends": "../../tsconfig.base",
-  "include": [
-    "src"
-  ]
-}
-`;
-
-/** 生成项目的 tsdown 配置：源码 ESM，产物 CJS（.cjs），koishi 生态 dts 外部化。 */
-const TSDOWN_CONFIG_TS = `import { defineConfig } from "tsdown";
-
-// 源码保持 ESM（package.json 为 type:module，tsconfig/编辑器按 ESM 解析）；
-// 构建产物固定为 CJS（.cjs 扩展名）：Node 宿主的 loader 用 require() 加载插件，
-// Bun 宿主的 require(esm) 对 CJS 同样兼容，CJS 是两类宿主的最大公约数。
-const outExtensions = () => ({ js: ".cjs", dts: ".d.ts" });
-
-export default defineConfig({
-    entry: ["src/index.ts"],
-    outDir: "lib",
-    dts: true,
-    format: "cjs",
-    platform: "node",
-    outExtensions,
-    clean: true,
-    deps: {
-        // 依赖全部 external（koishi 为 peer 单实例），不打进产物。
-        bundle: false,
-        dts: {
-            // koishi 生态 d.ts 用 CJS dts 语法（export = Element）或 namespace 成员
-            // re-export，dts 打包无法解析 → 生成 d.ts 时保持外部引用
-            // （产物 d.ts 保留 import，消费端由 koishi 提供类型）。
-            neverBundle: [/^koishi/, /^@satorijs\\//, /^@koishijs\\//, /^cordis/, /^minato/, /^cosmokit/],
-        },
-    },
-});
-`;
-
-/** 生成项目的 biome 配置（4 空格 / 行宽 100 / 双引号）。 */
-const BIOME_JSON = `{
-    "$schema": "https://biomejs.dev/schemas/2.5.10/schema.json",
-    "vcs": {
-        "enabled": true,
-        "clientKind": "git",
-        "useIgnoreFile": true
-    },
-    "files": {
-        "includes": ["**/src/**"]
-    },
-    "formatter": {
-        "indentStyle": "space",
-        "indentWidth": 4,
-        "lineWidth": 100,
-        "lineEnding": "lf"
-    },
-    "javascript": {
-        "formatter": {
-            "quoteStyle": "double",
-            "trailingCommas": "all"
-        }
-    },
-    "linter": {
-        "enabled": true,
-        "rules": {
-            "recommended": true,
-            "nursery": {
-                "noFloatingPromises": "error"
-            }
-        }
-    },
-    "assist": {
-        "actions": {
-            "source": {
-                "organizeImports": "on"
-            }
-        }
-    }
-}
-`;
-
-/** monorepo 形态的根 biome 配置（覆盖全部子包的 src 目录）。 */
-const ROOT_BIOME_JSON = `{
-    "$schema": "https://biomejs.dev/schemas/2.5.10/schema.json",
-    "vcs": {
-        "enabled": true,
-        "clientKind": "git",
-        "useIgnoreFile": true
-    },
-    "files": {
-        "includes": ["packages/*/src/**"]
-    },
-    "formatter": {
-        "indentStyle": "space",
-        "indentWidth": 4,
-        "lineWidth": 100,
-        "lineEnding": "lf"
-    },
-    "javascript": {
-        "formatter": {
-            "quoteStyle": "double",
-            "trailingCommas": "all"
-        }
-    },
-    "linter": {
-        "enabled": true,
-        "rules": {
-            "recommended": true,
-            "nursery": {
-                "noFloatingPromises": "error"
-            }
-        }
-    },
-    "assist": {
-        "actions": {
-            "source": {
-                "organizeImports": "on"
-            }
-        }
-    }
-}
-`;
-
-// ---------------------------------------------------------------------------
-// 模板：源码与文档
-// ---------------------------------------------------------------------------
-
-/** 插件入口模板（--console 用 console 变体，注册控制台扩展页面入口）。 */
-function renderSrcIndex(a: Answers, consoleForm: boolean): string {
-	const head = `import { type Context, Schema } from "koishi";
-
-export const name = "${a.dirname}";
-
-export type Config = Record<string, never>;
-
-export const Config: Schema<Config> = Schema.object({});
-`;
-	if (!consoleForm) {
-		return `${head}
-export function apply(ctx: Context, _config: Config) {
-    ctx.logger("${a.dirname}").info("插件已加载");
-}
-`;
-	}
-	return `${head}
-import { dirname, resolve } from "node:path";
-import { fileURLToPath } from "node:url";
-
-// 源码是 ESM，用 import.meta.url 定位；构建为 CJS 后 rolldown 的
-// import.meta.url 垫片指向产物文件，../client 仍落在项目根的 client/。
-const clientRoot = resolve(dirname(fileURLToPath(import.meta.url)), "../client");
-
-export function apply(ctx: Context, _config: Config) {
-    ctx.inject(["console"], (ctx) => {
-        ctx.console.addEntry({
-            dev: resolve(clientRoot, "index.ts"),
-            prod: resolve(clientRoot, "../dist"),
-        });
-    });
-}
-`;
-}
-
-/** 控制台前端扩展入口（依赖宿主 console 的 vite 管线与 unocss virtual module）。 */
-const CLIENT_INDEX_TS = `import type { Context } from "@koishijs/client";
-import Page from "./page.vue";
-
-import "virtual:uno.css";
-
-export default (ctx: Context) => {
-    ctx.page({
-        name: "扩展页面",
-        path: "/custom-page",
-        component: Page,
-    });
-};
-`;
-
-/** 控制台扩展示例页面（k-layout 为宿主 console 全局组件）。 */
-const CLIENT_PAGE_VUE = `<template>
-  <k-layout>扩展内容</k-layout>
-</template>
-`;
-
-/** 控制台前端独立 tsconfig（types 用上游名 @koishijs/client/global）。 */
-const CLIENT_TSCONFIG_JSON = `{
-    "compilerOptions": {
-        "rootDir": ".",
-        "module": "esnext",
-        "moduleResolution": "bundler",
-        "jsx": "preserve",
-        "noEmit": true,
-        "skipLibCheck": true,
-        "strict": true,
-        "types": ["@koishijs/client/global"]
-    },
-    "include": ["."]
-}
-`;
-
-const GITIGNORE = `lib
-dist
-
-node_modules
-npm-debug.log
-yarn-debug.log
-yarn-error.log
-tsconfig.tsbuildinfo
-
-.DS_Store
-.idea
-.vscode
-*.suo
-*.ntvs*
-*.njsproj
-*.sln
-`;
-
-const EDITORCONFIG = `root = true
-
-[*]
-insert_final_newline = true
-indent_style = space
-indent_size = 2
-end_of_line = lf
-charset = utf-8
-trim_trailing_whitespace = true
-`;
-
-const GITATTRIBUTES = `* text eol=lf
-
-*.png -text
-*.jpg -text
-*.ico -text
-*.gif -text
-*.webp -text
-`;
-
-function renderReadme(a: Answers, monorepo: boolean): string {
-	const desc = a.desc !== "" ? a.desc : "（待补充项目简介）";
-	const check = monorepo
-		? `yarn build      # 根级 foreach 构建全部子包（产物 packages/*/lib/index.cjs）
-yarn workspace ${a.name} check   # 单包门禁：biome + 类型检查`
-		: `yarn check      # 门禁：biome + 类型检查
-yarn build      # 构建（产物 lib/index.cjs）`;
-	return `# ${a.name}
-
-[![npm](https://img.shields.io/npm/v/${a.name}?style=flat-square)](https://www.npmjs.com/package/${a.name})
-
-${desc}
-
-## 开发
-
-\`\`\`bash
-yarn install    # 在宿主工作区根目录执行一次（workspace 成员依赖提升）
-${check}
-\`\`\`
-
-约定详见 \`AGENTS.md\`。
-`;
-}
-
-function renderLicense(author: string): string {
-	const year = new Date().getFullYear();
-	// 许可证持有人只取姓名（`Name <email>` 格式中 `<` 之前的部分）：
-	// 截断而非剥离 <...> 段——后者对嵌套尖括号（如 `<<<>script>`）存在
-	// 清洗绕过，残留 `<script>` 标签（CodeQL incomplete-multi-character-sanitization）
-	const holder = (author.split("<")[0] ?? "").trim() || "（作者名）";
-	return `MIT License
-
-Copyright (c) ${year} ${holder}
-
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
-`;
-}
-
-function renderChangesetConfig(branch: string): string {
-	return `${JSON.stringify(
-		{
-			$schema: "https://unpkg.com/@changesets/config@3.0.0/schema.json",
-			changelog: false,
-			commit: false,
-			fixed: [],
-			linked: [],
-			access: "public",
-			baseBranch: branch,
-			updateInternalDependencies: "patch",
-		},
-		null,
-		4,
-	)}\n`;
-}
-
-/** changesets 说明（发版命令按单包 / monorepo 根区分）。 */
-function renderChangesetReadme(monorepo: boolean): string {
-	const release = monorepo
-		? "yarn release        # changeset version → foreach build → changeset publish"
-		: "yarn release        # changeset version → tsdown → npm publish";
-	return `# Changesets
-
-每次完成一批用户可见改动（feat / fix / refactor 涉及发布内容），**必须随改动一起**
-在本目录写 changeset 并提交，不要攒到发版前——攒必漏。
-
-## 写法
-
-手写 \`.changeset/<名字>.md\`：
-
-\`\`\`md
----
-"${PLUGIN_NAME_TOKEN}": patch
----
-
-fix: 简体中文说明改动内容
-\`\`\`
-
-或运行 \`yarn changeset\` 交互式创建。
-
-## bump 类型（0.x 阶段，API 未冻结）
-
-- API 破坏 → minor（\`0.1.x → 0.2.x\`）
-- 修复 → patch（\`0.0.x\`）
-- 纯 chore（文档、CI、格式化等无行为变化）→ 不需要 changeset
-
-## 发版
-
-\`\`\`bash
-${release}
-\`\`\`
-`;
-}
-
-function renderAgentsMd(a: Answers, monorepo: boolean): string {
-	const desc = a.desc !== "" ? a.desc : "Koishi 插件";
-	const form = monorepo ? "，monorepo 插件集合" : "";
-	const workflow = monorepo
-		? `\`\`\`bash
-yarn build        # 根级：foreach 构建全部子包（产物 packages/*/lib/index.cjs）
-yarn version      # 根级：消费 .changeset/ 条目、升版本号、写 CHANGELOG
-yarn release      # 根级：version → build → changeset publish
-yarn workspace ${a.name} check    # 单包门禁：biome check + ts7 类型检查（提交前必跑）
-\`\`\`
-
-- 包间引用走 workspace:* 协议；仓库根 tsconfig.json 配置了 \`koishi-plugin-*\`
-  → \`packages/*/src\` 的 paths 映射，编辑器可直接跳转子包源码。
-- 门禁全绿才提交；逐功能小步提交。`
-		: `\`\`\`bash
-yarn check        # 门禁：biome check + ts7 类型检查（提交前必跑）
-yarn fix          # biome 自动修复 + 类型检查
-yarn build        # tsdown 构建，产物 lib/index.cjs（Koishi loader 用 require 加载 CJS）
-yarn typecheck    # 仅类型检查
-\`\`\`
-
-- 门禁全绿才提交；逐功能小步提交。
-- 新增 locales yml 时参考兄弟项目做法（Bun 运行时原生支持 yml 导入）。`;
-	const body = `# 项目常驻指令
-
-> 本文件是本仓库（${PLUGIN_NAME_TOKEN}，${desc}${form}）的常驻开发约定。技术栈：TypeScript 7（@typescript/native）+ tsdown + biome + Changesets，开发环境为宿主工作区（external/ 下，依赖由工作区根提升提供，项目内无需 install）。
-
-## 基本约束
-
-- **全程使用简体中文**：回复、代码注释、提交说明、文档均用简体中文。
-- **参考兄弟项目**：宿主工作区 external/ 下其它插件是现成范式，拿不准的写法先看它们。
-
-## 工作流与门禁
-
-${workflow}
-
-- 构建产物固定 **CJS（.cjs 扩展名）**，源码保持 ESM；Koishi 的 loader 用 require 加载插件。
-- 依赖只声明用到的：koishi 走 peerDependencies；开发工具进 devDependencies 并同步到宿主工作区根安装。
-
-## 代码风格（biome 已强制）
-
-- 4 空格缩进、行宽 100、双引号、尾逗号 all、LF。
-- 类型安全：strict 全家桶、\`noUncheckedIndexedAccess\`、\`exactOptionalPropertyTypes\`、\`verbatimModuleSyntax\`、\`erasableSyntaxOnly\`（禁止 enum 与构造器参数属性，用 const 对象 + 联合类型替代）。
-- 类型导入一律 \`import type\`；相对导入按 NodeNext 带 \`.js\` 后缀。
-- 异步调用必须 await 或显式 void/\`.catch\`（\`noFloatingPromises\` 为 error）。
-
-## Changesets 工作流（强制，勿攒）
-
-- 每次用户可见改动随提交在 \`.changeset/\` 写条目，不要攒到发版前——攒必漏。
-- **已知坑**：全新仓库在首次 commit 之前 \`changeset status\` 会报 "Failed to find where HEAD diverged from <分支>"——先做初始提交即可。
-- 手写模板：
-
-  \`\`\`md
-  ---
-  "${PLUGIN_NAME_TOKEN}": patch
-  ---
-
-  fix: ……（简体中文说明）
-  \`\`\`
-
-- bump 类型（0.x 阶段）：API 破坏 → minor，修复 → patch；纯 chore 不需要。
-- 发版：${monorepo ? "仓库根 `yarn release`（version → build → changeset publish）" : "`yarn release`（version → build → npm publish）"}；发不出先查 \`.changeset/\` 是否有 pending 条目。
-
-## git 提交流程
-
-1. 先跑门禁确认全绿再提交。
-2. \`git add -A\` 后提交，简体中文提交信息（\`feat:\` / \`fix:\` / \`docs:\` / \`chore:\`）。
-3. 主分支直提；完成后向用户简要说明改动与提交哈希。
-`;
-	return body.split(PLUGIN_NAME_TOKEN).join(a.name);
-}
-
-// ---------------------------------------------------------------------------
 // 写盘与主流程
-// ---------------------------------------------------------------------------
+// ----------------------------------------------------------------------------
 
 /**
  * 生成单包形态的全部文件（也用于 monorepo 的 packages/<name>/ 子包，
@@ -887,23 +414,110 @@ function writePackageFiles(
 	writeFileRel(
 		targetDir,
 		"tsconfig.json",
-		isMember ? PACKAGE_TSCONFIG_JSON : TSCONFIG_JSON,
+		isMember
+			? readTemplate("shared", "member", "tsconfig.json")
+			: readTemplate("single", "tsconfig.json"),
 	);
-	writeFileRel(targetDir, "tsdown.config.ts", TSDOWN_CONFIG_TS);
+	writeFileRel(
+		targetDir,
+		"tsdown.config.ts",
+		readTemplate("shared", "tsdown.config.ts"),
+	);
 	writeFileRel(
 		targetDir,
 		join("src", "index.ts"),
-		renderSrcIndex(a, options.console),
+		renderTemplate(
+			readTemplate(
+				"shared",
+				"src",
+				options.console ? "index.console.ts" : "index.ts",
+			),
+			{ SHORTNAME: a.dirname },
+		),
 	);
 	if (options.console) {
-		writeFileRel(targetDir, join("client", "index.ts"), CLIENT_INDEX_TS);
-		writeFileRel(targetDir, join("client", "page.vue"), CLIENT_PAGE_VUE);
+		writeFileRel(
+			targetDir,
+			join("client", "index.ts"),
+			readTemplate("shared", "client", "index.ts"),
+		);
+		writeFileRel(
+			targetDir,
+			join("client", "page.vue"),
+			readTemplate("shared", "client", "page.vue"),
+		);
 		writeFileRel(
 			targetDir,
 			join("client", "tsconfig.json"),
-			CLIENT_TSCONFIG_JSON,
+			readTemplate("shared", "client", "tsconfig.json"),
 		);
 	}
+}
+
+/**
+ * 单包形态的仓库根附加文件（biome / changesets / 文档 / 许可证等，
+ * monorepo 形态由 writeMonorepoRootFiles 承担）。
+ */
+function writeSingleRootFiles(
+	targetDir: string,
+	a: Answers,
+	author: string,
+	branch: string,
+): void {
+	writeFileRel(
+		targetDir,
+		"biome.json",
+		readTemplate("single", "biome.json.tpl"),
+	);
+	writeFileRel(
+		targetDir,
+		join(".changeset", "config.json"),
+		renderTemplate(readTemplate("shared", "changeset-config.json"), {
+			BRANCH: branch,
+		}),
+	);
+	writeFileRel(
+		targetDir,
+		join(".changeset", "README.md"),
+		renderTemplate(readTemplate("single", "changeset-readme.md"), {
+			PKG_NAME: a.name,
+		}),
+	);
+	writeFileRel(
+		targetDir,
+		"AGENTS.md",
+		renderTemplate(readTemplate("single", "AGENTS.md"), {
+			PKG_NAME: a.name,
+			DESC: a.desc !== "" ? a.desc : "Koishi 插件",
+		}),
+	);
+	writeFileRel(targetDir, ".gitignore", readTemplate("shared", "gitignore"));
+	writeFileRel(
+		targetDir,
+		".editorconfig",
+		readTemplate("shared", "editorconfig"),
+	);
+	writeFileRel(
+		targetDir,
+		".gitattributes",
+		readTemplate("shared", "gitattributes"),
+	);
+	writeFileRel(
+		targetDir,
+		"readme.md",
+		renderTemplate(readTemplate("single", "readme.md"), {
+			PKG_NAME: a.name,
+			DESC: a.desc !== "" ? a.desc : "（待补充项目简介）",
+		}),
+	);
+	writeFileRel(
+		targetDir,
+		"LICENSE",
+		renderTemplate(readTemplate("shared", "license"), {
+			YEAR: `${new Date().getFullYear()}`,
+			HOLDER: licenseHolder(author),
+		}),
+	);
 }
 
 /** 生成 monorepo 形态的仓库根文件。 */
@@ -914,25 +528,72 @@ function writeMonorepoRootFiles(
 	branch: string,
 ): void {
 	writeFileRel(monorepoDir, "package.json", renderRootPackageJson(a, author));
-	writeFileRel(monorepoDir, "tsconfig.base.json", TSCONFIG_BASE_JSON);
-	writeFileRel(monorepoDir, "tsconfig.json", renderRootTsConfig(a));
-	writeFileRel(monorepoDir, "biome.json", ROOT_BIOME_JSON);
+	writeFileRel(
+		monorepoDir,
+		"tsconfig.base.json",
+		readTemplate("monorepo", "tsconfig.base.json"),
+	);
+	writeFileRel(
+		monorepoDir,
+		"tsconfig.json",
+		renderTemplate(readTemplate("monorepo", "tsconfig.json"), {
+			DIRNAME: a.dirname,
+		}),
+	);
+	writeFileRel(
+		monorepoDir,
+		"biome.json",
+		readTemplate("monorepo", "biome.json.tpl"),
+	);
 	writeFileRel(
 		monorepoDir,
 		join(".changeset", "config.json"),
-		renderChangesetConfig(branch),
+		renderTemplate(readTemplate("shared", "changeset-config.json"), {
+			BRANCH: branch,
+		}),
 	);
 	writeFileRel(
 		monorepoDir,
 		join(".changeset", "README.md"),
-		renderChangesetReadme(true),
+		renderTemplate(readTemplate("monorepo", "changeset-readme.md"), {
+			PKG_NAME: a.name,
+		}),
 	);
-	writeFileRel(monorepoDir, "AGENTS.md", renderAgentsMd(a, true));
-	writeFileRel(monorepoDir, ".gitignore", GITIGNORE);
-	writeFileRel(monorepoDir, ".editorconfig", EDITORCONFIG);
-	writeFileRel(monorepoDir, ".gitattributes", GITATTRIBUTES);
-	writeFileRel(monorepoDir, "readme.md", renderReadme(a, true));
-	writeFileRel(monorepoDir, "LICENSE", renderLicense(author));
+	writeFileRel(
+		monorepoDir,
+		"AGENTS.md",
+		renderTemplate(readTemplate("monorepo", "AGENTS.md"), {
+			PKG_NAME: a.name,
+			DESC: a.desc !== "" ? a.desc : "Koishi 插件",
+		}),
+	);
+	writeFileRel(monorepoDir, ".gitignore", readTemplate("shared", "gitignore"));
+	writeFileRel(
+		monorepoDir,
+		".editorconfig",
+		readTemplate("shared", "editorconfig"),
+	);
+	writeFileRel(
+		monorepoDir,
+		".gitattributes",
+		readTemplate("shared", "gitattributes"),
+	);
+	writeFileRel(
+		monorepoDir,
+		"readme.md",
+		renderTemplate(readTemplate("monorepo", "readme.md"), {
+			PKG_NAME: a.name,
+			DESC: a.desc !== "" ? a.desc : "（待补充项目简介）",
+		}),
+	);
+	writeFileRel(
+		monorepoDir,
+		"LICENSE",
+		renderTemplate(readTemplate("shared", "license"), {
+			YEAR: `${new Date().getFullYear()}`,
+			HOLDER: licenseHolder(author),
+		}),
+	);
 }
 
 /**
@@ -997,23 +658,7 @@ export default async function runSetup(
 		writePackageFiles(targetDir, answers, versions, authorLine, options, true);
 	} else {
 		writePackageFiles(targetDir, answers, versions, authorLine, options, false);
-		writeFileRel(targetDir, "biome.json", BIOME_JSON);
-		writeFileRel(
-			targetDir,
-			join(".changeset", "config.json"),
-			renderChangesetConfig(branch),
-		);
-		writeFileRel(
-			targetDir,
-			join(".changeset", "README.md"),
-			renderChangesetReadme(false),
-		);
-		writeFileRel(targetDir, "AGENTS.md", renderAgentsMd(answers, false));
-		writeFileRel(targetDir, ".gitignore", GITIGNORE);
-		writeFileRel(targetDir, ".editorconfig", EDITORCONFIG);
-		writeFileRel(targetDir, ".gitattributes", GITATTRIBUTES);
-		writeFileRel(targetDir, "readme.md", renderReadme(answers, false));
-		writeFileRel(targetDir, "LICENSE", renderLicense(authorLine));
+		writeSingleRootFiles(targetDir, answers, authorLine, branch);
 	}
 
 	const gitInit = spawnSync("git", ["init", "-b", branch], { cwd: projectDir });
@@ -1026,8 +671,8 @@ export default async function runSetup(
 	console.log(`
 [setup] 🎉 完成！后续步骤：
   1. cd ${projectDir.slice(cwd.length + 1) || projectDir}
-  2. 在宿主工作区根执行 yarn install（注册 workspace 依赖到 lockfile）
-  3. ${options.monorepo ? `yarn build && yarn workspace ${answers.name} check` : "yarn check && yarn build"} 验证门禁
+  2. 在宿主工作区根执行 bun install（注册 workspace 依赖到 lockfile）
+  3. ${options.monorepo ? `bun run build && bun run --filter ${answers.name} check` : "bun run check && bun run build"} 验证门禁
   4. 没有 remote 时自行创建 GitHub 仓库并 git remote add origin …
   5. 开始写代码；用户可见改动随提交写 changeset（见 AGENTS.md）`);
 	return 0;
