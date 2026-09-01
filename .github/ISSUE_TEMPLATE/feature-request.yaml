@@ -1,3 +1,6 @@
+# SPDX-License-Identifier: MIT
+# Copyright (c) 2026-present Koishi-CE contributors.
+
 name: 功能请求
 description: 为本仓库提议新功能或改进
 title: "Feature: "

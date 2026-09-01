@@ -1,3 +1,6 @@
+# SPDX-License-Identifier: MIT
+# Copyright (c) 2026-present Koishi-CE contributors.
+
 name: Bug 报告
 description: 报告本仓库中某个包或插件的问题
 title: "Bug: "

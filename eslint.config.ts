@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: MIT
+// Copyright (c) 2026-present Koishi-CE contributors.
+
 import tsParser from "@typescript-eslint/parser";
 import type { Linter } from "eslint";
 import pluginVue from "eslint-plugin-vue";
