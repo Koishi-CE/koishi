@@ -1,3 +1,7 @@
+<!-- SPDX-License-Identifier: AGPL-3.0-only -->
+<!-- Copyright (c) 2019-present Shigma and Koishijs contributors. -->
+<!-- Copyright (c) 2026-present Koishi-CE contributors. -->
+
 <!--
   通知条（全局组件 k-comment）：带左侧色条与状态图标的提示块。
   type 取 primary / secondary / warning / success / error（error 会映射为

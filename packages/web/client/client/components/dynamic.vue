@@ -1,3 +1,7 @@
+<!-- SPDX-License-Identifier: AGPL-3.0-only -->
+<!-- Copyright (c) 2019-present Shigma and Koishijs contributors. -->
+<!-- Copyright (c) 2026-present Koishi-CE contributors. -->
+
 <!--
   dynamic.vue：动态 schema 表单控件（any + dynamic 角色）。
   适用于"具体结构由服务端决定"的配置项：本地 schema 只带 meta.extra.name，

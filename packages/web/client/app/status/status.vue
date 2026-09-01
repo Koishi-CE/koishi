@@ -1,3 +1,7 @@
+<!-- SPDX-License-Identifier: AGPL-3.0-only -->
+<!-- Copyright (c) 2019-present Shigma and Koishijs contributors. -->
+<!-- Copyright (c) 2026-present Koishi-CE contributors. -->
+
 <!--
   通用状态项容器（页面模板中 <k-status> 的内置实现）：
   内容区 + 悬停时的 tooltip（内容经 el-scrollbar 限高滚动）。

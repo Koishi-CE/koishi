@@ -1,3 +1,7 @@
+<!-- SPDX-License-Identifier: AGPL-3.0-only -->
+<!-- Copyright (c) 2019-present Shigma and Koishijs contributors. -->
+<!-- Copyright (c) 2026-present Koishi-CE contributors. -->
+
 <!--
   k-empty：空状态占位组件。
   居中展示 Koishi 徽标图标与默认插槽文案，用于无数据 / 无权限等场景。

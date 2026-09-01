@@ -1,3 +1,7 @@
+<!-- SPDX-License-Identifier: AGPL-3.0-only -->
+<!-- Copyright (c) 2019-present Shigma and Koishijs contributors. -->
+<!-- Copyright (c) 2026-present Koishi-CE contributors. -->
+
 <!--
   主题选择器：role 为 "theme" 的字符串 schema 的专用渲染组件。
   下拉选项按明 / 暗模式过滤（主题 id 以 -light / -dark 结尾），

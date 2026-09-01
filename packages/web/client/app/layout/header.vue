@@ -1,3 +1,7 @@
+<!-- SPDX-License-Identifier: AGPL-3.0-only -->
+<!-- Copyright (c) 2019-present Shigma and Koishijs contributors. -->
+<!-- Copyright (c) 2026-present Koishi-CE contributors. -->
+
 <!--
   布局顶栏：左侧标题（默认取当前路由名）、右侧菜单区，
   移动端额外提供侧栏开关按钮与溢出菜单（"..."）按钮。

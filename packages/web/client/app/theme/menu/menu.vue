@@ -1,3 +1,7 @@
+<!-- SPDX-License-Identifier: AGPL-3.0-only -->
+<!-- Copyright (c) 2019-present Shigma and Koishijs contributors. -->
+<!-- Copyright (c) 2026-present Koishi-CE contributors. -->
+
 <!--
   单个浮动上下文菜单（页面模板中 <k-menu> 的内置实现）：
   依据触发点的锚点矩形（props.relative）与自身实际尺寸，

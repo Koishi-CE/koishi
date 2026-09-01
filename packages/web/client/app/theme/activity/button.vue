@@ -1,3 +1,7 @@
+<!-- SPDX-License-Identifier: AGPL-3.0-only -->
+<!-- Copyright (c) 2019-present Shigma and Koishijs contributors. -->
+<!-- Copyright (c) 2026-present Koishi-CE contributors. -->
+
 <!--
   活动栏单个图标按钮，也是拖拽排序的拖拽源：
   拖起时向 dataTransfer 写入 "activity:<id>" 文本供落点组件识别。

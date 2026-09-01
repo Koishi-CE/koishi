@@ -1,3 +1,7 @@
+<!-- SPDX-License-Identifier: AGPL-3.0-only -->
+<!-- Copyright (c) 2019-present Shigma and Koishijs contributors. -->
+<!-- Copyright (c) 2026-present Koishi-CE contributors. -->
+
 <!--
   过滤条件按钮（computed.vue 分支条件的编辑入口）：以一句话摘要展示当前
   过滤表达式，点击弹出对话框，内嵌 k-filter 进行完整编辑。

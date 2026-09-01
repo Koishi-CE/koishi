@@ -1,3 +1,7 @@
+<!-- SPDX-License-Identifier: AGPL-3.0-only -->
+<!-- Copyright (c) 2019-present Shigma and Koishijs contributors. -->
+<!-- Copyright (c) 2026-present Koishi-CE contributors. -->
+
 <!-- 漏斗筛选图标（注册名 "filter"），用于列表过滤开关 -->
 <template>
   <svg class="k-icon k-icon-filter" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">

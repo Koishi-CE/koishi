@@ -1,14 +1,14 @@
+﻿// SPDX-License-Identifier: AGPL-3.0-only
+// Copyright (c) 2026-present Koishi-CE contributors.
+
 import type { UserConfig } from "tsdown";
 import { defineConfig } from "tsdown";
 
 /**
- * @koishi-ce/client 的 node 侧构建配置（workspace 模式下与根配置合并，
- * 其余选项沿用根配置的 ESM-only 约定）。
- *
- * 相对根配置的差异仅是多入口：除主入口（编程式 build / createServer）外，
- * 还要产出 `koishi-console` CLI（src/bin.ts，产物首行 shebang 由 rolldown
- * 原样保留，package.json 的 bin 字段指向它）。
- */
+ * @koishi-ce/client 鐨?node 渚ф瀯寤洪厤缃紙workspace 妯″紡涓嬩笌鏍归厤缃悎骞讹紝
+ * 鍏朵綑閫夐」娌跨敤鏍归厤缃殑 ESM-only 绾﹀畾锛夈€? *
+ * 鐩稿鏍归厤缃殑宸紓浠呮槸澶氬叆鍙ｏ細闄や富鍏ュ彛锛堢紪绋嬪紡 build / createServer锛夊锛? * 杩樿浜у嚭 `koishi-console` CLI锛坰rc/bin.ts锛屼骇鐗╅琛?shebang 鐢?rolldown
+ * 鍘熸牱淇濈暀锛宲ackage.json 鐨?bin 瀛楁鎸囧悜瀹冿級銆? */
 const config: UserConfig = {
 	entry: {
 		index: "src/index.ts",

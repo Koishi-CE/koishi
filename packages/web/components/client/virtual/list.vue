@@ -1,3 +1,7 @@
+<!-- SPDX-License-Identifier: AGPL-3.0-only -->
+<!-- Copyright (c) 2019-present Shigma and Koishijs contributors. -->
+<!-- Copyright (c) 2026-present Koishi-CE contributors. -->
+
 <!--
   虚拟列表组件（全局组件 virtual-list）：基于 el-scrollbar 长列表渲染。
   只渲染 Virtual 计算出的 [range.start, range.end) 区间，区间外用上下

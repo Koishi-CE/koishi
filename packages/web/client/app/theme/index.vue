@@ -1,3 +1,7 @@
+<!-- SPDX-License-Identifier: AGPL-3.0-only -->
+<!-- Copyright (c) 2019-present Shigma and Koishijs contributors. -->
+<!-- Copyright (c) 2026-present Koishi-CE contributors. -->
+
 <!--
   控制台根组件：活动栏 + 路由页面（keep-alive 缓存） + 状态栏 + 全局菜单层。
   路由声明了所需 store 字段（route.meta.activity.fields）时，

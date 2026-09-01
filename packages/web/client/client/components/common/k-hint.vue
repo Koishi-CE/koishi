@@ -1,3 +1,7 @@
+<!-- SPDX-License-Identifier: AGPL-3.0-only -->
+<!-- Copyright (c) 2019-present Shigma and Koishijs contributors. -->
+<!-- Copyright (c) 2026-present Koishi-CE contributors. -->
+
 <!--
   k-hint：带悬浮提示（tooltip）的问号图标。
   默认是纯展示的提示图标；当传入 v-model（modelValue 有值）时变为

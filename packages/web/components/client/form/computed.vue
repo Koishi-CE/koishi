@@ -1,3 +1,7 @@
+<!-- SPDX-License-Identifier: AGPL-3.0-only -->
+<!-- Copyright (c) 2019-present Shigma and Koishijs contributors. -->
+<!-- Copyright (c) 2026-present Koishi-CE contributors. -->
+
 <!--
   计算属性编辑器（schemastery-vue 扩展组件，经 form/index.ts 注册到
   type=union + role=computed 节点）：把配置值表达为 $switch 结构——

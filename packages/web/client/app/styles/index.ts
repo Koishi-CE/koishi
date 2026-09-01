@@ -1,3 +1,7 @@
+// SPDX-License-Identifier: AGPL-3.0-only
+// Copyright (c) 2019-present Shigma and Koishijs contributors.
+// Copyright (c) 2026-present Koishi-CE contributors.
+
 /**
  * 全局样式插件：引入 app 级 SCSS，并注册四套内置主题
  * （默认 / 高对比 × 明亮 / 暗色），供主题选择器列出与切换。

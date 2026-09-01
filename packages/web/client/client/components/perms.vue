@@ -1,3 +1,7 @@
+<!-- SPDX-License-Identifier: AGPL-3.0-only -->
+<!-- Copyright (c) 2019-present Shigma and Koishijs contributors. -->
+<!-- Copyright (c) 2026-present Koishi-CE contributors. -->
+
 <!--
   perms.vue：权限选择控件（array + perms 角色）。
   把服务端下发的扁平权限名（如 "channel.xxx"）按 ":" 逐级拆分，

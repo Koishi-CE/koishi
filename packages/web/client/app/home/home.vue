@@ -1,3 +1,7 @@
+<!-- SPDX-License-Identifier: AGPL-3.0-only -->
+<!-- Copyright (c) 2019-present Shigma and Koishijs contributors. -->
+<!-- Copyright (c) 2026-present Koishi-CE contributors. -->
+
 <!--
   控制台首页：WebSocket 就绪后渲染 "home" 插槽内容（默认为欢迎卡片），
   未连接时显示连接提示卡片。

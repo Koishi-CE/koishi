@@ -1,3 +1,7 @@
+<!-- SPDX-License-Identifier: AGPL-3.0-only -->
+<!-- Copyright (c) 2019-present Shigma and Koishijs contributors. -->
+<!-- Copyright (c) 2026-present Koishi-CE contributors. -->
+
 <!--
   单条过滤表达式编辑器（k-filter 的内层行组件）：
   「实体 + 运算符 + 值」三段式编辑一条 minato 查询条件。

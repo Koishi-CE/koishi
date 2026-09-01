@@ -1,3 +1,7 @@
+<!-- SPDX-License-Identifier: AGPL-3.0-only -->
+<!-- Copyright (c) 2019-present Shigma and Koishijs contributors. -->
+<!-- Copyright (c) 2026-present Koishi-CE contributors. -->
+
 <!--
   顶栏菜单按钮（图标型）：hidden/disabled/label/icon 均支持 getter，
   点击时以 action scope 为参调用对应 action。

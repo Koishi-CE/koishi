@@ -1,3 +1,7 @@
+<!-- SPDX-License-Identifier: AGPL-3.0-only -->
+<!-- Copyright (c) 2019-present Shigma and Koishijs contributors. -->
+<!-- Copyright (c) 2026-present Koishi-CE contributors. -->
+
 <!-- 空心五角星图标（注册名 "star-empty"），用于未收藏/未订阅状态 -->
 <template>
   <svg class="k-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 576 512">

@@ -1,3 +1,7 @@
+// SPDX-License-Identifier: AGPL-3.0-only
+// Copyright (c) 2019-present Shigma and Koishijs contributors.
+// Copyright (c) 2026-present Koishi-CE contributors.
+
 /**
  * 活动栏（activity bar）相关的类型扩充：
  * - 为 ActionContext 补充 "theme.activity" 菜单的求值上下文类型；

@@ -1,3 +1,7 @@
+// SPDX-License-Identifier: AGPL-3.0-only
+// Copyright (c) 2019-present Shigma and Koishijs contributors.
+// Copyright (c) 2026-present Koishi-CE contributors.
+
 /**
  * 宿主控制台前端的总装构建脚本（编程式 vite.build，本仓库没有 vite 配置文件）。
  *

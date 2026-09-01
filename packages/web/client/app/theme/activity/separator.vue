@@ -1,3 +1,7 @@
+<!-- SPDX-License-Identifier: AGPL-3.0-only -->
+<!-- Copyright (c) 2019-present Shigma and Koishijs contributors. -->
+<!-- Copyright (c) 2026-present Koishi-CE contributors. -->
+
 <!--
   活动栏条目间的分隔槽：平时不可见，拖拽悬停时显示横线提示，
   松手即把被拖项移动到该位置（拖拽排序的核心落点组件）。

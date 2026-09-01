@@ -1,3 +1,7 @@
+<!-- SPDX-License-Identifier: AGPL-3.0-only -->
+<!-- Copyright (c) 2019-present Shigma and Koishijs contributors. -->
+<!-- Copyright (c) 2026-present Koishi-CE contributors. -->
+
 <!--
   欢迎卡片：文档 / 社区论坛等入口链接。
   自带 zh-CN 与 en-US 两套文案（局部 vue-i18n 实例，独立于全局语言包），

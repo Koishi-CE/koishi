@@ -1,3 +1,7 @@
+<!-- SPDX-License-Identifier: AGPL-3.0-only -->
+<!-- Copyright (c) 2019-present Shigma and Koishijs contributors. -->
+<!-- Copyright (c) 2026-present Koishi-CE contributors. -->
+
 <!--
   图片查看器（全局组件 k-image-viewer）：在容器内居中展示单张图片，
   底部悬浮工具条提供缩小 / 放大 / 复原 / 旋转操作。切换图片后自动复位

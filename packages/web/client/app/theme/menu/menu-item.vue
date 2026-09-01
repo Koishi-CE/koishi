@@ -1,3 +1,7 @@
+<!-- SPDX-License-Identifier: AGPL-3.0-only -->
+<!-- Copyright (c) 2019-present Shigma and Koishijs contributors. -->
+<!-- Copyright (c) 2026-present Koishi-CE contributors. -->
+
 <!--
   上下文菜单的单个菜单项：点击时调用对应 action。
   id 支持两种特殊写法："!" 前缀会被去除（兼容旧的否定式 id），

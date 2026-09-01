@@ -1,3 +1,7 @@
+<!-- SPDX-License-Identifier: AGPL-3.0-only -->
+<!-- Copyright (c) 2019-present Shigma and Koishijs contributors. -->
+<!-- Copyright (c) 2026-present Koishi-CE contributors. -->
+
 <!--
   用户设置页：左侧 el-tree 分组导航 + 右侧当前分组的内容。
   分组内的条目三种形态二选一渲染：组件型（component）、表单型（schema），

@@ -1,3 +1,7 @@
+<!-- SPDX-License-Identifier: AGPL-3.0-only -->
+<!-- Copyright (c) 2019-present Shigma and Koishijs contributors. -->
+<!-- Copyright (c) 2026-present Koishi-CE contributors. -->
+
 <!--
   过滤器编辑器（全局组件 k-filter）：以「或 → 与 → 单条表达式」三层结构
   编辑 minato 查询条件——外层各组之间为 $or，组内各行之间为 $and，

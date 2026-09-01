@@ -1,3 +1,7 @@
+<!-- SPDX-License-Identifier: AGPL-3.0-only -->
+<!-- Copyright (c) 2019-present Shigma and Koishijs contributors. -->
+<!-- Copyright (c) 2026-present Koishi-CE contributors. -->
+
 <!--
   overlay.vue：全屏图片查看器（经 router 的 global 插槽挂载）。
   打开时把图片从原位"飞入"屏幕中心（appear 阶段从原坐标过渡到居中），

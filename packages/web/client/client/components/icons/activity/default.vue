@@ -1,3 +1,7 @@
+<!-- SPDX-License-Identifier: AGPL-3.0-only -->
+<!-- Copyright (c) 2019-present Shigma and Koishijs contributors. -->
+<!-- Copyright (c) 2026-present Koishi-CE contributors. -->
+
 <!-- activity 侧栏页面默认图标（注册名 "activity:default"）：仪表盘样式 -->
 <template>
   <svg class="k-icon" viewBox="0 0 448 512" xmlns="http://www.w3.org/2000/svg">

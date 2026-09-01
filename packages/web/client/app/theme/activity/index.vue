@@ -1,3 +1,7 @@
+<!-- SPDX-License-Identifier: AGPL-3.0-only -->
+<!-- Copyright (c) 2019-present Shigma and Koishijs contributors. -->
+<!-- Copyright (c) 2026-present Koishi-CE contributors. -->
+
 <!--
   活动栏（最左侧图标栏）：分 top / bottom 两区渲染活动项，
   项与项之间的分隔槽（activity-separator）同时充当拖拽排序的落点。

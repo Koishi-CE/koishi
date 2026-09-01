@@ -1,12 +1,12 @@
+﻿// SPDX-License-Identifier: AGPL-3.0-only
+// Copyright (c) 2026-present Koishi-CE contributors.
+
 import type { Plugin } from "vite";
 
 /**
- * .yml/.yaml → JS 模块的 vite 转换插件（替代 @maikolib/vite-plugin-yaml）。
- *
- * 构建脚本统一以 Bun 执行，YAML 解析走 Bun 内置的 Bun.YAML，不再引入 js-yaml
- * （其 4.1.0 版本存在 GHSA-52cp-r559-cp3m / GHSA-5p4m-2wfm-xmqj 高危通告）。
- * 行为对齐原插件：默认导出解析结果，不产出 sourcemap 映射。
- */
+ * .yml/.yaml 鈫?JS 妯″潡鐨?vite 杞崲鎻掍欢锛堟浛浠?@maikolib/vite-plugin-yaml锛夈€? *
+ * 鏋勫缓鑴氭湰缁熶竴浠?Bun 鎵ц锛孻AML 瑙ｆ瀽璧?Bun 鍐呯疆鐨?Bun.YAML锛屼笉鍐嶅紩鍏?js-yaml
+ * 锛堝叾 4.1.0 鐗堟湰瀛樺湪 GHSA-52cp-r559-cp3m / GHSA-5p4m-2wfm-xmqj 楂樺嵄閫氬憡锛夈€? * 琛屼负瀵归綈鍘熸彃浠讹細榛樿瀵煎嚭瑙ｆ瀽缁撴灉锛屼笉浜у嚭 sourcemap 鏄犲皠銆? */
 export function yaml(): Plugin {
 	return {
 		name: "vite:transform-yaml",

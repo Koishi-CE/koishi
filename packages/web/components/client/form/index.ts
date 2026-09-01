@@ -1,3 +1,7 @@
+// SPDX-License-Identifier: AGPL-3.0-only
+// Copyright (c) 2019-present Shigma and Koishijs contributors.
+// Copyright (c) 2026-present Koishi-CE contributors.
+
 /**
  * 表单子模块入口（Vue 插件形态）：在 schemastery-vue 的 k-schema 体系上
  * 注册本仓库扩展——union + computed 角色的「计算属性」编辑器（computed.vue，

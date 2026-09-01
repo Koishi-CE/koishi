@@ -1,3 +1,7 @@
+<!-- SPDX-License-Identifier: AGPL-3.0-only -->
+<!-- Copyright (c) 2019-present Shigma and Koishijs contributors. -->
+<!-- Copyright (c) 2026-present Koishi-CE contributors. -->
+
 <!--
   chat-image：聊天消息中的图片。
   普通点击打开内置大图查看器（overlay.vue，经 global 插槽全局挂载）；

@@ -1,3 +1,7 @@
+// SPDX-License-Identifier: AGPL-3.0-only
+// Copyright (c) 2019-present Shigma and Koishijs contributors.
+// Copyright (c) 2026-present Koishi-CE contributors.
+
 /**
  * 虚拟列表的条目包装组件（VirtualItem）：给插槽内容的根元素挂上
  * 自定义指令以捕获 DOM 引用，再用 ResizeObserver 监听其尺寸变化，

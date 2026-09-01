@@ -1,3 +1,7 @@
+// SPDX-License-Identifier: AGPL-3.0-only
+// Copyright (c) 2019-present Shigma and Koishijs contributors.
+// Copyright (c) 2026-present Koishi-CE contributors.
+
 /**
  * 主题插件（控制台外壳）：
  * - 向 "root" 插槽注册应用根组件（活动栏 + 路由视图 + 状态栏 + 全局菜单层）；

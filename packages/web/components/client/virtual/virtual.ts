@@ -1,3 +1,7 @@
+// SPDX-License-Identifier: AGPL-3.0-only
+// Copyright (c) 2019-present Shigma and Koishijs contributors.
+// Copyright (c) 2026-present Koishi-CE contributors.
+
 /**
  * 虚拟列表的核心计算模型（移植自 vue-virtual-scroll-list 的 virtual.js）：
  * 只维护「当前应渲染 [start, end) 哪一段」以及前后两段撑开滚动条的

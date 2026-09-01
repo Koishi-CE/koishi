@@ -1,3 +1,7 @@
+<!-- SPDX-License-Identifier: AGPL-3.0-only -->
+<!-- Copyright (c) 2019-present Shigma and Koishijs contributors. -->
+<!-- Copyright (c) 2026-present Koishi-CE contributors. -->
+
 <!--
   活动栏条目：children[0] 为组的主图标，其余为并入该组的子活动，
   悬停 tooltip 中列出组内成员。条目本身也是拖拽落点——

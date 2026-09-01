@@ -1,24 +1,17 @@
+﻿// SPDX-License-Identifier: AGPL-3.0-only
+// Copyright (c) 2026-present Koishi-CE contributors.
+
 /**
- * "schemastery-vue/client" 虚拟子路径的真实文件载体（compiler-sfc 专用）。
- *
- * - 运行时：该子路径在包内并不存在，构建器用 resolve.alias 把它映射到
- *   同目录 schemastery-vue-runtime.ts（见 packages/web/client/src/index.ts
- *   与 scripts/client.ts），本文件不会进入任何产物。
- * - 类型：vue 的 compiler-sfc 在解析 .vue 文件内 defineProps 等类型时走
- *   TypeScript 模块解析（compiler-sfc 的 resolveWithTS），既不认 vite
- *   别名也不认 ambient declare module，必须由 tsconfig 的 paths 把子路径
- *   落到本真实文件（见根 tsconfig.client.json）。tsc 类型程序则统一消费
- *   client/shims.d.ts 的 ambient 声明（经 form/index.ts 的 /// reference
- *   自动传播，且 ambient 会遮蔽 paths 解析），两者是同一套实体的镜像，
- *   必须同步修改。
- *
- * 类型刻意手写而非再导出 schemastery-vue 源码：该包仅以 TS 源码发布，
- * 其源码无法通过本仓库的超严格编译配置（verbatimModuleSyntax /
- * noUncheckedIndexedAccess 等），不能作为 .ts 依赖进入类型程序。
- *
- * Schema 类型取自 "@koishi-ce/koishi"（其 lib 声明再导出 schemastery 的
- * Schema，与该包运行时导出的是同一实现）。
- */
+ * "schemastery-vue/client" 铏氭嫙瀛愯矾寰勭殑鐪熷疄鏂囦欢杞戒綋锛坈ompiler-sfc 涓撶敤锛夈€? *
+ * - 杩愯鏃讹細璇ュ瓙璺緞鍦ㄥ寘鍐呭苟涓嶅瓨鍦紝鏋勫缓鍣ㄧ敤 resolve.alias 鎶婂畠鏄犲皠鍒? *   鍚岀洰褰?schemastery-vue-runtime.ts锛堣 packages/web/client/src/index.ts
+ *   涓?scripts/client.ts锛夛紝鏈枃浠朵笉浼氳繘鍏ヤ换浣曚骇鐗┿€? * - 绫诲瀷锛歷ue 鐨?compiler-sfc 鍦ㄨВ鏋?.vue 鏂囦欢鍐?defineProps 绛夌被鍨嬫椂璧? *   TypeScript 妯″潡瑙ｆ瀽锛坈ompiler-sfc 鐨?resolveWithTS锛夛紝鏃笉璁?vite
+ *   鍒悕涔熶笉璁?ambient declare module锛屽繀椤荤敱 tsconfig 鐨?paths 鎶婂瓙璺緞
+ *   钀藉埌鏈湡瀹炴枃浠讹紙瑙佹牴 tsconfig.client.json锛夈€倀sc 绫诲瀷绋嬪簭鍒欑粺涓€娑堣垂
+ *   client/shims.d.ts 鐨?ambient 澹版槑锛堢粡 form/index.ts 鐨?/// reference
+ *   鑷姩浼犳挱锛屼笖 ambient 浼氶伄钄?paths 瑙ｆ瀽锛夛紝涓よ€呮槸鍚屼竴濂楀疄浣撶殑闀滃儚锛? *   蹇呴』鍚屾淇敼銆? *
+ * 绫诲瀷鍒绘剰鎵嬪啓鑰岄潪鍐嶅鍑?schemastery-vue 婧愮爜锛氳鍖呬粎浠?TS 婧愮爜鍙戝竷锛? * 鍏舵簮鐮佹棤娉曢€氳繃鏈粨搴撶殑瓒呬弗鏍肩紪璇戦厤缃紙verbatimModuleSyntax /
+ * noUncheckedIndexedAccess 绛夛級锛屼笉鑳戒綔涓?.ts 渚濊禆杩涘叆绫诲瀷绋嬪簭銆? *
+ * Schema 绫诲瀷鍙栬嚜 "@koishi-ce/koishi"锛堝叾 lib 澹版槑鍐嶅鍑?schemastery 鐨? * Schema锛屼笌璇ュ寘杩愯鏃跺鍑虹殑鏄悓涓€瀹炵幇锛夈€? */
 import type { Schema } from "@koishi-ce/koishi";
 import type { App, Component } from "vue";
 

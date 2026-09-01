@@ -1,3 +1,7 @@
+<!-- SPDX-License-Identifier: AGPL-3.0-only -->
+<!-- Copyright (c) 2019-present Shigma and Koishijs contributors. -->
+<!-- Copyright (c) 2026-present Koishi-CE contributors. -->
+
 <!--
   k-tab：水平选项卡（文字式切换器）。
   data 为 "键 → 文案" 映射，点击某项时通过 v-model 更新选中键；
