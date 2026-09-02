@@ -254,17 +254,14 @@ export default class Scanner {
 				try {
 					const versions = await this.process(object, version, onRegistry);
 					if (versions) {
-						// biome-ignore lint/nursery/noFloatingPromises: 已 await，nursery 规则对回调调用的误报
 						await onSuccess?.(object, versions);
 						return versions;
 					} else {
 						object.ignored = true;
-						// biome-ignore lint/nursery/noFloatingPromises: 已 await，nursery 规则对回调调用的误报
 						await onSkipped?.(name);
 					}
 				} catch (error) {
 					object.ignored = true;
-					// biome-ignore lint/nursery/noFloatingPromises: 已 await，nursery 规则对回调调用的误报
 					await onFailure?.(name, error);
 				} finally {
 					this.progress += 1;
