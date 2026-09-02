@@ -14,6 +14,7 @@
 import { existsSync } from "node:fs";
 import { mkdir, rm } from "node:fs/promises";
 import { resolve } from "node:path";
+import { pathToFileURL } from "node:url";
 import vue from "@vitejs/plugin-vue";
 import * as vite from "vite";
 import { yaml } from "./yaml.ts";
@@ -81,6 +82,15 @@ const runtimeShimPath = (
  */
 export async function build(root: string, config: vite.UserConfig = {}) {
 	if (!existsSync(`${root}/client`)) return;
+
+	// 插件可自带 `build/client.ts` 导出额外的 vite 配置覆盖下方默认值
+	// （vite 只自动发现 vite.config.*，不会加载该路径，须在此显式接线），
+	// 如 analytics 的 fuck-echarts 符号遮蔽修补
+	const overridePath = `${root}/build/client.ts`;
+	if (existsSync(overridePath)) {
+		const mod = await import(pathToFileURL(overridePath).href);
+		config = vite.mergeConfig(config, mod.default ?? mod);
+	}
 
 	// 产物约定：固定写入插件目录下的 dist/，清空后重建
 	const outDir = `${root}/dist`;

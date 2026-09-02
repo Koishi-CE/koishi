@@ -65,9 +65,11 @@
 	"devDependencies": {
 		"@koishi-ce/client": "workspace:*",
 		"@koishi-ce/plugin-console": "workspace:*",
-		"@types/throttle-debounce": "^2.1.0",
 		"@koishi-ce/koishi": "workspace:*",
-		"monaco-editor": "~0.56.0"
+		"@vueuse/core": "^14.4.0",
+		"monaco-editor": "~0.56.0",
+		"vue": "^3.5.12",
+		"vue-router": "^5.2.0"
 	},
 	"dependencies": {
 		"@koishi-ce/console": "workspace:*",

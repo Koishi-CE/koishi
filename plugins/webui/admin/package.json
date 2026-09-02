@@ -62,6 +62,7 @@
 	},
 	"devDependencies": {
 		"@koishi-ce/client": "workspace:*",
+		"@koishi-ce/console": "workspace:*",
 		"@koishi-ce/plugin-console": "workspace:*",
 		"@koishi-ce/plugin-locales": "workspace:*",
 		"@koishi-ce/plugin-mock": "workspace:*",

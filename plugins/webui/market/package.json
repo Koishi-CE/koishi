@@ -65,7 +65,9 @@
         "@koishi-ce/plugin-config": "workspace:*",
         "@koishijs/market": "^4.2.10",
         "@types/semver": "^7.5.8",
-        "vue": "^3.5.12"
+        "@vueuse/core": "^14.4.0",
+        "vue": "^3.5.12",
+        "vue-router": "^5.2.0"
     },
     "dependencies": {
         "@koishi-ce/console": "workspace:*",

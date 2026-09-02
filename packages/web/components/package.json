@@ -37,6 +37,9 @@
 		"cosmokit": "^1.8.1",
 		"schemastery-vue": "^7.3.15"
 	},
+	"devDependencies": {
+		"@koishi-ce/koishi": "workspace:*"
+	},
 	"exports": {
 		".": {
 			"source": "./client/index.ts",

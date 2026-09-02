@@ -59,6 +59,7 @@
 		"@koishi-ce/client": "workspace:*",
 		"ansi_up": "^6.0.6",
 		"@koishi-ce/koishi": "workspace:*",
+		"@koishi-ce/plugin-console": "workspace:*",
 		"reggol": "^2.1.0"
 	},
 	"dependencies": {

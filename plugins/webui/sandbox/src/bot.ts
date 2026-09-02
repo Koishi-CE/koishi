@@ -132,33 +132,3 @@ export class SandboxBot<C extends Context = Context> extends Bot<
 		);
 	}
 }
-
-/** 沙盒用户昵称候选表：浏览器端"添加用户"时按序取用（与 client/utils.ts 保持一致）。 */
-export const words = [
-	"Alice",
-	"Bob",
-	"Carol",
-	"Dave",
-	"Eve",
-	"Frank",
-	"Grace",
-	"Hank",
-	"Ivy",
-	"Jack",
-	"Kathy",
-	"Lily",
-	"Mandy",
-	"Nancy",
-	"Oscar",
-	"Peggy",
-	"Quinn",
-	"Randy",
-	"Sandy",
-	"Toby",
-	"Uma",
-	"Vicky",
-	"Wendy",
-	"Xander",
-	"Yvonne",
-	"Zoe",
-];

@@ -20,9 +20,9 @@ import type { Dict } from "cosmokit";
 import { Argv, type Token } from "./argv.ts";
 
 /** 左引号字符表（直引号 + 中文弯引号），与 rightQuotes 按下标配对 */
-export const leftQuotes = `"'“‘`;
+const leftQuotes = `"'“‘`;
 /** 右引号字符表，与 leftQuotes 按下标配对 */
-export const rightQuotes = `"'”’`;
+const rightQuotes = `"'”’`;
 
 /** 全局插值语法注册表（键为起始符，如 "$("） */
 export const bracs: Dict<Argv.Interpolation> = {};

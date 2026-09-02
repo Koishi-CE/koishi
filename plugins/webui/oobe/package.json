@@ -57,11 +57,5 @@
 	"peerDependencies": {
 		"@koishi-ce/plugin-console": "^1.0.0",
 		"@koishi-ce/koishi": "^1.0.0"
-	},
-	"devDependencies": {
-		"@koishi-ce/client": "workspace:*"
-	},
-	"dependencies": {
-		"@koishi-ce/console": "workspace:*"
 	}
 }

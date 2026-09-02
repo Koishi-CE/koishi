@@ -60,10 +60,13 @@
 	},
 	"devDependencies": {
 		"@koishi-ce/client": "workspace:*",
+		"@koishi-ce/koishi": "workspace:*",
+		"@koishi-ce/loader": "workspace:*",
 		"@koishi-ce/plugin-console": "workspace:*",
 		"@types/d3-force": "^3.0.9",
+		"@vueuse/core": "^14.4.0",
 		"d3-force": "^3.0.0",
-		"@koishi-ce/koishi": "workspace:*"
+		"vue": "^3.5.12"
 	},
 	"dependencies": {
 		"@koishi-ce/console": "workspace:*"

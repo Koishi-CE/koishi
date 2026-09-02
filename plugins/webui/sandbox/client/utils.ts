@@ -144,7 +144,7 @@ receive<{ method: string; nonce: string; data: unknown }>(
 	},
 );
 
-/** 沙盒用户昵称候选表（与服务端 src/bot.ts 的 words 保持一致）。 */
+/** 沙盒用户昵称候选表：浏览器端"添加用户"时按序取用。 */
 export const words = [
 	"Alice",
 	"Bob",

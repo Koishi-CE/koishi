@@ -58,7 +58,7 @@ const dist = `${cwd}/plugins/webui/console/dist`;
  *   真实打包 vue-i18n（见下方别名说明），其余构建一律复用宿主的 client.js
  * @returns rollup 构建结果（供调用方进一步处理产物）
  */
-export async function build(
+async function build(
 	root: string,
 	config: vite.UserConfig = {},
 	isClient = false,

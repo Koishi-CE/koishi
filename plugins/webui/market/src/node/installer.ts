@@ -105,14 +105,14 @@ export interface Dependency {
 	latest?: string | undefined;
 }
 
-export interface LocalPackage extends PackageJson {
+interface LocalPackage extends PackageJson {
 	private?: boolean;
 	$workspace?: boolean;
 	/** loadManifest 归一化保证 dependencies 必有 */
 	dependencies: Record<string, string>;
 }
 
-export function loadManifest(name: string) {
+function loadManifest(name: string) {
 	// resolvePackageJson 以纯 fs 探测为主路径：市场安装流程在包落盘前的
 	// 探测不能触碰解析 API，否则触发 Bun 的父目录快照缓存（装完即失败）
 	const filename = resolvePackageJson(name);

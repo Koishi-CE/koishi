@@ -32,7 +32,7 @@ export interface PkgInfo {
 }
 
 /** 单包跳过原因（planPublish 产出）。 */
-export interface SkippedPkg {
+interface SkippedPkg {
 	/** 被跳过的包。 */
 	pkg: PkgInfo;
 	/** 跳过原因（如 "版本已在 registry"）。 */

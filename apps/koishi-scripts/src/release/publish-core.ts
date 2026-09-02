@@ -97,7 +97,7 @@ export async function discoverPackages(root: string): Promise<WorkspacePkg[]> {
 }
 
 /** 单个包跳过的原因（planPublish 产出）。 */
-export interface SkippedPkg {
+interface SkippedPkg {
 	/** 被跳过的包。 */
 	pkg: WorkspacePkg;
 	/** 跳过原因（如 "版本 0.0.1 已在 registry"）。 */

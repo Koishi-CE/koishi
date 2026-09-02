@@ -191,7 +191,7 @@ class Watcher {
 
 		// 框架自身（koishi 入口）的依赖集合：这些文件不属于任何插件，变动时只能整体重启
 		this.externals = loadDependencies(
-			require.resolve("koishi"),
+			require.resolve("@koishi-ce/koishi"),
 			new Set(Object.values(loader.cache)),
 		);
 		const triggerLocalReload = this.ctx.debounce(

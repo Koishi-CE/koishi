@@ -62,7 +62,7 @@ bun packages/web/client/src/bin.ts build <插件目录>  # 单个 webui 插件�
 - **Bun 会把 exports 的 `"bun"` 条件用在 require 上**：CJS 链 require 到 ESM namespace 的 interop 已在 loader `node/interop.ts` 处理，勿动。
 - **TS7 的跨文件 `declare module` 增强对经 lib 产物 d.ts 的模块骨架不生效**：node 侧 Services / Events 声明变更时须同步镜像 `plugins/webui/market/client/console-services.ts`。
 - **前端构建无 vite 配置文件**（全部编程式 `vite.build()`）；`collectWorkspaceAliases()` 是跨包解析的关键，动 client 构建须复核。
-- **特殊构建 hack**：analytics 的 "fuck-echarts"、explorer 的 monaco manualChunks、client 构建的 vue-i18n esm-browser.prod 别名。
+- **特殊构建 hack**：插件可自带 `build/client.ts` 导出 vite 配置覆盖（`@koishi-ce/client` 的 `build()` 显式加载合并，vite 不会自动发现该文件名），analytics 的 "fuck-echarts" 即经此接入；另有 client 构建的 vue-i18n esm-browser.prod 别名。
 - **hmr 的 esbuild 是运行时依赖**（TS 即时编译），不是 devDep。
 - **测试断言新标准是 `bun:test` 的 `expect`**：不要新增 chai 断言（存量逐步迁移）。
 - **目录名 `apps/koishi-create` 与包名 `create-koishi-ce` 不一致**：引用一律以 `apps/koishi-create` 为准。

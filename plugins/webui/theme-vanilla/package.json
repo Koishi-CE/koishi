@@ -54,9 +54,6 @@
 		"@koishi-ce/client": "workspace:*",
 		"@koishi-ce/koishi": "workspace:*"
 	},
-	"dependencies": {
-		"@koishi-ce/console": "workspace:*"
-	},
 	"exports": {
 		".": {
 			"source": "./src/index.ts",
