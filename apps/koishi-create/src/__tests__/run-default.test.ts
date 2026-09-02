@@ -19,7 +19,7 @@ import { basename, join } from "node:path";
  * start() 默认（内置模板）主流程的端到端测试。
  *
  * 手段：把 process.argv 指为无位置参数 + --git，chdir 到临时目录后动态
- * 导入被测模块（其内部 cwd / argv 在模块顶层固化）；prompts 与
+ * 导入被测模块（其内部 cwd / argv 在模块顶层固化）；@clack/prompts 与
  * node:child_process 均 mock，分别提供可编程的问询答案与子进程记录，
  * process.exit 替换为可捕获的异常，从而覆盖全部交互分支。
  */
@@ -34,17 +34,15 @@ const hadUserAgent = userAgentKey in process.env;
 const previousUserAgent = process.env[userAgentKey];
 delete process.env[userAgentKey];
 
-/** prompts 的可编程答案队列（按 type 分发） */
+/** @clack/prompts 的可编程答案队列（按 prompt 类型分发） */
 const nameAnswers: string[] = [];
 const confirmAnswers: boolean[] = [];
 
-mock.module("prompts", () => ({
-	default: async (question: { type?: string }) => {
-		if (question.type === "confirm") {
-			return { yes: confirmAnswers.shift() ?? false };
-		}
-		return { name: nameAnswers.shift() ?? "" };
-	},
+mock.module("@clack/prompts", () => ({
+	text: async () => nameAnswers.shift() ?? "",
+	confirm: async () => confirmAnswers.shift() ?? false,
+	isCancel: (value: unknown) => typeof value === "symbol",
+	cancel: () => {},
 }));
 
 /** spawnSync 的调用记录与可编程行为 */

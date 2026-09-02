@@ -82,16 +82,14 @@ const registry = Bun.serve({
 	},
 });
 
-/** prompts mock：install 的 confirm 默认拒绝，可按用例入队覆盖 */
+/** @clack/prompts mock：install 的 confirm 默认拒绝，可按用例入队覆盖 */
 const confirmAnswers: boolean[] = [];
 
-mock.module("prompts", () => ({
-	default: async (question: { type?: string }) => {
-		if (question.type === "confirm") {
-			return { yes: confirmAnswers.shift() ?? false };
-		}
-		return { name: "" };
-	},
+mock.module("@clack/prompts", () => ({
+	text: async () => "",
+	confirm: async () => confirmAnswers.shift() ?? false,
+	isCancel: (value: unknown) => typeof value === "symbol",
+	cancel: () => {},
 }));
 
 // erasableSyntaxOnly 禁用参数属性，改为显式字段声明

@@ -26,8 +26,8 @@ import { homedir } from "node:os";
 import { basename, join, relative } from "node:path";
 import type { ReadableStream as NodeWebReadableStream } from "node:stream/web";
 import { parseArgs } from "node:util";
+import * as p from "@clack/prompts";
 import kleur from "kleur";
-import prompts from "prompts";
 import pkg from "../package.json" with { type: "json" };
 import { untar } from "./tar.ts";
 import { baseManifest, templateFiles } from "./template.ts";
@@ -176,17 +176,17 @@ function gitConfig(key: string): string {
 
 /**
  * 获取项目名：优先取第一个位置参数，否则交互式询问（默认 koishi-app）。
- * 用户取消或输入为空时直接退出（不强行兜底默认值）。
+ * 用户取消（Ctrl+C）或输入为空时直接退出（不强行兜底默认值）。
  */
 async function getName(): Promise<string> {
 	if (argv._[0]) return `${argv._[0]}`;
-	const answer = (await prompts({
-		type: "text",
-		name: "name",
+	const answer = await p.text({
 		message: "项目名：",
-		initial: "koishi-app",
-	})) as { name?: string };
-	const trimmed = answer.name?.trim();
+		initialValue: "koishi-app",
+		validate: (value) => (value?.trim() ? undefined : "项目名不能为空"),
+	});
+	if (p.isCancel(answer)) process.exit(0);
+	const trimmed = answer.trim();
 	if (!trimmed) process.exit(0);
 	return trimmed;
 }
@@ -198,15 +198,11 @@ function emptyDir(root: string) {
 	}
 }
 
-/** 交互式确认框：返回用户是否选择了「是」（取消视为否） */
+/** 交互式确认框：返回用户是否选择了「是」（Ctrl+C 取消直接退出） */
 async function confirm(message: string) {
-	const answer = (await prompts({
-		type: "confirm",
-		name: "yes",
-		initial: true,
-		message,
-	})) as { yes?: boolean };
-	return answer.yes === true;
+	const answer = await p.confirm({ message, initialValue: true });
+	if (p.isCancel(answer)) process.exit(0);
+	return answer === true;
 }
 
 /**
