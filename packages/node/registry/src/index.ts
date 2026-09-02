@@ -18,7 +18,6 @@ import {
 	isNonNullable,
 	Time,
 } from "cosmokit";
-import pMap from "p-map";
 import { compare, intersects } from "semver";
 import type {
 	Registry,
@@ -26,7 +25,7 @@ import type {
 	SearchObject,
 	SearchResult,
 } from "./types.ts";
-import { conclude } from "./utils.ts";
+import { conclude, mapLimit } from "./utils.ts";
 
 export * from "./local.ts";
 export * from "./types.ts";
@@ -49,7 +48,7 @@ export interface CollectConfig {
 export interface AnalyzeConfig {
 	/** 目标 Koishi 版本范围（semver range），用于筛选兼容的插件版本 */
 	version: string;
-	/** 并发数（p-map 控制同时分析的插件个数） */
+	/** 并发数（mapLimit 控制同时分析的插件个数） */
 	concurrency?: number;
 	/** 每个对象开始分析前调用 */
 	before?(object: SearchObject): void;
@@ -245,33 +244,29 @@ export default class Scanner {
 			after,
 		} = config;
 
-		const result = await pMap(
-			this.objects,
-			async (object) => {
-				if (object.ignored) return;
-				before?.(object);
-				const { name } = object.package;
-				try {
-					const versions = await this.process(object, version, onRegistry);
-					if (versions) {
-						await onSuccess?.(object, versions);
-						return versions;
-					} else {
-						object.ignored = true;
-						await onSkipped?.(name);
-					}
-				} catch (error) {
+		const result = await mapLimit(this.objects, concurrency, async (object) => {
+			if (object.ignored) return;
+			before?.(object);
+			const { name } = object.package;
+			try {
+				const versions = await this.process(object, version, onRegistry);
+				if (versions) {
+					await onSuccess?.(object, versions);
+					return versions;
+				} else {
 					object.ignored = true;
-					await onFailure?.(name, error);
-				} finally {
-					this.progress += 1;
-					after?.(object);
+					await onSkipped?.(name);
 				}
-				// 未产出 versions 的对象在此返回 undefined，由下方 filter 剔除
-				return;
-			},
-			{ concurrency },
-		);
+			} catch (error) {
+				object.ignored = true;
+				await onFailure?.(name, error);
+			} finally {
+				this.progress += 1;
+				after?.(object);
+			}
+			// 未产出 versions 的对象在此返回 undefined，由下方 filter 剔除
+			return;
+		});
 
 		return result.filter(isNonNullable);
 	}

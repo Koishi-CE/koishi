@@ -23,14 +23,14 @@ import type {} from "@koishi-ce/plugin-market";
 import Scanner, {
 	type DependencyMetaKey,
 	isResidentInCache,
+	mapLimit,
 	type PackageJson,
 	type Registry,
 	type RemotePackage,
 	resolvePackageJson,
 } from "@koishi-ce/registry";
-import spawn from "execa";
-import pMap from "p-map";
 import { compare, satisfies, valid } from "semver";
+import { spawnBun } from "./proc.ts";
 
 const logger = new Logger("market");
 
@@ -237,28 +237,24 @@ class Installer extends Service {
 		const result = valueMap(this.manifest.dependencies, (request) => {
 			return { request: request.replace(/^[~^]/, "") } as Dependency;
 		});
-		await pMap(
-			Object.keys(result),
-			async (name) => {
-				const dep = result[name];
-				if (!dep) return;
-				try {
-					// some dependencies may be left with no local installation
-					const meta = loadManifest(name);
-					dep.resolved = meta.version;
-					dep.workspace = meta.$workspace;
-					if (meta.$workspace) return;
-				} catch {}
+		await mapLimit(Object.keys(result), 10, async (name) => {
+			const dep = result[name];
+			if (!dep) return;
+			try {
+				// some dependencies may be left with no local installation
+				const meta = loadManifest(name);
+				dep.resolved = meta.version;
+				dep.workspace = meta.$workspace;
+				if (meta.$workspace) return;
+			} catch {}
 
-				if (!valid(dep.request)) {
-					dep.invalid = true;
-				}
+			if (!valid(dep.request)) {
+				dep.invalid = true;
+			}
 
-				const versions = await this.getPackage(name);
-				if (versions) dep.latest = Object.keys(versions)[0];
-			},
-			{ concurrency: 10 },
-		);
+			const versions = await this.getPackage(name);
+			if (versions) dep.latest = Object.keys(versions)[0];
+		});
 		return result;
 	}
 
@@ -285,7 +281,7 @@ class Installer extends Service {
 		// 安装（上游经 which-pm-runs 探测 npm/yarn/bun，此处固定为 bun）
 		args.unshift("install");
 		return new Promise<number>((resolve) => {
-			const child = spawn("bun", args, { cwd: this.cwd });
+			const child = spawnBun(args, this.cwd);
 			child.on("exit", (code) => resolve(code ?? -1));
 			child.on("error", () => resolve(-1));
 

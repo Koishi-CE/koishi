@@ -7,7 +7,7 @@
  * registry / 任意 package.json 的不可信字段）与 conclude()（把
  * package.json 的 koishi 字段与约定关键词汇总成结构化 Manifest）。
  */
-import type { Dict } from "cosmokit";
+import type { Awaitable, Dict } from "cosmokit";
 import type { Manifest, PackageJson } from "./types.ts";
 
 // 与 `Ensure` 常量同名：接口占据类型空间，常量占据值空间，二者合并声明
@@ -131,4 +131,39 @@ export function conclude(meta: PackageJson) {
 	});
 
 	return manifest;
+}
+
+/**
+ * 带并发上限的保序 map（p-map 的最小等价实现，用于替换 npm 依赖）。
+ *
+ * 逐个取出输入元素并以不超过 concurrency 的并发调用 mapper，返回值按下标
+ * 写入 pending 后统一 Promise.all，保证返回数组与输入同序；任一 mapper
+ * 抛错会让整体 reject（等价于 p-map 默认 stopOnError: true 的行为，其余
+ * 已启动的任务继续执行但不影响已 reject 的结果）。并发实现是 worker 池：
+ * 每次取一个下标执行，全部取完即收束，不依赖外部计数器或信号量。
+ *
+ * 返回值先存 Promise 再统一兑现（而非在 worker 内 await 后直接写回），
+ * 是因为 Awaitable<R> 对未约束泛型 R 在 await 展开后仍保留条件类型，
+ * 直接赋回 R[] 无法通过类型检查；经 Promise.all 收口则类型自然化简。
+ */
+export async function mapLimit<T, R>(
+	items: readonly T[],
+	concurrency: number,
+	mapper: (item: T, index: number) => Awaitable<R>,
+): Promise<R[]> {
+	const pending = new Array<Promise<R>>(items.length);
+	let next = 0;
+	const worker = async () => {
+		while (next < items.length) {
+			const index = next++;
+			const item = items[index];
+			if (item === undefined) break;
+			pending[index] = Promise.resolve(mapper(item, index));
+		}
+	};
+	// 并发数上限：任务数少于并发时按任务数起 worker
+	await Promise.all(
+		Array.from({ length: Math.min(concurrency, items.length) }, worker),
+	);
+	return Promise.all(pending);
 }

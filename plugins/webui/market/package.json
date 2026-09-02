@@ -70,8 +70,6 @@
     "dependencies": {
         "@koishi-ce/console": "workspace:*",
         "@koishi-ce/registry": "workspace:*",
-        "execa": "^5.1.1",
-        "p-map": "^4.0.0",
         "semver": "^7.6.3"
     },
     "exports": {

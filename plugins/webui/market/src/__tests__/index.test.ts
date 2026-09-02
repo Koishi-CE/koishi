@@ -10,20 +10,20 @@ import memory from "@koishijs/plugin-database-memory";
 
 /**
  * market 插件测试：
- * - 子进程（npm/yarn 安装）经 mock.module 拦截 execa，不落盘不联网安装；
+ * - 子进程（bun 安装）经 mock.module 拦截本地 proc.ts（spawnBun 封装），不落盘不联网安装；
  * - registry 网络请求由进程内 Bun.serve 提供（registry 协议的最小 JSON）；
  * - 宿主环境（loader / cwd）使用 FakeLoader 与临时目录 + chdir，
  *   Installer 的 override 写盘只会作用于临时 package.json。
  */
 
-/** 已发生的子进程调用（命令与参数）。 */
+/** 已发生的子进程调用（参数列表）。 */
 const spawnCalls: string[][] = [];
 /** 控制下一次子进程的退出码与触发事件。 */
 let nextExitCode = 0;
 let nextSpawnError = false;
 
-const execaMock = (name: string, args: string[]) => {
-	spawnCalls.push([name, ...args]);
+const spawnBunMock = (_args: string[], _cwd: string) => {
+	spawnCalls.push(_args);
 	return {
 		on(event: string, cb: (code?: number) => void) {
 			if (nextSpawnError) {
@@ -52,7 +52,7 @@ const execaMock = (name: string, args: string[]) => {
 	};
 };
 
-mock.module("execa", () => ({ default: execaMock }));
+mock.module("../node/proc.ts", () => ({ spawnBun: spawnBunMock }));
 
 import type { Entry } from "@koishi-ce/console";
 // 均为 type-only 导入：编译期擦除，不干扰 mock.module 先于插件加载的时序
@@ -286,8 +286,7 @@ describe("Installer 安装链路", () => {
 		expect(code).toBe(0);
 		// 触发了包管理器安装（bun install --registry …）
 		expect(spawnCalls.length).toBe(1);
-		expect(spawnCalls[0]?.[0]).toBe("bun");
-		expect(spawnCalls[0]?.[1]).toBe("install");
+		expect(spawnCalls[0]?.[0]).toBe("install");
 		// 重新读取临时 package.json：护栏项保持原样，新依赖加入
 		const manifest = JSON.parse(
 			await Bun.file(join(tmp, "package.json")).text(),
