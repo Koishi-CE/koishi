@@ -3,7 +3,6 @@
 // Copyright (c) 2026-present Koishi-CE contributors.
 
 import { readFileSync } from "node:fs";
-import { createRequire } from "node:module";
 import { homedir } from "node:os";
 import { join, resolve } from "node:path";
 import type {} from "@koishi-ce/console";
@@ -87,12 +86,6 @@ function getLocalRegistry(cwd: string, userHome: string = homedir()): string {
 	return "https://registry.npmjs.org/";
 }
 
-// 经 createRequire 加载 CJS 包并就地断言签名：不走 ESM 导入互操作，
-// 规避多包合并类型检查（大一统 tsconfig）下 export = 交织失效问题
-const whichPMRuns = createRequire(import.meta.url)("which-pm-runs") as () =>
-	| undefined
-	| { name: string; version: string };
-
 export interface Dependency {
 	/**
 	 * requested semver range
@@ -111,20 +104,6 @@ export interface Dependency {
 	/** latest version */
 	latest?: string | undefined;
 }
-
-export interface YarnLog {
-	type: "warning" | "info" | "error" | string;
-	name: number | null;
-	displayName: string;
-	indent?: string;
-	data: string;
-}
-
-const levelMap = {
-	info: "info",
-	warning: "debug",
-	error: "warn",
-} as const;
 
 export interface LocalPackage extends PackageJson {
 	private?: boolean;
@@ -170,7 +149,6 @@ class Installer extends Service {
 	private pkgTasks: Dict<
 		Promise<Dict<Pick<RemotePackage, DependencyMetaKey>>>
 	> = {};
-	private agent = whichPMRuns();
 	private manifest: LocalPackage;
 	private declare depTask: Promise<Dict<Dependency>>;
 	private flushData: () => void;
@@ -303,19 +281,18 @@ class Installer extends Service {
 	}
 
 	async exec(args: string[]) {
-		const name = this.agent?.name ?? "npm";
-		const useJson = name === "yarn" && (this.agent?.version ?? "1") >= "2";
-		if (name !== "yarn") args.unshift("install");
+		// Bun-first：CE 生态只存在 bun 这一种包管理器，直接驱动 bun 执行
+		// 安装（上游经 which-pm-runs 探测 npm/yarn/bun，此处固定为 bun）
+		args.unshift("install");
 		return new Promise<number>((resolve) => {
-			if (useJson) args.push("--json");
-			const child = spawn(name, args, { cwd: this.cwd });
+			const child = spawn("bun", args, { cwd: this.cwd });
 			child.on("exit", (code) => resolve(code ?? -1));
 			child.on("error", () => resolve(-1));
 
 			let stderr = "";
 			child.stderr?.on("data", (data) => {
-				data = stderr + data.toString();
-				const lines = data.split("\n");
+				stderr += data.toString();
+				const lines = stderr.split("\n");
 				stderr = lines.pop() ?? "";
 				for (const line of lines) {
 					logger.warn(line);
@@ -324,23 +301,11 @@ class Installer extends Service {
 
 			let stdout = "";
 			child.stdout?.on("data", (data) => {
-				data = stdout + data.toString();
-				const lines = data.split("\n");
+				stdout += data.toString();
+				const lines = stdout.split("\n");
 				stdout = lines.pop() ?? "";
 				for (const line of lines) {
-					if (!useJson || line[0] !== "{") {
-						logger.info(line);
-						continue;
-					}
-					try {
-						const { type, data } = JSON.parse(line) as YarnLog;
-						const level =
-							type in levelMap ? levelMap[type as keyof typeof levelMap] : null;
-						(level ? logger[level] : logger.info)(data);
-					} catch (error) {
-						logger.warn(line);
-						logger.warn(error);
-					}
+					logger.info(line);
 				}
 			});
 		});

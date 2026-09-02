@@ -284,9 +284,9 @@ describe("Installer 安装链路", () => {
 			"koishi-plugin-demo": "^1.0.0",
 		});
 		expect(code).toBe(0);
-		// 触发了包管理器安装（npm install --registry …）
+		// 触发了包管理器安装（bun install --registry …）
 		expect(spawnCalls.length).toBe(1);
-		expect(spawnCalls[0]?.[0]).toBe("npm");
+		expect(spawnCalls[0]?.[0]).toBe("bun");
 		expect(spawnCalls[0]?.[1]).toBe("install");
 		// 重新读取临时 package.json：护栏项保持原样，新依赖加入
 		const manifest = JSON.parse(

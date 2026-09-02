@@ -11,17 +11,9 @@
  */
 
 import { readFile } from "node:fs/promises";
-import { createRequire } from "node:module";
+import { arch, cpus, platform, release } from "node:os";
 import { DataService } from "@koishi-ce/console";
 import { type Context, type Dict, Schema, version } from "@koishi-ce/koishi";
-import { helpers } from "envinfo";
-
-// 经 createRequire 加载 CJS 包并就地断言签名：不走 ESM 导入互操作，
-// 规避多包合并类型检查（大一统 tsconfig）下 export = 交织失效问题
-// （此前具名导入在 Bun 运行时下本就拿不到具名导出，属顺带修复）
-const whichPMRuns = createRequire(import.meta.url)("which-pm-runs") as () =>
-	| undefined
-	| { name: string; version: string };
 
 class EnvInfoProvider extends DataService<Dict<Dict<string>>> {
 	/** 采集任务的缓存：get() 首次调用时创建，之后始终复用同一 Promise。 */
@@ -37,24 +29,17 @@ class EnvInfoProvider extends DataService<Dict<Dict<string>>> {
 
 	/** 执行一次实际采集：系统信息、运行时版本、Koishi 生态版本。 */
 	async _get(): Promise<Dict<Dict<string>>> {
-		// @types/envinfo 把各 helper 声明为 Promise<string>，运行时实际返回
-		// [标题, 值] 二元组；解构默认值仅用于收窄类型，正常路径不会触发
-		const [[, Os = ""], [, Cpu = ""]] = await Promise.all([
-			helpers.getOSInfo(),
-			helpers.getCPUInfo(),
-		]);
-		const agent = whichPMRuns();
-		const system: Dict<string> = { OS: Os, CPU: Cpu };
+		// 不再依赖 npm 包 envinfo / which-pm-runs：OS 由 platform +
+		// release + arch 原生拼出，CPU 取 cpus() 首核型号；Bun-first
+		// 下包管理器恒为 bun（唯一启动方式），直接上报其版本
+		const system: Dict<string> = {
+			OS: `${platform()} ${release()} ${arch()}`,
+			CPU: cpus()[0]?.model.trim() ?? "",
+		};
 		const binaries: Dict<string> = {
 			Node: process.versions.node,
+			Bun: Bun.version,
 		};
-		if (agent) {
-			// yarn 的名称归一为首字母大写，与 Node 等键的展示风格一致
-			if (agent.name === "yarn") {
-				agent.name = "Yarn";
-			}
-			binaries[agent.name] = agent.version;
-		}
 		// 不直接 require package.json 是为了避免其被模块缓存固定住，
 		// 热更新后读取到的仍是旧版本号
 		const metapath = require.resolve("@koishi-ce/console/package.json");
