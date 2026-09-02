@@ -15,7 +15,7 @@
 import { readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { downloadTemplate } from "giget";
-import kleur from "kleur";
+import pc from "picocolors";
 import { type Manifest, renderManifest } from "./manifest.ts";
 
 /** registry 包元数据中本流程消费的字段 */
@@ -104,7 +104,7 @@ export async function scaffoldRemote({
 	} catch (err) {
 		if (!(err instanceof HttpError)) throw err;
 		console.log(
-			`${kleur.red("error")} 请求失败：HTTP ${err.status} ${err.statusText}`,
+			`${pc.red("error")} 请求失败：HTTP ${err.status} ${err.statusText}`,
 		);
 		process.exit(1);
 	}

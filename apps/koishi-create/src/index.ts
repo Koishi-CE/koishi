@@ -27,7 +27,7 @@ import { existsSync, mkdirSync, readdirSync, writeFileSync } from "node:fs";
 import { basename, join, relative } from "node:path";
 import { parseArgs } from "node:util";
 import * as p from "@clack/prompts";
-import kleur from "kleur";
+import pc from "picocolors";
 import pkg from "../package.json" with { type: "json" };
 import { type Manifest, renderManifest } from "./manifest.ts";
 import { getLocalRegistry, readNpmrcRegistry } from "./registry.ts";
@@ -121,7 +121,7 @@ async function prepare() {
 	if (!files.length) return;
 
 	if (!argv.forced && !argv.yes) {
-		console.log(kleur.yellow(`  目标目录 "${project}" 非空。`));
+		console.log(pc.yellow(`  目标目录 "${project}" 非空。`));
 		const yes = await confirm("清空现有文件并继续？");
 		if (!yes) process.exit(0);
 	}
@@ -149,7 +149,7 @@ function scaffoldBuiltin() {
  * scaffoldRemote），registry 取值 --registry 参数 > 本机 npm 配置 > 官方源。
  */
 async function scaffold() {
-	console.log(kleur.dim("  正在 ") + project + kleur.dim(" 中生成项目 ..."));
+	console.log(pc.dim("  正在 ") + project + pc.dim(" 中生成项目 ..."));
 
 	if (argv.template) {
 		const registry = (
@@ -157,7 +157,7 @@ async function scaffold() {
 			getLocalRegistry() ||
 			"https://registry.npmjs.org"
 		).replace(/\/$/, "");
-		console.log(kleur.dim(`  使用 registry：${registry}\n`));
+		console.log(pc.dim(`  使用 registry：${registry}\n`));
 		// 运行期状态不跨模块共享：远程分支所需字段在此显式组装后传入
 		await scaffoldRemote({
 			registry,
@@ -171,7 +171,7 @@ async function scaffold() {
 		scaffoldBuiltin();
 	}
 
-	console.log(kleur.green("  完成。\n"));
+	console.log(pc.green("  完成。\n"));
 }
 
 /**
@@ -182,7 +182,7 @@ async function initGit() {
 	if (!argv.git || !supports(["git", "--version"])) return;
 	const branch = gitConfig("init.defaultBranch") || "main";
 	spawnSync("git", ["init", "-b", branch], { stdio: "ignore", cwd: rootDir });
-	console.log(kleur.green(`  已初始化 git 仓库（分支 ${branch}）。\n`));
+	console.log(pc.green(`  已初始化 git 仓库（分支 ${branch}）。\n`));
 }
 
 /**
@@ -202,21 +202,19 @@ async function install() {
 			cwd: rootDir,
 		});
 		if (installed.status !== 0) {
-			console.log(kleur.red("  依赖安装失败，请检查上方日志。"));
+			console.log(pc.red("  依赖安装失败，请检查上方日志。"));
 			return;
 		}
 		spawnSync(agent, startArgs, { stdio: "inherit", cwd: rootDir });
 	} else {
-		console.log(kleur.dim("  稍后可以这样启动：\n"));
+		console.log(pc.dim("  稍后可以这样启动：\n"));
 		if (rootDir !== cwd) {
 			const related = relative(cwd, rootDir);
-			console.log(kleur.blue(`  cd ${kleur.bold(related)}`));
+			console.log(pc.blue(`  cd ${pc.bold(related)}`));
 		}
+		console.log(pc.blue(`  ${agent === "yarn" ? "yarn" : `${agent} install`}`));
 		console.log(
-			kleur.blue(`  ${agent === "yarn" ? "yarn" : `${agent} install`}`),
-		);
-		console.log(
-			kleur.blue(`  ${agent === "yarn" ? "yarn" : `${agent} run`} start`),
+			pc.blue(`  ${agent === "yarn" ? "yarn" : `${agent} run`} start`),
 		);
 		console.log();
 	}
@@ -245,7 +243,7 @@ export async function start() {
 	}
 
 	console.log();
-	console.log(`  ${kleur.bold("Create Koishi")}  ${kleur.blue(`v${version}`)}`);
+	console.log(`  ${pc.bold("Create Koishi")}  ${pc.blue(`v${version}`)}`);
 	console.log();
 
 	const name = await getName();
