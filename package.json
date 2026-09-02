@@ -32,6 +32,7 @@
 		"@changesets/cli": "^3.0.1",
 		"@koishi-ce/koishi": "workspace:*",
 		"@koishi-ce/plugin-help": "workspace:*",
+		"@koishi-ce/plugin-http": "workspace:*",
 		"@koishi-ce/plugin-mock": "workspace:*",
 		"@koishijs/plugin-database-memory": "^3.7.0",
 		"@sinonjs/fake-timers": "^11.0.1",

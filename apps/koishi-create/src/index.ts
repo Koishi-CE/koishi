@@ -24,20 +24,19 @@ import {
 } from "node:fs";
 import { homedir } from "node:os";
 import { basename, join, relative } from "node:path";
-import { Readable } from "node:stream";
 import type { ReadableStream as NodeWebReadableStream } from "node:stream/web";
+import { parseArgs } from "node:util";
 import kleur from "kleur";
 import prompts from "prompts";
-import { extract } from "tar";
-import parse from "yargs-parser";
 import pkg from "../package.json" with { type: "json" };
+import { untar } from "./tar.ts";
 import { baseManifest, templateFiles } from "./template.ts";
 
 const { version } = pkg;
 
-/** CLI 参数（yargs-parser 解析，别名映射见 bin 帮助文本） */
+/** CLI 参数（node:util parseArgs 解析，别名映射见 bin 帮助文本） */
 interface Args {
-	_: Array<string | number>;
+	_: string[];
 	registry?: string;
 	ref?: string;
 	forced?: boolean;
@@ -79,18 +78,25 @@ class HttpError extends Error {
 	}
 }
 
-// 命令行参数（顶层解析；无副作用，单测导入本文件不会触发主流程）
-const argv = parse(process.argv.slice(2), {
-	alias: {
-		ref: ["r"],
-		forced: ["f"],
-		git: ["g"],
-		prod: ["p"],
-		template: ["t"],
-		yes: ["y"],
-		help: ["h"],
+// 命令行参数（顶层解析；无副作用，单测导入本文件不会触发主流程）。
+// 用 node:util 的 parseArgs（Bun 内置同一 API）替代 yargs-parser：结果按
+// values / positionals 分离，此处合并回旧的 argv 形态，其余引用点不变。
+// 未知选项在 strict 模式下直接抛错（yargs-parser 会静默忽略，此处更严格）。
+const { values, positionals } = parseArgs({
+	args: process.argv.slice(2),
+	options: {
+		registry: { type: "string" },
+		ref: { type: "string", short: "r" },
+		forced: { type: "boolean", short: "f" },
+		git: { type: "boolean", short: "g" },
+		prod: { type: "boolean", short: "p" },
+		template: { type: "string", short: "t" },
+		yes: { type: "boolean", short: "y" },
+		help: { type: "boolean", short: "h" },
 	},
-}) as Args;
+	allowPositionals: true,
+});
+const argv = { ...values, _: positionals } as Args;
 
 /** 项目目录名（rootDir 的最后一段，写入生成项目的 package.json 的 name） */
 let project: string;
@@ -272,8 +278,9 @@ function scaffoldBuiltin() {
 /**
  * 远程模板下载与解包（--template 指定时）：
  * 1. 拉取模板包元数据，按 dist-tags 解析目标版本（--ref，默认 latest）；
- * 2. 流式下载 tarball 并解包到目标目录（strip: 1 去掉包根目录层级），
- *    网络错误统一以 HttpError 提示后退出；
+ * 2. 流式下载 tarball 并解包到目标目录（strip: 1 去掉包根目录层级，
+ *    gzip 解压与 ustar 解析均走内置 API，见 src/tar.ts），网络错误统一
+ *    以 HttpError 提示后退出；
  * 3. 最后改写 package.json。
  */
 async function scaffoldRemote(registry: string) {
@@ -298,11 +305,10 @@ async function scaffoldRemote(registry: string) {
 			throw new HttpError(tarballRes.status, tarballRes.statusText);
 		}
 
-		await new Promise<void>((resolve, reject) => {
-			Readable.fromWeb(body as unknown as NodeWebReadableStream)
-				.pipe(extract({ cwd: rootDir, newer: true, strip: 1 }))
-				.on("finish", resolve)
-				.on("error", reject);
+		// 流式解包：路径穿越条目由 untar 内部安全跳过；解包失败
+		// （gzip 损坏 / 归档截断）走下方非 HttpError 分支原样上抛
+		await untar(body as unknown as NodeWebReadableStream, rootDir, {
+			strip: 1,
 		});
 	} catch (err) {
 		if (!(err instanceof HttpError)) throw err;

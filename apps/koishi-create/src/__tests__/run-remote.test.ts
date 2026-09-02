@@ -13,14 +13,15 @@ import {
 } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { c as tarCreate } from "tar";
+import { tarPack } from "../tar.ts";
 
 /**
  * start() 远程模板分支（--template）的端到端测试。
  *
  * 以 Bun.serve 起本地伪 registry（127.0.0.1 随机端口），按用例切换
  * 场景（正常 / 元数据 404 / dist-tag 缺失 / tarball 404 / tarball 损坏）；
- * tarball 由 tar 包真实打包，scaffoldRemote 的下载-解包-改写全链路真实执行。
+ * tarball 由 src/tar.ts 的 tarPack 打包（ustar + gzip，与真实 npm
+ * tarball 同构），scaffoldRemote 的下载-解包-改写全链路真实执行。
  *
  * 覆盖率口径说明：bun 的覆盖率对同一路径的多个 query 实例只统计最后
  * 求值的那份，本文件是 koishi-create 全部测试中最后加载的实例，因此
@@ -38,7 +39,7 @@ let scenario: "ok" | "meta-404" | "missing-ref" | "tarball-404" | "corrupt" =
 	"ok";
 
 /** 预先打包好的模板 tarball（package/ 前缀目录，strip:1 解包） */
-let tarball: Buffer;
+let tarball: Uint8Array;
 
 // fetch 回调内引用 registry.port，显式标注返回类型以切断 initializer 的循环推断
 const registry = Bun.serve({
@@ -136,25 +137,25 @@ beforeAll(async () => {
 		logs.push(args.map((arg) => `${arg}`).join(" "));
 	};
 	// 造模板载荷并打包：package/package.json + package/index.js
-	const payload = join(workspaceRoot, "payload", "package");
-	mkdirSync(payload, { recursive: true });
-	writeFileSync(
-		join(payload, "package.json"),
-		JSON.stringify({
-			name: "fake-tpl",
-			version: "2.0.0",
-			private: false,
-			workspaces: ["src/*"],
-			scripts: { start: "node index.js" },
-		}),
-	);
-	writeFileSync(join(payload, "index.js"), "console.log('tpl');\n");
-	const tarballPath = join(workspaceRoot, "fake-tpl.tgz");
-	await tarCreate(
-		{ file: tarballPath, cwd: join(workspaceRoot, "payload"), portable: true },
-		["package"],
-	);
-	tarball = readFileSync(tarballPath);
+	const encoder = new TextEncoder();
+	tarball = await tarPack([
+		{
+			path: "package/package.json",
+			data: encoder.encode(
+				JSON.stringify({
+					name: "fake-tpl",
+					version: "2.0.0",
+					private: false,
+					workspaces: ["src/*"],
+					scripts: { start: "node index.js" },
+				}),
+			),
+		},
+		{
+			path: "package/index.js",
+			data: encoder.encode("console.log('tpl');\n"),
+		},
+	]);
 });
 
 afterAll(() => {
