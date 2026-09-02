@@ -8,13 +8,6 @@
         "source.fixAll.biome": "explicit",
         "source.organizeImports.biome": "explicit"
     },
-    "[json]": {
-        "editor.defaultFormatter": "vscode.json-language-features",
-        "editor.codeActionsOnSave": {
-            "source.fixAll.biome": "never",
-            "source.organizeImports.biome": "never"
-        }
-    },
     // Material Icon Theme
     "material-icon-theme.folders.associations": {
         "webui": "client"
