@@ -2,7 +2,7 @@
 // Copyright (c) 2019-present Shigma and Koishijs contributors.
 // Copyright (c) 2026-present Koishi-CE contributors.
 
-import { beforeAll, describe, it } from "bun:test";
+import { beforeAll, describe, expect, it } from "bun:test";
 import { App } from "@koishi-ce/koishi";
 import admin from "@koishi-ce/plugin-admin";
 import mock from "@koishi-ce/plugin-mock";
@@ -12,15 +12,11 @@ import * as memoryModule from "@koishijs/plugin-database-memory";
 const memory =
 	memoryModule.default as unknown as typeof memoryModule.default.default;
 
-import { expect, use } from "chai";
-import promise from "chai-as-promised";
-
 /**
  * @koishi-ce/plugin-admin 聊天指令的行为测试：
  * 覆盖 user/authorize 的目标校验与权限约束、channel/assign 的受理人指派，
  * 断言以中文回执文案为准。
  */
-use(promise);
 
 const app = new App();
 
@@ -85,12 +81,16 @@ describe("Admin Commands", () => {
 		);
 		await client1.shouldReply("assign -c #333", "频道数据已修改。");
 
-		const getChannel = () =>
-			expect(app.database.getChannel("mock", "321")).eventually;
-		await getChannel().to.have.property("assignee", "514");
+		await expect(app.database.getChannel("mock", "321")).resolves.toMatchObject(
+			{ assignee: "514" },
+		);
 		await client1.shouldReply("assign -c #321 @123", "频道数据已修改。");
-		await getChannel().to.have.property("assignee", "123");
+		await expect(app.database.getChannel("mock", "321")).resolves.toMatchObject(
+			{ assignee: "123" },
+		);
 		await client2.shouldReply("assign -c #321", "频道数据已修改。");
-		await getChannel().to.have.property("assignee", "514");
+		await expect(app.database.getChannel("mock", "321")).resolves.toMatchObject(
+			{ assignee: "514" },
+		);
 	});
 });

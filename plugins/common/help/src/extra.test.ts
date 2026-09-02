@@ -15,7 +15,11 @@ import { beforeAll, describe, expect, it } from "bun:test";
 import { App } from "@koishi-ce/koishi";
 import * as help from "@koishi-ce/plugin-help";
 import mock from "@koishi-ce/plugin-mock";
-import memory from "@minatojs/driver-memory";
+import * as memoryModule from "@koishijs/plugin-database-memory";
+
+// CJS 实现配 ESM 声明，Bun 互操作视图多包一层 default，穿透取真实驱动
+const memory =
+	memoryModule.default as unknown as typeof memoryModule.default.default;
 
 const app = new App({
 	minSimilarity: 0.64,

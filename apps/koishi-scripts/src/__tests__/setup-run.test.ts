@@ -47,15 +47,26 @@ const { default: runSetup } = await import("../setup.ts");
 /** 收集 console.log 输出，避免脚手架横幅刷屏并可供断言 */
 const logs: string[] = [];
 const originalLog = console.log;
+// bun-types 将 isTTY 定为非可选，经可选视图读写与删除
+const stdin = process.stdin as { isTTY?: boolean };
+const originalIsTTY = stdin.isTTY;
 
 beforeAll(() => {
 	console.log = (...args: unknown[]) => {
 		logs.push(args.map((arg) => `${arg}`).join(" "));
 	};
+	// bun test 会继承所在终端的 TTY：交互终端下 stdin.isTTY 为 true，
+	// 会让缺参用例误入问询分支（本文件全部用例都以参数驱动，强制非交互）
+	stdin.isTTY = false;
 });
 
 afterAll(() => {
 	console.log = originalLog;
+	if (originalIsTTY === undefined) {
+		delete stdin.isTTY;
+	} else {
+		stdin.isTTY = originalIsTTY;
+	}
 	rmSync(workspaceRoot, { recursive: true, force: true });
 });
 

@@ -2,12 +2,11 @@
 // Copyright (c) 2019-present Shigma and Koishijs contributors.
 // Copyright (c) 2026-present Koishi-CE contributors.
 
-import { afterAll, afterEach, beforeAll, describe, it } from "bun:test";
+import { afterAll, afterEach, beforeAll, describe, expect, it } from "bun:test";
 import { App } from "@koishi-ce/koishi";
 import commands from "@koishi-ce/plugin-commands";
 import * as help from "@koishi-ce/plugin-help";
 import mock from "@koishi-ce/plugin-mock";
-import { expect } from "chai";
 
 /**
  * @koishi-ce/plugin-commands 的行为测试：
@@ -84,7 +83,7 @@ describe("@koishi-ce/plugin-commands", () => {
 			await client.shouldNotReply("baz");
 			await client.shouldReply("command bar -a baz", "已更新指令配置。");
 			await client.shouldReply("baz", "test");
-			expect(fork.config).to.deep.equal({
+			expect(fork.config).toEqual({
 				bar: {
 					aliases: {
 						baz: {},
@@ -102,40 +101,40 @@ describe("@koishi-ce/plugin-commands", () => {
 			// 配置写法：把子指令提升为顶层指令并追加别名
 			const foo = app.command("foo");
 			app.command("foo/bar").action(() => "test");
-			expect(foo.children).to.have.length(1);
+			expect(foo.children).toHaveLength(1);
 
 			const fork = app.plugin(commands, {
 				bar: "/baz",
 			});
 
-			expect(foo.children).to.have.length(0);
+			expect(foo.children).toHaveLength(0);
 			await client.shouldReply("bar", "test");
 			await client.shouldReply("baz", "test");
 
 			fork.dispose();
 			await client.shouldReply("bar", "test");
 			await client.shouldNotReply("baz");
-			expect(foo.children).to.have.length(1);
+			expect(foo.children).toHaveLength(1);
 		});
 
 		it("root to leaf", async () => {
 			// 配置写法：把顶层指令挂到其它指令之下并追加别名
 			const foo = app.command("foo");
 			app.command("bar").action(() => "test");
-			expect(foo.children).to.have.length(0);
+			expect(foo.children).toHaveLength(0);
 
 			const fork = app.plugin(commands, {
 				bar: "foo/baz",
 			});
 
-			expect(foo.children).to.have.length(1);
+			expect(foo.children).toHaveLength(1);
 			await client.shouldReply("bar", "test");
 			await client.shouldReply("baz", "test");
 
 			fork.dispose();
 			await client.shouldReply("bar", "test");
 			await client.shouldNotReply("baz");
-			expect(foo.children).to.have.length(0);
+			expect(foo.children).toHaveLength(0);
 		});
 
 		it("leaf to leaf", async () => {
@@ -143,26 +142,26 @@ describe("@koishi-ce/plugin-commands", () => {
 			// 父指令被销毁后应回到原父级
 			const bar = app.command("bar");
 			app.command("bar/foo").action(() => "test");
-			expect(bar.children).to.have.length(1);
+			expect(bar.children).toHaveLength(1);
 
 			const fork = app.plugin(commands, {
 				foo: "baz/foo",
 			});
 
-			expect(bar.children).to.have.length(1);
+			expect(bar.children).toHaveLength(1);
 			const baz = app.command("baz");
 			await app.sleep(0);
-			expect(bar.children).to.have.length(0);
-			expect(baz.children).to.have.length(1);
+			expect(bar.children).toHaveLength(0);
+			expect(baz.children).toHaveLength(1);
 			await client.shouldReply("foo", "test");
 
 			baz.dispose();
-			expect(bar.children).to.have.length(1);
+			expect(bar.children).toHaveLength(1);
 
 			fork.dispose();
 			await client.shouldReply("foo", "test");
-			expect(bar.children).to.have.length(1);
-			expect(baz.children).to.have.length(0);
+			expect(bar.children).toHaveLength(1);
+			expect(baz.children).toHaveLength(0);
 		});
 	});
 
@@ -171,36 +170,36 @@ describe("@koishi-ce/plugin-commands", () => {
 			// 聊天指令写法：-P 提升为顶层，-a 追加别名
 			const foo = app.command("foo");
 			app.command("foo/bar").action(() => "test");
-			expect(foo.children).to.have.length(1);
+			expect(foo.children).toHaveLength(1);
 
 			const fork = app.plugin(commands, {});
 			await client.shouldReply("command bar -P -a baz", "已更新指令配置。");
-			expect(foo.children).to.have.length(0);
+			expect(foo.children).toHaveLength(0);
 			await client.shouldReply("bar", "test");
 			await client.shouldReply("baz", "test");
 
 			fork.dispose();
 			await client.shouldReply("bar", "test");
 			await client.shouldNotReply("baz");
-			expect(foo.children).to.have.length(1);
+			expect(foo.children).toHaveLength(1);
 		});
 
 		it("root to leaf", async () => {
 			// 聊天指令写法：-p 指定父指令并追加别名
 			const foo = app.command("foo");
 			app.command("bar").action(() => "test");
-			expect(foo.children).to.have.length(0);
+			expect(foo.children).toHaveLength(0);
 
 			const fork = app.plugin(commands, {});
 			await client.shouldReply("command bar -p foo -a baz", "已更新指令配置。");
-			expect(foo.children).to.have.length(1);
+			expect(foo.children).toHaveLength(1);
 			await client.shouldReply("bar", "test");
 			await client.shouldReply("baz", "test");
 
 			fork.dispose();
 			await client.shouldReply("bar", "test");
 			await client.shouldNotReply("baz");
-			expect(foo.children).to.have.length(0);
+			expect(foo.children).toHaveLength(0);
 		});
 
 		it("leaf to leaf", async () => {
@@ -208,24 +207,24 @@ describe("@koishi-ce/plugin-commands", () => {
 			// 父指令销毁后回到原父级
 			const bar = app.command("bar");
 			app.command("bar/foo").action(() => "test");
-			expect(bar.children).to.have.length(1);
+			expect(bar.children).toHaveLength(1);
 
 			const fork = app.plugin(commands, {});
 			await client.shouldReply("command foo -p baz", "已更新指令配置。");
-			expect(bar.children).to.have.length(1);
+			expect(bar.children).toHaveLength(1);
 			const baz = app.command("baz");
 			await app.sleep(0);
-			expect(bar.children).to.have.length(0);
-			expect(baz.children).to.have.length(1);
+			expect(bar.children).toHaveLength(0);
+			expect(baz.children).toHaveLength(1);
 			await client.shouldReply("foo", "test");
 
 			baz.dispose();
-			expect(bar.children).to.have.length(1);
+			expect(bar.children).toHaveLength(1);
 
 			fork.dispose();
 			await client.shouldReply("foo", "test");
-			expect(bar.children).to.have.length(1);
-			expect(baz.children).to.have.length(0);
+			expect(bar.children).toHaveLength(1);
+			expect(baz.children).toHaveLength(0);
 		});
 	});
 
@@ -241,7 +240,7 @@ describe("@koishi-ce/plugin-commands", () => {
 			});
 
 			const foo = app.command("foo");
-			expect(foo.children).to.have.length(1);
+			expect(foo.children).toHaveLength(1);
 			await client.shouldReply("foo", /baz/);
 			await client.shouldReply("baz", "test");
 
@@ -262,7 +261,7 @@ describe("@koishi-ce/plugin-commands", () => {
 
 			const foo = app.command("foo");
 			await app.sleep(0);
-			expect(foo.children).to.have.length(1);
+			expect(foo.children).toHaveLength(1);
 			await client.shouldReply("foo", /baz/);
 			await client.shouldReply("baz", "test");
 

@@ -51,8 +51,9 @@
 		"@koishi-ce/koishi": "^1.0.0"
 	},
 	"devDependencies": {
+		"@koishi-ce/koishi": "workspace:*",
 		"@koishi-ce/plugin-mock": "workspace:*",
-		"@koishi-ce/koishi": "workspace:*"
+		"@koishijs/plugin-database-memory": "^3.7.0"
 	},
 	"exports": {
 		".": {

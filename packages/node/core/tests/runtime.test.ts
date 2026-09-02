@@ -13,7 +13,11 @@
 import { afterAll, beforeAll, describe, it, jest } from "bun:test";
 import { App, Channel, sleep, User } from "@koishi-ce/koishi";
 import mock, { DEFAULT_SELF_ID } from "@koishi-ce/plugin-mock";
-import memory from "@minatojs/driver-memory";
+import * as memoryModule from "@koishijs/plugin-database-memory";
+
+// CJS 实现配 ESM 声明，Bun 互操作视图多包一层 default，穿透取真实驱动
+const memory =
+	memoryModule.default as unknown as typeof memoryModule.default.default;
 
 const app = new App();
 

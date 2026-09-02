@@ -187,7 +187,9 @@ export class LocalScanner {
 	 * node_modules 时说明是包管理器的 workspace 链接（本仓库源码形态）。
 	 */
 	private async loadManifest(name: string) {
-		const filename = resolvePackageJson(name);
+		// 解析锚点与 _collect 的扫描锚点（baseDir）保持一致：
+		// 默认的 cwd 在宿主以非 cwd 启动时会与扫描起点脱节，扫到却解析不到
+		const filename = resolvePackageJson(name, this.baseDir);
 		const meta: PackageJson = JSON.parse(await readFile(filename, "utf8"));
 		return [meta, !filename.includes("node_modules")] as const;
 	}

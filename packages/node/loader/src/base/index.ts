@@ -447,6 +447,10 @@ export abstract class Loader {
 		const app = (this.app = new Context(
 			this.interpolate(this.config) as Context.Config,
 		));
+		// cordis 3.18 起构造器自带 baseDir = cwd() 自有属性，且 provide
+		// 之后该属性会被访问子接管、裸赋值被静默吞掉——必须赶在 provide
+		// 之前赋值，插件才能读到配置文件所在目录而非进程 cwd
+		app.baseDir = this.baseDir;
 		app.provide("loader", this, true);
 		app.provide("baseDir", this.baseDir, true);
 		(app.scope as LoaderScope)[kRecord] = Object.create(null);

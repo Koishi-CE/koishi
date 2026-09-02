@@ -12,7 +12,10 @@
  */
 
 import { afterAll, beforeAll, describe, expect, it } from "bun:test";
+import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import type { IncomingMessage } from "node:http";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 import { type Client, Console, type Entry } from "@koishi-ce/console";
 import {
 	App,
@@ -132,6 +135,35 @@ class TestLoader extends Loader {
 }
 
 const loader = new TestLoader();
+
+/**
+ * Hermetic 应用根：本机包扫描（LocalScanner）与 workspace 路径键解析均以
+ * loader.baseDir 为锚，固定到临时 fixture，避免断言依赖真实仓库 node_modules
+ * 的链接状态（哪些 workspace 包被链入由包管理器布局决定，换环境即挂）。
+ */
+const fixtureRoot = mkdtempSync(join(tmpdir(), "koishi-config-pkg-"));
+mkdirSync(join(fixtureRoot, "node_modules/@koishi-ce/plugin-fixture"), {
+	recursive: true,
+});
+writeFileSync(
+	join(fixtureRoot, "node_modules/@koishi-ce/plugin-fixture/package.json"),
+	JSON.stringify(
+		{
+			name: "@koishi-ce/plugin-fixture",
+			version: "1.0.0",
+			peerDependencies: { koishi: "^4.18.0" },
+		},
+		null,
+		"\t",
+	),
+);
+mkdirSync(join(fixtureRoot, "plugins/webui/auth"), { recursive: true });
+writeFileSync(
+	join(fixtureRoot, "plugins/webui/auth/package.json"),
+	JSON.stringify({ name: "@koishi-ce/plugin-auth", version: "1.0.0" }),
+);
+loader.baseDir = fixtureRoot;
+
 loader.config = {
 	plugins: {
 		$sfolded: true,
@@ -182,6 +214,7 @@ afterAll(async () => {
 	}
 	await tick();
 	await app.stop();
+	rmSync(fixtureRoot, { recursive: true, force: true });
 });
 
 describe("@koishi-ce/plugin-config", () => {
@@ -232,8 +265,8 @@ describe("@koishi-ce/plugin-config", () => {
 			const auth = data["@koishi-ce/plugin-auth"];
 			expect(auth?.["paths"]).toEqual(["./plugins/webui/auth"]);
 			expect(auth?.["runtime"]).toBeTruthy();
-			// 本机 node_modules 扫描出的已装插件包
-			expect(data["@koishi-ce/plugin-server"]).toBeTruthy();
+			// 本机 node_modules 扫描出的已装插件包（fixture 预置，见文件头说明）
+			expect(data["@koishi-ce/plugin-fixture"]).toBeTruthy();
 		});
 
 		it("request-runtime 按路径键 / 短名解析并刷新，解析失败不缓存", async () => {

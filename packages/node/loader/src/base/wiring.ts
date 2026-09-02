@@ -17,7 +17,9 @@ import { rename, separate } from "./utils.ts";
 
 /** 记录一条插件生命周期日志（apply / unload / reload） */
 export function logPluginUpdate(app: Context, type: string, key: string) {
-	app.logger("loader").info("%s plugin %c", type, key);
+	// 停机销毁期 logger 服务可能先于插件事件被释放（internal/fork 在
+	// teardown 中仍会触发），日志缺失不应升级为事件处理错误
+	app.logger?.("loader")?.info("%s plugin %c", type, key);
 }
 
 /**
@@ -56,6 +58,10 @@ export function wireAppEvents(loader: Loader, app: Context) {
 		// 正常路径：ctx.dispose() -> fork / runtime 销毁 -> delete(plugin)
 		// hmr 路径：delete(plugin) -> runtime 销毁 -> fork 销毁
 		if (!app.registry.has(fork.runtime.plugin)) return;
+		// 根作用域已在停机/销毁（reset 先置 isActive=false 再执行销毁回调）：
+		// 此时的大批卸载是进程退出的一部分，回写 ~ 键既无意义，一旦防抖
+		// 落盘抢在进程退出前完成更是灾难（整份配置被停用）
+		if (!app.scope.isActive) return;
 		rename(
 			fork.parent.scope.config,
 			key,

@@ -31,9 +31,9 @@
 		"koishi"
 	],
 	"devDependencies": {
+		"@koishi-ce/koishi": "workspace:*",
 		"@koishi-ce/plugin-mock": "workspace:*",
-		"@minatojs/driver-memory": "^3.7.0",
-		"@koishi-ce/koishi": "workspace:*"
+		"@koishijs/plugin-database-memory": "^3.7.0"
 	},
 	"dependencies": {
 		"@koishi-ce/i18n-utils": "workspace:*",

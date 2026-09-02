@@ -88,7 +88,7 @@
       "devDependencies": {
         "@koishi-ce/koishi": "workspace:*",
         "@koishi-ce/plugin-mock": "workspace:*",
-        "@minatojs/driver-memory": "^3.7.0",
+        "@koishijs/plugin-database-memory": "^3.7.0",
       },
     },
     "packages/node/i18n-utils": {
@@ -204,6 +204,7 @@
       "devDependencies": {
         "@koishi-ce/koishi": "workspace:*",
         "@koishi-ce/plugin-mock": "workspace:*",
+        "@koishijs/plugin-database-memory": "^3.7.0",
       },
       "peerDependencies": {
         "@koishi-ce/koishi": "^1.0.0",
@@ -215,6 +216,7 @@
       "devDependencies": {
         "@koishi-ce/koishi": "workspace:*",
         "@koishi-ce/plugin-mock": "workspace:*",
+        "@koishijs/plugin-database-memory": "^3.7.0",
       },
       "peerDependencies": {
         "@koishi-ce/koishi": "^1.0.0",
@@ -248,6 +250,7 @@
       "devDependencies": {
         "@koishi-ce/koishi": "workspace:*",
         "@koishi-ce/plugin-mock": "workspace:*",
+        "@koishijs/plugin-database-memory": "^3.7.0",
       },
       "peerDependencies": {
         "@koishi-ce/koishi": "^1.0.0",
@@ -271,6 +274,7 @@
         "@koishi-ce/koishi": "workspace:*",
         "@koishi-ce/plugin-help": "workspace:*",
         "@koishi-ce/plugin-mock": "workspace:*",
+        "@koishijs/plugin-database-memory": "^3.7.0",
       },
       "peerDependencies": {
         "@koishi-ce/koishi": "^1.0.0",
