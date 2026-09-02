@@ -49,6 +49,7 @@ archive/
 # 一些缓存
 .pnpm-store
 .repo/
+tmp.txt
 
 # 配置
 /koishi.yml
