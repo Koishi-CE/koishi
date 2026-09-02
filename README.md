@@ -37,7 +37,7 @@ bun create koishi-ce
 
 ### 参与贡献
 
-开发环境、门禁与提交约定见 [CONTRIBUTING.md](./CONTRIBUTING.md)；仓库级开发约定（agent 亦可读）见 [AGENTS.md](./AGENTS.md)。
+开发环境、门禁与提交约定见 [CONTRIBUTING.md](./.github/CONTRIBUTING.md)；仓库级开发约定（agent 亦可读）见 [AGENTS.md](./AGENTS.md)。
 
 - 行为准则：[CODE_OF_CONDUCT.md](./.github/CODE_OF_CONDUCT.md)
 - 安全漏洞报告：[SECURITY.md](./.github/SECURITY.md)
