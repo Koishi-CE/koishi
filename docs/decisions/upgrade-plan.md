@@ -4,7 +4,7 @@
 >
 > 前置文档:[dependency-audit.md](dependency-audit.md) · 日期:2026-08-27
 > 原则:**最现代、高性能、Bun 原生优先;允许破坏性更新;git 分阶段提交可回滚。**
-> 硬约束:所有面向上游运行时的 `peerDependencies`(`koishi`、`@koishijs/*`)**保持不动**(fork 兼容性设计,见审计 §1;该约束后已演变为「CE 包 peer 一律指向 CE 包名」，现行纪律见 [../ARCHITECTURE.md](../ARCHITECTURE.md) 依赖纪律节)。
+> 硬约束:所有面向上游运行时的 `peerDependencies`(`koishi`、`@koishijs/*`)**保持不动**(fork 兼容性设计,见审计 §1;该约束后已演变为「CE 包 peer 一律指向 CE 包名」，现行纪律见 [../reference/architecture.md](../reference/architecture.md) 依赖纪律节)。
 
 **已批准决策(2026-08-27 审阅):**
 1. **Phase 5(cordis 生态 4.x)立项执行**,在 RC 上先行,stable 后跟进收尾。

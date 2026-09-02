@@ -6,7 +6,7 @@
 
 1. 安装 [Bun](https://bun.sh) ≥ 1.4（唯一包管理器与运行时）。
 2. `bun install` 安装依赖。
-3. 参照 [docs/DEVELOPMENT.md](./docs/DEVELOPMENT.md) 了解门禁命令、编码约定与测试写法；仓库结构见 [docs/ARCHITECTURE.md](./docs/ARCHITECTURE.md)。
+3. 参照 [docs/guides/development.md](./docs/guides/development.md) 了解门禁命令、编码约定与测试写法；仓库结构见 [docs/reference/architecture.md](./docs/reference/architecture.md)。
 
 ## 提交前检查
 
@@ -20,8 +20,8 @@ bun test         # 全量测试
 ## 提交约定
 
 - 提交到 `main` 分支，提交信息用简体中文，格式参考历史：`feat:` / `fix:` / `docs:` / `chore:` / `build:`，可带 scope（如 `fix(core):`）。
-- 面向发布的包改动随提交写 changeset（`bun run changeset`），详见 [docs/RELEASE.md](./docs/RELEASE.md)。
-- 从上游 koishi / webui 移植改动按 [docs/UPSTREAM.md](./docs/UPSTREAM.md) 的映射表手动 diff 移植。
+- 面向发布的包改动随提交写 changeset（`bun run changeset`），详见 [docs/process/release.md](./docs/process/release.md)。
+- 从上游 koishi / webui 移植改动按 [docs/process/upstream.md](./docs/process/upstream.md) 的映射表手动 diff 移植。
 
 ## 行为准则与安全
 

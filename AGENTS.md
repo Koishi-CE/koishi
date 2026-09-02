@@ -4,14 +4,14 @@
 
 ## 基本约束
 
-- **全程使用简体中文**：所有回复、代码注释、提交说明、生成的文档均使用简体中文（README / NOTICE / docs/UPSTREAM.md / CONTRIBUTING 等面向公开受众的既有英文文档除外）。
-- **本仓库是上游 fork 合并仓**：[koishijs/koishi](https://github.com/koishijs/koishi)（MIT）与 [koishijs/webui](https://github.com/koishijs/webui)（部分 AGPL-3.0）的文件级合并重构，**未保留上游 git 历史**；目录映射与同步流程见 `docs/UPSTREAM.md`，各目录许可证归属见 `NOTICE`。
+- **全程使用简体中文**：所有回复、代码注释、提交说明、生成的文档均使用简体中文（README / NOTICE / docs/process/upstream.md / CONTRIBUTING 等面向公开受众的既有英文文档除外）。
+- **本仓库是上游 fork 合并仓**：[koishijs/koishi](https://github.com/koishijs/koishi)（MIT）与 [koishijs/webui](https://github.com/koishijs/webui)（部分 AGPL-3.0）的文件级合并重构，**未保留上游 git 历史**；目录映射与同步流程见 `docs/process/upstream.md`，各目录许可证归属见 `NOTICE`。
 - **不要在 Biome 的 JSON 行尾不可见字符上浪费 Token**：已知、正常、无害，看到即跳过，不调查、不修复、不报告。
 - 除以上约束外，不要过度解读本指令——其余行为遵循默认 Agent 规则。
 
 ## 关于 docs/ 文档
 
-- **开发手册**：`docs/DEVELOPMENT.md`（环境 / 门禁 / 编码约定 / 测试 / 已知坑细节）、`docs/ARCHITECTURE.md`（目录与包清单 / 构建体系 / 依赖纪律）、`docs/RELEASE.md`（发布流程）、`docs/UPSTREAM.md`（上游映射）——均以实际代码为准，文档滞后时听代码的。
+- **开发手册**：`docs/guides/development.md`（环境 / 门禁 / 编码约定 / 测试 / 已知坑细节）、`docs/reference/architecture.md`（目录与包清单 / 构建体系 / 依赖纪律）、`docs/process/release.md`（发布流程）、`docs/process/upstream.md`（上游映射）——均以实际代码为准，文档滞后时听代码的。
 - **历史决策记录**：`docs/decisions/upgrade-plan.md`（依赖六阶段升级计划书，含 Phase 5 cordis 4 被阻塞的实证结论与重启条件）、`docs/decisions/dependency-audit.md`（99 个外部依赖的立项前审计快照）。
 
 ## 硬性约束（违反 = 错误）
@@ -25,7 +25,7 @@
 7. **market 插件为上游原版再分发**：`plugins/webui/market/`（`@koishi-ce/plugin-market`）对齐自上游 webui `plugins/market`（原版 v2.11.11），社区版 `plugin-marketn` 已被其取代并移除。client 侧依赖 npm 包 `@koishijs/market`，其中的 npm 名 `@koishijs/components` 由单插件构建的 alias 重定向到本仓 workspace 版，避免双实例。
 8. **packages/shim 两包不动**：`@koishi-ce/koishi-shim`（4.18.11）与 `@koishi-ce/console-shim`（5.30.11）是下游 npm alias 的占名目标——纯 JS 预编译、版本冻结跟随上游线、changesets ignore（**勿写 changeset、勿 bump、勿改回 1.x 基线**）。下游项目以四行 alias 钉名（`"koishi": "npm:@koishi-ce/koishi-shim@^4.18.11"` 等），机理与维护纪律详见 `packages/shim/README.md`。
 9. **create-koishi-ce 的默认模板是内置的纯 `@koishi-ce` 模板**（`apps/koishi-create/src/template/` 目录），不下载上游官方 `@koishijs/boilerplate`；`--template <包名>` 保留为远程模板逃生舱。
-10. **一切发布走 `bun run release` 发布链，禁止手动 `npm publish`**（2026-08-31 事故：绕链发布把 `workspace:*` 原样带上 npm，下游全炸）。补发用 `bun run release publish --only <包名>`；流程与约定见 `docs/RELEASE.md`。
+10. **一切发布走 `bun run release` 发布链，禁止手动 `npm publish`**（2026-08-31 事故：绕链发布把 `workspace:*` 原样带上 npm，下游全炸）。补发用 `bun run release publish --only <包名>`；流程与约定见 `docs/process/release.md`。
 
 ## 门禁与工作流
 
@@ -42,9 +42,9 @@ bun packages/web/client/src/bin.ts build            # 宿主控制台前端 → 
 bun packages/web/client/src/bin.ts build <插件目录>  # 单个 webui 插件的前端
 ```
 
-- `apps/koishi-create` 有自己的 tsdown.config.ts，进目录 `bun run build`；发布链见 `docs/RELEASE.md`。
+- `apps/koishi-create` 有自己的 tsdown.config.ts，进目录 `bun run build`；发布链见 `docs/process/release.md`。
 - **类型检查现状**：全仓 TS7 下 0 错误。最低纪律：改哪个包，保证该包所在 project 不新增错误。
-- 上游同步（port 上游改动）按 `docs/UPSTREAM.md` 的映射表手动 diff 移植；port 进来的相对导入须补 `.ts` 扩展名（nodenext 约束，上游是无后缀的 bundler 风格）；完成后跑 `bun run build` + `bun test`。
+- 上游同步（port 上游改动）按 `docs/process/upstream.md` 的映射表手动 diff 移植；port 进来的相对导入须补 `.ts` 扩展名（nodenext 约束，上游是无后缀的 bundler 风格）；完成后跑 `bun run build` + `bun test`。
 
 ## 代码风格
 
@@ -53,7 +53,7 @@ bun packages/web/client/src/bin.ts build <插件目录>  # 单个 webui 插件�
 - TS 双版本策略：根 `typescript` 实为 typescript6（供 @typescript-eslint/parser），类型检查走 `@typescript/native`（TS7 原生编译器）。
 - 显式 `any` 全仓为 0，保持住：动态边界用 `unknown` + 收窄。
 
-## 已知坑（一行一条，细节与机理见 docs/DEVELOPMENT.md §7）
+## 已知坑（一行一条，细节与机理见 docs/guides/development.md §7）
 
 - **测试对 workspace 包加载 src 而非 lib**：改 src 跑测试无需先 build；各包 tsconfig 的 paths 块手工维护（`tooling/sync-test-paths.ts` 已删除）。
 - **测试之外的解析走 lib 产物**：改 src 要先 `bun run build` 才在运行时生效。

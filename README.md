@@ -4,7 +4,7 @@
 
 ## 中文
 
-`koishi` 是 [Koishi](https://koishi.chat) 聊天机器人框架的 **Bun-first 社区再分发版**：将 [koishijs/koishi](https://github.com/koishijs/koishi)（MIT）与 [koishijs/webui](https://github.com/koishijs/webui)（部分 AGPL-3.0）两个上游仓库文件级合并重构为单一 monorepo，以 GitHub 组织 [Koishi-CE](https://github.com/Koishi-CE) 发布、npm 作用域 `@koishi-ce`。**本仓库与 Koishijs 组织无隶属关系**；来源与许可证归属见 [NOTICE](./NOTICE)，上游目录映射见 [docs/UPSTREAM.md](./docs/UPSTREAM.md)。
+`koishi` 是 [Koishi](https://koishi.chat) 聊天机器人框架的 **Bun-first 社区再分发版**：将 [koishijs/koishi](https://github.com/koishijs/koishi)（MIT）与 [koishijs/webui](https://github.com/koishijs/webui)（部分 AGPL-3.0）两个上游仓库文件级合并重构为单一 monorepo，以 GitHub 组织 [Koishi-CE](https://github.com/Koishi-CE) 发布、npm 作用域 `@koishi-ce`。**本仓库与 Koishijs 组织无隶属关系**；来源与许可证归属见 [NOTICE](./NOTICE)，上游目录映射见 [docs/process/upstream.md](./docs/process/upstream.md)。
 
 ### 快速开始
 
@@ -50,7 +50,7 @@ MIT 与 AGPL-3.0 分区授权，各目录归属见 [NOTICE](./NOTICE)。
 
 ## English
 
-`koishi` is a **Bun-first community redistribution** of the [Koishi](https://koishi.chat) chatbot framework: the [koishijs/koishi](https://github.com/koishijs/koishi) (MIT) and [koishijs/webui](https://github.com/koishijs/webui) (partly AGPL-3.0) codebases merged and restructured into a single monorepo, published under the [Koishi-CE](https://github.com/Koishi-CE) GitHub organization and the `@koishi-ce` npm scope. **Not affiliated with the Koishijs organization.** See [NOTICE](./NOTICE) for attribution and licensing, and [docs/UPSTREAM.md](./docs/UPSTREAM.md) for the upstream mapping.
+`koishi` is a **Bun-first community redistribution** of the [Koishi](https://koishi.chat) chatbot framework: the [koishijs/koishi](https://github.com/koishijs/koishi) (MIT) and [koishijs/webui](https://github.com/koishijs/webui) (partly AGPL-3.0) codebases merged and restructured into a single monorepo, published under the [Koishi-CE](https://github.com/Koishi-CE) GitHub organization and the `@koishi-ce` npm scope. **Not affiliated with the Koishijs organization.** See [NOTICE](./NOTICE) for attribution and licensing, and [docs/process/upstream.md](./docs/process/upstream.md) for the upstream mapping.
 
 ### Getting started
 

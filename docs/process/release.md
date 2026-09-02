@@ -1,7 +1,7 @@
 # 发布流程（RELEASE）
 
 > 本仓全部可发布包的版本与发布管理：changesets 管版本，`bun run release` 发布链（`tooling/release/`）管执行。**铁律：一切发布走发布链，禁止手动 `npm publish`。** 实现代码见 `tooling/release/index.ts`（该目录与 `apps/koishi-scripts` 的 release 链互不相干——后者面向宿主工作区的插件项目）。
-> **先读**：开发与门禁见 [DEVELOPMENT.md](DEVELOPMENT.md)；版本基线与 shim 例外见 [ARCHITECTURE.md](ARCHITECTURE.md)。
+> **先读**：开发与门禁见 [../guides/development.md](../guides/development.md)；版本基线与 shim 例外见 [../reference/architecture.md](../reference/architecture.md)。
 > **本文结构**：1 命令 · 2 发布链环节 · 3 changesets 约定 · 4 发布顺序与补发 · 5 事故记录。
 
 ## 1. 命令

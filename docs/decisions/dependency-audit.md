@@ -1,6 +1,6 @@
 # 依赖与技术栈全量审计报告
 
-> **状态：历史快照（2026-08-27）**。本审计记录依赖升级计划立项前的基线；其行动方案（[upgrade-plan.md](upgrade-plan.md)）的 Phase 0-4 已执行完毕，文中「现状」「状态」列均为审计当日数据，与当前仓库实况的出入以 [../DEVELOPMENT.md](../DEVELOPMENT.md) 与 [../ARCHITECTURE.md](../ARCHITECTURE.md) 为准。
+> **状态：历史快照（2026-08-27）**。本审计记录依赖升级计划立项前的基线；其行动方案（[upgrade-plan.md](upgrade-plan.md)）的 Phase 0-4 已执行完毕，文中「现状」「状态」列均为审计当日数据，与当前仓库实况的出入以 [../guides/development.md](../guides/development.md) 与 [../reference/architecture.md](../reference/architecture.md) 为准。
 >
 > 审计日期:2026-08-27 · 注册表数据均于当日经 npm registry 实时验证
 > 运行环境:Bun 1.4.0 · Node v24.16.0(辅) · 包管理: Bun workspaces(`bun.lock`)

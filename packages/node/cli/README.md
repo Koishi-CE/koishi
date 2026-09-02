@@ -4,7 +4,7 @@
 
 Koishi 的社区再发行版（Community Edition）主包与命令行宿主，来自 [Koishi-CE/koishi](https://github.com/Koishi-CE/koishi)——将上游 [koishijs/koishi](https://github.com/koishijs/koishi) 与 [koishijs/webui](https://github.com/koishijs/webui) 合并重构的单一 Bun workspace 单仓库。本包入口与上游 `koishi` 主包同构：合并再导出 [`@koishi-ce/core`](https://github.com/Koishi-CE/koishi/tree/main/packages/node/core) 与 [`@koishi-ce/loader`](https://github.com/Koishi-CE/koishi/tree/main/packages/node/loader)，并内置 `koishi` 命令与守护进程。
 
-命令名保持为 `koishi`，与上游用法一致。本项目与 Koishijs 官方组织无从属关系，感谢原作者 Shigma 及所有上游贡献者，相关声明见 [NOTICE](https://github.com/Koishi-CE/koishi/blob/main/NOTICE) 与 [docs/UPSTREAM.md](https://github.com/Koishi-CE/koishi/blob/main/docs/UPSTREAM.md)。
+命令名保持为 `koishi`，与上游用法一致。本项目与 Koishijs 官方组织无从属关系，感谢原作者 Shigma 及所有上游贡献者，相关声明见 [NOTICE](https://github.com/Koishi-CE/koishi/blob/main/NOTICE) 与 [docs/process/upstream.md](https://github.com/Koishi-CE/koishi/blob/main/docs/process/upstream.md)。
 
 ## 安装与启动
 
@@ -55,7 +55,7 @@ import { App, defineConfig, NodeLoader } from "@koishi-ce/koishi";
 
 ## English
 
-The Community Edition main package and CLI host of Koishi, from [Koishi-CE/koishi](https://github.com/Koishi-CE/koishi) — a single Bun-workspace monorepo merging the upstream [koishijs/koishi](https://github.com/koishijs/koishi) and [koishijs/webui](https://github.com/koishijs/webui). Its entry mirrors the upstream `koishi` package: a merged re-export of `@koishi-ce/core` and `@koishi-ce/loader`, plus the `koishi` command and a daemon. Not affiliated with the Koishijs organization; see [NOTICE](https://github.com/Koishi-CE/koishi/blob/main/NOTICE) and [docs/UPSTREAM.md](https://github.com/Koishi-CE/koishi/blob/main/docs/UPSTREAM.md).
+The Community Edition main package and CLI host of Koishi, from [Koishi-CE/koishi](https://github.com/Koishi-CE/koishi) — a single Bun-workspace monorepo merging the upstream [koishijs/koishi](https://github.com/koishijs/koishi) and [koishijs/webui](https://github.com/koishijs/webui). Its entry mirrors the upstream `koishi` package: a merged re-export of `@koishi-ce/core` and `@koishi-ce/loader`, plus the `koishi` command and a daemon. Not affiliated with the Koishijs organization; see [NOTICE](https://github.com/Koishi-CE/koishi/blob/main/NOTICE) and [docs/process/upstream.md](https://github.com/Koishi-CE/koishi/blob/main/docs/process/upstream.md).
 
 ## Installation
 

@@ -46,7 +46,7 @@ await app.start();
 ## 与上游的差异
 
 - 内置一处补丁：对 `satori.Bot.prototype.dispose` 加防护，规避 satori 4.6.0 在 `app.stop()` 时抛出 TypeError 的缺陷（升级 satori 修复后可移除）。
-- 包内导入一律指向 `@koishi-ce/*` workspace 包；其余行为与上游保持一致，目录级映射见仓库 [docs/UPSTREAM.md](https://github.com/Koishi-CE/koishi/blob/main/docs/UPSTREAM.md)。
+- 包内导入一律指向 `@koishi-ce/*` workspace 包；其余行为与上游保持一致，目录级映射见仓库 [docs/process/upstream.md](https://github.com/Koishi-CE/koishi/blob/main/docs/process/upstream.md)。
 
 ## 许可证
 
