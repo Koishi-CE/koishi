@@ -1,7 +1,7 @@
 {
 	"name": "@koishi-ce/plugin-analytics",
 	"description": "Show statistics for Koishi application",
-	"version": "1.0.1",
+	"version": "1.0.2",
 	"type": "module",
 	"main": "lib/index.mjs",
 	"typings": "lib/index.d.ts",

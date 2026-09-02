@@ -1,7 +1,7 @@
 {
 	"name": "@koishi-ce/plugin-config",
 	"description": "Manage your bots and plugins with console",
-	"version": "1.0.7",
+	"version": "1.0.8",
 	"type": "module",
 	"main": "lib/index.mjs",
 	"types": "lib/index.d.ts",

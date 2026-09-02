@@ -39,7 +39,7 @@
     },
     "packages/node/assets": {
       "name": "@koishi-ce/assets",
-      "version": "1.0.1",
+      "version": "1.0.2",
       "dependencies": {
         "file-type": "^22.0.2",
       },
@@ -53,7 +53,7 @@
     },
     "packages/node/cli": {
       "name": "@koishi-ce/koishi",
-      "version": "1.0.3",
+      "version": "1.0.4",
       "bin": "lib/cli/index.mjs",
       "dependencies": {
         "@koishi-ce/core": "workspace:*",
@@ -100,7 +100,7 @@
     },
     "packages/node/loader": {
       "name": "@koishi-ce/loader",
-      "version": "1.0.3",
+      "version": "1.0.4",
       "devDependencies": {
         "@koishi-ce/core": "workspace:*",
         "@koishi-ce/koishi": "workspace:*",
@@ -112,7 +112,7 @@
     },
     "packages/node/registry": {
       "name": "@koishi-ce/registry",
-      "version": "1.0.4",
+      "version": "1.0.5",
       "dependencies": {
         "cosmokit": "^1.8.1",
         "semver": "^7.8.5",
@@ -148,7 +148,7 @@
     },
     "packages/web/client": {
       "name": "@koishi-ce/client",
-      "version": "1.0.2",
+      "version": "1.0.3",
       "bin": {
         "koishi-console": "./lib/bin.mjs",
       },
@@ -175,7 +175,7 @@
     },
     "packages/web/components": {
       "name": "@koishi-ce/components",
-      "version": "1.0.0",
+      "version": "1.0.1",
       "dependencies": {
         "@satorijs/element": "^3.2.0",
         "cosmokit": "^1.8.1",
@@ -289,7 +289,7 @@
     },
     "plugins/infra/hmr": {
       "name": "@koishi-ce/plugin-hmr",
-      "version": "1.0.4",
+      "version": "1.0.5",
       "dependencies": {
         "@babel/code-frame": "^8.0.0",
         "@koishi-ce/loader": "workspace:*",
@@ -371,7 +371,7 @@
     },
     "plugins/webui/actions": {
       "name": "@koishi-ce/plugin-actions",
-      "version": "1.0.0",
+      "version": "1.0.1",
       "peerDependencies": {
         "@koishi-ce/koishi": "^1.0.0",
         "@koishi-ce/plugin-console": "^1.0.0",
@@ -379,7 +379,7 @@
     },
     "plugins/webui/admin": {
       "name": "@koishi-ce/plugin-admin",
-      "version": "1.0.0",
+      "version": "1.0.1",
       "dependencies": {
         "throttle-debounce": "^5.0.2",
       },
@@ -401,7 +401,7 @@
     },
     "plugins/webui/analytics": {
       "name": "@koishi-ce/plugin-analytics",
-      "version": "1.0.1",
+      "version": "1.0.2",
       "dependencies": {
         "@koishi-ce/console": "workspace:*",
       },
@@ -419,7 +419,7 @@
     },
     "plugins/webui/auth": {
       "name": "@koishi-ce/plugin-auth",
-      "version": "1.0.0",
+      "version": "1.0.1",
       "dependencies": {
         "@koishi-ce/console": "workspace:*",
       },
@@ -435,7 +435,7 @@
     },
     "plugins/webui/commands": {
       "name": "@koishi-ce/plugin-commands",
-      "version": "1.0.0",
+      "version": "1.0.1",
       "dependencies": {
         "@koishi-ce/console": "workspace:*",
       },
@@ -458,7 +458,7 @@
     },
     "plugins/webui/config": {
       "name": "@koishi-ce/plugin-config",
-      "version": "1.0.7",
+      "version": "1.0.8",
       "dependencies": {
         "@koishi-ce/console": "workspace:*",
         "@koishi-ce/loader": "workspace:*",
@@ -479,7 +479,7 @@
     },
     "plugins/webui/console": {
       "name": "@koishi-ce/plugin-console",
-      "version": "1.0.2",
+      "version": "1.0.3",
       "dependencies": {
         "@koishi-ce/console": "workspace:*",
         "open": "^11.0.1",
@@ -516,7 +516,7 @@
     },
     "plugins/webui/explorer": {
       "name": "@koishi-ce/plugin-explorer",
-      "version": "1.0.0",
+      "version": "1.0.1",
       "dependencies": {
         "@koishi-ce/console": "workspace:*",
         "anymatch": "^3.1.3",
@@ -540,7 +540,7 @@
     },
     "plugins/webui/insight": {
       "name": "@koishi-ce/plugin-insight",
-      "version": "1.0.0",
+      "version": "1.0.1",
       "dependencies": {
         "@koishi-ce/console": "workspace:*",
       },
@@ -561,7 +561,7 @@
     },
     "plugins/webui/locales": {
       "name": "@koishi-ce/plugin-locales",
-      "version": "1.0.0",
+      "version": "1.0.1",
       "dependencies": {
         "@koishi-ce/console": "workspace:*",
       },
@@ -580,7 +580,7 @@
     },
     "plugins/webui/logger": {
       "name": "@koishi-ce/plugin-logger",
-      "version": "1.0.0",
+      "version": "1.0.1",
       "dependencies": {
         "@koishi-ce/console": "workspace:*",
       },
@@ -601,7 +601,7 @@
     },
     "plugins/webui/market": {
       "name": "@koishi-ce/plugin-market",
-      "version": "1.0.8",
+      "version": "1.0.9",
       "dependencies": {
         "@koishi-ce/console": "workspace:*",
         "@koishi-ce/registry": "workspace:*",
@@ -627,7 +627,7 @@
     },
     "plugins/webui/notifier": {
       "name": "@koishi-ce/plugin-notifier",
-      "version": "1.0.0",
+      "version": "1.0.1",
       "devDependencies": {
         "@koishi-ce/client": "workspace:*",
         "@satorijs/element": "^3.2.0",
@@ -639,7 +639,7 @@
     },
     "plugins/webui/oobe": {
       "name": "@koishi-ce/plugin-oobe",
-      "version": "1.0.0",
+      "version": "1.0.1",
       "peerDependencies": {
         "@koishi-ce/koishi": "^1.0.0",
         "@koishi-ce/plugin-console": "^1.0.0",
@@ -647,7 +647,7 @@
     },
     "plugins/webui/sandbox": {
       "name": "@koishi-ce/plugin-sandbox",
-      "version": "1.0.0",
+      "version": "1.0.1",
       "dependencies": {
         "@koishi-ce/console": "workspace:*",
       },
@@ -665,7 +665,7 @@
     },
     "plugins/webui/status": {
       "name": "@koishi-ce/plugin-status",
-      "version": "1.0.0",
+      "version": "1.0.1",
       "dependencies": {
         "@koishi-ce/console": "workspace:*",
       },
@@ -681,7 +681,7 @@
     },
     "plugins/webui/theme-vanilla": {
       "name": "@koishi-ce/plugin-theme-vanilla",
-      "version": "1.0.1",
+      "version": "1.0.2",
       "devDependencies": {
         "@koishi-ce/client": "workspace:*",
         "@koishi-ce/koishi": "workspace:*",

@@ -1,7 +1,7 @@
 {
     "name": "@koishi-ce/plugin-status",
     "description": "Status view for Koishi",
-    "version": "1.0.0",
+    "version": "1.0.1",
     "type": "module",
     "main": "lib/index.mjs",
     "typings": "lib/index.d.ts",
