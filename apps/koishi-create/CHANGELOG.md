@@ -1,5 +1,20 @@
 # create-koishi-ce
 
+## 1.3.1
+
+### Patch Changes
+
+- 11aabfe: refactor(create): 交互层从 prompts 迁移到 @clack/prompts
+  
+  - 移除 `prompts` 与 `@types/prompts`（clack 自带 TS 类型，无需 `@types/*` 包）
+  - 项目名输入与各类确认改用 `@clack/prompts` 的 `text` / `confirm`：Ctrl+C 优雅返回取消符号（不再抛 SIGINT 堆栈），项目名校验内联进 `validate`
+  - 测试 mock 同步切换至 `@clack/prompts`（按 prompt 类型分发的可编程答案队列不变）
+- 5b65d63: refactor(create): 移除 yargs-parser 与自研 tar 解析，命令行与模板解包改用社区包 / 标准工具
+  
+  - 命令行解析换用 `node:util` 的 `parseArgs`（Bun 内置同一 API），移除 `yargs-parser` 与 `@types/yargs-parser`；未知选项由静默忽略改为明确报错
+  - 远程模板解包改用 `giget`（其解压实现内联打包 `tar`，零传递依赖）：tarball 先落本地缓存再解压到目标目录，按 npm tarball 惯例剥离顶层 `package/` 目录，自带路径穿越防护；不再维护自研 ustar / pax 解析
+  - 原自研 tar 的打包侧（`tarPack`）保留为测试专用 fixture 构造器（`src/__tests__/tar-pack.ts`），随附数字字段与 pax 头兼容修复（对齐 node-tar 解析约定）；相应单测收敛到 run-remote 端到端用例
+
 ## 1.3.0
 
 ### Minor Changes
