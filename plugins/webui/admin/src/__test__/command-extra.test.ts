@@ -6,7 +6,7 @@ import { afterAll, beforeAll, describe, expect, it } from "bun:test";
 import { App } from "@koishi-ce/koishi";
 import mock from "@koishi-ce/plugin-mock";
 import * as memoryModule from "@koishijs/plugin-database-memory";
-import admin from "./index.ts";
+import admin from "../index.ts";
 
 // 同 index.test.ts：CJS 实现配 ESM 声明，nodenext 互操作视图多包一层 default
 const memory =
