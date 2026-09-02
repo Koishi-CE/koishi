@@ -11,6 +11,7 @@ docs 根下只有本导航页；文档按性质分层：**指南**（guides，�
 flowchart LR
   R["README.md 本页"]
   AG["AGENTS.md 常驻约定"]
+  RM["roadmap.md 规划 · 讨论稿"]
   subgraph G["guides · 指南"]
     DEV["development.md 开发手册"]
   end
@@ -26,6 +27,7 @@ flowchart LR
     P2["dependency-audit.md"]
   end
   R --- AG
+  R --- RM
   R --- G
   R --- RF
   R --- P
@@ -49,6 +51,12 @@ flowchart LR
 | [process/upstream.md](process/upstream.md) | 上游基线 · 目录映射表 · port 流程（英文） | 同步上游改动时 |
 
 各手册开头统一带「本文结构」行（编号章节速览），正文引用具体节时用锚点链接。
+
+## 规划
+
+| 文档 | 内容速览 | 状态 |
+|---|---|---|
+| [roadmap.md](roadmap.md) | 阻塞项 · 进行中 · 计划与候选 · 近期收尾池 | 讨论稿（草案，待维护者确认） |
 
 ## 档案区（只读参考）
 
