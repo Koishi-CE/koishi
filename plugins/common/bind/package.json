@@ -1,65 +1,65 @@
 {
-    "name": "@koishi-ce/plugin-bind",
-    "description": "Bind User Accounts Across Platforms in Koishi",
-    "version": "1.0.0",
-    "type": "module",
-    "main": "lib/index.mjs",
-    "typings": "lib/index.d.ts",
-    "files": [
-        "lib",
-        "src",
-        "locales"
-    ],
-    "contributors": [
-        "Shigma <shigma10826@gmail.com>",
-        "Oppenheymu <oppenheymu@gmail.com>"
-    ],
-    "license": "MIT",
-    "repository": {
-        "type": "git",
-        "url": "git+https://github.com/Koishi-CE/koishi.git",
-        "directory": "plugins/common/bind"
-    },
-    "bugs": {
-        "url": "https://github.com/Koishi-CE/koishi/issues"
-    },
-    "homepage": "https://koishi.chat/plugins/common/bind.html",
-    "keywords": [
-        "bot",
-        "chatbot",
-        "koishi",
-        "plugin",
-        "bind"
-    ],
-    "koishi": {
-        "category": "tool",
-        "description": {
-            "en": "Bind user accounts across platforms",
-            "zh": "跨平台账户绑定 (绑定后在多个平台将共享同一套用户数据)"
-        },
-        "service": {
-            "required": [
-                "database"
-            ]
-        },
-        "locales": [
-            "zh",
-            "en"
-        ]
-    },
-    "peerDependencies": {
-        "@koishi-ce/koishi": "^1.0.0"
-    },
-    "devDependencies": {
-        "@koishi-ce/plugin-mock": "workspace:*",
-        "@koishi-ce/koishi": "workspace:*"
-    },
-    "exports": {
-        ".": {
-            "source": "./src/index.ts",
-            "types": "./lib/index.d.ts",
-            "import": "./lib/index.mjs",
-            "default": "./lib/index.mjs"
-        }
-    }
+	"name": "@koishi-ce/plugin-bind",
+	"description": "Bind User Accounts Across Platforms in Koishi",
+	"version": "1.0.0",
+	"type": "module",
+	"main": "lib/index.mjs",
+	"typings": "lib/index.d.ts",
+	"files": [
+		"lib",
+		"src",
+		"locales"
+	],
+	"contributors": [
+		"Shigma <shigma10826@gmail.com>",
+		"Oppenheymu <oppenheymu@gmail.com>"
+	],
+	"license": "MIT",
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/Koishi-CE/koishi.git",
+		"directory": "plugins/common/bind"
+	},
+	"bugs": {
+		"url": "https://github.com/Koishi-CE/koishi/issues"
+	},
+	"homepage": "https://koishi.chat/plugins/common/bind.html",
+	"keywords": [
+		"bot",
+		"chatbot",
+		"koishi",
+		"plugin",
+		"bind"
+	],
+	"koishi": {
+		"category": "tool",
+		"description": {
+			"en": "Bind user accounts across platforms",
+			"zh": "跨平台账户绑定 (绑定后在多个平台将共享同一套用户数据)"
+		},
+		"service": {
+			"required": [
+				"database"
+			]
+		},
+		"locales": [
+			"zh",
+			"en"
+		]
+	},
+	"peerDependencies": {
+		"@koishi-ce/koishi": "^1.0.0"
+	},
+	"devDependencies": {
+		"@koishi-ce/plugin-mock": "workspace:*",
+		"@koishi-ce/koishi": "workspace:*"
+	},
+	"exports": {
+		".": {
+			"source": "./src/index.ts",
+			"types": "./lib/index.d.ts",
+			"import": "./lib/index.mjs",
+			"default": "./lib/index.mjs"
+		}
+	}
 }
