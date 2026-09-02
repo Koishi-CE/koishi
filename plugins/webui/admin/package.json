@@ -65,7 +65,6 @@
         "@koishi-ce/plugin-console": "workspace:*",
         "@koishi-ce/plugin-locales": "workspace:*",
         "@koishi-ce/plugin-mock": "workspace:*",
-        "@types/throttle-debounce": "^2.1.0",
         "@koishijs/plugin-database-memory": "^3.7.0"
     },
     "dependencies": {
