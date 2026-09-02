@@ -13,15 +13,16 @@ import {
 } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { tarPack } from "../tar.ts";
+import { tarPack } from "./tar-pack.ts";
 
 /**
  * start() 远程模板分支（--template）的端到端测试。
  *
  * 以 Bun.serve 起本地伪 registry（127.0.0.1 随机端口），按用例切换
  * 场景（正常 / 元数据 404 / dist-tag 缺失 / tarball 404 / tarball 损坏）；
- * tarball 由 src/tar.ts 的 tarPack 打包（ustar + gzip，与真实 npm
- * tarball 同构），scaffoldRemote 的下载-解包-改写全链路真实执行。
+ * tarball 由 __tests__/tar-pack.ts 的 tarPack 打包（ustar + gzip，与真实
+ * npm tarball 同构），scaffoldRemote 的下载-解包-改写全链路真实执行
+ * （解包走 giget，含超长名 pax 条目的端到端验证）。
  *
  * 覆盖率口径说明：bun 的覆盖率对同一路径的多个 query 实例只统计最后
  * 求值的那份，本文件是 koishi-create 全部测试中最后加载的实例，因此
@@ -40,6 +41,9 @@ let scenario: "ok" | "meta-404" | "missing-ref" | "tarball-404" | "corrupt" =
 
 /** 预先打包好的模板 tarball（package/ 前缀目录，strip:1 解包） */
 let tarball: Uint8Array;
+
+/** 超长文件名（>100 字节，触发 pax 扩展头），归档与落盘共用同一串 */
+const longName = "deep".repeat(30);
 
 // fetch 回调内引用 registry.port，显式标注返回类型以切断 initializer 的循环推断
 const registry = Bun.serve({
@@ -134,7 +138,7 @@ beforeAll(async () => {
 	console.log = (...args: unknown[]) => {
 		logs.push(args.map((arg) => `${arg}`).join(" "));
 	};
-	// 造模板载荷并打包：package/package.json + package/index.js
+	// 造模板载荷并打包：package/package.json + package/index.js + 超长名文件
 	const encoder = new TextEncoder();
 	tarball = await tarPack([
 		{
@@ -153,6 +157,12 @@ beforeAll(async () => {
 			path: "package/index.js",
 			data: encoder.encode("console.log('tpl');\n"),
 		},
+		{
+			// 124 字符 > ustar 的 100 字节 name 上限：tarPack 前置 pax
+			// 扩展头，giget（tar 库）经 pax 还原后同样能正确落盘
+			path: `package/${longName}.txt`,
+			data: encoder.encode("pax"),
+		},
 	]);
 });
 
@@ -169,6 +179,10 @@ function reset(sc: typeof scenario): void {
 	scenario = sc;
 	logs.length = 0;
 	rmSync(join(workspaceRoot, "myapp"), { recursive: true, force: true });
+	// giget 把 tarball 缓存到系统临时目录（win32 为 tmpdir()/giget，不受
+	// XDG_CACHE_HOME 影响）；逐用例清理，避免上一场景的缓存（tarball-404
+	// 的缺失或 corrupt 的损坏归档）被 giget 的「下载失败回退缓存」吞掉
+	rmSync(join(tmpdir(), "giget"), { recursive: true, force: true });
 }
 
 describe("create-koishi-ce 远程模板", () => {
@@ -177,6 +191,8 @@ describe("create-koishi-ce 远程模板", () => {
 		await start();
 		const dir = join(workspaceRoot, "myapp");
 		expect(existsSync(join(dir, "index.js"))).toBe(true);
+		// 超长名文件经 pax 扩展头正常落盘（tarPack 打包 → giget 解包全链路）
+		expect(readFileSync(join(dir, `${longName}.txt`), "utf8")).toBe("pax");
 		const manifest = JSON.parse(
 			readFileSync(join(dir, "package.json"), "utf8"),
 		) as Record<string, unknown>;

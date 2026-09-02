@@ -24,12 +24,11 @@ import {
 } from "node:fs";
 import { homedir } from "node:os";
 import { basename, join, relative } from "node:path";
-import type { ReadableStream as NodeWebReadableStream } from "node:stream/web";
 import { parseArgs } from "node:util";
 import * as p from "@clack/prompts";
+import { downloadTemplate } from "giget";
 import kleur from "kleur";
 import pkg from "../package.json" with { type: "json" };
-import { untar } from "./tar.ts";
 import { baseManifest, templateFiles } from "./template.ts";
 
 const { version } = pkg;
@@ -274,9 +273,9 @@ function scaffoldBuiltin() {
 /**
  * 远程模板下载与解包（--template 指定时）：
  * 1. 拉取模板包元数据，按 dist-tags 解析目标版本（--ref，默认 latest）；
- * 2. 流式下载 tarball 并解包到目标目录（strip: 1 去掉包根目录层级，
- *    gzip 解压与 ustar 解析均走内置 API，见 src/tar.ts），网络错误统一
- *    以 HttpError 提示后退出；
+ * 2. 下载 tarball 并解包到目标目录（解包走 giget，其按 npm tarball 惯例
+ *    剥离顶层 package/ 目录，等价于 strip: 1），网络错误统一以 HttpError
+ *    提示后退出；
  * 3. 最后改写 package.json。
  */
 async function scaffoldRemote(registry: string) {
@@ -288,23 +287,34 @@ async function scaffoldRemote(registry: string) {
 		if (!metaRes.ok) throw new HttpError(metaRes.status, metaRes.statusText);
 		const remote = (await metaRes.json()) as RegistryMeta;
 		const version = remote["dist-tags"][ref];
-		const url =
-			version === undefined
-				? undefined
-				: remote.versions[version]?.dist?.tarball;
+		if (version === undefined) {
+			throw new HttpError(404, `模板 ${template}@${ref} 不存在`);
+		}
+		const url = remote.versions[version]?.dist?.tarball;
 		if (url === undefined) {
 			throw new HttpError(404, `模板 ${template}@${ref} 不存在`);
 		}
-		const tarballRes = await fetch(url);
-		const body = tarballRes.body;
-		if (!tarballRes.ok || !body) {
-			throw new HttpError(tarballRes.status, tarballRes.statusText);
-		}
 
-		// 流式解包：路径穿越条目由 untar 内部安全跳过；解包失败
-		// （gzip 损坏 / 归档截断）走下方非 HttpError 分支原样上抛
-		await untar(body as unknown as NodeWebReadableStream, rootDir, {
-			strip: 1,
+		// 解包交给 giget：provider 的 tar 字段是函数，giget 需要时才发起
+		// 下载（HttpError 在下载阶段抛出，不经 giget 包装可直接识别）；
+		// giget 先把 tarball 落入本地缓存再解压到 rootDir，解压失败
+		// （gzip 损坏 / 归档截断）走下方非 HttpError 分支原样上抛。
+		await downloadTemplate(template, {
+			provider: "npm",
+			providers: {
+				npm: async () => ({
+					name: template,
+					version,
+					tar: async () => {
+						const tarballRes = await fetch(url);
+						if (!tarballRes.ok || !tarballRes.body) {
+							throw new HttpError(tarballRes.status, tarballRes.statusText);
+						}
+						return tarballRes.body;
+					},
+				}),
+			},
+			dir: rootDir,
 		});
 	} catch (err) {
 		if (!(err instanceof HttpError)) throw err;
