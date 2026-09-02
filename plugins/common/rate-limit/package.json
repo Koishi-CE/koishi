@@ -1,68 +1,66 @@
 {
-	"name": "@koishi-ce/plugin-rate-limit",
-	"description": "Commands rate limiting for Koishi",
-	"version": "1.0.1",
-	"type": "module",
-	"main": "lib/index.mjs",
-	"typings": "lib/index.d.ts",
-	"files": [
-		"lib",
-		"src",
-		"locales"
-	],
-	"contributors": [
-		"Shigma <shigma10826@gmail.com>",
-		"Oppenheymu <oppenheymu@gmail.com>"
-	],
-	"license": "MIT",
-	"repository": {
-		"type": "git",
-		"url": "git+https://github.com/Koishi-CE/koishi.git",
-		"directory": "plugins/common/rate-limit"
-	},
-	"bugs": {
-		"url": "https://github.com/Koishi-CE/koishi/issues"
-	},
-	"homepage": "https://koishi.chat/plugins/common/rate-limit.html",
-	"keywords": [
-		"bot",
-		"chatbot",
-		"koishi",
-		"rate",
-		"limit",
-		"usage"
-	],
-	"koishi": {
-		"category": "tool",
-		"description": {
-			"en": "Commands rate limiting",
-			"zh": "为指令提供调用频率与次数限制"
-		},
-		"service": {
-			"required": [
-				"database"
-			]
-		},
-		"locales": [
-			"zh"
-		]
-	},
-	"peerDependencies": {
-		"@koishi-ce/koishi": "^1.0.0"
-	},
-	"devDependencies": {
-		"@koishi-ce/koishi": "workspace:*",
-		"@koishi-ce/plugin-help": "workspace:*",
-		"@koishi-ce/plugin-mock": "workspace:*",
-		"@minatojs/driver-memory": "^3.7.0",
-		"minato": "^3.7.0"
-	},
-	"exports": {
-		".": {
-			"source": "./src/index.ts",
-			"types": "./lib/index.d.ts",
-			"import": "./lib/index.mjs",
-			"default": "./lib/index.mjs"
-		}
-	}
+    "name": "@koishi-ce/plugin-rate-limit",
+    "description": "Commands rate limiting for Koishi",
+    "version": "1.0.1",
+    "type": "module",
+    "main": "lib/index.mjs",
+    "typings": "lib/index.d.ts",
+    "files": [
+        "lib",
+        "src",
+        "locales"
+    ],
+    "contributors": [
+        "Shigma <shigma10826@gmail.com>",
+        "Oppenheymu <oppenheymu@gmail.com>"
+    ],
+    "license": "MIT",
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/Koishi-CE/koishi.git",
+        "directory": "plugins/common/rate-limit"
+    },
+    "bugs": {
+        "url": "https://github.com/Koishi-CE/koishi/issues"
+    },
+    "homepage": "https://koishi.chat/plugins/common/rate-limit.html",
+    "keywords": [
+        "bot",
+        "chatbot",
+        "koishi",
+        "rate",
+        "limit",
+        "usage"
+    ],
+    "koishi": {
+        "category": "tool",
+        "description": {
+            "en": "Commands rate limiting",
+            "zh": "为指令提供调用频率与次数限制"
+        },
+        "service": {
+            "required": [
+                "database"
+            ]
+        },
+        "locales": [
+            "zh"
+        ]
+    },
+    "peerDependencies": {
+        "@koishi-ce/koishi": "^1.0.0"
+    },
+    "devDependencies": {
+        "@koishi-ce/koishi": "workspace:*",
+        "@koishi-ce/plugin-help": "workspace:*",
+        "@koishi-ce/plugin-mock": "workspace:*"
+    },
+    "exports": {
+        ".": {
+            "source": "./src/index.ts",
+            "types": "./lib/index.d.ts",
+            "import": "./lib/index.mjs",
+            "default": "./lib/index.mjs"
+        }
+    }
 }
