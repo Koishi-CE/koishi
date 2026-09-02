@@ -28,10 +28,6 @@
         "release": "bun tooling/release/index.ts"
     },
     "devDependencies": {
-        "@koishi-ce/koishi": "workspace:*",
-        "@koishi-ce/plugin-help": "workspace:*",
-        "@koishi-ce/plugin-http": "workspace:*",
-        "@koishi-ce/plugin-mock": "workspace:*",
         "typescript": "npm:@typescript/typescript6@6.0.2",
         "@typescript/native": "npm:typescript@7.0.2",
         "@types/node": "^26.4.0",
