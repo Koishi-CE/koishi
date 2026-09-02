@@ -8,7 +8,7 @@
  * 生成项目，产物依赖全是 npm 官方包（koishi / @koishijs/*），完全绕开了
  * 本仓的 @koishi-ce 再分发生态（官方 market 还带 Bun 下必炸的 get-registry）。
  * 默认模板改为内置的纯 @koishi-ce 依赖集；确需上游官方模板时用
- * --template <包名> 走 npm 远程下载（见 index.ts 的 scaffoldRemote）。
+ * --template <包名> 走 npm 远程下载（见 remote.ts 的 scaffoldRemote）。
  *
  * 模板的静态文本一律放在 src/template/ 下的真实文件里（本模块只负责
  * 定位与读取，不再内嵌字符串常量）。npm 包的 files 含 src，因此 lib
@@ -33,7 +33,7 @@
 import { existsSync, readdirSync, readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
-import type { Manifest } from "./index.ts";
+import type { Manifest } from "./manifest.ts";
 
 /**
  * 定位内置模板目录：src 直跑（开发 / 测试）与 lib 产物（npm 消费）两种

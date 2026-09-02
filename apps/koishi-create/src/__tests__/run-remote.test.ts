@@ -27,7 +27,8 @@ import { tarPack } from "./tar-pack.ts";
  * 覆盖率口径说明：bun 的覆盖率对同一路径的多个 query 实例只统计最后
  * 求值的那份，本文件是 koishi-create 全部测试中最后加载的实例，因此
  * 在此补齐 registry 探测纯函数、emptyDir 与 initGit（--git）等只在其它
- * 实例出现过的分支，保证 src/index.ts 的行覆盖完整。
+ * 实例出现过的分支，保证 index.ts 及其子模块（manifest / registry /
+ * utils / remote）的行覆盖完整。
  */
 
 const workspaceRoot = mkdtempSync(join(tmpdir(), "ckc-run-remote-"));

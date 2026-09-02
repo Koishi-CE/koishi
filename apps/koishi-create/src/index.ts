@@ -10,28 +10,37 @@
  * 见 src/template.ts；--template <包名> 可改用 npm registry 远程模板，如
  * 上游官方 @koishijs/boilerplate）→ 按需初始化 git → 询问是否立即安装
  * 依赖并启动。CLI 可执行入口在 src/bin.ts（构建产物 lib/bin.mjs，bin 字段
- * 指向它）；本文件只承载主流程与可单测的纯函数（范式对齐
- * @koishi-ce/scripts）。
+ * 指向它）。
+ *
+ * 本文件是 CLI 的编排层：承载参数解析与运行期状态（argv / cwd /
+ * project / rootDir —— 它们被 e2e 测试以模块 query 隔离实例，必须留在
+ * 顶层模块内）与交互主流程。纯函数与单一职责的子流程按域拆到同目录
+ * 子模块，公共导出面在文件尾原样 re-export（bin 与测试的导入路径不变）：
+ * - manifest.ts   package.json 改写（Manifest / renderManifest）
+ * - registry.ts   本机 npm registry 配置探测
+ * - utils.ts      平台小工具（包管理器 / git 探测、清空目录）
+ * - remote.ts     --template 远程模板的下载-解包-改写全流程
+ * - template.ts   内置 @koishi-ce 模板（静态文件与 baseManifest）
  */
 import { spawnSync } from "node:child_process";
-import {
-	existsSync,
-	mkdirSync,
-	readdirSync,
-	readFileSync,
-	rmSync,
-	writeFileSync,
-} from "node:fs";
-import { homedir } from "node:os";
+import { existsSync, mkdirSync, readdirSync, writeFileSync } from "node:fs";
 import { basename, join, relative } from "node:path";
 import { parseArgs } from "node:util";
 import * as p from "@clack/prompts";
-import { downloadTemplate } from "giget";
 import kleur from "kleur";
 import pkg from "../package.json" with { type: "json" };
+import { type Manifest, renderManifest } from "./manifest.ts";
+import { getLocalRegistry, readNpmrcRegistry } from "./registry.ts";
+import { scaffoldRemote } from "./remote.ts";
 import { baseManifest, templateFiles } from "./template.ts";
+import { detectAgent, emptyDir, gitConfig, supports } from "./utils.ts";
 
 const { version } = pkg;
+
+export type { Manifest };
+// 公共导出面：与拆分前保持一致（bin.ts 与测试文件按 ../index.ts 的既有
+// 导入路径原样可用）；子模块的其余导出属于包内部实现，不在此暴露。
+export { detectAgent, getLocalRegistry, readNpmrcRegistry, renderManifest };
 
 /** CLI 参数（node:util parseArgs 解析，别名映射见 bin 帮助文本） */
 interface Args {
@@ -44,37 +53,6 @@ interface Args {
 	template?: string;
 	yes?: boolean;
 	help?: boolean;
-}
-
-/**
- * 模板项目的 package.json（改写目标）：只需要类型化本流程触碰的字段，
- * 其余字段经 index signature 原样保留。
- */
-export interface Manifest {
-	name?: string;
-	private?: boolean;
-	version?: string;
-	workspaces?: unknown;
-	dependencies?: Record<string, string>;
-	devDependencies?: Record<string, string>;
-	[key: string]: unknown;
-}
-
-/** registry 包元数据中本流程消费的字段 */
-interface RegistryMeta {
-	"dist-tags": Record<string, string>;
-	versions: Record<string, { dist?: { tarball?: string } }>;
-}
-
-/** fetch 请求非 2xx 时抛出的错误，携带 HTTP 状态码与状态文本 */
-class HttpError extends Error {
-	status: number;
-	statusText: string;
-	constructor(status: number, statusText: string) {
-		super(`HTTP ${status} ${statusText}`);
-		this.status = status;
-		this.statusText = statusText;
-	}
 }
 
 // 命令行参数（顶层解析；无副作用，单测导入本文件不会触发主流程）。
@@ -106,74 +84,6 @@ let rootDir: string;
 const cwd = process.cwd();
 
 /**
- * 探测后续安装/启动使用的包管理器（Bun-first）：yarn / pnpm 用户跟随其
- * 生态习惯；其余场景（npm、bun 及探测不到 user-agent）一律走 bun——
- * 本 CLI 自身以 bun 为运行时（bin shebang），能执行即已具备 bun 环境。
- */
-export function detectAgent(): string {
-	const ua = process.env["npm_config_user_agent"] ?? "";
-	if (ua.startsWith("yarn")) return "yarn";
-	if (ua.startsWith("pnpm")) return "pnpm";
-	return "bun";
-}
-
-/**
- * 从单个 .npmrc 文件提取 registry 配置项（非注释、非 scoped 的 registry= 行）。
- * 文件不存在或未配置时返回 undefined，读文件异常一律静默吞掉。
- */
-export function readNpmrcRegistry(file: string): string | undefined {
-	try {
-		for (const line of readFileSync(file, "utf8").split(/\r?\n/)) {
-			const matched = /^\s*registry\s*=\s*(\S+)\s*$/.exec(line);
-			const value = matched?.[1];
-			if (value) return value;
-		}
-	} catch {
-		// registry 探测不允许打断主流程，任何读取失败都视为未配置
-	}
-	return undefined;
-}
-
-/**
- * 读取本机 npm registry 配置（优先级对齐 npm 自身：环境变量 > 项目
- * .npmrc > 用户 ~/.npmrc）。刻意不 spawn 子进程探测——既有实现按
- * user-agent 选 `bun config get registry`，而 Bun 没有 config 子命令，
- * bunx 场景下子进程退出码 1 直接炸掉脚手架；读 npmrc 是零依赖、零
- * 子进程的等价路径。任何一步都拿不到时返回 undefined，由调用方回落
- * 官方源。
- */
-export function getLocalRegistry(
-	cwd: string = process.cwd(),
-	userHome: string = homedir(),
-): string | undefined {
-	const candidates = [
-		process.env["npm_config_registry"],
-		readNpmrcRegistry(join(cwd, ".npmrc")),
-		readNpmrcRegistry(join(userHome, ".npmrc")),
-	];
-	for (const candidate of candidates) {
-		if (candidate?.startsWith("https://") || candidate?.startsWith("http://")) {
-			return candidate;
-		}
-	}
-	return undefined;
-}
-
-/** 静默执行命令探测其是否可用（如 git --version），失败即视为不可用 */
-function supports(command: readonly string[]) {
-	return (
-		spawnSync(command[0] ?? "", command.slice(1), { stdio: "ignore" })
-			.status === 0
-	);
-}
-
-/** 读 git 全局配置单项（读不到 → 空串） */
-function gitConfig(key: string): string {
-	const res = spawnSync("git", ["config", "--get", key], { encoding: "utf8" });
-	return res.status === 0 ? (res.stdout?.trim() ?? "") : "";
-}
-
-/**
  * 获取项目名：优先取第一个位置参数，否则交互式询问（默认 koishi-app）。
  * 用户取消（Ctrl+C）或输入为空时直接退出（不强行兜底默认值）。
  */
@@ -188,13 +98,6 @@ async function getName(): Promise<string> {
 	const trimmed = answer.trim();
 	if (!trimmed) process.exit(0);
 	return trimmed;
-}
-
-/** 递归清空目录内容（目录本身保留）。 */
-function emptyDir(root: string) {
-	for (const file of readdirSync(root)) {
-		rmSync(join(root, file), { recursive: true, force: true });
-	}
 }
 
 /** 交互式确认框：返回用户是否选择了「是」（Ctrl+C 取消直接退出） */
@@ -227,36 +130,6 @@ async function prepare() {
 }
 
 /**
- * 改写模板的 package.json（纯函数，导出供单测）：替换项目名、标记
- * private、版本归零。
- */
-export function renderManifest(
-	source: Manifest,
-	project: string,
-	prod: boolean,
-): string {
-	const meta: Manifest = { ...source };
-	meta["name"] = project;
-	meta["private"] = true;
-	meta["version"] = "0.0.0";
-	if (prod) {
-		// https://github.com/koishijs/koishi/issues/994
-		// 生产模式不借助 NODE_ENV 或 --production 标志，
-		// 而是直接删掉 devDependencies 与 workspaces 字段。
-		delete meta["workspaces"];
-		delete meta["devDependencies"];
-	}
-	return `${JSON.stringify(meta, null, 2)}\n`;
-}
-
-/** 把改写结果写回生成项目的 package.json */
-function writePackageJson() {
-	const filename = join(rootDir, "package.json");
-	const meta = JSON.parse(readFileSync(filename, "utf8")) as Manifest;
-	writeFileSync(filename, renderManifest(meta, project, argv.prod === true));
-}
-
-/**
  * 写入内置模板（默认路径）：静态文件（src/template.ts 的 templateFiles）
  * 加上由 baseManifest() 渲染出的 package.json。纯本地写入，无网络请求。
  */
@@ -271,66 +144,9 @@ function scaffoldBuiltin() {
 }
 
 /**
- * 远程模板下载与解包（--template 指定时）：
- * 1. 拉取模板包元数据，按 dist-tags 解析目标版本（--ref，默认 latest）；
- * 2. 下载 tarball 并解包到目标目录（解包走 giget，其按 npm tarball 惯例
- *    剥离顶层 package/ 目录，等价于 strip: 1），网络错误统一以 HttpError
- *    提示后退出；
- * 3. 最后改写 package.json。
- */
-async function scaffoldRemote(registry: string) {
-	const template = argv.template as string;
-	const ref = argv.ref || "latest";
-
-	try {
-		const metaRes = await fetch(`${registry}/${template}`);
-		if (!metaRes.ok) throw new HttpError(metaRes.status, metaRes.statusText);
-		const remote = (await metaRes.json()) as RegistryMeta;
-		const version = remote["dist-tags"][ref];
-		if (version === undefined) {
-			throw new HttpError(404, `模板 ${template}@${ref} 不存在`);
-		}
-		const url = remote.versions[version]?.dist?.tarball;
-		if (url === undefined) {
-			throw new HttpError(404, `模板 ${template}@${ref} 不存在`);
-		}
-
-		// 解包交给 giget：provider 的 tar 字段是函数，giget 需要时才发起
-		// 下载（HttpError 在下载阶段抛出，不经 giget 包装可直接识别）；
-		// giget 先把 tarball 落入本地缓存再解压到 rootDir，解压失败
-		// （gzip 损坏 / 归档截断）走下方非 HttpError 分支原样上抛。
-		await downloadTemplate(template, {
-			provider: "npm",
-			providers: {
-				npm: async () => ({
-					name: template,
-					version,
-					tar: async () => {
-						const tarballRes = await fetch(url);
-						if (!tarballRes.ok || !tarballRes.body) {
-							throw new HttpError(tarballRes.status, tarballRes.statusText);
-						}
-						return tarballRes.body;
-					},
-				}),
-			},
-			dir: rootDir,
-		});
-	} catch (err) {
-		if (!(err instanceof HttpError)) throw err;
-		console.log(
-			`${kleur.red("error")} 请求失败：HTTP ${err.status} ${err.statusText}`,
-		);
-		process.exit(1);
-	}
-
-	writePackageJson();
-}
-
-/**
  * 生成项目的主入口：默认写内置 @koishi-ce 模板（scaffoldBuiltin）；
- * --template <包名> 时改为从 npm registry 下载远程模板（scaffoldRemote），
- * registry 取值 --registry 参数 > 本机 npm 配置 > 官方源。
+ * --template <包名> 时改为从 npm registry 下载远程模板（remote.ts 的
+ * scaffoldRemote），registry 取值 --registry 参数 > 本机 npm 配置 > 官方源。
  */
 async function scaffold() {
 	console.log(kleur.dim("  正在 ") + project + kleur.dim(" 中生成项目 ..."));
@@ -342,7 +158,15 @@ async function scaffold() {
 			"https://registry.npmjs.org"
 		).replace(/\/$/, "");
 		console.log(kleur.dim(`  使用 registry：${registry}\n`));
-		await scaffoldRemote(registry);
+		// 运行期状态不跨模块共享：远程分支所需字段在此显式组装后传入
+		await scaffoldRemote({
+			registry,
+			template: argv.template,
+			ref: argv.ref || "latest",
+			prod: argv.prod === true,
+			project,
+			rootDir,
+		});
 	} else {
 		scaffoldBuiltin();
 	}
