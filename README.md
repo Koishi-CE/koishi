@@ -73,7 +73,7 @@ The scaffold generates a Bun-based CE instance with a pure `@koishi-ce` template
 
 ### Contributing
 
-See [CONTRIBUTING.md](./CONTRIBUTING.md); repo-wide conventions also live in [AGENTS.md](./AGENTS.md).
+See [CONTRIBUTING.md](./.github/CONTRIBUTING.md); repo-wide conventions also live in [AGENTS.md](./AGENTS.md).
 
 - Code of conduct: [CODE_OF_CONDUCT.md](./.github/CODE_OF_CONDUCT.md)
 - Reporting vulnerabilities: [SECURITY.md](./.github/SECURITY.md)

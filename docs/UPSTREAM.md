@@ -2,6 +2,8 @@
 
 This repository is a community redistribution: it was bootstrapped by merging two upstream repositories as plain file copies (**no git history was preserved**) and restructuring them, and later redistributes a few plugins from other upstream repos. Porting upstream changes therefore has to be done manually, by diffing against an upstream checkout at the baseline version.
 
+**On this page**: [Baselines](#baselines) · [Restructure map](#restructure-map) · [Upstreams](#upstreams) · [Syncing upstream changes](#syncing-upstream-changes). Related: [docs index](README.md) · [DEVELOPMENT.md](DEVELOPMENT.md) · [ARCHITECTURE.md](ARCHITECTURE.md).
+
 ## Baselines
 
 No git history is preserved, so baselines are stated as upstream release lines rather than exact commits:
@@ -38,7 +40,7 @@ Local regrouping (upstream packages are flat `packages/*` / `plugins/*`): `packa
 Naming rules:
 
 - Code inside this monorepo imports `@koishi-ce/*` exclusively. The only external upstream imports are `@koishijs/plugin-database-memory` (tests) and `@koishijs/plugin-server-proxy` (type-only, console).
-- `peerDependencies` of CE packages target CE names (`@koishi-ce/* ^1.0.0`) so that Bun never auto-installs the official npm packages. Downstream projects occupy the upstream names via npm aliases to the frozen shims (`@koishi-ce/koishi-shim`, `@koishi-ce/console-shim`) — see `packages/shim/README.md` and [ARCHITECTURE.md](./ARCHITECTURE.md).
+- `peerDependencies` of CE packages target CE names (`@koishi-ce/* ^1.0.0`) so that Bun never auto-installs the official npm packages. Downstream projects occupy the upstream names via npm aliases to the frozen shims (`@koishi-ce/koishi-shim`, `@koishi-ce/console-shim`) — see `packages/shim/README.md` and [ARCHITECTURE.md](ARCHITECTURE.md).
 - Dependencies on packages outside this monorepo keep their upstream names.
 
 ## Upstreams

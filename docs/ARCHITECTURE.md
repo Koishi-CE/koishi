@@ -1,12 +1,14 @@
 # 仓库架构（ARCHITECTURE）
 
-> `koishi`（Koishi-CE）的仓库结构、包清单、构建体系与依赖纪律。以实际代码为准，文档滞后时听代码的。开发环境与命令见 [DEVELOPMENT.md](./DEVELOPMENT.md)；上游目录映射见 [UPSTREAM.md](./UPSTREAM.md)。包版本不在此罗列（统一 1.0.0 基线、随发布漂移，以各包 package.json 为准）。
+> `koishi`（Koishi-CE）的**仓库结构文档**：目录与包清单、依赖纪律、构建 / 类型检查 / 测试体系、许可证分区。以实际代码为准，文档滞后时听代码的。包版本不在此罗列（统一 1.0.0 基线、随发布漂移，以各包 package.json 为准）。
+> **先读**：开发环境与命令见 [DEVELOPMENT.md](DEVELOPMENT.md)；上游目录映射见 [UPSTREAM.md](UPSTREAM.md)；发布见 [RELEASE.md](RELEASE.md)。
+> **本文结构**：1 定位 · 2 目录与包清单 · 3 依赖纪律 · 4 构建体系 · 5 测试体系 · 6 许可证分区。
 
 ## 1. 定位
 
 - **是什么**：[Koishi](https://koishi.chat) 聊天机器人框架的 **Bun-first 社区再分发**（community redistribution）。由 [koishijs/koishi](https://github.com/koishijs/koishi)（MIT）与 [koishijs/webui](https://github.com/koishijs/webui)（部分 AGPL-3.0）两个上游仓库**文件级合并**（无上游 git 历史）重构为单一 Bun workspace monorepo，另再分发若干独立上游插件。
 - **发布身份**：GitHub 组织 [Koishi-CE](https://github.com/Koishi-CE)，npm 作用域 `@koishi-ce`（`koishi` → `@koishi-ce/koishi`，命令名不变；`@koishijs/X` → `@koishi-ce/X`）。与 Koishijs 组织无隶属关系（见 `NOTICE`）。
-- **上游同步**：按 [UPSTREAM.md](./UPSTREAM.md) 的映射表手动 diff 移植。
+- **上游同步**：按 [UPSTREAM.md](UPSTREAM.md) 的映射表手动 diff 移植。
 
 ## 2. 目录结构与包清单
 
@@ -85,14 +87,14 @@ node 侧在 `src/`、Vue 侧在 `client/`（上游约定），`koishi.public: ["
 
 ### tooling/ 与预留位
 
-- `tooling/release/`：本仓发布链（`bun run release`，见 [RELEASE.md](./RELEASE.md)）。与 koishi-scripts 的 release 链（面向宿主工作区插件项目）互不相干。
+- `tooling/release/`：本仓发布链（`bun run release`，见 [RELEASE.md](RELEASE.md)）。与 koishi-scripts 的 release 链（面向宿主工作区插件项目）互不相干。
 - 预留位（.gitignore 提到，当前均不存在）：`apps/koishi-plugin-adapter/`（适配器独立仓库位）、`external/`、`archive/`（本地参考 / 归档区）。
 
 ## 3. 依赖纪律
 
-### 两个依赖世界（背景见 [decisions/dependency-audit.md](./decisions/dependency-audit.md)）
+### 两个依赖世界（背景见 [decisions/dependency-audit.md](decisions/dependency-audit.md)）
 
-1. **cordis 生态运行时（冻结线）**：cordis ^3.18 / minato ^3.7 / @cordisjs/* / @satorijs/*——整体冻结在上游 koishi 4.18 配套线。Phase 5 跳代实证被 `@satorijs/core@4.6.0`（内部携带 cordis ^3，无 cordis 4 线）阻塞并整体回退，重启条件见 [decisions/upgrade-plan.md](./decisions/upgrade-plan.md) Phase 5 节。
+1. **cordis 生态运行时（冻结线）**：cordis ^3.18 / minato ^3.7 / @cordisjs/* / @satorijs/*——整体冻结在上游 koishi 4.18 配套线。Phase 5 跳代实证被 `@satorijs/core@4.6.0`（内部携带 cordis ^3，无 cordis 4 线）阻塞并整体回退，重启条件见 [decisions/upgrade-plan.md](decisions/upgrade-plan.md) Phase 5 节。
 2. **独立工具链（现代线）**：构建 / 前端 / CLI / 测试已一步到位（vite 8、TS 7、tsdown、biome 2.5、bun test）。
 
 ### 硬性规则
@@ -125,7 +127,7 @@ node 侧在 `src/`、Vue 侧在 `client/`（上游约定），`koishi.public: ["
 
 ## 5. 测试体系
 
-- 运行器 `bun test`（裸跑即全量：97 个测试文件 / 约 800 用例，覆盖全部 node 侧包）；断言标准为 `bun:test` 的 `expect`，存量 chai 用例逐步迁移；shape 断言用 `packages/node/core/tests/shape.ts` 注册的 `toHaveShape`。写法与坑见 [DEVELOPMENT.md](./DEVELOPMENT.md) §6。
+- 运行器 `bun test`（裸跑即全量：97 个测试文件 / 约 800 用例，覆盖全部 node 侧包）；断言标准为 `bun:test` 的 `expect`，存量 chai 用例逐步迁移；shape 断言用 `packages/node/core/tests/shape.ts` 注册的 `toHaveShape`。写法与坑见 [DEVELOPMENT.md](DEVELOPMENT.md) §6。
 
 ## 6. 许可证分区（权威：`NOTICE`）
 

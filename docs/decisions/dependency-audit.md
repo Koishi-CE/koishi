@@ -1,6 +1,6 @@
 # 依赖与技术栈全量审计报告
 
-> **状态：历史快照（2026-08-27）**。本审计记录依赖升级计划立项前的基线；其行动方案（[upgrade-plan.md](./upgrade-plan.md)）的 Phase 0-4 已执行完毕，文中「现状」「状态」列均为审计当日数据，与当前仓库实况的出入以 [../DEVELOPMENT.md](../DEVELOPMENT.md) 与 [../ARCHITECTURE.md](../ARCHITECTURE.md) 为准。
+> **状态：历史快照（2026-08-27）**。本审计记录依赖升级计划立项前的基线；其行动方案（[upgrade-plan.md](upgrade-plan.md)）的 Phase 0-4 已执行完毕，文中「现状」「状态」列均为审计当日数据，与当前仓库实况的出入以 [../DEVELOPMENT.md](../DEVELOPMENT.md) 与 [../ARCHITECTURE.md](../ARCHITECTURE.md) 为准。
 >
 > 审计日期:2026-08-27 · 注册表数据均于当日经 npm registry 实时验证
 > 运行环境:Bun 1.4.0 · Node v24.16.0(辅) · 包管理: Bun workspaces(`bun.lock`)
@@ -186,4 +186,4 @@ koishi-bun/
 3. cordis 4 / minato 4 / @cordisjs 1.x 生态跳版是最大的破坏性变更,且 cordis 4 尚处 RC,需单独决策。
 4. 存在 4 项弃用/死依赖与一批幽灵依赖、历史残留,应先行清理。
 
-后续行动见 **[upgrade-plan.md](./upgrade-plan.md)**。
+后续行动见 **[upgrade-plan.md](upgrade-plan.md)**。

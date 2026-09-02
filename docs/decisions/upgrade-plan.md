@@ -2,7 +2,7 @@
 
 > **状态：Phase 0-4 已完成（2026-08）；Phase 5（cordis 生态 4.x）已执行、被上游阻塞并整体回退**——实证结论与重启条件见 Phase 5 节，该节仍是活约束（仓库依赖纪律的依据）。本文是决策记录，文中命令与版本号为当时数据。
 >
-> 前置文档:[dependency-audit.md](./dependency-audit.md) · 日期:2026-08-27
+> 前置文档:[dependency-audit.md](dependency-audit.md) · 日期:2026-08-27
 > 原则:**最现代、高性能、Bun 原生优先;允许破坏性更新;git 分阶段提交可回滚。**
 > 硬约束:所有面向上游运行时的 `peerDependencies`(`koishi`、`@koishijs/*`)**保持不动**(fork 兼容性设计,见审计 §1;该约束后已演变为「CE 包 peer 一律指向 CE 包名」，现行纪律见 [../ARCHITECTURE.md](../ARCHITECTURE.md) 依赖纪律节)。
 

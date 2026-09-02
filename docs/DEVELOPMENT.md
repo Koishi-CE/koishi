@@ -1,6 +1,8 @@
 # 开发指南（DEVELOPMENT）
 
-> 本文档是 `koishi`（Koishi-CE monorepo）的开发参考手册：环境、门禁命令、构建布局、编码约定、测试写法与已知坑。以实际代码为准，文档滞后时听代码的。仓库级常驻约束见根目录 [AGENTS.md](../AGENTS.md)；结构与包清单见 [ARCHITECTURE.md](./ARCHITECTURE.md)；发布流程见 [RELEASE.md](./RELEASE.md)。
+> `koishi`（Koishi-CE monorepo）的**开发手册**：环境、命令、门禁、构建产物布局、编码约定、测试写法与已知坑。以实际代码为准，文档滞后时听代码的。
+> **先读**：根 [AGENTS.md](../AGENTS.md)（铁律精简版）→ 本文（方法与细节）；结构见 [ARCHITECTURE.md](ARCHITECTURE.md)，发布见 [RELEASE.md](RELEASE.md)。
+> **本文结构**：1 环境 · 2 命令 · 3 门禁 · 4 构建产物 · 5 编码约定 · 6 测试 · 7 已知坑 · 8 版本与发布。
 
 ## 1. 环境要求
 
@@ -83,9 +85,9 @@ bun run release status                   # 发布链概览（详见 RELEASE.md�
 ### 命名空间与依赖纪律
 
 - 代码内导入一律 `@koishi-ce/*`。外部上游导入仅有的例外：测试用 `@koishijs/plugin-database-memory`，console 的类型引用 `@koishijs/plugin-server-proxy`。
-- `peerDependencies` 一律指向 CE 包名（`@koishi-ce/koishi ^1.0.0` 等），不要写回上游名；详见 [ARCHITECTURE.md](./ARCHITECTURE.md) 依赖纪律节。
+- `peerDependencies` 一律指向 CE 包名（`@koishi-ce/koishi ^1.0.0` 等），不要写回上游名；详见 [ARCHITECTURE.md](ARCHITECTURE.md) 依赖纪律节。
 - 依赖方向：`plugins/webui/* → @koishi-ce/console → @koishi-ce/core`；`plugins/common/* → @koishi-ce/core`；`packages/web/*`（浏览器侧）不依赖 node 侧运行时。
-- cordis 生态冻结在 3.x 内洽线（cordis / minato / @cordisjs/* / @satorijs/* 不得跳 4.x / 1.x），依据与重启条件见 [decisions/upgrade-plan.md](./decisions/upgrade-plan.md) Phase 5 节。
+- cordis 生态冻结在 3.x 内洽线（cordis / minato / @cordisjs/* / @satorijs/* 不得跳 4.x / 1.x），依据与重启条件见 [decisions/upgrade-plan.md](decisions/upgrade-plan.md) Phase 5 节。
 
 ### Biome / ESLint
 
@@ -127,12 +129,12 @@ expect(app.database.getUser("mock", "A")).resolves.toHaveShape({ authority: 1 })
 9. **前端构建没有 vite 配置文件**，全部编程式 `vite.build()`：宿主总装 `packages/web/client/scripts/client.ts`（产物硬编码到 `plugins/webui/console/dist`）；单插件 `build(root)` 内置 `collectWorkspaceAliases()`——未被依赖的 workspace 包不会出现在 node_modules 链接里，必须显式映射才能被 bundler 解析。
 10. **特殊构建 hack**（动对应构建链必须复核）：analytics 的 "fuck-echarts"（echarts chunk 内 `Symbol` 重命名）、explorer 的 monaco manualChunks、client 构建的 vue-i18n `esm-browser.prod` 别名。
 11. **hmr 的 esbuild 是运行时依赖**（TS 即时编译），不是 devDep，不能挪。
-12. **上游 port 须补 `.ts` 扩展名**：上游源码是无后缀的 bundler 风格相对导入，本仓 nodenext 类型检查要求相对导入带扩展名；port 流程见 [UPSTREAM.md](./UPSTREAM.md)。
+12. **上游 port 须补 `.ts` 扩展名**：上游源码是无后缀的 bundler 风格相对导入，本仓 nodenext 类型检查要求相对导入带扩展名；port 流程见 [UPSTREAM.md](UPSTREAM.md)。
 13. **Biome 的 JSON 行尾不可见字符**：已知、正常、无害，看到即跳过，不调查、不修复、不报告。
 14. **`apps/koishi-create`（目录）≠ `create-koishi-ce`（包名）**：历史遗留的命名不一致，引用一律以 `apps/koishi-create` 为准。
 
 ## 8. 版本与发布
 
-- 全部可发布包统一 1.0.0 版本基线（不镜像上游版本号），shim 两包例外（版本冻结跟随上游线，见 [ARCHITECTURE.md](./ARCHITECTURE.md)）。
-- 版本与发布由 changesets + `bun run release` 发布链管理，禁止手动 `npm publish`——流程、命令与事故教训见 [RELEASE.md](./RELEASE.md)。
-- 面向发布的包改动随提交写 `.changeset/` 条目（见 [RELEASE.md](./RELEASE.md) 第 3 节）。
+- 全部可发布包统一 1.0.0 版本基线（不镜像上游版本号），shim 两包例外（版本冻结跟随上游线，见 [ARCHITECTURE.md](ARCHITECTURE.md)）。
+- 版本与发布由 changesets + `bun run release` 发布链管理，禁止手动 `npm publish`——流程、命令与事故教训见 [RELEASE.md](RELEASE.md)。
+- 面向发布的包改动随提交写 `.changeset/` 条目（见 [RELEASE.md](RELEASE.md) 第 3 节）。
