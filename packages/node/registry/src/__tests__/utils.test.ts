@@ -9,7 +9,7 @@
  */
 import { describe, expect, it } from "bun:test";
 import type { Manifest, PackageJson } from "../types.ts";
-import { conclude, Ensure } from "../utils.ts";
+import { conclude, Ensure, mapLimit } from "../utils.ts";
 
 /** 生成最小可用的 package.json 测试载荷 */
 function pkg(partial: Partial<PackageJson> = {}): PackageJson {
@@ -181,5 +181,99 @@ describe("conclude", () => {
 			locales: [],
 			service: { required: [], optional: [], implements: [] },
 		});
+	});
+});
+describe("mapLimit", () => {
+	it("保序返回全部结果（含真实 undefined 元素不跳过后继任务）", async () => {
+		const calls: number[] = [];
+		const result = await mapLimit(
+			[1, undefined, 3] as const,
+			2,
+			(item, index) => {
+				calls.push(index);
+				return item === undefined ? undefined : item * 2;
+			},
+		);
+		// 索引 2 不被索引 1 的 undefined 提前截断
+		expect(result).toEqual([2, undefined, 6]);
+		expect(calls).toEqual([0, 1, 2]);
+	});
+
+	it("并发数受限：同时执行不超过 concurrency 个 mapper", async () => {
+		let active = 0;
+		let peak = 0;
+		await mapLimit([0, 1, 2, 3, 4, 5], 2, async (item) => {
+			active += 1;
+			peak = Math.max(peak, active);
+			await new Promise((resolve) => setTimeout(resolve, 5));
+			active -= 1;
+			return item;
+		});
+		expect(peak).toBe(2);
+	});
+
+	it("并发数归一化：0 / 负数 / NaN 按 1，Infinity 退化为任务数", async () => {
+		expect(await mapLimit([1, 2], 0, (x) => x)).toEqual([1, 2]);
+		expect(await mapLimit([1, 2], -1, (x) => x)).toEqual([1, 2]);
+		expect(await mapLimit([1, 2], Number.NaN, (x) => x)).toEqual([1, 2]);
+		expect(await mapLimit([1, 2], Number.POSITIVE_INFINITY, (x) => x)).toEqual([
+			1, 2,
+		]);
+	});
+
+	it("空数组直接返回空结果", async () => {
+		expect(await mapLimit([], 5, (x) => x)).toEqual([]);
+	});
+
+	it("mapper 抛错：整体 reject 且不再派发新任务", async () => {
+		const calls: number[] = [];
+		const task = mapLimit([0, 1, 2, 3], 1, (item) => {
+			calls.push(item);
+			if (item === 1) throw new Error("boom");
+			return item;
+		});
+		await expect(task).rejects.toThrow("boom");
+		// 并发 1 串行：失败后停止，不派发索引 2 / 3
+		expect(calls).toEqual([0, 1]);
+	});
+
+	it("mapper 异步拒绝同样被消化（无 unhandled rejection）并整体 reject", async () => {
+		const task = mapLimit([0, 1], 2, async (item) => {
+			await new Promise((resolve) => setTimeout(resolve, 1));
+			if (item === 1) throw new Error("async boom");
+			return item;
+		});
+		await expect(task).rejects.toThrow("async boom");
+	});
+
+	it("mapper 抛出 undefined 不被吞掉：整体 reject 且不再派发新任务", async () => {
+		const calls: number[] = [];
+		const task = mapLimit([0, 1, 2, 3], 1, (item) => {
+			calls.push(item);
+			// throw undefined 是合法 JS，原因值本身为空也必须视为失败
+			if (item === 1) throw undefined;
+			return item;
+		});
+		// rejects.toBeUndefined()：断言整体以 undefined 原因 reject
+		let rejected = false;
+		try {
+			await task;
+		} catch (error) {
+			rejected = true;
+			expect(error).toBeUndefined();
+		}
+		expect(rejected).toBe(true);
+		// 并发 1 串行：失败后停止，不派发索引 2 / 3
+		expect(calls).toEqual([0, 1]);
+	});
+
+	it("首个失败优先：后发错误不覆盖首次错误原因", async () => {
+		const task = mapLimit([0, 1], 2, async (item) => {
+			await new Promise((resolve) => setTimeout(resolve, item === 0 ? 3 : 1));
+			throw new Error(`boom-${item}`);
+		});
+		// 并发 2：延迟 1ms 的 item 1 先失败，延迟 3ms 的 item 0 后失败；
+		// 后者不得覆盖已记录的首次错误原因
+		await expect(task).rejects.toThrow("boom-1");
 	});
 });

@@ -136,34 +136,74 @@ export function conclude(meta: PackageJson) {
 /**
  * 带并发上限的保序 map（p-map 的最小等价实现，用于替换 npm 依赖）。
  *
- * 逐个取出输入元素并以不超过 concurrency 的并发调用 mapper，返回值按下标
- * 写入 pending 后统一 Promise.all，保证返回数组与输入同序；任一 mapper
- * 抛错会让整体 reject（等价于 p-map 默认 stopOnError: true 的行为，其余
- * 已启动的任务继续执行但不影响已 reject 的结果）。并发实现是 worker 池：
- * 每次取一个下标执行，全部取完即收束，不依赖外部计数器或信号量。
+ * 逐个取出输入元素并以不超过 concurrency 的并发调用 mapper，结果按下标
+ * 写回，保证返回数组与输入同序。失败语义对齐 p-map 默认 stopOnError:
+ * true——首个 mapper 抛错后不再派发新任务、已启动的继续跑完，整体以该
+ * 错误 reject。并发实现是 worker 池：每次取一个下标执行，全部取完即
+ * 收束，不依赖外部计数器或信号量。
  *
- * 返回值先存 Promise 再统一兑现（而非在 worker 内 await 后直接写回），
- * 是因为 Awaitable<R> 对未约束泛型 R 在 await 展开后仍保留条件类型，
- * 直接赋回 R[] 无法通过类型检查；经 Promise.all 收口则类型自然化简。
+ * 与 p-map 的差异（有意取舍）：不支持中途取消与 stopOnError: false
+ *（调用方无需这些能力），失败原因取首个发生的错误而非 AggregateError。
+ *
+ * 实现要点：
+ * - worker 内 await mapper 并 try/catch 记录错误——若把 mapper 的裸
+ *   Promise 直接收集后统一 Promise.all，失败快速的 rejected promise
+ *   会在被消费前触发 unhandled rejection（运行时可能直接告警或崩溃）；
+ *   这里每个 promise 都被 await 消化，无此窗口。
+ * - failed 与 error 分离存储：mapper 抛出的原因可以是任意值（包括
+ *   undefined），若仅以 error 是否为空判断出错，`throw undefined` 会被
+ *   当成成功吞掉并继续派发后续任务；布尔标志不受原因值影响。
+ * - 循环边界只依赖索引（next < items.length）：不做元素值判空，真实
+ *   元素为 undefined 时也会照常派发（此前按值 break 会静默跳过其后
+ *   所有任务）。noUncheckedIndexedAccess 下 items[index] 的类型含
+ *   undefined，索引受边界保护故断言存在。
+ * - 并发数归一化显式走分支而非 `Math.floor(c) || 1`：后者依赖 || 的
+ *   隐式转换，可读性差。有限正数向下取整且至少为 1；Infinity 视为
+ *   不设上限（退化为任务数）；NaN / 0 / 负数按 1。
  */
 export async function mapLimit<T, R>(
 	items: readonly T[],
 	concurrency: number,
 	mapper: (item: T, index: number) => Awaitable<R>,
 ): Promise<R[]> {
-	const pending = new Array<Promise<R>>(items.length);
+	if (!items.length) return [];
+	const results = new Array<R>(items.length);
+	// 首个失败记录于此：failed 与 error 分离，while 条件只看 failed，
+	// 已派发的 worker 也会因 failed 置位停止派发新任务
+	let failed = false;
+	let error: unknown;
 	let next = 0;
 	const worker = async () => {
-		while (next < items.length) {
+		while (next < items.length && !failed) {
 			const index = next++;
-			const item = items[index];
-			if (item === undefined) break;
-			pending[index] = Promise.resolve(mapper(item, index));
+			try {
+				// Awaitable<R> 对未约束泛型 R 在 await 展开后仍保留条件类型，
+				// 无法直接化简为 R，此处断言一次
+				results[index] = (await mapper(items[index] as T, index)) as R;
+			} catch (reason) {
+				if (!failed) {
+					failed = true;
+					error = reason;
+				}
+			}
 		}
 	};
 	// 并发数上限：任务数少于并发时按任务数起 worker
-	await Promise.all(
-		Array.from({ length: Math.min(concurrency, items.length) }, worker),
-	);
-	return Promise.all(pending);
+	let limit: number;
+	if (concurrency === Number.POSITIVE_INFINITY) {
+		// 不设上限：与任务数一致（全部并发）
+		limit = items.length;
+	} else if (Number.isFinite(concurrency) && concurrency > 0) {
+		limit = Math.min(items.length, Math.max(1, Math.floor(concurrency)));
+	} else {
+		// NaN / 0 / 负数：保守按 1 串行
+		limit = 1;
+	}
+	const workers: Promise<void>[] = [];
+	for (let i = 0; i < limit; i++) {
+		workers.push(worker());
+	}
+	await Promise.all(workers);
+	if (failed) throw error;
+	return results;
 }
