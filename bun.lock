@@ -369,6 +369,21 @@
         "@koishi-ce/koishi": "^1.0.0",
       },
     },
+    "plugins/infra/sqlite": {
+      "name": "@koishi-ce/plugin-database-sqlite",
+      "version": "1.0.0",
+      "dependencies": {
+        "@minatojs/sql-utils": "^5.6.0",
+        "cosmokit": "^1.8.1",
+        "minato": "^3.7.0",
+      },
+      "devDependencies": {
+        "@koishi-ce/koishi": "workspace:*",
+      },
+      "peerDependencies": {
+        "@koishi-ce/koishi": "^1.0.0",
+      },
+    },
     "plugins/webui/actions": {
       "name": "@koishi-ce/plugin-actions",
       "version": "1.0.1",
@@ -939,6 +954,8 @@
 
     "@koishi-ce/plugin-console": ["@koishi-ce/plugin-console@workspace:plugins/webui/console"],
 
+    "@koishi-ce/plugin-database-sqlite": ["@koishi-ce/plugin-database-sqlite@workspace:plugins/infra/sqlite"],
+
     "@koishi-ce/plugin-dataview": ["@koishi-ce/plugin-dataview@workspace:plugins/webui/dataview"],
 
     "@koishi-ce/plugin-echo": ["@koishi-ce/plugin-echo@workspace:plugins/common/echo"],
@@ -1016,6 +1033,8 @@
     "@manypkg/tools": ["@manypkg/tools@2.1.2", "", { "dependencies": { "jju": "^1.4.0", "tinyglobby": "^0.2.13", "yaml": "^2.9.0" } }, "sha512-6QEf6yqFbETdwGITKq57aYoPfX/3K8XFNwsAlx0C1M7o8cb79sv1M3w+tWuWvIcSbNqrLF7OD7YpZMVVz335hQ=="],
 
     "@minatojs/driver-memory": ["@minatojs/driver-memory@3.7.0", "", { "dependencies": { "cosmokit": "^1.6.3" }, "peerDependencies": { "minato": "^3.7.0" } }, "sha512-IOiLWm4KVxUS5cvL9YWn827tbnEeHku6CIMHLtO+smPFUInRnczJZ6kikpCzx2ynqMV/nPKu8kIAGrYKJhR5/Q=="],
+
+    "@minatojs/sql-utils": ["@minatojs/sql-utils@5.6.0", "", { "dependencies": { "cosmokit": "^1.6.3" }, "peerDependencies": { "minato": "^3.7.0" } }, "sha512-FD1HeSEqQnhXm/nG+LXZb8G8WelTB7tGR+zFaTZN0TmjMSyoJpKqOxeiZve464YgaAd3IxZMcfFE28nPXBWx/w=="],
 
     "@napi-rs/wasm-runtime": ["@napi-rs/wasm-runtime@1.2.3", "", { "dependencies": { "@tybys/wasm-util": "^0.10.3" }, "peerDependencies": { "@emnapi/core": "^1.7.1 || ^2.0.0-alpha.4", "@emnapi/runtime": "^1.7.1 || ^2.0.0-alpha.4" } }, "sha512-UMduMbqO5s5zF2NkNacMT/yK5Y5QiKvWr2+50bzIIxFDwVJ2h49b+oyjaCGPhJxd2/gC2x39EHv/gHVuu36x2Q=="],
 

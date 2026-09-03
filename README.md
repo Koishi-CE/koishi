@@ -16,7 +16,7 @@ bun create koishi-ce
 
 ### 仓库状态
 
-- 46 个 workspace 包全部 ESM-only（`index.mjs` + `index.d.ts`），运行时与包管理均为 [Bun](https://bun.sh)
+- 47 个 workspace 包全部 ESM-only（`index.mjs` + `index.d.ts`），运行时与包管理均为 [Bun](https://bun.sh)
 - 类型检查走 TS7 原生编译器（`@typescript/native`），全仓 0 错误
 - 97 个测试文件 / 约 800 用例（`bun test`），总体约 99.8% 行覆盖
 - 独立工具链已一步到位：vite 8 / tsdown / biome 2 / bun test；cordis 生态冻结在 3.x（上游 cordis 4 被 `@satorijs/core` 阻塞，实证见 [docs/decisions/upgrade-plan.md](./docs/decisions/upgrade-plan.md)）
@@ -62,7 +62,7 @@ The scaffold generates a Bun-based CE instance with a pure `@koishi-ce` template
 
 ### Status
 
-- 46 workspace packages, all ESM-only, on the [Bun](https://bun.sh) runtime and package manager
+- 47 workspace packages, all ESM-only, on the [Bun](https://bun.sh) runtime and package manager
 - Type-checked by the TS7 native compiler (`@typescript/native`) with zero errors
 - 97 test files / ~800 cases (`bun test`), ~99.8% overall line coverage
 - Modern toolchain in place: vite 8 / tsdown / biome 2 / bun test; the cordis ecosystem stays on 3.x (cordis 4 is blocked upstream, see [docs/decisions/upgrade-plan.md](./docs/decisions/upgrade-plan.md))

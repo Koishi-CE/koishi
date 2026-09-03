@@ -12,7 +12,7 @@
 
 ## 2. 目录结构与包清单
 
-共 46 个 workspace 包，全部 `"type": "module"`。
+共 47 个 workspace 包，全部 `"type": "module"`。
 
 ```
 koishi/（Bun workspaces：packages/node/* · packages/shim/* · packages/web/* · plugins/{common,infra,webui}/* · apps/* · tooling/*）
@@ -20,7 +20,7 @@ koishi/（Bun workspaces：packages/node/* · packages/shim/* · packages/web/* 
 ├── packages/shim/   上游包名占位 shim（2 包，纯 JS 预编译，不走 tsdown）
 ├── packages/web/    浏览器侧库（client / components，源码直出，无独立构建产物）
 ├── plugins/common/  通用 bot 插件 ×8（MIT）
-├── plugins/infra/   基础设施插件 ×6（http/proxy/server 为 vendored 预编译）
+├── plugins/infra/   基础设施插件 ×7（http/proxy/server 为 vendored 预编译）
 ├── plugins/webui/   控制台插件 ×18（src/=Node 侧，client/=Vue 侧）
 ├── apps/            可部署应用（koishi-create / koishi-scripts）
 └── tooling/         发布链脚本（release/）
@@ -61,12 +61,13 @@ CE 包 peer 一律指 CE 名，但外部真包依赖（测试用的 `@koishijs/p
 
 `bind`（跨平台账户绑定，需 database）、`broadcast`（广播，需 database）、`callme`（昵称）、`echo`（回声，`koishi.browser: true`）、`help`（指令帮助，多语言 locale）、`inspect`（用户/频道/消息诊断）来自上游 koishi `plugins/common/*`；`assets-local`（本地资源落盘，来自 [koishijs/assets](https://github.com/koishijs/assets) `packages/local`）与 `rate-limit`（指令限流，来自 [koishijs/common](https://github.com/koishijs/common) `packages/rate-limit`）为后续再分发。均带 `koishi` 元数据，locale 放 `src/locales/*.yml`。
 
-### plugins/infra/*（基础设施 ×6）
+### plugins/infra/*（基础设施 ×7）
 
 | 目录 | 包名 | 说明 |
 |---|---|---|
 | `hmr` | `@koishi-ce/plugin-hmr` | 热重载；**esbuild 为运行时依赖** |
 | `mock` | `@koishi-ce/plugin-mock` | 测试 mock（多数测试依赖它） |
+| `sqlite` | `@koishi-ce/plugin-database-sqlite` | SQLite 数据库驱动（三源合并：cordis 3 线 `@minatojs/driver-sqlite` 4.7.0 骨架 + cordis 4 线 5.1.1 的 `node:sqlite` 引擎层；依赖官方 npm 的 `minato ^3.7` / `@minatojs/sql-utils ^5.6`） |
 | `http` | `@koishi-ce/plugin-http` | **vendored 预编译产物**（无 src，内联再导出 `@cordisjs/plugin-http`） |
 | `proxy` | `@koishi-ce/plugin-proxy-agent` | 同上（`@cordisjs/plugin-proxy-agent`；目录 `proxy` 系上游 `proxy-agent` 的本地改名） |
 | `server` | `@koishi-ce/plugin-server` | 同上（`@cordisjs/plugin-server ^0.2.9`）；Phase 5 原计划从 1.x 重建，随 cordis 4 回退一并冻结 |

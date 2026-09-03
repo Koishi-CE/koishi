@@ -38,6 +38,9 @@
 			],
 			"@koishi-ce/plugin-hmr": ["./plugins/infra/hmr/src/index.ts"],
 			"@koishi-ce/plugin-mock": ["./plugins/infra/mock/src/index.ts"],
+			"@koishi-ce/plugin-database-sqlite": [
+				"./plugins/infra/sqlite/src/index.ts"
+			],
 			"@koishi-ce/plugin-server-temp": [
 				"./plugins/infra/server-temp/src/index.ts"
 			],

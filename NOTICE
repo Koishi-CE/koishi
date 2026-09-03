@@ -31,6 +31,7 @@ The AGPL-3.0 portions remain under AGPL-3.0 in this repository; the MIT portions
 | `packages/node/{console,registry}` | [koishijs/webui](https://github.com/koishijs/webui) `packages/*` | [MIT](./LICENSE) \* |
 | `plugins/infra/{http,server,hmr,mock}` | [koishijs/koishi](https://github.com/koishijs/koishi) `plugins/*` | [MIT](./LICENSE) |
 | `plugins/infra/proxy`（上游目录为 `proxy-agent`，本地改名） | [koishijs/koishi](https://github.com/koishijs/koishi) `plugins/proxy-agent` | [MIT](./LICENSE) |
+| `plugins/infra/sqlite`（合并 cordis 3 线 driver 与 cordis 4 线引擎层） | [cordiverse/minato](https://github.com/cordiverse/minato) `packages/sqlite` · [cordiverse/database](https://github.com/cordiverse/database) `packages/sqlite` · [koishijs/upstream](https://github.com/koishijs/upstream) `plugins/database/sqlite` | [MIT](./LICENSE) |
 | `plugins/infra/server-temp` | [cordiverse/server](https://github.com/cordiverse/server) `packages/temp` | [MIT](./LICENSE) |
 | `plugins/common/{bind,broadcast,callme,echo,help,inspect}` | [koishijs/koishi](https://github.com/koishijs/koishi) `plugins/common/*` | [MIT](./LICENSE) |
 | `plugins/common/assets-local` | [koishijs/assets](https://github.com/koishijs/assets) `packages/local` | [MIT](./LICENSE) |

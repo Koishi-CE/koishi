@@ -11,7 +11,7 @@ No git history is preserved, so baselines are stated as upstream release lines r
 - koishi — the `koishi@4.18.11` release line (core / cli; `@koishijs/loader` 4.6.x, `@koishijs/utils` 7.2.x, `@koishijs/i18n-utils` 1.0.x)
 - webui — the `@koishijs/plugin-console@5.30.11` release line; `plugins/market` is aligned to upstream market **v2.11.11**
 - assets — the `@koishijs/assets@1.1.2` line (`packages/core` and `packages/local`)
-- others — `plugins/common/rate-limit` from [koishijs/common](https://github.com/koishijs/common), `plugins/infra/server-temp` from [cordiverse/server](https://github.com/cordiverse/server), `plugins/webui/{dataview,theme-vanilla}` from their standalone repos; see `NOTICE` for the full provenance table
+- others — `plugins/common/rate-limit` from [koishijs/common](https://github.com/koishijs/common), `plugins/infra/server-temp` from [cordiverse/server](https://github.com/cordiverse/server), `plugins/infra/sqlite` (a three-source merge, see the map below), `plugins/webui/{dataview,theme-vanilla}` from their standalone repos; see `NOTICE` for the full provenance table
 
 ## Restructure map
 
@@ -25,6 +25,7 @@ No git history is preserved, so baselines are stated as upstream release lines r
 | `packages/web/{client,components}` | webui `packages/*` |
 | `plugins/infra/{http,server,hmr,mock}` | koishi `plugins/*` |
 | `plugins/infra/proxy`（上游目录为 `proxy-agent`，本地改名） | koishi `plugins/proxy-agent` |
+| `plugins/infra/sqlite`（三源合并：cordis 3 线 driver + cordis 3 线 koishi 包装层 + cordis 4 线 `node:sqlite` 引擎层） | [cordiverse/minato](https://github.com/cordiverse/minato) `packages/sqlite`（3 线 `@minatojs/driver-sqlite` 4.7.0）· [cordiverse/database](https://github.com/cordiverse/database) `packages/sqlite`（4 线 `@cordisjs/plugin-database-sqlite` 5.1.1）· [koishijs/upstream](https://github.com/koishijs/upstream) `plugins/database/sqlite`（包装层） |
 | `plugins/infra/server-temp` | [cordiverse/server](https://github.com/cordiverse/server) `packages/temp` |
 | `plugins/common/{bind,broadcast,callme,echo,help,inspect}` | koishi `plugins/common/*` |
 | `plugins/common/assets-local` | [koishijs/assets](https://github.com/koishijs/assets) `packages/local` |

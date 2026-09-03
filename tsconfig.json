@@ -35,6 +35,7 @@
 		"plugins/common/rate-limit/src",
 		"plugins/infra/hmr/src",
 		"plugins/infra/mock/src",
+		"plugins/infra/sqlite/src",
 		"plugins/infra/server-temp/src",
 		"plugins/webui/actions/src",
 		"plugins/webui/admin/src",

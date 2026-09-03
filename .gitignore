@@ -54,6 +54,3 @@ tmp.txt
 # 配置
 /koishi.yml
 data/
-
-# 暂时ignore
-sqlite/
