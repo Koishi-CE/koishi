@@ -20,6 +20,21 @@ import {
 import type { ResolvedConfigFile } from "./config-file.ts";
 import { Loader } from "./index.ts";
 
+beforeAll(() => {
+	// createApp 期间 loader 的 apply/unload 与启动横幅均为生命周期 info；组配置
+	// 更新会触发 "duplicate plugin" 的 app 域 warn——一并收敛为仅错误级
+	const levels = Logger.levels as Record<string, number>;
+	levels["loader"] = 1;
+	levels["app"] = 1;
+});
+
+afterAll(() => {
+	// 恢复域级阈值，避免同进程后续测试文件被连带静默
+	const levels = Logger.levels as Record<string, number>;
+	delete levels["loader"];
+	delete levels["app"];
+});
+
 /** loader 测试桩：不落盘、不解析真实模块的 Loader 实现 */
 class TestLoader extends Loader {
 	/** 插件名 -> mock 插件对象 的内存注册表 */
@@ -304,16 +319,6 @@ describe("Loader.paths", () => {
 });
 
 describe("group 插件", () => {
-	beforeAll(() => {
-		// 组配置更新在 cordis fork 重建语义下会重挂旧键，触发
-		// "duplicate plugin" 的 [W] app 域告警，静默之（不影响断言）
-		(Logger.levels as Record<string, number>)["app"] = 0;
-	});
-
-	afterAll(() => {
-		delete (Logger.levels as Record<string, number>)["app"];
-	});
-
 	it("配置更新后新增键挂载、保留键存活", async () => {
 		const loader = setupLoader({
 			plugins: { "group:g": { a: {}, b: {} } },

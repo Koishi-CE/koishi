@@ -15,7 +15,13 @@ import { afterAll, beforeAll, describe, expect, it } from "bun:test";
 import { createHash, pbkdf2Sync, randomBytes } from "node:crypto";
 import type { IncomingMessage } from "node:http";
 import { type Client, Console, type Entry } from "@koishi-ce/console";
-import { App, type Plugin, Time, type Universal } from "@koishi-ce/koishi";
+import {
+	App,
+	Logger,
+	type Plugin,
+	Time,
+	type Universal,
+} from "@koishi-ce/koishi";
 import auth, { type Auth, randomId } from "@koishi-ce/plugin-auth";
 import mockClient from "@koishi-ce/plugin-mock";
 import memory from "@koishijs/plugin-database-memory";
@@ -173,6 +179,8 @@ let aliceId = 0;
 let bobId = 0;
 
 beforeAll(async () => {
+	// 「creating admin account」是启动期一次性生命周期 info，收敛为仅错误级
+	(Logger.levels as Record<string, number>)["auth"] = 1;
 	await app.start();
 	// alice：用于平台验证码登录；bob：用于绑定改挂场景
 	const alice = await app.database.createUser("mock", "111", {
@@ -194,6 +202,7 @@ afterAll(async () => {
 	}
 	await tick();
 	await app.stop();
+	delete (Logger.levels as Record<string, number>)["auth"];
 });
 
 /** 以管理员身份登录并返回客户端 */

@@ -11,7 +11,13 @@
  * check 抛错的容忍，以及 list() 汇总（含 validate 插件的命令权限闭包）。
  */
 import { afterAll, beforeAll, describe, expect, it } from "bun:test";
-import { App, Context, type Session, type User } from "@koishi-ce/koishi";
+import {
+	App,
+	Context,
+	Logger,
+	type Session,
+	type User,
+} from "@koishi-ce/koishi";
 import mock from "@koishi-ce/plugin-mock";
 
 const app = new App();
@@ -114,12 +120,18 @@ describe("Permissions", () => {
 	});
 
 	it("check 抛错按不通过处理且不影响其它规则", async () => {
-		app.permissions.provide("boom:(x)", () => {
-			throw new Error("check failed");
-		});
-		await expect(app.permissions.test("boom:1", session())).resolves.toBe(
-			false,
-		);
+		// 抛错容忍路径的 app 域告警是被测行为的预期伴生输出，静默之
+		(Logger.levels as Record<string, number>)["app"] = 0;
+		try {
+			app.permissions.provide("boom:(x)", () => {
+				throw new Error("check failed");
+			});
+			await expect(app.permissions.test("boom:1", session())).resolves.toBe(
+				false,
+			);
+		} finally {
+			delete (Logger.levels as Record<string, number>)["app"];
+		}
 	});
 
 	it("shadow 会话还原为原始会话再校验", async () => {

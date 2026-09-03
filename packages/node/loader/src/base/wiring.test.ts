@@ -6,11 +6,25 @@
  * 应用装配测试：根上下文 dispose 触发整进程重载、CLI 透传的启动消息
  * 在目标机器人上线后送达一次（无 channelId 时仅注销监听）。
  */
-import { describe, expect, it, mock } from "bun:test";
-import { type Context, sleep, type Universal } from "@koishi-ce/koishi";
+import { afterAll, beforeAll, describe, expect, it, mock } from "bun:test";
+import { type Context, Logger, sleep, type Universal } from "@koishi-ce/koishi";
 import type { ResolvedConfigFile } from "./config-file.ts";
 import { Loader } from "./index.ts";
 import { handleStartMessage } from "./wiring.ts";
+
+beforeAll(() => {
+	// createApp 期间 loader 的 apply 与启动横幅均为生命周期 info，收敛为仅错误级
+	const levels = Logger.levels as Record<string, number>;
+	levels["loader"] = 1;
+	levels["app"] = 1;
+});
+
+afterAll(() => {
+	// 恢复域级阈值，避免同进程后续测试文件被连带静默
+	const levels = Logger.levels as Record<string, number>;
+	delete levels["loader"];
+	delete levels["app"];
+});
 
 /** loader 测试桩：不落盘、fullReload 仅记录调用 */
 class TestLoader extends Loader {

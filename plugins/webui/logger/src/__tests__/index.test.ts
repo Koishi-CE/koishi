@@ -148,6 +148,8 @@ describe("@koishi-ce/plugin-logger", () => {
 		await mkdir(join(root, "2000-01-01-1.log"), { recursive: true });
 		await writeFile(join(root, "2000-01-01-2.log"), "{}", "utf8");
 		await writeFile(join(root, "2000-01-01-3.log"), "{}", "utf8");
+		// 启动清理对目录形态的 rm 失败会按预期告警（正是被测的容错分支），静默 logger 域
+		(Logger.levels as Record<string, number>)["logger"] = 0;
 
 		// loader 需在插件加载前就位（apply 时捕获），供 meta.paths 与 prolog 链路使用
 		app.provide("loader", {
@@ -170,6 +172,8 @@ describe("@koishi-ce/plugin-logger", () => {
 		}
 		await tick();
 		await app.stop();
+		// 恢复域级阈值，避免同进程后续测试文件被连带静默
+		delete (Logger.levels as Record<string, number>)["logger"];
 	});
 
 	it("启动清理超龄日志（目录形态触发容错分支）", async () => {
@@ -232,32 +236,33 @@ describe("@koishi-ce/plugin-logger", () => {
 	});
 
 	it("loader 暂存的 prolog 在加载时补写，卸载时清理", async () => {
+		// 独立 App 装配本插件：主 App 上已注册过同引用的 LogProvider，
+		// 再以任何包装形态 fork 都会触发 cordis 的 duplicate plugin 告警
 		const dir = join(tmpdir(), `koishi-logger-prolog-${Date.now()}`);
 		await mkdir(dir, { recursive: true });
-		const loader = app.get("loader") as { prolog: unknown[] };
-		loader.prolog = [record("prolog-message")];
-		// 注册表按 apply 函数引用去重：克隆须换名并包一层新的 apply
+		const app2 = new App();
+		app2.plugin(TestConsole as unknown as Plugin.Constructor<App>);
+		// loader 需在插件加载前就位（apply 时捕获），prolog 随 provide 预置
+		app2.provide("loader", {
+			paths: () => ["group:entry", "logger"],
+			prolog: [record("prolog-message")],
+		});
 		const targetsBefore = (Logger.targets as Logger.Target[]).length;
-		const fork = app.plugin(
-			{
-				...loggerPlugin,
-				name: "logger-clone-test",
-				apply: (ctx: Parameters<typeof loggerPlugin.apply>[0], config) =>
-					loggerPlugin.apply(ctx, config),
-			},
-			{
-				root: dir,
-				maxAge: 0,
-				maxSize: 1024 * 100,
-			},
-		);
+		const fork = app2.plugin(loggerPlugin, {
+			root: dir,
+			maxAge: 0,
+			maxSize: 1024 * 100,
+		});
+		await app2.start();
 		await tick(100);
 		const content = await readFile(join(dir, `${today()}-1.log`), "utf8");
 		expect(content).toContain("prolog-message");
+		const loader = app2.get("loader") as { prolog: unknown[] };
 		fork.dispose();
 		await tick(50);
 		// 卸载：清空 loader 暂存、摘除日志 target
 		expect(loader.prolog).toHaveLength(0);
 		expect((Logger.targets as Logger.Target[]).length).toBe(targetsBefore);
+		await app2.stop();
 	});
 });

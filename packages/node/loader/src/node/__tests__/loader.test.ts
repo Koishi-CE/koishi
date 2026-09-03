@@ -79,14 +79,18 @@ describe("@koishi-ce/loader", () => {
 	loader.writable = true;
 
 	beforeAll(() => {
-		// foo 插件 apply 抛错是预期场景；app 域日志在此只会产生 [E]/[I] 噪声，
-		// 静默之（阈值 0 = SILENT），不影响 "loader" 域的 [I] 输出
-		(Logger.levels as Record<string, number>)["app"] = 0;
+		// foo 插件 apply 抛错是预期场景，app 域静默（阈值 0 = SILENT）；
+		// createApp 期间 loader 的 apply/unload 为生命周期 info，收敛为仅错误级
+		const levels = Logger.levels as Record<string, number>;
+		levels["app"] = 0;
+		levels["loader"] = 1;
 	});
 
 	afterAll(() => {
 		// 恢复域级配置，避免同一进程内后续测试文件被连带静默
-		delete (Logger.levels as Record<string, number>)["app"];
+		const levels = Logger.levels as Record<string, number>;
+		delete levels["app"];
+		delete levels["loader"];
 	});
 
 	// 验证 createApp 能按配置表正确挂载插件并传递配置

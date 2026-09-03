@@ -1,30 +1,17 @@
 {
 	"$schema": "https://unpkg.com/knip@6.34.0/schema.json",
-	"exclude": [
-		"duplicates"
-	],
-	"ignoreDependencies": [
-		"@satorijs/element"
-	],
+	"exclude": ["duplicates"],
+	"ignoreDependencies": ["@satorijs/element"],
 	"workspaces": {
 		"apps/koishi-scripts": {
-			"ignore": [
-				"src/template/**"
-			]
+			"ignore": ["src/template/**"]
 		},
 		"packages/web/client": {
-			"entry": [
-				"client/**/*.ts",
-				"app/**/*.ts"
-			],
-			"ignore": [
-				"app/theme/blank.vue"
-			]
+			"entry": ["client/**/*.ts", "app/**/*.ts"],
+			"ignore": ["app/theme/blank.vue"]
 		},
 		"packages/web/components": {
-			"entry": [
-				"client/**/*.ts"
-			]
+			"entry": ["client/**/*.ts"]
 		},
 		"packages/node/cli": {
 			"ignoreDependencies": [
@@ -34,29 +21,19 @@
 			]
 		},
 		"plugins/infra/http": {
-			"ignore": [
-				"**/*"
-			]
+			"ignore": ["**/*"]
 		},
 		"plugins/infra/proxy": {
-			"ignore": [
-				"**/*"
-			]
+			"ignore": ["**/*"]
 		},
 		"plugins/infra/server": {
-			"ignore": [
-				"**/*"
-			]
+			"ignore": ["**/*"]
 		},
 		"plugins/infra/mock": {
-			"ignore": [
-				"lib/**"
-			]
+			"ignore": ["lib/**"]
 		},
 		"plugins/webui/admin": {
-			"entry": [
-				"client/**/*.ts"
-			],
+			"entry": ["client/**/*.ts"],
 			"ignoreDependencies": [
 				"@koishi-ce/plugin-console",
 				"@koishi-ce/plugin-locales",
@@ -64,20 +41,13 @@
 			]
 		},
 		"plugins/webui/analytics": {
-			"entry": [
-				"client/**/*.ts",
-				"build/**/*.ts"
-			]
+			"entry": ["client/**/*.ts", "build/**/*.ts"]
 		},
 		"plugins/webui/auth": {
-			"entry": [
-				"client/**/*.ts"
-			]
+			"entry": ["client/**/*.ts"]
 		},
 		"plugins/webui/commands": {
-			"entry": [
-				"client/**/*.ts"
-			],
+			"entry": ["client/**/*.ts"],
 			"ignoreDependencies": [
 				"@koishi-ce/plugin-console",
 				"@koishi-ce/plugin-config",
@@ -85,70 +55,43 @@
 			]
 		},
 		"plugins/webui/config": {
-			"entry": [
-				"client/**/*.ts"
-			]
+			"entry": ["client/**/*.ts"]
 		},
 		"plugins/webui/dataview": {
-			"entry": [
-				"client/**/*.ts"
-			]
+			"entry": ["client/**/*.ts"]
 		},
 		"plugins/webui/explorer": {
-			"entry": [
-				"client/**/*.ts"
-			]
+			"entry": ["client/**/*.ts"]
 		},
 		"plugins/webui/insight": {
-			"entry": [
-				"client/**/*.ts"
-			]
+			"entry": ["client/**/*.ts"]
 		},
 		"plugins/webui/locales": {
-			"entry": [
-				"client/**/*.ts"
-			]
+			"entry": ["client/**/*.ts"]
 		},
 		"plugins/webui/logger": {
-			"entry": [
-				"client/**/*.ts"
-			],
-			"ignoreDependencies": [
-				"ansi_up"
-			]
+			"entry": ["client/**/*.ts"],
+			"ignoreDependencies": ["ansi_up"]
 		},
 		"plugins/webui/market": {
-			"entry": [
-				"client/**/*.ts",
-				"src/browser/**/*.ts"
-			]
+			"entry": ["client/**/*.ts", "src/browser/**/*.ts"]
 		},
 		"plugins/webui/notifier": {
-			"entry": [
-				"client/**/*.ts"
-			]
+			"entry": ["client/**/*.ts"]
 		},
 		"plugins/webui/sandbox": {
-			"entry": [
-				"client/**/*.ts"
-			],
+			"entry": ["client/**/*.ts"],
 			"ignoreDependencies": [
 				"@koishi-ce/plugin-console",
 				"@satorijs/components-vue"
 			]
 		},
 		"plugins/webui/status": {
-			"entry": [
-				"client/**/*.ts"
-			],
-			"ignoreDependencies": [
-				"@koishi-ce/plugin-analytics"
-			]
+			"entry": ["client/**/*.ts"],
+			"ignoreDependencies": ["@koishi-ce/plugin-analytics"]
 		},
 		"plugins/webui/theme-vanilla": {
-			"entry": [
-				"client/**/*.ts"
-			]
+			"entry": ["client/**/*.ts"]
 		}
 	}
 }

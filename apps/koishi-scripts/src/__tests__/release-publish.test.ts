@@ -115,15 +115,23 @@ function respondVersions(versions: string[]): Response {
 
 const logs: string[] = [];
 const originalLog = console.log;
+// whoami 缺席等预期告警直通 stderr，捕获收敛避免刷屏（子进程均被 mock，无真实 stderr）
+const stderrChunks: string[] = [];
+const originalStderrWrite = process.stderr.write.bind(process.stderr);
 
 beforeAll(() => {
 	console.log = (...args: unknown[]) => {
 		logs.push(args.map((arg) => `${arg}`).join(" "));
 	};
+	process.stderr.write = ((chunk: string | Uint8Array) => {
+		stderrChunks.push(`${chunk}`);
+		return true;
+	}) as typeof process.stderr.write;
 });
 
 afterAll(() => {
 	console.log = originalLog;
+	process.stderr.write = originalStderrWrite;
 	globalThis.fetch = realFetch;
 	restoreTimers();
 	rmSync(workspaceRoot, { recursive: true, force: true });

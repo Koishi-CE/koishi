@@ -58,7 +58,19 @@ describe("进程执行工具（release/run.ts）", () => {
 	it("runCommand 在无效 cwd 下启动失败返回 1", () => {
 		const missing = join(workdir, "definitely-missing-dir");
 		expect(existsSync(missing)).toBe(false);
-		expect(runCommand(missing, "echo", ["hi"])).toBe(1);
+		// 启动失败的警告直通 stderr：捕获后转为断言，避免预期告警刷屏
+		const chunks: string[] = [];
+		const originalWrite = process.stderr.write.bind(process.stderr);
+		process.stderr.write = ((chunk: string | Uint8Array) => {
+			chunks.push(`${chunk}`);
+			return true;
+		}) as typeof process.stderr.write;
+		try {
+			expect(runCommand(missing, "echo", ["hi"])).toBe(1);
+		} finally {
+			process.stderr.write = originalWrite;
+		}
+		expect(chunks.join("")).toContain("无法启动 echo");
 	});
 
 	it("captureCommand 捕获 stdout，失败时返回 null", () => {

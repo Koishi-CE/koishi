@@ -10,7 +10,7 @@
  * 的精确投递与"未找到频道"告警、空内容短路。
  */
 import { afterAll, beforeAll, describe, expect, it } from "bun:test";
-import { App, Channel } from "@koishi-ce/koishi";
+import { App, Channel, Logger } from "@koishi-ce/koishi";
 import mock, { DEFAULT_SELF_ID } from "@koishi-ce/plugin-mock";
 import * as memoryModule from "@koishijs/plugin-database-memory";
 
@@ -63,11 +63,17 @@ describe("Database Broadcast", () => {
 	});
 
 	it("指定频道列表时精确投递并告警未找到的频道", async () => {
-		delivered = [];
-		// 频道列表会同时收窄平台过滤与目标集合；
-		// 未命中（不存在或非本 bot 受理）的频道记入告警
-		await app.broadcast(["mock:A", "mock:404"], "hello");
-		expect(delivered).toEqual(["A"]);
+		// 「未找到频道」的 app 域告警正是被测行为，静默之
+		(Logger.levels as Record<string, number>)["app"] = 0;
+		try {
+			delivered = [];
+			// 频道列表会同时收窄平台过滤与目标集合；
+			// 未命中（不存在或非本 bot 受理）的频道记入告警
+			await app.broadcast(["mock:A", "mock:404"], "hello");
+			expect(delivered).toEqual(["A"]);
+		} finally {
+			delete (Logger.levels as Record<string, number>)["app"];
+		}
 	});
 
 	it("空内容直接返回空数组", async () => {

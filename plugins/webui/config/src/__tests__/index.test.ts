@@ -21,6 +21,7 @@ import {
 	App,
 	type Context,
 	type Dict,
+	Logger,
 	type Plugin,
 	type Universal,
 } from "@koishi-ce/koishi";
@@ -70,6 +71,26 @@ function fakeRequest() {
 function tick(ms = 20) {
 	return new Promise((resolve) => setTimeout(resolve, ms));
 }
+
+/** 声明预期触发告警（失败路径正是被测行为）的用例：执行期间静默指定日志域。 */
+const itQuiet = (
+	domains: string[],
+	name: string,
+	fn: () => Promise<void> | void,
+) =>
+	it(name, async () => {
+		const levels = Logger.levels as Record<string, number>;
+		const saved = domains.map((d) => [d, levels[d]] as const);
+		for (const d of domains) levels[d] = 0;
+		try {
+			await fn();
+		} finally {
+			for (const [d, v] of saved) {
+				if (v === undefined) delete levels[d];
+				else levels[d] = v;
+			}
+		}
+	});
 
 /** Console 抽象基类的最小实现 */
 class TestConsole extends Console {
@@ -139,6 +160,12 @@ class TestLoader extends Loader {
 
 const loader = new TestLoader();
 
+// loader 的 apply/reload/unload 与启动横幅是正常生命周期 info（且部分在下方顶层
+// createApp 期间即产生），收敛为仅错误级；恢复见文件末 afterAll
+const testLevels = Logger.levels as Record<string, number>;
+testLevels["loader"] = 1;
+testLevels["app"] = 1;
+
 /**
  * Hermetic 应用根：本机包扫描（LocalScanner）与 workspace 路径键解析均以
  * loader.baseDir 为锚，固定到临时 fixture，避免断言依赖真实仓库 node_modules
@@ -164,6 +191,12 @@ mkdirSync(join(fixtureRoot, "plugins/webui/auth"), { recursive: true });
 writeFileSync(
 	join(fixtureRoot, "plugins/webui/auth/package.json"),
 	JSON.stringify({ name: "@koishi-ce/plugin-auth", version: "1.0.0" }),
+);
+// 配置树里的路径键 ./missing-pkg 也应真实存在，否则包扫描每轮都刷 ENOENT 告警
+mkdirSync(join(fixtureRoot, "missing-pkg"), { recursive: true });
+writeFileSync(
+	join(fixtureRoot, "missing-pkg/package.json"),
+	JSON.stringify({ name: "koishi-plugin-missing-pkg", version: "1.0.0" }),
 );
 loader.baseDir = fixtureRoot;
 
@@ -218,10 +251,13 @@ afterAll(async () => {
 	await tick();
 	await app.stop();
 	rmSync(fixtureRoot, { recursive: true, force: true });
+	// 恢复域级阈值，避免同进程后续测试文件被连带静默
+	delete testLevels["loader"];
+	delete testLevels["app"];
 });
 
 describe("@koishi-ce/plugin-config", () => {
-	it("无可写 loader 时仅告警并跳过装配", async () => {
+	itQuiet(["app"], "无可写 loader 时仅告警并跳过装配", async () => {
 		const bare = new App();
 		bare.plugin(TestConsole as unknown as Plugin.Constructor<App>);
 		bare.plugin(configPlugin);
@@ -272,33 +308,40 @@ describe("@koishi-ce/plugin-config", () => {
 			expect(data["@koishi-ce/plugin-fixture"]).toBeTruthy();
 		});
 
-		it("request-runtime 按路径键 / 短名解析并刷新，失败结果同样缓存", async () => {
-			const listener = app.console.listeners["config/request-runtime"];
-			expect(listener).toBeTruthy();
-			const provider = app.get("console.services.packages") as unknown as {
-				cache: Dict<{ failed?: boolean }>;
-				pathKeys: Dict<string>;
-			};
-			// 失败路径：stub 的 bad-plugin 抛错，{ failed: true } 入缓存并
-			// 随数据下发——前端据以展示失败提示并停止重发请求
-			await listener?.callback.call(client as never, "bad-plugin");
-			await flushWrites();
-			expect(provider.cache["bad-plugin"]).toEqual({ failed: true });
-			// 重复请求命中失败缓存，不再触发 loader.import（防活锁刷屏）
-			const importsAfterFirst = loader.importCounts["bad-plugin"] ?? 0;
-			expect(importsAfterFirst).toBeGreaterThan(0);
-			await listener?.callback.call(client as never, "bad-plugin");
-			await flushWrites();
-			expect(loader.importCounts["bad-plugin"] ?? 0).toBe(importsAfterFirst);
-			// 成功路径：workspace 包名命中 pathKeys
-			await listener?.callback.call(client as never, "@koishi-ce/plugin-auth");
-			await flushWrites();
-			expect(provider.pathKeys["@koishi-ce/plugin-auth"]).toBe(
-				"./plugins/webui/auth",
-			);
-			expect(provider.cache["./plugins/webui/auth"]).toBeTruthy();
-			expect(provider.cache["./plugins/webui/auth"]?.failed).toBeUndefined();
-		});
+		itQuiet(
+			["config"],
+			"request-runtime 按路径键 / 短名解析并刷新，失败结果同样缓存",
+			async () => {
+				const listener = app.console.listeners["config/request-runtime"];
+				expect(listener).toBeTruthy();
+				const provider = app.get("console.services.packages") as unknown as {
+					cache: Dict<{ failed?: boolean }>;
+					pathKeys: Dict<string>;
+				};
+				// 失败路径：stub 的 bad-plugin 抛错，{ failed: true } 入缓存并
+				// 随数据下发——前端据以展示失败提示并停止重发请求
+				await listener?.callback.call(client as never, "bad-plugin");
+				await flushWrites();
+				expect(provider.cache["bad-plugin"]).toEqual({ failed: true });
+				// 重复请求命中失败缓存，不再触发 loader.import（防活锁刷屏）
+				const importsAfterFirst = loader.importCounts["bad-plugin"] ?? 0;
+				expect(importsAfterFirst).toBeGreaterThan(0);
+				await listener?.callback.call(client as never, "bad-plugin");
+				await flushWrites();
+				expect(loader.importCounts["bad-plugin"] ?? 0).toBe(importsAfterFirst);
+				// 成功路径：workspace 包名命中 pathKeys
+				await listener?.callback.call(
+					client as never,
+					"@koishi-ce/plugin-auth",
+				);
+				await flushWrites();
+				expect(provider.pathKeys["@koishi-ce/plugin-auth"]).toBe(
+					"./plugins/webui/auth",
+				);
+				expect(provider.cache["./plugins/webui/auth"]).toBeTruthy();
+				expect(provider.cache["./plugins/webui/auth"]?.failed).toBeUndefined();
+			},
+		);
 
 		it("internal/runtime / fork / status 与 hmr/reload 触发运行时更新", async () => {
 			const dummy = loader.data["keep"] as Plugin;
@@ -439,7 +482,7 @@ describe("@koishi-ce/plugin-config", () => {
 			expect(Object.keys(plugins)[0]).toBe("mov:me");
 		});
 
-		it("manager/* 失败统一回执 failed", async () => {
+		itQuiet(["loader"], "manager/* 失败统一回执 failed", async () => {
 			const listener = app.console.listeners["manager/teleport"];
 			await expect(
 				listener?.callback.call(client as never, "no-such-group", "k", "", 0),

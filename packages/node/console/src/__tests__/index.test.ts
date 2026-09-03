@@ -24,6 +24,7 @@ import {
 	App,
 	type Context,
 	type Dict,
+	Logger,
 	makeArray,
 	type Schema,
 	type Universal,
@@ -277,39 +278,45 @@ describe("@koishi-ce/console 基座", () => {
 		});
 
 		it("未知事件回 not implemented，正常事件回传结果", async () => {
-			const socket = new FakeSocket();
-			const client = service.acceptClient(socket.socket, fakeRequest());
-			await tick();
-			socket.sent.length = 0;
+			// 未知事件的 console 域 info 是被测行为的预期伴生输出，静默之
+			(Logger.levels as Record<string, number>)["console"] = 0;
+			try {
+				const socket = new FakeSocket();
+				const client = service.acceptClient(socket.socket, fakeRequest());
+				await tick();
+				socket.sent.length = 0;
 
-			let boundId = "";
-			let boundArg: unknown;
-			service.addListener("test/echo", function (this: Client, ...args) {
-				boundId = this.id;
-				boundArg = args[0];
-				return args;
-			});
+				let boundId = "";
+				let boundArg: unknown;
+				service.addListener("test/echo", function (this: Client, ...args) {
+					boundId = this.id;
+					boundArg = args[0];
+					return args;
+				});
 
-			socket.receive(
-				JSON.stringify({ type: "unknown-event", id: 1, args: [] }),
-			);
-			socket.receive(
-				JSON.stringify({ type: "test/echo", id: 2, args: ["hello"] }),
-			);
-			await tick();
+				socket.receive(
+					JSON.stringify({ type: "unknown-event", id: 1, args: [] }),
+				);
+				socket.receive(
+					JSON.stringify({ type: "test/echo", id: 2, args: ["hello"] }),
+				);
+				await tick();
 
-			expect(readSent(socket)[0]).toEqual({
-				type: "response",
-				body: { id: 1, error: "not implemented" },
-			});
-			expect(readSent(socket)[1]).toEqual({
-				type: "response",
-				body: { id: 2, value: ["hello"] },
-			});
-			// 回调的 this 绑定为发起调用的客户端
-			expect(boundId).toBe(client.id);
-			expect(boundArg).toBe("hello");
-			socket.shutdown();
+				expect(readSent(socket)[0]).toEqual({
+					type: "response",
+					body: { id: 1, error: "not implemented" },
+				});
+				expect(readSent(socket)[1]).toEqual({
+					type: "response",
+					body: { id: 2, value: ["hello"] },
+				});
+				// 回调的 this 绑定为发起调用的客户端
+				expect(boundId).toBe(client.id);
+				expect(boundArg).toBe("hello");
+				socket.shutdown();
+			} finally {
+				delete (Logger.levels as Record<string, number>)["console"];
+			}
 		});
 
 		it("回调抛错时回传 coerce 格式化的错误文本", async () => {

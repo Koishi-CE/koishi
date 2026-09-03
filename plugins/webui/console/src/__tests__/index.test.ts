@@ -18,7 +18,7 @@ import { mkdir, writeFile } from "node:fs/promises";
 import net from "node:net";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { App, type Plugin } from "@koishi-ce/koishi";
+import { App, Logger, type Plugin } from "@koishi-ce/koishi";
 import type { ClientConfig, Entry } from "@koishi-ce/plugin-console";
 import Server, { type WebSocketLayer } from "@koishi-ce/plugin-server";
 
@@ -154,12 +154,19 @@ app.plugin(NodeConsole as unknown as Plugin.Constructor<App>, {
 let base = "";
 
 beforeAll(async () => {
+	// listening/available/closing 与 unknown message 均为生命周期 info，收敛为仅错误级
+	const levels = Logger.levels as Record<string, number>;
+	levels["server"] = 1;
+	levels["console"] = 1;
 	await app.start();
 	base = `http://127.0.0.1:${app.server.port}`;
 });
 
 afterAll(async () => {
 	await app.stop();
+	const levels = Logger.levels as Record<string, number>;
+	delete levels["server"];
+	delete levels["console"];
 });
 
 describe("@koishi-ce/plugin-console（NodeConsole）", () => {

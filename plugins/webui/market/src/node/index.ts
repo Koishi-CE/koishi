@@ -39,7 +39,9 @@ declare module "@koishi-ce/console" {
 }
 
 export const name = "market";
-export const inject = ["http"];
+// loader 由宿主以 builtin 服务提供，生产恒存在；测试等裸 App 环境可缺席，
+// 声明为非必需注入以免 cordis 报「property loader is not registered」
+export const inject = { http: { required: true }, loader: { required: false } };
 
 export const usage = `
 如果插件市场页面提示「无法连接到插件市场」，则可以选择一个 Koishi 社区提供的镜像地址，填入下方对应的配置项中。

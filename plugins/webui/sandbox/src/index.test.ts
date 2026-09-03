@@ -7,7 +7,7 @@ import { mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { type Client, Console, type Entry } from "@koishi-ce/console";
-import { App, type Plugin } from "@koishi-ce/koishi";
+import { App, Logger, type Plugin } from "@koishi-ce/koishi";
 import mock from "@koishi-ce/plugin-mock";
 import server from "@koishi-ce/plugin-server";
 import memory from "@koishijs/plugin-database-memory";
@@ -74,10 +74,15 @@ async function call<K extends keyof Console["listeners"]>(
 	return listener.callback.call(client, ...(args as never[]));
 }
 
-beforeAll(() => app.start());
+beforeAll(() => {
+	// server listening/closing 是生命周期 info，收敛为仅错误级
+	(Logger.levels as Record<string, number>)["server"] = 1;
+	return app.start();
+});
 
 afterAll(async () => {
 	await app.stop();
+	delete (Logger.levels as Record<string, number>)["server"];
 });
 
 describe("sandbox 插件", () => {

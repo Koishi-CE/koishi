@@ -2,7 +2,7 @@
 // Copyright (c) 2026-present Koishi-CE contributors.
 
 import { afterAll, beforeAll, describe, expect, it } from "bun:test";
-import { App, Database, RuntimeError } from "@koishi-ce/koishi";
+import { App, Database, Logger, RuntimeError } from "@koishi-ce/koishi";
 import mock from "@koishi-ce/plugin-mock";
 // 同 admin 既有测试：CJS 实现配 ESM 声明，nodenext 互操作视图多包一层 default，转型取真实插件对象
 import * as memoryModule from "@koishijs/plugin-database-memory";
@@ -97,6 +97,8 @@ describe("callme 指令", () => {
 	});
 
 	it("落库遇到其他错误时提示修改失败", async () => {
+		// 落库异常的 common 域告警是被测行为的预期伴生输出，静默之
+		(Logger.levels as Record<string, number>)["common"] = 0;
 		const proto = Database.prototype as unknown as Record<
 			string,
 			(...args: unknown[]) => Promise<unknown>
@@ -105,9 +107,12 @@ describe("callme 指令", () => {
 		proto["set"] = async () => {
 			throw new Error("boom");
 		};
-		const replies = await client.receive("callme 小强").finally(() => {
+		try {
+			const replies = await client.receive("callme 小强");
+			expect(replies[0]).toBe("修改称呼失败。");
+		} finally {
 			proto["set"] = original!;
-		});
-		expect(replies[0]).toBe("修改称呼失败。");
+			delete (Logger.levels as Record<string, number>)["common"];
+		}
 	});
 });

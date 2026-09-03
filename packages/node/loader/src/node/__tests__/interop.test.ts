@@ -198,6 +198,8 @@ describe("seedCjsInterop", () => {
 			try {
 				// 裸名缓存键未被种入，内置 buffer 导出完好
 				expect("buffer" in require.cache).toBe(false);
+				// 裸名 require 正是被测对象（防 polyfill 劫持），不可改为 node: 前缀
+				// biome-ignore lint/style/useNodejsImportProtocol: 测试裸名解析行为
 				expect(typeof require("buffer").constants).toBe("object");
 				// 同树的正常分歧修复（pg-like）不受守卫误伤
 				const pgKey = require.resolve("pg-like", {

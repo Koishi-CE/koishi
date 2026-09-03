@@ -11,7 +11,7 @@
  * 以及指令校验（权限等级、参数数量、未知选项、选项类型、before 钩子）。
  */
 import { afterAll, beforeAll, describe, it, jest } from "bun:test";
-import { App, Channel, sleep, User } from "@koishi-ce/koishi";
+import { App, Channel, Logger, sleep, User } from "@koishi-ce/koishi";
 import mock, { DEFAULT_SELF_ID } from "@koishi-ce/plugin-mock";
 import * as memoryModule from "@koishijs/plugin-database-memory";
 
@@ -320,35 +320,45 @@ describe("Runtime", () => {
 		});
 
 		it("option.validate", async () => {
-			// 选项类型校验：抛错（可带自定义后缀）、正则、枚举列表各有提示
-			const cmd3 = app.command("cmd3").action(() => "after cmd3");
-			cmd3.option("foo", "<foo>", {
-				type: () => {
-					throw new Error();
-				},
-			});
-			cmd3.option("bar", "<bar>", {
-				type: () => {
-					throw new Error("SUFFIX");
-				},
-			});
-			cmd3.option("baz", "<baz>", { type: /$^/ });
-			cmd3.option("bax", "<baz>", { type: ["abc", "def"] });
-			await client1.shouldReply("cmd3", "after cmd3");
-			await client1.shouldReply(
-				"cmd3 --foo xxx",
-				"选项 foo 输入无效，输入帮助以查看用法。",
-			);
-			await client1.shouldReply("cmd3 --bar xxx", "选项 bar 输入无效，SUFFIX");
-			await client1.shouldReply(
-				"cmd3 --baz xxx",
-				"选项 baz 输入无效，输入帮助以查看用法。",
-			);
-			await client1.shouldReply(
-				"cmd3 --bax cba",
-				"选项 bax 输入无效，输入帮助以查看用法。",
-			);
-			cmd3.dispose();
+			// bar 的错误消息 "SUFFIX" 被 i18n 当作路径渲染，missing 告警是
+			// 该失败路径的预期伴生输出，静默之
+			(Logger.levels as Record<string, number>)["i18n"] = 0;
+			try {
+				// 选项类型校验：抛错（可带自定义后缀）、正则、枚举列表各有提示
+				const cmd3 = app.command("cmd3").action(() => "after cmd3");
+				cmd3.option("foo", "<foo>", {
+					type: () => {
+						throw new Error();
+					},
+				});
+				cmd3.option("bar", "<bar>", {
+					type: () => {
+						throw new Error("SUFFIX");
+					},
+				});
+				cmd3.option("baz", "<baz>", { type: /$^/ });
+				cmd3.option("bax", "<baz>", { type: ["abc", "def"] });
+				await client1.shouldReply("cmd3", "after cmd3");
+				await client1.shouldReply(
+					"cmd3 --foo xxx",
+					"选项 foo 输入无效，输入帮助以查看用法。",
+				);
+				await client1.shouldReply(
+					"cmd3 --bar xxx",
+					"选项 bar 输入无效，SUFFIX",
+				);
+				await client1.shouldReply(
+					"cmd3 --baz xxx",
+					"选项 baz 输入无效，输入帮助以查看用法。",
+				);
+				await client1.shouldReply(
+					"cmd3 --bax cba",
+					"选项 bax 输入无效，输入帮助以查看用法。",
+				);
+				cmd3.dispose();
+			} finally {
+				delete (Logger.levels as Record<string, number>)["i18n"];
+			}
 		});
 
 		// 上游 master 同名用例为 command.before();fork 运行时尚无 beforeAll API

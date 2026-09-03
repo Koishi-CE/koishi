@@ -7,10 +7,11 @@
  * 注入/撤销与迁移回写、migrateEntry 数据库默认值、import 的解析缓存与
  * 失败告警、fullReload 的共享数据回传（mock process.send / process.exit）。
  */
-import { afterEach, describe, expect, it } from "bun:test";
+import { afterAll, afterEach, beforeAll, describe, expect, it } from "bun:test";
 import { promises as fs } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+import { Logger } from "@koishi-ce/koishi";
 import { revertEnv } from "../env.ts";
 import NodeLoader, { Loader } from "../index.ts";
 
@@ -149,10 +150,16 @@ describe("NodeLoader.migrateEntry", () => {
 
 describe("NodeLoader.import", () => {
 	it("解析失败记录错误并返回 undefined", async () => {
-		const loader = new NodeLoader();
-		await expect(
-			loader.import("definitely-not-exist-xyz"),
-		).resolves.toBeUndefined();
+		// 解析失败的 [E] app 域告警正是被测行为，静默之
+		(Logger.levels as Record<string, number>)["app"] = 0;
+		try {
+			const loader = new NodeLoader();
+			await expect(
+				loader.import("definitely-not-exist-xyz"),
+			).resolves.toBeUndefined();
+		} finally {
+			delete (Logger.levels as Record<string, number>)["app"];
+		}
 	});
 
 	it("相对路径加载本地模块并缓存解析结果", async () => {
@@ -185,6 +192,15 @@ describe("NodeLoader.import", () => {
 });
 
 describe("NodeLoader.fullReload", () => {
+	beforeAll(() => {
+		// 重载触发与回传失败日志均为被测路径的预期输出，静默 app 域
+		(Logger.levels as Record<string, number>)["app"] = 0;
+	});
+
+	afterAll(() => {
+		delete (Logger.levels as Record<string, number>)["app"];
+	});
+
 	/** 进程 API 的可写视图（mock 期间替换、测毕恢复） */
 	const proc = process as unknown as {
 		send?: unknown;

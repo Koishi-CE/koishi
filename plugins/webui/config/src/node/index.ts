@@ -18,7 +18,9 @@ import { PackageProvider } from "./packages.ts";
 export * from "../shared/index.ts";
 
 export const name = "config";
-export const inject = ["console"];
+// loader 由宿主以 builtin 服务提供，生产恒存在；测试等裸 App 环境可缺席，
+// 声明为非必需注入以免 cordis 报「property loader is not registered」
+export const inject = { console: { required: true }, loader: { required: false } };
 
 export type Config = Record<never, never>;
 

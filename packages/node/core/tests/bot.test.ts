@@ -12,7 +12,7 @@
  *   元组 / Session 三种形态，带限速间隔且单条失败不中断。
  */
 import { afterAll, afterEach, beforeAll, describe, expect, it } from "bun:test";
-import { App } from "@koishi-ce/koishi";
+import { App, Logger } from "@koishi-ce/koishi";
 import mock from "@koishi-ce/plugin-mock";
 
 const app = new App();
@@ -125,15 +125,21 @@ describe("Bot Extensions", () => {
 	});
 
 	it("broadcast 单条失败不中断后续发送", async () => {
-		wrapSend((channelId) => {
-			if (channelId === "bad") throw new Error("send failed");
-			return ["id1"];
-		});
-		// delay 取根配置 delay.broadcast，这里调小以加快用例
-		app.root.config.delay!.broadcast = 0;
-		const ids = await bot.broadcast(["bad", "good"], "hello");
-		expect(ids).toEqual(["id1"]);
-		expect(sendCalls).toHaveLength(2);
+		// 单条失败的 bot 域告警是被测行为的预期伴生输出，静默之
+		(Logger.levels as Record<string, number>)["bot"] = 0;
+		try {
+			wrapSend((channelId) => {
+				if (channelId === "bad") throw new Error("send failed");
+				return ["id1"];
+			});
+			// delay 取根配置 delay.broadcast，这里调小以加快用例
+			app.root.config.delay!.broadcast = 0;
+			const ids = await bot.broadcast(["bad", "good"], "hello");
+			expect(ids).toEqual(["id1"]);
+			expect(sendCalls).toHaveLength(2);
+		} finally {
+			delete (Logger.levels as Record<string, number>)["bot"];
+		}
 	});
 
 	it("broadcast 相邻消息按 delay 限速", async () => {

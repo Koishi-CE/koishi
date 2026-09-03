@@ -10,7 +10,7 @@
  * 以及 cancelQueued 清空队列并延迟恢复的行为。
  */
 import { afterAll, afterEach, beforeAll, describe, expect, it } from "bun:test";
-import { App, type Session } from "@koishi-ce/koishi";
+import { App, Logger, type Session } from "@koishi-ce/koishi";
 import mock from "@koishi-ce/plugin-mock";
 
 const app = new App();
@@ -63,10 +63,16 @@ describe("Session Messaging", () => {
 	});
 
 	it("send 发送失败只返回空数组不抛错", async () => {
-		wrapSend(true);
-		const session = createSession();
-		await expect(session.send("hello")).resolves.toEqual([]);
-		expect(contents).toEqual(["hello"]);
+		// 失败容忍路径的 session 域告警是被测行为的预期伴生输出，静默之
+		(Logger.levels as Record<string, number>)["session"] = 0;
+		try {
+			wrapSend(true);
+			const session = createSession();
+			await expect(session.send("hello")).resolves.toEqual([]);
+			expect(contents).toEqual(["hello"]);
+		} finally {
+			delete (Logger.levels as Record<string, number>)["session"];
+		}
 	});
 
 	it("send 正常发送返回消息 ID 列表", async () => {
