@@ -329,7 +329,7 @@
         "@koishi-ce/koishi": "^1.0.0",
       },
     },
-    "plugins/infra/proxy-agent": {
+    "plugins/infra/proxy": {
       "name": "@koishi-ce/plugin-proxy-agent",
       "version": "1.0.0",
       "dependencies": {
@@ -967,7 +967,7 @@
 
     "@koishi-ce/plugin-oobe": ["@koishi-ce/plugin-oobe@workspace:plugins/webui/oobe"],
 
-    "@koishi-ce/plugin-proxy-agent": ["@koishi-ce/plugin-proxy-agent@workspace:plugins/infra/proxy-agent"],
+    "@koishi-ce/plugin-proxy-agent": ["@koishi-ce/plugin-proxy-agent@workspace:plugins/infra/proxy"],
 
     "@koishi-ce/plugin-rate-limit": ["@koishi-ce/plugin-rate-limit@workspace:plugins/common/rate-limit"],
 

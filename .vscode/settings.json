@@ -1,18 +1,22 @@
 {
-	// TSGo
-	"js/ts.experimental.useTsgo": true,
-	// Editor
-	"editor.defaultFormatter": "biomejs.biome",
-	"editor.formatOnSave": true,
-	"editor.codeActionsOnSave": {
-		"source.fixAll.biome": "explicit",
-		"source.organizeImports.biome": "explicit"
-	},
-	// Material Icon Theme
-	"material-icon-theme.folders.associations": {
-		"webui": "client"
-	},
-	"material-icon-theme.files.associations": {
-		"NOTICE": "certificate"
-	}
+    // TSGo
+    "js/ts.experimental.useTsgo": true,
+    // Editor
+    "editor.defaultFormatter": "biomejs.biome",
+    "editor.formatOnSave": true,
+    "editor.codeActionsOnSave": {
+        "source.fixAll.biome": "explicit",
+        "source.organizeImports.biome": "explicit"
+    },
+    // Material Icon Theme
+    "material-icon-theme.folders.associations": {
+        "webui": "client",
+        "hmr": "plugin",
+        "http": "connection",
+        "server-temp": "server",
+        "sqlite": "database"
+    },
+    "material-icon-theme.files.associations": {
+        "NOTICE": "certificate"
+    }
 }

@@ -23,7 +23,8 @@ No git history is preserved, so baselines are stated as upstream release lines r
 | `packages/node/registry` | webui `packages/registry` |
 | `packages/node/assets` | [koishijs/assets](https://github.com/koishijs/assets) `packages/core` |
 | `packages/web/{client,components}` | webui `packages/*` |
-| `plugins/infra/{http,server,hmr,mock,proxy-agent}` | koishi `plugins/*` |
+| `plugins/infra/{http,server,hmr,mock}` | koishi `plugins/*` |
+| `plugins/infra/proxy`（上游目录为 `proxy-agent`，本地改名） | koishi `plugins/proxy-agent` |
 | `plugins/infra/server-temp` | [cordiverse/server](https://github.com/cordiverse/server) `packages/temp` |
 | `plugins/common/{bind,broadcast,callme,echo,help,inspect}` | koishi `plugins/common/*` |
 | `plugins/common/assets-local` | [koishijs/assets](https://github.com/koishijs/assets) `packages/local` |

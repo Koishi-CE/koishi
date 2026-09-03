@@ -17,7 +17,7 @@ import { defineConfig } from "tsdown";
  *   支持 yml 导入，直接加载。
  * - packages/web/components、market 仅作为客户端源码被 console 打包器消费，
  *   无独立运行时产物；webui 插件的 .vue 部分由 vite 构建。
- * - 例外（不走本配置）：vendored 三包（plugins/infra/{http,proxy-agent,
+ * - 例外（不走本配置）：vendored 三包（plugins/infra/{http,proxy,
  *   server}，预编译产物包，见 workspace.exclude）；apps/online 为 vite
  *   编程式构建。apps/koishi-create 与 apps/koishi-scripts 走本配置，仅以
  *   包级 tsdown.config.ts 补 bin 入口（产物 lib/bin.mjs，首行 bun shebang）。
@@ -38,7 +38,7 @@ const extensions = [
 ];
 
 // tsdown workspace 模式的包发现范围：覆盖全部 node 侧子包；
-// vendored 三包（plugins/infra/{http,proxy-agent,server}）是预编译
+// vendored 三包（plugins/infra/{http,proxy,server}）是预编译
 // 产物包（无 src/、分别内联再导出 @cordisjs/plugin-*），显式排除；
 // file-type-compat 是同样不走构建的纯 JS 预编译 shim（见其 index.js 注释）；
 // packages/web/components 仅作为客户端源码被 console 打包器消费，
@@ -55,7 +55,7 @@ const workspace = {
 	],
 	exclude: [
 		"plugins/infra/http",
-		"plugins/infra/proxy-agent",
+		"plugins/infra/proxy",
 		"plugins/infra/server",
 		"plugins/infra/file-type-compat",
 		"packages/web/components",

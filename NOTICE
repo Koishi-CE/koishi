@@ -29,7 +29,8 @@ The AGPL-3.0 portions remain under AGPL-3.0 in this repository; the MIT portions
 | `packages/node/{core,loader,utils,i18n-utils,cli}` | [koishijs/koishi](https://github.com/koishijs/koishi) `packages/*` | [MIT](./LICENSE) |
 | `packages/node/assets` | [koishijs/assets](https://github.com/koishijs/assets) `packages/core` | [MIT](./LICENSE) |
 | `packages/node/{console,registry}` | [koishijs/webui](https://github.com/koishijs/webui) `packages/*` | [MIT](./LICENSE) \* |
-| `plugins/infra/{http,server,hmr,mock,proxy-agent}` | [koishijs/koishi](https://github.com/koishijs/koishi) `plugins/*` | [MIT](./LICENSE) |
+| `plugins/infra/{http,server,hmr,mock}` | [koishijs/koishi](https://github.com/koishijs/koishi) `plugins/*` | [MIT](./LICENSE) |
+| `plugins/infra/proxy`（上游目录为 `proxy-agent`，本地改名） | [koishijs/koishi](https://github.com/koishijs/koishi) `plugins/proxy-agent` | [MIT](./LICENSE) |
 | `plugins/infra/server-temp` | [cordiverse/server](https://github.com/cordiverse/server) `packages/temp` | [MIT](./LICENSE) |
 | `plugins/common/{bind,broadcast,callme,echo,help,inspect}` | [koishijs/koishi](https://github.com/koishijs/koishi) `plugins/common/*` | [MIT](./LICENSE) |
 | `plugins/common/assets-local` | [koishijs/assets](https://github.com/koishijs/assets) `packages/local` | [MIT](./LICENSE) |

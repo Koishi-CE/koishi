@@ -20,7 +20,7 @@ koishi/（Bun workspaces：packages/node/* · packages/shim/* · packages/web/* 
 ├── packages/shim/   上游包名占位 shim（2 包，纯 JS 预编译，不走 tsdown）
 ├── packages/web/    浏览器侧库（client / components，源码直出，无独立构建产物）
 ├── plugins/common/  通用 bot 插件 ×8（MIT）
-├── plugins/infra/   基础设施插件 ×6（http/proxy-agent/server 为 vendored 预编译）
+├── plugins/infra/   基础设施插件 ×6（http/proxy/server 为 vendored 预编译）
 ├── plugins/webui/   控制台插件 ×18（src/=Node 侧，client/=Vue 侧）
 ├── apps/            可部署应用（koishi-create / koishi-scripts）
 └── tooling/         发布链脚本（release/）
@@ -68,7 +68,7 @@ CE 包 peer 一律指 CE 名，但外部真包依赖（测试用的 `@koishijs/p
 | `hmr` | `@koishi-ce/plugin-hmr` | 热重载；**esbuild 为运行时依赖** |
 | `mock` | `@koishi-ce/plugin-mock` | 测试 mock（多数测试依赖它） |
 | `http` | `@koishi-ce/plugin-http` | **vendored 预编译产物**（无 src，内联再导出 `@cordisjs/plugin-http`） |
-| `proxy-agent` | `@koishi-ce/plugin-proxy-agent` | 同上（`@cordisjs/plugin-proxy-agent`） |
+| `proxy` | `@koishi-ce/plugin-proxy-agent` | 同上（`@cordisjs/plugin-proxy-agent`；目录 `proxy` 系上游 `proxy-agent` 的本地改名） |
 | `server` | `@koishi-ce/plugin-server` | 同上（`@cordisjs/plugin-server ^0.2.9`）；Phase 5 原计划从 1.x 重建，随 cordis 4 回退一并冻结 |
 | `server-temp` | `@koishi-ce/plugin-server-temp` | 临时文件服务（来自 [cordiverse/server](https://github.com/cordiverse/server) `packages/temp`） |
 
@@ -100,7 +100,7 @@ node 侧在 `src/`、Vue 侧在 `client/`（上游约定），`koishi.public: ["
 ### 硬性规则
 
 - `peerDependencies` **一律指向 CE 包名**（`@koishi-ce/* ^1.0.0`），不要写回上游名；代码内导入同样一律 `@koishi-ce/*`（例外仅 `@koishijs/plugin-database-memory` 与 `@koishijs/plugin-server-proxy` 两处外部包）。
-- vendored 三包（http / proxy-agent / server）不动。
+- vendored 三包（http / proxy / server）不动。
 - 依赖方向：`plugins/webui/* → @koishi-ce/console → @koishi-ce/core`；`plugins/common/* → @koishi-ce/core`；`packages/web/*`（浏览器侧）不依赖 node 侧运行时。
 
 ## 4. 构建体系

@@ -19,7 +19,7 @@
 1. **peerDependencies 一律指向 CE 包名**：`@koishi-ce/koishi ^1.0.0`、`@koishi-ce/plugin-console ^1.0.0`、`@koishi-ce/loader ^1.0.0` 等（peer 声明用于下游 `bun add` 解析与防 Bun 自动装官方包），**不要写回上游名**（`koishi` / `@koishijs/*`）。
 2. **代码内导入一律 `@koishi-ce/*`**；仅有的外部上游导入例外是测试用的 `@koishijs/plugin-database-memory` 与 console 的类型引用 `@koishijs/plugin-server-proxy`。
 3. **cordis 生态冻结在 3.x 内洽线**：cordis / minato / @cordisjs/* / @satorijs/* 不得跳 4.x / 1.x——Phase 5 已实证被 `@satorijs/core`（内部携带 cordis ^3，无 cordis 4 线）阻塞并整体回退，重启条件见 `docs/decisions/upgrade-plan.md` Phase 5 节。
-4. **vendored 三包不动**：`plugins/infra/{http,proxy-agent,server}` 是预编译产物包（无 `src/`、不走 tsdown、根 tsdown 配置显式 exclude），分别内联再导出 `@cordisjs/plugin-*`。
+4. **vendored 三包不动**：`plugins/infra/{http,proxy,server}` 是预编译产物包（无 `src/`、不走 tsdown、根 tsdown 配置显式 exclude），分别内联再导出 `@cordisjs/plugin-*`（`proxy` 目录系上游 `proxy-agent` 的本地改名，见 docs/process/upstream.md）。
 5. **ESM-only 产物 + Bun 运行时**：全部 46 个 workspace 包均为 `"type": "module"`，根 tsdown 单遍构建只出 ESM（`index.mjs` + `index.d.ts`），各包 exports 以 `default` 条件兜底；Bun 的 `require()` 可直接加载 ESM，loader 的插件加载链据此工作，**不要恢复 CJS 双格式产物**。运行时以 Bun 为准（Node 不作兼容目标）；`.yml` locale 走 copy loader 原样拷入产物，Bun 原生支持 yml 导入。
 6. **许可证分区**：`packages/web/*` 与 `plugins/webui/*` 全部（含 console 宿主插件）为 AGPL-3.0，其余目录 MIT——以 `NOTICE` 为准；在 AGPL 目录新增文件同样受 AGPL 约束。
 7. **market 插件为上游原版再分发**：`plugins/webui/market/`（`@koishi-ce/plugin-market`）对齐自上游 webui `plugins/market`（原版 v2.11.11），社区版 `plugin-marketn` 已被其取代并移除。client 侧依赖 npm 包 `@koishijs/market`，其中的 npm 名 `@koishijs/components` 由单插件构建的 alias 重定向到本仓 workspace 版，避免双实例。
@@ -73,3 +73,4 @@ bun packages/web/client/src/bin.ts build <插件目录>  # 单个 webui 插件�
 2. `git add -A` 后提交，提交信息用简体中文，格式参考现有历史（`feat:` / `fix:` / `docs:` / `chore:` / `build:`，可带 scope 如 `fix(core):`）。
 3. 提交到主分支 `main`；若当前不在主分支，先切回主分支再提交。
 4. 提交完成后向用户简要说明改了什么与提交哈希。
+

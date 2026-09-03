@@ -29,7 +29,7 @@ bun create koishi-ce
 | `packages/web/` | 浏览器侧库（client / components），源码直出，无独立构建 |
 | `packages/shim/` | 上游包名占位 shim ×2（下游 npm alias 目标，版本冻结） |
 | `plugins/common/` | 通用 bot 插件 ×8（MIT） |
-| `plugins/infra/` | 基础设施插件 ×6（http / proxy-agent / server 为 vendored 预编译） |
+| `plugins/infra/` | 基础设施插件 ×6（http / proxy / server 为 vendored 预编译） |
 | `plugins/webui/` | 控制台插件 ×18（`src/` 为 Node 侧、`client/` 为 Vue 侧） |
 | `apps/` | `create-koishi-ce` 脚手架 CLI、`@koishi-ce/scripts` 插件开发 CLI |
 | `tooling/` | 发布链脚本（`bun run release`） |

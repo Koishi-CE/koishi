@@ -19,7 +19,7 @@ koishi-bun/
 ├── packages/node/      运行时核心:koishi(CLI入口) core loader console utils i18n-utils
 ├── packages/web/       前端基础:client(构建API+控制台前端) components market(市场组件)
 ├── plugins/common/     通用插件:bind broadcast callme echo help inspect
-├── plugins/infra/      基础设施插件:hmr http mock proxy-agent server(vendored 预编译)
+├── plugins/infra/      基础设施插件:hmr http mock proxy server(vendored 预编译)
 ├── plugins/webui/      控制台插件 ·16:actions admin analytics auth commands config
 │                       console explorer insight locales logger market notifier oobe sandbox status
 ├── apps/               create-koishi-ce(脚手架) koishi-scripts(插件开发CLI)
@@ -52,7 +52,7 @@ koishi-bun/
 | @satorijs/components-vue | ^0.7.8 (dev) | web/client | 消息元素的 Vue 渲染组件(测试/开发用) | 0.7.8 | [新] |
 | @cordisjs/plugin-http | ^0.6.3 | core | HTTP 客户端上下文插件(`ctx.http`) | 1.5.2 | [旧] major |
 | @cordisjs/plugin-server | ^0.2.9 | plugins/infra/server(vendored) | HTTP/WebSocket 服务上下文插件(`ctx.server`) | 1.7.0 | [旧] major |
-| @cordisjs/plugin-proxy-agent | ^0.3.3 | plugins/infra/proxy-agent | 网络代理支持 | 0.3.3 | [新] |
+| @cordisjs/plugin-proxy-agent | ^0.3.3 | plugins/infra/proxy | 网络代理支持 | 0.3.3 | [新] |
 | @cordiverse/{dns,fs,os,path,url} | ^1.x (dev) | apps/online | 跨运行时系统 API polyfill 套件 | 1.x | [新] |
 | reggol | ^1.7.1 (dev) | core(dev) | 生态日志库(cordis 内部同款) | 2.1.0 | [旧] major |
 | yml-register | ^1.2.5 (dev root) | 根 | require/TS 钩子,支持 `import x from '*.yml'` 语言包 | 1.2.5 | [新] |
