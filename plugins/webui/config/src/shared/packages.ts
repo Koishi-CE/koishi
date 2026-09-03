@@ -50,6 +50,8 @@ export abstract class PackageProvider extends DataService<
 	Dict<PackageProvider.Data>
 > {
 	cache: Dict<PackageProvider.RuntimeData> = {};
+	/** 进行中的解析（键 → 共享 promise），同键并发请求合并为一次模块加载 */
+	inflight: Dict<Promise<PackageProvider.RuntimeData>> = {};
 	debouncedRefresh: () => void;
 
 	/** 完整包名 → 引用它的首个配置键（workspace 相对路径），由 node 端 collect 填充 */
@@ -76,25 +78,26 @@ export abstract class PackageProvider extends DataService<
 		});
 
 		// 前端按需请求：某插件缺少运行时信息时（如刚安装尚未解析），
-		// 按其配置键（workspace 相对路径）或短名解析其导出并立即推送
+		// 按其配置键（workspace 相对路径）或短名解析其导出并立即推送。
+		// 解析失败同样写入缓存（failed 标记随数据下发）：前端展示失败
+		// 提示后不再重发请求——否则「请求 → 失败 → 广播 → 前端再请求」
+		// 互相喂养成活锁，加载即崩的插件会把日志瞬间打爆
 		ctx.console.addListener(
 			"config/request-runtime",
 			async (name) => {
-				// 依次尝试：路径配置键 → 短名 → 原名，首个解析成功的为准
+				// 依次尝试：路径配置键 → 短名 → 原名，首个解析成功的为准；
+				// 已有结果（含失败标记）的键直接复用，不重新解析
 				const candidates = [
 					this.pathKeys[name],
 					getPluginShortname(name),
 					name,
 				];
-				for (const key of candidates) {
+				for (const key of new Set(candidates)) {
 					if (!key) continue;
-					const result = await this.parseExports(key);
-					if (!result.failed) {
-						this.cache[key] = result;
-						break;
-					}
+					const result = (this.cache[key] ??= await this.parseExports(key));
+					if (!result.failed) break;
 				}
-				this.refresh(false);
+				this.debouncedRefresh();
 			},
 			{ authority: 4 },
 		);
@@ -174,12 +177,23 @@ export abstract class PackageProvider extends DataService<
 	/**
 	 * 解析插件模块的导出，提取配置 schema、用法文档、过滤器开关与
 	 * 注入的服务依赖（required / optional），并附带运行时 fork 状态。
-	 * 解析失败时返回 `{ failed: true }` 而不是抛错。
+	 * 解析失败时返回 `{ failed: true }` 而不是抛错。同键并发调用共享
+	 * 一次模块加载（抛错的模块不进 require.cache，每次都重新求值，
+	 * 并发即多份重复求值与告警）。
 	 *
 	 * @param name 插件短名（不含 koishi-plugin- 前缀）
 	 * @returns 可序列化的运行时数据
 	 */
-	async parseExports(name: string) {
+	parseExports(name: string): Promise<PackageProvider.RuntimeData> {
+		const pending = (this.inflight[name] ??= this.resolveExports(name).finally(
+			() => {
+				delete this.inflight[name];
+			},
+		));
+		return pending;
+	}
+
+	private async resolveExports(name: string) {
 		try {
 			// 插件本体之外的附加导出（配置面板消费的元信息）
 			type Extras = {

@@ -29,6 +29,9 @@
  * - 仅识别 "." 主入口的扁平条件表与一层 "." 嵌套；数组、子路径表、更
  *   深嵌套一律视为未知、不预置；
  * - Node 语义入口必须真实存在且可 require，否则跳过；
+ * - require.resolve 返回裸名（内置模块的解析结果）时不预置：与内置
+ *   模块同名的 npm polyfill（如 readable-stream 声明的 buffer / events /
+ *   process）种进裸名缓存键会全进程劫持内置模块导出；
  * - 解析失败（含 Bun 的进程内负缓存）不重试、不预置；
  * - Node 语义入口以本模块（loader）上下文加载，其依赖沿 node_modules
  *   链解析——提升（hoisted）布局下与 Node 行为一致，嵌套副本布局为
@@ -37,7 +40,7 @@
  */
 
 import { existsSync, readFileSync, realpathSync } from "node:fs";
-import { dirname, join } from "node:path";
+import { dirname, isAbsolute, join } from "node:path";
 import { Logger } from "@koishi-ce/core";
 
 const logger = new Logger("app");
@@ -184,6 +187,12 @@ function trySeed(spec: string, consumerDir: string, depDir: string): void {
 	} catch {
 		return;
 	}
+	// 裸名是内置模块的解析结果（依赖树里存在同名 npm polyfill 时出现，
+	// 如 readable-stream 声明的 buffer / events / process）：其缓存键与
+	// 内置模块的 require 相撞，把 polyfill 种进去等于全进程劫持内置模块
+	// 导出（feross/buffer 无 constants，pino→thread-stream 顶层取
+	// buffer.constants.MAX_STRING_LENGTH 即崩），必须跳过
+	if (!isAbsolute(bunEntry)) return;
 	const key = normalizePath(bunEntry);
 	if (seeded.has(key)) return;
 	if (key === normalizePath(nodeEntry)) return;

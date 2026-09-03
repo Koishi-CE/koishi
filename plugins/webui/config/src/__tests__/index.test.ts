@@ -96,6 +96,8 @@ class TestLoader extends Loader {
 	data: Dict<unknown> = Object.create(null);
 	writes: { filename: string; config: unknown }[] = [];
 	fullReloadCount = 0;
+	/** 每个名字被 import 的次数（断言失败缓存不再重复解析） */
+	importCounts: Dict<number> = Object.create(null);
 
 	constructor() {
 		super();
@@ -103,6 +105,7 @@ class TestLoader extends Loader {
 	}
 
 	override async import(name: string) {
+		this.importCounts[name] = (this.importCounts[name] ?? 0) + 1;
 		if (name === "bad-plugin") {
 			throw new Error("cannot resolve bad-plugin");
 		}
@@ -269,23 +272,32 @@ describe("@koishi-ce/plugin-config", () => {
 			expect(data["@koishi-ce/plugin-fixture"]).toBeTruthy();
 		});
 
-		it("request-runtime 按路径键 / 短名解析并刷新，解析失败不缓存", async () => {
+		it("request-runtime 按路径键 / 短名解析并刷新，失败结果同样缓存", async () => {
 			const listener = app.console.listeners["config/request-runtime"];
 			expect(listener).toBeTruthy();
-			// 失败路径：stub 的 bad-plugin 抛错，返回 { failed: true } 不入缓存
+			const provider = app.get("console.services.packages") as unknown as {
+				cache: Dict<{ failed?: boolean }>;
+				pathKeys: Dict<string>;
+			};
+			// 失败路径：stub 的 bad-plugin 抛错，{ failed: true } 入缓存并
+			// 随数据下发——前端据以展示失败提示并停止重发请求
 			await listener?.callback.call(client as never, "bad-plugin");
 			await flushWrites();
+			expect(provider.cache["bad-plugin"]).toEqual({ failed: true });
+			// 重复请求命中失败缓存，不再触发 loader.import（防活锁刷屏）
+			const importsAfterFirst = loader.importCounts["bad-plugin"] ?? 0;
+			expect(importsAfterFirst).toBeGreaterThan(0);
+			await listener?.callback.call(client as never, "bad-plugin");
+			await flushWrites();
+			expect(loader.importCounts["bad-plugin"] ?? 0).toBe(importsAfterFirst);
 			// 成功路径：workspace 包名命中 pathKeys
 			await listener?.callback.call(client as never, "@koishi-ce/plugin-auth");
 			await flushWrites();
-			const provider = app.get("console.services.packages") as unknown as {
-				cache: Dict<unknown>;
-				pathKeys: Dict<string>;
-			};
 			expect(provider.pathKeys["@koishi-ce/plugin-auth"]).toBe(
 				"./plugins/webui/auth",
 			);
 			expect(provider.cache["./plugins/webui/auth"]).toBeTruthy();
+			expect(provider.cache["./plugins/webui/auth"]?.failed).toBeUndefined();
 		});
 
 		it("internal/runtime / fork / status 与 hmr/reload 触发运行时更新", async () => {

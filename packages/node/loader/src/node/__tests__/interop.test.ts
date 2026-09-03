@@ -33,7 +33,8 @@ async function writePkg(
  * 建立临时 fixture 项目：koishi-plugin-fixture 为被加载的插件（CJS），
  * pg-like 建模 postgres（bun/import→ESM、default→CJS），normal-pkg 无
  * 分歧，broken-pkg 的 exports 为数组（形态未知），chain-pkg 经
- * peerDependencies 进入依赖树且自身消费 pg-like，absent-pkg 声明未装。
+ * peerDependencies 进入依赖树且自身消费 pg-like，absent-pkg 声明未装，
+ * buffer 建模与内置模块同名的 polyfill（readable-stream 依赖形态）。
  */
 async function withFixtures(fn: (dir: string) => Promise<void> | void) {
 	const dir = await fs.mkdtemp(join(tmpdir(), "koishi-loader-interop-"));
@@ -49,6 +50,7 @@ async function withFixtures(fn: (dir: string) => Promise<void> | void) {
 					"normal-pkg": "*",
 					"broken-pkg": "*",
 					"absent-pkg": "*",
+					buffer: "*",
 				},
 				peerDependencies: { "chain-pkg": "*" },
 			},
@@ -98,6 +100,13 @@ async function withFixtures(fn: (dir: string) => Promise<void> | void) {
 			"broken-pkg",
 			{ name: "broken-pkg", main: "cjs/index.js", exports: ["./cjs/index.js"] },
 			{ "cjs/index.js": "module.exports = { tag: 'broken' }" },
+		);
+		// feross/buffer 形态的 polyfill：导出刻意不含 constants
+		await writePkg(
+			dir,
+			"buffer",
+			{ name: "buffer", version: "6.0.3", main: "index.js" },
+			{ "index.js": "module.exports = { Buffer: { isBuffer: () => false } }" },
 		);
 		await fn(dir);
 	} finally {
@@ -175,6 +184,31 @@ describe("seedCjsInterop", () => {
 		expect(() =>
 			seedCjsInterop(join(tmpdir(), "definitely-lonely-xyz.js")),
 		).not.toThrow();
+	});
+
+	it("内置模块同名的 polyfill 依赖不预置（防劫持 require('buffer') 等）", async () => {
+		await withFixtures(async (dir) => {
+			const entry = join(
+				dir,
+				"node_modules",
+				"koishi-plugin-fixture",
+				"index.js",
+			);
+			seedCjsInterop(entry);
+			try {
+				// 裸名缓存键未被种入，内置 buffer 导出完好
+				expect("buffer" in require.cache).toBe(false);
+				expect(typeof require("buffer").constants).toBe("object");
+				// 同树的正常分歧修复（pg-like）不受守卫误伤
+				const pgKey = require.resolve("pg-like", {
+					paths: [join(dir, "node_modules", "koishi-plugin-fixture")],
+				});
+				expect(typeof require.cache[pgKey]?.exports).toBe("function");
+			} finally {
+				// 守卫失效导致污染时清场，避免拖垮同进程的后续测试
+				delete require.cache["buffer"];
+			}
+		});
 	});
 });
 
