@@ -68,6 +68,6 @@
 		"@koishi-ce/plugin-server": "workspace:*",
 		"@koishi-ce/utils": "workspace:*",
 		"cac": "^7.0.0",
-		"kleur": "^4.1.5"
+		"picocolors": "^1.1.1"
 	}
 }

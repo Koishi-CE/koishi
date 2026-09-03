@@ -12,7 +12,7 @@
 
 import { hyphenate, isInteger } from "@koishi-ce/utils";
 import type { CAC } from "cac";
-import kleur from "kleur";
+import pc from "picocolors";
 import type { Config } from "../worker/daemon.ts";
 
 /** 子进程通过 IPC 通道发来的消息类型（并集） */
@@ -96,7 +96,7 @@ function createWorker(options: WorkerOptions) {
 			timer = config.heartbeatTimeout
 				? setTimeout(() => {
 						// eslint-disable-next-line no-console
-						console.log(kleur.red("daemon: heartbeat timeout"));
+						console.log(pc.red("daemon: heartbeat timeout"));
 						child.kill("SIGKILL");
 					}, config.heartbeatTimeout)
 				: undefined;
@@ -110,7 +110,7 @@ function createWorker(options: WorkerOptions) {
 			clearTimeout(timer);
 			timer = setTimeout(() => {
 				// eslint-disable-next-line no-console
-				console.log(kleur.red("daemon: heartbeat timeout"));
+				console.log(pc.red("daemon: heartbeat timeout"));
 				child.kill("SIGKILL");
 			}, config.heartbeatTimeout);
 		}
@@ -184,7 +184,7 @@ export default function (cli: CAC) {
 			if (logLevel !== undefined && (!isInteger(logLevel) || logLevel < 0)) {
 				// eslint-disable-next-line no-console
 				console.warn(
-					`${kleur.red("error")} log level should be a positive integer.`,
+					`${pc.red("error")} log level should be a positive integer.`,
 				);
 				process.exit(1);
 			}
