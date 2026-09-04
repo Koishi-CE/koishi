@@ -9,7 +9,7 @@
 <template>
   <k-status v-if="progress < 1">
     <el-progress :indeterminate="!store.entry" :percentage="progress * 100">
-      正在加载页面组件
+      {{ t('loading.page') }}
     </el-progress>
   </k-status>
 </template>
@@ -17,8 +17,10 @@
 <script lang="ts" setup>
 import { store, useContext } from "@koishi-ce/client";
 import { computed } from "vue";
+import { useI18n } from "vue-i18n";
 
 const ctx = useContext();
+const { t } = useI18n();
 
 const progress = computed(() => {
 	const states = Object.values(ctx.$loader.extensions);

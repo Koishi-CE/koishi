@@ -18,19 +18,19 @@
         <k-icon name="chevron-right"/>
       </span>
       <span class="button bottom" @click.stop>
-        <el-tooltip placement="top" content="缩小" :offset="20">
+        <el-tooltip placement="top" :content="t('overlay.zoomOut')" :offset="20">
           <k-icon name="search-minus" @click="scale -= 0.2"/>
         </el-tooltip>
-        <el-tooltip placement="top" content="放大" :offset="20">
+        <el-tooltip placement="top" :content="t('overlay.zoomIn')" :offset="20">
           <k-icon name="search-plus" @click="scale += 0.2"/>
         </el-tooltip>
-        <el-tooltip placement="top" content="复原" :offset="20">
+        <el-tooltip placement="top" :content="t('overlay.reset')" :offset="20">
           <k-icon name="expand" @click="scale = 1, rotate = 0"/>
         </el-tooltip>
-        <el-tooltip placement="top" content="逆时针旋转" :offset="20">
+        <el-tooltip placement="top" :content="t('overlay.rotateLeft')" :offset="20">
           <k-icon name="undo" @click="rotate -= 90"/>
         </el-tooltip>
-        <el-tooltip placement="top" content="逆时针旋转" :offset="20">
+        <el-tooltip placement="top" :content="t('overlay.rotateRight')" :offset="20">
           <k-icon name="redo" @click="rotate += 90"/>
         </el-tooltip>
       </span>
@@ -49,7 +49,10 @@ import {
 	ref,
 	watch,
 } from "vue";
+import { useI18n } from "vue-i18n";
 import { shared } from "./utils";
+
+const { t } = useI18n();
 
 // 用户手动调整的缩放与旋转量（复原即回到 1 / 0）
 const scale = ref(1);

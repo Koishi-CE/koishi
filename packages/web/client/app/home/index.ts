@@ -14,7 +14,8 @@ export default function (ctx: Context) {
 	ctx.page({
 		id: "home",
 		path: "/",
-		name: "欢迎",
+		// name 传 getter：渲染层解析（MaybeRefOrGetter），随界面语言切换
+		name: () => ctx.$i18n.t("pages.home"),
 		icon: "activity:home",
 		order: 1000,
 		component: Home,

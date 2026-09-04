@@ -14,7 +14,7 @@
       <component :is="Component"></component>
     </keep-alive>
   </router-view>
-  <div class="loading" v-else v-loading="true" element-loading-text="正在加载数据……"></div>
+  <div class="loading" v-else v-loading="true" :element-loading-text="t('loading.data')"></div>
   <status-bar></status-bar>
   <menu-list></menu-list>
 </template>
@@ -22,11 +22,13 @@
 <script lang="ts" setup>
 import { store } from "@koishi-ce/client";
 import { computed } from "vue";
+import { useI18n } from "vue-i18n";
 import { useRoute } from "vue-router";
 import ActivityBar from "./activity/index.vue";
 import MenuList from "./menu/index.vue";
 import StatusBar from "./status.vue";
 
+const { t } = useI18n();
 const route = useRoute();
 
 // 页面就绪判定：未声明所需字段的页面恒为已就绪；

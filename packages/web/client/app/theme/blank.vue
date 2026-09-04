@@ -6,9 +6,15 @@
 <template>
   <div class="blank">
     <h1>404</h1>
-    <p>如果你看到了这个页面，说明控制台插件已经加载成功，但你尚未安装任何控制台扩展。</p>
+    <p>{{ t('blank.hint') }}</p>
   </div>
 </template>
+
+<script lang="ts" setup>
+import { useI18n } from "vue-i18n";
+
+const { t } = useI18n();
+</script>
 
 <style lang="scss" scoped>
 

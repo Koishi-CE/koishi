@@ -1,0 +1,47 @@
+# SPDX-License-Identifier: AGPL-3.0-only
+# Copyright (c) 2019-present Shigma and Koishijs contributors.
+# Copyright (c) 2026-present Koishi-CE contributors.
+
+pages:
+  home: 歡迎
+  settings: 使用者設定
+home:
+  connecting: 正在連線到 Koishi 伺服器……
+welcome:
+  title: 歡迎使用 Koishi！
+  description: 你的機器人已經準備就緒。點擊下面的任一選項，開啟你的 Koishi 之旅吧。
+  docs:
+    title: 閱讀文件
+    description: 開始閱讀官方文件。官方文件裡包含了你想要了解的全部內容。
+  forum:
+    title: 前往論壇
+    description: 前往論壇與其他使用者交流。如果你遇到了問題，可以在這裡尋求幫助。
+settings:
+  general: 一般設定
+  appearance: 外觀設定
+  status: 狀態列設定
+loading:
+  page: 正在載入頁面元件
+  data: 正在載入資料……
+blank:
+  hint: 如果你看到了這個頁面，說明控制檯插件已經載入成功，但你尚未安裝任何控制檯擴充功能。
+menu:
+  resetActivity: 重置活動欄
+overlay:
+  zoomOut: 縮小
+  zoomIn: 放大
+  reset: 復原
+  rotateLeft: 逆時針旋轉
+  rotateRight: 順時針旋轉
+schema:
+  settings:
+    $description: 一般設定
+    locale: 語言設定。
+  theme:
+    $description: 主題設定
+    mode: 主題偏好。
+    mode-auto: 跟隨系統
+    mode-dark: 深色
+    mode-light: 淺色
+    dark: 深色主題。
+    light: 淺色主題。

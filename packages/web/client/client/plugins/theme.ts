@@ -21,6 +21,7 @@ import {
 import { Schema } from "../../../components/client/index.ts";
 import type { Context } from "../context";
 import { Service } from "../utils";
+import { pickMessages } from "./i18n";
 import { useConfig } from "./setting";
 
 declare module "../context" {
@@ -79,14 +80,38 @@ export default class ThemeService extends Service {
 
 		ctx.settings({
 			id: "appearance",
-			title: "外观设置",
+			title: () => this.ctx.$i18n.t("settings.appearance"),
 			order: 900,
 			schema: Schema.object({
 				theme: Schema.object({
+					// const 选项的显示名不受 .i18n() 递归覆盖（其词典
+					// 递归会滤掉 $ 键），故以 Dict 形态经 extra 写入
+					// meta.description（description() 方法仅收 string）
 					mode: Schema.union([
-						Schema.const("auto").description("跟随系统"),
-						Schema.const("dark").description("深色"),
-						Schema.const("light").description("浅色"),
+						Schema.const("auto").extra(
+							"description",
+							pickMessages<string>(
+								"schema",
+								"theme",
+								"mode-auto",
+							),
+						),
+						Schema.const("dark").extra(
+							"description",
+							pickMessages<string>(
+								"schema",
+								"theme",
+								"mode-dark",
+							),
+						),
+						Schema.const("light").extra(
+							"description",
+							pickMessages<string>(
+								"schema",
+								"theme",
+								"mode-light",
+							),
+						),
 					])
 						.default("auto")
 						.description("主题偏好。"),
@@ -99,7 +124,7 @@ export default class ThemeService extends Service {
 						.default("default-light")
 						.description("浅色主题。"),
 				}).description("主题设置"),
-			}),
+			}).i18n(pickMessages("schema", "theme")),
 		});
 
 		ctx.effect(() =>

@@ -39,7 +39,8 @@ export default function (ctx: Context) {
 			//   label: '活动栏设置',
 			// }, {
 			id: ".reset",
-			label: "重置活动栏",
+			// label 支持 getter（menu-item 渲染层 toValue 解析），随界面语言切换
+			label: () => ctx.$i18n.t("menu.resetActivity"),
 		},
 	]);
 }

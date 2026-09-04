@@ -16,7 +16,8 @@ import Theme from "./theme.vue";
 export default function (ctx: Context) {
 	ctx.page({
 		path: "/settings/:name*",
-		name: "用户设置",
+		// name / title 传 getter：渲染层解析，随界面语言切换
+		name: () => ctx.$i18n.t("pages.settings"),
 		icon: "activity:settings",
 		position: "bottom",
 		order: -100,
@@ -31,7 +32,7 @@ export default function (ctx: Context) {
 
 	ctx.settings({
 		id: "status",
-		title: "状态栏设置",
+		title: () => ctx.$i18n.t("settings.status"),
 		order: 800,
 	});
 

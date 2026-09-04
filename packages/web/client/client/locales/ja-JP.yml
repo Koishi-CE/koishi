@@ -1,0 +1,47 @@
+# SPDX-License-Identifier: AGPL-3.0-only
+# Copyright (c) 2019-present Shigma and Koishijs contributors.
+# Copyright (c) 2026-present Koishi-CE contributors.
+
+pages:
+  home: ホーム
+  settings: ユーザー設定
+home:
+  connecting: Koishi サーバーに接続しています……
+welcome:
+  title: Koishi へようこそ！
+  description: ボットの準備が整いました。以下の選択肢からどれかを選んで、Koishi の旅を始めましょう。
+  docs:
+    title: ドキュメントを読む
+    description: 公式ドキュメントを読み始めましょう。知りたいことがすべて書かれています。
+  forum:
+    title: フォーラムへ
+    description: フォーラムで他のユーザーと交流しましょう。問題が起きたときは、ここで助けを求めることができます。
+settings:
+  general: 一般設定
+  appearance: 外観設定
+  status: ステータスバー設定
+loading:
+  page: ページコンポーネントを読み込み中
+  data: データを読み込み中……
+blank:
+  hint: このページが表示されている場合、コンソールプラグインの読み込みには成功していますが、コンソール拡張がまだインストールされていません。
+menu:
+  resetActivity: アクティビティバーをリセット
+overlay:
+  zoomOut: 縮小
+  zoomIn: 拡大
+  reset: リセット
+  rotateLeft: 反時計回りに回転
+  rotateRight: 時計回りに回転
+schema:
+  settings:
+    $description: 一般設定
+    locale: 言語設定。
+  theme:
+    $description: テーマ設定
+    mode: テーマの設定。
+    mode-auto: システムに従う
+    mode-dark: ダーク
+    mode-light: ライト
+    dark: ダークテーマ。
+    light: ライトテーマ。

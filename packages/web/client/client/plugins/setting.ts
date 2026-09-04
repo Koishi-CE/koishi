@@ -17,6 +17,7 @@ import { type Dict, remove } from "cosmokit";
 import {
 	type Component,
 	computed,
+	type MaybeRefOrGetter,
 	markRaw,
 	reactive,
 	ref,
@@ -29,6 +30,7 @@ import {
 import type { Config } from "..";
 import type { Context } from "../context";
 import { insert, type Ordered, Service } from "../utils";
+import { pickMessages } from "./i18n";
 
 declare module "../context" {
 	interface Context {
@@ -46,8 +48,8 @@ declare module "../context" {
 interface SettingOptions extends Ordered {
 	/** 所属设置分区 id（空串为通用设置） */
 	id: string;
-	/** 分区标题 */
-	title?: string;
+	/** 分区标题（支持 getter，随界面语言实时切换） */
+	title?: MaybeRefOrGetter<string>;
 	disabled?: () => boolean;
 	/** 该分区的配置 schema（渲染为表单） */
 	schema?: Schema;
@@ -157,14 +159,23 @@ export default class SettingService extends Service {
 
 		this.settings({
 			id: "",
-			title: "通用设置",
+			title: () => this.ctx.$i18n.t("settings.general"),
 			order: 1000,
 			schema: Schema.object({
+				// 语言列表覆盖宿主词典支持的全部语种；
+				// 显示名采用各语言的本地名称（CLDR 惯例），无需翻译
 				locale: Schema.union([
-					"zh-CN",
-					"en-US",
+					Schema.const("zh-CN").description("简体中文"),
+					Schema.const("zh-TW").description("繁體中文"),
+					Schema.const("en-US").description("English"),
+					Schema.const("ja-JP").description("日本語"),
+					Schema.const("fr-FR").description("Français"),
+					Schema.const("de-DE").description("Deutsch"),
+					Schema.const("ru-RU").description("Русский"),
 				]).description("语言设置。"),
-			}).description("通用设置"),
+			})
+				.description("通用设置")
+				.i18n(pickMessages("schema", "settings")),
 		});
 
 		// 汇总所有分区 schema 为一个相交对象，作为 resolved 的解释器

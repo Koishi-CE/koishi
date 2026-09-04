@@ -5,12 +5,12 @@
 <!--
   用户设置页：左侧 el-tree 分组导航 + 右侧当前分组的内容。
   分组内的条目三种形态二选一渲染：组件型（component）、表单型（schema），
-  disabled 的条目直接跳过。
+  disabled 的条目直接跳过。分区标题支持 getter（随界面语言实时切换）。
 -->
 <template>
   <k-layout main="page-settings">
     <template #header>
-      {{ ctx.internal.settings[path][0]?.title }}
+      {{ toValue(ctx.internal.settings[path][0]?.title) }}
     </template>
 
     <template #left>
@@ -38,7 +38,7 @@
 
 <script lang="ts" setup>
 import { useConfig, useContext } from "@koishi-ce/client";
-import { computed } from "vue";
+import { computed, toValue } from "vue";
 import { useRoute, useRouter } from "vue-router";
 
 const route = useRoute();
@@ -59,7 +59,7 @@ const data = computed(() =>
 	Object.entries(ctx.internal.settings).map<Tree>(
 		([id, [{ title }]]) => ({
 			id,
-			label: title,
+			label: toValue(title),
 		}),
 	),
 );

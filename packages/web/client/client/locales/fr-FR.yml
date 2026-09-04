@@ -1,0 +1,47 @@
+# SPDX-License-Identifier: AGPL-3.0-only
+# Copyright (c) 2019-present Shigma and Koishijs contributors.
+# Copyright (c) 2026-present Koishi-CE contributors.
+
+pages:
+  home: Accueil
+  settings: Paramètres utilisateur
+home:
+  connecting: Connexion au serveur Koishi...
+welcome:
+  title: Bienvenue sur Koishi !
+  description: Votre chatbot est prêt. Choisissez une option ci-dessous pour commencer votre aventure Koishi.
+  docs:
+    title: Documentation
+    description: "Lisez la documentation officielle : elle contient tout ce que vous voulez savoir."
+  forum:
+    title: Forum
+    description: Échangez avec d'autres utilisateurs sur le forum. Si vous rencontrez des problèmes, vous pouvez y demander de l'aide.
+settings:
+  general: Paramètres généraux
+  appearance: Apparence
+  status: Paramètres de la barre d'état
+loading:
+  page: Chargement des composants de la page
+  data: Chargement des données...
+blank:
+  hint: Si vous voyez cette page, le plugin console s'est chargé avec succès, mais aucune extension de console n'est installée.
+menu:
+  resetActivity: Réinitialiser la barre d'activités
+overlay:
+  zoomOut: Réduire
+  zoomIn: Agrandir
+  reset: Réinitialiser
+  rotateLeft: Pivoter dans le sens antihoraire
+  rotateRight: Pivoter dans le sens horaire
+schema:
+  settings:
+    $description: Paramètres généraux
+    locale: Paramètres de langue.
+  theme:
+    $description: Paramètres du thème
+    mode: Préférence de thème.
+    mode-auto: Suivre le système
+    mode-dark: Sombre
+    mode-light: Clair
+    dark: Thème sombre.
+    light: Thème clair.

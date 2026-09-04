@@ -1,0 +1,47 @@
+# SPDX-License-Identifier: AGPL-3.0-only
+# Copyright (c) 2019-present Shigma and Koishijs contributors.
+# Copyright (c) 2026-present Koishi-CE contributors.
+
+pages:
+  home: Главная
+  settings: Настройки пользователя
+home:
+  connecting: Подключение к серверу Koishi...
+welcome:
+  title: Добро пожаловать в Koishi!
+  description: Ваш бот готов к работе. Выберите любой пункт ниже, чтобы начать путешествие по Koishi.
+  docs:
+    title: Документация
+    description: Начните читать официальную документацию — в ней есть всё, что вы хотите узнать.
+  forum:
+    title: Форум
+    description: Общайтесь с другими пользователями на форуме. Если возникнут проблемы, здесь можно обратиться за помощью.
+settings:
+  general: Общие настройки
+  appearance: Оформление
+  status: Настройки строки состояния
+loading:
+  page: Загрузка компонентов страницы
+  data: Загрузка данных...
+blank:
+  hint: Если вы видите эту страницу, плагин консоли загрузился успешно, но расширения консоли ещё не установлены.
+menu:
+  resetActivity: Сбросить панель активности
+overlay:
+  zoomOut: Уменьшить
+  zoomIn: Увеличить
+  reset: Сбросить
+  rotateLeft: Повернуть против часовой стрелки
+  rotateRight: Повернуть по часовой стрелке
+schema:
+  settings:
+    $description: Общие настройки
+    locale: Настройки языка.
+  theme:
+    $description: Настройки темы
+    mode: Предпочтительная тема.
+    mode-auto: Как в системе
+    mode-dark: Тёмная
+    mode-light: Светлая
+    dark: Тёмная тема.
+    light: Светлая тема.

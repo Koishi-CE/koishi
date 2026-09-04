@@ -4,25 +4,25 @@
 
 <!--
   欢迎卡片：文档 / 社区论坛等入口链接。
-  自带 zh-CN 与 en-US 两套文案（局部 vue-i18n 实例，独立于全局语言包），
+  文案走宿主全局词典（client/locales/，7 语种），
   其余扩展可通过 "welcome-choice" 插槽追加自定义入口。
 -->
 <template>
   <div class="k-card welcome">
-    <h1>{{ t('title') }}</h1>
-    <p>{{ t('description') }}</p>
+    <h1>{{ t('welcome.title') }}</h1>
+    <p>{{ t('welcome.description') }}</p>
     <div class="choices">
       <k-slot name="welcome-choice">
         <k-slot-item :order="1000">
           <a class="choice" href="https://koishi.chat" rel="noopener noreferer" target="_blank">
-            <h2>{{ t('action.docs.title') }}</h2>
-            <p>{{ t('action.docs.description') }}</p>
+            <h2>{{ t('welcome.docs.title') }}</h2>
+            <p>{{ t('welcome.docs.description') }}</p>
           </a>
         </k-slot-item>
         <k-slot-item :order="500">
           <a class="choice" href="https://k.ilharp.cc" rel="noopener noreferer" target="_blank">
-            <h2>{{ t('action.forum.title') }}</h2>
-            <p>{{ t('action.forum.description') }}</p>
+            <h2>{{ t('welcome.forum.title') }}</h2>
+            <p>{{ t('welcome.forum.description') }}</p>
           </a>
         </k-slot-item>
       </k-slot>
@@ -32,32 +32,9 @@
 
 <script lang="ts" setup>
 import { useI18n } from "vue-i18n";
-import enUS from "./welcome.en-US.yml";
-import zhCN from "./welcome.zh-CN.yml";
 
-// 组件私有的双语文案：不依赖全局 i18n，确保欢迎页在任何语言环境下可用
-const { t, setLocaleMessage } = useI18n({
-	messages: {
-		"zh-CN": zhCN,
-		"en-US": enUS,
-	},
-});
-
-// 开发模式下 yml 文案改动即时热替换，无需整页刷新
-if (import.meta.hot) {
-	import.meta.hot.accept(
-		"./welcome.zh-CN.yml",
-		(module) => {
-			setLocaleMessage("zh-CN", module.default);
-		},
-	);
-	import.meta.hot.accept(
-		"./welcome.en-US.yml",
-		(module) => {
-			setLocaleMessage("en-US", module.default);
-		},
-	);
-}
+// 全局 composer：词典由宿主 $i18n 服务在挂载前注入
+const { t } = useI18n();
 </script>
 
 <style lang="scss">

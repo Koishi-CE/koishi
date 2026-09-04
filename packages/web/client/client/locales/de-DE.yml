@@ -1,0 +1,47 @@
+# SPDX-License-Identifier: AGPL-3.0-only
+# Copyright (c) 2019-present Shigma and Koishijs contributors.
+# Copyright (c) 2026-present Koishi-CE contributors.
+
+pages:
+  home: Willkommen
+  settings: Benutzereinstellungen
+home:
+  connecting: Verbindung zum Koishi-Server wird hergestellt...
+welcome:
+  title: Willkommen bei Koishi!
+  description: Ihr Chatbot ist einsatzbereit. Wählen Sie eine der Optionen unten, um Ihre Koishi-Reise zu beginnen.
+  docs:
+    title: Dokumentation
+    description: Lesen Sie die offizielle Dokumentation. Sie enthält alles, was Sie wissen möchten.
+  forum:
+    title: Forum
+    description: Tauschen Sie sich im Forum mit anderen Nutzern aus. Wenn Probleme auftreten, finden Sie dort Hilfe.
+settings:
+  general: Allgemeine Einstellungen
+  appearance: Erscheinungsbild
+  status: Statusleisten-Einstellungen
+loading:
+  page: Seitenkomponenten werden geladen
+  data: Daten werden geladen...
+blank:
+  hint: Wenn Sie diese Seite sehen, wurde das Konsolen-Plugin erfolgreich geladen, aber es sind noch keine Konsolen-Erweiterungen installiert.
+menu:
+  resetActivity: Aktivitätsleiste zurücksetzen
+overlay:
+  zoomOut: Verkleinern
+  zoomIn: Vergrößern
+  reset: Zurücksetzen
+  rotateLeft: Gegen den Uhrzeigersinn drehen
+  rotateRight: Im Uhrzeigersinn drehen
+schema:
+  settings:
+    $description: Allgemeine Einstellungen
+    locale: Spracheinstellungen.
+  theme:
+    $description: Design-Einstellungen
+    mode: Design-Präferenz.
+    mode-auto: System folgen
+    mode-dark: Dunkel
+    mode-light: Hell
+    dark: Dunkles Design.
+    light: Helles Design.

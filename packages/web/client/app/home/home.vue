@@ -16,14 +16,17 @@
       </k-slot>
     </el-scrollbar>
     <div v-else>
-      <k-card class="connect">正在连接到 Koishi 服务器……</k-card>
+      <k-card class="connect">{{ t('home.connecting') }}</k-card>
     </div>
   </k-layout>
 </template>
 
 <script lang="ts" setup>
 import { global, socket } from "@koishi-ce/client";
+import { useI18n } from "vue-i18n";
 import Welcome from "./welcome.vue";
+
+const { t } = useI18n();
 </script>
 
 <style lang="scss">
