@@ -6,9 +6,13 @@
  *
  * 包发现以根 package.json 的 workspaces globs 为唯一事实源（本仓库全部
  * 是 "base/*" 单层形态，其余模式忽略），排除 private 包；发布序按内部
- * 依赖（dependencies / peerDependencies / optionalDependencies 中命中
- * workspace 包名者）拓扑排序，被依赖者在前——npm 逐个发包时依赖方能先
- * 落到 registry。纯函数不触网；文件系统访问集中在 discoverPackages。
+ * 依赖（dependencies / optionalDependencies 中命中 workspace 包名者）
+ * 拓扑排序，被依赖者在前——npm 逐个发包时依赖方能先落到 registry。
+ * peerDependencies 不参与排序：peer 是运行时兼容性声明而非安装依赖，
+ * 消费方自备，不构成「先发依赖方」的顺序约束；且本生态框架与插件互
+ * peer 属常态（@koishi-ce/koishi 依赖 plugin-server，plugin-server 又
+ * peer koishi），把 peer 算进边则必成环、发布链永久中断。纯函数不触网；
+ * 文件系统访问集中在 discoverPackages。
  */
 import type { Dirent } from "node:fs";
 import {
@@ -146,7 +150,12 @@ export function discoverPackages(root: string): PkgInfo[] {
 		.filter((pkg): pkg is PkgInfo => pkg !== null);
 }
 
-/** 包的内部依赖名集合（deps + peers + optional 命中 workspace 包名者，去重）。 */
+/**
+ * 包的内部依赖名集合（deps + optional 命中 workspace 包名者，去重）。
+ * 刻意不含 peerDependencies：peer 由消费方运行时满足，发布顺序与它无关，
+ * 且框架⇄插件互 peer（koishi 依赖 server、server peer koishi）纳入排序
+ * 必成环——正是发布链曾因此整体中断的实证，勿加回来。
+ */
 function internalDeps(
 	pkg: PkgInfo,
 	names: ReadonlySet<string>,
@@ -155,7 +164,6 @@ function internalDeps(
 		...new Set(
 			[
 				...Object.keys(pkg.dependencies),
-				...Object.keys(pkg.peerDependencies),
 				...Object.keys(pkg.optionalDependencies),
 			].filter((name) => names.has(name)),
 		),
