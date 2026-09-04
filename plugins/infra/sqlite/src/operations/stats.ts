@@ -5,7 +5,7 @@
 /** 库 / 表规模统计（webui 数据库面板的数据源）。 */
 import { escapeId } from "@minatojs/sql-utils";
 import type { Driver } from "minato";
-import type { SQLiteDriver } from "./index.ts";
+import type { SQLiteDriver } from "../index.ts";
 
 export async function collectStats(
 	driver: SQLiteDriver,

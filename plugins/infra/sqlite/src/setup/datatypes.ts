@@ -5,7 +5,7 @@
 /** minato 类型 transformer 注册：JS 值 ↔ SQLite 存储值的双向转换。 */
 import { Binary, isNullable } from "cosmokit";
 import { Field } from "minato";
-import type { SQLiteDriver } from "./index.ts";
+import type { SQLiteDriver } from "../index.ts";
 
 export function defineTypes(driver: SQLiteDriver) {
 	driver.define<boolean, number>({

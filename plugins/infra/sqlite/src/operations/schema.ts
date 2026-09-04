@@ -13,8 +13,8 @@ import { escapeId } from "@minatojs/sql-utils";
 import type { Dict } from "cosmokit";
 import { isNullable, makeArray } from "cosmokit";
 import { Field } from "minato";
-import type { SQLiteDriver } from "./index.ts";
-import { joinKeys } from "./utils.ts";
+import type { SQLiteDriver } from "../index.ts";
+import { joinKeys } from "../sql/utils.ts";
 
 function getTypeDef({ deftype: type }: Field) {
 	switch (type) {

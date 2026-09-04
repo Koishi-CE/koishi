@@ -9,9 +9,9 @@ import type { Dict } from "cosmokit";
 import { deepEqual, difference, makeArray, mapValues } from "cosmokit";
 import type { Selection } from "minato";
 import { Eval, executeUpdate, getCell, hasSubquery, isEvalExpr } from "minato";
-import { SQLiteBuilder } from "./builder.ts";
-import type { SQLiteDriver } from "./index.ts";
-import { joinKeys } from "./utils.ts";
+import type { SQLiteDriver } from "../index.ts";
+import { SQLiteBuilder } from "../sql/builder.ts";
+import { joinKeys } from "../sql/utils.ts";
 
 export async function remove(driver: SQLiteDriver, sel: Selection.Mutable) {
 	const { query, table, tables } = sel;

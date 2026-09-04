@@ -18,10 +18,11 @@ import type { Dict } from "cosmokit";
  * （node:sqlite 引擎）的文件级合并改写——以 4 线的引擎层为骨架，
  * API 面回退到 minato 3；映射关系见 docs/process/upstream.md。
  *
- * 模块划分：builder.ts 为 SQL 生成器；schema.ts 为表结构同步（DDL）；
- * crud.ts 为数据操作（DML）；indexes.ts 为二级索引；stats.ts 为规模
- * 统计；functions.ts / datatypes.ts 分别承载自定义 SQL 函数与类型
- * transformer 的注册；utils.ts 存放共享 SQL 片段工具。
+ * 模块划分（src/ 下按职责分三个子目录）：sql/ 为 SQL 生成
+ * （builder.ts 方言生成器、utils.ts 共享片段工具）；operations/
+ * 为 Driver 方法实现（schema.ts 表结构同步、crud.ts 数据操作、
+ * indexes.ts 二级索引、stats.ts 规模统计）；setup/ 为启动时注册
+ * （functions.ts 自定义 SQL 函数、datatypes.ts 类型 transformer）。
  *
  * 已知限制：Bun 的 node:sqlite 实现中 `setReadBigInts` 为空操作，
  * 超过 Number.MAX_SAFE_INTEGER 的整数读回会抛 RangeError（写入不受
@@ -31,13 +32,13 @@ import type { Eval, MigrationHooks, Selection } from "minato";
 import { Driver, z } from "minato";
 import enUS from "../locales/en-US.yml";
 import zhCN from "../locales/zh-CN.yml";
-import { SQLiteBuilder } from "./builder.ts";
-import * as crud from "./crud.ts";
-import { defineTypes } from "./datatypes.ts";
-import { registerFunctions } from "./functions.ts";
-import * as indexes from "./indexes.ts";
-import * as schema from "./schema.ts";
-import { collectStats } from "./stats.ts";
+import * as crud from "./operations/crud.ts";
+import * as indexes from "./operations/indexes.ts";
+import * as schema from "./operations/schema.ts";
+import { collectStats } from "./operations/stats.ts";
+import { defineTypes } from "./setup/datatypes.ts";
+import { registerFunctions } from "./setup/functions.ts";
+import { SQLiteBuilder } from "./sql/builder.ts";
 
 export class SQLiteDriver extends Driver<SQLiteDriver.Config> {
 	static override name = "sqlite";

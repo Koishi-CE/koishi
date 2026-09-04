@@ -5,7 +5,7 @@
 /** 二级索引管理：创建、列举、删除与 `sqlite_master` 定义解析。 */
 import { escapeId } from "@minatojs/sql-utils";
 import type { Driver } from "minato";
-import type { SQLiteDriver } from "./index.ts";
+import type { SQLiteDriver } from "../index.ts";
 
 /** `sqlite_master` 的行结构。 */
 interface SQLiteMasterInfo {
