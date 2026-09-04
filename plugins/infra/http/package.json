@@ -21,18 +21,17 @@
 	"license": "MIT",
 	"repository": {
 		"type": "git",
-		"url": "git+https://github.com/cordiverse/http.git",
-		"directory": "packages/core"
+		"url": "git+https://github.com/Koishi-CE/koishi.git",
+		"directory": "plugins/infra/http"
 	},
 	"bugs": {
-		"url": "https://github.com/cordiverse/http/issues"
+		"url": "https://github.com/Koishi-CE/koishi/issues"
 	},
-	"homepage": "https://github.com/cordiverse/http",
+	"homepage": "https://github.com/Koishi-CE/koishi/tree/main/plugins/infra/http",
 	"keywords": [
 		"http",
 		"fetch",
 		"axios",
-		"http",
 		"undici",
 		"client",
 		"request",

@@ -21,13 +21,13 @@
 	"license": "MIT",
 	"repository": {
 		"type": "git",
-		"url": "git+https://github.com/cordiverse/http.git",
-		"directory": "packages/proxy-agent"
+		"url": "git+https://github.com/Koishi-CE/koishi.git",
+		"directory": "plugins/infra/proxy"
 	},
 	"bugs": {
-		"url": "https://github.com/cordiverse/http/issues"
+		"url": "https://github.com/Koishi-CE/koishi/issues"
 	},
-	"homepage": "https://github.com/cordiverse/http",
+	"homepage": "https://github.com/Koishi-CE/koishi/tree/main/plugins/infra/proxy",
 	"keywords": [
 		"http",
 		"client",
@@ -35,7 +35,6 @@
 		"fetch",
 		"axios",
 		"socks",
-		"http",
 		"https",
 		"proxy",
 		"agent",
