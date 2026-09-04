@@ -169,7 +169,16 @@ export async function build(
 					},
 				},
 				plugins: [
-					vue(),
+					// 钉死剥离模板注释：注释写在 template 根元素之前时，SFC 会被
+					// 编译成多根 fragment，Vue 随之禁用 attribute 透传（外部传入的
+					// class 落不到 svg 上，侧栏图标因此丢掉尺寸类）；生产语义本就
+					// 应剥注释，这里显式钉死，避免随 NODE_ENV 漂移。dev server
+					// 同步钉死，保证开发态与产物行为一致
+					vue({
+						template: {
+							compilerOptions: { comments: false },
+						},
+					}),
 					yaml(),
 					(
 						await import("unocss/vite")
@@ -268,7 +277,16 @@ export async function createServer(
 					},
 				},
 				plugins: [
-					vue(),
+					// 钉死剥离模板注释：注释写在 template 根元素之前时，SFC 会被
+					// 编译成多根 fragment，Vue 随之禁用 attribute 透传（外部传入的
+					// class 落不到 svg 上，侧栏图标因此丢掉尺寸类）；生产语义本就
+					// 应剥注释，这里显式钉死，避免随 NODE_ENV 漂移。dev server
+					// 同步钉死，保证开发态与产物行为一致
+					vue({
+						template: {
+							compilerOptions: { comments: false },
+						},
+					}),
 					yaml(),
 					(await import("unocss/vite")).default({
 						presets: [
