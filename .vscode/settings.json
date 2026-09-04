@@ -12,7 +12,7 @@
     "material-icon-theme.folders.associations": {
         "webui": "client",
         // plugins/common
-        "assets-local": "assets",
+        "assets-local": "resource",
         // plugins/infra
         "hmr": "plugin",
         "http": "connection",
@@ -24,7 +24,7 @@
     "material-icon-theme.files.associations": {
         "NOTICE": "certificate",
         // templates
-        "env": ".env",
-        "gitignore": ".gitignore"
+        "env": "tune",
+        "gitignore": "git"
     }
 }
