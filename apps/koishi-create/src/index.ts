@@ -23,24 +23,45 @@
  * - template.ts   内置 @koishi-ce 模板（静态文件与 baseManifest）
  */
 import { spawnSync } from "node:child_process";
-import { existsSync, mkdirSync, readdirSync, writeFileSync } from "node:fs";
+import {
+	existsSync,
+	mkdirSync,
+	readdirSync,
+	writeFileSync,
+} from "node:fs";
 import { basename, join, relative } from "node:path";
 import { parseArgs } from "node:util";
 import * as p from "@clack/prompts";
 import pc from "picocolors";
 import pkg from "../package.json" with { type: "json" };
-import { type Manifest, renderManifest } from "./manifest.ts";
-import { getLocalRegistry, readNpmrcRegistry } from "./registry.ts";
+import {
+	type Manifest,
+	renderManifest,
+} from "./manifest.ts";
+import {
+	getLocalRegistry,
+	readNpmrcRegistry,
+} from "./registry.ts";
 import { scaffoldRemote } from "./remote.ts";
 import { baseManifest, templateFiles } from "./template.ts";
-import { detectAgent, emptyDir, gitConfig, supports } from "./utils.ts";
+import {
+	detectAgent,
+	emptyDir,
+	gitConfig,
+	supports,
+} from "./utils.ts";
 
 const { version } = pkg;
 
 export type { Manifest };
 // 公共导出面：与拆分前保持一致（bin.ts 与测试文件按 ../index.ts 的既有
 // 导入路径原样可用）；子模块的其余导出属于包内部实现，不在此暴露。
-export { detectAgent, getLocalRegistry, readNpmrcRegistry, renderManifest };
+export {
+	detectAgent,
+	getLocalRegistry,
+	readNpmrcRegistry,
+	renderManifest,
+};
 
 /** CLI 参数（node:util parseArgs 解析，别名映射见 bin 帮助文本） */
 interface Args {
@@ -92,7 +113,8 @@ async function getName(): Promise<string> {
 	const answer = await p.text({
 		message: "项目名：",
 		initialValue: "koishi-app",
-		validate: (value) => (value?.trim() ? undefined : "项目名不能为空"),
+		validate: (value) =>
+			value?.trim() ? undefined : "项目名不能为空",
 	});
 	if (p.isCancel(answer)) process.exit(0);
 	const trimmed = answer.trim();
@@ -102,7 +124,10 @@ async function getName(): Promise<string> {
 
 /** 交互式确认框：返回用户是否选择了「是」（Ctrl+C 取消直接退出） */
 async function confirm(message: string) {
-	const answer = await p.confirm({ message, initialValue: true });
+	const answer = await p.confirm({
+		message,
+		initialValue: true,
+	});
 	if (p.isCancel(answer)) process.exit(0);
 	return answer === true;
 }
@@ -121,7 +146,9 @@ async function prepare() {
 	if (!files.length) return;
 
 	if (!argv.forced && !argv.yes) {
-		console.log(pc.yellow(`  目标目录 "${project}" 非空。`));
+		console.log(
+			pc.yellow(`  目标目录 "${project}" 非空。`),
+		);
 		const yes = await confirm("清空现有文件并继续？");
 		if (!yes) process.exit(0);
 	}
@@ -134,12 +161,18 @@ async function prepare() {
  * 加上由 baseManifest() 渲染出的 package.json。纯本地写入，无网络请求。
  */
 function scaffoldBuiltin() {
-	for (const [file, content] of Object.entries(templateFiles)) {
+	for (const [file, content] of Object.entries(
+		templateFiles,
+	)) {
 		writeFileSync(join(rootDir, file), content);
 	}
 	writeFileSync(
 		join(rootDir, "package.json"),
-		renderManifest(baseManifest(), project, argv.prod === true),
+		renderManifest(
+			baseManifest(),
+			project,
+			argv.prod === true,
+		),
 	);
 }
 
@@ -149,7 +182,9 @@ function scaffoldBuiltin() {
  * scaffoldRemote），registry 取值 --registry 参数 > 本机 npm 配置 > 官方源。
  */
 async function scaffold() {
-	console.log(pc.dim("  正在 ") + project + pc.dim(" 中生成项目 ..."));
+	console.log(
+		pc.dim("  正在 ") + project + pc.dim(" 中生成项目 ..."),
+	);
 
 	if (argv.template) {
 		const registry = (
@@ -181,8 +216,13 @@ async function scaffold() {
 async function initGit() {
 	if (!argv.git || !supports(["git", "--version"])) return;
 	const branch = gitConfig("init.defaultBranch") || "main";
-	spawnSync("git", ["init", "-b", branch], { stdio: "ignore", cwd: rootDir });
-	console.log(pc.green(`  已初始化 git 仓库（分支 ${branch}）。\n`));
+	spawnSync("git", ["init", "-b", branch], {
+		stdio: "ignore",
+		cwd: rootDir,
+	});
+	console.log(
+		pc.green(`  已初始化 git 仓库（分支 ${branch}）。\n`),
+	);
 }
 
 /**
@@ -194,7 +234,8 @@ async function install() {
 	if (argv.yes) return;
 
 	const agent = detectAgent();
-	const startArgs = agent === "yarn" ? ["start"] : ["run", "start"];
+	const startArgs =
+		agent === "yarn" ? ["start"] : ["run", "start"];
 	const yes = await confirm("现在安装依赖并启动吗？");
 	if (yes) {
 		const installed = spawnSync(agent, ["install"], {
@@ -202,19 +243,30 @@ async function install() {
 			cwd: rootDir,
 		});
 		if (installed.status !== 0) {
-			console.log(pc.red("  依赖安装失败，请检查上方日志。"));
+			console.log(
+				pc.red("  依赖安装失败，请检查上方日志。"),
+			);
 			return;
 		}
-		spawnSync(agent, startArgs, { stdio: "inherit", cwd: rootDir });
+		spawnSync(agent, startArgs, {
+			stdio: "inherit",
+			cwd: rootDir,
+		});
 	} else {
 		console.log(pc.dim("  稍后可以这样启动：\n"));
 		if (rootDir !== cwd) {
 			const related = relative(cwd, rootDir);
 			console.log(pc.blue(`  cd ${pc.bold(related)}`));
 		}
-		console.log(pc.blue(`  ${agent === "yarn" ? "yarn" : `${agent} install`}`));
 		console.log(
-			pc.blue(`  ${agent === "yarn" ? "yarn" : `${agent} run`} start`),
+			pc.blue(
+				`  ${agent === "yarn" ? "yarn" : `${agent} install`}`,
+			),
+		);
+		console.log(
+			pc.blue(
+				`  ${agent === "yarn" ? "yarn" : `${agent} run`} start`,
+			),
 		);
 		console.log();
 	}
@@ -243,7 +295,9 @@ export async function start() {
 	}
 
 	console.log();
-	console.log(`  ${pc.bold("Create Koishi")}  ${pc.blue(`v${version}`)}`);
+	console.log(
+		`  ${pc.bold("Create Koishi")}  ${pc.blue(`v${version}`)}`,
+	);
 	console.log();
 
 	const name = await getName();

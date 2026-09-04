@@ -21,7 +21,11 @@
 </template>
 
 <script lang="ts" setup>
-import { type MaybeGetter, type MenuItem, useContext } from "@koishi-ce/client";
+import {
+	type MaybeGetter,
+	type MenuItem,
+	useContext,
+} from "@koishi-ce/client";
 import { computed } from "vue";
 
 const props = defineProps<MenuItem & { prefix: string }>();
@@ -55,8 +59,10 @@ const icon = computed(() => toValue(props.icon));
 function toValue<T>(getter: MaybeGetter<T>): T {
 	if (typeof getter !== "function") return getter;
 	// 收窄到 MaybeGetter 的函数分支（以作用域为参的 getter）
-	return (getter as (current: ReturnType<typeof ctx.$action.createScope>) => T)(
-		ctx.$action.createScope(),
-	);
+	return (
+		getter as (
+			current: ReturnType<typeof ctx.$action.createScope>,
+		) => T
+	)(ctx.$action.createScope());
 }
 </script>

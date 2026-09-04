@@ -19,10 +19,13 @@ import type { Argv } from "./parser/index.ts";
 // https://github.com/microsoft/TypeScript/issues/17002
 // 上游 TS 缺陷长期未修：内置 Array.isArray 对含 readonly 数组的联合类型
 // 会把 false 分支也收窄进数组，只能用 unknown 版谓词断言绕过
-const isArray = Array.isArray as (arg: unknown) => arg is readonly unknown[];
+const isArray = Array.isArray as (
+	arg: unknown,
+) => arg is readonly unknown[];
 
 /** parseDecl 的产出：声明列表 + 剥离类型标注后的展示形式 */
-export interface DeclarationList extends Array<Argv.Declaration> {
+export interface DeclarationList
+	extends Array<Argv.Declaration> {
 	/** 原始声明串；贪婪类型（如 text）的标注替换为 "..."，其余类型标注删除 */
 	stripped: string;
 }
@@ -32,7 +35,10 @@ export interface DeclarationList extends Array<Argv.Declaration> {
  * 函数 / 正则 / 枚举数组按字面量构造 transform；对象视作完整配置；
  * 字符串视为内置 domain 名，从 ctx 服务表（domain:<name>）查询。
  */
-export function resolveDomain(ctx: Context, type: Argv.Type | undefined) {
+export function resolveDomain(
+	ctx: Context,
+	type: Argv.Type | undefined,
+) {
 	if (typeof type === "function") {
 		return { transform: type };
 	} else if (type instanceof RegExp) {
@@ -81,10 +87,10 @@ export function parseValue(
 			const message = argv.session.text(
 				(err as Error).message || "internal.check-syntax",
 			);
-			argv.error = argv.session.text(`internal.invalid-${kind}`, [
-				name,
-				message,
-			]);
+			argv.error = argv.session.text(
+				`internal.invalid-${kind}`,
+				[name, message],
+			);
 		}
 	}
 }
@@ -96,8 +102,13 @@ export function parseValue(
  * stripped 为去掉类型标注（贪婪类型保留 "..."）后的展示形式，
  * 供 help 与选项语法串拼接使用。
  */
-export function parseDecl(ctx: Context, source: string): DeclarationList {
-	const result: DeclarationList = Object.assign([], { stripped: "" });
+export function parseDecl(
+	ctx: Context,
+	source: string,
+): DeclarationList {
+	const result: DeclarationList = Object.assign([], {
+		stripped: "",
+	});
 	// 括号段提取用单调前进的游标 + 最近定界符指针实现：
 	// 带回溯的 `<[^>]+>|[...]` 在连续 '<' / '[' 输入下是平方级复杂度。
 	// 不变式：gt / rb 分别是 index 之后第一个 '>' / ']' 的下标（无则 -1），
@@ -116,7 +127,9 @@ export function parseDecl(ctx: Context, source: string): DeclarationList {
 				variadic = true;
 			}
 			const [name, rawType] = rawName.split(":");
-			const type = rawType ? (rawType.trim() as Argv.DomainType) : undefined;
+			const type = rawType
+				? (rawType.trim() as Argv.DomainType)
+				: undefined;
 			result.push({
 				variadic,
 				required: ch === "<",
@@ -129,8 +142,10 @@ export function parseDecl(ctx: Context, source: string): DeclarationList {
 			continue;
 		}
 		index++;
-		if (gt !== -1 && gt < index) gt = source.indexOf(">", index);
-		if (rb !== -1 && rb < index) rb = source.indexOf("]", index);
+		if (gt !== -1 && gt < index)
+			gt = source.indexOf(">", index);
+		if (rb !== -1 && rb < index)
+			rb = source.indexOf("]", index);
 	}
 	result.stripped = source
 		.replace(/:[\w-]+(?=[>\]])/g, (str) => {

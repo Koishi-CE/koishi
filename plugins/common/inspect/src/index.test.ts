@@ -5,7 +5,12 @@
  * inspect 插件测试：验证当前会话、at / sharp 元素参数、
  * 非法参数与引用消息四类输入的元信息输出。
  */
-import { afterAll, beforeAll, describe, it } from "bun:test";
+import {
+	afterAll,
+	beforeAll,
+	describe,
+	it,
+} from "bun:test";
 import { Context } from "@koishi-ce/koishi";
 import mock from "@koishi-ce/plugin-mock";
 import * as inspect from "./index.ts";
@@ -37,9 +42,18 @@ describe("@koishi-ce/plugin-inspect", () => {
 			),
 		);
 
-		await client.shouldReply('inspect <at id="321"/>', "用户 ID：321");
-		await client.shouldReply('inspect <sharp id="654"/>', "频道 ID：654");
-		await client.shouldReply("inspect foobar", "参数无法解析。");
+		await client.shouldReply(
+			'inspect <at id="321"/>',
+			"用户 ID：321",
+		);
+		await client.shouldReply(
+			'inspect <sharp id="654"/>',
+			"频道 ID：654",
+		);
+		await client.shouldReply(
+			"inspect foobar",
+			"参数无法解析。",
+		);
 
 		await client.shouldReply(
 			'<quote id="114514"/> inspect foobar',

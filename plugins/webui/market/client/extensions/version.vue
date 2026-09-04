@@ -48,9 +48,15 @@ import { hasUpdate } from "../utils";
 const name = inject<ComputedRef<string>>("plugin:name");
 
 const local = computed(() => store.packages?.[name.value]);
-const object = computed(() => store.market.data?.[name.value]);
-const dep = computed(() => store.dependencies?.[name.value]);
-const versions = computed(() => store.registry?.[name.value]);
+const object = computed(
+	() => store.market.data?.[name.value],
+);
+const dep = computed(
+	() => store.dependencies?.[name.value],
+);
+const versions = computed(
+	() => store.registry?.[name.value],
+);
 </script>
 
 <style lang="scss" scoped>

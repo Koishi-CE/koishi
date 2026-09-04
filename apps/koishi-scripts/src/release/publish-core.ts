@@ -32,7 +32,10 @@ export interface WorkspacePkg {
 }
 
 /** 展开根目录下一个 base 目录的直接子目录列表；base 不存在 → 空数组。 */
-async function expandGlobDirs(root: string, base: string): Promise<string[]> {
+async function expandGlobDirs(
+	root: string,
+	base: string,
+): Promise<string[]> {
 	const full = join(root, base);
 	let entries: Dirent[];
 	try {
@@ -49,7 +52,9 @@ async function expandGlobDirs(root: string, base: string): Promise<string[]> {
  * 读取单目录下的 package.json。
  * 无 package.json / 无 name / private 包 → null（不可发布）。
  */
-async function loadPackage(dir: string): Promise<WorkspacePkg | null> {
+async function loadPackage(
+	dir: string,
+): Promise<WorkspacePkg | null> {
 	let raw: string;
 	try {
 		raw = await readFile(join(dir, "package.json"), "utf8");
@@ -62,13 +67,20 @@ async function loadPackage(dir: string): Promise<WorkspacePkg | null> {
 		version?: unknown;
 		dependencies?: unknown;
 	};
-	if (typeof pkg.name !== "string" || pkg.name === "" || pkg.private === true) {
+	if (
+		typeof pkg.name !== "string" ||
+		pkg.name === "" ||
+		pkg.private === true
+	) {
 		return null;
 	}
 	return {
 		name: pkg.name,
 		dir,
-		version: typeof pkg.version === "string" ? pkg.version : "0.0.0",
+		version:
+			typeof pkg.version === "string"
+				? pkg.version
+				: "0.0.0",
 		dependencies:
 			pkg.dependencies === undefined
 				? {}
@@ -82,7 +94,9 @@ async function loadPackage(dir: string): Promise<WorkspacePkg | null> {
  *   external/<monorepo>/packages/<子包>/ —— monorepo 的子包
  * monorepo 根包为 private，由 loadPackage 自动过滤。
  */
-export async function discoverPackages(root: string): Promise<WorkspacePkg[]> {
+export async function discoverPackages(
+	root: string,
+): Promise<WorkspacePkg[]> {
 	const projects = await expandGlobDirs(root, "external");
 	const dirs = (
 		await Promise.all(
@@ -92,8 +106,12 @@ export async function discoverPackages(root: string): Promise<WorkspacePkg[]> {
 			]),
 		)
 	).flat();
-	const pkgs = await Promise.all(dirs.map((dir) => loadPackage(dir)));
-	return pkgs.filter((pkg): pkg is WorkspacePkg => pkg !== null);
+	const pkgs = await Promise.all(
+		dirs.map((dir) => loadPackage(dir)),
+	);
+	return pkgs.filter(
+		(pkg): pkg is WorkspacePkg => pkg !== null,
+	);
 }
 
 /** 单个包跳过的原因（planPublish 产出）。 */
@@ -133,7 +151,10 @@ export function planPublish(
 			);
 		}
 		if (versions.has(pkg.version)) {
-			skipped.push({ pkg, reason: `版本 ${pkg.version} 已在 registry` });
+			skipped.push({
+				pkg,
+				reason: `版本 ${pkg.version} 已在 registry`,
+			});
 		} else {
 			toPublish.push(pkg);
 		}
@@ -146,15 +167,19 @@ export function planPublish(
  * 工作区内包名（跨仓库依赖，如 monorepo 子包依赖另一个项目的包）。
  * 存在环 → 抛错。
  */
-export function topoSort(pkgs: readonly WorkspacePkg[]): WorkspacePkg[] {
-	const byName = new Map(pkgs.map((pkg) => [pkg.name, pkg]));
+export function topoSort(
+	pkgs: readonly WorkspacePkg[],
+): WorkspacePkg[] {
+	const byName = new Map(
+		pkgs.map((pkg) => [pkg.name, pkg]),
+	);
 	// 入度 = 依赖的内部包数量
 	const inDegree = new Map<string, number>();
 	const dependents = new Map<string, string[]>();
 	for (const pkg of pkgs) {
-		const internalDeps = Object.keys(pkg.dependencies).filter((name) =>
-			byName.has(name),
-		);
+		const internalDeps = Object.keys(
+			pkg.dependencies,
+		).filter((name) => byName.has(name));
 		inDegree.set(pkg.name, internalDeps.length);
 		for (const dep of internalDeps) {
 			const list = dependents.get(dep) ?? [];
@@ -184,16 +209,22 @@ export function topoSort(pkgs: readonly WorkspacePkg[]): WorkspacePkg[] {
 		const cyclic = pkgs
 			.map((pkg) => pkg.name)
 			.filter((name) => !ordered.includes(name));
-		throw new Error(`内部依赖存在环，无法确定发布顺序: ${cyclic.join(", ")}`);
+		throw new Error(
+			`内部依赖存在环，无法确定发布顺序: ${cyclic.join(", ")}`,
+		);
 	}
-	return ordered.map((name) => byName.get(name) as WorkspacePkg);
+	return ordered.map(
+		(name) => byName.get(name) as WorkspacePkg,
+	);
 }
 
 /**
  * 解析 "1.2.3" 形式版本为 [major, minor, patch] 数值（非数字段按 0 处理，
  * 预发布后缀忽略——本工作区包均为纯三段版本）。
  */
-function parseVersionParts(version: string): [number, number, number] {
+function parseVersionParts(
+	version: string,
+): [number, number, number] {
 	const parts = version.split(/[.+-]/, 3);
 	return [
 		Number.parseInt(parts[0] ?? "0", 10) || 0,
@@ -216,7 +247,8 @@ export function isDowngrade(
 		const parts = parseVersionParts(version);
 		if (
 			parts[0] > localParts[0] ||
-			(parts[0] === localParts[0] && parts[1] > localParts[1]) ||
+			(parts[0] === localParts[0] &&
+				parts[1] > localParts[1]) ||
 			(parts[0] === localParts[0] &&
 				parts[1] === localParts[1] &&
 				parts[2] > localParts[2])
@@ -293,13 +325,19 @@ export function rewriteWorkspaceProtocol(
 		for (const [dep, range] of Object.entries(
 			deps as Record<string, unknown>,
 		)) {
-			if (typeof range === "string" && /^(workspace|file|link):/.test(range)) {
+			if (
+				typeof range === "string" &&
+				/^(workspace|file|link):/.test(range)
+			) {
 				throw new Error(
 					`${field}.${dep} 改写后仍残留本地协议 ${range}，拒绝发布`,
 				);
 			}
 		}
 	}
-	const text = changes.length > 0 ? `${JSON.stringify(pkg, null, 4)}\n` : raw;
+	const text =
+		changes.length > 0
+			? `${JSON.stringify(pkg, null, 4)}\n`
+			: raw;
 	return { text, changes };
 }

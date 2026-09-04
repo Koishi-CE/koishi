@@ -42,10 +42,13 @@ import {
 import { captureCommand, runCommand } from "./run.ts";
 
 const REGISTRY =
-	process.env["RELEASE_REGISTRY"] ?? "https://registry.npmjs.org";
+	process.env["RELEASE_REGISTRY"] ??
+	"https://registry.npmjs.org";
 
 /** 查询单个 npm 包在 registry 的所有已发布版本。404 → 空集；其他非 200 → 抛错。 */
-async function fetchPublishedVersions(pkgName: string): Promise<Set<string>> {
+async function fetchPublishedVersions(
+	pkgName: string,
+): Promise<Set<string>> {
 	const url = `${REGISTRY}/${pkgName.replaceAll("/", "%2F")}`;
 	let lastError: unknown = new Error("unreachable");
 	for (let attempt = 1; attempt <= 3; attempt += 1) {
@@ -58,20 +61,30 @@ async function fetchPublishedVersions(pkgName: string): Promise<Set<string>> {
 				return new Set();
 			}
 			if (!res.ok) {
-				throw new Error(`registry 查询失败 ${pkgName}: HTTP ${res.status}`);
+				throw new Error(
+					`registry 查询失败 ${pkgName}: HTTP ${res.status}`,
+				);
 			}
-			const json = (await res.json()) as { versions?: Record<string, unknown> };
+			const json = (await res.json()) as {
+				versions?: Record<string, unknown>;
+			};
 			return new Set(Object.keys(json["versions"] ?? {}));
 		} catch (err) {
 			lastError = err;
 			if (attempt < 3) {
-				await new Promise((r) => setTimeout(r, attempt * 2000));
+				await new Promise((r) =>
+					setTimeout(r, attempt * 2000),
+				);
 			}
 		}
 	}
 	const message =
-		lastError instanceof Error ? lastError.message : String(lastError);
-	throw new Error(`registry 查询失败 ${pkgName}（重试 3 次）: ${message}`);
+		lastError instanceof Error
+			? lastError.message
+			: String(lastError);
+	throw new Error(
+		`registry 查询失败 ${pkgName}（重试 3 次）: ${message}`,
+	);
 }
 
 /** 查询 npm 当前登录账号（未登录返回 null）。 */
@@ -81,7 +94,12 @@ function fetchWhoami(): string | null {
 
 /** 查询包的 owner 用户名列表（查询失败视为空集）。 */
 function fetchOwners(pkgName: string): string[] {
-	const raw = captureCommand(cwd, "npm", ["owner", "ls", "--json", pkgName]);
+	const raw = captureCommand(cwd, "npm", [
+		"owner",
+		"ls",
+		"--json",
+		pkgName,
+	]);
 	if (raw === null) {
 		return [];
 	}
@@ -91,7 +109,9 @@ function fetchOwners(pkgName: string): string[] {
 			return [];
 		}
 		return list
-			.map((item) => (typeof item.name === "string" ? item.name : ""))
+			.map((item) =>
+				typeof item.name === "string" ? item.name : "",
+			)
 			.filter(Boolean);
 	} catch {
 		return [];
@@ -117,7 +137,8 @@ function filterByOwnership(
 		return { publishable: [...publishable], skipped: [] };
 	}
 	const kept: WorkspacePkg[] = [];
-	const skipped: { pkg: WorkspacePkg; reason: string }[] = [];
+	const skipped: { pkg: WorkspacePkg; reason: string }[] =
+		[];
 	for (const pkg of publishable) {
 		// registry 无版本 = 首次发布，无预检意义（首个发布者自动成为 owner）
 		if ((published.get(pkg.name)?.size ?? 0) === 0) {
@@ -187,7 +208,9 @@ async function publishOrdered(
 			}
 		}
 	}
-	console.log(`[publish] 全部完成（${dryRun ? "dry-run" : "已发布"}）`);
+	console.log(
+		`[publish] 全部完成（${dryRun ? "dry-run" : "已发布"}）`,
+	);
 	return 0;
 }
 
@@ -206,16 +229,27 @@ export default async function runPublish(
 	const published = new Map<string, Set<string>>();
 	await Promise.all(
 		pkgs.map(async (pkg) => {
-			published.set(pkg.name, await fetchPublishedVersions(pkg.name));
+			published.set(
+				pkg.name,
+				await fetchPublishedVersions(pkg.name),
+			);
 		}),
 	);
-	const { toPublish, skipped } = planPublish(pkgs, published);
+	const { toPublish, skipped } = planPublish(
+		pkgs,
+		published,
+	);
 
 	// 本地版本低于 registry 已发布版本（源码落后于已发布）→ 跳过并警告
 	const downgraded = toPublish.filter((pkg) =>
-		isDowngrade(pkg.version, published.get(pkg.name) ?? new Set<string>()),
+		isDowngrade(
+			pkg.version,
+			published.get(pkg.name) ?? new Set<string>(),
+		),
 	);
-	let publishable = toPublish.filter((pkg) => !downgraded.includes(pkg));
+	let publishable = toPublish.filter(
+		(pkg) => !downgraded.includes(pkg),
+	);
 	for (const pkg of downgraded) {
 		skipped.push({
 			pkg,
@@ -226,7 +260,11 @@ export default async function runPublish(
 
 	// 所有权预检：别人的包（版本领先于 registry 的第三方插件）跳过而非 403 中断
 	const whoami = dryRun ? null : fetchWhoami();
-	const ownership = filterByOwnership(publishable, published, whoami);
+	const ownership = filterByOwnership(
+		publishable,
+		published,
+		whoami,
+	);
 	publishable = ownership.publishable;
 	skipped.push(...ownership.skipped);
 
@@ -251,6 +289,12 @@ export default async function runPublish(
 		console.log(`  ${pkg.name}@${pkg.version}`);
 	}
 	// workspace:* → caret 真实版本映射（按工作区当前版本，改写在 publish 前、恢复在 finally）
-	const workspaceVersions = new Map(pkgs.map((pkg) => [pkg.name, pkg.version]));
-	return await publishOrdered(ordered, workspaceVersions, dryRun);
+	const workspaceVersions = new Map(
+		pkgs.map((pkg) => [pkg.name, pkg.version]),
+	);
+	return await publishOrdered(
+		ordered,
+		workspaceVersions,
+		dryRun,
+	);
 }

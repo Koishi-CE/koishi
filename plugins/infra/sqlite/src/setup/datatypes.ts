@@ -17,32 +17,42 @@ export function defineTypes(driver: SQLiteDriver) {
 	driver.define<object, string>({
 		types: ["json"],
 		dump: (value) => JSON.stringify(value),
-		load: (value) => (typeof value === "string" ? JSON.parse(value) : value),
+		load: (value) =>
+			typeof value === "string" ? JSON.parse(value) : value,
 	});
 
 	driver.define<string[], string>({
 		types: ["list"],
-		dump: (value) => (Array.isArray(value) ? value.join(",") : value),
+		dump: (value) =>
+			Array.isArray(value) ? value.join(",") : value,
 		load: (value) => (value ? value.split(",") : []),
 	});
 
 	driver.define<Date, number | bigint>({
 		types: ["date", "time", "timestamp"],
-		dump: (value) => (isNullable(value) ? null : +new Date(value)),
-		load: (value) => (isNullable(value) ? value : new Date(Number(value))),
+		dump: (value) =>
+			isNullable(value) ? null : +new Date(value),
+		load: (value) =>
+			isNullable(value) ? value : new Date(Number(value)),
 	});
 
 	driver.define<ArrayBufferLike, ArrayBufferView>({
 		types: ["binary"],
-		dump: (value) => (isNullable(value) ? value : new Uint8Array(value)),
-		load: (value) => (isNullable(value) ? value : Binary.fromSource(value)),
+		dump: (value) =>
+			isNullable(value) ? value : new Uint8Array(value),
+		load: (value) =>
+			isNullable(value) ? value : Binary.fromSource(value),
 	});
 
 	driver.define<number, number | bigint>({
 		// primary 主键与数字族共用 Number 归一（Field.Type<number> 不含 primary，
 		// 故整表断言一次）
-		types: ["primary", ...Field.number] as Field.Type<number>[],
+		types: [
+			"primary",
+			...Field.number,
+		] as Field.Type<number>[],
 		dump: (value) => value,
-		load: (value) => (isNullable(value) ? value : Number(value)),
+		load: (value) =>
+			isNullable(value) ? value : Number(value),
 	});
 }

@@ -43,14 +43,20 @@
  * 过滤、手动刷新（可联动统计信息同步）。
  */
 
-import { router, store, useConfig } from "@koishi-ce/client";
+import {
+	router,
+	store,
+	useConfig,
+} from "@koishi-ce/client";
 import { computed, ref, watch } from "vue";
 import { useRoute } from "vue-router";
 import TableView from "./components/data-table.vue";
 import { formatSize } from "./utils.ts";
 
 function join(source: string | string[]) {
-	return Array.isArray(source) ? source.join("/") : source || "";
+	return Array.isArray(source)
+		? source.join("/")
+		: source || "";
 }
 
 /** 表格组件暴露的方法（见 data-table.vue 的 defineExpose） */
@@ -65,10 +71,14 @@ const route = useRoute();
 const config = useConfig();
 
 const filter = ref(false);
-const filterIcon = computed(() => (filter.value ? "filter-off" : "filter-on"));
+const filterIcon = computed(() =>
+	filter.value ? "filter-off" : "filter-on",
+);
 
 const color = ref(config.value.dataview?.color ?? false);
-const colorIcon = computed(() => (color.value ? "rgb-off" : "rgb-on"));
+const colorIcon = computed(() =>
+	color.value ? "rgb-off" : "rgb-on",
+);
 
 const current = computed<string>({
 	get() {

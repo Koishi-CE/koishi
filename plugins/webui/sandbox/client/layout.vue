@@ -74,7 +74,13 @@ import { ChatInput } from "@satorijs/components-vue";
 import segment from "@satorijs/element";
 import { computed, ref, watch } from "vue";
 import ChatMessage from "./message.vue";
-import { api, channel, config, panelTypes, words } from "./utils";
+import {
+	api,
+	channel,
+	config,
+	panelTypes,
+	words,
+} from "./utils";
 
 const ctx = useContext();
 
@@ -101,7 +107,9 @@ const users = computed(() => {
 
 /** 左栏用户列表的 k-tab-group 数据源。 */
 const userMap = computed(() => {
-	return Object.fromEntries(users.value.map((name) => [name, { name }]));
+	return Object.fromEntries(
+		users.value.map((name) => [name, { name }]),
+	);
 });
 
 const length = 10;
@@ -118,14 +126,24 @@ function createUser() {
 	} while (users.value.includes(name));
 	config.value.user = name;
 	config.value.messages[`@${name}`] = [];
-	void send("sandbox/set-user", config.value.platform, config.value.user, {});
+	void send(
+		"sandbox/set-user",
+		config.value.platform,
+		config.value.user,
+		{},
+	);
 }
 
 /** 删除用户：清掉本地消息并通知 node 侧移除数据，被删的是当前用户时切换选中项。 */
 function removeUser(name: string) {
 	const index = users.value.indexOf(name);
 	delete config.value.messages[`@${name}`];
-	void send("sandbox/set-user", config.value.platform, config.value.user, null);
+	void send(
+		"sandbox/set-user",
+		config.value.platform,
+		config.value.user,
+		null,
+	);
 	if (config.value.user === name) {
 		config.value.user = users.value[index] || "";
 	}
@@ -142,22 +160,26 @@ const quote = ref<Message>();
  */
 function onKeydown(event: KeyboardEvent) {
 	if (event.key === "ArrowUp") {
-		const list = config.value.messages[channel.value].filter(
-			(item) => item.user === config.value.user,
-		);
+		const list = config.value.messages[
+			channel.value
+		].filter((item) => item.user === config.value.user);
 		let index = list.length - offset.value;
 		if (list[index - 1]) {
 			offset.value++;
-			input.value = segment.unescape(list[index - 1].content);
+			input.value = segment.unescape(
+				list[index - 1].content,
+			);
 		}
 	} else if (event.key === "ArrowDown") {
-		const list = config.value.messages[channel.value].filter(
-			(item) => item.user === config.value.user,
-		);
+		const list = config.value.messages[
+			channel.value
+		].filter((item) => item.user === config.value.user);
 		let index = list.length - offset.value;
 		if (list[index + 1]) {
 			offset.value--;
-			input.value = segment.unescape(list[index + 1].content);
+			input.value = segment.unescape(
+				list[index + 1].content,
+			);
 		} else if (offset.value) {
 			offset.value = 0;
 			input.value = "";
@@ -222,7 +244,10 @@ async function deleteMessage(data: Message) {
 		data.channel,
 		data.id,
 	);
-	api.deleteMessage({ messageId: data.id, channelId: data.channel });
+	api.deleteMessage({
+		messageId: data.id,
+		channelId: data.channel,
+	});
 }
 </script>
 

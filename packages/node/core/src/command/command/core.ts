@@ -39,11 +39,15 @@ export class CommandCore extends CommandBase<Command.Config> {
 			...config,
 		});
 		// 兼容旧版 authority 写法：换算成 permissions 权限列表
-		this.config.permissions ??= [`authority:${config?.authority ?? 1}`];
+		this.config.permissions ??= [
+			`authority:${config?.authority ?? 1}`,
+		];
 		this._registerAlias(name);
 		// CommandCore 为非泛型基类，this 的多态类型无法直接窄化为 Command，
 		// 经基类引用中转（Command → CommandCore 可赋值，故反向窄化合法）
-		ctx.$commander._commandList.push(this as CommandCore as Command);
+		ctx.$commander._commandList.push(
+			this as CommandCore as Command,
+		);
 	}
 
 	/** 当前调用方上下文：优先取触发本命令的动态作用域，否则回退注册时上下文 */
@@ -68,7 +72,10 @@ export class CommandCore extends CommandBase<Command.Config> {
 	set parent(parent: Command | null) {
 		if (this._parent === parent) return;
 		if (this._parent) {
-			remove(this._parent.children, this as CommandCore as Command);
+			remove(
+				this._parent.children,
+				this as CommandCore as Command,
+			);
 		}
 		this._parent = parent;
 		if (parent) {
@@ -84,9 +91,14 @@ export class CommandCore extends CommandBase<Command.Config> {
 	 * @param options 别名级配置：预设 args / options 与 filter
 	 * @throws 别名已被其它命令占用时抛错
 	 */
-	_registerAlias(name: string, prepend = false, options: Command.Alias = {}) {
+	_registerAlias(
+		name: string,
+		prepend = false,
+		options: Command.Alias = {},
+	) {
 		name = normalizeCommand(name);
-		if (name.startsWith(".")) name = (this.parent?.name ?? "") + name;
+		if (name.startsWith("."))
+			name = (this.parent?.name ?? "") + name;
 
 		// 全局查重：同名命令（含其它命令的别名）不可重复注册
 		const previous = this.ctx.$commander.get(name);
@@ -98,7 +110,10 @@ export class CommandCore extends CommandBase<Command.Config> {
 		const existing = this._aliases[name];
 		if (existing) {
 			if (prepend) {
-				this._aliases = { [name]: existing, ...this._aliases };
+				this._aliases = {
+					[name]: existing,
+					...this._aliases,
+				};
 			}
 		} else if (prepend) {
 			this._aliases = { [name]: options, ...this._aliases };
@@ -124,10 +139,14 @@ export class CommandCore extends CommandBase<Command.Config> {
 		} else {
 			// 走到此分支说明第二参不是 Alias 对象，所有实参均为别名
 			for (const name of args) {
-				if (typeof name === "string") this._registerAlias(name);
+				if (typeof name === "string")
+					this._registerAlias(name);
 			}
 		}
-		this.caller.emit("command-updated", this as CommandCore as Command);
+		this.caller.emit(
+			"command-updated",
+			this as CommandCore as Command,
+		);
 		return this;
 	}
 

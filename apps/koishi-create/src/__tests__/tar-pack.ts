@@ -34,20 +34,26 @@ function paxRecord(key: string, value: string): string {
 	let length = body.length + 2;
 	for (;;) {
 		const prefix = `${length} `;
-		if (prefix.length + body.length === length) return `${prefix}${body}`;
+		if (prefix.length + body.length === length)
+			return `${prefix}${body}`;
 		length = prefix.length + body.length;
 	}
 }
 
 /** 收集条目父目录（含显式目录自身），保证目录条目先于引用内容出现 */
-function collectDirs(entries: readonly TarEntry[]): string[] {
+function collectDirs(
+	entries: readonly TarEntry[],
+): string[] {
 	const dirs = new Set<string>();
 	for (const entry of entries) {
 		if (entry.type === "dir" || entry.path.endsWith("/")) {
 			dirs.add(entry.path.replace(/\/+$/, ""));
 			continue;
 		}
-		let parent = entry.path.slice(0, entry.path.lastIndexOf("/"));
+		let parent = entry.path.slice(
+			0,
+			entry.path.lastIndexOf("/"),
+		);
 		while (parent) {
 			dirs.add(parent);
 			const index = parent.lastIndexOf("/");
@@ -78,7 +84,10 @@ function createHeader(
 	header.set(encoder.encode("00"), 263);
 	// 校验和：先以空格占位，再求和回填（八进制 6 位 + \0 + 空格）
 	header.fill(0x20, 148, 156);
-	const sum = header.reduce((total, byte) => total + byte, 0);
+	const sum = header.reduce(
+		(total, byte) => total + byte,
+		0,
+	);
 	const checksum = `${sum.toString(8).padStart(6, "0")}\0 `;
 	header.set(encoder.encode(checksum), 148);
 	return header;
@@ -111,7 +120,10 @@ function writeOctal(
 }
 
 /** 追加内容块并按 512 补齐 */
-function pushPadded(blocks: Uint8Array[], content: Uint8Array): void {
+function pushPadded(
+	blocks: Uint8Array[],
+	content: Uint8Array,
+): void {
 	blocks.push(content);
 	const rest = content.length % BLOCK;
 	if (rest) blocks.push(new Uint8Array(BLOCK - rest));
@@ -138,10 +150,14 @@ function pushEntry(
 		// pax 扩展头自身也须有非空 name（node-tar 校验「path is
 		// required」，空名会把整条 x 头判为无效并导致后续流错位）；
 		// PaxHeader/ 前缀与 node-tar pack 的命名约定一致
-		blocks.push(createHeader(`PaxHeader/${name}`, "x", body.length));
+		blocks.push(
+			createHeader(`PaxHeader/${name}`, "x", body.length),
+		);
 		pushPadded(blocks, body);
 	}
-	blocks.push(createHeader(name.slice(0, 100), type, size, link));
+	blocks.push(
+		createHeader(name.slice(0, 100), type, size, link),
+	);
 	if (size) pushPadded(blocks, content);
 }
 
@@ -157,8 +173,12 @@ export async function tarPack(
 		blocks.push(createHeader(`${dir}/`, "5", 0));
 	}
 	for (const entry of entries) {
-		if (entry.type === "dir" || entry.path.endsWith("/")) continue;
-		if (entry.type === "symlink" || entry.type === "hardlink") {
+		if (entry.type === "dir" || entry.path.endsWith("/"))
+			continue;
+		if (
+			entry.type === "symlink" ||
+			entry.type === "hardlink"
+		) {
 			const type = entry.type === "symlink" ? "2" : "1";
 			pushEntry(
 				blocks,
@@ -175,7 +195,10 @@ export async function tarPack(
 	}
 	blocks.push(new Uint8Array(BLOCK * 2)); // 归档结束标志（全零块）
 
-	const total = blocks.reduce((sum, block) => sum + block.length, 0);
+	const total = blocks.reduce(
+		(sum, block) => sum + block.length,
+		0,
+	);
 	const raw = new Uint8Array(total);
 	let cursor = 0;
 	for (const block of blocks) {

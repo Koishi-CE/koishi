@@ -45,14 +45,19 @@ declare module "@koishi-ce/plugin-console" {
 				>
 			>;
 			packages: DataService<
-				Dict<import("@koishi-ce/plugin-config").PackageProvider.Data>
+				Dict<
+					import("@koishi-ce/plugin-config").PackageProvider.Data
+				>
 			>;
 		}
 	}
 
 	interface Events {
 		"market/refresh"(): void;
-		"market/install"(deps: Dict<string>, forced?: boolean): Promise<number>;
+		"market/install"(
+			deps: Dict<string>,
+			forced?: boolean,
+		): Promise<number>;
 		"market/registry"(
 			names: string[],
 		): Promise<

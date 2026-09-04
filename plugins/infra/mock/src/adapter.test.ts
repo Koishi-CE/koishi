@@ -1,7 +1,13 @@
 // SPDX-License-Identifier: MIT
 // Copyright (c) 2026-present Koishi-CE contributors.
 
-import { afterAll, beforeAll, describe, expect, it } from "bun:test";
+import {
+	afterAll,
+	beforeAll,
+	describe,
+	expect,
+	it,
+} from "bun:test";
 import { App } from "@koishi-ce/koishi";
 // memory 数据库经 admin 的 node_modules 深链导入源码形态（本包未声明该 devDep，
 // 且禁改 package.json；与 admin 既有测试同版本同实现）；
@@ -41,14 +47,23 @@ describe("MockAdapter（随插件装配）", () => {
 	it("initChannel 默认指派给第一个 bot，也可显式指定受理人", async () => {
 		await app.mock.initChannel("321");
 		await app.mock.initChannel("654", "999");
-		const channel1 = await app.database.getChannel("mock", "321");
+		const channel1 = await app.database.getChannel(
+			"mock",
+			"321",
+		);
 		expect(channel1?.["assignee"]).toBe("514");
-		const channel2 = await app.database.getChannel("mock", "654");
+		const channel2 = await app.database.getChannel(
+			"mock",
+			"654",
+		);
 		expect(channel2?.["assignee"]).toBe("999");
 	});
 
 	it("session 基于事件模板构造但不派发", () => {
-		const session = app.mock.session({ platform: "mock", type: "message" });
+		const session = app.mock.session({
+			platform: "mock",
+			type: "message",
+		});
 		expect(session.platform).toBe("mock");
 	});
 
@@ -93,13 +108,19 @@ describe("MockAdapter 无 bot 时的防御", () => {
 		try {
 			// 直接实例化（不经 ctx.plugin 的 fork 链）时 bots 为空
 			const adapter = new MockAdapter(empty, {} as never);
-			expect(() => adapter.client("1")).toThrow("mock 服务下没有已注册的 bot");
-			expect(() => adapter.session({})).toThrow("mock 服务下没有已注册的 bot");
-			expect(() => adapter.receive({})).toThrow("mock 服务下没有已注册的 bot");
-			// initChannel 的默认受理人取自 firstBot → 同样报错
-			await expect(adapter.initChannel("1")).rejects.toThrow(
+			expect(() => adapter.client("1")).toThrow(
 				"mock 服务下没有已注册的 bot",
 			);
+			expect(() => adapter.session({})).toThrow(
+				"mock 服务下没有已注册的 bot",
+			);
+			expect(() => adapter.receive({})).toThrow(
+				"mock 服务下没有已注册的 bot",
+			);
+			// initChannel 的默认受理人取自 firstBot → 同样报错
+			await expect(
+				adapter.initChannel("1"),
+			).rejects.toThrow("mock 服务下没有已注册的 bot");
 			// 无数据库时 initUser 抛出（database 服务缺失）
 			await expect(adapter.initUser("1")).rejects.toThrow();
 		} finally {

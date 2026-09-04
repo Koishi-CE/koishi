@@ -26,7 +26,8 @@ import ThemeService from "./plugins/theme";
 // —— 布局相关的 Context 类型扩展 ——
 
 /** 前端侧事件表：在 cordis 事件的基础上扩展本库自定义事件 */
-export interface Events<C extends Context = Context> extends cordis.Events<C> {}
+export interface Events<C extends Context = Context>
+	extends cordis.Events<C> {}
 
 /**
  * 前端 Context 接口：各服务插件通过 `declare module "../context"`
@@ -84,7 +85,10 @@ export class Context extends cordis.Context {
 		this.app = createApp(
 			defineComponent({
 				setup: () => () => [
-					h(resolveComponent("k-slot"), { name: "root", single: true }),
+					h(resolveComponent("k-slot"), {
+						name: "root",
+						single: true,
+					}),
 					h(resolveComponent("k-slot"), { name: "global" }),
 				],
 			}),
@@ -115,12 +119,16 @@ export class Context extends cordis.Context {
 	 */
 	addEventListener<K extends keyof WindowEventMap>(
 		type: K,
-		listener: (this: Window, ev: WindowEventMap[K]) => unknown,
+		listener: (
+			this: Window,
+			ev: WindowEventMap[K],
+		) => unknown,
 		options?: boolean | AddEventListenerOptions,
 	) {
 		return this.effect(() => {
 			window.addEventListener(type, listener, options);
-			return () => window.removeEventListener(type, listener, options);
+			return () =>
+				window.removeEventListener(type, listener, options);
 		});
 	}
 

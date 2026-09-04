@@ -12,7 +12,12 @@
  * - i18n 数据变化时防抖刷新 console entry，供前端展示全部翻译。
  */
 
-import { mkdir, readdir, readFile, writeFile } from "node:fs/promises";
+import {
+	mkdir,
+	readdir,
+	readFile,
+	writeFile,
+} from "node:fs/promises";
 import { resolve } from "node:path";
 import type { DataService } from "@koishi-ce/console";
 import {
@@ -70,7 +75,10 @@ export async function apply(ctx: Context, config: Config) {
 		for (const file of files) {
 			if (!file.endsWith(".yml")) continue;
 			logger.debug("loading locale %s", file);
-			const content = await readFile(resolve(folder, file), "utf8");
+			const content = await readFile(
+				resolve(folder, file),
+				"utf8",
+			);
 			// yml 文件为嵌套的翻译字典,按 I18n.Store 形态断言后注册
 			ctx.i18n.define(
 				`$${file.split(".")[0]}`,
@@ -87,7 +95,12 @@ export async function apply(ctx: Context, config: Config) {
 						`${process.env["KOISHI_BASE"]}/dist/style.css`,
 					]
 				: process.env["KOISHI_ENV"] === "browser"
-					? [import.meta.url.replace(/\/src\/[^/]+$/, "/client/index.ts")]
+					? [
+							import.meta.url.replace(
+								/\/src\/[^/]+$/,
+								"/client/index.ts",
+							),
+						]
 					: {
 							dev: resolve(__dirname, "../client/index.ts"),
 							prod: resolve(__dirname, "../dist"),

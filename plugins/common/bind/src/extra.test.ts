@@ -6,7 +6,14 @@
  * 私聊令牌一步完成绑定、原初绑定不止一个时解绑另建新用户承接、
  * 以及未注入生成器时走默认随机数字令牌路径。
  */
-import { afterAll, beforeAll, describe, expect, it, jest } from "bun:test";
+import {
+	afterAll,
+	beforeAll,
+	describe,
+	expect,
+	it,
+	jest,
+} from "bun:test";
 import { Context } from "@koishi-ce/koishi";
 import * as bind from "@koishi-ce/plugin-bind";
 import mock from "@koishi-ce/plugin-mock";
@@ -22,7 +29,8 @@ const app = new Context();
 let counter = 0;
 
 app.plugin(bind, {
-	generateToken: () => `koishi/${(++counter).toString().padStart(6, "0")}`,
+	generateToken: () =>
+		`koishi/${(++counter).toString().padStart(6, "0")}`,
 });
 
 app.plugin(mock);
@@ -68,15 +76,23 @@ describe("@koishi-ce/plugin-bind 补充用例", () => {
 		const [reply] = await group.receive(token);
 		expect(reply).toBe("账号绑定成功！");
 		// 私聊账号应并入群聊账号所属的内部用户
-		const [groupBinding] = await app.database.get("binding", { pid: "123" });
-		const [directBinding] = await app.database.get("binding", { pid: "456" });
+		const [groupBinding] = await app.database.get(
+			"binding",
+			{ pid: "123" },
+		);
+		const [directBinding] = await app.database.get(
+			"binding",
+			{ pid: "456" },
+		);
 		// 前置 receive 已保证两条绑定存在，非空断言仅消除索引访问的 undefined 分支
 		expect(directBinding!.aid).toBe(groupBinding!.aid);
 	});
 
 	it("原初绑定不止一个时解绑会另建新用户承接", async () => {
 		// 预置第二条原初绑定，使当前用户名下有两条 aid === bid 的记录
-		const [self] = await app.database.get("binding", { pid: "123" });
+		const [self] = await app.database.get("binding", {
+			pid: "123",
+		});
 		await app.database.create("binding", {
 			platform: "mock",
 			pid: "789",
@@ -89,9 +105,13 @@ describe("@koishi-ce/plugin-bind 补充用例", () => {
 		// 当前平台账号被划入新建用户名下，而非删除绑定记录
 		const usersAfter = await app.database.get("user", {});
 		expect(usersAfter.length).toBe(usersBefore.length + 1);
-		const [moved] = await app.database.get("binding", { pid: "123" });
+		const [moved] = await app.database.get("binding", {
+			pid: "123",
+		});
 		expect(moved!.aid).not.toBe(self!.aid);
-		const [newcomer] = await app.database.get("user", { id: moved!.aid });
+		const [newcomer] = await app.database.get("user", {
+			id: moved!.aid,
+		});
 		expect(newcomer).toBeDefined();
 	});
 

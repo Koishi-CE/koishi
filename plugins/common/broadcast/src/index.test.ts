@@ -5,7 +5,13 @@
  * broadcast 插件测试：用两个 mock bot 验证全局广播、
  * 仅本 bot 广播（-o）与静默频道过滤（-f）的目标频道集合。
  */
-import { beforeAll, describe, expect, it, jest } from "bun:test";
+import {
+	beforeAll,
+	describe,
+	expect,
+	it,
+	jest,
+} from "bun:test";
 import { App, type Bot, Channel } from "@koishi-ce/koishi";
 import * as broadcast from "@koishi-ce/plugin-broadcast";
 import mock from "@koishi-ce/plugin-mock";
@@ -31,7 +37,9 @@ beforeAll(async () => {
 	await app.mock.initUser("123", 4);
 	await app.mock.initChannel("111", "114");
 	await app.mock.initChannel("222", "514");
-	await app.mock.initChannel("333", "514", { flag: Channel.Flag.silent });
+	await app.mock.initChannel("333", "514", {
+		flag: Channel.Flag.silent,
+	});
 	await app.mock.initChannel("444", "810");
 });
 
@@ -39,13 +47,22 @@ describe("@koishi-ce/plugin-broadcast", () => {
 	// 拦截各 bot 的 sendMessage，断言广播命中了正确的频道且静默频道被正确跳过或强制发送
 	it("basic support", async () => {
 		// 在拦截前验证缺参数提示（此时回复链路完整，消息能送达 mock 客户端）
-		await client.shouldReply("broadcast", "请输入要发送的文本。");
+		await client.shouldReply(
+			"broadcast",
+			"请输入要发送的文本。",
+		);
 
 		// 替换 sendMessage 为仅记录参数的 mock；返回空 ID 列表以维持 bot.broadcast 的展开推送
-		const send1 = (app.bots.find((bot) => bot.selfId === "514")!.sendMessage =
-			jest.fn<Bot["sendMessage"]>(async () => []));
-		const send2 = (app.bots.find((bot) => bot.selfId === "114")!.sendMessage =
-			jest.fn<Bot["sendMessage"]>(async () => []));
+		const send1 = (app.bots.find(
+			(bot) => bot.selfId === "514",
+		)!.sendMessage = jest.fn<Bot["sendMessage"]>(
+			async () => [],
+		));
+		const send2 = (app.bots.find(
+			(bot) => bot.selfId === "114",
+		)!.sendMessage = jest.fn<Bot["sendMessage"]>(
+			async () => [],
+		));
 
 		await client.shouldNotReply("broadcast foo");
 		// 全局广播：两个 bot 各发送被指派的频道，静默频道 333 被跳过

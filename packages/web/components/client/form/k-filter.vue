@@ -45,7 +45,9 @@ interface FilterOptions {
 }
 
 /** 收窄辅助：判断值是否为普通对象（过滤表达式的载体） */
-function isRecord(value: unknown): value is Record<string, unknown> {
+function isRecord(
+	value: unknown,
+): value is Record<string, unknown> {
 	return typeof value === "object" && value !== null;
 }
 
@@ -74,7 +76,10 @@ const invalid = computed(() => {
 function extract(value: unknown, type: string): unknown[] {
 	if (!value) {
 		return [];
-	} else if (isRecord(value) && Array.isArray(value[type])) {
+	} else if (
+		isRecord(value) &&
+		Array.isArray(value[type])
+	) {
 		return value[type];
 	} else {
 		return [value];
@@ -110,7 +115,10 @@ function update(
 }
 
 /** 删除指定位置的表达式（置空后交给 format 收敛结构） */
-function remove(innerKey: string | number, outerKey: string | number) {
+function remove(
+	innerKey: string | number,
+	outerKey: string | number,
+) {
 	const outer = extract(props.modelValue, "$or").slice();
 	const inner = extract(outer[outerKey], "$and").slice();
 	inner[innerKey] = undefined;

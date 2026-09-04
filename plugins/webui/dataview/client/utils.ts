@@ -18,9 +18,15 @@ import type { Methods } from "@koishi-ce/plugin-dataview";
  * cosmokit `Binary.is` 的等价内联实现（跨 realm 的 toStringTag 判定，
  * 覆盖其 instanceof 分支）：浏览器端工程不直接依赖 cosmokit 运行时。
  */
-function isBinary(value: unknown): value is ArrayBufferLike {
-	const tag = Object.prototype.toString.call(value).slice(8, -1);
-	return tag === "ArrayBuffer" || tag === "SharedArrayBuffer";
+function isBinary(
+	value: unknown,
+): value is ArrayBufferLike {
+	const tag = Object.prototype.toString
+		.call(value)
+		.slice(8, -1);
+	return (
+		tag === "ArrayBuffer" || tag === "SharedArrayBuffer"
+	);
 }
 
 export function serialize(obj: unknown): string {
@@ -31,11 +37,14 @@ export function serialize(obj: unknown): string {
 		if (typeof value === "string") return `s${value}`;
 		if (typeof value === "bigint") return `n${value}`;
 		if (typeof value === "object") {
-			if (value instanceof Date) return `d${new Date(value).toJSON()}`;
+			if (value instanceof Date)
+				return `d${new Date(value).toJSON()}`;
 			if (value === null) return null;
 			const source = value as Record<string, unknown>;
 			// 数组副本也断言为 Record：序列化层按索引写入，运行时两态皆可
-			const copy = (Array.isArray(value) ? [] : {}) as Record<string, unknown>;
+			const copy = (
+				Array.isArray(value) ? [] : {}
+			) as Record<string, unknown>;
 			for (const key in source) {
 				const item = source[key];
 				if (item instanceof Date) {
@@ -55,7 +64,9 @@ export function serialize(obj: unknown): string {
 	});
 }
 
-export function deserialize(str: string | undefined): unknown {
+export function deserialize(
+	str: string | undefined,
+): unknown {
 	if (str === undefined) return undefined;
 	return JSON.parse(str, (_, value) => {
 		if (typeof value !== "string") return value;
@@ -78,7 +89,10 @@ export async function sendQuery<K extends Methods>(
 		event: `database/${Methods}`,
 		...args: string[]
 	) => Promise<string | undefined>;
-	const data = await request(`database/${name}`, ...args.map(serialize));
+	const data = await request(
+		`database/${name}`,
+		...args.map(serialize),
+	);
 	return deserialize(data) as ReturnType<Database[K]>;
 }
 

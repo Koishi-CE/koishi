@@ -12,7 +12,9 @@ import type { Manifest, PackageJson } from "../types.ts";
 import { conclude, Ensure, mapLimit } from "../utils.ts";
 
 /** 生成最小可用的 package.json 测试载荷 */
-function pkg(partial: Partial<PackageJson> = {}): PackageJson {
+function pkg(
+	partial: Partial<PackageJson> = {},
+): PackageJson {
 	return {
 		name: "koishi-plugin-test",
 		version: "1.0.0",
@@ -25,25 +27,36 @@ function pkg(partial: Partial<PackageJson> = {}): PackageJson {
 describe("Ensure", () => {
 	it("array：合法 string[] 原样返回，非字符串元素被过滤", () => {
 		expect(Ensure.array(["a", "b"])).toEqual(["a", "b"]);
-		expect(Ensure.array(["a", 1, true, null, "b"])).toEqual(["a", "b"]);
+		expect(Ensure.array(["a", 1, true, null, "b"])).toEqual(
+			["a", "b"],
+		);
 		expect(Ensure.array([])).toEqual([]);
 	});
 
 	it("array：非数组输入返回 undefined 或回退值", () => {
 		expect(Ensure.array("not-array")).toBeUndefined();
 		expect(Ensure.array(undefined)).toBeUndefined();
-		expect(Ensure.array(null, ["fallback"])).toEqual(["fallback"]);
+		expect(Ensure.array(null, ["fallback"])).toEqual([
+			"fallback",
+		]);
 	});
 
 	it("dict：合法字符串字典原样返回，非字符串值的键被丢弃", () => {
-		expect(Ensure.dict({ a: "1", b: "2" })).toEqual({ a: "1", b: "2" });
-		expect(Ensure.dict({ a: 1, b: "2", c: null })).toEqual({ b: "2" });
+		expect(Ensure.dict({ a: "1", b: "2" })).toEqual({
+			a: "1",
+			b: "2",
+		});
+		expect(Ensure.dict({ a: 1, b: "2", c: null })).toEqual({
+			b: "2",
+		});
 	});
 
 	it("dict：非对象输入返回 undefined 或回退值", () => {
 		expect(Ensure.dict(null)).toBeUndefined();
 		expect(Ensure.dict("str")).toBeUndefined();
-		expect(Ensure.dict(undefined, { fallback: "x" })).toEqual({
+		expect(
+			Ensure.dict(undefined, { fallback: "x" }),
+		).toEqual({
 			fallback: "x",
 		});
 	});
@@ -60,7 +73,9 @@ describe("Ensure", () => {
 
 describe("conclude", () => {
 	it("基础清单：description 回退顶层字段，service/locales 默认为空", () => {
-		const manifest = conclude(pkg({ description: "top-level" }));
+		const manifest = conclude(
+			pkg({ description: "top-level" }),
+		);
 		expect(manifest.description).toBe("top-level");
 		expect(manifest.locales).toEqual([]);
 		expect(manifest.service).toEqual({
@@ -77,10 +92,15 @@ describe("conclude", () => {
 		const manifest = conclude(
 			pkg({
 				description: "top",
-				koishi: { description: { "zh-CN": "中文", en: "English" } },
+				koishi: {
+					description: { "zh-CN": "中文", en: "English" },
+				},
 			}),
 		);
-		expect(manifest.description).toEqual({ "zh-CN": "中文", en: "English" });
+		expect(manifest.description).toEqual({
+			"zh-CN": "中文",
+			en: "English",
+		});
 	});
 
 	it("koishi 字段经 Ensure 清洗后写入，类型不符的不落键", () => {
@@ -118,7 +138,9 @@ describe("conclude", () => {
 	});
 
 	it("字符串描述截断到 1024 字符", () => {
-		const manifest = conclude(pkg({ description: "x".repeat(2000) }));
+		const manifest = conclude(
+			pkg({ description: "x".repeat(2000) }),
+		);
 		expect(manifest.description).toHaveLength(1024);
 		expect(manifest.description).toBe("x".repeat(1024));
 	});
@@ -127,7 +149,10 @@ describe("conclude", () => {
 		// 实现现状：Ensure.dict 只认对象，字符串形态的 koishi.description
 		// 不被采用，回退到顶层 description（缺省为空串）
 		const manifest = conclude(
-			pkg({ description: "top", koishi: { description: "ignored" } }),
+			pkg({
+				description: "top",
+				koishi: { description: "ignored" },
+			}),
 		);
 		expect(manifest.description).toBe("top");
 	});
@@ -140,7 +165,10 @@ describe("conclude", () => {
 				},
 			}),
 		);
-		const dict = manifest.description as Record<string, string>;
+		const dict = manifest.description as Record<
+			string,
+			string
+		>;
 		expect(dict["a"]).toHaveLength(1024);
 		expect(dict["b"]).toBe("short");
 	});
@@ -168,7 +196,9 @@ describe("conclude", () => {
 	});
 
 	it("keywords 非数组时回退为空数组", () => {
-		const meta = pkg({ keywords: "bad" as unknown as string[] });
+		const meta = pkg({
+			keywords: "bad" as unknown as string[],
+		});
 		const manifest = conclude(meta);
 		expect(meta.keywords).toEqual([]);
 		expect(manifest.hidden).toBeUndefined();
@@ -179,7 +209,11 @@ describe("conclude", () => {
 		expect(manifest).toEqual({
 			description: "",
 			locales: [],
-			service: { required: [], optional: [], implements: [] },
+			service: {
+				required: [],
+				optional: [],
+				implements: [],
+			},
 		});
 	});
 });
@@ -205,7 +239,9 @@ describe("mapLimit", () => {
 		await mapLimit([0, 1, 2, 3, 4, 5], 2, async (item) => {
 			active += 1;
 			peak = Math.max(peak, active);
-			await new Promise((resolve) => setTimeout(resolve, 5));
+			await new Promise((resolve) =>
+				setTimeout(resolve, 5),
+			);
 			active -= 1;
 			return item;
 		});
@@ -213,12 +249,22 @@ describe("mapLimit", () => {
 	});
 
 	it("并发数归一化：0 / 负数 / NaN 按 1，Infinity 退化为任务数", async () => {
-		expect(await mapLimit([1, 2], 0, (x) => x)).toEqual([1, 2]);
-		expect(await mapLimit([1, 2], -1, (x) => x)).toEqual([1, 2]);
-		expect(await mapLimit([1, 2], Number.NaN, (x) => x)).toEqual([1, 2]);
-		expect(await mapLimit([1, 2], Number.POSITIVE_INFINITY, (x) => x)).toEqual([
+		expect(await mapLimit([1, 2], 0, (x) => x)).toEqual([
 			1, 2,
 		]);
+		expect(await mapLimit([1, 2], -1, (x) => x)).toEqual([
+			1, 2,
+		]);
+		expect(
+			await mapLimit([1, 2], Number.NaN, (x) => x),
+		).toEqual([1, 2]);
+		expect(
+			await mapLimit(
+				[1, 2],
+				Number.POSITIVE_INFINITY,
+				(x) => x,
+			),
+		).toEqual([1, 2]);
 	});
 
 	it("空数组直接返回空结果", async () => {
@@ -239,7 +285,9 @@ describe("mapLimit", () => {
 
 	it("mapper 异步拒绝同样被消化（无 unhandled rejection）并整体 reject", async () => {
 		const task = mapLimit([0, 1], 2, async (item) => {
-			await new Promise((resolve) => setTimeout(resolve, 1));
+			await new Promise((resolve) =>
+				setTimeout(resolve, 1),
+			);
 			if (item === 1) throw new Error("async boom");
 			return item;
 		});
@@ -269,7 +317,9 @@ describe("mapLimit", () => {
 
 	it("首个失败优先：后发错误不覆盖首次错误原因", async () => {
 		const task = mapLimit([0, 1], 2, async (item) => {
-			await new Promise((resolve) => setTimeout(resolve, item === 0 ? 3 : 1));
+			await new Promise((resolve) =>
+				setTimeout(resolve, item === 0 ? 3 : 1),
+			);
 			throw new Error(`boom-${item}`);
 		});
 		// 并发 2：延迟 1ms 的 item 1 先失败，延迟 3ms 的 item 0 后失败；

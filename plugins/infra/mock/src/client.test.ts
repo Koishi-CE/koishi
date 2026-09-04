@@ -1,7 +1,13 @@
 // SPDX-License-Identifier: MIT
 // Copyright (c) 2026-present Koishi-CE contributors.
 
-import { afterAll, beforeAll, describe, expect, it } from "bun:test";
+import {
+	afterAll,
+	beforeAll,
+	describe,
+	expect,
+	it,
+} from "bun:test";
 import { App, h } from "@koishi-ce/koishi";
 // 同 admin 既有测试：CJS 实现配 ESM 声明，nodenext 互操作视图多包一层 default，转型取真实插件对象
 import * as memoryModule from "@koishijs/plugin-database-memory";
@@ -32,13 +38,22 @@ app.command("tag").action(() =>
 );
 app.command("bold").action(() => h("b", {}, "加粗"));
 app.command("para").action(() => h("p", {}, "第一段"));
-app.command("nestedPara").action(() => h("p", {}, h("p", {}, "内段")));
+app
+	.command("nestedPara")
+	.action(() => h("p", {}, h("p", {}, "内段")));
 app.command("figure").action(() => h("figure", {}, "图段"));
-app.command("tpl").action(() => h("template", {}, "模板内容"));
+app
+	.command("tpl")
+	.action(() => h("template", {}, "模板内容"));
 app
 	.command("msgs")
-	.action(() => [h("message", {}, "其一"), h("message", {}, "其二")]);
-app.command("nested").action(() => h("message", {}, h("message", {}, "内层")));
+	.action(() => [
+		h("message", {}, "其一"),
+		h("message", {}, "其二"),
+	]);
+app
+	.command("nested")
+	.action(() => h("message", {}, h("message", {}, "内层")));
 app.command("show").action(() => "ok");
 app.command("echo <msg>").action((_, msg) => msg);
 
@@ -97,7 +112,9 @@ describe("MockMessageEncoder 序列化", () => {
 describe("shouldReply / shouldNotReply 分支", () => {
 	it("无期待值：要求至少一条回复", async () => {
 		await client.shouldReply("echo 有回复");
-		await expect(client.shouldReply("missing-cmd-xyz")).rejects.toThrow(
+		await expect(
+			client.shouldReply("missing-cmd-xyz"),
+		).rejects.toThrow(
 			'expected "missing-cmd-xyz" to be replied but received nothing',
 		);
 	});
@@ -108,19 +125,25 @@ describe("shouldReply / shouldNotReply 分支", () => {
 	});
 
 	it("字符串不匹配 → RECEIVED_OTHERWISE", async () => {
-		await expect(client.shouldReply("echo hi", "no")).rejects.toThrow(
+		await expect(
+			client.shouldReply("echo hi", "no"),
+		).rejects.toThrow(
 			'expected "echo hi" to be replied with "no" but received "hi"',
 		);
 	});
 
 	it("数组缺项 → RECEIVED_NTH_NOTHING", async () => {
-		await expect(client.shouldReply("echo hi", ["hi", "more"])).rejects.toThrow(
+		await expect(
+			client.shouldReply("echo hi", ["hi", "more"]),
+		).rejects.toThrow(
 			'expected "echo hi" to be replied at index 1 but received nothing',
 		);
 	});
 
 	it("数组逐项不匹配 → RECEIVED_NTH_OTHERWISE", async () => {
-		await expect(client.shouldReply("echo hi", ["no"])).rejects.toThrow(
+		await expect(
+			client.shouldReply("echo hi", ["no"]),
+		).rejects.toThrow(
 			'expected "echo hi" to be replied with "no" at index 0 but received "hi"',
 		);
 	});
@@ -128,7 +151,9 @@ describe("shouldReply / shouldNotReply 分支", () => {
 	it("shouldNotReply：无回复通过，收到回复时报错", async () => {
 		await client.shouldNotReply("missing-cmd-xyz");
 		// 断言失败文案里 result 以数组形态格式化
-		await expect(client.shouldNotReply("echo hi")).rejects.toThrow(
+		await expect(
+			client.shouldNotReply("echo hi"),
+		).rejects.toThrow(
 			'expected "echo hi" to be not replied but received "[ \'hi\' ]"',
 		);
 	});

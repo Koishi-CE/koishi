@@ -12,7 +12,12 @@
  * 注意：h.parse 会把显式 <text> 标签解析成空的 text 包装元素，
  * 故此处统一用 h() 工厂直接构造元素树，保证 children 形态干净。
  */
-import { afterAll, beforeAll, describe, it } from "bun:test";
+import {
+	afterAll,
+	beforeAll,
+	describe,
+	it,
+} from "bun:test";
 import { App, h } from "@koishi-ce/koishi";
 import mock from "@koishi-ce/plugin-mock";
 
@@ -22,26 +27,54 @@ const client = app.mock.client("123");
 
 app.i18n.define("zh-CN", "greet.hello", "你好，{0}");
 
-app.command("echo [content:text]").action((_, text) => text);
+app
+	.command("echo [content:text]")
+	.action((_, text) => text);
 
 // 各组件的触发入口：指令直接返回对应标签的元素
-app.command("random").action(() => h("random", {}, [h.text("a"), h.text("b")]));
+app
+	.command("random")
+	.action(() =>
+		h("random", {}, [h.text("a"), h.text("b")]),
+	);
 app
 	.command("plural0")
-	.action(() => h("plural", { count: "0" }, [h.text("zero"), h.text("one")]));
+	.action(() =>
+		h("plural", { count: "0" }, [
+			h.text("zero"),
+			h.text("one"),
+		]),
+	);
 app
 	.command("plural1")
-	.action(() => h("plural", { count: "1" }, [h.text("zero"), h.text("one")]));
+	.action(() =>
+		h("plural", { count: "1" }, [
+			h.text("zero"),
+			h.text("one"),
+		]),
+	);
 app
 	.command("plurallast")
-	.action(() => h("plural", {}, [h.text("zero"), h.text("one")]));
+	.action(() =>
+		h("plural", {}, [h.text("zero"), h.text("one")]),
+	);
 app
 	.command("i18ntag")
-	.action(() => h("i18n", { path: "greet.hello" }, [h.text("世界")]));
-app.command("execute-tag").action(() => "<execute>echo 内联</execute>");
-app.command("time1").action(() => h("i18n:time", { value: "183600000" }));
-app.command("time2").action(() => h("i18n:time", { value: "90000" }));
-app.command("time3").action(() => h("i18n:time", { value: "30000" }));
+	.action(() =>
+		h("i18n", { path: "greet.hello" }, [h.text("世界")]),
+	);
+app
+	.command("execute-tag")
+	.action(() => "<execute>echo 内联</execute>");
+app
+	.command("time1")
+	.action(() => h("i18n:time", { value: "183600000" }));
+app
+	.command("time2")
+	.action(() => h("i18n:time", { value: "90000" }));
+app
+	.command("time3")
+	.action(() => h("i18n:time", { value: "30000" }));
 app.command("ask").action(() => "<prompt>请输入</prompt>");
 
 beforeAll(() => app.start());

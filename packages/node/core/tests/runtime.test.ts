@@ -10,9 +10,23 @@
  * 中间件准入（用户/频道 ignore、受理人检查），
  * 以及指令校验（权限等级、参数数量、未知选项、选项类型、before 钩子）。
  */
-import { afterAll, beforeAll, describe, it, jest } from "bun:test";
-import { App, Channel, Logger, sleep, User } from "@koishi-ce/koishi";
-import mock, { DEFAULT_SELF_ID } from "@koishi-ce/plugin-mock";
+import {
+	afterAll,
+	beforeAll,
+	describe,
+	it,
+	jest,
+} from "bun:test";
+import {
+	App,
+	Channel,
+	Logger,
+	sleep,
+	User,
+} from "@koishi-ce/koishi";
+import mock, {
+	DEFAULT_SELF_ID,
+} from "@koishi-ce/plugin-mock";
 import * as memoryModule from "@koishijs/plugin-database-memory";
 
 // CJS 实现配 ESM 声明，Bun 互操作视图多包一层 default，穿透取真实驱动
@@ -62,7 +76,9 @@ beforeAll(async () => {
 	await app.mock.initUser("456", 1);
 	await app.mock.initUser("789", 1);
 	// 789 被标记为 ignore（用户级准入测试用）
-	await app.database.setUser("mock", "789", { flag: User.Flag.ignore });
+	await app.database.setUser("mock", "789", {
+		flag: User.Flag.ignore,
+	});
 	// 预置两个频道：321 受理人为默认 bot，654 受理人为 999（非本 bot）
 	await app.mock.initChannel("321");
 	await app.mock.initChannel("654", "999");
@@ -147,8 +163,12 @@ describe("Runtime", () => {
 				"cmd2:123",
 			);
 			await client4.shouldNotReply('<at id="999"/> cmd2');
-			await client4.shouldNotReply(`<quote id="123"/> cmd2`);
-			await client4.shouldNotReply(`<quote id="123"/> <at id="999"/> cmd2`);
+			await client4.shouldNotReply(
+				`<quote id="123"/> cmd2`,
+			);
+			await client4.shouldNotReply(
+				`<quote id="123"/> <at id="999"/> cmd2`,
+			);
 			await client4.shouldReply(
 				'<quote id="123"/> <at id="514"/> cmd2',
 				"cmd2:123",
@@ -161,8 +181,14 @@ describe("Runtime", () => {
 
 			await client1.shouldReply("koishi, cmd2", "cmd2:123");
 			await client4.shouldReply("koishi, cmd2", "cmd2:123");
-			await client1.shouldReply("koishi\n cmd2", "cmd2:123");
-			await client4.shouldReply("koishi\n cmd2", "cmd2:123");
+			await client1.shouldReply(
+				"koishi\n cmd2",
+				"cmd2:123",
+			);
+			await client4.shouldReply(
+				"koishi\n cmd2",
+				"cmd2:123",
+			);
 			await client1.shouldReply("@koishi cmd2", "cmd2:123");
 			await client4.shouldReply("@koishi cmd2", "cmd2:123");
 			// 同前缀的其它昵称不应误匹配
@@ -238,7 +264,10 @@ describe("Runtime", () => {
 		it("channel.assignee", async () => {
 			// 非受理频道（654 的受理人是 999）的消息被忽略，
 			// 除非显式 @ 机器人
-			await client4.shouldReply("cmd1 test --baz", "cmd1:test");
+			await client4.shouldReply(
+				"cmd1 test --baz",
+				"cmd1:test",
+			);
 			await client4.shouldReply("escape", "early");
 			await client5.shouldNotReply("cmd1 test --baz");
 			await client5.shouldReply(
@@ -255,8 +284,12 @@ describe("Runtime", () => {
 			await sleep(0);
 			await client4.shouldNotReply("escape");
 			await client4.shouldNotReply("cmd1 --baz");
-			await client4.shouldNotReply(`<at id="${DEFAULT_SELF_ID}"/> cmd1 --baz`);
-			await app.database.setChannel("mock", "321", { flag: 0 });
+			await client4.shouldNotReply(
+				`<at id="${DEFAULT_SELF_ID}"/> cmd1 --baz`,
+			);
+			await app.database.setChannel("mock", "321", {
+				flag: 0,
+			});
 		});
 	});
 
@@ -270,7 +303,9 @@ describe("Runtime", () => {
 			app.command("cmd1", { showWarning: false });
 			await client1.shouldNotReply("cmd1 --bar");
 			// 子指令继承父指令的权限要求
-			const cmd3 = app.command("cmd1/cmd3").action(() => "after cmd3");
+			const cmd3 = app
+				.command("cmd1/cmd3")
+				.action(() => "after cmd3");
 			await client2.shouldReply("cmd3", "权限不足。");
 			await client1.shouldReply("cmd3", "after cmd3");
 			cmd3.dispose();
@@ -299,7 +334,10 @@ describe("Runtime", () => {
 			cmd1.config.showWarning = true;
 			await client4.shouldReply("cmd1", "请发送arg1。");
 			await jest.runAllTimers();
-			await client4.shouldReply("", "缺少参数，输入帮助以查看用法。");
+			await client4.shouldReply(
+				"",
+				"缺少参数，输入帮助以查看用法。",
+			);
 			cmd1.config.showWarning = false;
 			cmd1.config.checkArgCount = false;
 			jest.useRealTimers();
@@ -325,7 +363,9 @@ describe("Runtime", () => {
 			(Logger.levels as Record<string, number>)["i18n"] = 0;
 			try {
 				// 选项类型校验：抛错（可带自定义后缀）、正则、枚举列表各有提示
-				const cmd3 = app.command("cmd3").action(() => "after cmd3");
+				const cmd3 = app
+					.command("cmd3")
+					.action(() => "after cmd3");
 				cmd3.option("foo", "<foo>", {
 					type: () => {
 						throw new Error();
@@ -337,7 +377,9 @@ describe("Runtime", () => {
 					},
 				});
 				cmd3.option("baz", "<baz>", { type: /$^/ });
-				cmd3.option("bax", "<baz>", { type: ["abc", "def"] });
+				cmd3.option("bax", "<baz>", {
+					type: ["abc", "def"],
+				});
 				await client1.shouldReply("cmd3", "after cmd3");
 				await client1.shouldReply(
 					"cmd3 --foo xxx",
@@ -357,14 +399,18 @@ describe("Runtime", () => {
 				);
 				cmd3.dispose();
 			} finally {
-				delete (Logger.levels as Record<string, number>)["i18n"];
+				delete (Logger.levels as Record<string, number>)[
+					"i18n"
+				];
 			}
 		});
 
 		// 上游 master 同名用例为 command.before();fork 运行时尚无 beforeAll API
 		it("command.before()", async () => {
 			// before 钩子：返回值非空时替代指令执行，空值则取消执行
-			const cmd3 = app.command("cmd3").action(() => "after cmd3");
+			const cmd3 = app
+				.command("cmd3")
+				.action(() => "after cmd3");
 			await client1.shouldReply("cmd3", "after cmd3");
 			let value = "before cmd3";
 			cmd3.before(() => value);

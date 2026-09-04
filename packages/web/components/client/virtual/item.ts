@@ -27,7 +27,9 @@ import {
  * 把模板 ref 包装成指令：在挂载 / 更新时把元素写入 ref，
  * 卸载时清空。用于给并非本组件直接渲染的插槽根元素建立引用。
  */
-export const useRefDirective = (ref: Ref): Directive<Element> => ({
+export const useRefDirective = (
+	ref: Ref,
+): Directive<Element> => ({
 	mounted(el) {
 		ref.value = el;
 	},
@@ -55,7 +57,9 @@ function findFirstLegitChild(
 				case Text:
 					break;
 				case Fragment:
-					return findFirstLegitChild(child.children as VNode[]);
+					return findFirstLegitChild(
+						child.children as VNode[],
+					);
 				default:
 					if (typeof child.type === "string") return child;
 					return child;
@@ -83,23 +87,31 @@ const VirtualItem = defineComponent({
 			resizeObserver?.disconnect();
 			if (!value) return;
 
-			resizeObserver = new ResizeObserver(dispatchSizeChange);
+			resizeObserver = new ResizeObserver(
+				dispatchSizeChange,
+			);
 			resizeObserver.observe(value);
 		});
 
 		// 上报尺寸：offsetHeight 不含外边距，需补上 marginTop（外间距折叠场景）
 		function dispatchSizeChange() {
 			if (!root.value) return;
-			const marginTop = +getComputedStyle(root.value).marginTop.slice(0, -2);
+			const marginTop = +getComputedStyle(
+				root.value,
+			).marginTop.slice(0, -2);
 			emit("resize", root.value.offsetHeight + marginTop);
 		}
 
 		const directive = useRefDirective(root);
 
 		return () => {
-			const head = findFirstLegitChild(slots["default"]?.(attrs));
+			const head = findFirstLegitChild(
+				slots["default"]?.(attrs),
+			);
 			// 插槽无真实子节点时不渲染（防御；正常使用必有内容）
-			return head ? withDirectives(head, [[directive]]) : null;
+			return head
+				? withDirectives(head, [[directive]])
+				: null;
 		};
 	},
 });

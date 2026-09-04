@@ -9,7 +9,11 @@
  * - 定义作用域扩展接口 LoaderScope 与跨模块共享的符号键（kRecord / kUpdate）。
  */
 
-import type { Dict, EffectScope, ForkScope } from "@koishi-ce/core";
+import type {
+	Dict,
+	EffectScope,
+	ForkScope,
+} from "@koishi-ce/core";
 import type { Loader } from "./index.ts";
 
 // 通过模块合并向全局类型注入 loader 服务、相关事件与配置项

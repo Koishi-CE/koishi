@@ -12,7 +12,9 @@ import Server from "@cordisjs/plugin-server";
 export default class ServerWithLoggerGuard extends Server {
 	constructor(ctx, config) {
 		const shadow = ctx.extend({});
-		Object.defineProperty(shadow, "logger", { value: ctx.logger });
+		Object.defineProperty(shadow, "logger", {
+			value: ctx.logger,
+		});
 		super(shadow, config);
 	}
 }

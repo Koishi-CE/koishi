@@ -40,9 +40,13 @@ provide("component:analytic-number", Numeric);
 // 近期 DAU：剔除今天的占位后取历史天数的平均值（天数不足时按实际天数除）
 const recentDau = computed(() => {
 	const data = store.analytics.dauHistory.slice(1);
-	const historyLength = store.analytics.dauHistory.length - 1;
+	const historyLength =
+		store.analytics.dauHistory.length - 1;
 	if (!historyLength) return 0;
-	return data.reduce((a, b) => a + b, 0) / Math.min(data.length, historyLength);
+	return (
+		data.reduce((a, b) => a + b, 0) /
+		Math.min(data.length, historyLength)
+	);
 });
 </script>
 

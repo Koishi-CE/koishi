@@ -52,11 +52,18 @@ export function registerComponents(ctx: Context) {
 	// 复数形式：按 count（或默认取最后一个子元素索引）选取对应变体
 	ctx.component("plural", async (attrs, children) => {
 		const path =
-			attrs["count"] in children ? attrs["count"] : children.length - 1;
+			attrs["count"] in children
+				? attrs["count"]
+				: children.length - 1;
 		return children[path] ?? "";
 	});
 
-	const units = ["day", "hour", "minute", "second"] as const;
+	const units = [
+		"day",
+		"hour",
+		"minute",
+		"second",
+	] as const;
 
 	// 把毫秒时长人性化：如 "2 天 3 小时"、"5 分钟"，不足一分钟按秒取整。
 	// ms += minor / 2 是四舍五入技巧：让低级单位过半时向高级单位进位

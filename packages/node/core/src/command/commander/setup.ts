@@ -18,13 +18,19 @@ import type { Universal } from "@satorijs/core";
 import { defineProperty } from "cosmokit";
 import { Context } from "../../context/index.ts";
 import { Command } from "../command/command.ts";
-import { commandOptionSchema, registerBuiltinDomains } from "../domains.ts";
+import {
+	commandOptionSchema,
+	registerBuiltinDomains,
+} from "../domains.ts";
 import { Argv } from "../parser/index.ts";
 import validate from "../validate.ts";
 import type { Commander } from "./commander.ts";
 
 /** Commander 的构造期装配：绑定事件监听、schema 扩展与内置参数类型 */
-export function setupCommander(cmdr: Commander, ctx: Context) {
+export function setupCommander(
+	cmdr: Commander,
+	ctx: Context,
+) {
 	defineProperty(cmdr, Context.current, ctx);
 	ctx.plugin(validate);
 
@@ -34,7 +40,8 @@ export function setupCommander(cmdr: Commander, ctx: Context) {
 			isDirect,
 			stripped: { prefix, appel },
 		} = session;
-		if (!isDirect && typeof prefix !== "string" && !appel) return;
+		if (!isDirect && typeof prefix !== "string" && !appel)
+			return;
 		return Argv.parse(content);
 	});
 
@@ -43,7 +50,11 @@ export function setupCommander(cmdr: Commander, ctx: Context) {
 	// 否则伪装成带称呼的根消息，走一遍常规解析链
 	ctx.on("interaction/command", (session) => {
 		if (session.event?.argv) {
-			const { name, options, arguments: args } = session.event.argv;
+			const {
+				name,
+				options,
+				arguments: args,
+			} = session.event.argv;
 			session.execute({ name, args, options });
 		} else {
 			session.stripped.hasAt = true;
@@ -53,12 +64,19 @@ export function setupCommander(cmdr: Commander, ctx: Context) {
 			defineProperty(
 				session,
 				"argv",
-				ctx.bail("before-parse", session.content ?? "", session),
+				ctx.bail(
+					"before-parse",
+					session.content ?? "",
+					session,
+				),
 			);
 			if (!session.argv) {
 				ctx
 					.logger("command")
-					.warn("failed to parse interaction command:", session.content);
+					.warn(
+						"failed to parse interaction command:",
+						session.content,
+					);
 				return;
 			}
 			session.argv.root = true;
@@ -79,7 +97,11 @@ export function setupCommander(cmdr: Commander, ctx: Context) {
 			content = content.slice(prefix.length);
 			break;
 		}
-		defineProperty(session, "argv", ctx.bail("before-parse", content, session));
+		defineProperty(
+			session,
+			"argv",
+			ctx.bail("before-parse", content, session),
+		);
 		if (!session.argv) return;
 		session.argv.root = true;
 		session.argv.session = session;
@@ -87,7 +109,8 @@ export function setupCommander(cmdr: Commander, ctx: Context) {
 
 	ctx.middleware((session, next) => {
 		// 命令执行中间件：argv 能推断出命令则执行，否则交给后续中间件
-		if (!session.argv || !cmdr.resolveCommand(session.argv)) return next();
+		if (!session.argv || !cmdr.resolveCommand(session.argv))
+			return next();
 		return session.execute(session.argv, next);
 	});
 
@@ -102,9 +125,14 @@ export function setupCommander(cmdr: Commander, ctx: Context) {
 			isDirect,
 			stripped: { prefix, appel },
 		} = session;
-		if (argv?.command || (!isDirect && !prefix && !appel)) return next();
-		const content = session.stripped.content.slice((prefix ?? "").length);
-		const actual = (content.split(/\s/, 1)[0] ?? "").toLowerCase();
+		if (argv?.command || (!isDirect && !prefix && !appel))
+			return next();
+		const content = session.stripped.content.slice(
+			(prefix ?? "").length,
+		);
+		const actual = (
+			content.split(/\s/, 1)[0] ?? ""
+		).toLowerCase();
 		if (!actual) return next();
 
 		return next(async (next) => {
@@ -136,17 +164,26 @@ export function setupCommander(cmdr: Commander, ctx: Context) {
 
 	// 扩展控制台配置面板使用的 command / command-option schema
 	ctx.schema.extend("command", Command.Config, 1000);
-	ctx.schema.extend("command-option", commandOptionSchema, 1000);
+	ctx.schema.extend(
+		"command-option",
+		commandOptionSchema,
+		1000,
+	);
 
 	ctx.on("ready", () => {
 		const bots = ctx.bots.filter(
-			(v) => v.status === (1 satisfies Universal.Status) && v.updateCommands,
+			(v) =>
+				v.status === (1 satisfies Universal.Status) &&
+				v.updateCommands,
 		);
 		bots.forEach((bot) => cmdr.updateCommands(bot));
 	});
 
 	ctx.on("bot-status-updated", async (bot) => {
-		if (bot.status !== (1 satisfies Universal.Status) || !bot.updateCommands)
+		if (
+			bot.status !== (1 satisfies Universal.Status) ||
+			!bot.updateCommands
+		)
 			return;
 		cmdr.updateCommands(bot);
 	});

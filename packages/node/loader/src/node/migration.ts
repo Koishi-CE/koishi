@@ -24,7 +24,10 @@ interface PackageManifest {
 function resolveManifest(): string | undefined {
 	for (const name of ["@koishi-ce/koishi", "koishi"]) {
 		try {
-			return Bun.resolveSync(`${name}/package.json`, import.meta.dir);
+			return Bun.resolveSync(
+				`${name}/package.json`,
+				import.meta.dir,
+			);
 		} catch {}
 	}
 	return undefined;
@@ -40,13 +43,21 @@ function resolveManifest(): string | undefined {
  * 注：package.json 按进程工作目录读写（保持历史行为）；
  * 依赖版本取自 koishi 元包的依赖表（按 loader 自身位置解析）。
  */
-export async function migrateManifest(config: Dict<unknown>) {
+export async function migrateManifest(
+	config: Dict<unknown>,
+) {
 	try {
 		let isDirty = false;
-		const meta = (await Bun.file("package.json").json()) as PackageManifest;
+		const meta = (await Bun.file(
+			"package.json",
+		).json()) as PackageManifest;
 		const manifest = resolveManifest();
 		const deps = manifest
-			? ((await Bun.file(manifest).json()) as PackageManifest).dependencies
+			? (
+					(await Bun.file(
+						manifest,
+					).json()) as PackageManifest
+				).dependencies
 			: undefined;
 		meta.dependencies ??= {};
 		const dependencies = meta.dependencies;
@@ -70,7 +81,9 @@ export async function migrateManifest(config: Dict<unknown>) {
 		}
 
 		// 补挂 proxy-agent 插件（旧版代理能力已拆分为插件）
-		if (!meta.dependencies["@koishi-ce/plugin-proxy-agent"]) {
+		if (
+			!meta.dependencies["@koishi-ce/plugin-proxy-agent"]
+		) {
 			config["plugins"] = {
 				"proxy-agent": {},
 				...(config["plugins"] as Record<string, unknown>),
@@ -79,16 +92,23 @@ export async function migrateManifest(config: Dict<unknown>) {
 		}
 
 		/** 从插件表（含嵌套 group）中提取 http 插件的 proxyAgent 配置并移除 */
-		function getProxyAgent(plugins: Dict<unknown>): unknown {
+		function getProxyAgent(
+			plugins: Dict<unknown>,
+		): unknown {
 			for (const [key, value] of Object.entries(plugins)) {
 				const name = key.replace(/^~/, "").split(":")[0];
 				let result: unknown;
 				if (name === "http") {
-					const config = value as Dict<unknown> | null | undefined;
+					const config = value as
+						| Dict<unknown>
+						| null
+						| undefined;
 					result = config?.["proxyAgent"];
 					delete config?.["proxyAgent"];
 				} else if (name === "group") {
-					result = getProxyAgent((value ?? {}) as Dict<unknown>);
+					result = getProxyAgent(
+						(value ?? {}) as Dict<unknown>,
+					);
 				}
 				if (result) return result;
 			}
@@ -96,14 +116,21 @@ export async function migrateManifest(config: Dict<unknown>) {
 		}
 
 		/** 将提取到的 proxyAgent 写回 proxy-agent 插件配置 */
-		function setProxyAgent(plugins: Dict<unknown>): boolean | undefined {
+		function setProxyAgent(
+			plugins: Dict<unknown>,
+		): boolean | undefined {
 			for (const [key, value] of Object.entries(plugins)) {
 				const name = key.replace(/^~/, "").split(":")[0];
 				if (name === "proxy-agent") {
-					plugins[key] = { ...(value as Dict<unknown>), proxyAgent };
+					plugins[key] = {
+						...(value as Dict<unknown>),
+						proxyAgent,
+					};
 					return true;
 				} else if (name === "group") {
-					const result = setProxyAgent((value ?? {}) as Dict<unknown>);
+					const result = setProxyAgent(
+						(value ?? {}) as Dict<unknown>,
+					);
 					if (result) return result;
 				}
 			}
@@ -114,7 +141,8 @@ export async function migrateManifest(config: Dict<unknown>) {
 		const proxyAgent = getProxyAgent(
 			(config["plugins"] ?? {}) as Dict<unknown>,
 		);
-		if (proxyAgent) setProxyAgent(config["plugins"] as Dict<unknown>);
+		if (proxyAgent)
+			setProxyAgent(config["plugins"] as Dict<unknown>);
 
 		// 旧的服务器顶层配置（端口等）改写为 server 插件
 		if (config["port"]) {
@@ -137,7 +165,10 @@ export async function migrateManifest(config: Dict<unknown>) {
 					a.localeCompare(b),
 				),
 			);
-			await Bun.write("package.json", `${JSON.stringify(meta, null, 2)}\n`);
+			await Bun.write(
+				"package.json",
+				`${JSON.stringify(meta, null, 2)}\n`,
+			);
 		}
 	} catch (error) {
 		logger.warn("failed to migrate manifest");

@@ -19,7 +19,10 @@ import {
 	type Universal,
 	type User,
 } from "@koishi-ce/koishi";
-import { MessageClient, MockMessageEncoder } from "./client.ts";
+import {
+	MessageClient,
+	MockMessageEncoder,
+} from "./client.ts";
 import { Webhook } from "./webhook.ts";
 
 // 模块增强必须指向本仓库的 @koishi-ce/koishi（上游包名 "koishi" 在此无法解析）
@@ -54,7 +57,9 @@ export namespace MockBot {
 }
 
 /** 模拟 Bot：以 "mock" 平台注册，支持不经真实平台直接派发会话 */
-export class MockBot<C extends Context = Context> extends Bot<C> {
+export class MockBot<
+	C extends Context = Context,
+> extends Bot<C> {
 	static override MessageEncoder = MockMessageEncoder;
 
 	// config 参数可选：cordis 的 plugin() 以 Spread<T> 推断参数个数，
@@ -74,7 +79,10 @@ export class MockBot<C extends Context = Context> extends Bot<C> {
 	}
 
 	/** 基于事件模板构造会话并派发到应用（可携带来源 client 以回捕回复），返回会话 ID */
-	receive(event: Partial<Universal.Event>, client?: MessageClient) {
+	receive(
+		event: Partial<Universal.Event>,
+		client?: MessageClient,
+	) {
 		const session = this.session(event);
 		session.client = client;
 		this.dispatch(session);
@@ -101,10 +109,9 @@ export class MockBot<C extends Context = Context> extends Bot<C> {
 }
 
 /** 模拟适配器：向 ctx 注入 mock 服务，并代理到第一个 bot 的便捷方法 */
-export class MockAdapter<C extends Context = Context> extends Adapter<
-	C,
-	MockBot<C>
-> {
+export class MockAdapter<
+	C extends Context = Context,
+> extends Adapter<C, MockBot<C>> {
 	public webhook: Webhook;
 
 	// 第二个参数是 ctx.plugin(MockAdapter, bot) 传入的 bot 实例，构造流程不使用
@@ -120,13 +127,21 @@ export class MockAdapter<C extends Context = Context> extends Adapter<
 	 */
 	private get firstBot(): MockBot<C> {
 		const bot = this.bots[0];
-		if (!bot) throw new Error("mock 服务下没有已注册的 bot");
+		if (!bot)
+			throw new Error("mock 服务下没有已注册的 bot");
 		return bot;
 	}
 
 	/** 在数据库中预置一个 mock 平台用户 */
-	async initUser(id: string, authority = 1, data?: Partial<User>) {
-		await this.ctx.root.database.createUser("mock", id, { authority, ...data });
+	async initUser(
+		id: string,
+		authority = 1,
+		data?: Partial<User>,
+	) {
+		await this.ctx.root.database.createUser("mock", id, {
+			authority,
+			...data,
+		});
 	}
 
 	/** 在数据库中预置一个 mock 平台频道（默认指派给第一个 bot） */
@@ -147,7 +162,10 @@ export class MockAdapter<C extends Context = Context> extends Adapter<
 	}
 
 	/** 让第一个 bot 派发一条事件 */
-	receive(event: Partial<Universal.Event>, client?: MessageClient) {
+	receive(
+		event: Partial<Universal.Event>,
+		client?: MessageClient,
+	) {
 		return this.firstBot.receive(event, client);
 	}
 

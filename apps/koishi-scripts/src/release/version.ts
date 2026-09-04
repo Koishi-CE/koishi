@@ -41,7 +41,8 @@ function hasPendingChangesets(projectDir: string): boolean {
 	}
 	return entries.some(
 		(name) =>
-			name.toLowerCase() !== "readme.md" && name.toLowerCase().endsWith(".md"),
+			name.toLowerCase() !== "readme.md" &&
+			name.toLowerCase().endsWith(".md"),
 	);
 }
 
@@ -49,7 +50,12 @@ function hasPendingChangesets(projectDir: string): boolean {
 function resolveChangesetBin(projectDir: string): string {
 	const ext = process.platform === "win32" ? ".cmd" : "";
 	const candidates = [
-		join(projectDir, "node_modules", ".bin", `changeset${ext}`),
+		join(
+			projectDir,
+			"node_modules",
+			".bin",
+			`changeset${ext}`,
+		),
 		join(cwd, "node_modules", ".bin", `changeset${ext}`),
 	];
 	for (const candidate of candidates) {
@@ -71,7 +77,9 @@ export default function runVersion(): number {
 	try {
 		projects = listProjects();
 	} catch {
-		console.log("[version] 当前目录下无 external/，请在宿主工作区根执行");
+		console.log(
+			"[version] 当前目录下无 external/，请在宿主工作区根执行",
+		);
 		return 1;
 	}
 	if (projects.length === 0) {
@@ -80,12 +88,17 @@ export default function runVersion(): number {
 	}
 	let consumed = 0;
 	for (const projectDir of projects) {
-		const projectName = projectDir.split(/[\\/]/).pop() ?? projectDir;
+		const projectName =
+			projectDir.split(/[\\/]/).pop() ?? projectDir;
 		if (!hasPendingChangesets(projectDir)) {
-			console.log(`[version] ⏭  ${projectName}：无 pending changeset，跳过`);
+			console.log(
+				`[version] ⏭  ${projectName}：无 pending changeset，跳过`,
+			);
 			continue;
 		}
-		console.log(`[version] 📦 ${projectName}：执行 changeset version ...`);
+		console.log(
+			`[version] 📦 ${projectName}：执行 changeset version ...`,
+		);
 		const bin = resolveChangesetBin(projectDir);
 		const code = runCommand(projectDir, bin, ["version"]);
 		if (code !== 0) {

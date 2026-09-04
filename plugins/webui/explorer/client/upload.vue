@@ -29,7 +29,10 @@ const showUploading = computed({
 });
 
 /** 遍历拖入/粘贴的数据项，把其中的文件读为 ArrayBuffer 后以 base64 写到目标目录。 */
-function handleDataTransfer(event: Event, transfer: DataTransfer) {
+function handleDataTransfer(
+	event: Event,
+	transfer: DataTransfer,
+) {
 	const prefix = uploading.value;
 	for (const item of transfer.items) {
 		if (item.kind !== "file") continue;

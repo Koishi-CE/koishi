@@ -59,7 +59,12 @@ class LogProvider extends DataService<Logger.Record[]> {
 						`${process.env["KOISHI_BASE"]}/dist/style.css`,
 					]
 				: process.env["KOISHI_ENV"] === "browser"
-					? [import.meta.url.replace(/\/src\/[^/]+$/, "/client/index.ts")]
+					? [
+							import.meta.url.replace(
+								/\/src\/[^/]+$/,
+								"/client/index.ts",
+							),
+						]
 					: {
 							dev: resolve(__dirname, "../client/index.ts"),
 							prod: resolve(__dirname, "../dist"),
@@ -92,14 +97,19 @@ export const Config: Schema<Config> = Schema.object({
 
 export async function apply(ctx: Context, config: Config) {
 	// Schema 默认值同步到此处兜底,与 Config 声明保持一致
-	const root = resolve(ctx.baseDir, config.root ?? "data/logs");
+	const root = resolve(
+		ctx.baseDir,
+		config.root ?? "data/logs",
+	);
 	await mkdir(root, { recursive: true });
 
 	// 扫描既有日志文件，按日期归集序号（如 "2024-01-01-3.log" → files["2024-01-01"] = [3]），
 	// 供后续轮转时确定起始序号与清理超龄文件
 	const files: Dict<number[]> = {};
 	for (const filename of await readdir(root)) {
-		const capture = /^(\d{4}-\d{2}-\d{2})-(\d+)\.log$/.exec(filename);
+		const capture = /^(\d{4}-\d{2}-\d{2})-(\d+)\.log$/.exec(
+			filename,
+		);
 		if (!capture) continue;
 		const [, date, index] = capture;
 		if (!date || !index) continue;
@@ -114,25 +124,34 @@ export async function apply(ctx: Context, config: Config) {
 	 * @param index 该日期下的文件序号
 	 */
 	async function createFile(date: string, index: number) {
-		writer = new FileWriter(date, `${root}/${date}-${index}.log`);
+		writer = new FileWriter(
+			date,
+			`${root}/${date}-${index}.log`,
+		);
 
 		const { maxAge } = config;
 		if (!maxAge) return;
 
 		const now = Date.now();
 		for (const date of Object.keys(files)) {
-			if (now - +new Date(date) < maxAge * Time.day) continue;
+			if (now - +new Date(date) < maxAge * Time.day)
+				continue;
 			for (const index of files[date] ?? []) {
-				await rm(`${root}/${date}-${index}.log`).catch((error) => {
-					ctx.logger("logger").warn(error);
-				});
+				await rm(`${root}/${date}-${index}.log`).catch(
+					(error) => {
+						ctx.logger("logger").warn(error);
+					},
+				);
 			}
 			delete files[date];
 		}
 	}
 
 	const date = new Date().toISOString().slice(0, 10);
-	void createFile(date, Math.max(...(files[date] ?? [0])) + 1);
+	void createFile(
+		date,
+		Math.max(...(files[date] ?? [0])) + 1,
+	);
 
 	// 推送缓冲：日志先攒进 buffer，由节流回调每 100ms 批量 patch 给前端
 	let buffer: Logger.Record[] = [];
@@ -155,7 +174,9 @@ export async function apply(ctx: Context, config: Config) {
 			if (loader && scope) {
 				meta.paths = loader.paths(scope);
 			}
-			const date = new Date(record.timestamp).toISOString().slice(0, 10);
+			const date = new Date(record.timestamp)
+				.toISOString()
+				.slice(0, 10);
 			if (writer.date !== date) {
 				void writer.close();
 				files[date] = [1];

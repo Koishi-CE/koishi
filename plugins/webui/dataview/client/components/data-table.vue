@@ -132,7 +132,13 @@
  * 承载，字段类型经类型染色配置着色。
  */
 
-import { type Dict, message, pick, store, useConfig } from "@koishi-ce/client";
+import {
+	type Dict,
+	message,
+	pick,
+	store,
+	useConfig,
+} from "@koishi-ce/client";
 import {
 	type ComputedRef,
 	computed,
@@ -169,7 +175,10 @@ export type SortState = {
 };
 
 /** 行号 => 字段名 => 输入模型（暂存未提交的修改） */
-export type ChangesState = Record<number, Record<string, { model: CellModel }>>;
+export type ChangesState = Record<
+	number,
+	Record<string, { model: CellModel }>
+>;
 
 const state = reactive<TableStatus>({
 	loading: true,
@@ -188,7 +197,9 @@ const props = defineProps<{
 	color: boolean;
 }>();
 
-const table = computed(() => store.database?.tables[props.name]);
+const table = computed(
+	() => store.database?.tables[props.name],
+);
 
 watchEffect(() => {
 	state.pageSize = state.pageSize || (pageSizes[0] ?? 30);
@@ -203,7 +214,8 @@ watch(
 	() => table.value?.fields,
 	(v) => {
 		for (const fName in v) {
-			if (!(fName in state.newRow)) state.newRow[fName] = "";
+			if (!(fName in state.newRow))
+				state.newRow[fName] = "";
 		}
 	},
 	{ immediate: true },
@@ -237,15 +249,17 @@ async function updateData() {
 	};
 	try {
 		const row = props.filter
-			? Object.keys(state.newRow).reduce<Record<string, unknown>>(
-					(o, field) => {
-						if (state.newRow[field]) {
-							o[field] = fromModelValue(field, state.newRow[field]);
-						}
-						return o;
-					},
-					{},
-				)
+			? Object.keys(state.newRow).reduce<
+					Record<string, unknown>
+				>((o, field) => {
+					if (state.newRow[field]) {
+						o[field] = fromModelValue(
+							field,
+							state.newRow[field],
+						);
+					}
+					return o;
+				}, {})
 			: {};
 		tableData.value = await sendQuery(
 			"get",
@@ -267,16 +281,24 @@ const config = computed(() => schema(rawConfig.value));
 function getCellStyle({
 	column,
 }: {
-	column: { label: string; cellStyle?: Record<string, string> };
+	column: {
+		label: string;
+		cellStyle?: Record<string, string>;
+	};
 }) {
 	if (!props.color) return (column.cellStyle = undefined);
 	if (column.cellStyle) return column.cellStyle;
 	for (const pref of config.value.dataview?.colors ?? []) {
 		if (!pref?.types) continue;
 		if (
-			pref.types.includes(table.value?.fields?.[column.label]?.deftype as never)
+			pref.types.includes(
+				table.value?.fields?.[column.label]
+					?.deftype as never,
+			)
 		) {
-			return (column.cellStyle = { "background-color": pref.color ?? "" });
+			return (column.cellStyle = {
+				"background-color": pref.color ?? "",
+			});
 		}
 	}
 	return (column.cellStyle = {});
@@ -303,9 +325,11 @@ interface ColumnInput {
 	};
 }
 
-const columnInputAttr: ComputedRef<Dict<ColumnInput>> = computed(() =>
-	Object.keys(table.value?.fields ?? {}).reduce<Dict<ColumnInput>>(
-		(o, fName) => {
+const columnInputAttr: ComputedRef<Dict<ColumnInput>> =
+	computed(() =>
+		Object.keys(table.value?.fields ?? {}).reduce<
+			Dict<ColumnInput>
+		>((o, fName) => {
 			const fieldConfig = table.value?.fields[fName];
 			if (!fieldConfig) return o;
 			const dateAttrs = { clearable: false };
@@ -314,7 +338,10 @@ const columnInputAttr: ComputedRef<Dict<ColumnInput>> = computed(() =>
 			let step: number | undefined;
 			switch (fieldConfig.deftype) {
 				case "time":
-					o[fName] = { is: "el-time-picker", attrs: dateAttrs };
+					o[fName] = {
+						is: "el-time-picker",
+						attrs: dateAttrs,
+					};
 					return o;
 				case "date":
 					o[fName] = {
@@ -348,50 +375,70 @@ const columnInputAttr: ComputedRef<Dict<ColumnInput>> = computed(() =>
 
 			const validate = (val: CellModel) => {
 				const text = String(val ?? "");
-				if (fieldConfig.nullable === false && !text.length) return false;
+				if (fieldConfig.nullable === false && !text.length)
+					return false;
 				let value: number | string = text;
 				// 上游此处误写为 type.value（恒假）；按其意图对数字输入先转数值再校验
-				if (type === "number") value = Number.parseFloat(text);
+				if (type === "number")
+					value = Number.parseFloat(text);
 				switch (fieldConfig.deftype) {
 					// biome-ignore lint/suspicious/noFallthroughSwitchClause: 负数已提前返回,落入整数检查是上游既定语义
 					case "unsigned":
-						if (typeof value === "number" && value < 0) return false;
+						if (typeof value === "number" && value < 0)
+							return false;
 					case "integer":
-						if (typeof value === "number" && value % 1 !== 0) return false;
+						if (
+							typeof value === "number" &&
+							value % 1 !== 0
+						)
+							return false;
 						break;
 					case "json":
 						if (text === "") return true;
-						if (!text.startsWith("{") || !text.endsWith("}")) return false;
+						if (
+							!text.startsWith("{") ||
+							!text.endsWith("}")
+						)
+							return false;
 						break;
 				}
 				return true;
 			};
 
-			o[fName] = { is: "el-input", attrs: { type, validate, step } };
+			o[fName] = {
+				is: "el-input",
+				attrs: { type, validate, step },
+			};
 			return o;
-		},
-		{},
-	),
-);
+		}, {}),
+	);
 
 /** 仅保留通过输入校验的修改 */
-const validChanges: ComputedRef<ChangesState> = computed(() => {
-	const result: ChangesState = {};
-	for (const i in state.changes) {
-		for (const field in state.changes[i]) {
-			const column = columnInputAttr.value[field];
-			if (column?.attrs?.validate) {
-				if (!column.attrs.validate(state.changes[i][field]?.model ?? "")) {
-					continue; // 跳过非法修改
+const validChanges: ComputedRef<ChangesState> = computed(
+	() => {
+		const result: ChangesState = {};
+		for (const i in state.changes) {
+			for (const field in state.changes[i]) {
+				const column = columnInputAttr.value[field];
+				if (column?.attrs?.validate) {
+					if (
+						!column.attrs.validate(
+							state.changes[i][field]?.model ?? "",
+						)
+					) {
+						continue; // 跳过非法修改
+					}
 				}
+				(result[i] ??= {})[field] = state.changes[i][field];
 			}
-			(result[i] ??= {})[field] = state.changes[i][field];
 		}
-	}
-	return result;
-});
+		return result;
+	},
+);
 
-const existChanges = computed(() => !!Object.keys(state.changes).length);
+const existChanges = computed(
+	() => !!Object.keys(state.changes).length,
+);
 const existValidChanges = computed(
 	() => !!Object.keys(validChanges.value).length,
 );
@@ -399,13 +446,17 @@ const newRowValid = computed(() => {
 	for (const field in table.value?.fields) {
 		const column = columnInputAttr.value[field];
 		if (column?.attrs?.validate) {
-			if (!column.attrs.validate(state.newRow[field] ?? "")) return false;
+			if (!column.attrs.validate(state.newRow[field] ?? ""))
+				return false;
 		}
 	}
 	return true;
 });
 
-function onSort(e: { prop: string; order: "ascending" | "descending" | null }) {
+function onSort(e: {
+	prop: string;
+	order: "ascending" | "descending" | null;
+}) {
 	if (e.order === null) {
 		state.sort = null;
 	} else {
@@ -416,7 +467,10 @@ function onSort(e: { prop: string; order: "ascending" | "descending" | null }) {
 	}
 }
 
-function renderCell(field: string, scope: { row: Record<string, unknown> }) {
+function renderCell(
+	field: string,
+	scope: { row: Record<string, unknown> },
+) {
 	const fType = table.value?.fields[field]?.deftype;
 	const data = scope.row[field];
 	switch (fType) {
@@ -429,7 +483,8 @@ function renderCell(field: string, scope: { row: Record<string, unknown> }) {
 			if (data instanceof Date) return timeStr(data);
 			break;
 		case "timestamp":
-			if (data instanceof Date) return `${dateStr(data)} ${timeStr(data)}`;
+			if (data instanceof Date)
+				return `${dateStr(data)} ${timeStr(data)}`;
 			break;
 		case "binary":
 			return `<Binary len=${data}>`;
@@ -438,9 +493,13 @@ function renderCell(field: string, scope: { row: Record<string, unknown> }) {
 }
 
 /** 把单元格数据转换为输入模型 */
-function toModelValue(field: string, data: unknown): CellModel {
+function toModelValue(
+	field: string,
+	data: unknown,
+): CellModel {
 	const fType = table.value?.fields[field]?.deftype;
-	if (fType === "list" || fType === "json") return JSON.stringify(data);
+	if (fType === "list" || fType === "json")
+		return JSON.stringify(data);
 	if (fType === "time" && typeof data === "string") {
 		const [h, m, s] = data.split(":");
 		const time = new Date();
@@ -455,7 +514,10 @@ function toModelValue(field: string, data: unknown): CellModel {
 }
 
 /** 把输入模型转换回单元格数据 */
-function fromModelValue(field: string, data: CellModel): unknown {
+function fromModelValue(
+	field: string,
+	data: CellModel,
+): unknown {
 	const fType = table.value?.fields[field]?.deftype;
 	switch (fType) {
 		case "unsigned":
@@ -481,11 +543,15 @@ function isCellChanged(
 	checkValue = true,
 ) {
 	const { row, column, $index } = scope;
-	if (state.changes[$index]?.[column.label] === undefined) return false;
+	if (state.changes[$index]?.[column.label] === undefined)
+		return false;
 	if (!checkValue) return true;
 	// 上游此分支以 row.id（而非 $index）比对 model.value；现有调用均传
 	// checkValue=false，该分支不会执行，这里按输入模型与原值近似比较
-	return state.changes[$index]?.[column.label]?.model === row[column.label];
+	return (
+		state.changes[$index]?.[column.label]?.model ===
+		row[column.label]
+	);
 }
 
 /* 外层单元格双击时把事件转发给内部 .inner-cell（借此拿到 $index） */
@@ -506,7 +572,10 @@ function onCellDblClick(scope: {
 }) {
 	const { row, column, $index } = scope;
 	if (isCellChanged(scope, false)) return; // 已有修改记录
-	if (table.value?.fields[column.label]?.deftype === "binary") return;
+	if (
+		table.value?.fields[column.label]?.deftype === "binary"
+	)
+		return;
 	const record = (state.changes[$index] ??= {});
 	record[column.label] = reactive({
 		model: toModelValue(column.label, row[column.label]),
@@ -514,12 +583,16 @@ function onCellDblClick(scope: {
 }
 
 /** 撤销当前单元格的修改 */
-function onCancelInput(scope: { column: { label: string }; $index: number }) {
+function onCancelInput(scope: {
+	column: { label: string };
+	$index: number;
+}) {
 	const { column, $index } = scope;
 	const record = state.changes[$index];
 	if (!record) return;
 	delete record[column.label];
-	if (!Object.keys(record).length) delete state.changes[$index];
+	if (!Object.keys(record).length)
+		delete state.changes[$index];
 }
 
 /** 撤销全部修改 */
@@ -546,7 +619,10 @@ async function onSubmitChanges() {
 			await sendQuery(
 				"set",
 				props.name as never,
-				pick(row ?? {}, table.value?.primary ?? []) as never,
+				pick(
+					row ?? {},
+					table.value?.primary ?? [],
+				) as never,
 				data as never,
 			);
 
@@ -567,7 +643,8 @@ async function onSubmitChanges() {
 			delete state.changes[idx];
 	}
 	await updateData();
-	if (submitted.length) message.success(`成功修改 ${submitted.length} 项数据`);
+	if (submitted.length)
+		message.success(`成功修改 ${submitted.length} 项数据`);
 	state.loading = false;
 }
 
@@ -593,13 +670,22 @@ async function onDeleteRow(scope: {
 async function onInsertRow() {
 	state.loading = true;
 	try {
-		const row = Object.keys(state.newRow).reduce<Dict<unknown>>((o, field) => {
+		const row = Object.keys(state.newRow).reduce<
+			Dict<unknown>
+		>((o, field) => {
 			if (state.newRow[field]) {
-				o[field] = fromModelValue(field, state.newRow[field]);
+				o[field] = fromModelValue(
+					field,
+					state.newRow[field],
+				);
 			}
 			return o;
 		}, {});
-		await sendQuery("create", props.name as never, row as never);
+		await sendQuery(
+			"create",
+			props.name as never,
+			row as never,
+		);
 		await updateData();
 		message.success("成功添加数据");
 		for (const field in state.newRow) {

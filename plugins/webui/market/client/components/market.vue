@@ -53,7 +53,12 @@
 </template>
 
 <script setup lang="ts">
-import { global, router, store, useConfig } from "@koishi-ce/client";
+import {
+	global,
+	router,
+	store,
+	useConfig,
+} from "@koishi-ce/client";
 import type { SearchObject } from "@koishi-ce/registry";
 import {
 	getSorted,
@@ -82,9 +87,13 @@ const config = useConfig();
 
 const words = ref<string[]>([""]);
 
-const prompt = computed(() => words.value.filter((w) => w).join(" "));
+const prompt = computed(() =>
+	words.value.filter((w) => w).join(" "),
+);
 
-const data = computed(() => Object.values(store.market?.data || {}));
+const data = computed(() =>
+	Object.values(store.market?.data || {}),
+);
 
 watch(
 	router.currentRoute,
@@ -92,9 +101,12 @@ watch(
 		if (value.path !== "/market") return;
 		const { keyword } = value.query;
 		if (keyword === prompt.value) return;
-		words.value = Array.isArray(keyword) ? keyword : (keyword || "").split(" ");
+		words.value = Array.isArray(keyword)
+			? keyword
+			: (keyword || "").split(" ");
 		words.value = words.value.map((w) => w.toLowerCase());
-		if (words.value[words.value.length - 1]) words.value.push("");
+		if (words.value[words.value.length - 1])
+			words.value.push("");
 	},
 	{ immediate: true, deep: true },
 );
@@ -102,9 +114,12 @@ watch(
 watch(
 	prompt,
 	(value) => {
-		const { keyword: _, ...rest } = router.currentRoute.value.query;
+		const { keyword: _, ...rest } =
+			router.currentRoute.value.query;
 		if (value) {
-			router.replace({ query: { keyword: value, ...rest } });
+			router.replace({
+				query: { keyword: value, ...rest },
+			});
 		} else {
 			router.replace({ query: rest });
 		}
@@ -114,7 +129,8 @@ watch(
 
 function getType(data: SearchObject) {
 	if (global.static) return "primary";
-	const version = config.value.market.override[data.package.name];
+	const version =
+		config.value.market.override[data.package.name];
 	if (installed(data)) {
 		if (version === "") return "danger";
 		if (version) return "warning";
@@ -126,7 +142,8 @@ function getType(data: SearchObject) {
 
 function getText(data: SearchObject) {
 	if (global.static) return "配置";
-	const version = config.value.market.override[data.package.name];
+	const version =
+		config.value.market.override[data.package.name];
 	if (installed(data)) {
 		if (version === "") return "等待移除";
 		if (version) return "等待更新";

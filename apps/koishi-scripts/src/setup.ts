@@ -90,17 +90,25 @@ interface Answers {
  */
 function locateTemplateDir(): string {
 	const base = dirname(fileURLToPath(import.meta.url));
-	for (const dir of [join(base, "template"), join(base, "../src/template")]) {
+	for (const dir of [
+		join(base, "template"),
+		join(base, "../src/template"),
+	]) {
 		if (existsSync(dir)) return dir;
 	}
-	throw new Error("koishi-scripts 内置模板目录缺失（src/template）");
+	throw new Error(
+		"koishi-scripts 内置模板目录缺失（src/template）",
+	);
 }
 
 const templateDir = locateTemplateDir();
 
 /** 读取模板文件原文（相对模板目录的多段路径）。 */
 function readTemplate(...segments: string[]): string {
-	return readFileSync(join(templateDir, ...segments), "utf8");
+	return readFileSync(
+		join(templateDir, ...segments),
+		"utf8",
+	);
 }
 
 /**
@@ -111,8 +119,12 @@ function renderTemplate(
 	source: string,
 	tokens: Record<string, string>,
 ): string {
-	return source.replace(/@@([A-Z_]+)@@/g, (raw, key: string) =>
-		Object.hasOwn(tokens, key) ? (tokens[key] ?? raw) : raw,
+	return source.replace(
+		/@@([A-Z_]+)@@/g,
+		(raw, key: string) =>
+			Object.hasOwn(tokens, key)
+				? (tokens[key] ?? raw)
+				: raw,
 	);
 }
 
@@ -122,7 +134,9 @@ function renderTemplate(
  * （CodeQL incomplete-multi-character-sanitization）。
  */
 function licenseHolder(author: string): string {
-	return (author.split("<")[0] ?? "").trim() || "（作者名）";
+	return (
+		(author.split("<")[0] ?? "").trim() || "（作者名）"
+	);
 }
 
 // ---------------------------------------------------------------------------
@@ -130,11 +144,16 @@ function licenseHolder(author: string): string {
 // ----------------------------------------------------------------------------
 
 /** 解析 --key=value 形式的命令行参数。 */
-export function parseFlags(argv: readonly string[]): Record<string, string> {
+export function parseFlags(
+	argv: readonly string[],
+): Record<string, string> {
 	const flags: Record<string, string> = {};
 	for (const arg of argv) {
 		const match = /^--([a-zA-Z-]+)=(.*)$/.exec(arg);
-		if (match?.[1] !== undefined && match?.[2] !== undefined) {
+		if (
+			match?.[1] !== undefined &&
+			match?.[2] !== undefined
+		) {
 			flags[match[1]] = match[2];
 		}
 	}
@@ -150,7 +169,10 @@ export function normalizeName(raw: string): string | null {
 	if (name.startsWith("@")) {
 		// @scope/koishi-plugin-x：scope 段校验 + 尾段自动补前缀
 		const slash = name.indexOf("/");
-		if (slash < 0 || !/^@[a-z0-9-]+$/.test(name.slice(0, slash))) {
+		if (
+			slash < 0 ||
+			!/^@[a-z0-9-]+$/.test(name.slice(0, slash))
+		) {
 			return null;
 		}
 		const segment = name.slice(slash + 1);
@@ -173,12 +195,17 @@ function isValidPluginSegment(name: string): boolean {
 		return false;
 	}
 	const body = name.slice("koishi-plugin-".length);
-	return body.length > 0 && /^[a-z0-9](?:[a-z0-9._-]*[a-z0-9])?$/.test(body);
+	return (
+		body.length > 0 &&
+		/^[a-z0-9](?:[a-z0-9._-]*[a-z0-9])?$/.test(body)
+	);
 }
 
 /** 由包名推导目录名（也是插件短名）：@scope/koishi-plugin-x → x。 */
 export function deriveDirname(name: string): string {
-	const pkg = name.includes("/") ? (name.split("/")[1] ?? name) : name;
+	const pkg = name.includes("/")
+		? (name.split("/")[1] ?? name)
+		: name;
 	return pkg.slice("koishi-plugin-".length);
 }
 
@@ -190,11 +217,17 @@ function detectOwner(): string {
 	const externalDir = join(cwd, "external");
 	const counts = new Map<string, number>();
 	try {
-		for (const entry of readdirSync(externalDir, { withFileTypes: true })) {
+		for (const entry of readdirSync(externalDir, {
+			withFileTypes: true,
+		})) {
 			if (!entry.isDirectory()) {
 				continue;
 			}
-			const manifestPath = join(externalDir, entry.name, "package.json");
+			const manifestPath = join(
+				externalDir,
+				entry.name,
+				"package.json",
+			);
 			if (!existsSync(manifestPath)) {
 				continue;
 			}
@@ -208,7 +241,10 @@ function detectOwner(): string {
 					? /github\.com[:/]([A-Za-z0-9_-]+)\//.exec(url)
 					: null;
 			if (match?.[1] !== undefined) {
-				counts.set(match[1], (counts.get(match[1]) ?? 0) + 1);
+				counts.set(
+					match[1],
+					(counts.get(match[1]) ?? 0) + 1,
+				);
 			}
 		}
 	} catch {
@@ -227,7 +263,9 @@ function detectOwner(): string {
 
 /** 读 git 全局配置单项（读不到 → 空串）。 */
 function gitConfig(key: string): string {
-	const res = spawnSync("git", ["config", "--get", key], { encoding: "utf8" });
+	const res = spawnSync("git", ["config", "--get", key], {
+		encoding: "utf8",
+	});
 	return res.status === 0 ? (res.stdout?.trim() ?? "") : "";
 }
 
@@ -235,7 +273,9 @@ function gitConfig(key: string): string {
  * 汇总问询答案。--name 给定时视为完全非交互：缺省字段静默取默认值
  * （desc 空、owner 走兄弟项目探测）；否则交互式逐项问询（需 TTY）。
  */
-async function resolveAnswers(flags: Record<string, string>): Promise<Answers> {
+async function resolveAnswers(
+	flags: Record<string, string>,
+): Promise<Answers> {
 	const detected = detectOwner();
 	const finish = (
 		rawName: string,
@@ -246,12 +286,24 @@ async function resolveAnswers(flags: Record<string, string>): Promise<Answers> {
 		if (name === null) {
 			throw new Error(`非法的包名：${rawName}`);
 		}
-		const owner = ownerInput.trim() !== "" ? ownerInput.trim() : detected;
-		return { name, dirname: deriveDirname(name), desc: desc.trim(), owner };
+		const owner =
+			ownerInput.trim() !== ""
+				? ownerInput.trim()
+				: detected;
+		return {
+			name,
+			dirname: deriveDirname(name),
+			desc: desc.trim(),
+			owner,
+		};
 	};
 
 	if (flags["name"] !== undefined) {
-		return finish(flags["name"], flags["desc"] ?? "", flags["owner"] ?? "");
+		return finish(
+			flags["name"],
+			flags["desc"] ?? "",
+			flags["owner"] ?? "",
+		);
 	}
 
 	if (!process.stdin.isTTY) {
@@ -259,14 +311,20 @@ async function resolveAnswers(flags: Record<string, string>): Promise<Answers> {
 			"非交互环境下必须提供 --name=<包名>（可选 --desc= --owner=）",
 		);
 	}
-	const rl = createInterface({ input: process.stdin, output: process.stdout });
+	const rl = createInterface({
+		input: process.stdin,
+		output: process.stdout,
+	});
 	try {
 		const rawName = await rl.question(
 			"📦 包名（可省略 koishi-plugin- 前缀）：",
 		);
 		const desc = await rl.question("📝 描述（可选）：");
-		const ownerHint = detected !== "" ? `（回车 = ${detected}）` : "";
-		const owner = await rl.question(`🐙 GitHub 所有者${ownerHint}：`);
+		const ownerHint =
+			detected !== "" ? `（回车 = ${detected}）` : "";
+		const owner = await rl.question(
+			`🐙 GitHub 所有者${ownerHint}：`,
+		);
 		return finish(rawName, desc, owner);
 	} finally {
 		rl.close();
@@ -278,7 +336,11 @@ async function resolveAnswers(flags: Record<string, string>): Promise<Answers> {
 // ----------------------------------------------------------------------------
 
 /** 相对路径写入（按需建目录，统一 LF 结尾）。 */
-function writeFileRel(dir: string, relPath: string, content: string): void {
+function writeFileRel(
+	dir: string,
+	relPath: string,
+	content: string,
+): void {
 	const fullPath = join(dir, relPath);
 	mkdirSync(dirname(fullPath), { recursive: true });
 	writeFileSync(fullPath, content, "utf8");
@@ -292,10 +354,14 @@ export function renderPackageJson(
 	options: SetupOptions,
 	isMember: boolean,
 ): string {
-	const description = a.desc !== "" ? a.desc : "一个 Koishi 插件";
+	const description =
+		a.desc !== "" ? a.desc : "一个 Koishi 插件";
 	const hasRepo = a.owner !== "";
 	const repository = hasRepo
-		? { type: "git", url: `git+https://github.com/${a.owner}/${a.name}.git` }
+		? {
+				type: "git",
+				url: `git+https://github.com/${a.owner}/${a.name}.git`,
+			}
 		: undefined;
 	const manifest: Record<string, unknown> = {
 		$schema: "https://json.schemastore.org/package.json",
@@ -347,13 +413,19 @@ export function renderPackageJson(
 		peerDependencies: {
 			koishi: versions.koishi,
 			...(options.console
-				? { "@koishijs/plugin-console": versions["@koishijs/plugin-console"] }
+				? {
+						"@koishijs/plugin-console":
+							versions["@koishijs/plugin-console"],
+					}
 				: {}),
 		},
 		devDependencies: {
 			...DEV_DEPENDENCIES,
 			...(options.console
-				? { "@koishijs/client": versions["@koishijs/client"] }
+				? {
+						"@koishijs/client":
+							versions["@koishijs/client"],
+					}
 				: {}),
 		},
 		koishi: {
@@ -365,8 +437,12 @@ export function renderPackageJson(
 }
 
 /** monorepo 形态的仓库根 package.json（根级 changesets + --filter 编排）。 */
-function renderRootPackageJson(a: Answers, author: string): string {
-	const description = a.desc !== "" ? a.desc : "一个 Koishi 插件集合";
+function renderRootPackageJson(
+	a: Answers,
+	author: string,
+): string {
+	const description =
+		a.desc !== "" ? a.desc : "一个 Koishi 插件集合";
 	const manifest: Record<string, unknown> = {
 		$schema: "https://json.schemastore.org/package.json",
 		name: `@root/${a.dirname}`,
@@ -409,7 +485,13 @@ function writePackageFiles(
 	writeFileRel(
 		targetDir,
 		"package.json",
-		renderPackageJson(a, versions, author, options, isMember),
+		renderPackageJson(
+			a,
+			versions,
+			author,
+			options,
+			isMember,
+		),
 	);
 	writeFileRel(
 		targetDir,
@@ -472,16 +554,22 @@ function writeSingleRootFiles(
 	writeFileRel(
 		targetDir,
 		join(".changeset", "config.json"),
-		renderTemplate(readTemplate("shared", "changeset-config.json"), {
-			BRANCH: branch,
-		}),
+		renderTemplate(
+			readTemplate("shared", "changeset-config.json"),
+			{
+				BRANCH: branch,
+			},
+		),
 	);
 	writeFileRel(
 		targetDir,
 		join(".changeset", "README.md"),
-		renderTemplate(readTemplate("single", "changeset-readme.md"), {
-			PKG_NAME: a.name,
-		}),
+		renderTemplate(
+			readTemplate("single", "changeset-readme.md"),
+			{
+				PKG_NAME: a.name,
+			},
+		),
 	);
 	writeFileRel(
 		targetDir,
@@ -491,7 +579,11 @@ function writeSingleRootFiles(
 			DESC: a.desc !== "" ? a.desc : "Koishi 插件",
 		}),
 	);
-	writeFileRel(targetDir, ".gitignore", readTemplate("shared", "gitignore"));
+	writeFileRel(
+		targetDir,
+		".gitignore",
+		readTemplate("shared", "gitignore"),
+	);
 	writeFileRel(
 		targetDir,
 		".editorconfig",
@@ -527,7 +619,11 @@ function writeMonorepoRootFiles(
 	author: string,
 	branch: string,
 ): void {
-	writeFileRel(monorepoDir, "package.json", renderRootPackageJson(a, author));
+	writeFileRel(
+		monorepoDir,
+		"package.json",
+		renderRootPackageJson(a, author),
+	);
 	writeFileRel(
 		monorepoDir,
 		"tsconfig.base.json",
@@ -536,9 +632,12 @@ function writeMonorepoRootFiles(
 	writeFileRel(
 		monorepoDir,
 		"tsconfig.json",
-		renderTemplate(readTemplate("monorepo", "tsconfig.json"), {
-			DIRNAME: a.dirname,
-		}),
+		renderTemplate(
+			readTemplate("monorepo", "tsconfig.json"),
+			{
+				DIRNAME: a.dirname,
+			},
+		),
 	);
 	writeFileRel(
 		monorepoDir,
@@ -548,16 +647,22 @@ function writeMonorepoRootFiles(
 	writeFileRel(
 		monorepoDir,
 		join(".changeset", "config.json"),
-		renderTemplate(readTemplate("shared", "changeset-config.json"), {
-			BRANCH: branch,
-		}),
+		renderTemplate(
+			readTemplate("shared", "changeset-config.json"),
+			{
+				BRANCH: branch,
+			},
+		),
 	);
 	writeFileRel(
 		monorepoDir,
 		join(".changeset", "README.md"),
-		renderTemplate(readTemplate("monorepo", "changeset-readme.md"), {
-			PKG_NAME: a.name,
-		}),
+		renderTemplate(
+			readTemplate("monorepo", "changeset-readme.md"),
+			{
+				PKG_NAME: a.name,
+			},
+		),
 	);
 	writeFileRel(
 		monorepoDir,
@@ -567,7 +672,11 @@ function writeMonorepoRootFiles(
 			DESC: a.desc !== "" ? a.desc : "Koishi 插件",
 		}),
 	);
-	writeFileRel(monorepoDir, ".gitignore", readTemplate("shared", "gitignore"));
+	writeFileRel(
+		monorepoDir,
+		".gitignore",
+		readTemplate("shared", "gitignore"),
+	);
 	writeFileRel(
 		monorepoDir,
 		".editorconfig",
@@ -605,21 +714,33 @@ export default async function runSetup(
 ): Promise<number> {
 	const flags = parseFlags(args);
 	const options: SetupOptions = {
-		monorepo: args.includes("--monorepo") || args.includes("-m"),
-		console: args.includes("--console") || args.includes("-c"),
+		monorepo:
+			args.includes("--monorepo") || args.includes("-m"),
+		console:
+			args.includes("--console") || args.includes("-c"),
 	};
 	const answers = await resolveAnswers(flags);
 
 	// monorepo：仓库根 external/<dirname>/，插件包在 packages/<dirname>/
 	const rootDir = join(cwd, "external");
 	const targetDir = options.monorepo
-		? join(rootDir, answers.dirname, "packages", answers.dirname)
+		? join(
+				rootDir,
+				answers.dirname,
+				"packages",
+				answers.dirname,
+			)
 		: join(rootDir, answers.dirname);
 	const workspaceDir = options.monorepo
 		? join(rootDir, answers.dirname)
 		: targetDir;
-	if (existsSync(workspaceDir) && readdirSync(workspaceDir).length > 0) {
-		throw new Error(`目标目录已存在且非空：external/${answers.dirname}`);
+	if (
+		existsSync(workspaceDir) &&
+		readdirSync(workspaceDir).length > 0
+	) {
+		throw new Error(
+			`目标目录已存在且非空：external/${answers.dirname}`,
+		);
 	}
 
 	// 作者（git 全局 user.name/email）与主分支（git init.defaultBranch，未配置则 main）
@@ -636,7 +757,9 @@ export default async function runSetup(
 	// koishi 生态版本号：宿主清单优先，兜底常量
 	const host = await loadHostManifest();
 	const versions: Versions = {
-		koishi: host?.dependencies?.["koishi"] ?? FALLBACK_VERSIONS.koishi,
+		koishi:
+			host?.dependencies?.["koishi"] ??
+			FALLBACK_VERSIONS.koishi,
 		"@koishijs/client":
 			host?.devDependencies?.["@koishijs/client"] ??
 			FALLBACK_VERSIONS["@koishijs/client"],
@@ -654,14 +777,40 @@ export default async function runSetup(
 	);
 
 	if (options.monorepo) {
-		writeMonorepoRootFiles(projectDir, answers, authorLine, branch);
-		writePackageFiles(targetDir, answers, versions, authorLine, options, true);
+		writeMonorepoRootFiles(
+			projectDir,
+			answers,
+			authorLine,
+			branch,
+		);
+		writePackageFiles(
+			targetDir,
+			answers,
+			versions,
+			authorLine,
+			options,
+			true,
+		);
 	} else {
-		writePackageFiles(targetDir, answers, versions, authorLine, options, false);
-		writeSingleRootFiles(targetDir, answers, authorLine, branch);
+		writePackageFiles(
+			targetDir,
+			answers,
+			versions,
+			authorLine,
+			options,
+			false,
+		);
+		writeSingleRootFiles(
+			targetDir,
+			answers,
+			authorLine,
+			branch,
+		);
 	}
 
-	const gitInit = spawnSync("git", ["init", "-b", branch], { cwd: projectDir });
+	const gitInit = spawnSync("git", ["init", "-b", branch], {
+		cwd: projectDir,
+	});
 	console.log(
 		gitInit.status === 0
 			? `[setup] ✅ 已初始化 git 仓库（分支 ${branch}）`

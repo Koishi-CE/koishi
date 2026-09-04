@@ -14,7 +14,12 @@
  *   供配置页展示"依赖 / 服务 / 可重用性"提示；
  * - 维护跨组件共享的响应式状态（current、dialogFork、dialogSelect）。
  */
-import { router, ScopeStatus, send, store } from "@koishi-ce/client";
+import {
+	router,
+	ScopeStatus,
+	send,
+	store,
+} from "@koishi-ce/client";
 import type { Context, Dict } from "@koishi-ce/koishi";
 import type { PackageProvider } from "@koishi-ce/plugin-config";
 import { computed, ref } from "vue";
@@ -58,7 +63,11 @@ declare module "@koishi-ce/plugin-console" {
 			target: string,
 			index: number,
 		): void;
-		"manager/reload"(parent: string, key: string, config: unknown): void;
+		"manager/reload"(
+			parent: string,
+			key: string,
+			config: unknown,
+		): void;
 		"manager/unload"(
 			parent: string,
 			key: string,
@@ -98,7 +107,11 @@ export const coreDeps = [
  * @param tree 配置树节点
  */
 export function hasCoreDeps(tree: Tree) {
-	if (tree.name && coreDeps.includes(getFullName(tree.name) ?? "")) return true;
+	if (
+		tree.name &&
+		coreDeps.includes(getFullName(tree.name) ?? "")
+	)
+		return true;
 	if (tree.children) return tree.children.some(hasCoreDeps);
 }
 
@@ -150,10 +163,12 @@ function getEnvInfo(name: string) {
 			continue;
 		const provider = resolveProvider(packages, name);
 		if (coreDeps.includes(provider?.name ?? name)) continue;
-		const required = !local.package.peerDependenciesMeta?.[name]?.optional;
+		const required =
+			!local.package.peerDependenciesMeta?.[name]?.optional;
 		const active = !!provider?.runtime?.id;
 		result.peer[name] = { required, active };
-		for (const service of provider?.manifest?.service.implements ?? []) {
+		for (const service of provider?.manifest?.service
+			.implements ?? []) {
 			services.add(service);
 		}
 	}
@@ -239,8 +254,8 @@ export const current = ref<Tree>();
 export function getFullName(shortname: string) {
 	if (!shortname) return shortname;
 	if (shortname.startsWith("./")) {
-		return Object.values(store.packages ?? {}).find((data) =>
-			data.paths?.includes(shortname),
+		return Object.values(store.packages ?? {}).find(
+			(data) => data.paths?.includes(shortname),
 		)?.package?.name;
 	}
 	if (shortname.includes("/")) {
@@ -270,7 +285,8 @@ export const name = computed(() => {
 export const type = computed(() => {
 	const env = envMap.value[name.value ?? ""];
 	if (!env) return;
-	if (env.warning && current.value?.disabled) return "warning";
+	if (env.warning && current.value?.disabled)
+		return "warning";
 	for (const name in env.using) {
 		if (name in (store.services || {})) {
 			if (env.impl.includes(name)) return "warning";
@@ -301,7 +317,9 @@ function getTree(
 	for (let key in plugins) {
 		if (key.startsWith("$")) continue;
 		// 配置值本质是任意 JSON 对象（插件配置或嵌套分组），此处按字典收窄使用
-		const config = plugins[key] as Record<string, unknown> | undefined;
+		const config = plugins[key] as
+			| Record<string, unknown>
+			| undefined;
 		const node = { config, parent } as Tree;
 		if (key.startsWith("~")) {
 			node.disabled = true;
@@ -348,8 +366,9 @@ export const plugins = computed(() => {
 	}
 	/** 收集展开状态、fork 索引与路径索引。 */
 	function traverse(tree: Tree) {
-		const collapsed = (tree.config as Record<string, unknown> | undefined)
-			?.$collapsed;
+		const collapsed = (
+			tree.config as Record<string, unknown> | undefined
+		)?.$collapsed;
 		if (!collapsed && tree.children) {
 			expanded.push(tree.path);
 		}
@@ -368,8 +387,8 @@ export const plugins = computed(() => {
  */
 export function getStatus(tree: Tree) {
 	switch (
-		store.packages?.[getFullName(tree.name) ?? ""]?.runtime?.forks?.[tree.path]
-			?.status
+		store.packages?.[getFullName(tree.name) ?? ""]?.runtime
+			?.forks?.[tree.path]?.status
 	) {
 		case ScopeStatus.PENDING:
 			return "pending";

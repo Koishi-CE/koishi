@@ -14,10 +14,12 @@ export const group: Plugin.Object<Context> = {
 	name: "group",
 	reusable: true,
 	apply(ctx, plugins) {
-		(ctx.scope as LoaderScope)[kRecord] ||= Object.create(null);
+		(ctx.scope as LoaderScope)[kRecord] ||=
+			Object.create(null);
 
 		for (const name in plugins || {}) {
-			if (name.startsWith("~") || name.startsWith("$")) continue;
+			if (name.startsWith("~") || name.startsWith("$"))
+				continue;
 			ctx.loader.reload(ctx, name, plugins[name]);
 		}
 
@@ -28,8 +30,11 @@ export const group: Plugin.Object<Context> = {
 
 				// 依据新旧配置差异增删改组内插件
 				for (const key in { ...old, ...neo }) {
-					if (key.startsWith("~") || key.startsWith("$")) continue;
-					const fork = (ctx.scope as LoaderScope)[kRecord]?.[key];
+					if (key.startsWith("~") || key.startsWith("$"))
+						continue;
+					const fork = (ctx.scope as LoaderScope)[
+						kRecord
+					]?.[key];
 					if (!fork) {
 						ctx.loader.reload(ctx, key, neo[key]);
 					} else if (!(key in neo)) {

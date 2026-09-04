@@ -16,12 +16,22 @@
  */
 import type { Fragment } from "@satorijs/core";
 import type { Dict, MaybeArray } from "cosmokit";
-import type { Driver, FlatKeys, FlatPick, Update } from "minato";
+import type {
+	Driver,
+	FlatKeys,
+	FlatPick,
+	Update,
+} from "minato";
 import * as minato from "minato";
 import { Context } from "../context/index.ts";
 import { broadcastDatabase } from "./broadcast.ts";
 import { registerModels } from "./models.ts";
-import type { Channel, Tables, Types, User } from "./tables.ts";
+import type {
+	Channel,
+	Tables,
+	Types,
+	User,
+} from "./tables.ts";
 
 export * from "./tables.ts";
 
@@ -39,7 +49,10 @@ declare module "@koishi-ce/core" {
 		 *
 		 * @param forced 为 false 时跳过 mute / flag 标记的频道
 		 */
-		broadcast(content: Fragment, forced?: boolean): Promise<string[]>;
+		broadcast(
+			content: Fragment,
+			forced?: boolean,
+		): Promise<string[]>;
 		broadcast(
 			channels: readonly string[],
 			content: Fragment,
@@ -62,7 +75,11 @@ declare module "@koishi-ce/core" {
 				modifier?: Driver.Cursor<K>,
 			): Promise<FlatPick<User, K>>;
 			/** 按 (platform, pid) 更新用户；未绑定则抛错 */
-			setUser(platform: string, pid: string, data: Update<User>): Promise<void>;
+			setUser(
+				platform: string,
+				pid: string,
+				data: Update<User>,
+			): Promise<void>;
 			/** 创建用户并同步建立平台绑定 */
 			createUser(
 				platform: string,
@@ -103,7 +120,8 @@ declare module "@koishi-ce/core" {
 }
 
 // biome-ignore lint/correctness/noUnusedVariables: 该接口与同名类声明合并，为类实例注入 minato.Database 的 this 成员（this.get / this.set 等），并非冗余
-interface KoishiDatabase extends minato.Database<Tables, Types, Context> {}
+interface KoishiDatabase
+	extends minato.Database<Tables, Types, Context> {}
 
 /**
  * Koishi 数据库实现：minato Database 之上叠加领域方法。
@@ -136,23 +154,37 @@ class KoishiDatabase {
 		ctx.on("login-added", ({ platform }) => {
 			const table = ctx.model.tables["user"];
 			if (table && platform in table.fields) return;
-			ctx.model.migrate("user", { [platform]: "string(255)" }, async (db) => {
-				const users = await db.get("user", { [platform]: { $exists: true } }, [
-					"id",
-					platform as never,
-				]);
-				await db.upsert(
-					"binding",
-					users
-						.filter((u) => (u as Record<string, unknown>)[platform])
-						.map((user) => ({
-							aid: user.id,
-							bid: user.id,
-							pid: (user as unknown as Record<string, string>)[platform] ?? "",
-							platform,
-						})),
-				);
-			});
+			ctx.model.migrate(
+				"user",
+				{ [platform]: "string(255)" },
+				async (db) => {
+					const users = await db.get(
+						"user",
+						{ [platform]: { $exists: true } },
+						["id", platform as never],
+					);
+					await db.upsert(
+						"binding",
+						users
+							.filter(
+								(u) =>
+									(u as Record<string, unknown>)[platform],
+							)
+							.map((user) => ({
+								aid: user.id,
+								bid: user.id,
+								pid:
+									(
+										user as unknown as Record<
+											string,
+											string
+										>
+									)[platform] ?? "",
+								platform,
+							})),
+					);
+				},
+			);
 		});
 	}
 
@@ -166,23 +198,48 @@ class KoishiDatabase {
 		pid: string,
 		modifier?: Driver.Cursor<K>,
 	): Promise<FlatPick<User, K>> {
-		const [binding] = await this.get("binding", { platform, pid }, ["aid"]);
+		const [binding] = await this.get(
+			"binding",
+			{ platform, pid },
+			["aid"],
+		);
 		if (!binding) return undefined as never;
-		const [user] = await this.get("user", { id: binding.aid }, modifier);
+		const [user] = await this.get(
+			"user",
+			{ id: binding.aid },
+			modifier,
+		);
 		return user as FlatPick<User, K>;
 	}
 
 	/** 按 (platform, pid) 更新用户；没有绑定记录则抛错。 */
-	async setUser(platform: string, pid: string, data: Update<User>) {
-		const [binding] = await this.get("binding", { platform, pid }, ["aid"]);
+	async setUser(
+		platform: string,
+		pid: string,
+		data: Update<User>,
+	) {
+		const [binding] = await this.get(
+			"binding",
+			{ platform, pid },
+			["aid"],
+		);
 		if (!binding) throw new Error("user not found");
 		return this.set("user", binding.aid, data);
 	}
 
 	/** 创建用户并同步建立初始平台绑定（aid = bid = user.id）。 */
-	async createUser(platform: string, pid: string, data: Partial<User>) {
+	async createUser(
+		platform: string,
+		pid: string,
+		data: Partial<User>,
+	) {
 		const user = await this.create("user", data);
-		await this.create("binding", { aid: user.id, bid: user.id, pid, platform });
+		await this.create("binding", {
+			aid: user.id,
+			bid: user.id,
+			pid,
+			platform,
+		});
 		return user;
 	}
 
@@ -206,7 +263,11 @@ class KoishiDatabase {
 		id: MaybeArray<string>,
 		modifier?: Driver.Cursor<K>,
 	) {
-		const data = await this.get("channel", { platform, id }, modifier);
+		const data = await this.get(
+			"channel",
+			{ platform, id },
+			modifier,
+		);
 		if (Array.isArray(id)) return data;
 		if (data[0]) Object.assign(data[0], { platform, id });
 		return data[0];
@@ -221,7 +282,8 @@ class KoishiDatabase {
 		const selfIdMap: Dict<string[]> = Object.create(null);
 		for (const bot of this.ctx.bots) {
 			if (!bot.platform || !bot.selfId) continue;
-			if (platforms && !platforms.includes(bot.platform)) continue;
+			if (platforms && !platforms.includes(bot.platform))
+				continue;
 			(selfIdMap[bot.platform] ||= []).push(bot.selfId);
 		}
 		return selfIdMap;
@@ -242,28 +304,44 @@ class KoishiDatabase {
 		return this.get(
 			"channel",
 			{
-				$or: Object.entries(selfIdMap).map(([platform, assignee]) => ({
-					platform,
-					assignee,
-				})),
+				$or: Object.entries(selfIdMap).map(
+					([platform, assignee]) => ({
+						platform,
+						assignee,
+					}),
+				),
 			},
 			fields,
 		);
 	}
 
 	/** 按 (platform, id) 更新频道。 */
-	setChannel(platform: string, id: string, data: Update<Channel>) {
+	setChannel(
+		platform: string,
+		id: string,
+		data: Update<Channel>,
+	) {
 		return this.set("channel", { platform, id }, data);
 	}
 
 	/** 创建频道（platform / id 与其余数据合并写入）。 */
-	createChannel(platform: string, id: string, data: Partial<Channel>) {
-		return this.create("channel", { platform, id, ...data });
+	createChannel(
+		platform: string,
+		id: string,
+		data: Partial<Channel>,
+	) {
+		return this.create("channel", {
+			platform,
+			id,
+			...data,
+		});
 	}
 
 	/** 全服广播（实现见 broadcast.ts 的 broadcastDatabase）。 */
 	broadcast(
-		...args: [Fragment, boolean?] | [readonly string[], Fragment, boolean?]
+		...args:
+			| [Fragment, boolean?]
+			| [readonly string[], Fragment, boolean?]
 	) {
 		return broadcastDatabase(this, ...args);
 	}

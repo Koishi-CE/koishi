@@ -35,7 +35,12 @@
 </template>
 
 <script setup lang="ts">
-import { type Dict, router, store, useConfig } from "@koishi-ce/client";
+import {
+	type Dict,
+	router,
+	store,
+	useConfig,
+} from "@koishi-ce/client";
 import { computed } from "vue";
 import StatusLight from "./light.vue";
 import BotPreview from "./preview.vue";
@@ -51,7 +56,9 @@ const statusMap = computed(() => {
 		map[key] = (map[key] || 0) + 1;
 	}
 	return Object.fromEntries(
-		Object.entries(map).sort((a, b) => a[0].localeCompare(b[0])),
+		Object.entries(map).sort((a, b) =>
+			a[0].localeCompare(b[0]),
+		),
 	);
 });
 

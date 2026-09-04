@@ -9,7 +9,10 @@
  * parseDecl 的变长声明解析与 stripped 展示（贪婪类型替换为 "..."）。
  */
 import { describe, expect, it } from "bun:test";
-import { Context as App, type Argv } from "@koishi-ce/koishi";
+import {
+	Context as App,
+	type Argv,
+} from "@koishi-ce/koishi";
 
 const app = new App();
 
@@ -17,13 +20,17 @@ describe("Declaration", () => {
 	it("正则 domain：命中通过、未命中抛错转错误文案", () => {
 		const ok: Argv = {};
 		expect(
-			app.$commander.parseValue("123", "argument", ok, { type: /^\d+$/ }),
+			app.$commander.parseValue("123", "argument", ok, {
+				type: /^\d+$/,
+			}),
 		).toBe("123");
 		expect(ok.error).toBeUndefined();
 
 		const bad: Argv = {};
 		expect(
-			app.$commander.parseValue("abc", "argument", bad, { type: /^\d+$/ }),
+			app.$commander.parseValue("abc", "argument", bad, {
+				type: /^\d+$/,
+			}),
 		).toBeUndefined();
 		expect(bad.error).toBeTruthy();
 	});
@@ -58,14 +65,23 @@ describe("Declaration", () => {
 	it("未注册的 domain 名归一为空配置（转换直通）", () => {
 		const argv: Argv = {};
 		// 未注册名不在 Type 联合中（运行时按字面量归一），经声明视图传入
-		const decl = { type: "no-such-domain" } as unknown as Argv.Declaration;
+		const decl = {
+			type: "no-such-domain",
+		} as unknown as Argv.Declaration;
 		expect(
-			app.$commander.parseValue("raw", "argument", argv, decl),
+			app.$commander.parseValue(
+				"raw",
+				"argument",
+				argv,
+				decl,
+			),
 		).toBeUndefined();
 	});
 
 	it("parseDecl 变长声明与 stripped 展示", () => {
-		const decls = app.$commander.parseDecl("<req> [...rest:text] opt");
+		const decls = app.$commander.parseDecl(
+			"<req> [...rest:text] opt",
+		);
 		expect(decls[0]).toMatchObject({
 			name: "req",
 			required: true,

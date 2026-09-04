@@ -39,7 +39,11 @@
  * - 单进程遍历的包目录数设上限，防御病态巨型依赖树拖慢启动。
  */
 
-import { existsSync, readFileSync, realpathSync } from "node:fs";
+import {
+	existsSync,
+	readFileSync,
+	realpathSync,
+} from "node:fs";
 import { dirname, isAbsolute, join } from "node:path";
 import { Logger } from "@koishi-ce/core";
 
@@ -57,7 +61,11 @@ const dependencyFields = [
  * 取首个命中（与 Node 一致），"types" / "bun" / "workerd" / "import"
  * 等键不在集合内、自然跳过。
  */
-const nodeRequireConditions = ["require", "node", "default"];
+const nodeRequireConditions = [
+	"require",
+	"node",
+	"default",
+];
 
 /** 单进程遍历的包目录上限：超出后停止深入，防御病态依赖树拖慢启动 */
 const maxVisited = 500;
@@ -98,8 +106,13 @@ function readManifest(dir: string): Manifest | undefined {
  * 在 exports 条件表中按 Node require 条件集取首个命中的相对目标。
  * 仅识别字符串目标；命中键的值仍为对象/数组等复杂形态时视为未知。
  */
-function resolveExportTarget(exportsField: unknown): string | undefined {
-	if (typeof exportsField !== "object" || exportsField === null) {
+function resolveExportTarget(
+	exportsField: unknown,
+): string | undefined {
+	if (
+		typeof exportsField !== "object" ||
+		exportsField === null
+	) {
 		return undefined;
 	}
 	if (Array.isArray(exportsField)) return undefined;
@@ -108,13 +121,19 @@ function resolveExportTarget(exportsField: unknown): string | undefined {
 	if ("." in record) {
 		const dot = record["."];
 		if (typeof dot === "string") return dot;
-		if (typeof dot !== "object" || dot === null || Array.isArray(dot)) {
+		if (
+			typeof dot !== "object" ||
+			dot === null ||
+			Array.isArray(dot)
+		) {
 			return undefined;
 		}
 		map = dot as Record<string, unknown>;
 	} else {
 		// 无 "." 键：存在子路径键则主入口缺失；否则整体视作条件表
-		if (Object.keys(record).some((key) => key.startsWith("."))) {
+		if (
+			Object.keys(record).some((key) => key.startsWith("."))
+		) {
 			return undefined;
 		}
 		map = record;
@@ -137,7 +156,10 @@ export function nodeRequireEntry(
 	pkgDir: string,
 ): string | undefined {
 	let target: string | undefined;
-	if (manifest.exports === undefined || manifest.exports === null) {
+	if (
+		manifest.exports === undefined ||
+		manifest.exports === null
+	) {
 		if (typeof manifest.main !== "string") return undefined;
 		target = manifest.main;
 	} else {
@@ -148,11 +170,15 @@ export function nodeRequireEntry(
 }
 
 /** 沿 node_modules 链向上探测包目录（纯 fs，不触碰解析 API 及其负缓存） */
-function resolvePackageDir(name: string, from: string): string | undefined {
+function resolvePackageDir(
+	name: string,
+	from: string,
+): string | undefined {
 	let dir = from;
 	for (;;) {
 		const candidate = join(dir, "node_modules", name);
-		if (existsSync(join(candidate, "package.json"))) return candidate;
+		if (existsSync(join(candidate, "package.json")))
+			return candidate;
 		const parent = dirname(dir);
 		if (parent === dir) return undefined;
 		dir = parent;
@@ -160,7 +186,9 @@ function resolvePackageDir(name: string, from: string): string | undefined {
 }
 
 /** 自入口文件向上找最近的 package.json 所在目录（无清单则不处理） */
-function findPackageRoot(entryFile: string): string | undefined {
+function findPackageRoot(
+	entryFile: string,
+): string | undefined {
 	let dir = dirname(entryFile);
 	for (;;) {
 		if (existsSync(join(dir, "package.json"))) return dir;
@@ -175,7 +203,11 @@ function findPackageRoot(entryFile: string): string | undefined {
  * （require.resolve 的 paths 形态即消费方 require 的解析结果与缓存键）
  * 若异于 Node require 语义入口，则把后者的加载结果放到前者的键上。
  */
-function trySeed(spec: string, consumerDir: string, depDir: string): void {
+function trySeed(
+	spec: string,
+	consumerDir: string,
+	depDir: string,
+): void {
 	const manifest = readManifest(depDir);
 	if (!manifest) return;
 	const nodeEntry = nodeRequireEntry(manifest, depDir);
@@ -183,7 +215,9 @@ function trySeed(spec: string, consumerDir: string, depDir: string): void {
 	if (!nodeEntry || !existsSync(nodeEntry)) return;
 	let bunEntry: string;
 	try {
-		bunEntry = require.resolve(spec, { paths: [consumerDir] });
+		bunEntry = require.resolve(spec, {
+			paths: [consumerDir],
+		});
 	} catch {
 		return;
 	}
@@ -210,7 +244,8 @@ function trySeed(spec: string, consumerDir: string, depDir: string): void {
 		loaded: true,
 		children: [],
 	};
-	require.cache[bunEntry] = entry as unknown as (typeof require.cache)[string];
+	require.cache[bunEntry] =
+		entry as unknown as (typeof require.cache)[string];
 	seeded.add(key);
 	logger.debug(
 		"seeded cjs interop for %c (%s -> %s)",
@@ -222,7 +257,8 @@ function trySeed(spec: string, consumerDir: string, depDir: string): void {
 	try {
 		const real = realpathSync(bunEntry);
 		if (real !== bunEntry && !(real in require.cache)) {
-			require.cache[real] = entry as unknown as (typeof require.cache)[string];
+			require.cache[real] =
+				entry as unknown as (typeof require.cache)[string];
 		}
 	} catch {}
 }

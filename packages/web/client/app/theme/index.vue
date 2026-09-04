@@ -33,6 +33,8 @@ const route = useRoute();
 // 否则要求 meta.activity.fields 中每个 store 字段都有数据
 const loaded = computed(() => {
 	if (!route.meta.activity?.fields) return true;
-	return route.meta.activity.fields.every((key) => store[key]);
+	return route.meta.activity.fields.every(
+		(key) => store[key],
+	);
 });
 </script>

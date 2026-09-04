@@ -53,10 +53,18 @@ describe("Selector API", () => {
 		// private 只放行私聊会话，可与 user 组合
 		expect(app.private().filter(session1)).toBe(false);
 		expect(app.private().filter(session2)).toBe(true);
-		expect(app.private().user("123").filter(session1)).toBe(false);
-		expect(app.private().user("123").filter(session2)).toBe(true);
-		expect(app.private().user("456").filter(session1)).toBe(false);
-		expect(app.private().user("456").filter(session2)).toBe(false);
+		expect(app.private().user("123").filter(session1)).toBe(
+			false,
+		);
+		expect(app.private().user("123").filter(session2)).toBe(
+			true,
+		);
+		expect(app.private().user("456").filter(session1)).toBe(
+			false,
+		);
+		expect(app.private().user("456").filter(session2)).toBe(
+			false,
+		);
 	});
 
 	it("context.prototype.guild", () => {
@@ -71,33 +79,63 @@ describe("Selector API", () => {
 
 	it("context chaining", () => {
 		// 链式调用为交集语义，且与顺序无关
-		expect(app.guild("456").user("123").filter(session1)).toBe(true);
-		expect(app.guild("456").user("456").filter(session1)).toBe(false);
-		expect(app.guild("123").user("123").filter(session1)).toBe(false);
-		expect(app.user("123").guild("456").filter(session1)).toBe(true);
-		expect(app.user("456").guild("456").filter(session1)).toBe(false);
-		expect(app.user("123").guild("123").filter(session1)).toBe(false);
+		expect(
+			app.guild("456").user("123").filter(session1),
+		).toBe(true);
+		expect(
+			app.guild("456").user("456").filter(session1),
+		).toBe(false);
+		expect(
+			app.guild("123").user("123").filter(session1),
+		).toBe(false);
+		expect(
+			app.user("123").guild("456").filter(session1),
+		).toBe(true);
+		expect(
+			app.user("456").guild("456").filter(session1),
+		).toBe(false);
+		expect(
+			app.user("123").guild("123").filter(session1),
+		).toBe(false);
 	});
 
 	it("context intersection", () => {
 		// 同名选择器多次调用同样取交集（白名单的交集）
-		expect(app.guild("456", "789").guild("123", "456").filter(session1)).toBe(
-			true,
-		);
-		expect(app.guild("456", "789").guild("123", "789").filter(session1)).toBe(
-			false,
-		);
-		expect(app.guild("123", "789").guild("123", "456").filter(session1)).toBe(
-			false,
-		);
-		expect(app.user("123", "789").user("123", "456").filter(session1)).toBe(
-			true,
-		);
-		expect(app.user("456", "789").user("123", "456").filter(session1)).toBe(
-			false,
-		);
-		expect(app.user("123", "789").user("456", "789").filter(session1)).toBe(
-			false,
-		);
+		expect(
+			app
+				.guild("456", "789")
+				.guild("123", "456")
+				.filter(session1),
+		).toBe(true);
+		expect(
+			app
+				.guild("456", "789")
+				.guild("123", "789")
+				.filter(session1),
+		).toBe(false);
+		expect(
+			app
+				.guild("123", "789")
+				.guild("123", "456")
+				.filter(session1),
+		).toBe(false);
+		expect(
+			app
+				.user("123", "789")
+				.user("123", "456")
+				.filter(session1),
+		).toBe(true);
+		expect(
+			app
+				.user("456", "789")
+				.user("123", "456")
+				.filter(session1),
+		).toBe(false);
+		expect(
+			app
+				.user("123", "789")
+				.user("456", "789")
+				.filter(session1),
+		).toBe(false);
 	});
 });

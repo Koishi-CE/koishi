@@ -2,7 +2,13 @@
 // Copyright (c) 2019-present Shigma and Koishijs contributors.
 // Copyright (c) 2026-present Koishi-CE contributors.
 
-import { afterAll, beforeAll, describe, expect, it } from "bun:test";
+import {
+	afterAll,
+	beforeAll,
+	describe,
+	expect,
+	it,
+} from "bun:test";
 import { App, type Plugin } from "@koishi-ce/koishi";
 import * as oobe from "./index.ts";
 
@@ -25,7 +31,9 @@ afterAll(async () => {
 describe("oobe 插件骨架", () => {
 	it("空 apply 可正常加载与停止", async () => {
 		// 插件加载成功即 scope 存在且状态正常
-		expect(app.registry.has(oobePlugin as never)).toBe(true);
+		expect(app.registry.has(oobePlugin as never)).toBe(
+			true,
+		);
 		await app.stop();
 		await app.start();
 	});

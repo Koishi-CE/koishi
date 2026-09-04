@@ -25,6 +25,11 @@ export function apply(ctx: Context, _config: Config) {
 	ctx.console.addEntry(
 		base
 			? [`${base}/dist/index.js`, `${base}/dist/style.css`]
-			: [import.meta.url.replace(/\/src\/[^/]+\/[^/]+$/, "/client/index.ts")],
+			: [
+					import.meta.url.replace(
+						/\/src\/[^/]+\/[^/]+$/,
+						"/client/index.ts",
+					),
+				],
 	);
 }

@@ -16,7 +16,10 @@
 import { spawnSync } from "node:child_process";
 
 /** Windows 下把命令包装为经 cmd.exe 执行的形式（其余平台原样返回）。 */
-function wrapWin(cmd: string, args: readonly string[]): [string, string[]] {
+function wrapWin(
+	cmd: string,
+	args: readonly string[],
+): [string, string[]] {
 	if (process.platform !== "win32") {
 		return [cmd, [...args]];
 	}
@@ -32,9 +35,14 @@ export function runCommand(
 	const [realCmd, realArgs] = wrapWin(cmd, args);
 	// cwd / bin 源自 process.cwd() 与目录枚举——本地发布工具，运行者即环境控制者，
 	// 参数经数组传递不经 shell 展开，无真实注入面（CodeQL 该告警属误报）
-	const res = spawnSync(realCmd, realArgs, { cwd, stdio: "inherit" });
+	const res = spawnSync(realCmd, realArgs, {
+		cwd,
+		stdio: "inherit",
+	});
 	if (res.error !== undefined) {
-		process.stderr.write(`[run] ⚠️ 无法启动 ${cmd}: ${res.error.message}\n`);
+		process.stderr.write(
+			`[run] ⚠️ 无法启动 ${cmd}: ${res.error.message}\n`,
+		);
 		return 1;
 	}
 	return res.status ?? 1;
@@ -47,7 +55,10 @@ export function captureCommand(
 	args: readonly string[],
 ): string | null {
 	const [realCmd, realArgs] = wrapWin(cmd, args);
-	const res = spawnSync(realCmd, realArgs, { cwd, encoding: "utf8" });
+	const res = spawnSync(realCmd, realArgs, {
+		cwd,
+		encoding: "utf8",
+	});
 	if (res.error !== undefined || res.status !== 0) {
 		return null;
 	}

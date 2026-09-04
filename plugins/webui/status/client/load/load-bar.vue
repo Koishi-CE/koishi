@@ -25,7 +25,10 @@
 import type { LoadRate } from "@koishi-ce/plugin-status";
 import { computed } from "vue";
 
-const props = defineProps<{ rate: LoadRate; title: string }>();
+const props = defineProps<{
+	rate: LoadRate;
+	title: string;
+}>();
 
 function percentage(value: number, digits = 1) {
 	return `${+(value * 100).toFixed(digits)}%`;
@@ -42,7 +45,9 @@ const distribution = computed(() => [
 
 // 第一个占比 >= 50% 的段下标（找不到为 -1），该段足够宽时内嵌完整说明文案
 const maxIndex = computed(() => {
-	return distribution.value.findIndex((value) => value >= 0.5);
+	return distribution.value.findIndex(
+		(value) => value >= 0.5,
+	);
 });
 
 // 内嵌文案："本进程占比 / 整机占比"

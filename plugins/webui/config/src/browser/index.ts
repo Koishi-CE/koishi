@@ -12,7 +12,10 @@
  *    client 源码（供开发调试用）。
  */
 import { type Context, Schema } from "@koishi-ce/koishi";
-import { ConfigWriter, ServiceProvider } from "../shared/index.ts";
+import {
+	ConfigWriter,
+	ServiceProvider,
+} from "../shared/index.ts";
 import { PackageProvider } from "./packages.ts";
 
 export * from "../shared/index.ts";
@@ -35,6 +38,11 @@ export function apply(ctx: Context) {
 					`${process.env["KOISHI_BASE"]}/dist/index.js`,
 					`${process.env["KOISHI_BASE"]}/dist/style.css`,
 				]
-			: [import.meta.url.replace(/\/src\/[^/]+\/[^/]+$/, "/client/index.ts")],
+			: [
+					import.meta.url.replace(
+						/\/src\/[^/]+\/[^/]+$/,
+						"/client/index.ts",
+					),
+				],
 	);
 }

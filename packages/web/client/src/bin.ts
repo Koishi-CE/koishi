@@ -36,7 +36,11 @@ Options:
 
 async function main() {
 	const [command, ...args] = process.argv.slice(2);
-	if (command === undefined || command === "-h" || command === "--help") {
+	if (
+		command === undefined ||
+		command === "-h" ||
+		command === "--help"
+	) {
 		console.log(help);
 		return;
 	}
@@ -47,7 +51,8 @@ async function main() {
 	if (command === "build") {
 		// root 缺省时：cwd 是插件目录则构建它，否则视为宿主总装
 		const root = args.find((arg) => !arg.startsWith("-"));
-		const target = root ?? (existsSync("client") ? "." : undefined);
+		const target =
+			root ?? (existsSync("client") ? "." : undefined);
 		if (target !== undefined) {
 			await build(resolve(process.cwd(), target));
 			return;
@@ -56,7 +61,9 @@ async function main() {
 		await host.default();
 		return;
 	}
-	console.error(`Unknown command ${JSON.stringify(command)}.`);
+	console.error(
+		`Unknown command ${JSON.stringify(command)}.`,
+	);
 	console.log(help);
 	process.exitCode = 1;
 }

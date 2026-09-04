@@ -48,7 +48,8 @@ watch(name, (name2) => {
 function onEnter() {
 	if (!remote.value) return;
 	const { name } = remote.value;
-	config.value.market.override[name] = remote.value["dist-tags"].latest;
+	config.value.market.override[name] =
+		remote.value["dist-tags"].latest;
 	showManual.value = false;
 }
 </script>

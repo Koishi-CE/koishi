@@ -2,7 +2,12 @@
 // Copyright (c) 2026-present Koishi-CE contributors.
 
 import { describe, expect, it } from "bun:test";
-import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import {
+	mkdirSync,
+	mkdtempSync,
+	rmSync,
+	writeFileSync,
+} from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import {
@@ -15,7 +20,10 @@ import {
 } from "../release/publish-core.ts";
 
 /** 快速构造 WorkspacePkg。 */
-function pkg(name: string, deps: Record<string, string> = {}): WorkspacePkg {
+function pkg(
+	name: string,
+	deps: Record<string, string> = {},
+): WorkspacePkg {
 	return {
 		name,
 		dir: join("/tmp", name),
@@ -26,25 +34,44 @@ function pkg(name: string, deps: Record<string, string> = {}): WorkspacePkg {
 
 /** 在临时目录里造一个可发现的工作区（external/ 单包 + monorepo 私有根 + 子包）。 */
 function withTempWorkspace(): string {
-	const root = mkdtempSync(join(tmpdir(), "koishi-scripts-test-"));
-	mkdirSync(join(root, "external", "single"), { recursive: true });
-	writeFileSync(
-		join(root, "external", "single", "package.json"),
-		JSON.stringify({ name: "koishi-plugin-single", version: "0.1.0" }),
+	const root = mkdtempSync(
+		join(tmpdir(), "koishi-scripts-test-"),
 	);
-	mkdirSync(join(root, "external", "mono", "packages", "sub"), {
+	mkdirSync(join(root, "external", "single"), {
 		recursive: true,
 	});
+	writeFileSync(
+		join(root, "external", "single", "package.json"),
+		JSON.stringify({
+			name: "koishi-plugin-single",
+			version: "0.1.0",
+		}),
+	);
+	mkdirSync(
+		join(root, "external", "mono", "packages", "sub"),
+		{
+			recursive: true,
+		},
+	);
 	writeFileSync(
 		join(root, "external", "mono", "package.json"),
 		JSON.stringify({ name: "@root/mono", private: true }),
 	);
 	writeFileSync(
-		join(root, "external", "mono", "packages", "sub", "package.json"),
+		join(
+			root,
+			"external",
+			"mono",
+			"packages",
+			"sub",
+			"package.json",
+		),
 		JSON.stringify({
 			name: "koishi-plugin-sub",
 			version: "0.2.0",
-			dependencies: { "koishi-plugin-single": "workspace:*" },
+			dependencies: {
+				"koishi-plugin-single": "workspace:*",
+			},
 		}),
 	);
 	mkdirSync(join(root, "external", "nopkg"));
@@ -60,8 +87,12 @@ describe("discoverPackages", () => {
 				"koishi-plugin-single",
 				"koishi-plugin-sub",
 			]);
-			const sub = pkgs.find((p) => p.name === "koishi-plugin-sub");
-			expect(sub?.dependencies["koishi-plugin-single"]).toBe("workspace:*");
+			const sub = pkgs.find(
+				(p) => p.name === "koishi-plugin-sub",
+			);
+			expect(
+				sub?.dependencies["koishi-plugin-single"],
+			).toBe("workspace:*");
 		} finally {
 			rmSync(root, { recursive: true, force: true });
 		}
@@ -84,9 +115,9 @@ describe("planPublish", () => {
 	});
 
 	it("缺少 registry 信息 → 抛错", () => {
-		expect(() => planPublish([pkg("a")], new Map())).toThrow(
-			"registry 版本信息",
-		);
+		expect(() =>
+			planPublish([pkg("a")], new Map()),
+		).toThrow("registry 版本信息");
 	});
 });
 
@@ -95,7 +126,11 @@ describe("topoSort", () => {
 		const a = pkg("a");
 		const b = pkg("b", { a: "^1.0.0" });
 		const c = pkg("c", { b: "^1.0.0", a: "^1.0.0" });
-		expect(topoSort([c, b, a]).map((p) => p.name)).toEqual(["a", "b", "c"]);
+		expect(topoSort([c, b, a]).map((p) => p.name)).toEqual([
+			"a",
+			"b",
+			"c",
+		]);
 	});
 
 	it("依赖环 → 抛错", () => {
@@ -107,17 +142,27 @@ describe("topoSort", () => {
 
 describe("isDowngrade", () => {
 	it("本地版本低于已发布任一版本 → true", () => {
-		expect(isDowngrade("1.0.0", new Set(["1.0.1"]))).toBe(true);
-		expect(isDowngrade("1.0.0", new Set(["0.9.0", "2.0.0"]))).toBe(true);
+		expect(isDowngrade("1.0.0", new Set(["1.0.1"]))).toBe(
+			true,
+		);
+		expect(
+			isDowngrade("1.0.0", new Set(["0.9.0", "2.0.0"])),
+		).toBe(true);
 	});
 
 	it("同版本或更高 → false", () => {
-		expect(isDowngrade("1.0.0", new Set(["1.0.0"]))).toBe(false);
-		expect(isDowngrade("1.1.0", new Set(["1.0.0"]))).toBe(false);
+		expect(isDowngrade("1.0.0", new Set(["1.0.0"]))).toBe(
+			false,
+		);
+		expect(isDowngrade("1.1.0", new Set(["1.0.0"]))).toBe(
+			false,
+		);
 	});
 
 	it("预发布后缀不参与比较", () => {
-		expect(isDowngrade("1.2.3", new Set(["1.2.3-beta.1"]))).toBe(false);
+		expect(
+			isDowngrade("1.2.3", new Set(["1.2.3-beta.1"])),
+		).toBe(false);
 	});
 });
 
@@ -132,17 +177,28 @@ describe("rewriteWorkspaceProtocol", () => {
 			["a", "1.2.3"],
 			["b", "0.1.0"],
 		]);
-		const { text, changes } = rewriteWorkspaceProtocol(raw, versions);
+		const { text, changes } = rewriteWorkspaceProtocol(
+			raw,
+			versions,
+		);
 		const rewritten = JSON.parse(text) as {
 			dependencies?: Record<string, string>;
 			peerDependencies?: Record<string, string>;
 		};
 		expect(rewritten.dependencies?.["a"]).toBe("^1.2.3");
-		expect(rewritten.dependencies?.["lodash"]).toBe("^4.0.0");
-		expect(rewritten.peerDependencies?.["b"]).toBe("^0.1.0");
+		expect(rewritten.dependencies?.["lodash"]).toBe(
+			"^4.0.0",
+		);
+		expect(rewritten.peerDependencies?.["b"]).toBe(
+			"^0.1.0",
+		);
 		expect(changes).toEqual([
 			{ field: "dependencies", dep: "a", range: "^1.2.3" },
-			{ field: "peerDependencies", dep: "b", range: "^0.1.0" },
+			{
+				field: "peerDependencies",
+				dep: "b",
+				range: "^0.1.0",
+			},
 		]);
 	});
 
@@ -158,6 +214,8 @@ describe("rewriteWorkspaceProtocol", () => {
 
 	it("工作区找不到依赖版本 → 抛错", () => {
 		const raw = `${JSON.stringify({ name: "c", dependencies: { ghost: "workspace:*" } })}\n`;
-		expect(() => rewriteWorkspaceProtocol(raw, new Map())).toThrow("ghost");
+		expect(() =>
+			rewriteWorkspaceProtocol(raw, new Map()),
+		).toThrow("ghost");
 	});
 });

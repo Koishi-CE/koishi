@@ -9,9 +9,17 @@
  * 领域方法语义：对不存在记录的 set 应报错 / 无效，create 后可查、
  * 可更新，以及 getAssignedChannels 按受理人过滤与批量 getChannel。
  */
-import { afterAll, beforeAll, describe, expect, it } from "bun:test";
+import {
+	afterAll,
+	beforeAll,
+	describe,
+	expect,
+	it,
+} from "bun:test";
 import { App } from "@koishi-ce/koishi";
-import mock, { DEFAULT_SELF_ID } from "@koishi-ce/plugin-mock";
+import mock, {
+	DEFAULT_SELF_ID,
+} from "@koishi-ce/plugin-mock";
 import * as memoryModule from "@koishijs/plugin-database-memory";
 import "./shape.ts";
 
@@ -34,21 +42,31 @@ describe("Database API", () => {
 			await expect(
 				app.database.setUser("mock", "A", { authority: 1 }),
 			).rejects.toThrow();
-			await expect(app.database.getUser("mock", "A")).resolves.toBeUndefined();
+			await expect(
+				app.database.getUser("mock", "A"),
+			).resolves.toBeUndefined();
 		});
 
 		it("db.createUser() on non-existing user", async () => {
 			// create 后即可按 (platform, pid) 查到
-			await app.database.createUser("mock", "A", { authority: 1 });
-			await expect(app.database.getUser("mock", "A")).resolves.toHaveShape({
+			await app.database.createUser("mock", "A", {
+				authority: 1,
+			});
+			await expect(
+				app.database.getUser("mock", "A"),
+			).resolves.toHaveShape({
 				authority: 1,
 			});
 		});
 
 		it("db.setUser() on existing user", async () => {
 			// 已存在用户可正常更新字段
-			await app.database.setUser("mock", "A", { authority: 2 });
-			await expect(app.database.getUser("mock", "A")).resolves.toHaveShape({
+			await app.database.setUser("mock", "A", {
+				authority: 2,
+			});
+			await expect(
+				app.database.getUser("mock", "A"),
+			).resolves.toHaveShape({
 				authority: 2,
 			});
 		});
@@ -57,22 +75,32 @@ describe("Database API", () => {
 	describe("Channel Operations", () => {
 		it("db.setChannel() on non-existing channel", async () => {
 			// 未创建的频道：set 不报错但也不产生记录
-			await app.database.setChannel("mock", "A", { assignee: "123" });
+			await app.database.setChannel("mock", "A", {
+				assignee: "123",
+			});
 			await expect(
 				app.database.getChannel("mock", "A"),
 			).resolves.toBeUndefined();
 		});
 
 		it("db.createChannel() on non-existing channel", async () => {
-			await app.database.createChannel("mock", "A", { assignee: "123" });
-			await expect(app.database.getChannel("mock", "A")).resolves.toHaveShape({
+			await app.database.createChannel("mock", "A", {
+				assignee: "123",
+			});
+			await expect(
+				app.database.getChannel("mock", "A"),
+			).resolves.toHaveShape({
 				assignee: "123",
 			});
 		});
 
 		it("db.setChannel() on existing channel", async () => {
-			await app.database.setChannel("mock", "A", { assignee: "321" });
-			await expect(app.database.getChannel("mock", "A")).resolves.toHaveShape({
+			await app.database.setChannel("mock", "A", {
+				assignee: "321",
+			});
+			await expect(
+				app.database.getChannel("mock", "A"),
+			).resolves.toHaveShape({
 				assignee: "321",
 			});
 		});
@@ -89,7 +117,9 @@ describe("Database API", () => {
 				app.database.getAssignedChannels(undefined),
 			).resolves.toHaveLength(2);
 			await expect(
-				app.database.getAssignedChannels(undefined, { mock: ["321"] }),
+				app.database.getAssignedChannels(undefined, {
+					mock: ["321"],
+				}),
 			).resolves.toHaveLength(1);
 		});
 
@@ -99,7 +129,9 @@ describe("Database API", () => {
 				app.database.getChannel("mock", ["A"]),
 			).resolves.toHaveLength(1);
 			await app.database.remove("channel", { id: "A" });
-			await expect(app.database.getChannel("mock", ["A"])).resolves.toEqual([]);
+			await expect(
+				app.database.getChannel("mock", ["A"]),
+			).resolves.toEqual([]);
 		});
 	});
 });

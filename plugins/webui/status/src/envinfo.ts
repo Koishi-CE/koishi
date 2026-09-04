@@ -13,16 +13,26 @@
 import { readFile } from "node:fs/promises";
 import { arch, cpus, platform, release } from "node:os";
 import { DataService } from "@koishi-ce/console";
-import { type Context, type Dict, Schema, version } from "@koishi-ce/koishi";
+import {
+	type Context,
+	type Dict,
+	Schema,
+	version,
+} from "@koishi-ce/koishi";
 
-class EnvInfoProvider extends DataService<Dict<Dict<string>>> {
+class EnvInfoProvider extends DataService<
+	Dict<Dict<string>>
+> {
 	/** 采集任务的缓存：get() 首次调用时创建，之后始终复用同一 Promise。 */
 	private task!: Promise<Dict<Dict<string>>>;
 
 	// 基类链（cordis Service）上已有 config 成员，故需 override
 	override config: EnvInfoProvider.Config;
 
-	constructor(ctx: Context, config: EnvInfoProvider.Config) {
+	constructor(
+		ctx: Context,
+		config: EnvInfoProvider.Config,
+	) {
 		super(ctx, "envinfo");
 		this.config = config;
 	}
@@ -42,15 +52,20 @@ class EnvInfoProvider extends DataService<Dict<Dict<string>>> {
 		};
 		// 不直接 require package.json 是为了避免其被模块缓存固定住，
 		// 热更新后读取到的仍是旧版本号
-		const metapath = require.resolve("@koishi-ce/console/package.json");
-		const meta = await readFile(metapath, "utf8").then(JSON.parse);
+		const metapath = require.resolve(
+			"@koishi-ce/console/package.json",
+		);
+		const meta = await readFile(metapath, "utf8").then(
+			JSON.parse,
+		);
 		const koishi: Dict<string> = {
 			Core: version,
 			Console: meta.version,
 		};
 		// 宿主代理（如 koishi-plugin-browser）可通过该环境变量上报自身名称与版本
 		if (process.env["KOISHI_AGENT"]) {
-			const [name, agentVersion] = process.env["KOISHI_AGENT"].split("/");
+			const [name, agentVersion] =
+				process.env["KOISHI_AGENT"].split("/");
 			if (name && agentVersion) {
 				koishi[name] = agentVersion;
 			}
@@ -66,7 +81,8 @@ class EnvInfoProvider extends DataService<Dict<Dict<string>>> {
 
 	// erasableSyntaxOnly 禁止含运行时值的 namespace，
 	// 原 namespace 内的 Config 常量移到此处的静态字段，对外形状不变
-	static Config: Schema<EnvInfoProvider.Config> = Schema.object({});
+	static Config: Schema<EnvInfoProvider.Config> =
+		Schema.object({});
 }
 
 namespace EnvInfoProvider {

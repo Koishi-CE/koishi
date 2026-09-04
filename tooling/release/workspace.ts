@@ -11,7 +11,11 @@
  * 落到 registry。纯函数不触网；文件系统访问集中在 discoverPackages。
  */
 import type { Dirent } from "node:fs";
-import { existsSync, readdirSync, readFileSync } from "node:fs";
+import {
+	existsSync,
+	readdirSync,
+	readFileSync,
+} from "node:fs";
 import { join } from "node:path";
 
 /** 工作区内一个可发布包（非 private、含 name 与 version）。 */
@@ -89,10 +93,9 @@ function loadPkg(dir: string): PkgInfo | null {
 	}
 	let manifest: Record<string, unknown>;
 	try {
-		manifest = JSON.parse(readFileSync(manifestPath, "utf8")) as Record<
-			string,
-			unknown
-		>;
+		manifest = JSON.parse(
+			readFileSync(manifestPath, "utf8"),
+		) as Record<string, unknown>;
 	} catch {
 		return null;
 	}
@@ -123,7 +126,10 @@ function loadPkg(dir: string): PkgInfo | null {
 		peerDependencies: record("peerDependencies"),
 		optionalDependencies: record("optionalDependencies"),
 		files: Array.isArray(files)
-			? files.filter((item): item is string => typeof item === "string")
+			? files.filter(
+					(item): item is string =>
+						typeof item === "string",
+				)
 			: [],
 	};
 }
@@ -141,7 +147,10 @@ export function discoverPackages(root: string): PkgInfo[] {
 }
 
 /** 包的内部依赖名集合（deps + peers + optional 命中 workspace 包名者，去重）。 */
-function internalDeps(pkg: PkgInfo, names: ReadonlySet<string>): string[] {
+function internalDeps(
+	pkg: PkgInfo,
+	names: ReadonlySet<string>,
+): string[] {
 	return [
 		...new Set(
 			[
@@ -157,9 +166,13 @@ function internalDeps(pkg: PkgInfo, names: ReadonlySet<string>): string[] {
  * 按内部依赖拓扑排序：被依赖者在前。入度为内部依赖数，Kahn 算法；
  * 存在环 → 抛错（发布链中断，人工排查）。
  */
-export function topoSort(pkgs: readonly PkgInfo[]): PkgInfo[] {
+export function topoSort(
+	pkgs: readonly PkgInfo[],
+): PkgInfo[] {
 	const names = new Set(pkgs.map((pkg) => pkg.name));
-	const byName = new Map(pkgs.map((pkg) => [pkg.name, pkg]));
+	const byName = new Map(
+		pkgs.map((pkg) => [pkg.name, pkg]),
+	);
 	const inDegree = new Map<string, number>();
 	const dependents = new Map<string, string[]>();
 	for (const pkg of pkgs) {
@@ -193,7 +206,9 @@ export function topoSort(pkgs: readonly PkgInfo[]): PkgInfo[] {
 		const cyclic = pkgs
 			.map((pkg) => pkg.name)
 			.filter((name) => !ordered.includes(name));
-		throw new Error(`内部依赖存在环，无法确定发布顺序: ${cyclic.join(", ")}`);
+		throw new Error(
+			`内部依赖存在环，无法确定发布顺序: ${cyclic.join(", ")}`,
+		);
 	}
 	return ordered.map((name) => byName.get(name) as PkgInfo);
 }
@@ -207,7 +222,10 @@ export function planPublish(
 	const skipped: SkippedPkg[] = [];
 	for (const pkg of pkgs) {
 		if (published.get(pkg.name)?.has(pkg.version)) {
-			skipped.push({ pkg, reason: `版本 ${pkg.version} 已在 registry` });
+			skipped.push({
+				pkg,
+				reason: `版本 ${pkg.version} 已在 registry`,
+			});
 		} else {
 			toPublish.push(pkg);
 		}
@@ -216,7 +234,9 @@ export function planPublish(
 }
 
 /** 解析版本为 [major, minor, patch] 数值（非数字段按 0，预发布段忽略）。 */
-function versionParts(version: string): [number, number, number] {
+function versionParts(
+	version: string,
+): [number, number, number] {
 	const parts = version.split(/[.+-]/, 3);
 	return [
 		Number.parseInt(parts[0] ?? "0", 10) || 0,
@@ -238,7 +258,8 @@ export function isDowngrade(
 		const parts = versionParts(version);
 		if (
 			parts[0] > localParts[0] ||
-			(parts[0] === localParts[0] && parts[1] > localParts[1]) ||
+			(parts[0] === localParts[0] &&
+				parts[1] > localParts[1]) ||
 			(parts[0] === localParts[0] &&
 				parts[1] === localParts[1] &&
 				parts[2] > localParts[2])
@@ -283,7 +304,10 @@ export function rewriteWorkspaceProtocol(
 	raw: string,
 	versions: ReadonlyMap<string, string>,
 ): { text: string; changes: WorkspaceRewrite[] } {
-	const manifest = JSON.parse(raw) as Record<string, unknown>;
+	const manifest = JSON.parse(raw) as Record<
+		string,
+		unknown
+	>;
 	const changes: WorkspaceRewrite[] = [];
 	for (const field of DEP_FIELDS) {
 		const deps = manifest[field];
@@ -293,7 +317,10 @@ export function rewriteWorkspaceProtocol(
 		for (const [dep, range] of Object.entries(
 			deps as Record<string, unknown>,
 		)) {
-			if (typeof range !== "string" || !range.startsWith("workspace:")) {
+			if (
+				typeof range !== "string" ||
+				!range.startsWith("workspace:")
+			) {
 				continue;
 			}
 			if (range !== "workspace:*") {
@@ -319,7 +346,10 @@ export function rewriteWorkspaceProtocol(
 		for (const [dep, range] of Object.entries(
 			deps as Record<string, unknown>,
 		)) {
-			if (typeof range === "string" && /^(workspace|file|link):/.test(range)) {
+			if (
+				typeof range === "string" &&
+				/^(workspace|file|link):/.test(range)
+			) {
 				throw new Error(
 					`${field}.${dep} 改写后仍残留本地协议 ${range}，拒绝发布`,
 				);
@@ -327,7 +357,9 @@ export function rewriteWorkspaceProtocol(
 		}
 	}
 	const text =
-		changes.length > 0 ? `${JSON.stringify(manifest, null, 4)}\n` : raw;
+		changes.length > 0
+			? `${JSON.stringify(manifest, null, 4)}\n`
+			: raw;
 	return { text, changes };
 }
 

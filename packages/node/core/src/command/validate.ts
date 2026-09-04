@@ -22,8 +22,11 @@ export default function validate(ctx: Context) {
 		depends: ({ name }) => {
 			const command = ctx.$commander.get(name);
 			if (!command) return;
-			const depends = [...(command.config.dependencies ?? [])];
-			if (command.parent) depends.push(`command:${command.parent.name}`);
+			const depends = [
+				...(command.config.dependencies ?? []),
+			];
+			if (command.parent)
+				depends.push(`command:${command.parent.name}`);
 			return depends;
 		},
 		inherits: ({ name }) => {
@@ -39,39 +42,57 @@ export default function validate(ctx: Context) {
 	// 选项级权限：依赖与继承取自选项自身的注册配置
 	ctx.permissions.define("command:(name):option:(name2)", {
 		depends: ({ name, name2 }) => {
-			return ctx.$commander.get(name)?._options[name2]?.dependencies;
+			return ctx.$commander.get(name)?._options[name2]
+				?.dependencies;
 		},
 		inherits: ({ name, name2 }) => {
-			return ctx.$commander.get(name)?._options[name2]?.permissions;
+			return ctx.$commander.get(name)?._options[name2]
+				?.permissions;
 		},
 		list: () => {
-			return ctx.$commander._commandList.flatMap((command) => {
-				return Object.keys(command._options).map(
-					(name) => `command:${command.name}:option:${name}`,
-				);
-			});
+			return ctx.$commander._commandList.flatMap(
+				(command) => {
+					return Object.keys(command._options).map(
+						(name) =>
+							`command:${command.name}:option:${name}`,
+					);
+				},
+			);
 		},
 	});
 
 	// 用户权限校验：命令本体 + 用户实际传入的每个选项都要通过测试
 	ctx.before(
 		"command/execute",
-		async (argv: Argv<"authority">): Promise<string | undefined> => {
+		async (
+			argv: Argv<"authority">,
+		): Promise<string | undefined> => {
 			const { session, options, command } = argv;
 			if (!session?.user || !command) return undefined;
 
-			const sendHint = (message: string, ...param: unknown[]) =>
-				command.config.showWarning ? session.text(message, param) : "";
+			const sendHint = (
+				message: string,
+				...param: unknown[]
+			) =>
+				command.config.showWarning
+					? session.text(message, param)
+					: "";
 
 			// 权限测试：命令本体与传入选项的权限一并校验
 			const permissions = [`command:${command.name}`];
-			for (const option of Object.values(command._options)) {
+			for (const option of Object.values(
+				command._options,
+			)) {
 				const { name } = option;
 				if (name !== undefined && name in (options ?? {})) {
-					permissions.push(`command:${command.name}:option:${name}`);
+					permissions.push(
+						`command:${command.name}:option:${name}`,
+					);
 				}
 			}
-			if (!(await ctx.permissions.test(permissions, session))) {
+			if (
+				!(await ctx.permissions.test(permissions, session))
+			) {
 				return sendHint("internal.low-authority");
 			}
 			return undefined;
@@ -83,10 +104,20 @@ export default function validate(ctx: Context) {
 	ctx.before(
 		"command/execute",
 		async (argv: Argv): Promise<string | undefined> => {
-			const { args = [], options = {}, command, session } = argv;
+			const {
+				args = [],
+				options = {},
+				command,
+				session,
+			} = argv;
 			if (!command || !session) return undefined;
-			const sendHint = (message: string, ...param: unknown[]) =>
-				command.config.showWarning ? session.text(message, param) : "";
+			const sendHint = (
+				message: string,
+				...param: unknown[]
+			) =>
+				command.config.showWarning
+					? session.text(message, param)
+					: "";
 
 			// 参数数量校验：必填参数缺失时逐个交互式追问补全；
 			// 参数超出声明数（且末位不是变长参数）时报错
@@ -97,19 +128,36 @@ export default function validate(ctx: Context) {
 					if (!decl) break;
 					await session.send(
 						session.text("internal.prompt-argument", [
-							session.text(`commands.${command.name}.arguments.${decl.name}`),
+							session.text(
+								`commands.${command.name}.arguments.${decl.name}`,
+							),
 						]),
 					);
 					const source = await session.prompt();
 					if (isNullable(source)) {
-						return sendHint("internal.insufficient-arguments", decl.name);
+						return sendHint(
+							"internal.insufficient-arguments",
+							decl.name,
+						);
 					}
-					args.push(ctx.$commander.parseValue(source, "argument", argv, decl));
+					args.push(
+						ctx.$commander.parseValue(
+							source,
+							"argument",
+							argv,
+							decl,
+						),
+					);
 					index++;
 				}
 				const finalArg =
-					command._arguments[command._arguments.length - 1] || {};
-				if (args.length > command._arguments.length && !finalArg.variadic) {
+					command._arguments[
+						command._arguments.length - 1
+					] || {};
+				if (
+					args.length > command._arguments.length &&
+					!finalArg.variadic
+				) {
 					return sendHint("internal.redunant-arguments");
 				}
 			}
@@ -120,7 +168,10 @@ export default function validate(ctx: Context) {
 					(key) => !command._options[key],
 				);
 				if (unknown.length) {
-					return sendHint("internal.unknown-option", unknown.join(", "));
+					return sendHint(
+						"internal.unknown-option",
+						unknown.join(", "),
+					);
 				}
 			}
 			return undefined;

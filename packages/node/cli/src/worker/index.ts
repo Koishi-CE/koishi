@@ -14,7 +14,13 @@
 import { existsSync, readFileSync } from "node:fs";
 import net from "node:net";
 import { dirname, resolve } from "node:path";
-import { Context, type Dict, Logger, Schema, Time } from "@koishi-ce/core";
+import {
+	Context,
+	type Dict,
+	Logger,
+	Schema,
+	Time,
+} from "@koishi-ce/core";
 import Loader, { resolvePlugin } from "@koishi-ce/loader";
 import * as daemon from "./daemon.ts";
 import * as logger from "./logger.ts";
@@ -87,14 +93,19 @@ interface ServerPort {
 }
 
 /** 从模块入口路径向上查找最近的 package.json，返回其 name 字段 */
-function locatePackageName(filename: string): string | undefined {
+function locatePackageName(
+	filename: string,
+): string | undefined {
 	let dir = dirname(filename);
 	while (true) {
 		const file = resolve(dir, "package.json");
 		if (existsSync(file)) {
 			try {
-				const manifest = JSON.parse(readFileSync(file, "utf8"));
-				if (typeof manifest?.name === "string") return manifest.name;
+				const manifest = JSON.parse(
+					readFileSync(file, "utf8"),
+				);
+				if (typeof manifest?.name === "string")
+					return manifest.name;
 			} catch {}
 		}
 		const parent = dirname(dir);
@@ -107,9 +118,17 @@ function locatePackageName(filename: string): string | undefined {
  * 遍历插件配置表（含 group 嵌套），收集服务器插件声明的端口区间。
  * 引用键格式与 loader 一致：首个冒号前为插件名；`$` 开头为元属性。
  */
-function collectServerPorts(plugins: Dict, baseDir: string, out: ServerPort[]) {
+function collectServerPorts(
+	plugins: Dict,
+	baseDir: string,
+	out: ServerPort[],
+) {
 	for (const [key, source] of Object.entries(plugins)) {
-		if (key.startsWith("$") || source === null || typeof source !== "object") {
+		if (
+			key.startsWith("$") ||
+			source === null ||
+			typeof source !== "object"
+		) {
 			continue;
 		}
 		const [name = ""] = key.split(":", 1);
@@ -118,14 +137,21 @@ function collectServerPorts(plugins: Dict, baseDir: string, out: ServerPort[]) {
 			continue;
 		}
 		try {
-			const pkgName = locatePackageName(resolvePlugin(name, baseDir));
-			if (!pkgName || !serverPackages.has(pkgName)) continue;
-			const { host, port, maxPort } = source as Record<string, unknown>;
+			const pkgName = locatePackageName(
+				resolvePlugin(name, baseDir),
+			);
+			if (!pkgName || !serverPackages.has(pkgName))
+				continue;
+			const { host, port, maxPort } = source as Record<
+				string,
+				unknown
+			>;
 			if (typeof port !== "number") continue;
 			out.push({
 				host: typeof host === "string" ? host : "127.0.0.1",
 				port,
-				maxPort: typeof maxPort === "number" ? maxPort : port,
+				maxPort:
+					typeof maxPort === "number" ? maxPort : port,
 			});
 		} catch {}
 	}
@@ -136,7 +162,9 @@ function probePort(port: number, host: string) {
 	return new Promise<boolean>((promiseResolve) => {
 		const server = net.createServer();
 		server.once("error", () => promiseResolve(false));
-		server.once("listening", () => server.close(() => promiseResolve(true)));
+		server.once("listening", () =>
+			server.close(() => promiseResolve(true)),
+		);
 		server.listen(port, host);
 	});
 }
@@ -152,14 +180,19 @@ async function checkPorts(plugins: Dict, baseDir: string) {
 	collectServerPorts(plugins, baseDir, ports);
 	for (const { host, port, maxPort } of ports) {
 		let available = false;
-		for (let current = port; current <= maxPort; current++) {
+		for (
+			let current = port;
+			current <= maxPort;
+			current++
+		) {
 			if (await probePort(current, host)) {
 				available = true;
 				break;
 			}
 		}
 		if (available) continue;
-		const range = port === maxPort ? `${port}` : `${port}-${maxPort}`;
+		const range =
+			port === maxPort ? `${port}` : `${port}-${maxPort}`;
 		new Logger("app").error(
 			`端口 ${range} 已被占用（可能已有 Koishi 实例在运行），启动中止`,
 		);

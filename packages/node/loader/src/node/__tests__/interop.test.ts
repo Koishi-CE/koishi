@@ -12,7 +12,11 @@ import { promises as fs } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { pathToFileURL } from "node:url";
-import { type Manifest, nodeRequireEntry, seedCjsInterop } from "../interop.ts";
+import {
+	type Manifest,
+	nodeRequireEntry,
+	seedCjsInterop,
+} from "../interop.ts";
 
 /** 写入一个 fixture 包：清单 + 若干文件 */
 async function writePkg(
@@ -23,7 +27,10 @@ async function writePkg(
 ) {
 	const dir = join(base, "node_modules", name);
 	await fs.mkdir(dir, { recursive: true });
-	await Bun.write(join(dir, "package.json"), JSON.stringify(manifest));
+	await Bun.write(
+		join(dir, "package.json"),
+		JSON.stringify(manifest),
+	);
 	for (const [filename, content] of Object.entries(files)) {
 		await Bun.write(join(dir, filename), content);
 	}
@@ -36,8 +43,12 @@ async function writePkg(
  * peerDependencies 进入依赖树且自身消费 pg-like，absent-pkg 声明未装，
  * buffer 建模与内置模块同名的 polyfill（readable-stream 依赖形态）。
  */
-async function withFixtures(fn: (dir: string) => Promise<void> | void) {
-	const dir = await fs.mkdtemp(join(tmpdir(), "koishi-loader-interop-"));
+async function withFixtures(
+	fn: (dir: string) => Promise<void> | void,
+) {
+	const dir = await fs.mkdtemp(
+		join(tmpdir(), "koishi-loader-interop-"),
+	);
 	try {
 		await writePkg(
 			dir,
@@ -75,8 +86,10 @@ async function withFixtures(fn: (dir: string) => Promise<void> | void) {
 				},
 			},
 			{
-				"esm/index.js": "export default function pgEsm() { return 'esm' }",
-				"cjs/index.js": "module.exports = function pgCjs() { return 'cjs' }",
+				"esm/index.js":
+					"export default function pgEsm() { return 'esm' }",
+				"cjs/index.js":
+					"module.exports = function pgCjs() { return 'cjs' }",
 			},
 		);
 		await writePkg(
@@ -93,20 +106,37 @@ async function withFixtures(fn: (dir: string) => Promise<void> | void) {
 				main: "index.js",
 				dependencies: { "pg-like": "*" },
 			},
-			{ "index.js": "module.exports = { pg: require('pg-like') }" },
+			{
+				"index.js":
+					"module.exports = { pg: require('pg-like') }",
+			},
 		);
 		await writePkg(
 			dir,
 			"broken-pkg",
-			{ name: "broken-pkg", main: "cjs/index.js", exports: ["./cjs/index.js"] },
-			{ "cjs/index.js": "module.exports = { tag: 'broken' }" },
+			{
+				name: "broken-pkg",
+				main: "cjs/index.js",
+				exports: ["./cjs/index.js"],
+			},
+			{
+				"cjs/index.js":
+					"module.exports = { tag: 'broken' }",
+			},
 		);
 		// feross/buffer 形态的 polyfill：导出刻意不含 constants
 		await writePkg(
 			dir,
 			"buffer",
-			{ name: "buffer", version: "6.0.3", main: "index.js" },
-			{ "index.js": "module.exports = { Buffer: { isBuffer: () => false } }" },
+			{
+				name: "buffer",
+				version: "6.0.3",
+				main: "index.js",
+			},
+			{
+				"index.js":
+					"module.exports = { Buffer: { isBuffer: () => false } }",
+			},
 		);
 		await fn(dir);
 	} finally {
@@ -155,8 +185,15 @@ describe("seedCjsInterop", () => {
 			seedCjsInterop(entry);
 			// 以 ESM import 加载被 seed 的入口文件：仍按 ESM 求值
 			const esm = (await import(
-				pathToFileURL(join(dir, "node_modules", "pg-like", "esm", "index.js"))
-					.href
+				pathToFileURL(
+					join(
+						dir,
+						"node_modules",
+						"pg-like",
+						"esm",
+						"index.js",
+					),
+				).href
 			)) as { default: () => string };
 			expect(esm.default()).toBe("esm");
 		});
@@ -170,8 +207,14 @@ describe("seedCjsInterop", () => {
 				"koishi-plugin-fixture",
 				"index.js",
 			);
-			const consumerDir = join(dir, "node_modules", "koishi-plugin-fixture");
-			const key = require.resolve("pg-like", { paths: [consumerDir] });
+			const consumerDir = join(
+				dir,
+				"node_modules",
+				"koishi-plugin-fixture",
+			);
+			const key = require.resolve("pg-like", {
+				paths: [consumerDir],
+			});
 			seedCjsInterop(entry);
 			const first = require.cache[key]?.exports;
 			expect(typeof first).toBe("function");
@@ -182,7 +225,9 @@ describe("seedCjsInterop", () => {
 
 	it("入口无 package.json（脚本插件）时安全跳过", () => {
 		expect(() =>
-			seedCjsInterop(join(tmpdir(), "definitely-lonely-xyz.js")),
+			seedCjsInterop(
+				join(tmpdir(), "definitely-lonely-xyz.js"),
+			),
 		).not.toThrow();
 	});
 
@@ -200,12 +245,22 @@ describe("seedCjsInterop", () => {
 				expect("buffer" in require.cache).toBe(false);
 				// 裸名 require 正是被测对象（防 polyfill 劫持），不可改为 node: 前缀
 				// biome-ignore lint/style/useNodejsImportProtocol: 测试裸名解析行为
-				expect(typeof require("buffer").constants).toBe("object");
+				expect(typeof require("buffer").constants).toBe(
+					"object",
+				);
 				// 同树的正常分歧修复（pg-like）不受守卫误伤
 				const pgKey = require.resolve("pg-like", {
-					paths: [join(dir, "node_modules", "koishi-plugin-fixture")],
+					paths: [
+						join(
+							dir,
+							"node_modules",
+							"koishi-plugin-fixture",
+						),
+					],
 				});
-				expect(typeof require.cache[pgKey]?.exports).toBe("function");
+				expect(typeof require.cache[pgKey]?.exports).toBe(
+					"function",
+				);
 			} finally {
 				// 守卫失效导致污染时清场，避免拖垮同进程的后续测试
 				delete require.cache["buffer"];
@@ -227,43 +282,62 @@ describe("nodeRequireEntry", () => {
 				default: "./cjs/index.js",
 			},
 		};
-		expect(nodeRequireEntry(manifest, base)).toBe(join(base, "cjs/index.js"));
+		expect(nodeRequireEntry(manifest, base)).toBe(
+			join(base, "cjs/index.js"),
+		);
 	});
 
 	it("键序优先：default 在前则 default 生效（与 Node 一致）", () => {
 		const manifest: Manifest = {
 			exports: { default: "./d.js", require: "./c.cjs" },
 		};
-		expect(nodeRequireEntry(manifest, base)).toBe(join(base, "d.js"));
+		expect(nodeRequireEntry(manifest, base)).toBe(
+			join(base, "d.js"),
+		);
 	});
 
 	it('嵌套 "." 形态命中 require 条件', () => {
 		const manifest: Manifest = {
 			exports: {
-				".": { import: "./m.mjs", require: "./c.cjs", default: "./d.js" },
+				".": {
+					import: "./m.mjs",
+					require: "./c.cjs",
+					default: "./d.js",
+				},
 			},
 		};
-		expect(nodeRequireEntry(manifest, base)).toBe(join(base, "c.cjs"));
+		expect(nodeRequireEntry(manifest, base)).toBe(
+			join(base, "c.cjs"),
+		);
 	});
 
 	it("无 exports 时回落 main", () => {
-		expect(nodeRequireEntry({ main: "./lib.js" }, base)).toBe(
-			join(base, "lib.js"),
-		);
+		expect(
+			nodeRequireEntry({ main: "./lib.js" }, base),
+		).toBe(join(base, "lib.js"));
 	});
 
 	it("子路径表 / 数组 / 深层嵌套 / 非 main 字符串均为未知", () => {
 		expect(
-			nodeRequireEntry({ exports: { "./sub": "./s.js" } }, base),
-		).toBeUndefined();
-		expect(nodeRequireEntry({ exports: ["./a.js"] }, base)).toBeUndefined();
-		expect(
 			nodeRequireEntry(
-				{ exports: { ".": { require: { node: "./n.js" } } } },
+				{ exports: { "./sub": "./s.js" } },
 				base,
 			),
 		).toBeUndefined();
-		expect(nodeRequireEntry({ main: 42 }, base)).toBeUndefined();
+		expect(
+			nodeRequireEntry({ exports: ["./a.js"] }, base),
+		).toBeUndefined();
+		expect(
+			nodeRequireEntry(
+				{
+					exports: { ".": { require: { node: "./n.js" } } },
+				},
+				base,
+			),
+		).toBeUndefined();
+		expect(
+			nodeRequireEntry({ main: 42 }, base),
+		).toBeUndefined();
 		expect(nodeRequireEntry({}, base)).toBeUndefined();
 	});
 });

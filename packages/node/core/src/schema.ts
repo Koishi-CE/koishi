@@ -17,14 +17,20 @@
  *    供多个插件向同一份配置（如 intercept.http 网络拦截配置）追加字段。
  */
 import { Schema } from "@satorijs/core";
-import { type Dict, defineProperty, remove } from "cosmokit";
+import {
+	type Dict,
+	defineProperty,
+	remove,
+} from "cosmokit";
 import { Context } from "./context/index.ts";
 import type { Computed } from "./filter.ts";
 
 declare global {
 	interface Schemastery<S, T> {
 		/** 把当前 Schema 提升为"计算属性" Schema（值可按会话动态求值）。 */
-		computed(options?: Computed.Options): Schema<Computed<S>, Computed<T>>;
+		computed(
+			options?: Computed.Options,
+		): Schema<Computed<S>, Computed<T>>;
 	}
 
 	namespace Schemastery {
@@ -103,8 +109,13 @@ Schema.path = function path(options = {}) {
 };
 
 /** 实例方法版本：`Schema.string().computed()`，沿用原默认值。 */
-Schema.prototype.computed = function computed(this: Schema, options = {}) {
-	return Schema.computed(this, options).default(this.meta.default);
+Schema.prototype.computed = function computed(
+	this: Schema,
+	options = {},
+) {
+	return Schema.computed(this, options).default(
+		this.meta.default,
+	);
 };
 
 /** 内部符号：记录每个 Schema 片段在 extend 插入时的排序权重 */
@@ -140,8 +151,12 @@ export class SchemaService {
 				timeout: Schema.natural()
 					.role("ms")
 					.description("等待连接建立的最长时间。"),
-				proxyAgent: Schema.string().description("使用的代理服务器地址。"),
-				keepAlive: Schema.boolean().description("是否保持连接。"),
+				proxyAgent: Schema.string().description(
+					"使用的代理服务器地址。",
+				),
+				keepAlive: Schema.boolean().description(
+					"是否保持连接。",
+				),
 			}),
 		);
 	}
@@ -158,7 +173,9 @@ export class SchemaService {
 		const target = this.get(name);
 		const list = (target.list ??= []);
 		const index = list.findIndex(
-			(a) => ((a as SchemaWithOrder)[kSchemaOrder] ?? Number.NaN) < order,
+			(a) =>
+				((a as SchemaWithOrder)[kSchemaOrder] ??
+					Number.NaN) < order,
 		);
 		defineProperty(schema, kSchemaOrder, order);
 		if (index >= 0) {

@@ -16,10 +16,16 @@ import { join } from "node:path";
  * 从单个 .npmrc 文件提取 registry 配置项（非注释、非 scoped 的 registry= 行）。
  * 文件不存在或未配置时返回 undefined，读文件异常一律静默吞掉。
  */
-export function readNpmrcRegistry(file: string): string | undefined {
+export function readNpmrcRegistry(
+	file: string,
+): string | undefined {
 	try {
-		for (const line of readFileSync(file, "utf8").split(/\r?\n/)) {
-			const matched = /^\s*registry\s*=\s*(\S+)\s*$/.exec(line);
+		for (const line of readFileSync(file, "utf8").split(
+			/\r?\n/,
+		)) {
+			const matched = /^\s*registry\s*=\s*(\S+)\s*$/.exec(
+				line,
+			);
 			const value = matched?.[1];
 			if (value) return value;
 		}
@@ -44,7 +50,10 @@ export function getLocalRegistry(
 		readNpmrcRegistry(join(userHome, ".npmrc")),
 	];
 	for (const candidate of candidates) {
-		if (candidate?.startsWith("https://") || candidate?.startsWith("http://")) {
+		if (
+			candidate?.startsWith("https://") ||
+			candidate?.startsWith("http://")
+		) {
 			return candidate;
 		}
 	}

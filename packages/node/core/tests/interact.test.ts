@@ -8,9 +8,16 @@
  * prompt 的无回调重载会把消息开头 @机器人 的元素剥掉只留正文，
  * 这里通过 mock 客户端的两次应答交互验证该行为。
  */
-import { afterAll, beforeAll, describe, it } from "bun:test";
+import {
+	afterAll,
+	beforeAll,
+	describe,
+	it,
+} from "bun:test";
 import { App } from "@koishi-ce/koishi";
-import mock, { DEFAULT_SELF_ID } from "@koishi-ce/plugin-mock";
+import mock, {
+	DEFAULT_SELF_ID,
+} from "@koishi-ce/plugin-mock";
 
 const app = new App();
 app.plugin(mock);

@@ -17,7 +17,9 @@ const VERSIONS = {
 
 describe("parseFlags", () => {
 	it("解析 --key=value 参数", () => {
-		expect(parseFlags(["--name=foo", "--desc=a b", "--empty="])).toEqual({
+		expect(
+			parseFlags(["--name=foo", "--desc=a b", "--empty="]),
+		).toEqual({
 			name: "foo",
 			desc: "a b",
 			empty: "",
@@ -25,7 +27,14 @@ describe("parseFlags", () => {
 	});
 
 	it("忽略非 --key=value 形式的参数", () => {
-		expect(parseFlags(["-m", "--monorepo", "positional", "--=x"])).toEqual({});
+		expect(
+			parseFlags([
+				"-m",
+				"--monorepo",
+				"positional",
+				"--=x",
+			]),
+		).toEqual({});
 	});
 });
 
@@ -36,22 +45,30 @@ describe("normalizeName", () => {
 	});
 
 	it("已带前缀 / scope 名原样通过", () => {
-		expect(normalizeName("koishi-plugin-foo")).toBe("koishi-plugin-foo");
-		expect(normalizeName("@scope/foo")).toBe("@scope/koishi-plugin-foo");
+		expect(normalizeName("koishi-plugin-foo")).toBe(
+			"koishi-plugin-foo",
+		);
+		expect(normalizeName("@scope/foo")).toBe(
+			"@scope/koishi-plugin-foo",
+		);
 		expect(normalizeName("@scope/koishi-plugin-foo")).toBe(
 			"@scope/koishi-plugin-foo",
 		);
 	});
 
 	it("下划线转连字符", () => {
-		expect(normalizeName("foo_bar")).toBe("koishi-plugin-foo-bar");
+		expect(normalizeName("foo_bar")).toBe(
+			"koishi-plugin-foo-bar",
+		);
 	});
 
 	it("非法名返回 null", () => {
 		expect(normalizeName("foo bar")).toBeNull();
 		expect(normalizeName("koishi-plugin-")).toBeNull();
 		expect(normalizeName("@scope/foo bar")).toBeNull();
-		expect(normalizeName("@Bad/foo")).toBe("@bad/koishi-plugin-foo");
+		expect(normalizeName("@Bad/foo")).toBe(
+			"@bad/koishi-plugin-foo",
+		);
 		expect(normalizeName("")).toBeNull();
 		// scope 段为空或不合法（仅 @）→ null；下划线会被规范化为连字符故仍合法
 		expect(normalizeName("@/foo")).toBeNull();
@@ -62,7 +79,9 @@ describe("normalizeName", () => {
 describe("deriveDirname", () => {
 	it("去前缀与 scope", () => {
 		expect(deriveDirname("koishi-plugin-foo")).toBe("foo");
-		expect(deriveDirname("@scope/koishi-plugin-foo")).toBe("foo");
+		expect(deriveDirname("@scope/koishi-plugin-foo")).toBe(
+			"foo",
+		);
 	});
 });
 
@@ -89,14 +108,22 @@ describe("renderPackageJson", () => {
 		expect(manifest["type"]).toBe("module");
 		expect(manifest["workspaces"]).toEqual(["."]);
 		expect(manifest["files"]).toEqual(["lib"]);
-		expect(manifest["peerDependencies"]).toEqual({ koishi: "^4.18.11" });
+		expect(manifest["peerDependencies"]).toEqual({
+			koishi: "^4.18.11",
+		});
 		expect(
-			(manifest["scripts"] as Record<string, string>)["release"],
+			(manifest["scripts"] as Record<string, string>)[
+				"release"
+			],
 		).toContain("npm publish");
-		expect((manifest["repository"] as Record<string, string>)["url"]).toContain(
-			"Oppenheymu/koishi-plugin-demo",
+		expect(
+			(manifest["repository"] as Record<string, string>)[
+				"url"
+			],
+		).toContain("Oppenheymu/koishi-plugin-demo");
+		expect(JSON.stringify(manifest)).not.toContain(
+			"@@PLUGIN",
 		);
-		expect(JSON.stringify(manifest)).not.toContain("@@PLUGIN");
 	});
 
 	it("console 形态：补 client 依赖与 dist 产物目录", () => {
@@ -111,14 +138,20 @@ describe("renderPackageJson", () => {
 		) as Record<string, unknown>;
 		expect(manifest["files"]).toEqual(["lib", "dist"]);
 		expect(
-			(manifest["devDependencies"] as Record<string, string>)[
-				"@koishijs/client"
-			],
+			(
+				manifest["devDependencies"] as Record<
+					string,
+					string
+				>
+			)["@koishijs/client"],
 		).toBe("^5.30.4");
 		expect(
-			(manifest["peerDependencies"] as Record<string, string>)[
-				"@koishijs/plugin-console"
-			],
+			(
+				manifest["peerDependencies"] as Record<
+					string,
+					string
+				>
+			)["@koishijs/plugin-console"],
 		).toBe("^5.30.11");
 	});
 
@@ -134,13 +167,19 @@ describe("renderPackageJson", () => {
 		) as Record<string, unknown>;
 		expect(manifest["workspaces"]).toBeUndefined();
 		expect(
-			(manifest["scripts"] as Record<string, string>)["changeset"],
+			(manifest["scripts"] as Record<string, string>)[
+				"changeset"
+			],
 		).toBeUndefined();
 		expect(
-			(manifest["scripts"] as Record<string, string>)["release"],
+			(manifest["scripts"] as Record<string, string>)[
+				"release"
+			],
 		).toBeUndefined();
-		expect((manifest["scripts"] as Record<string, string>)["build"]).toBe(
-			"tsdown",
-		);
+		expect(
+			(manifest["scripts"] as Record<string, string>)[
+				"build"
+			],
+		).toBe("tsdown");
 	});
 });

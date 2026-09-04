@@ -34,7 +34,9 @@ describe("Tokenizer Interpolation", () => {
 		const argv = Argv.parse('"foo $(bar) baz"');
 		const tokens = argv.tokens!;
 		// 双引号 token 的插值段被记录到 inters，等待执行阶段求值
-		expect(tokens[0]?.inters).toHaveShape([{ source: "bar", initiator: "$(" }]);
+		expect(tokens[0]?.inters).toHaveShape([
+			{ source: "bar", initiator: "$(" },
+		]);
 		expect(tokens[0]).toHaveShape({ content: "foo  baz" });
 	});
 
@@ -70,10 +72,14 @@ describe("Tokenizer Interpolation", () => {
 		tokenizer.interpolate("%", ")");
 		// 实例上注册的语法可解析
 		const local = tokenizer.parse("x%(y)z");
-		expect(local.tokens![0]?.inters).toHaveShape([{ initiator: "%" }]);
+		expect(local.tokens![0]?.inters).toHaveShape([
+			{ initiator: "%" },
+		]);
 		// 全局默认 tokenizer 不受实例注册影响："%" 不被当作插值
 		const global = Argv.parse("x%(y)z");
-		expect(global.tokens).toHaveShape([{ content: "x%(y)z" }]);
+		expect(global.tokens).toHaveShape([
+			{ content: "x%(y)z" },
+		]);
 		expect(global.tokens![0]?.inters).toEqual([]);
 	});
 
@@ -81,7 +87,14 @@ describe("Tokenizer Interpolation", () => {
 		const tokenizer = new Tokenizer();
 		tokenizer.interpolate("%", "", (source) => ({
 			source,
-			tokens: [{ content: source, quoted: true, terminator: "", inters: [] }],
+			tokens: [
+				{
+					content: source,
+					quoted: true,
+					terminator: "",
+					inters: [],
+				},
+			],
 		}));
 		const argv = tokenizer.parse("a%hello b");
 		// 自定义 parse 接管子段解析，子 argv 原样记录进 inters

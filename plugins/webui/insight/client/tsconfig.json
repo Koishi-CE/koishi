@@ -3,7 +3,9 @@
 	"include": ["."],
 	"compilerOptions": {
 		"paths": {
-			"vue": ["../../../../packages/web/client/node_modules/vue"],
+			"vue": [
+				"../../../../packages/web/client/node_modules/vue"
+			],
 			"@vueuse/core": [
 				"../../../../packages/web/client/node_modules/@vueuse/core"
 			]

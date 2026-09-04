@@ -73,7 +73,11 @@ export default class Virtual {
 	updateUids(uids: string[]) {
 		this.param.uids = uids;
 		this.sizes.forEach((_v, key) => {
-			if (!uids.includes(key) && key !== "header" && key !== "footer")
+			if (
+				!uids.includes(key) &&
+				key !== "header" &&
+				key !== "footer"
+			)
 				this.sizes.delete(key);
 		});
 	}
@@ -108,12 +112,12 @@ export default class Virtual {
 			typeof this.firstRangeTotalSize !== "undefined"
 		) {
 			if (
-				this.sizes.size < Math.min(this.param.count, this.param.uids.length)
+				this.sizes.size <
+				Math.min(this.param.count, this.param.uids.length)
 			) {
-				this.firstRangeTotalSize = [...this.sizes.values()].reduce(
-					(acc, val) => acc + val,
-					0,
-				);
+				this.firstRangeTotalSize = [
+					...this.sizes.values(),
+				].reduce((acc, val) => acc + val, 0);
 				this.firstRangeAverageSize = Math.round(
 					this.firstRangeTotalSize / this.sizes.size,
 				);
@@ -140,7 +144,10 @@ export default class Virtual {
 
 		start = Math.max(start, 0);
 
-		this.updateRange(this.range.start, this.getEndByStart(start));
+		this.updateRange(
+			this.range.start,
+			this.getEndByStart(start),
+		);
 	}
 
 	/** 插槽（header / footer）尺寸变化同样触发强制重算 */
@@ -194,7 +201,8 @@ export default class Virtual {
 	 * 定长模式直接整除；动态模式用二分查找定位 offset 落在哪一项的区间。
 	 */
 	private getScrollOvers() {
-		const offset = this.offset - (this.sizes.get("header") ?? 0);
+		const offset =
+			this.offset - (this.sizes.get("header") ?? 0);
 		if (offset <= 0) return 0;
 
 		// 定长模式可以直接整除得出（定长态 getEstimateSize 即实测固定值）
@@ -241,12 +249,20 @@ export default class Virtual {
 		for (let index = 0; index < givenIndex; index++) {
 			// 下标恒在 uids 界内；越界（不可能发生）按未测量兜底到估算值
 			const uid = this.param.uids[index] ?? "";
-			offset = offset + (this.sizes.get(uid) ?? this.getEstimateSize());
+			offset =
+				offset +
+				(this.sizes.get(uid) ?? this.getEstimateSize());
 		}
 
 		// 记录已精确计算到的最大下标（getPadBehind 据此判断能否精确取值）
-		this.lastCalcIndex = Math.max(this.lastCalcIndex, givenIndex);
-		this.lastCalcIndex = Math.min(this.lastCalcIndex, this.getLastIndex());
+		this.lastCalcIndex = Math.max(
+			this.lastCalcIndex,
+			givenIndex,
+		);
+		this.lastCalcIndex = Math.min(
+			this.lastCalcIndex,
+			this.getLastIndex(),
+		);
 
 		return offset;
 	}
@@ -293,7 +309,10 @@ export default class Virtual {
 
 	/** 由 start 推算对应范围的 end（不超过数据总量） */
 	getEndByStart(start: number) {
-		return Math.min(start + this.param.count, this.param.uids.length);
+		return Math.min(
+			start + this.param.count,
+			this.param.uids.length,
+		);
 	}
 
 	/** 渲染范围之前的总占位高度 */
@@ -318,7 +337,9 @@ export default class Virtual {
 
 		// 已全部精确计算过时返回精确值
 		if (this.lastCalcIndex === lastIndex) {
-			return this.getOffset(lastIndex) - this.getOffset(end);
+			return (
+				this.getOffset(lastIndex) - this.getOffset(end)
+			);
 		} else {
 			// 否则用估算尺寸兜底
 			return (lastIndex - end) * this.getEstimateSize();
@@ -328,9 +349,14 @@ export default class Virtual {
 	/** 取当前估算的项高：定长取实测值，动态取首范围平均值，再退到初始预估 */
 	getEstimateSize() {
 		// FIXED 态下 fixedSizeValue 必然已写入（delete 仅发生在转入 DYNAMIC 时）
-		if (this.isFixedType() && this.fixedSizeValue !== undefined) {
+		if (
+			this.isFixedType() &&
+			this.fixedSizeValue !== undefined
+		) {
 			return this.fixedSizeValue;
 		}
-		return this.firstRangeAverageSize || this.param.estimated;
+		return (
+			this.firstRangeAverageSize || this.param.estimated
+		);
 	}
 }

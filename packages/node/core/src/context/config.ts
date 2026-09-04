@@ -28,7 +28,9 @@ declare module "cordis" {
  * 以函数形式延迟调用：context/index.ts 需先完成 Context 类初始化，
  * 避免模块初始化顺序上的循环依赖。
  */
-export function defineContextConfig(Config: typeof Context.Config) {
+export function defineContextConfig(
+	Config: typeof Context.Config,
+) {
 	defineProperty(
 		Config,
 		"Basic",
@@ -37,9 +39,13 @@ export function defineContextConfig(Config: typeof Context.Config) {
 				.default([""])
 				.role("table")
 				.computed()
-				.description("指令前缀字符构成的数组。将被用于指令的匹配。"),
+				.description(
+					"指令前缀字符构成的数组。将被用于指令的匹配。",
+				),
 			prefixMode: Schema.union([
-				Schema.const("auto").description("默认：当存在称呼时允许无前缀触发。"),
+				Schema.const("auto").description(
+					"默认：当存在称呼时允许无前缀触发。",
+				),
 				Schema.const("strict").description(
 					"严格：只有在指令前缀匹配时才允许触发。",
 				),
@@ -51,15 +57,21 @@ export function defineContextConfig(Config: typeof Context.Config) {
 			nickname: Schema.array(String)
 				.role("table")
 				.computed()
-				.description("机器人昵称构成的数组。将被用于指令的匹配。"),
+				.description(
+					"机器人昵称构成的数组。将被用于指令的匹配。",
+				),
 			autoAssign: Schema.boolean()
 				.default(true)
 				.computed()
-				.description("当获取不到频道数据时，是否使用接受者作为受理人。"),
+				.description(
+					"当获取不到频道数据时，是否使用接受者作为受理人。",
+				),
 			autoAuthorize: Schema.natural()
 				.default(1)
 				.computed()
-				.description("当获取不到用户数据时默认使用的权限等级。"),
+				.description(
+					"当获取不到用户数据时默认使用的权限等级。",
+				),
 			minSimilarity: Schema.percent()
 				.default(1)
 				.description(
@@ -89,15 +101,21 @@ export function defineContextConfig(Config: typeof Context.Config) {
 			cancel: Schema.natural()
 				.role("ms")
 				.default(0)
-				.description("调用 `session.cancelQueued()` 时默认的延迟。"),
+				.description(
+					"调用 `session.cancelQueued()` 时默认的延迟。",
+				),
 			broadcast: Schema.natural()
 				.role("ms")
 				.default(0.5 * Time.second)
-				.description("调用 `bot.broadcast()` 时默认的延迟。"),
+				.description(
+					"调用 `bot.broadcast()` 时默认的延迟。",
+				),
 			prompt: Schema.natural()
 				.role("ms")
 				.default(Time.minute)
-				.description("调用 `session.prompt()` 时默认的等待时间。"),
+				.description(
+					"调用 `session.prompt()` 时默认的等待时间。",
+				),
 		}),
 	);
 

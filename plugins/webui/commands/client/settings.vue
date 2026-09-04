@@ -24,7 +24,9 @@ import { computed, inject } from "vue";
 import type { CommandData } from "../lib";
 
 // 由配置管理面板注入的「当前插件」信息（此处仅需 path 字段）
-const current = inject<Ref<{ path: string }>>("manager.settings.current");
+const current = inject<Ref<{ path: string }>>(
+	"manager.settings.current",
+);
 
 const data = useRpc<Dict<CommandData>>();
 

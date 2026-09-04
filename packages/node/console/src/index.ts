@@ -57,7 +57,10 @@ declare module "@koishi-ce/koishi" {
 
 /** 前端 RPC 监听器：回调绑定到发起调用的 Client 上执行 */
 export interface Listener extends DataService.Options {
-	callback(this: Client, ...args: unknown[]): Awaitable<unknown>;
+	callback(
+		this: Client,
+		...args: unknown[]
+	): Awaitable<unknown>;
 }
 
 /** 单个入口下发给前端的数据结构 */
@@ -76,9 +79,14 @@ interface EntryResponseData {
 	data: unknown;
 }
 
-type EntryResponse = Record<string, EntryResponseData | string>;
+type EntryResponse = Record<
+	string,
+	EntryResponseData | string
+>;
 type ServiceValue<K extends keyof Console.Services> =
-	Console.Services[K] extends DataService<infer T> ? T : never;
+	Console.Services[K] extends DataService<infer T>
+		? T
+		: never;
 
 /**
  * 内置数据服务：向前端下发全部入口信息。
@@ -122,7 +130,8 @@ export abstract class Console extends Service {
 	 */
 	public services = new Proxy({} as Console.Services, {
 		get: (target, key, receiver) => {
-			if (typeof key === "symbol") return Reflect.get(target, key, receiver);
+			if (typeof key === "symbol")
+				return Reflect.get(target, key, receiver);
 			return this.ctx.get(`console.services.${key}`);
 		},
 		set: (_target, _key, _value, _receiver) => {
@@ -147,7 +156,10 @@ export abstract class Console extends Service {
 	 * 接收一个已建立的 WebSocket 连接。
 	 * 由派生类在握手完成时调用；此处登记客户端并在连接关闭时清理。
 	 */
-	protected accept(socket: Universal.WebSocket, request: IncomingMessage) {
+	protected accept(
+		socket: Universal.WebSocket,
+		request: IncomingMessage,
+	) {
 		const client = new Client(this.ctx, socket, request);
 		socket.addEventListener("close", () => {
 			delete this.clients[client.id];
@@ -165,14 +177,19 @@ export abstract class Console extends Service {
 	 */
 	async get(client: Client) {
 		return {
-			...valueMap(this.entries, ({ files, ctx, data }, key) => {
-				const paths = this.ctx.get("loader")?.paths(ctx.scope);
-				return {
-					files: this.resolveEntry(files, key),
-					...(paths !== undefined ? { paths } : {}),
-					data: data?.(client),
-				};
-			}),
+			...valueMap(
+				this.entries,
+				({ files, ctx, data }, key) => {
+					const paths = this.ctx
+						.get("loader")
+						?.paths(ctx.scope);
+					return {
+						files: this.resolveEntry(files, key),
+						...(paths !== undefined ? { paths } : {}),
+						data: data?.(client),
+					};
+				},
+			),
 			_id: this.id,
 		};
 	}
@@ -181,7 +198,10 @@ export abstract class Console extends Service {
 	 * 将入口的文件声明解析为前端可加载的 URL 列表。
 	 * 由具体宿主环境（如 @koishi-ce/plugin-console）实现。
 	 */
-	protected abstract resolveEntry(files: Entry.Files, key: string): string[];
+	protected abstract resolveEntry(
+		files: Entry.Files,
+		key: string,
+	): string[];
 
 	/**
 	 * 注册一个前端入口（扩展脚本）。
@@ -227,9 +247,17 @@ export abstract class Console extends Service {
 		if (!handles.length) return;
 		await Promise.all(
 			Object.values(this.clients).map(async (client) => {
-				if (await this.ctx.serial("console/intercept", client, options)) return;
+				if (
+					await this.ctx.serial(
+						"console/intercept",
+						client,
+						options,
+					)
+				)
+					return;
 				const data = { type, body };
-				if (typeof body === "function") data.body = await body(client);
+				if (typeof body === "function")
+					data.body = await body(client);
 				client.socket.send(JSON.stringify(data));
 			}),
 		);
@@ -239,14 +267,21 @@ export abstract class Console extends Service {
 	 * 触发指定数据服务的全量刷新（重新计算并广播数据）。
 	 */
 	refresh<K extends keyof Console.Services>(type: K) {
-		return this.ctx.get(`console.services.${type}`)?.refresh();
+		return this.ctx
+			.get(`console.services.${type}`)
+			?.refresh();
 	}
 
 	/**
 	 * 向指定数据服务提交增量补丁（部分更新）并广播。
 	 */
-	patch<K extends keyof Console.Services>(type: K, value: ServiceValue<K>) {
-		const service = this.ctx.get(`console.services.${type}`) as
+	patch<K extends keyof Console.Services>(
+		type: K,
+		value: ServiceValue<K>,
+	) {
+		const service = this.ctx.get(
+			`console.services.${type}`,
+		) as
 			| { patch(value: ServiceValue<K>): void }
 			| undefined;
 		return service?.patch(value);

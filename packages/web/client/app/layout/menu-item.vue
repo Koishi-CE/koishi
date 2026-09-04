@@ -54,7 +54,9 @@ const scope = computed(() =>
 function toValue<T>(getter: MaybeGetter<T>): T {
 	if (typeof getter !== "function") return getter;
 	// 收窄到 MaybeGetter 的函数分支（以作用域为参的 getter）
-	return (getter as (current: typeof scope.value) => T)(scope.value);
+	return (getter as (current: typeof scope.value) => T)(
+		scope.value,
+	);
 }
 
 function trigger() {

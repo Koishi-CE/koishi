@@ -21,7 +21,10 @@ import { Context } from "./index.ts";
  * Koishi 应用服务：持有根配置与三大 Mixin 实例。
  * 服务名固定为 "koishi"，注册后可通过 `ctx.koishi` 访问。
  */
-export default class Koishi extends cordis.Service<Context.Config, Context> {
+export default class Koishi extends cordis.Service<
+	Context.Config,
+	Context
+> {
 	override config: Context.Config;
 
 	/** bot 能力聚合（getGuildMemberMap / broadcast） */

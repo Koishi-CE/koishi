@@ -41,7 +41,10 @@ interface BuildResult {
 function findModulePath(id: string) {
 	const path = require.resolve(id).replace(/\\/g, "/");
 	const keyword = `/node_modules/${id}/`;
-	return path.slice(0, path.indexOf(keyword)) + keyword.slice(0, -1);
+	return (
+		path.slice(0, path.indexOf(keyword)) +
+		keyword.slice(0, -1)
+	);
 }
 
 // 源码 scripts/ 与打包后 lib/ 到仓库根的深度一致（四级），两种运行
@@ -126,18 +129,21 @@ async function build(
 
 export default async function () {
 	// 第一步：构建控制台主应用（入口为 app/index.html，产物 index.js）
-	const { output } = await build(`${cwd}/packages/web/client/app`, {
-		plugins: [
-			unocss({
-				presets: [
-					mini({
-						// 宿主 html 已自带基础样式，这里关掉 unocss 的全局 reset
-						preflight: false,
-					}),
-				],
-			}),
-		],
-	});
+	const { output } = await build(
+		`${cwd}/packages/web/client/app`,
+		{
+			plugins: [
+				unocss({
+					presets: [
+						mini({
+							// 宿主 html 已自带基础样式，这里关掉 unocss 的全局 reset
+							preflight: false,
+						}),
+					],
+				}),
+			],
+		},
+	);
 
 	// 第二步：三个运行时共享包。vue 直接复制官方 runtime esm-browser 产物；
 	// vue-router 与 @vueuse/core 以各自官方浏览器产物为入口重新打包，
@@ -145,7 +151,9 @@ export default async function () {
 	await Promise.all([
 		Bun.write(
 			`${dist}/vue.js`,
-			Bun.file(`${findModulePath("vue")}/dist/vue.runtime.esm-browser.prod.js`),
+			Bun.file(
+				`${findModulePath("vue")}/dist/vue.runtime.esm-browser.prod.js`,
+			),
 		),
 		build(`${findModulePath("vue-router")}/dist`, {
 			build: {
@@ -190,7 +198,9 @@ export default async function () {
 					output: {
 						// element-plus 体积大，单独拆为 element chunk
 						manualChunks(id: string) {
-							return id.includes("element-plus") ? "element" : undefined;
+							return id.includes("element-plus")
+								? "element"
+								: undefined;
 						},
 					},
 					preserveEntrySignatures: "strict",
@@ -204,7 +214,10 @@ export default async function () {
 	// 因此这里把主应用构建（留在内存 output 中）的样式追加到文件末尾，
 	// 使最终 style.css 同时包含两者
 	for (const file of output) {
-		if (file.type === "asset" && file.name === "style.css") {
+		if (
+			file.type === "asset" &&
+			file.name === "style.css"
+		) {
 			if (file.source === undefined) continue;
 			await appendFile(`${dist}/style.css`, file.source);
 		}

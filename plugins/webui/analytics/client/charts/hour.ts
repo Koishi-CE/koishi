@@ -25,13 +25,17 @@ export default (ctx: Context) => {
 				// render 侧已按 fields 守卫,此处仅为收窄可选的 store 键
 				if (!analytics) return;
 				// 当前页签下全天均为 0（对应方向无数据）则不渲染
-				if (analytics.messageByHour.every((val) => !val[tab])) return;
+				if (
+					analytics.messageByHour.every((val) => !val[tab])
+				)
+					return;
 				return {
 					tooltip: Tooltip.axis<number[]>(([first]) => {
 						if (!first) return "";
 						const [x = 0] = first.data;
 						const { dataIndex } = first;
-						const source = analytics.messageByHour[dataIndex];
+						const source =
+							analytics.messageByHour[dataIndex];
 						const output = [
 							`${formatHour(x)}`,
 							`日均消息数量：${+(source?.[tab] || 0).toFixed(1)}`,
@@ -49,7 +53,8 @@ export default (ctx: Context) => {
 						},
 						axisPointer: {
 							label: {
-								formatter: ({ value }) => formatHour(value as number),
+								formatter: ({ value }) =>
+									formatHour(value as number),
 							},
 						},
 					},
@@ -58,10 +63,12 @@ export default (ctx: Context) => {
 					},
 					series: [
 						{
-							data: analytics.messageByHour.map((val, index) => [
-								index + 0.5,
-								val[tab] || 0,
-							]),
+							data: analytics.messageByHour.map(
+								(val, index) => [
+									index + 0.5,
+									val[tab] || 0,
+								],
+							),
 							type: "bar",
 							stack: "1",
 						},

@@ -27,20 +27,26 @@ export function detectAgent(): string {
 /** 静默执行命令探测其是否可用（如 git --version），失败即视为不可用 */
 export function supports(command: readonly string[]) {
 	return (
-		spawnSync(command[0] ?? "", command.slice(1), { stdio: "ignore" })
-			.status === 0
+		spawnSync(command[0] ?? "", command.slice(1), {
+			stdio: "ignore",
+		}).status === 0
 	);
 }
 
 /** 读 git 全局配置单项（读不到 → 空串） */
 export function gitConfig(key: string): string {
-	const res = spawnSync("git", ["config", "--get", key], { encoding: "utf8" });
+	const res = spawnSync("git", ["config", "--get", key], {
+		encoding: "utf8",
+	});
 	return res.status === 0 ? (res.stdout?.trim() ?? "") : "";
 }
 
 /** 递归清空目录内容（目录本身保留）。 */
 export function emptyDir(root: string) {
 	for (const file of readdirSync(root)) {
-		rmSync(join(root, file), { recursive: true, force: true });
+		rmSync(join(root, file), {
+			recursive: true,
+			force: true,
+		});
 	}
 }

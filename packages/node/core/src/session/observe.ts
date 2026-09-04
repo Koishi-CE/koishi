@@ -23,15 +23,24 @@ export class SessionObservable extends SessionMessaging {
 	 * 记录不存在时：开了 autoAssign 则入库创建并指派给本机器人，
 	 * 否则返回带 `$detached` 标记的游离对象（修改不会落库）。
 	 */
-	override async getChannel<K extends Channel.Field = never>(
+	override async getChannel<
+		K extends Channel.Field = never,
+	>(
 		id = this.channelId ?? "",
 		fields: K[] = [],
 	): Promise<Channel> {
 		const { app, platform, guildId } = this;
-		if (!fields.length) return { platform, id, guildId } as Channel;
-		const channel = await app.database.getChannel(platform, id, fields);
+		if (!fields.length)
+			return { platform, id, guildId } as Channel;
+		const channel = await app.database.getChannel(
+			platform,
+			id,
+			fields,
+		);
 		if (channel) return channel as unknown as Channel;
-		const assignee = this.resolve(app.koishi.config.autoAssign ?? true)
+		const assignee = this.resolve(
+			app.koishi.config.autoAssign ?? true,
+		)
 			? this.selfId
 			: "";
 		if (assignee) {
@@ -44,8 +53,14 @@ export class SessionObservable extends SessionMessaging {
 			// 游离频道：仅存在于内存，写回会被 $detached 守卫拦截
 			const table = app.model.tables["channel"];
 			const channel = table?.create();
-			if (!channel) throw new Error("cannot create detached channel");
-			Object.assign(channel, { platform, id, guildId, $detached: true });
+			if (!channel)
+				throw new Error("cannot create detached channel");
+			Object.assign(channel, {
+				platform,
+				id,
+				guildId,
+				$detached: true,
+			});
 			return channel;
 		}
 	}
@@ -54,22 +69,28 @@ export class SessionObservable extends SessionMessaging {
 	 * 内部工具：观察单个 channelId（不区分频道/群），
 	 * 包装为可观察对象并在 diff 时写回数据库。
 	 */
-	async _observeChannelLike<K extends Channel.Field = never>(
-		channelId: string,
-		fields: Iterable<K> = [],
-	) {
+	async _observeChannelLike<
+		K extends Channel.Field = never,
+	>(channelId: string, fields: Iterable<K> = []) {
 		const fieldSet = new Set<Channel.Field>(fields);
 		const { platform } = this;
 		const key = `${platform}:${channelId}`;
 
-		const data = await this.getChannel(channelId, [...fieldSet]);
+		const data = await this.getChannel(channelId, [
+			...fieldSet,
+		]);
 		const cache = observe(
 			data,
 			async (diff) => {
 				// 游离频道不入库（写回前拦截），见上游 issue #1267：
 				// https://github.com/koishijs/koishi/issues/1267
-				if ("$detached" in data && data["$detached"]) return;
-				await this.app.database.setChannel(platform, channelId, diff);
+				if ("$detached" in data && data["$detached"])
+					return;
+				await this.app.database.setChannel(
+					platform,
+					channelId,
+					diff,
+				);
 			},
 			`channel ${key}`,
 		);
@@ -82,16 +103,27 @@ export class SessionObservable extends SessionMessaging {
 	 * 群聊场景下频道 ID 与群 ID 不同，需要同时观察两者：
 	 * channel 挂 this.channel，guild 挂 this.guild（两者均含群级设置）。
 	 */
-	override async observeChannel<T extends Channel.Field = never>(
-		fields: Iterable<T>,
-	): Promise<Channel.Observed<T>> {
-		const tasks = [this._observeChannelLike(this.channelId ?? "", fields)];
+	override async observeChannel<
+		T extends Channel.Field = never,
+	>(fields: Iterable<T>): Promise<Channel.Observed<T>> {
+		const tasks = [
+			this._observeChannelLike(
+				this.channelId ?? "",
+				fields,
+			),
+		];
 		if (this.channelId !== this.guildId) {
-			tasks.push(this._observeChannelLike(this.guildId ?? "", fields));
+			tasks.push(
+				this._observeChannelLike(
+					this.guildId ?? "",
+					fields,
+				),
+			);
 		}
 		const results = await Promise.all(tasks);
 		const channel = results[0];
-		if (!channel) throw new Error("failed to observe channel");
+		if (!channel)
+			throw new Error("failed to observe channel");
 		const guild = results[1] ?? channel;
 		this.guild = guild;
 		this.channel = channel;
@@ -111,17 +143,32 @@ export class SessionObservable extends SessionMessaging {
 	): Promise<User> {
 		const { app, platform } = this;
 		if (!fields.length) return {} as User;
-		const user = await app.database.getUser(platform, userId, fields);
+		const user = await app.database.getUser(
+			platform,
+			userId,
+			fields,
+		);
 		if (user) return user as unknown as User;
-		const authority = this.resolve(app.koishi.config.autoAuthorize ?? 1);
-		const data = { locales: this.locales, authority, createdAt: new Date() };
+		const authority = this.resolve(
+			app.koishi.config.autoAuthorize ?? 1,
+		);
+		const data = {
+			locales: this.locales,
+			authority,
+			createdAt: new Date(),
+		};
 		if (authority) {
-			return app.database.createUser(platform, userId, data);
+			return app.database.createUser(
+				platform,
+				userId,
+				data,
+			);
 		} else {
 			// 游离用户：仅存在于内存，写回会被 $detached 守卫拦截
 			const table = app.model.tables["user"];
 			const user = table?.create();
-			if (!user) throw new Error("cannot create detached user");
+			if (!user)
+				throw new Error("cannot create detached user");
 			Object.assign(user, { ...data, $detached: true });
 			return user;
 		}
@@ -152,14 +199,20 @@ export class SessionObservable extends SessionMessaging {
 		}
 
 		// 匿名用户：不落库，用模型默认值构造临时观察对象
-		if ((this.author as { anonymous?: unknown } | undefined)?.anonymous) {
+		if (
+			(this.author as { anonymous?: unknown } | undefined)
+				?.anonymous
+		) {
 			const table = this.app.model.tables["user"];
 			const fallback = table?.create();
-			if (!fallback) throw new Error("cannot create anonymous user");
+			if (!fallback)
+				throw new Error("cannot create anonymous user");
 			fallback.authority = this.resolve(
 				this.app.koishi.config.autoAuthorize ?? 1,
 			);
-			const user = observe(fallback, () => Promise.resolve());
+			const user = observe(fallback, () =>
+				Promise.resolve(),
+			);
 			return (this.user = user);
 		}
 
@@ -174,8 +227,13 @@ export class SessionObservable extends SessionMessaging {
 				async (diff) => {
 					// 游离用户不入库（写回前拦截），见上游 issue #1267：
 					// https://github.com/koishijs/koishi/issues/1267
-					if ("$detached" in data && data["$detached"]) return;
-					await this.app.database.setUser(this.platform, userId ?? "", diff);
+					if ("$detached" in data && data["$detached"])
+						return;
+					await this.app.database.setUser(
+						this.platform,
+						userId ?? "",
+						diff,
+					);
 				},
 				`user ${this.uid}`,
 			);

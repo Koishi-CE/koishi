@@ -15,7 +15,8 @@ import type { Channel, User } from "../database/index.ts";
 import { SessionObservable } from "./observe.ts";
 
 /** 会话本地化层：作用域管理与 i18n 渲染 */
-export interface SessionLocalized extends SessionObservable {}
+export interface SessionLocalized
+	extends SessionObservable {}
 
 export class SessionLocalized extends SessionObservable {
 	/**
@@ -63,14 +64,19 @@ export class SessionLocalized extends SessionObservable {
 	override resolveScope(path: string) {
 		if (!path.startsWith(".")) return path;
 		if (!this.scope) {
-			this.app.logger("i18n").warn(new Error(`missing scope for "${path}"`));
+			this.app
+				.logger("i18n")
+				.warn(new Error(`missing scope for "${path}"`));
 			return "";
 		}
 		return this.scope + path;
 	}
 
 	/** 以纯文本渲染 i18n 文案（拼接各片段，不保留元素结构）。 */
-	override text(path: string | string[], params: object = {}) {
+	override text(
+		path: string | string[],
+		params: object = {},
+	) {
 		return this.i18n(path, params).join("");
 	}
 
@@ -79,18 +85,30 @@ export class SessionLocalized extends SessionObservable {
 	 * （output 为 prefer-user 时用户语言优先级提到最前），
 	 * 最后会话自带 locales 永远最优先，再交由 app.i18n 渲染。
 	 */
-	override i18n(path: string | string[], params: object = {}) {
+	override i18n(
+		path: string | string[],
+		params: object = {},
+	) {
 		const locales: string[] = [
-			...((this.channel as Channel.Observed)?.locales || []),
+			...((this.channel as Channel.Observed)?.locales ||
+				[]),
 			...((this.guild as Channel.Observed)?.locales || []),
 		];
-		if (this.app.koishi.config.i18n?.output === "prefer-user") {
-			locales.unshift(...((this.user as User.Observed)?.locales || []));
+		if (
+			this.app.koishi.config.i18n?.output === "prefer-user"
+		) {
+			locales.unshift(
+				...((this.user as User.Observed)?.locales || []),
+			);
 		} else {
-			locales.push(...((this.user as User.Observed)?.locales || []));
+			locales.push(
+				...((this.user as User.Observed)?.locales || []),
+			);
 		}
 		locales.unshift(...(this.locales || []));
-		const paths = makeArray(path).map((path) => this.resolveScope(path));
+		const paths = makeArray(path).map((path) =>
+			this.resolveScope(path),
+		);
 		return this.app.i18n.render(locales, paths, params);
 	}
 }

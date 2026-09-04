@@ -150,7 +150,10 @@ function installDep(
 
 	// workspace packages don't need to be installed
 	if (config.value.market.bulkMode && !workspace.value) {
-		if (dep.value?.resolved === version || (!version && !dep.value)) {
+		if (
+			dep.value?.resolved === version ||
+			(!version && !dep.value)
+		) {
 			delete config.value.market.override[target];
 		} else {
 			config.value.market.override[target] = version;
@@ -162,8 +165,13 @@ function installDep(
 	// 1. The plugin is to be removed.
 	// 2. The plugin has config entries.
 	// 3. `removeConfig` is not set.
-	if (checkConfig && ctx.configWriter?.get(target)?.length) {
-		if (typeof config.value.market?.removeConfig !== "boolean") {
+	if (
+		checkConfig &&
+		ctx.configWriter?.get(target)?.length
+	) {
+		if (
+			typeof config.value.market?.removeConfig !== "boolean"
+		) {
 			showRemoveDialog.value = true;
 			return;
 		} else {
@@ -200,7 +208,10 @@ const version = computed({
 
 const selectVersion = computed({
 	get() {
-		if (store.dependencies?.[active.value]?.request === version.value) {
+		if (
+			store.dependencies?.[active.value]?.request ===
+			version.value
+		) {
 			return `${version.value} (当前)`;
 		} else {
 			return version.value;
@@ -214,7 +225,9 @@ const selectVersion = computed({
 const versions = reactive<Dict<string>>({});
 
 function getOverride() {
-	return config.value.market.bulkMode ? config.value.market.override : versions;
+	return config.value.market.bulkMode
+		? config.value.market.override
+		: versions;
 }
 
 function getVersion(name: string) {
@@ -234,24 +247,34 @@ function setVersion(name: string, version: string) {
 const unchanged = computed(() => {
 	return (
 		!data.value?.[version.value] ||
-		(version.value === store.dependencies?.[active.value]?.request &&
+		(version.value ===
+			store.dependencies?.[active.value]?.request &&
 			!!store.dependencies?.[active.value]?.resolved)
 	);
 });
 
-const dep = computed(() => store.dependencies?.[active.value]);
-const current = computed(() => store.dependencies?.[active.value]?.resolved);
-const local = computed(() => store.packages?.[active.value]);
+const dep = computed(
+	() => store.dependencies?.[active.value],
+);
+const current = computed(
+	() => store.dependencies?.[active.value]?.resolved,
+);
+const local = computed(
+	() => store.packages?.[active.value],
+);
 
 const showRemoveButton = computed(() => {
 	return (
 		current.value ||
 		store.dependencies?.[active.value] ||
-		(config.value.market.bulkMode && config.value.market.override[active.value])
+		(config.value.market.bulkMode &&
+			config.value.market.override[active.value])
 	);
 });
 
-const workspace = computed(() => getWorkspaceVersion(active.value));
+const workspace = computed(() =>
+	getWorkspaceVersion(active.value),
+);
 
 function getWorkspaceVersion(name: string) {
 	// workspace plugins:     dependencies ? packages √
@@ -272,7 +295,8 @@ const data = computed(() => {
 const danger = computed(() => {
 	if (workspace.value) return;
 	const deprecated =
-		store.registry?.[active.value]?.[version.value]?.deprecated;
+		store.registry?.[active.value]?.[version.value]
+			?.deprecated;
 	if (deprecated) return `此版本已废弃：${deprecated}`;
 	if (store.market?.data[active.value]?.insecure) {
 		return "警告：从此插件的最新版本中检测出安全性问题。安装或升级此插件可能导致严重问题。";
@@ -280,7 +304,8 @@ const danger = computed(() => {
 });
 
 const warning = computed(() => {
-	if (!version.value || !current.value || workspace.value) return;
+	if (!version.value || !current.value || workspace.value)
+		return;
 	try {
 		const source = parse(current.value);
 		const target = parse(version.value);
@@ -299,20 +324,26 @@ const result = computed(() => {
 	// analyzeVersions 以精确版本号为键的合法键，查不到时按未定级处理
 	const entry = data.value?.[version.value];
 	if (!entry) return;
-	if (entry.result === "danger" || danger.value) return "danger";
-	if (entry.result === "warning" || warning.value) return "warning";
+	if (entry.result === "danger" || danger.value)
+		return "danger";
+	if (entry.result === "warning" || warning.value)
+		return "warning";
 	return entry.result;
 });
 
 function shouldFetchRegistry(name: string) {
-	return !store.registry?.[name] && !getWorkspaceVersion(name);
+	return (
+		!store.registry?.[name] && !getWorkspaceVersion(name)
+	);
 }
 
 watch(
 	() => data.value?.[version.value]?.peers,
 	async (peers) => {
 		if (!peers) return;
-		const names = Object.keys(peers).filter(shouldFetchRegistry);
+		const names = Object.keys(peers).filter(
+			shouldFetchRegistry,
+		);
 		let registry: typeof store.registry = {};
 		if (names.length) {
 			registry = await send("market/registry", names);
@@ -329,7 +360,8 @@ watch(
 		for (const name in peers) {
 			if (!registry[name]) continue;
 			const { result } = peers[name];
-			if (result !== "warning" && result !== "danger") continue;
+			if (result !== "warning" && result !== "danger")
+				continue;
 			versions[name] = Object.keys(registry[name])[0];
 		}
 	},
@@ -346,8 +378,12 @@ watch(
 			Object.keys(store.registry?.[name] || {})[0];
 
 		if (shouldFetchRegistry(name)) {
-			const registry = await send("market/registry", [name]);
-			version.value = Object.keys(registry[active.value])[0];
+			const registry = await send("market/registry", [
+				name,
+			]);
+			version.value = Object.keys(
+				registry[active.value],
+			)[0];
 		}
 	},
 	{ immediate: true },
@@ -380,9 +416,17 @@ function getResultText(peer: PeerInfo, name: string) {
 		case "primary":
 			return isOverriden ? "等待移除" : "可选";
 		case "danger":
-			return peer.resolved ? "不兼容" : isOverriden ? "等待移除" : "未下载";
+			return peer.resolved
+				? "不兼容"
+				: isOverriden
+					? "等待移除"
+					: "未下载";
 		case "success":
-			return isOverriden ? (isInstalled ? "等待更新" : "等待安装") : "已下载";
+			return isOverriden
+				? isInstalled
+					? "等待更新"
+					: "等待安装"
+				: "已下载";
 	}
 }
 </script>

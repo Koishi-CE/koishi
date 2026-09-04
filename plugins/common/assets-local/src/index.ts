@@ -38,26 +38,31 @@ class LocalAssets extends Assets<LocalAssets.Config> {
 	static override inject = ["server"];
 
 	/** 插件配置的 Schema（静态挂载与 koishi 插件约定同构） */
-	static override Config: Schema<LocalAssets.Config> = Schema.intersect([
-		Schema.object({
-			root: Schema.path({
-				filters: ["directory"],
-				allowCreate: true,
-			})
-				.default("data/assets")
-				.description("本地存储资源文件的相对路径。"),
-			path: Schema.string()
-				.default("/files")
-				.description("静态图片暴露在服务器的路径。"),
-			selfUrl: Schema.string()
-				.role("link")
-				.description("Koishi 服务暴露在公网的地址。缺省时将使用全局配置。"),
-			secret: Schema.string()
-				.role("secret")
-				.description("用于验证上传者的密钥，配合 assets-remote 使用。"),
-		}),
-		Assets.Config,
-	]);
+	static override Config: Schema<LocalAssets.Config> =
+		Schema.intersect([
+			Schema.object({
+				root: Schema.path({
+					filters: ["directory"],
+					allowCreate: true,
+				})
+					.default("data/assets")
+					.description("本地存储资源文件的相对路径。"),
+				path: Schema.string()
+					.default("/files")
+					.description("静态图片暴露在服务器的路径。"),
+				selfUrl: Schema.string()
+					.role("link")
+					.description(
+						"Koishi 服务暴露在公网的地址。缺省时将使用全局配置。",
+					),
+				secret: Schema.string()
+					.role("secret")
+					.description(
+						"用于验证上传者的密钥，配合 assets-remote 使用。",
+					),
+			}),
+			Assets.Config,
+		]);
 
 	/** 启动任务（存量统计），upload / stats 在其完成后才可用 */
 	private _task: Promise<void> = Promise.resolve();
@@ -74,9 +79,13 @@ class LocalAssets extends Assets<LocalAssets.Config> {
 	constructor(ctx: Context, config: LocalAssets.Config) {
 		super(ctx, config);
 
-		this.root = resolve(ctx.baseDir, config.root || "data/assets");
+		this.root = resolve(
+			ctx.baseDir,
+			config.root || "data/assets",
+		);
 
-		const selfUrl = config.selfUrl || ctx.server.config.selfUrl;
+		const selfUrl =
+			config.selfUrl || ctx.server.config.selfUrl;
 		if (selfUrl) {
 			this.path = sanitize(config.path || "/files");
 			this.baseUrl = trimSlash(selfUrl) + this.path;
@@ -94,7 +103,9 @@ class LocalAssets extends Assets<LocalAssets.Config> {
 	private async _start() {
 		const legacy = resolve(this.ctx.baseDir, "public");
 		await mkdir(this.root, { recursive: true });
-		const stats: Stats | null = await stat(legacy).catch(() => null);
+		const stats: Stats | null = await stat(legacy).catch(
+			() => null,
+		);
 		if (stats?.isDirectory()) {
 			this.ctx.logger.info("migrating to data directory");
 			await cp(legacy, this.root);
@@ -104,8 +115,11 @@ class LocalAssets extends Assets<LocalAssets.Config> {
 		this._stats.assetCount = filenames.length;
 		await Promise.all(
 			filenames.map(async (file) => {
-				const { size } = await stat(resolve(this.root, file));
-				this._stats.assetSize = (this._stats.assetSize ?? 0) + size;
+				const { size } = await stat(
+					resolve(this.root, file),
+				);
+				this._stats.assetSize =
+					(this._stats.assetSize ?? 0) + size;
 			}),
 		);
 	}
@@ -120,30 +134,40 @@ class LocalAssets extends Assets<LocalAssets.Config> {
 			koa.body = await this.stats();
 		});
 
-		this.ctx.server.get(`${this.path}/:name`, async (koa) => {
-			// 路由参数 :name 必然存在，此守卫仅为收窄类型
-			const name = koa.params["name"];
-			if (!name) {
-				koa.status = 404;
-				return;
-			}
-			const filename = resolve(this.root, basename(name));
-			// file-type v22 移除了流式探测导出：改为读取文件头部字节按魔数判定
-			// MIME 后再以流式响应返回文件本体。4100 为 file-type 探测所需的最小
-			// 样本字节数，判型语义与上游一致（不信任扩展名）。
-			const head = Buffer.alloc(4100);
-			const handle = await open(filename, "r");
-			try {
-				const { bytesRead } = await handle.read(head, 0, head.byteLength, 0);
-				const fileType = await fileTypeFromBuffer(head.subarray(0, bytesRead));
-				if (fileType?.mime) {
-					koa.type = fileType.mime;
+		this.ctx.server.get(
+			`${this.path}/:name`,
+			async (koa) => {
+				// 路由参数 :name 必然存在，此守卫仅为收窄类型
+				const name = koa.params["name"];
+				if (!name) {
+					koa.status = 404;
+					return;
 				}
-			} finally {
-				await handle.close();
-			}
-			koa.body = createReadStream(filename);
-		});
+				const filename = resolve(this.root, basename(name));
+				// file-type v22 移除了流式探测导出：改为读取文件头部字节按魔数判定
+				// MIME 后再以流式响应返回文件本体。4100 为 file-type 探测所需的最小
+				// 样本字节数，判型语义与上游一致（不信任扩展名）。
+				const head = Buffer.alloc(4100);
+				const handle = await open(filename, "r");
+				try {
+					const { bytesRead } = await handle.read(
+						head,
+						0,
+						head.byteLength,
+						0,
+					);
+					const fileType = await fileTypeFromBuffer(
+						head.subarray(0, bytesRead),
+					);
+					if (fileType?.mime) {
+						koa.type = fileType.mime;
+					}
+				} finally {
+					await handle.close();
+				}
+				koa.body = createReadStream(filename);
+			},
+		);
 
 		this.ctx.server.post(this.path, async (koa) => {
 			const { salt, sign, url, file } = koa.query;
@@ -159,7 +183,10 @@ class LocalAssets extends Assets<LocalAssets.Config> {
 			}
 			const filename = typeof file === "string" ? file : "";
 			if (this.config.secret) {
-				if (typeof salt !== "string" || typeof sign !== "string") {
+				if (
+					typeof salt !== "string" ||
+					typeof sign !== "string"
+				) {
 					koa.status = 400;
 					return;
 				}
@@ -178,14 +205,19 @@ class LocalAssets extends Assets<LocalAssets.Config> {
 	/** 落盘并累计存量统计 */
 	private async write(buffer: Buffer, filename: string) {
 		await writeFile(filename, buffer);
-		this._stats.assetCount = (this._stats.assetCount ?? 0) + 1;
-		this._stats.assetSize = (this._stats.assetSize ?? 0) + buffer.byteLength;
+		this._stats.assetCount =
+			(this._stats.assetCount ?? 0) + 1;
+		this._stats.assetSize =
+			(this._stats.assetSize ?? 0) + buffer.byteLength;
 	}
 
 	override async upload(url: string, file: string) {
 		if (url.startsWith(this.baseUrl)) return url;
 		await this._task;
-		const { buffer, filename } = await this.analyze(url, file);
+		const { buffer, filename } = await this.analyze(
+			url,
+			file,
+		);
 		const savePath = resolve(this.root, filename);
 		await this.write(buffer, savePath);
 		if (this.noServer) {

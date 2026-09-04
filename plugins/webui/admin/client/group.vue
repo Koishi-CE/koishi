@@ -114,7 +114,12 @@
  * 选中用户组时还提供组成员管理（按平台 + 账号添加 / 移除用户）。
  * 所有变更通过 admin/* RPC 事件发送到服务端。
  */
-import { message, send, store, useRpc } from "@koishi-ce/client";
+import {
+	message,
+	send,
+	store,
+	useRpc,
+} from "@koishi-ce/client";
 import type Admin from "@koishi-ce/plugin-admin/src";
 import {} from "@koishi-ce/plugin-locales";
 import { debounce } from "throttle-debounce";
@@ -183,7 +188,8 @@ const activeTrack = computed<string>({
 
 // 选中条目的权限列表（active 已保证 type / id 有效）
 const permissions = computed(() => {
-	return data.value[active.value.type][active.value.id].permissions;
+	return data.value[active.value.type][active.value.id]
+		.permissions;
 });
 
 // 行内重命名：输入停顿 1s 后才发送，避免每个按键都打一次 RPC
@@ -196,10 +202,12 @@ const renameItem = debounce(
 
 const renameInput = computed<string>({
 	get() {
-		return data.value[active.value.type][active.value.id].name;
+		return data.value[active.value.type][active.value.id]
+			.name;
 	},
 	set(value) {
-		data.value[active.value.type][active.value.id].name = value;
+		data.value[active.value.type][active.value.id].name =
+			value;
 		renameItem(active.value.type, +active.value.id, value);
 	},
 });
@@ -207,20 +215,27 @@ const renameInput = computed<string>({
 // 新建用户组 / 路线后跳转到新条目
 async function createItem() {
 	showCreateDialog.value = false;
-	const id = await send(`admin/create-${createType.value}`, createInput.value);
+	const id = await send(
+		`admin/create-${createType.value}`,
+		createInput.value,
+	);
 	router.replace(`/admin/${createType.value}/${id}`);
 	createInput.value = "";
 }
 
 // 删除当前选中的用户组 / 路线并回到列表首页
 async function deleteItem() {
-	await send(`admin/delete-${active.value.type}`, +active.value.id);
+	await send(
+		`admin/delete-${active.value.type}`,
+		+active.value.id,
+	);
 	router.replace("/admin/");
 }
 
 // 追加一个权限并把整份权限列表回写
 async function addPermission() {
-	const { permissions } = data.value[active.value.type][active.value.id];
+	const { permissions } =
+		data.value[active.value.type][active.value.id];
 	permissions.push(permission.value);
 	permission.value = null;
 	await send(
@@ -232,7 +247,8 @@ async function addPermission() {
 
 // 移除一个权限并把整份权限列表回写
 async function removePermission(index: number) {
-	const { permissions } = data.value[active.value.type][active.value.id];
+	const { permissions } =
+		data.value[active.value.type][active.value.id];
 	permissions.splice(index, 1);
 	await send(
 		`admin/update-${active.value.type}`,

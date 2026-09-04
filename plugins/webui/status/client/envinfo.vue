@@ -20,7 +20,11 @@
 </template>
 
 <script lang="ts" setup>
-import { capitalize, message, store } from "@koishi-ce/client";
+import {
+	capitalize,
+	message,
+	store,
+} from "@koishi-ce/client";
 import { copyToClipboard } from "./utils";
 
 // 将 envinfo 的 { 分组: { 条目: 值 } } 结构展开为缩进的多行文本后复制

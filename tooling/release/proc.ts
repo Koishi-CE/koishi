@@ -23,7 +23,10 @@
 import { spawnSync } from "node:child_process";
 
 /** win32 下把 .cmd 型命令（npm）包装为经 cmd.exe 执行的形式；其余平台原样。 */
-function wrapCmdShim(cmd: string, args: readonly string[]): [string, string[]] {
+function wrapCmdShim(
+	cmd: string,
+	args: readonly string[],
+): [string, string[]] {
 	if (process.platform !== "win32") {
 		return [cmd, [...args]];
 	}
@@ -68,7 +71,10 @@ export function capture(
 	args: readonly string[],
 	cwd: string,
 ): string | null {
-	const res = spawnSync(cmd, [...args], { cwd, encoding: "utf8" });
+	const res = spawnSync(cmd, [...args], {
+		cwd,
+		encoding: "utf8",
+	});
 	if (res.error !== undefined || res.status !== 0) {
 		return null;
 	}

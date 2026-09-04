@@ -22,7 +22,9 @@ export interface CompareOptions {
 type GroupNames<
 	P extends string,
 	K extends string = never,
-> = P extends `${string}(${infer R})${infer S}` ? GroupNames<S, K | R> : K;
+> = P extends `${string}(${infer R})${infer S}`
+	? GroupNames<S, K | R>
+	: K;
 
 /** 匹配结果：捕获组名到捕获值的映射（类型由模式串字面量推导）。 */
 export type MatchResult<P extends string = never> = Record<
@@ -94,7 +96,11 @@ export function findMatches<P extends string>(
 			if (!data) continue;
 			const expect = i18n._data[locale][path];
 			if (typeof expect !== "string") continue;
-			const similarity = i18n.compare(expect, actual, options);
+			const similarity = i18n.compare(
+				expect,
+				actual,
+				options,
+			);
 			if (!similarity) continue;
 			results.push({ locale, data, similarity });
 		}

@@ -37,8 +37,10 @@ export class CommanderResolve extends CommanderCore {
 		// 群聊消息必须带前缀或称呼（@机器人）才可能是一次命令调用；
 		// strict 模式下任何场景都要求前缀
 		const isStrict =
-			this.config.prefixMode === "strict" || (!isDirect && !stripped.appel);
-		if (argv.root && stripped.prefix === null && isStrict) return;
+			this.config.prefixMode === "strict" ||
+			(!isDirect && !stripped.appel);
+		if (argv.root && stripped.prefix === null && isStrict)
+			return;
 		const segments: string[] = [];
 		const tokens = argv.tokens ?? [];
 		while (tokens.length) {
@@ -46,12 +48,17 @@ export class CommanderResolve extends CommanderCore {
 			if (!token) break;
 			const { content } = token;
 			segments.push(content);
-			const { name, command } = this._resolve(segments.join("."), argv.session);
+			const { name, command } = this._resolve(
+				segments.join("."),
+				argv.session,
+			);
 			if (!command) break;
 			tokens.shift();
 			argv.command = command;
 			// 命中的若是具名别名，注入其预设的参数与选项
-			const alias = name ? command._aliases[name] : undefined;
+			const alias = name
+				? command._aliases[name]
+				: undefined;
 			if (alias) {
 				if (alias.args) argv.args = alias.args;
 				if (alias.options) argv.options = alias.options;
@@ -84,7 +91,9 @@ export class CommanderResolve extends CommanderCore {
 	resolveCommand(argv: Argv) {
 		const command = this.inferCommand(argv);
 		if (!command) return;
-		if (argv.tokens?.every((token) => !token.inters.length)) {
+		if (
+			argv.tokens?.every((token) => !token.inters.length)
+		) {
 			const { options, args, error } = command.parse(argv);
 			argv.options = options ?? {};
 			argv.args = args ?? [];

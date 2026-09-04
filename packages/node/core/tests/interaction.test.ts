@@ -10,8 +10,19 @@
  * before-parse 短路导致解析失败的告警分支，
  * 以及 session.execute 对未知命令名的警告路径。
  */
-import { afterAll, beforeAll, describe, expect, it, jest } from "bun:test";
-import { App, Logger, type Session } from "@koishi-ce/koishi";
+import {
+	afterAll,
+	beforeAll,
+	describe,
+	expect,
+	it,
+	jest,
+} from "bun:test";
+import {
+	App,
+	Logger,
+	type Session,
+} from "@koishi-ce/koishi";
 import mock, { type MockBot } from "@koishi-ce/plugin-mock";
 
 const app = new App();
@@ -30,7 +41,10 @@ const print = jest.fn();
 
 beforeAll(() => {
 	Logger.levels.base = 1;
-	Logger.targets.push({ levels: { base: 0, command: 3, session: 3 }, print });
+	Logger.targets.push({
+		levels: { base: 0, command: 3, session: 3 },
+		print,
+	});
 	return app.start();
 });
 
@@ -61,7 +75,11 @@ describe("Interaction Command", () => {
 			selfId: bot.selfId,
 			channel: { id: "c1", type: 0 },
 			user: { id: "u1", name: "u1" },
-			argv: { name: "slashy", arguments: ["hello"], options: {} },
+			argv: {
+				name: "slashy",
+				arguments: ["hello"],
+				options: {},
+			},
 		} as never);
 		await new Promise((resolve) => setTimeout(resolve, 10));
 		// captured 会在异步回调中被赋值，按声明类型比较避免被收窄为 null
@@ -80,7 +98,10 @@ describe("Interaction Command", () => {
 		print.mockClear();
 		// 首个监听器返回空串：bail 得到 falsy 的 argv（非 undefined 的 falsy
 		// 才会短路后续钩子），空串不在监听器声明的返回类型中，经 unknown 收窄
-		const dispose = app.before("parse", () => "" as unknown as undefined);
+		const dispose = app.before(
+			"parse",
+			() => "" as unknown as undefined,
+		);
 		bot.dispatch(createSession("slashy world") as never);
 		await new Promise((resolve) => setTimeout(resolve, 10));
 		dispose();
@@ -94,8 +115,14 @@ describe("Interaction Command", () => {
 describe("Session Execute Edge Cases", () => {
 	it("execute 按名找不到命令时告警并返回空", async () => {
 		print.mockClear();
-		const session = bot.session({ platform: "mock" }) as Session;
-		await expect(session.execute({ name: "nonexistent" })).resolves.toEqual([]);
-		expect(print.mock.calls[0]?.[0]).toMatch(/cannot find command/);
+		const session = bot.session({
+			platform: "mock",
+		}) as Session;
+		await expect(
+			session.execute({ name: "nonexistent" }),
+		).resolves.toEqual([]);
+		expect(print.mock.calls[0]?.[0]).toMatch(
+			/cannot find command/,
+		);
 	});
 });

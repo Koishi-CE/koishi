@@ -110,7 +110,13 @@
 import { send, store, useContext } from "@koishi-ce/client";
 import { computed, provide, watch } from "vue";
 import KModifier from "./modifier.vue";
-import { dialogFork, envMap, name, plugins, type Tree } from "./utils";
+import {
+	dialogFork,
+	envMap,
+	name,
+	plugins,
+	type Tree,
+} from "./utils";
 
 const props = defineProps<{
 	current: Tree;
@@ -130,7 +136,9 @@ const env = computed(() => envMap.value[name.value]);
 const local = computed(() => store.packages[name.value]);
 // 提示语按插件来源区分:工作区插件提示检查源码,市场插件提示联系作者
 const hint = computed(() =>
-	local.value.workspace ? "请检查插件源代码。" : "请联系插件作者并反馈此问题。",
+	local.value.workspace
+		? "请检查插件源代码。"
+		: "请联系插件作者并反馈此问题。",
 );
 
 // store 中缺少该插件的运行时信息时,主动向服务端请求解析

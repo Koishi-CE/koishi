@@ -14,11 +14,27 @@
  */
 
 import { coerce } from "@koishi-ce/utils";
-import { type Fragment, Logger, Schema, type Universal } from "@satorijs/core";
-import { type Awaitable, type Dict, isNullable, remove } from "cosmokit";
-import type { Channel, User } from "../../database/index.ts";
+import {
+	type Fragment,
+	Logger,
+	Schema,
+	type Universal,
+} from "@satorijs/core";
+import {
+	type Awaitable,
+	type Dict,
+	isNullable,
+	remove,
+} from "cosmokit";
+import type {
+	Channel,
+	User,
+} from "../../database/index.ts";
 import type { Computed } from "../../filter.ts";
-import { Next, SessionError } from "../../middleware/index.ts";
+import {
+	Next,
+	SessionError,
+} from "../../middleware/index.ts";
 import type { Permissions } from "../../permission.ts";
 import type { Session } from "../../session/index.ts";
 import { normalizeCommand } from "../normalize.ts";
@@ -29,7 +45,9 @@ const logger = new Logger("command");
 
 /** 向选项类型 O 中并入键 K（值类型 T），用于 option() 的类型收窄 */
 export type Extend<O extends {}, K extends string, T> = {
-	[P in K | keyof O]?: (P extends keyof O ? O[P] : unknown) &
+	[P in K | keyof O]?: (P extends keyof O
+		? O[P]
+		: unknown) &
 		(P extends K ? T : unknown);
 };
 
@@ -51,8 +69,12 @@ export class Command<
 			.role("perms")
 			.default(["authority:1"])
 			.description("权限继承。"),
-		dependencies: Schema.array(String).role("perms").description("权限依赖。"),
-		slash: Schema.boolean().description("启用斜线指令功能。").default(true),
+		dependencies: Schema.array(String)
+			.role("perms")
+			.description("权限依赖。"),
+		slash: Schema.boolean()
+			.description("启用斜线指令功能。")
+			.default(true),
 		captureQuote: Schema.boolean()
 			.description("是否捕获引用文本。")
 			.default(true)
@@ -69,7 +91,10 @@ export class Command<
 			.description("是否显示命令警告。")
 			.default(true)
 			.hidden(),
-		handleError: Schema.union([Schema.boolean(), Schema.function()])
+		handleError: Schema.union([
+			Schema.boolean(),
+			Schema.function(),
+		])
 			.description("是否处理错误。")
 			.default(true)
 			.hidden(),
@@ -97,13 +122,18 @@ export class Command<
 		// 解析阶段已产生错误（如类型转换失败）：直接把错误文案作为回复
 		if (error) return error;
 		if (logger.level >= 3)
-			logger.debug((argv.source ||= this.stringify(args, options)));
+			logger.debug(
+				(argv.source ||= this.stringify(args, options)),
+			);
 
 		// 前置校验：任一 checker 返回非空值即短路返回
 		for (const validator of this._checkers) {
 			// _checkers 存储为擦除签名（见 definition.ts 的 ErasedAction），
 			// 以 apply + 数组断言还原当前命令的实参（与 .call 语义一致）
-			const result = await validator.apply(this, [argv, ...args] as never);
+			const result = await validator.apply(this, [
+				argv,
+				...args,
+			] as never);
 			if (!isNullable(result)) return result as Fragment;
 		}
 
@@ -111,9 +141,14 @@ export class Command<
 		if (!this._actions.length) return "";
 
 		let index = 0;
-		const queue: Next.Queue = this._actions.map((action) => async () => {
-			return await action.apply(this, [argv, ...args] as never);
-		});
+		const queue: Next.Queue = this._actions.map(
+			(action) => async () => {
+				return await action.apply(this, [
+					argv,
+					...args,
+				] as never);
+			},
+		);
 
 		queue.push(fallback);
 		const length = queue.length;
@@ -121,7 +156,9 @@ export class Command<
 			if (callback !== undefined) {
 				queue.push((next) => Next.compose(callback, next));
 				if (queue.length > Next.MAX_DEPTH) {
-					throw new Error(`middleware stack exceeded ${Next.MAX_DEPTH}`);
+					throw new Error(
+						`middleware stack exceeded ${Next.MAX_DEPTH}`,
+					);
 				}
 			}
 			return queue[index++]?.(argv.next);
@@ -134,18 +171,32 @@ export class Command<
 			// 异常来自 fallback 本身（action 已全部执行完）：不接管，向上抛
 			if (index === length) throw err;
 			if (err instanceof SessionError) {
-				return argv.session?.text(err.path, err.param) ?? "";
+				return (
+					argv.session?.text(err.path, err.param) ?? ""
+				);
 			}
 			const stack = coerce(err);
 			logger.warn(
 				`${(argv.source ||= this.stringify(args, options))}\n${stack}`,
 			);
-			this.ctx.emit(argv.session, "command-error", argv, err);
+			this.ctx.emit(
+				argv.session,
+				"command-error",
+				argv,
+				err,
+			);
 			if (typeof this.config.handleError === "function") {
-				const result = await this.config.handleError(err as Error, argv);
+				const result = await this.config.handleError(
+					err as Error,
+					argv,
+				);
 				if (!isNullable(result)) return result;
 			} else if (this.config.handleError) {
-				return argv.session?.text("internal.error-encountered") ?? "";
+				return (
+					argv.session?.text(
+						"internal.error-encountered",
+					) ?? ""
+				);
 			}
 		}
 
@@ -157,7 +208,9 @@ export class Command<
 	 * 级联销毁子命令，并从命令列表与父命令中移除自身。
 	 */
 	dispose() {
-		this._disposables.splice(0).forEach((dispose) => dispose());
+		this._disposables
+			.splice(0)
+			.forEach((dispose) => dispose());
 		this.ctx.emit("command-removed", this);
 		for (const cmd of this.children.slice()) {
 			cmd.dispose();
@@ -170,7 +223,9 @@ export class Command<
 	toJSON(): Universal.Command {
 		return {
 			name: this.name,
-			description: this.ctx.i18n.get(`commands.${this.name}.description`),
+			description: this.ctx.i18n.get(
+				`commands.${this.name}.description`,
+			),
 			arguments: this._arguments.map((arg) => ({
 				name: arg.name ?? this.name,
 				type: toStringType(arg.type ?? "string"),
@@ -179,12 +234,16 @@ export class Command<
 				),
 				required: arg.required ?? false,
 			})),
-			options: Object.entries(this._options).map(([name, option]) => ({
-				name,
-				type: toStringType(option.type ?? "string"),
-				description: this.ctx.i18n.get(`commands.${this.name}.options.${name}`),
-				required: option.required ?? false,
-			})),
+			options: Object.entries(this._options).map(
+				([name, option]) => ({
+					name,
+					type: toStringType(option.type ?? "string"),
+					description: this.ctx.i18n.get(
+						`commands.${this.name}.options.${name}`,
+					),
+					required: option.required ?? false,
+				}),
+			),
 			children: this.children
 				.filter((child) => child.name.includes("."))
 				.map((child) => child.toJSON()),
@@ -232,15 +291,22 @@ export namespace Command {
 		A extends unknown[] = unknown[],
 		O extends object = object,
 		// biome-ignore lint/suspicious/noConfusingVoidType: 公共 API：action 返回 void 表示透传给后续 checker，改为 undefined 会破坏 void 返回回调的可赋值性
-	> = (argv: Argv<U, G, A, O>, ...args: A) => Awaitable<void | Fragment>;
+	> = (
+		argv: Argv<U, G, A, O>,
+		...args: A
+	) => Awaitable<void | Fragment>;
 
 	/** 用法说明：静态字符串或按会话动态生成的函数 */
 	export type Usage<
 		U extends User.Field = never,
 		G extends Channel.Field = never,
-	> = string | ((session: Session<U, G>) => Awaitable<string>);
+	> =
+		| string
+		| ((session: Session<U, G>) => Awaitable<string>);
 
-	export interface Config extends CommandBase.Config, Permissions.Config {
+	export interface Config
+		extends CommandBase.Config,
+			Permissions.Config {
 		/** 根消息带引用时，把引用内容追加为最后一个参数 */
 		captureQuote?: boolean;
 		/** 拒绝未注册的选项（返回错误提示） */
@@ -253,7 +319,10 @@ export namespace Command {
 		handleError?:
 			| boolean
 			// biome-ignore lint/suspicious/noConfusingVoidType: 公共 API：返回 void 表示无自定义输出，改为 undefined 会破坏 void 返回回调的可赋值性
-			| ((error: Error, argv: Argv) => Awaitable<void | Fragment>);
+			| ((
+					error: Error,
+					argv: Argv,
+			  ) => Awaitable<void | Fragment>);
 		/** 是否向平台注册斜线指令 */
 		slash?: boolean;
 	}

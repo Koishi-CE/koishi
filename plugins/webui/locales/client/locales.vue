@@ -115,7 +115,9 @@ provide("locale:prefix", active);
 
 /** 树节点过滤：label 包含关键字即命中（不区分大小写）。 */
 function filterNode(value: string, data: Tree) {
-	return data.label.toLowerCase().includes(keyword.value.toLowerCase());
+	return data.label
+		.toLowerCase()
+		.includes(keyword.value.toLowerCase());
 }
 
 /** 树节点的 class 计算：当前选中项附加 is-active。 */
@@ -171,7 +173,11 @@ const data = computed(() => {
 		let children = data;
 		let depth = Math.min(parts.length - 1, 2);
 		for (let i = parts.length - 1; i >= depth; i--) {
-			if (paths.value.includes(`${parts.slice(0, i).join(".")}.$`)) {
+			if (
+				paths.value.includes(
+					`${parts.slice(0, i).join(".")}.$`,
+				)
+			) {
 				depth = i;
 				break;
 			}
@@ -187,7 +193,9 @@ const data = computed(() => {
 			}
 			children = child.children ??= [];
 		}
-		map[parts.slice(0, depth).join(".")].push(parts.slice(depth).join("."));
+		map[parts.slice(0, depth).join(".")].push(
+			parts.slice(depth).join("."),
+		);
 	}
 	sortTree(data);
 	return { data, map };
@@ -204,7 +212,11 @@ const update = useDebounceFn(() => {
 }, 1000);
 
 /** 编辑某个键的某语言翻译：写入 `$<locale>` 命名空间（空值置 null 以删除），并触发防抖提交。 */
-function handleUpdate(locale: string, path: string, value: string) {
+function handleUpdate(
+	locale: string,
+	path: string,
+	value: string,
+) {
 	const root = (store.locales[`$${locale}`] ??= {});
 	if (value) {
 		root[`${active.value}.${path}`] = value;

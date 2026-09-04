@@ -17,7 +17,10 @@
 </template>
 
 <script lang="ts" setup>
-import { type ActiveMenu, useContext } from "@koishi-ce/client";
+import {
+	type ActiveMenu,
+	useContext,
+} from "@koishi-ce/client";
 import { ref } from "vue";
 import MenuItem from "./menu-item.vue";
 
@@ -31,9 +34,11 @@ const el = ref<HTMLElement>();
 // 结合菜单自身渲染后的实际宽高计算定位；尚未挂载时先隐藏避免闪烁
 const getStyle = () => {
 	if (!el.value) return { visibility: "hidden" };
-	const { height, width } = el.value.getBoundingClientRect();
-	const style: Partial<Record<"top" | "right" | "bottom" | "left", string>> =
-		{};
+	const { height, width } =
+		el.value.getBoundingClientRect();
+	const style: Partial<
+		Record<"top" | "right" | "bottom" | "left", string>
+	> = {};
 	if (props.relative.right + width > window.innerWidth) {
 		style.right = `${window.innerWidth - props.relative.left}px`;
 	} else {

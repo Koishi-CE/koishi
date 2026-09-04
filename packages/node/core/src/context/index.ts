@@ -19,7 +19,12 @@
 import * as satori from "@satorijs/core";
 import { type HTTP, Schema } from "@satorijs/core";
 import type * as cordis from "cordis";
-import type { GetEvents, Parameters, ReturnType, ThisType } from "cordis";
+import type {
+	GetEvents,
+	Parameters,
+	ReturnType,
+	ThisType,
+} from "cordis";
 import type { Promisify } from "cosmokit";
 import * as minato from "minato";
 import { Commander } from "../command/index.ts";
@@ -40,7 +45,11 @@ export type ForkScope = cordis.ForkScope<Context>;
 /** cordis 主作用域：插件定义所在的原始作用域 */
 export type MainScope = cordis.MainScope<Context>;
 
-export type { Component, Fragment, Render } from "@satorijs/core";
+export type {
+	Component,
+	Fragment,
+	Render,
+} from "@satorijs/core";
 export {
 	Adapter,
 	Bot,
@@ -56,7 +65,11 @@ export {
 	Universal,
 	z,
 } from "@satorijs/core";
-export type { Disposable, Plugin, ScopeStatus } from "cordis";
+export type {
+	Disposable,
+	Plugin,
+	ScopeStatus,
+} from "cordis";
 export { resolveConfig } from "cordis";
 
 /** 环境数据占位类型（Koishi 未使用 satori 的 EnvData，保留以兼容）。 */
@@ -66,16 +79,25 @@ export type EnvData = object;
 type OmitSubstring<
 	S extends string,
 	T extends string,
-> = S extends `${infer L}${T}${infer R}` ? `${L}${R}` : never;
+> = S extends `${infer L}${T}${infer R}`
+	? `${L}${R}`
+	: never;
 /** 所有带 "before-" 前缀的事件去掉前缀后的事件名 */
-type BeforeEventName = OmitSubstring<keyof Events & string, "before-">;
+type BeforeEventName = OmitSubstring<
+	keyof Events & string,
+	"before-"
+>;
 /** before 事件名到监听器签名的映射（见 Context.before） */
 type BeforeEventMap = {
-	[E in keyof Events & string as OmitSubstring<E, "before-">]: Events[E];
+	[E in keyof Events & string as OmitSubstring<
+		E,
+		"before-"
+	>]: Events[E];
 };
 
 /** Koishi 事件表：在 cordis 事件的基础上由各模块 declare module 陆续扩充。 */
-export interface Events<C extends Context = Context> extends cordis.Events<C> {}
+export interface Events<C extends Context = Context>
+	extends cordis.Events<C> {}
 
 /** Koishi 上下文接口：各模块通过 declare module 向 Context 合并成员。 */
 export interface Context {
@@ -123,12 +145,24 @@ export class Context extends satori.Context {
 		this.provide("$filter", new FilterService(this), true);
 		this.provide("schema", new SchemaService(this), true);
 		this.provide("$processor", new Processor(this), true);
-		this.provide("i18n", new I18n(this, this.config.i18n), true);
-		this.provide("permissions", new Permissions(this), true);
+		this.provide(
+			"i18n",
+			new I18n(this, this.config.i18n),
+			true,
+		);
+		this.provide(
+			"permissions",
+			new Permissions(this),
+			true,
+		);
 		// model / http 先占位，待数据库驱动 / 网络层插件注入实现
 		this.provide("model", undefined, true);
 		this.provide("http", undefined, true);
-		this.provide("$commander", new Commander(this, this.config), true);
+		this.provide(
+			"$commander",
+			new Commander(this, this.config),
+			true,
+		);
 		this.plugin(
 			minato.Database as unknown as cordis.Plugin.Constructor<Context>,
 		);
@@ -202,7 +236,9 @@ export { default } from "./runtime.ts";
 
 export namespace Context {
 	/** 应用根配置（基础 + 高级 + i18n / 延迟 / 网络请求）。 */
-	export interface Config extends Config.Basic, Config.Advanced {
+	export interface Config
+		extends Config.Basic,
+			Config.Advanced {
 		/** 国际化配置 */
 		i18n?: I18n.Config;
 		/** 各类消息延迟设置（防风控节流） */

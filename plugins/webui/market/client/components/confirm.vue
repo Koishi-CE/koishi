@@ -44,7 +44,11 @@
 </template>
 
 <script lang="ts" setup>
-import { store, useConfig, useContext } from "@koishi-ce/client";
+import {
+	store,
+	useConfig,
+	useContext,
+} from "@koishi-ce/client";
 import { computed, ref } from "vue";
 import { install, showConfirm } from "./utils";
 
@@ -67,8 +71,11 @@ const hasRemove = computed(() => {
 function confirm() {
 	showConfirm.value = false;
 	return install(config.value.market.override, async () => {
-		for (const [name, value] of Object.entries(config.value.market.override)) {
-			if (!value || store.dependencies?.[name]?.resolved) continue;
+		for (const [name, value] of Object.entries(
+			config.value.market.override,
+		)) {
+			if (!value || store.dependencies?.[name]?.resolved)
+				continue;
 			ctx.configWriter?.ensure(name, true);
 		}
 	});

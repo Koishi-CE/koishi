@@ -11,12 +11,27 @@
  * 与配置树的增删改、PackageProvider 的运行时解析缓存与按需刷新链路。
  */
 
-import { afterAll, beforeAll, describe, expect, it } from "bun:test";
-import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import {
+	afterAll,
+	beforeAll,
+	describe,
+	expect,
+	it,
+} from "bun:test";
+import {
+	mkdirSync,
+	mkdtempSync,
+	rmSync,
+	writeFileSync,
+} from "node:fs";
 import type { IncomingMessage } from "node:http";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { type Client, Console, type Entry } from "@koishi-ce/console";
+import {
+	type Client,
+	Console,
+	type Entry,
+} from "@koishi-ce/console";
 import {
 	App,
 	type Context,
@@ -32,28 +47,44 @@ import * as configPlugin from "@koishi-ce/plugin-config";
 /** 出站消息形状 */
 interface SentMessage {
 	type: string;
-	body: { id?: number; key?: string; value?: unknown; error?: string };
+	body: {
+		id?: number;
+		key?: string;
+		value?: unknown;
+		error?: string;
+	};
 }
 
 /** 内存 WebSocket 桩 */
 class FakeSocket {
 	sent: string[] = [];
 	// message 与 close 的监听器统一为同构签名（never 载荷），保证集合存取类型一致
-	private messageHandlers = new Set<(event: never) => void>();
+	private messageHandlers = new Set<
+		(event: never) => void
+	>();
 	private closeHandlers = new Set<(event: never) => void>();
 
 	send(data: string) {
 		this.sent.push(data);
 	}
 
-	addEventListener(type: string, listener: (event: never) => void) {
-		if (type === "message") this.messageHandlers.add(listener);
+	addEventListener(
+		type: string,
+		listener: (event: never) => void,
+	) {
+		if (type === "message")
+			this.messageHandlers.add(listener);
 		if (type === "close") this.closeHandlers.add(listener);
 	}
 
-	removeEventListener(type: string, listener: (event: never) => void) {
-		if (type === "message") this.messageHandlers.delete(listener);
-		if (type === "close") this.closeHandlers.delete(listener);
+	removeEventListener(
+		type: string,
+		listener: (event: never) => void,
+	) {
+		if (type === "message")
+			this.messageHandlers.delete(listener);
+		if (type === "close")
+			this.closeHandlers.delete(listener);
 	}
 
 	get socket(): Universal.WebSocket {
@@ -80,7 +111,9 @@ const itQuiet = (
 ) =>
 	it(name, async () => {
 		const levels = Logger.levels as Record<string, number>;
-		const saved = domains.map((d) => [d, levels[d]] as const);
+		const saved = domains.map(
+			(d) => [d, levels[d]] as const,
+		);
 		for (const d of domains) levels[d] = 0;
 		try {
 			await fn();
@@ -96,15 +129,23 @@ const itQuiet = (
 class TestConsole extends Console {
 	resolveEntry(files: Entry.Files, key: string): string[] {
 		const list =
-			typeof files === "string" || Array.isArray(files) ? files : files.prod;
+			typeof files === "string" || Array.isArray(files)
+				? files
+				: files.prod;
 		return [String(list), key];
 	}
 
-	acceptClient(socket: Universal.WebSocket, request: IncomingMessage): Client {
+	acceptClient(
+		socket: Universal.WebSocket,
+		request: IncomingMessage,
+	): Client {
 		let accepted: Client | undefined;
-		const dispose = this.ctx.on("console/connection", (client) => {
-			accepted = client;
-		});
+		const dispose = this.ctx.on(
+			"console/connection",
+			(client) => {
+				accepted = client;
+			},
+		);
 		this.accept(socket, request);
 		dispose();
 		if (!accepted) throw new Error("client not accepted");
@@ -126,7 +167,8 @@ class TestLoader extends Loader {
 	}
 
 	override async import(name: string) {
-		this.importCounts[name] = (this.importCounts[name] ?? 0) + 1;
+		this.importCounts[name] =
+			(this.importCounts[name] ?? 0) + 1;
 		if (name === "bad-plugin") {
 			throw new Error("cannot resolve bad-plugin");
 		}
@@ -143,11 +185,15 @@ class TestLoader extends Loader {
 	}
 
 	protected override locateConfig(): Promise<never> {
-		throw new Error("test loader does not touch the file system");
+		throw new Error(
+			"test loader does not touch the file system",
+		);
 	}
 
 	protected override parseConfig(): Promise<never> {
-		throw new Error("test loader does not touch the file system");
+		throw new Error(
+			"test loader does not touch the file system",
+		);
 	}
 
 	protected override async saveConfig(
@@ -171,12 +217,23 @@ testLevels["app"] = 1;
  * loader.baseDir 为锚，固定到临时 fixture，避免断言依赖真实仓库 node_modules
  * 的链接状态（哪些 workspace 包被链入由包管理器布局决定，换环境即挂）。
  */
-const fixtureRoot = mkdtempSync(join(tmpdir(), "koishi-config-pkg-"));
-mkdirSync(join(fixtureRoot, "node_modules/@koishi-ce/plugin-fixture"), {
-	recursive: true,
-});
+const fixtureRoot = mkdtempSync(
+	join(tmpdir(), "koishi-config-pkg-"),
+);
+mkdirSync(
+	join(
+		fixtureRoot,
+		"node_modules/@koishi-ce/plugin-fixture",
+	),
+	{
+		recursive: true,
+	},
+);
 writeFileSync(
-	join(fixtureRoot, "node_modules/@koishi-ce/plugin-fixture/package.json"),
+	join(
+		fixtureRoot,
+		"node_modules/@koishi-ce/plugin-fixture/package.json",
+	),
 	JSON.stringify(
 		{
 			name: "@koishi-ce/plugin-fixture",
@@ -187,16 +244,26 @@ writeFileSync(
 		"\t",
 	),
 );
-mkdirSync(join(fixtureRoot, "plugins/webui/auth"), { recursive: true });
+mkdirSync(join(fixtureRoot, "plugins/webui/auth"), {
+	recursive: true,
+});
 writeFileSync(
 	join(fixtureRoot, "plugins/webui/auth/package.json"),
-	JSON.stringify({ name: "@koishi-ce/plugin-auth", version: "1.0.0" }),
+	JSON.stringify({
+		name: "@koishi-ce/plugin-auth",
+		version: "1.0.0",
+	}),
 );
 // 配置树里的路径键 ./missing-pkg 也应真实存在，否则包扫描每轮都刷 ENOENT 告警
-mkdirSync(join(fixtureRoot, "missing-pkg"), { recursive: true });
+mkdirSync(join(fixtureRoot, "missing-pkg"), {
+	recursive: true,
+});
 writeFileSync(
 	join(fixtureRoot, "missing-pkg/package.json"),
-	JSON.stringify({ name: "koishi-plugin-missing-pkg", version: "1.0.0" }),
+	JSON.stringify({
+		name: "koishi-plugin-missing-pkg",
+		version: "1.0.0",
+	}),
 );
 loader.baseDir = fixtureRoot;
 
@@ -218,17 +285,22 @@ loader.config = {
 
 const app = await loader.createApp();
 // Console 基类的 static inject 是 cordis 3 旧形态，与 Plugin.Constructor 期待类型不兼容，仅做类型层转型
-app.plugin(TestConsole as unknown as Plugin.Constructor<App>);
+app.plugin(
+	TestConsole as unknown as Plugin.Constructor<App>,
+);
 app.plugin(configPlugin);
 
 const service = () => app.console as TestConsole;
-const writer = () => app.get("console.services.config") as ConfigWriter;
+const writer = () =>
+	app.get("console.services.config") as ConfigWriter;
 let socket: FakeSocket;
 let client: Client;
 
 /** 读取客户端已收到的全部消息 */
 function readSent(): SentMessage[] {
-	return socket.sent.map((line) => JSON.parse(line) as SentMessage);
+	return socket.sent.map(
+		(line) => JSON.parse(line) as SentMessage,
+	);
 }
 
 /** 等待写盘队列（合并窗口 setTimeout 0）落定 */
@@ -239,7 +311,10 @@ async function flushWrites() {
 beforeAll(async () => {
 	await app.start();
 	socket = new FakeSocket();
-	client = service().acceptClient(socket.socket, fakeRequest());
+	client = service().acceptClient(
+		socket.socket,
+		fakeRequest(),
+	);
 	await tick();
 	socket.sent.length = 0;
 });
@@ -257,27 +332,46 @@ afterAll(async () => {
 });
 
 describe("@koishi-ce/plugin-config", () => {
-	itQuiet(["app"], "无可写 loader 时仅告警并跳过装配", async () => {
-		const bare = new App();
-		bare.plugin(TestConsole as unknown as Plugin.Constructor<App>);
-		bare.plugin(configPlugin);
-		await bare.start();
-		expect(bare.get("console.services.config")).toBeUndefined();
-		expect(bare.get("console.services.packages")).toBeUndefined();
-		expect(bare.get("console.services.services")).toBeUndefined();
-		await bare.stop();
-	});
+	itQuiet(
+		["app"],
+		"无可写 loader 时仅告警并跳过装配",
+		async () => {
+			const bare = new App();
+			bare.plugin(
+				TestConsole as unknown as Plugin.Constructor<App>,
+			);
+			bare.plugin(configPlugin);
+			await bare.start();
+			expect(
+				bare.get("console.services.config"),
+			).toBeUndefined();
+			expect(
+				bare.get("console.services.packages"),
+			).toBeUndefined();
+			expect(
+				bare.get("console.services.services"),
+			).toBeUndefined();
+			await bare.stop();
+		},
+	);
 
 	it("挂载 packages / services / config 三个数据服务", () => {
-		expect(app.get("console.services.packages")).toBeTruthy();
-		expect(app.get("console.services.services")).toBeTruthy();
+		expect(
+			app.get("console.services.packages"),
+		).toBeTruthy();
+		expect(
+			app.get("console.services.services"),
+		).toBeTruthy();
 		expect(app.get("console.services.config")).toBeTruthy();
 	});
 
 	describe("ConfigWriter.get()", () => {
 		it("过滤未加载项，分组递归展开，$ 与 ~ 键原样保留", async () => {
 			const result = await writer().get();
-			const plugins = result.plugins as Record<string, unknown>;
+			const plugins = result.plugins as Record<
+				string,
+				unknown
+			>;
 			// $if 为假的键不出现；$ 内部键与 ~ 停用键保留
 			expect("gone:xyz" in plugins).toBe(false);
 			expect(plugins["$sfolded"]).toBe(true);
@@ -294,7 +388,9 @@ describe("@koishi-ce/plugin-config", () => {
 
 	describe("PackageProvider", () => {
 		it("收集本机包与 workspace 源码包并附全局设置条目", async () => {
-			const provider = app.get("console.services.packages") as unknown as {
+			const provider = app.get(
+				"console.services.packages",
+			) as unknown as {
 				get(): Promise<Dict<Record<string, unknown>>>;
 			};
 			const data = await provider.get();
@@ -302,44 +398,66 @@ describe("@koishi-ce/plugin-config", () => {
 			expect(data[""]).toBeTruthy();
 			// workspace 路径键引用的源码包：带 paths 与运行时缓存
 			const auth = data["@koishi-ce/plugin-auth"];
-			expect(auth?.["paths"]).toEqual(["./plugins/webui/auth"]);
+			expect(auth?.["paths"]).toEqual([
+				"./plugins/webui/auth",
+			]);
 			expect(auth?.["runtime"]).toBeTruthy();
 			// 本机 node_modules 扫描出的已装插件包（fixture 预置，见文件头说明）
-			expect(data["@koishi-ce/plugin-fixture"]).toBeTruthy();
+			expect(
+				data["@koishi-ce/plugin-fixture"],
+			).toBeTruthy();
 		});
 
 		itQuiet(
 			["config"],
 			"request-runtime 按路径键 / 短名解析并刷新，失败结果同样缓存",
 			async () => {
-				const listener = app.console.listeners["config/request-runtime"];
+				const listener =
+					app.console.listeners["config/request-runtime"];
 				expect(listener).toBeTruthy();
-				const provider = app.get("console.services.packages") as unknown as {
+				const provider = app.get(
+					"console.services.packages",
+				) as unknown as {
 					cache: Dict<{ failed?: boolean }>;
 					pathKeys: Dict<string>;
 				};
 				// 失败路径：stub 的 bad-plugin 抛错，{ failed: true } 入缓存并
 				// 随数据下发——前端据以展示失败提示并停止重发请求
-				await listener?.callback.call(client as never, "bad-plugin");
+				await listener?.callback.call(
+					client as never,
+					"bad-plugin",
+				);
 				await flushWrites();
-				expect(provider.cache["bad-plugin"]).toEqual({ failed: true });
+				expect(provider.cache["bad-plugin"]).toEqual({
+					failed: true,
+				});
 				// 重复请求命中失败缓存，不再触发 loader.import（防活锁刷屏）
-				const importsAfterFirst = loader.importCounts["bad-plugin"] ?? 0;
+				const importsAfterFirst =
+					loader.importCounts["bad-plugin"] ?? 0;
 				expect(importsAfterFirst).toBeGreaterThan(0);
-				await listener?.callback.call(client as never, "bad-plugin");
+				await listener?.callback.call(
+					client as never,
+					"bad-plugin",
+				);
 				await flushWrites();
-				expect(loader.importCounts["bad-plugin"] ?? 0).toBe(importsAfterFirst);
+				expect(loader.importCounts["bad-plugin"] ?? 0).toBe(
+					importsAfterFirst,
+				);
 				// 成功路径：workspace 包名命中 pathKeys
 				await listener?.callback.call(
 					client as never,
 					"@koishi-ce/plugin-auth",
 				);
 				await flushWrites();
-				expect(provider.pathKeys["@koishi-ce/plugin-auth"]).toBe(
-					"./plugins/webui/auth",
-				);
-				expect(provider.cache["./plugins/webui/auth"]).toBeTruthy();
-				expect(provider.cache["./plugins/webui/auth"]?.failed).toBeUndefined();
+				expect(
+					provider.pathKeys["@koishi-ce/plugin-auth"],
+				).toBe("./plugins/webui/auth");
+				expect(
+					provider.cache["./plugins/webui/auth"],
+				).toBeTruthy();
+				expect(
+					provider.cache["./plugins/webui/auth"]?.failed,
+				).toBeUndefined();
 			},
 		);
 
@@ -358,7 +476,11 @@ describe("@koishi-ce/plugin-config", () => {
 			app.emit("internal/fork", fork as never);
 			// internal/status 签名为 (scope, oldValue) 双参，仓库内监听者均不消费第二参，
 			// 补 undefined 占位满足调用形状且不改变运行时行为
-			app.emit("internal/status", fork as never, undefined as never);
+			app.emit(
+				"internal/status",
+				fork as never,
+				undefined as never,
+			);
 			app.emit("hmr/reload", [[dummy]] as never);
 			await tick(30);
 			expect(true).toBe(true);
@@ -367,17 +489,24 @@ describe("@koishi-ce/plugin-config", () => {
 
 	describe("ServiceProvider", () => {
 		it("上报各服务的提供者上下文并在服务变动时刷新", async () => {
-			const provider = app.get("console.services.services") as unknown as {
+			const provider = app.get(
+				"console.services.services",
+			) as unknown as {
 				get(): Promise<Dict<number>>;
 			};
 			const data = await provider.get();
 			expect(data["console"]).toBeGreaterThanOrEqual(0);
 			// 服务注册（set 会广播 internal/service）→ refresh → 客户端收到 services 数据
 			socket.sent.length = 0;
-			app.set("probe.svc" as never, { marker: true } as never);
+			app.set(
+				"probe.svc" as never,
+				{ marker: true } as never,
+			);
 			await tick(30);
 			const messages = readSent().filter(
-				(msg) => msg.type === "data" && msg.body.key === "services",
+				(msg) =>
+					msg.type === "data" &&
+					msg.body.key === "services",
 			);
 			expect(messages.length).toBeGreaterThan(0);
 		});
@@ -385,24 +514,37 @@ describe("@koishi-ce/plugin-config", () => {
 
 	describe("ConfigWriter 事件", () => {
 		it("manager/meta 更新元数据键（含 null 删除）", async () => {
-			const listener = app.console.listeners["manager/meta"];
-			await listener?.callback.call(client as never, "abc", {
-				$label: "L",
-				$collapsed: null,
-			});
+			const listener =
+				app.console.listeners["manager/meta"];
+			await listener?.callback.call(
+				client as never,
+				"abc",
+				{
+					$label: "L",
+					$collapsed: null,
+				},
+			);
 			await flushWrites();
 			const plugins = loader.config.plugins as Record<
 				string,
 				Record<string, unknown>
 			>;
 			expect(plugins["keep:abc"]?.["$label"]).toBe("L");
-			expect("$collapsed" in (plugins["keep:abc"] ?? {})).toBe(false);
+			expect(
+				"$collapsed" in (plugins["keep:abc"] ?? {}),
+			).toBe(false);
 			// 元数据键置于配置开头
-			expect(Object.keys(plugins["keep:abc"] ?? {})[0]).toBe("$label");
+			expect(
+				Object.keys(plugins["keep:abc"] ?? {})[0],
+			).toBe("$label");
 			// 分组内插件的 meta（按 ident 递归定位）
-			await listener?.callback.call(client as never, "two", {
-				$label: "G",
-			});
+			await listener?.callback.call(
+				client as never,
+				"two",
+				{
+					$label: "G",
+				},
+			);
 			await flushWrites();
 			const group = plugins["group:g1"] as Record<
 				string,
@@ -412,85 +554,164 @@ describe("@koishi-ce/plugin-config", () => {
 		});
 
 		it("manager/reload 更新插件配置并保持键位置", async () => {
-			const listener = app.console.listeners["manager/reload"];
-			await listener?.callback.call(client as never, "", "keep:abc", {
-				v: 2,
-			});
+			const listener =
+				app.console.listeners["manager/reload"];
+			await listener?.callback.call(
+				client as never,
+				"",
+				"keep:abc",
+				{
+					v: 2,
+				},
+			);
 			await flushWrites();
-			const plugins = loader.config.plugins as Record<string, unknown>;
+			const plugins = loader.config.plugins as Record<
+				string,
+				unknown
+			>;
 			expect(plugins["keep:abc"]).toEqual({ v: 2 });
 			const dummy = loader.data["keep"] as Plugin;
-			expect(app.registry.get(dummy)?.config).toEqual({ v: 2 });
+			expect(app.registry.get(dummy)?.config).toEqual({
+				v: 2,
+			});
 			// 运行期更新触发回写
 			expect(loader.writes.length).toBeGreaterThan(0);
 		});
 
 		it("manager/unload 停用插件（原位改 ~ 与按位置插入）", async () => {
-			const listener = app.console.listeners["manager/unload"];
+			const listener =
+				app.console.listeners["manager/unload"];
 			// 原位重命名
-			await listener?.callback.call(client as never, "", "keep:abc", {
-				v: 3,
-			});
+			await listener?.callback.call(
+				client as never,
+				"",
+				"keep:abc",
+				{
+					v: 3,
+				},
+			);
 			await flushWrites();
-			const plugins = loader.config.plugins as Record<string, unknown>;
+			const plugins = loader.config.plugins as Record<
+				string,
+				unknown
+			>;
 			expect("keep:abc" in plugins).toBe(false);
 			expect(plugins["~keep:abc"]).toEqual({ v: 3 });
 			const dummy = loader.data["keep"] as Plugin;
 			expect(app.registry.get(dummy)).toBeUndefined();
 
 			// 先补一个可停用键，再按 index 插入到指定位置
-			const reload = app.console.listeners["manager/reload"];
-			await reload?.callback.call(client as never, "", "back:two", {
-				b: 1,
-			});
+			const reload =
+				app.console.listeners["manager/reload"];
+			await reload?.callback.call(
+				client as never,
+				"",
+				"back:two",
+				{
+					b: 1,
+				},
+			);
 			await flushWrites();
-			await listener?.callback.call(client as never, "", "back:two", {}, 1);
+			await listener?.callback.call(
+				client as never,
+				"",
+				"back:two",
+				{},
+				1,
+			);
 			await flushWrites();
-			const keys = Object.keys(loader.config.plugins as object);
+			const keys = Object.keys(
+				loader.config.plugins as object,
+			);
 			expect(keys.indexOf("~back:two")).toBe(1);
 		});
 
 		it("manager/remove 彻底移除插件（含 ~ 停用态键）", async () => {
-			const listener = app.console.listeners["manager/remove"];
-			await listener?.callback.call(client as never, "", "~keep:abc");
+			const listener =
+				app.console.listeners["manager/remove"];
+			await listener?.callback.call(
+				client as never,
+				"",
+				"~keep:abc",
+			);
 			await flushWrites();
-			const plugins = loader.config.plugins as Record<string, unknown>;
+			const plugins = loader.config.plugins as Record<
+				string,
+				unknown
+			>;
 			expect("keep:abc" in plugins).toBe(false);
 			expect("~keep:abc" in plugins).toBe(false);
-			await listener?.callback.call(client as never, "", "pos:one");
+			await listener?.callback.call(
+				client as never,
+				"",
+				"pos:one",
+			);
 			await flushWrites();
 			expect("pos:one" in plugins).toBe(false);
 		});
 
 		it("manager/teleport 跨分组迁移与同分组重排", async () => {
-			const listener = app.console.listeners["manager/teleport"];
-			const plugins = loader.config.plugins as Record<string, unknown>;
+			const listener =
+				app.console.listeners["manager/teleport"];
+			const plugins = loader.config.plugins as Record<
+				string,
+				unknown
+			>;
 			// 跨分组：group:g1 → 根（index 0）
-			await listener?.callback.call(client as never, "g1", "mov:me", "", 0);
+			await listener?.callback.call(
+				client as never,
+				"g1",
+				"mov:me",
+				"",
+				0,
+			);
 			await flushWrites();
 			expect(plugins["mov:me"]).toEqual({ m: 1 });
-			const group = plugins["group:g1"] as Record<string, unknown>;
+			const group = plugins["group:g1"] as Record<
+				string,
+				unknown
+			>;
 			expect("mov:me" in group).toBe(false);
 			// 运行时 fork 已改挂根作用域
 			const dummy = loader.data["mov"] as Plugin;
 			const fork = app.registry.get(dummy)?.children[0];
-			expect(fork?.parent.scope.uid).toBe(loader.entry.scope.uid);
+			expect(fork?.parent.scope.uid).toBe(
+				loader.entry.scope.uid,
+			);
 
 			// 同分组：仅重排键位置
-			await listener?.callback.call(client as never, "", "mov:me", "", 0);
+			await listener?.callback.call(
+				client as never,
+				"",
+				"mov:me",
+				"",
+				0,
+			);
 			await flushWrites();
 			expect(Object.keys(plugins)[0]).toBe("mov:me");
 		});
 
-		itQuiet(["loader"], "manager/* 失败统一回执 failed", async () => {
-			const listener = app.console.listeners["manager/teleport"];
-			await expect(
-				listener?.callback.call(client as never, "no-such-group", "k", "", 0),
-			).rejects.toThrow("failed");
-		});
+		itQuiet(
+			["loader"],
+			"manager/* 失败统一回执 failed",
+			async () => {
+				const listener =
+					app.console.listeners["manager/teleport"];
+				await expect(
+					listener?.callback.call(
+						client as never,
+						"no-such-group",
+						"k",
+						"",
+						0,
+					),
+				).rejects.toThrow("failed");
+			},
+		);
 
 		it("manager/app-reload 替换全局配置并整进程重载", async () => {
-			const listener = app.console.listeners["manager/app-reload"];
+			const listener =
+				app.console.listeners["manager/app-reload"];
 			const writesBefore = loader.writes.length;
 			await listener?.callback.call(client as never, {
 				prefix: ["."],
@@ -499,11 +720,14 @@ describe("@koishi-ce/plugin-config", () => {
 			expect(loader.config.prefix).toEqual(["."]);
 			// plugins 部分被保留
 			expect(loader.config.plugins).toBeTruthy();
-			expect(loader.writes.length).toBeGreaterThan(writesBefore);
+			expect(loader.writes.length).toBeGreaterThan(
+				writesBefore,
+			);
 			expect(loader.fullReloadCount).toBe(1);
 			// 非静默写盘触发 config 事件 → config 服务刷新推送
 			const messages = readSent().filter(
-				(msg) => msg.type === "data" && msg.body.key === "config",
+				(msg) =>
+					msg.type === "data" && msg.body.key === "config",
 			);
 			expect(messages.length).toBeGreaterThan(0);
 		});

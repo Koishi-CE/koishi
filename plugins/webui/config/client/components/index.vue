@@ -173,13 +173,16 @@ ctx.define("config.tree", current);
 
 // 添加插件:仅分组节点与根节点可用,打开插件选择弹窗
 ctx.action("config.tree.add-plugin", {
-	hidden: ({ config }) => config.tree.path && !config.tree.children,
-	action: ({ config }) => (dialogSelect.value = config.tree),
+	hidden: ({ config }) =>
+		config.tree.path && !config.tree.children,
+	action: ({ config }) =>
+		(dialogSelect.value = config.tree),
 });
 
 // 添加分组:仅分组节点与根节点可用,打开创建分组弹窗
 ctx.action("config.tree.add-group", {
-	hidden: ({ config }) => config.tree.path && !config.tree.children,
+	hidden: ({ config }) =>
+		config.tree.path && !config.tree.children,
 	action: ({ config }) => {
 		groupCreate.value = config.tree.path;
 	},
@@ -188,19 +191,27 @@ ctx.action("config.tree.add-group", {
 /** 在当前分组下创建子分组（随机 ident）并跳转过去。 */
 function createGroup($label: string) {
 	const ident = Math.random().toString(36).slice(2, 8);
-	void send(`manager/reload`, groupCreate.value, `group:${ident}`, { $label });
+	void send(
+		`manager/reload`,
+		groupCreate.value,
+		`group:${ident}`,
+		{ $label },
+	);
 	router.replace(`/plugins/${ident}`);
 	groupCreate.value = null;
 }
 
 // 克隆配置:以停用态在紧随原配置的位置复制一份并跳转
 ctx.action("config.tree.clone", {
-	hidden: ({ config }) => !config.tree.path || !!config.tree.children,
+	hidden: ({ config }) =>
+		!config.tree.path || !!config.tree.children,
 	action: async ({ config }) => {
 		const children = config.tree.parent.path
 			? config.tree.parent.children
 			: plugins.value.data.slice(1);
-		const index = children.findIndex((tree) => tree.path === config.tree.path);
+		const index = children.findIndex(
+			(tree) => tree.path === config.tree.path,
+		);
 		const ident = Math.random().toString(36).slice(2, 8);
 		void send(
 			"manager/unload",
@@ -215,7 +226,8 @@ ctx.action("config.tree.clone", {
 
 // 管理多份配置:打开 fork 管理弹窗
 ctx.action("config.tree.manage", {
-	hidden: ({ config }) => !config.tree.path || !!config.tree.children,
+	hidden: ({ config }) =>
+		!config.tree.path || !!config.tree.children,
 	action: async ({ config }) => {
 		dialogFork.value = config.tree.name;
 	},
@@ -227,14 +239,17 @@ ctx.action("config.tree.rename", {
 	action: ({ config }) => {
 		input.value =
 			config.tree.label ||
-			(config.tree.name === "group" ? config.tree.path : config.tree.name);
+			(config.tree.name === "group"
+				? config.tree.path
+				: config.tree.name);
 		rename.value = config.tree;
 	},
 });
 
 // 移除:核心插件不可移除,其余弹出二次确认
 ctx.action("config.tree.remove", {
-	disabled: ({ config }) => !config.tree.path || hasCoreDeps(config.tree),
+	disabled: ({ config }) =>
+		!config.tree.path || hasCoreDeps(config.tree),
 	action: ({ config }) => (remove.value = config.tree),
 });
 
@@ -245,7 +260,8 @@ ctx.action("config.tree.remove", {
  * @returns 校验通过（或插件无 schema）为 true，否则弹出错误提示
  */
 function checkConfig(name: string) {
-	let schema = store.packages[getFullName(name)]?.runtime.schema;
+	let schema =
+		store.packages[getFullName(name)]?.runtime.schema;
 	if (!schema) return true;
 	try {
 		new Schema(schema)(config.value);
@@ -261,14 +277,19 @@ ctx.action("config.tree.save", {
 	shortcut: "ctrl+s",
 	disabled: (scope) =>
 		!scope?.config?.tree ||
-		!["config"].includes(router.currentRoute.value?.meta?.activity.id),
+		!["config"].includes(
+			router.currentRoute.value?.meta?.activity.id,
+		),
 	action: async ({ config: { tree } }) => {
 		const { disabled, path } = tree;
 		if (!disabled && !checkConfig(tree.name)) return;
-		if (!path) return send("manager/app-reload", config.value);
+		if (!path)
+			return send("manager/app-reload", config.value);
 		try {
 			await execute(tree, disabled ? "unload" : "reload");
-			message.success(disabled ? "配置已保存。" : "配置已重载。");
+			message.success(
+				disabled ? "配置已保存。" : "配置已重载。",
+			);
 		} catch (error) {
 			message.error("操作失败，请检查日志！");
 		}
@@ -277,7 +298,8 @@ ctx.action("config.tree.save", {
 
 // 启用/停用切换:核心插件不可操作;启用前先做 schema 校验
 ctx.action("config.tree.toggle", {
-	disabled: ({ config }) => !config.tree.path || hasCoreDeps(config.tree),
+	disabled: ({ config }) =>
+		!config.tree.path || hasCoreDeps(config.tree),
 	action: async ({ config: { tree } }) => {
 		const { disabled, name } = tree;
 		if (disabled && !checkConfig(tree.name)) return;
@@ -294,7 +316,10 @@ ctx.action("config.tree.toggle", {
 });
 
 /** 把启停/重载事件连同编辑副本一并发送给服务端。 */
-async function execute(tree: Tree, event: "unload" | "reload") {
+async function execute(
+	tree: Tree,
+	event: "unload" | "reload",
+) {
 	return await send(
 		`manager/${event}`,
 		tree.parent?.path ?? "",
@@ -307,7 +332,9 @@ async function execute(tree: Tree, event: "unload" | "reload") {
 function renameItem(tree: Tree, name: string) {
 	showRename.value = false;
 	tree.label = name;
-	void send("manager/meta", tree.path, { $label: name || null });
+	void send("manager/meta", tree.path, {
+		$label: name || null,
+	});
 }
 </script>
 

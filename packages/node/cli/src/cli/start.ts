@@ -20,7 +20,9 @@ type Event = Event.Start | Event.Env | Event.Heartbeat;
 /** 单个命令行选项的取值形态 */
 type WorkerOption = boolean | string | string[] | undefined;
 /** 传递给 worker 的完整选项表；`--` 键对应 cac 收集的透传参数 */
-type WorkerOptions = Record<string, WorkerOption> & { "--"?: string[] };
+type WorkerOptions = Record<string, WorkerOption> & {
+	"--"?: string[];
+};
 
 /** 子进程 IPC 消息的具体结构定义 */
 namespace Event {
@@ -54,7 +56,9 @@ process.env["KOISHI_SHARED"] = JSON.stringify({
  * 单字母键转为 `-x`，其余转为 `--kebab-case`。
  */
 function toArg(key: string) {
-	return key.length === 1 ? `-${key}` : `--${hyphenate(key)}`;
+	return key.length === 1
+		? `-${key}`
+		: `--${hyphenate(key)}`;
 }
 
 /**
@@ -67,21 +71,23 @@ function toArg(key: string) {
  */
 function createWorker(options: WorkerOptions) {
 	// 将选项对象还原为 Node/Bun 可识别的 execArgv 数组
-	const execArgv = Object.entries(options).flatMap<string>(([key, value]) => {
-		if (key === "--") return [];
-		key = toArg(key);
-		if (value === true) {
-			return [key];
-		} else if (value === false) {
-			// 布尔假值转为 --no-xxx 形式
-			return [`--no-${key.slice(2)}`];
-		} else if (Array.isArray(value)) {
-			// 数组值展开为多组 "键 值" 对
-			return value.flatMap((value) => [key, value]);
-		} else {
-			return [key, String(value)];
-		}
-	});
+	const execArgv = Object.entries(options).flatMap<string>(
+		([key, value]) => {
+			if (key === "--") return [];
+			key = toArg(key);
+			if (value === true) {
+				return [key];
+			} else if (value === false) {
+				// 布尔假值转为 --no-xxx 形式
+				return [`--no-${key.slice(2)}`];
+			} else if (Array.isArray(value)) {
+				// 数组值展开为多组 "键 值" 对
+				return value.flatMap((value) => [key, value]);
+			} else {
+				return [key, String(value)];
+			}
+		},
+	);
 	execArgv.push(...(options["--"] ?? []));
 
 	// worker 入口为构建产物 index.mjs，而非本 TS 源文件
@@ -96,7 +102,9 @@ function createWorker(options: WorkerOptions) {
 			timer = config.heartbeatTimeout
 				? setTimeout(() => {
 						// eslint-disable-next-line no-console
-						console.log(pc.red("daemon: heartbeat timeout"));
+						console.log(
+							pc.red("daemon: heartbeat timeout"),
+						);
 						child.kill("SIGKILL");
 					}, config.heartbeatTimeout)
 				: undefined;
@@ -116,19 +124,22 @@ function createWorker(options: WorkerOptions) {
 		}
 	};
 
-	child = Bun.spawn([process.execPath, worker, ...execArgv], {
-		ipc: handleMessage,
-		// Bun.spawn 的 stdio 默认为 ignore，须显式继承输出通道，
-		// 否则 worker 的全部日志都会被丢弃
-		stdout: "inherit",
-		stderr: "inherit",
-		onExit: (_, code, signal) => {
-			if (shouldExit(code, signal)) {
-				process.exit(code ?? 1);
-			}
-			createWorker(options);
+	child = Bun.spawn(
+		[process.execPath, worker, ...execArgv],
+		{
+			ipc: handleMessage,
+			// Bun.spawn 的 stdio 默认为 ignore，须显式继承输出通道，
+			// 否则 worker 的全部日志都会被丢弃
+			stdout: "inherit",
+			stderr: "inherit",
+			onExit: (_, code, signal) => {
+				if (shouldExit(code, signal)) {
+					process.exit(code ?? 1);
+				}
+				createWorker(options);
+			},
 		},
-	});
+	);
 
 	/**
 	 * 判断子进程退出后父进程应跟随退出还是重新拉起。
@@ -136,7 +147,10 @@ function createWorker(options: WorkerOptions) {
 	 * 退出码约定：0 表示正常退出；51 表示请求重启（如 loader 的整进程重载）；
 	 * 52 表示请求退出；收到信号一律视为外部终止，跟随退出。
 	 */
-	function shouldExit(code: number | null, signal: number | null) {
+	function shouldExit(
+		code: number | null,
+		signal: number | null,
+	) {
 		// 尚未收到 start 消息即退出，说明启动失败
 		if (!config) return true;
 
@@ -176,12 +190,21 @@ export default function (cli: CAC) {
 		.command("start [file]", "start a koishi bot")
 		.alias("run")
 		.allowUnknownOptions()
-		.option("--debug [namespace]", "specify debug namespace")
-		.option("--log-level [level]", "specify log level (default: 2)")
+		.option(
+			"--debug [namespace]",
+			"specify debug namespace",
+		)
+		.option(
+			"--log-level [level]",
+			"specify log level (default: 2)",
+		)
 		.option("--log-time [format]", "show timestamp in logs")
 		.action((file, options) => {
 			const { logLevel, debug, logTime, ...rest } = options;
-			if (logLevel !== undefined && (!isInteger(logLevel) || logLevel < 0)) {
+			if (
+				logLevel !== undefined &&
+				(!isInteger(logLevel) || logLevel < 0)
+			) {
 				// eslint-disable-next-line no-console
 				console.warn(
 					`${pc.red("error")} log level should be a positive integer.`,

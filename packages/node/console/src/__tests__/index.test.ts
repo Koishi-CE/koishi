@@ -11,7 +11,13 @@
  * DataService 的 refresh / patch 与 immediate 启动推送、宿主销毁时的清理。
  */
 
-import { afterAll, beforeAll, describe, expect, it } from "bun:test";
+import {
+	afterAll,
+	beforeAll,
+	describe,
+	expect,
+	it,
+} from "bun:test";
 import type { IncomingMessage } from "node:http";
 import {
 	type Client,
@@ -78,34 +84,50 @@ class FakeSocket {
 		this.sent.push(data);
 	}
 
-	addEventListener<K extends keyof Universal.WebSocket.EventMap>(
+	addEventListener<
+		K extends keyof Universal.WebSocket.EventMap,
+	>(
 		type: K,
-		listener: (event: Universal.WebSocket.EventMap[K]) => void,
+		listener: (
+			event: Universal.WebSocket.EventMap[K],
+		) => void,
 	) {
 		if (type === "message") {
 			this.messageHandlers.add(
-				listener as (event: Universal.WebSocket.MessageEvent) => void,
+				listener as (
+					event: Universal.WebSocket.MessageEvent,
+				) => void,
 			);
 		}
 		if (type === "close") {
 			this.closeHandlers.add(
-				listener as (event: Universal.WebSocket.CloseEvent) => void,
+				listener as (
+					event: Universal.WebSocket.CloseEvent,
+				) => void,
 			);
 		}
 	}
 
-	removeEventListener<K extends keyof Universal.WebSocket.EventMap>(
+	removeEventListener<
+		K extends keyof Universal.WebSocket.EventMap,
+	>(
 		type: K,
-		listener: (event: Universal.WebSocket.EventMap[K]) => void,
+		listener: (
+			event: Universal.WebSocket.EventMap[K],
+		) => void,
 	) {
 		if (type === "message") {
 			this.messageHandlers.delete(
-				listener as (event: Universal.WebSocket.MessageEvent) => void,
+				listener as (
+					event: Universal.WebSocket.MessageEvent,
+				) => void,
 			);
 		}
 		if (type === "close") {
 			this.closeHandlers.delete(
-				listener as (event: Universal.WebSocket.CloseEvent) => void,
+				listener as (
+					event: Universal.WebSocket.CloseEvent,
+				) => void,
 			);
 		}
 	}
@@ -113,14 +135,23 @@ class FakeSocket {
 	/** 注入一条前端 RPC 文本消息 */
 	receive(text: string) {
 		for (const handler of this.messageHandlers) {
-			handler({ type: "message", data: text, target: this.socket });
+			handler({
+				type: "message",
+				data: text,
+				target: this.socket,
+			});
 		}
 	}
 
 	/** 触发连接关闭事件 */
 	shutdown() {
 		for (const handler of this.closeHandlers) {
-			handler({ type: "close", code: 1000, reason: "", target: this.socket });
+			handler({
+				type: "close",
+				code: 1000,
+				reason: "",
+				target: this.socket,
+			});
 		}
 	}
 
@@ -139,7 +170,9 @@ function fakeRequest(headers: Record<string, string> = {}) {
 
 /** 读取某连接的全部出站消息 */
 function readSent(socket: FakeSocket): SentMessage[] {
-	return socket.sent.map((line) => JSON.parse(line) as SentMessage);
+	return socket.sent.map(
+		(line) => JSON.parse(line) as SentMessage,
+	);
 }
 
 /** 等待一小段时间，让异步分发（RPC 回调 / 首屏同步）完成 */
@@ -151,16 +184,26 @@ function tick(ms = 20) {
 class TestConsole extends Console {
 	resolveEntry(files: Entry.Files, key: string): string[] {
 		const list =
-			typeof files === "string" || Array.isArray(files) ? files : files.prod;
-		return makeArray(list).map((file) => `/assets/${key}/${file}`);
+			typeof files === "string" || Array.isArray(files)
+				? files
+				: files.prod;
+		return makeArray(list).map(
+			(file) => `/assets/${key}/${file}`,
+		);
 	}
 
 	/** 接入一个内存客户端并返回其 Client 实例 */
-	acceptClient(socket: Universal.WebSocket, request: IncomingMessage): Client {
+	acceptClient(
+		socket: Universal.WebSocket,
+		request: IncomingMessage,
+	): Client {
 		let accepted: Client | undefined;
-		const dispose = this.ctx.on("console/connection", (client) => {
-			accepted = client;
-		});
+		const dispose = this.ctx.on(
+			"console/connection",
+			(client) => {
+				accepted = client;
+			},
+		);
 		this.accept(socket, request);
 		dispose();
 		if (!accepted) throw new Error("client not accepted");
@@ -214,7 +257,10 @@ const app = new App();
 // Console 基类的 static inject 用的是 cordis 的 `{ optional: [...] }` 简写，
 // 该简写在 cordis d.ts 的 Inject 类型里未表达（运行时受支持），
 // 因此以纯构造器形状收窄后再交给 plugin()，避免 Inject 字典形状检查误报
-type ConsoleHost = new (ctx: Context, config: undefined) => TestConsole;
+type ConsoleHost = new (
+	ctx: Context,
+	config: undefined,
+) => TestConsole;
 app.plugin(TestConsole as ConsoleHost);
 const service = app.console as TestConsole;
 
@@ -224,51 +270,82 @@ afterAll(() => app.stop());
 describe("@koishi-ce/console 基座", () => {
 	describe("内置服务与 services 代理", () => {
 		it("注册 entry / schema / permissions 三个内置数据服务", () => {
-			expect(service.services.entry).toBeInstanceOf(EntryProvider);
-			expect(service.services.schema).toBeInstanceOf(SchemaProvider);
-			expect(service.services.permissions).toBeInstanceOf(PermissionProvider);
+			expect(service.services.entry).toBeInstanceOf(
+				EntryProvider,
+			);
+			expect(service.services.schema).toBeInstanceOf(
+				SchemaProvider,
+			);
+			expect(service.services.permissions).toBeInstanceOf(
+				PermissionProvider,
+			);
 		});
 
 		it("services 按名惰性解析，符号键直接透传", () => {
 			const symbol = Symbol("probe");
 			expect(
-				(service.services as unknown as Record<symbol, unknown>)[symbol],
+				(
+					service.services as unknown as Record<
+						symbol,
+						unknown
+					>
+				)[symbol],
 			).toBeUndefined();
 			// 未注册的服务名解析为 undefined
 			expect(
-				(service.services as unknown as Record<string, unknown>)["nonexistent"],
+				(
+					service.services as unknown as Record<
+						string,
+						unknown
+					>
+				)["nonexistent"],
 			).toBeUndefined();
 		});
 
 		it("services 代理禁止写入", () => {
 			expect(() => {
-				(service.services as unknown as Record<string, unknown>)["entry"] = 1;
+				(
+					service.services as unknown as Record<
+						string,
+						unknown
+					>
+				)["entry"] = 1;
 			}).toThrow();
 		});
 
 		it("内置 ping 监听器返回 pong", () => {
 			// Listener.callback 的 this 形参类型为 Client，以最小桩满足调用形状
 			const anyClient = { id: "ping-probe" } as Client;
-			expect(service.listeners["ping"]?.callback.call(anyClient)).toBe("pong");
+			expect(
+				service.listeners["ping"]?.callback.call(anyClient),
+			).toBe("pong");
 		});
 	});
 
 	describe("客户端接入与 RPC 分发", () => {
 		it("accept 登记客户端并触发 connection 事件，close 时清理", async () => {
 			const events: string[] = [];
-			const dispose = app.on("console/connection", (client) => {
-				events.push(client.id);
-			});
+			const dispose = app.on(
+				"console/connection",
+				(client) => {
+					events.push(client.id);
+				},
+			);
 
 			const socket = new FakeSocket();
-			const client = service.acceptClient(socket.socket, fakeRequest());
+			const client = service.acceptClient(
+				socket.socket,
+				fakeRequest(),
+			);
 			expect(service.clients[client.id]).toBe(client);
 			expect(events).toEqual([client.id]);
 
 			// 连接建立后触发首屏数据同步（entry 等内置服务立即下发）
 			await tick();
 			expect(
-				readSent(socket).filter((msg) => msg.type === "data").length,
+				readSent(socket).filter(
+					(msg) => msg.type === "data",
+				).length,
 			).toBeGreaterThan(0);
 
 			socket.shutdown();
@@ -279,26 +356,41 @@ describe("@koishi-ce/console 基座", () => {
 
 		it("未知事件回 not implemented，正常事件回传结果", async () => {
 			// 未知事件的 console 域 info 是被测行为的预期伴生输出，静默之
-			(Logger.levels as Record<string, number>)["console"] = 0;
+			(Logger.levels as Record<string, number>)["console"] =
+				0;
 			try {
 				const socket = new FakeSocket();
-				const client = service.acceptClient(socket.socket, fakeRequest());
+				const client = service.acceptClient(
+					socket.socket,
+					fakeRequest(),
+				);
 				await tick();
 				socket.sent.length = 0;
 
 				let boundId = "";
 				let boundArg: unknown;
-				service.addListener("test/echo", function (this: Client, ...args) {
-					boundId = this.id;
-					boundArg = args[0];
-					return args;
-				});
+				service.addListener(
+					"test/echo",
+					function (this: Client, ...args) {
+						boundId = this.id;
+						boundArg = args[0];
+						return args;
+					},
+				);
 
 				socket.receive(
-					JSON.stringify({ type: "unknown-event", id: 1, args: [] }),
+					JSON.stringify({
+						type: "unknown-event",
+						id: 1,
+						args: [],
+					}),
 				);
 				socket.receive(
-					JSON.stringify({ type: "test/echo", id: 2, args: ["hello"] }),
+					JSON.stringify({
+						type: "test/echo",
+						id: 2,
+						args: ["hello"],
+					}),
 				);
 				await tick();
 
@@ -315,7 +407,9 @@ describe("@koishi-ce/console 基座", () => {
 				expect(boundArg).toBe("hello");
 				socket.shutdown();
 			} finally {
-				delete (Logger.levels as Record<string, number>)["console"];
+				delete (Logger.levels as Record<string, number>)[
+					"console"
+				];
 			}
 		});
 
@@ -328,13 +422,21 @@ describe("@koishi-ce/console 基座", () => {
 			service.addListener("test/boom", () => {
 				throw new Error("boom");
 			});
-			socket.receive(JSON.stringify({ type: "test/boom", id: 3, args: [] }));
+			socket.receive(
+				JSON.stringify({
+					type: "test/boom",
+					id: 3,
+					args: [],
+				}),
+			);
 			await tick();
 
 			const response = readSent(socket)[0];
 			expect(response?.type).toBe("response");
 			expect(response?.body.id).toBe(3);
-			expect(String(response?.body.error)).toContain("boom");
+			expect(String(response?.body.error)).toContain(
+				"boom",
+			);
 			socket.shutdown();
 		});
 
@@ -353,11 +455,20 @@ describe("@koishi-ce/console 基座", () => {
 				},
 				{ authority: 5 },
 			);
-			const dispose = app.on("console/intercept", (_client, options) => {
-				return options.authority === 5;
-			});
+			const dispose = app.on(
+				"console/intercept",
+				(_client, options) => {
+					return options.authority === 5;
+				},
+			);
 
-			socket.receive(JSON.stringify({ type: "test/secret", id: 4, args: [] }));
+			socket.receive(
+				JSON.stringify({
+					type: "test/secret",
+					id: 4,
+					args: [],
+				}),
+			);
 			await tick();
 			expect(readSent(socket)[0]).toEqual({
 				type: "response",
@@ -373,22 +484,37 @@ describe("@koishi-ce/console 基座", () => {
 		it("向全部客户端广播静态与函数消息体", async () => {
 			const socketA = new FakeSocket();
 			const socketB = new FakeSocket();
-			const clientA = service.acceptClient(socketA.socket, fakeRequest());
-			const clientB = service.acceptClient(socketB.socket, fakeRequest());
+			const clientA = service.acceptClient(
+				socketA.socket,
+				fakeRequest(),
+			);
+			const clientB = service.acceptClient(
+				socketB.socket,
+				fakeRequest(),
+			);
 			await tick();
 			socketA.sent.length = 0;
 			socketB.sent.length = 0;
 
 			await service.broadcast("event", { static: true });
-			await service.broadcast("event", (client: Client) => ({
-				who: client.id,
-			}));
+			await service.broadcast(
+				"event",
+				(client: Client) => ({
+					who: client.id,
+				}),
+			);
 
 			expect(socketA.sent).toHaveLength(2);
 			expect(socketB.sent).toHaveLength(2);
-			expect(readSent(socketA)[0]?.body).toEqual({ static: true });
-			expect(readSent(socketA)[1]?.body).toEqual({ who: clientA.id });
-			expect(readSent(socketB)[1]?.body).toEqual({ who: clientB.id });
+			expect(readSent(socketA)[0]?.body).toEqual({
+				static: true,
+			});
+			expect(readSent(socketA)[1]?.body).toEqual({
+				who: clientA.id,
+			});
+			expect(readSent(socketB)[1]?.body).toEqual({
+				who: clientB.id,
+			});
 			socketA.shutdown();
 			socketB.shutdown();
 		});
@@ -396,16 +522,24 @@ describe("@koishi-ce/console 基座", () => {
 		it("被拦截器命中的客户端不参与广播；无客户端时为空操作", async () => {
 			const socketA = new FakeSocket();
 			const socketB = new FakeSocket();
-			const clientA = service.acceptClient(socketA.socket, fakeRequest());
+			const clientA = service.acceptClient(
+				socketA.socket,
+				fakeRequest(),
+			);
 			service.acceptClient(socketB.socket, fakeRequest());
 			await tick();
 			socketA.sent.length = 0;
 			socketB.sent.length = 0;
 
-			const dispose = app.on("console/intercept", (client) => {
-				return client === clientA;
+			const dispose = app.on(
+				"console/intercept",
+				(client) => {
+					return client === clientA;
+				},
+			);
+			await service.broadcast("blocked", null, {
+				authority: 1,
 			});
-			await service.broadcast("blocked", null, { authority: 1 });
 			expect(socketA.sent).toHaveLength(0);
 			expect(socketB.sent).toHaveLength(1);
 			dispose();
@@ -413,22 +547,30 @@ describe("@koishi-ce/console 基座", () => {
 			// 两个连接都断开后广播应直接返回
 			socketA.shutdown();
 			socketB.shutdown();
-			await expect(service.broadcast("nobody", 1)).resolves.toBeUndefined();
+			await expect(
+				service.broadcast("nobody", 1),
+			).resolves.toBeUndefined();
 		});
 	});
 
 	describe("入口（Entry）", () => {
 		it("addEntry 注册入口并随 get 下发（含 data 工厂与 loader 路径）", async () => {
 			const socket = new FakeSocket();
-			const client = service.acceptClient(socket.socket, fakeRequest());
+			const client = service.acceptClient(
+				socket.socket,
+				fakeRequest(),
+			);
 			await tick();
 
 			// 无 loader 时路径字段缺省
-			const entry = service.addEntry(["a.js", "b.js"], () => ({ v: 1 }));
+			const entry = service.addEntry(
+				["a.js", "b.js"],
+				() => ({ v: 1 }),
+			);
 			const data = await service.get(client);
-			const entryData = (data as Record<string, EntryItem | string>)[
-				entry.id
-			] as EntryItem | undefined;
+			const entryData = (
+				data as Record<string, EntryItem | string>
+			)[entry.id] as EntryItem | undefined;
 			expect(entryData?.files).toEqual([
 				`/assets/${entry.id}/a.js`,
 				`/assets/${entry.id}/b.js`,
@@ -442,14 +584,18 @@ describe("@koishi-ce/console 基座", () => {
 				paths: () => ["group:entry", "plugins"],
 			});
 			const withPaths = await service.get(client);
-			const withPathsEntry = (withPaths as Record<string, EntryItem | string>)[
-				entry.id
-			] as EntryItem | undefined;
-			expect(withPathsEntry?.paths).toEqual(["group:entry", "plugins"]);
+			const withPathsEntry = (
+				withPaths as Record<string, EntryItem | string>
+			)[entry.id] as EntryItem | undefined;
+			expect(withPathsEntry?.paths).toEqual([
+				"group:entry",
+				"plugins",
+			]);
 			await tick();
 			expect(
 				readSent(socket).filter(
-					(msg) => msg.type === "data" && msg.body.key === "entry",
+					(msg) =>
+						msg.type === "data" && msg.body.key === "entry",
 				).length,
 			).toBeGreaterThan(0);
 
@@ -463,7 +609,10 @@ describe("@koishi-ce/console 基座", () => {
 			service.acceptClient(socket.socket, fakeRequest());
 			await tick();
 
-			const entry = service.addEntry("single.js", () => "payload");
+			const entry = service.addEntry(
+				"single.js",
+				() => "payload",
+			);
 			await tick();
 			socket.sent.length = 0;
 			// refresh 不返回广播 Promise，等待一拍让消息落地
@@ -502,9 +651,10 @@ describe("@koishi-ce/console 基座", () => {
 			for (const value of dataValues) {
 				expect(value).toBeGreaterThan(0);
 			}
-			expect(messages.find((msg) => msg.type === "patch")?.body.value).toBe(
-				100,
-			);
+			expect(
+				messages.find((msg) => msg.type === "patch")?.body
+					.value,
+			).toBe(100);
 			fork.dispose();
 			socket.shutdown();
 		});
@@ -519,7 +669,9 @@ describe("@koishi-ce/console 基座", () => {
 			await tick(30);
 			expect(
 				readSent(socket).find(
-					(msg) => msg.type === "data" && msg.body.key === "immediate",
+					(msg) =>
+						msg.type === "data" &&
+						msg.body.key === "immediate",
 				)?.body.value,
 			).toBe(42);
 			fork.dispose();
@@ -533,31 +685,45 @@ describe("@koishi-ce/console 基座", () => {
 			await tick(30);
 			const socket = new FakeSocket();
 			// 拦截 authority 门槛为 7 的服务
-			const dispose = app.on("console/intercept", (_client, options) => {
-				return options.authority === 7;
-			});
+			const dispose = app.on(
+				"console/intercept",
+				(_client, options) => {
+					return options.authority === 7;
+				},
+			);
 
-			const client = service.acceptClient(socket.socket, fakeRequest());
+			const client = service.acceptClient(
+				socket.socket,
+				fakeRequest(),
+			);
 			await tick();
 			socket.sent.length = 0;
 			client.refresh();
 			await tick();
 			// 两个服务 get 均返回 null：不产生任何首屏消息
-			const messages = readSent(socket).filter((msg) => msg.type === "data");
-			expect(messages.find((msg) => msg.body.key === "empty")).toBeUndefined();
+			const messages = readSent(socket).filter(
+				(msg) => msg.type === "data",
+			);
+			expect(
+				messages.find((msg) => msg.body.key === "empty"),
+			).toBeUndefined();
 			expect(
 				messages.find((msg) => msg.body.key === "blocked"),
 			).toBeUndefined();
 
 			// 为 blocked 补上 authority 门槛后应下发 null
-			const blocked = app.get("console.services.blocked") as DataService;
+			const blocked = app.get(
+				"console.services.blocked",
+			) as DataService;
 			blocked.options = { authority: 7 };
 			socket.sent.length = 0;
 			client.refresh();
 			await tick();
 			expect(
 				readSent(socket).find(
-					(msg) => msg.type === "data" && msg.body.key === "blocked",
+					(msg) =>
+						msg.type === "data" &&
+						msg.body.key === "blocked",
 				)?.body.value,
 			).toBeNull();
 
@@ -572,9 +738,11 @@ describe("@koishi-ce/console 基座", () => {
 		it("schema / permissions 服务返回核心服务数据", async () => {
 			const schema = await service.services.schema.get();
 			expect(schema).toBe(
-				(app.schema as unknown as { _data: Dict<Schema> })._data,
+				(app.schema as unknown as { _data: Dict<Schema> })
+					._data,
 			);
-			const permissions = await service.services.permissions.get();
+			const permissions =
+				await service.services.permissions.get();
 			expect(Array.isArray(permissions)).toBe(true);
 		});
 
@@ -588,7 +756,9 @@ describe("@koishi-ce/console 基座", () => {
 			app.emit("internal/schema", "probe");
 			app.emit("internal/permission");
 			await tick();
-			const keys = readSent(socket).map((msg) => msg.body.key);
+			const keys = readSent(socket).map(
+				(msg) => msg.body.key,
+			);
 			expect(keys).toContain("schema");
 			expect(keys).toContain("permissions");
 			socket.shutdown();
@@ -603,7 +773,10 @@ describe("@koishi-ce/console 基座", () => {
 			await localApp.start();
 			const localConsole = localApp.console as TestConsole;
 			const socket = new FakeSocket();
-			localConsole.acceptClient(socket.socket, fakeRequest());
+			localConsole.acceptClient(
+				socket.socket,
+				fakeRequest(),
+			);
 			await tick();
 			expect(socket.sent.length).toBeGreaterThan(0);
 

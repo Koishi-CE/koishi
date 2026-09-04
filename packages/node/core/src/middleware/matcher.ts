@@ -61,18 +61,31 @@ export function executeMatcher(
 	matcher: Matcher,
 ) {
 	const { stripped, quote } = session;
-	const { appel, context, i18n, regex, fuzzy, pattern, response } = matcher;
+	const {
+		appel,
+		context,
+		i18n,
+		regex,
+		fuzzy,
+		pattern,
+		response,
+	} = matcher;
 	// 配置要求称呼、或消息 @ 了别人时，没有称呼（@机器人/昵称）则跳过
 	if ((appel || stripped.hasAt) && !stripped.appel) return;
 	if (!context.filter(session)) return;
 	let content = stripped.content;
 	if (quote?.content) content += ` ${quote.content}`;
 
-	const match = (pattern: string | RegExp): [string, ...string[]] | null => {
+	const match = (
+		pattern: string | RegExp,
+	): [string, ...string[]] | null => {
 		if (!pattern) return null;
 		if (typeof pattern === "string") {
 			// 非模糊模式要求整条消息与模板一致
-			if ((!fuzzy && content !== pattern) || !content.startsWith(pattern))
+			if (
+				(!fuzzy && content !== pattern) ||
+				!content.startsWith(pattern)
+			)
 				return null;
 			const rest = content.slice(pattern.length);
 			// 模糊模式下，模板与后续内容之间必须有词边界
@@ -83,7 +96,9 @@ export function executeMatcher(
 			return [content, rest];
 		} else {
 			// exec 结果首元素恒为完整匹配，天然满足捕获组元组形状
-			return pattern.exec(content) as [string, ...string[]] | null;
+			return pattern.exec(content) as
+				| [string, ...string[]]
+				| null;
 		}
 	};
 
@@ -94,7 +109,9 @@ export function executeMatcher(
 		// i18n 模式：逐语言取出模板文本再匹配，命中即锁定会话语言
 		for (const locale of ctx.i18n.fallback([])) {
 			const store = ctx.i18n._data[locale];
-			let value = store?.[pattern as string] as string | RegExp;
+			let value = store?.[pattern as string] as
+				| string
+				| RegExp;
 			if (!value) continue;
 			if (regex) {
 				// 正则模式：无称呼时要求模板后接空白，模糊模式再允许捕获剩余内容
@@ -114,10 +131,15 @@ export function executeMatcher(
 	const captured = params;
 	// 惰性构造回复：正文调用时才 resolve，捕获组同步解析为元素
 	session.response = async () => {
-		const output = await session.resolve(response, captured);
+		const output = await session.resolve(
+			response,
+			captured,
+		);
 		return h.normalize(
 			output,
-			captured.map((source) => (source ? h.parse(source) : "")),
+			captured.map((source) =>
+				source ? h.parse(source) : "",
+			),
 		);
 	};
 }

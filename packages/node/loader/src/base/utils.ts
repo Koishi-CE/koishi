@@ -13,7 +13,10 @@ import type { Dict } from "@koishi-ce/core";
  * 动态模块的导出形态无法静态约束，统一以 unknown 返回，由调用方按需收窄。
  */
 export function unwrapExports(module: unknown): unknown {
-	const record = module as { default?: unknown } | null | undefined;
+	const record = module as
+		| { default?: unknown }
+		| null
+		| undefined;
 	return record?.default || module;
 }
 
@@ -40,14 +43,21 @@ export function separate(
 			config[key] = value;
 		}
 	}
-	return [isGroup ? ((source ?? {}) as Dict<unknown>) : config, meta];
+	return [
+		isGroup ? ((source ?? {}) as Dict<unknown>) : config,
+		meta,
+	];
 }
 
 /**
  * 将 temp 中的键插入到 object 的指定位置（rest 各键之前），
  * 用于在重命名插件时保持键的相对顺序。
  */
-function insertKey(object: Dict<unknown>, temp: Dict<unknown>, rest: string[]) {
+function insertKey(
+	object: Dict<unknown>,
+	temp: Dict<unknown>,
+	rest: string[],
+) {
 	for (const key of rest) {
 		temp[key] = object[key];
 		delete object[key];
@@ -66,7 +76,9 @@ export function rename(
 	value: unknown,
 ) {
 	const keys = Object.keys(object);
-	const index = keys.findIndex((key) => key === old || key === `~${old}`);
+	const index = keys.findIndex(
+		(key) => key === old || key === `~${old}`,
+	);
 	const rest = index < 0 ? [] : keys.slice(index + 1);
 	const temp: Dict<unknown> = { [neo]: value };
 	delete object[old];

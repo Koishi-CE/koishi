@@ -53,11 +53,20 @@ export interface AnalyzeConfig {
 	/** 每个对象开始分析前调用 */
 	before?(object: SearchObject): void;
 	/** 拿到某包的完整 registry 数据、筛选出兼容版本后调用（含已废弃版本） */
-	onRegistry?(registry: Registry, versions: RemotePackage[]): Awaitable<void>;
+	onRegistry?(
+		registry: Registry,
+		versions: RemotePackage[],
+	): Awaitable<void>;
 	/** 单个包分析成功后调用 */
-	onSuccess?(object: SearchObject, versions: RemotePackage[]): Awaitable<void>;
+	onSuccess?(
+		object: SearchObject,
+		versions: RemotePackage[],
+	): Awaitable<void>;
 	/** 单个包分析抛错后调用（该包会被标记 ignored） */
-	onFailure?(name: string, reason: unknown): Awaitable<void>;
+	onFailure?(
+		name: string,
+		reason: unknown,
+	): Awaitable<void>;
 	/** 单个包因无兼容版本被跳过后调用（该包会被标记 ignored） */
 	onSkipped?(name: string): Awaitable<void>;
 	/** 每个对象结束分析（无论成败）后调用 */
@@ -65,12 +74,20 @@ export interface AnalyzeConfig {
 }
 
 /** 两个阶段的合并配置；request 由宿主注入实际的 HTTP 实现 */
-export interface ScanConfig extends CollectConfig, AnalyzeConfig {
+export interface ScanConfig
+	extends CollectConfig,
+		AnalyzeConfig {
 	request<T>(url: string): Promise<T>;
 }
 
 // 市场展示时要从 keywords 里剔除的停用词（与插件命名强相关，无区分度）
-const stopWords = ["koishi", "plugin", "bot", "coolq", "cqhttp"];
+const stopWords = [
+	"koishi",
+	"plugin",
+	"bot",
+	"coolq",
+	"cqhttp",
+];
 
 /** 单次请求的附加配置（目前仅超时） */
 export interface RequestConfig {
@@ -91,9 +108,17 @@ export default class Scanner {
 	private cache!: Dict<SearchObject>;
 
 	// erasableSyntaxOnly：参数属性需拆为显式字段声明
-	public request: <T>(url: string, config?: RequestConfig) => Promise<T>;
+	public request: <T>(
+		url: string,
+		config?: RequestConfig,
+	) => Promise<T>;
 
-	constructor(request: <T>(url: string, config?: RequestConfig) => Promise<T>) {
+	constructor(
+		request: <T>(
+			url: string,
+			config?: RequestConfig,
+		) => Promise<T>,
+	) {
 		this.request = request;
 		defineProperty(this, "progress", 0);
 		defineProperty(this, "cache", {});
@@ -104,13 +129,18 @@ export default class Scanner {
 	 * @param offset 起始偏移（from 参数）
 	 * @returns 本轮搜索命中的总数（total），用于判断是否还有下一页
 	 */
-	private async search(offset: number, config: CollectConfig) {
-		const { step = 250, timeout = Time.second * 30 } = config;
+	private async search(
+		offset: number,
+		config: CollectConfig,
+	) {
+		const { step = 250, timeout = Time.second * 30 } =
+			config;
 		const result = await this.request<SearchResult>(
 			`/-/v1/search?text=koishi+plugin&size=${step}&from=${offset}`,
 			{ timeout },
 		);
-		if (result.version !== undefined) this.version = result.version;
+		if (result.version !== undefined)
+			this.version = result.version;
 		for (const object of result.objects) {
 			this.cache[object.package.name] = object;
 		}
@@ -123,7 +153,11 @@ export default class Scanner {
 	 * 最后按包名去重、剔除无发布时间 / 被忽略 / 非 Koishi 插件的条目。
 	 */
 	public async collect(config: CollectConfig = {}) {
-		const { step = 250, margin = 25, ignored = [] } = config;
+		const {
+			step = 250,
+			margin = 25,
+			ignored = [],
+		} = config;
 		this.cache = {};
 		this.time = new Date().toUTCString();
 		const total = await this.search(0, config);
@@ -134,23 +168,28 @@ export default class Scanner {
 		) {
 			await this.search(offset - margin, config);
 		}
-		this.objects = Object.values(this.cache).filter((object) => {
-			const { name, date } = object.package;
-			// https://registry.npmjs.org 存在缺陷，`date` 字段可能为 `undefined`
-			return (
-				date &&
-				!object.ignored &&
-				!ignored.includes(name) &&
-				Scanner.isPlugin(name)
-			);
-		});
+		this.objects = Object.values(this.cache).filter(
+			(object) => {
+				const { name, date } = object.package;
+				// https://registry.npmjs.org 存在缺陷，`date` 字段可能为 `undefined`
+				return (
+					date &&
+					!object.ignored &&
+					!ignored.includes(name) &&
+					Scanner.isPlugin(name)
+				);
+			},
+		);
 		this.total = this.objects.length;
 	}
 
 	/** 判断包名是否为 Koishi 插件：官方 @koishijs/plugin-* 或社区 koishi-plugin-* */
 	static isPlugin(name: string) {
-		const official = /^@koishijs\/plugin-[0-9a-z-]+$/.test(name);
-		const community = /(^|\/)koishi-plugin-[0-9a-z-]+$/.test(name);
+		const official = /^@koishijs\/plugin-[0-9a-z-]+$/.test(
+			name,
+		);
+		const community =
+			/(^|\/)koishi-plugin-[0-9a-z-]+$/.test(name);
 		return official || community;
 	}
 
@@ -166,7 +205,10 @@ export default class Scanner {
 		const { peerDependencies = {} } = remote;
 		const declaredVersion = peerDependencies["koishi"];
 		try {
-			return !!declaredVersion && intersects(range, declaredVersion);
+			return (
+				!!declaredVersion &&
+				intersects(range, declaredVersion)
+			);
 		} catch {
 			return false;
 		}
@@ -185,7 +227,9 @@ export default class Scanner {
 	) {
 		const { name } = object.package;
 		const official = name.startsWith("@koishijs/plugin-");
-		const registry = await this.request<Registry>(`/${name}`);
+		const registry = await this.request<Registry>(
+			`/${name}`,
+		);
 		const compatible = Object.values(registry.versions)
 			.filter((remote) => {
 				return Scanner.isCompatible(range, remote);
@@ -193,7 +237,9 @@ export default class Scanner {
 			.sort((a, b) => compare(b.version, a.version));
 
 		await onRegistry?.(registry, compatible);
-		const versions = compatible.filter((item) => !item.deprecated);
+		const versions = compatible.filter(
+			(item) => !item.deprecated,
+		);
 		if (!versions.length) return;
 
 		const first = versions[0];
@@ -201,20 +247,30 @@ export default class Scanner {
 		const latest = registry.versions[first.version];
 		if (!latest) return;
 		const manifest = conclude(latest);
-		const times = compatible.map((item) => registry.time[item.version]).sort();
+		const times = compatible
+			.map((item) => registry.time[item.version])
+			.sort();
 
-		object.shortname = name.replace(/(koishi-|^@koishijs\/)plugin-/, "");
+		object.shortname = name.replace(
+			/(koishi-|^@koishijs\/)plugin-/,
+			"",
+		);
 		object.verified = official;
 		object.manifest = manifest;
-		if (manifest.insecure !== undefined) object.insecure = manifest.insecure;
-		if (manifest.category !== undefined) object.category = manifest.category;
+		if (manifest.insecure !== undefined)
+			object.insecure = manifest.insecure;
+		if (manifest.category !== undefined)
+			object.category = manifest.category;
 		// versions 非空保证 compatible / times 非空（noUncheckedIndexedAccess 下显式收窄）
 		const createdAt = times[0];
 		const updatedAt = times[times.length - 1];
-		if (createdAt === undefined || updatedAt === undefined) return;
+		if (createdAt === undefined || updatedAt === undefined)
+			return;
 		object.createdAt = createdAt;
 		object.updatedAt = updatedAt;
-		object.package.contributors ??= latest.author ? [latest.author] : [];
+		object.package.contributors ??= latest.author
+			? [latest.author]
+			: [];
 		object.package.keywords = (latest.keywords ?? [])
 			.map((keyword) => keyword.toLowerCase())
 			.filter((keyword) => {
@@ -244,29 +300,37 @@ export default class Scanner {
 			after,
 		} = config;
 
-		const result = await mapLimit(this.objects, concurrency, async (object) => {
-			if (object.ignored) return;
-			before?.(object);
-			const { name } = object.package;
-			try {
-				const versions = await this.process(object, version, onRegistry);
-				if (versions) {
-					await onSuccess?.(object, versions);
-					return versions;
-				} else {
+		const result = await mapLimit(
+			this.objects,
+			concurrency,
+			async (object) => {
+				if (object.ignored) return;
+				before?.(object);
+				const { name } = object.package;
+				try {
+					const versions = await this.process(
+						object,
+						version,
+						onRegistry,
+					);
+					if (versions) {
+						await onSuccess?.(object, versions);
+						return versions;
+					} else {
+						object.ignored = true;
+						await onSkipped?.(name);
+					}
+				} catch (error) {
 					object.ignored = true;
-					await onSkipped?.(name);
+					await onFailure?.(name, error);
+				} finally {
+					this.progress += 1;
+					after?.(object);
 				}
-			} catch (error) {
-				object.ignored = true;
-				await onFailure?.(name, error);
-			} finally {
-				this.progress += 1;
-				after?.(object);
-			}
-			// 未产出 versions 的对象在此返回 undefined，由下方 filter 剔除
-			return;
-		});
+				// 未产出 versions 的对象在此返回 undefined，由下方 filter 剔除
+				return;
+			},
+		);
 
 		return result.filter(isNonNullable);
 	}

@@ -4,10 +4,15 @@
 
 import { DataService } from "@koishi-ce/console";
 import type { Context, Dict } from "@koishi-ce/koishi";
-import type { DependencyMetaKey, RemotePackage } from "@koishi-ce/registry";
+import type {
+	DependencyMetaKey,
+	RemotePackage,
+} from "@koishi-ce/registry";
 import type { Dependency } from "./installer.ts";
 
-class DependencyProvider extends DataService<Dict<Dependency>> {
+class DependencyProvider extends DataService<
+	Dict<Dependency>
+> {
 	constructor(ctx: Context) {
 		super(ctx, "dependencies", { authority: 4 });
 	}

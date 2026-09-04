@@ -16,7 +16,11 @@ import type { Context } from "../../context/index.ts";
 import type { Computed } from "../../filter.ts";
 import type { Session } from "../../session/index.ts";
 import type { Command } from "../command/command.ts";
-import { parseDecl, parseValue, resolveDomain } from "../declaration.ts";
+import {
+	parseDecl,
+	parseValue,
+	resolveDomain,
+} from "../declaration.ts";
 import { normalizeCommand } from "../normalize.ts";
 import type { Argv } from "../parser/index.ts";
 
@@ -57,7 +61,10 @@ export class CommanderCore {
 	updateCommands(bot: Bot) {
 		return bot.updateCommands(
 			this._commandList
-				.filter((cmd) => !cmd.name.includes(".") && cmd.config.slash)
+				.filter(
+					(cmd) =>
+						!cmd.name.includes(".") && cmd.config.slash,
+				)
 				.map((cmd) => cmd.toJSON()),
 		);
 	}
@@ -68,7 +75,9 @@ export class CommanderCore {
 	 */
 	_resolvePrefixes(session: Session) {
 		const value = session.resolve(this.config.prefix);
-		const result = Array.isArray(value) ? value : [value || ""];
+		const result = Array.isArray(value)
+			? value
+			: [value || ""];
 		return result
 			.map((source) => h.escape(source))
 			.sort()
@@ -81,7 +90,10 @@ export class CommanderCore {
 			.filter((cmd) => cmd.match(session))
 			.flatMap((cmd) =>
 				Object.entries(cmd._aliases)
-					.filter(([, alias]) => session.resolve(alias.filter) ?? true)
+					.filter(
+						([, alias]) =>
+							session.resolve(alias.filter) ?? true,
+					)
 					.map(([name]) => name),
 			);
 	}
@@ -102,7 +114,10 @@ export class CommanderCore {
 		let i = 1,
 			name = segments[0] ?? "",
 			command: Command | undefined;
-		while ((command = this.get(name, session)) && i < segments.length) {
+		while (
+			(command = this.get(name, session)) &&
+			i < segments.length
+		) {
 			name = `${command.name}.${segments[i++] ?? ""}`;
 		}
 		return { command, name };

@@ -26,7 +26,9 @@ export const cwd = process.cwd();
  */
 export async function loadHostManifest(): Promise<PackageJson | null> {
 	try {
-		return (await Bun.file(`${cwd}/package.json`).json()) as PackageJson;
+		return (await Bun.file(
+			`${cwd}/package.json`,
+		).json()) as PackageJson;
 	} catch {
 		return null;
 	}

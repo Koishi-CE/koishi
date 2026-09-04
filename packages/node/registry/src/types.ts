@@ -62,7 +62,9 @@ export interface PackageJson
 
 export namespace PackageJson {
 	export type Exports = string | { [key: string]: Exports };
-	export type Overrides = string | { [key: string]: Overrides };
+	export type Overrides =
+		| string
+		| { [key: string]: Overrides };
 
 	/** peer 依赖的附加标记（如 optional 声明可选） */
 	export interface PeerMeta {

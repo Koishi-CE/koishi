@@ -10,8 +10,16 @@
  * 避免把整个 echarts 打进前端产物。
  * 经 utils.ts 的 defineAsyncComponent 异步引入，图表不渲染时不加载。
  */
-import { BarChart, LineChart, PieChart, SunburstChart } from "echarts/charts";
-import { GridComponent, TooltipComponent } from "echarts/components";
+import {
+	BarChart,
+	LineChart,
+	PieChart,
+	SunburstChart,
+} from "echarts/charts";
+import {
+	GridComponent,
+	TooltipComponent,
+} from "echarts/components";
 import { use } from "echarts/core";
 import { CanvasRenderer } from "echarts/renderers";
 import VChart from "vue-echarts";

@@ -62,7 +62,11 @@ export default function apply(ctx: Context) {
 		.action(async ({ options, session }, authority) => {
 			if (!session) return;
 			// -u 选项由下方 adminUser 动态注入,不在静态 options 类型中
-			const { user } = (options ?? {}) as Extend<object, "user", string>;
+			const { user } = (options ?? {}) as Extend<
+				object,
+				"user",
+				string
+			>;
 			if (!user) {
 				return session.text("admin.user-expected");
 			}
@@ -87,7 +91,9 @@ export default function apply(ctx: Context) {
 			admin: { channel: true, upsert: true },
 		})
 		.channelFields(["assignee"])
-		.option("remove", "-r", { descPath: "admin.options.remove" })
+		.option("remove", "-r", {
+			descPath: "admin.options.remove",
+		})
 		.action(async ({ session, options }, value) => {
 			if (!session) return;
 			if (!session.channel) return;
@@ -98,7 +104,9 @@ export default function apply(ctx: Context) {
 			} else {
 				const [platform, userId] = parsePlatform(value);
 				if (platform !== session.platform) {
-					return session.text("admin.invalid-assignee-platform");
+					return session.text(
+						"admin.invalid-assignee-platform",
+					);
 				}
 				session.channel.assignee = userId;
 			}
@@ -116,7 +124,9 @@ export default function apply(ctx: Context) {
 }
 
 /** 拆分 "platform:id" 形式的目标标识。 */
-function parsePlatform(target: string): [platform: string, id: string] {
+function parsePlatform(
+	target: string,
+): [platform: string, id: string] {
 	const index = target.indexOf(":");
 	const platform = target.slice(0, index);
 	const id = target.slice(index + 1);
@@ -137,7 +147,12 @@ function adminUser(command: Command) {
 	 * 目标权限不低于操作者时拒绝操作。
 	 */
 	async function setTarget(
-		argv: Argv<"authority", never, unknown[], Extend<object, "user", unknown>>,
+		argv: Argv<
+			"authority",
+			never,
+			unknown[],
+			Extend<object, "user", unknown>
+		>,
 	) {
 		const { options, session } = argv;
 		if (!session) return undefined;
@@ -148,35 +163,56 @@ function adminUser(command: Command) {
 		if (!options?.user) return undefined;
 
 		// 指定的目标用户就是当前用户（-u [user:user] 保证运行时为 string）
-		const [platform, userId] = parsePlatform(options.user as string);
-		if (session.userId === userId && session.platform === platform) {
+		const [platform, userId] = parsePlatform(
+			options.user as string,
+		);
+		if (
+			session.userId === userId &&
+			session.platform === platform
+		) {
 			return undefined;
 		}
 
 		// 读取目标用户数据
 		const fields = session.collect("user", argv);
-		const data = await app.database.getUser(platform, userId, [...fields]);
+		const data = await app.database.getUser(
+			platform,
+			userId,
+			[...fields],
+		);
 
 		if (!data) {
 			notFound = true;
 			// user 表由内核启动时注册,运行时必然存在,缺失视为致命错误
 			const table = app.model.tables["user"];
-			if (!table) throw new Error("table user is not registered");
+			if (!table)
+				throw new Error("table user is not registered");
 			const temp = table.create();
 			session.user = observe(
 				temp,
 				async (diff) => {
-					await app.database.createUser(platform, userId, diff);
+					await app.database.createUser(
+						platform,
+						userId,
+						diff,
+					);
 				},
 				`user ${options.user}`,
 			);
-		} else if (session.user && session.user.authority <= data.authority) {
+		} else if (
+			session.user &&
+			session.user.authority <= data.authority
+		) {
 			return session.text("internal.low-authority");
 		} else {
 			session.user = observe(
 				data,
 				async (diff) => {
-					await app.database.setUser(platform, userId, diff);
+					await app.database.setUser(
+						platform,
+						userId,
+						diff,
+					);
 				},
 				`user ${options.user}`,
 			);
@@ -207,7 +243,10 @@ function adminUser(command: Command) {
 				} else if (typeof result === "string") {
 					return result;
 				} else if (
-					!difference(Object.keys(session.user.$diff), diffKeys).length
+					!difference(
+						Object.keys(session.user.$diff),
+						diffKeys,
+					).length
 				) {
 					return session.text("admin.user-unchanged");
 				} else if (
@@ -237,7 +276,12 @@ function adminChannel(command: Command) {
 	 * 目标不存在时用空模板创建观察者（配合 upsert 决定是报错还是建档）。
 	 */
 	async function setTarget(
-		argv: Argv<never, never, unknown[], Extend<object, "channel", unknown>>,
+		argv: Argv<
+			never,
+			never,
+			unknown[],
+			Extend<object, "channel", unknown>
+		>,
 	) {
 		const { options, session } = argv;
 		if (!session) return undefined;
@@ -253,29 +297,41 @@ function adminChannel(command: Command) {
 		const channel = options?.channel ?? session.cid;
 		// $detached 是 observe 运行时附加的标记(仅会赋 true),不在 Observed 类型中
 		const current = session.channel;
-		if (channel === session.cid && !(current && "$detached" in current)) {
+		if (
+			channel === session.cid &&
+			!(current && "$detached" in current)
+		) {
 			return undefined;
 		}
 
 		// 读取目标频道数据（-c [channel:channel] 保证选项运行时为 string）
-		const [platform, channelId] = parsePlatform(channel as string);
+		const [platform, channelId] = parsePlatform(
+			channel as string,
+		);
 		const fields = session.collect("channel", argv);
-		const data = await app.database.getChannel(platform, channelId, [
-			...fields,
-		]);
+		const data = await app.database.getChannel(
+			platform,
+			channelId,
+			[...fields],
+		);
 
 		if (!data) {
 			notFound = true;
 			// channel 表由内核启动时注册,运行时必然存在,缺失视为致命错误
 			const table = app.model.tables["channel"];
-			if (!table) throw new Error("table channel is not registered");
+			if (!table)
+				throw new Error("table channel is not registered");
 			const temp = table.create();
 			temp.platform = platform;
 			temp.id = channelId;
 			session.channel = observe(
 				temp,
 				async (diff) => {
-					await app.database.createChannel(platform, channelId, diff);
+					await app.database.createChannel(
+						platform,
+						channelId,
+						diff,
+					);
 				},
 				`channel ${channel}`,
 			);
@@ -283,7 +339,11 @@ function adminChannel(command: Command) {
 			session.channel = observe(
 				data,
 				async (diff) => {
-					await app.database.setChannel(platform, channelId, diff);
+					await app.database.setChannel(
+						platform,
+						channelId,
+						diff,
+					);
 				},
 				`channel ${channel}`,
 			);
@@ -313,7 +373,10 @@ function adminChannel(command: Command) {
 				} else if (typeof result === "string") {
 					return result;
 				} else if (
-					!difference(Object.keys(session.channel.$diff), diffKeys).length
+					!difference(
+						Object.keys(session.channel.$diff),
+						diffKeys,
+					).length
 				) {
 					return session.text("admin.channel-unchanged");
 				}
@@ -346,7 +409,9 @@ function adminLocale<
 	O extends {},
 >(cmd: Command<U, G, A, O>, key: Key) {
 	return cmd
-		.option("remove", "-r", { descPath: "admin.options.remove" })
+		.option("remove", "-r", {
+			descPath: "admin.options.remove",
+		})
 		.action(async ({ session, options }, ...args) => {
 			if (!session) return;
 			const target = session[key] as { locales?: string[] };

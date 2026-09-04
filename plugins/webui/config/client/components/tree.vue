@@ -55,7 +55,12 @@ import { send, useMenu } from "@koishi-ce/client";
 import type { ElScrollbar, ElTree } from "element-plus";
 import { nextTick, onActivated, ref, watch } from "vue";
 import { useRoute } from "vue-router";
-import { getFullName, getStatus, plugins, type Tree } from "./utils";
+import {
+	getFullName,
+	getStatus,
+	plugins,
+	type Tree,
+} from "./utils";
 
 const props = defineProps<{
 	modelValue: string;
@@ -72,7 +77,9 @@ const keyword = ref("");
 
 /** el-tree 的节点过滤回调：按插件短名做大小写不敏感的包含匹配。 */
 function filterNode(value: string, data: Tree) {
-	return data.name.toLowerCase().includes(keyword.value.toLowerCase());
+	return data.name
+		.toLowerCase()
+		.includes(keyword.value.toLowerCase());
 }
 
 const isActivating = ref(true);
@@ -87,10 +94,15 @@ async function activate() {
 	const nodeEl = rootEl?.querySelector(
 		".el-tree-node.is-active",
 	) as HTMLElement;
-	if (!nodeEl || (!nodeEl.offsetTop && route.path.slice(9 /* /plugins/ */)))
+	if (
+		!nodeEl ||
+		(!nodeEl.offsetTop &&
+			route.path.slice(9 /* /plugins/ */))
+	)
 		return;
 	root.value["setScrollTop"](
-		nodeEl.offsetTop - (rootEl.offsetHeight - nodeEl.offsetHeight) / 2,
+		nodeEl.offsetTop -
+			(rootEl.offsetHeight - nodeEl.offsetHeight) / 2,
 	);
 }
 
@@ -163,12 +175,20 @@ function handleClick(
 
 /** 展开分组：把 $collapsed 置为 null（即删除该键）。 */
 function handleExpand(data: Tree, target: Node, instance) {
-	void send("manager/meta", data.path, { $collapsed: null });
+	void send("manager/meta", data.path, {
+		$collapsed: null,
+	});
 }
 
 /** 收起分组：写入 $collapsed: true 并持久化。 */
-function handleCollapse(data: Tree, target: Node, instance) {
-	void send("manager/meta", data.path, { $collapsed: true });
+function handleCollapse(
+	data: Tree,
+	target: Node,
+	instance,
+) {
+	void send("manager/meta", data.path, {
+		$collapsed: true,
+	});
 }
 
 /**
@@ -181,7 +201,8 @@ function handleDrop(
 	position: "before" | "after" | "inner",
 	event: DragEvent,
 ) {
-	const parent = position === "inner" ? target : target.parent;
+	const parent =
+		position === "inner" ? target : target.parent;
 	let index = parent.childNodes.findIndex(
 		(node) => node.data.path === source.data.path,
 	);
@@ -199,8 +220,10 @@ function handleDrop(
 function getClass(tree: Tree) {
 	const words: string[] = [];
 	if (tree.children) words.push("is-group");
-	if (!tree.children && !getFullName(tree.name)) words.push("is-disabled");
-	if (tree.path === props.modelValue) words.push("is-active");
+	if (!tree.children && !getFullName(tree.name))
+		words.push("is-disabled");
+	if (tree.path === props.modelValue)
+		words.push("is-active");
 	return words.join(" ");
 }
 

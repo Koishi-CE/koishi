@@ -38,7 +38,11 @@
 </template>
 
 <script lang="ts" setup>
-import { store, useConfig, useContext } from "@koishi-ce/client";
+import {
+	store,
+	useConfig,
+	useContext,
+} from "@koishi-ce/client";
 import { computed, type WatchStopHandle, watch } from "vue";
 import { hasUpdate } from "../utils";
 import ManualInstall from "./manual.vue";
@@ -74,7 +78,9 @@ watch(
 	{ immediate: true },
 );
 
-const updates = computed(() => names.value.filter(hasUpdate));
+const updates = computed(() =>
+	names.value.filter(hasUpdate),
+);
 
 const ctx = useContext();
 
@@ -83,7 +89,8 @@ ctx.action("dependencies.upgrade", {
 	async action() {
 		for (const name of updates.value) {
 			const versions = store.registry[name];
-			config.value.market.override[name] = Object.keys(versions)[0];
+			config.value.market.override[name] =
+				Object.keys(versions)[0];
 		}
 	},
 });

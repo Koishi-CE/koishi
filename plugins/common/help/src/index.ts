@@ -52,7 +52,9 @@ declare module "@koishi-ce/koishi" {
 	}
 
 	namespace Argv {
-		interface OptionConfig<T extends Argv.Type = Argv.Type> {
+		interface OptionConfig<
+			T extends Argv.Type = Argv.Type,
+		> {
 			/** 在帮助中隐藏此选项 */
 			hidden?: Computed<boolean>;
 			/** 本地化参数 */
@@ -76,14 +78,19 @@ export interface Config {
 }
 
 export const Config: Schema<Config> = Schema.object({
-	shortcut: Schema.boolean().default(true).description("是否启用快捷调用。"),
+	shortcut: Schema.boolean()
+		.default(true)
+		.description("是否启用快捷调用。"),
 	options: Schema.boolean()
 		.default(true)
 		.description("是否为每个指令添加 `-h, --help` 选项。"),
 });
 
 /** 在当前会话中转执行 help 指令（供 -h 选项与无 action 的指令复用） */
-function executeHelp(session: Session<never, never>, name: string) {
+function executeHelp(
+	session: Session<never, never>,
+	name: string,
+) {
 	if (!session.app.$commander.get("help")) return;
 	return session.execute({
 		name: "help",
@@ -118,7 +125,9 @@ export function apply(ctx: Context, config: Config) {
 			hidden: Schema.computed(Schema.boolean())
 				.description("在帮助菜单中隐藏指令。")
 				.default(false),
-			params: Schema.any().description("帮助信息的本地化参数。").hidden(),
+			params: Schema.any()
+				.description("帮助信息的本地化参数。")
+				.hidden(),
 		}),
 		900,
 	);
@@ -129,7 +138,9 @@ export function apply(ctx: Context, config: Config) {
 			hidden: Schema.computed(Schema.boolean())
 				.description("在帮助菜单中隐藏选项。")
 				.default(false),
-			params: Schema.any().description("帮助信息的本地化参数。").hidden(),
+			params: Schema.any()
+				.description("帮助信息的本地化参数。")
+				.hidden(),
 		}),
 		900,
 	);
@@ -143,7 +154,14 @@ export function apply(ctx: Context, config: Config) {
 	// 指令执行前的拦截：带 -h 或指令本身没有 action 时，转而输出帮助
 	ctx.before(
 		"command/execute",
-		(argv: Argv<never, never, unknown[], { help?: boolean }>) => {
+		(
+			argv: Argv<
+				never,
+				never,
+				unknown[],
+				{ help?: boolean }
+			>,
+		) => {
 			const { command, options, session } = argv;
 			if (!command || !session || !options) return;
 			if (options["help"] && command._options["help"]) {
@@ -162,16 +180,24 @@ export function apply(ctx: Context, config: Config) {
 	 * @param target 用户输入的指令名或快捷调用文本
 	 * @returns 指令对象；仅有模糊命中时返回候选列表
 	 */
-	function findCommand(target: string, session: Session<never, never>) {
+	function findCommand(
+		target: string,
+		session: Session<never, never>,
+	) {
 		const command = $.resolve(target, session);
 		if (command?.ctx.filter(session)) return command;
 
 		// 指令名未命中：转为在各语言的指令快捷调用文本中检索
 		const data = ctx.i18n
 			.find("commands.(name).shortcuts.(variant)", target)
-			.map((item) => ({ ...item, command: $.resolve(item.data.name, session) }))
+			.map((item) => ({
+				...item,
+				command: $.resolve(item.data.name, session),
+			}))
 			.filter((item) => item.command?.match(session));
-		const perfect = data.filter((item) => item.similarity === 1);
+		const perfect = data.filter(
+			(item) => item.similarity === 1,
+		);
 		if (!perfect.length) return data;
 		return perfect[0]?.command;
 	}
@@ -179,7 +205,9 @@ export function apply(ctx: Context, config: Config) {
 	// 字段收集器：help 指令自身只用 authority，
 	// 但被查询的目标指令可能声明了额外的 user / channel 观察字段
 	const createCollector =
-		<T extends "user" | "channel">(key: T): FieldCollector<T> =>
+		<T extends "user" | "channel">(
+			key: T,
+		): FieldCollector<T> =>
 		(argv, fields) => {
 			const { args, session } = argv;
 			const [target] = args ?? [];
@@ -190,7 +218,12 @@ export function apply(ctx: Context, config: Config) {
 				if (result) {
 					session.collect(
 						key,
-						{ ...argv, command: result, args: [], options: { help: true } },
+						{
+							...argv,
+							command: result,
+							args: [],
+							options: { help: true },
+						},
 						fields,
 					);
 				}
@@ -200,14 +233,22 @@ export function apply(ctx: Context, config: Config) {
 				if (!command) continue;
 				session.collect(
 					key,
-					{ ...argv, command, args: [], options: { help: true } },
+					{
+						...argv,
+						command,
+						args: [],
+						options: { help: true },
+					},
 					fields,
 				);
 			}
 		};
 
 	/** 推断用户输入对应的指令；仅有模糊命中时发起相似度建议（“您要找的是不是…”） */
-	async function inferCommand(target: string, session: Session) {
+	async function inferCommand(
+		target: string,
+		session: Session,
+	) {
 		const result = findCommand(target, session);
 		if (!Array.isArray(result)) return result;
 
@@ -227,7 +268,11 @@ export function apply(ctx: Context, config: Config) {
 			filter: (name) => {
 				const command = $.resolve(name, session);
 				if (!command) return false;
-				return ctx.permissions.test(`command:${command.name}`, session, cache);
+				return ctx.permissions.test(
+					`command:${command.name}`,
+					session,
+					cache,
+				);
 			},
 		});
 		if (!name) return;
@@ -236,7 +281,10 @@ export function apply(ctx: Context, config: Config) {
 
 	// 主指令：无参数时列出全局指令清单，带参数时输出目标指令的详细帮助
 	const cmd = ctx
-		.command("help [command:string]", { authority: 0, ...config })
+		.command("help [command:string]", {
+			authority: 0,
+			...config,
+		})
 		.userFields(["authority"])
 		.userFields(createCollector("user"))
 		.channelFields(createCollector("channel"))
@@ -245,25 +293,40 @@ export function apply(ctx: Context, config: Config) {
 			if (!session || !options) return;
 			if (!target) {
 				const prefix =
-					session.resolve(session.app.koishi.config.prefix)?.[0] ?? "";
-				const commands = $._commandList.filter((cmd) => cmd.parent === null);
+					session.resolve(
+						session.app.koishi.config.prefix,
+					)?.[0] ?? "";
+				const commands = $._commandList.filter(
+					(cmd) => cmd.parent === null,
+				);
 				const output = await formatCommands(
 					".global-prolog",
 					session,
 					commands,
 					options as HelpOptions,
 				);
-				const epilog = session.text(".global-epilog", [prefix]);
+				const epilog = session.text(".global-epilog", [
+					prefix,
+				]);
 				if (epilog) output.push(epilog);
 				return output.filter(Boolean).join("\n");
 			}
 
 			const command = await inferCommand(target, session);
 			if (!command) return;
-			if (!(await ctx.permissions.test(`command:${command.name}`, session))) {
+			if (
+				!(await ctx.permissions.test(
+					`command:${command.name}`,
+					session,
+				))
+			) {
 				return session.text("internal.low-authority");
 			}
-			return showHelp(command, session, options as HelpOptions);
+			return showHelp(
+				command,
+				session,
+				options as HelpOptions,
+			);
 		});
 
 	// 注册全局快捷调用“帮助”（具体文本由各语言的 i18n 文本提供）
@@ -278,12 +341,23 @@ function* getCommands(
 	showHidden = false,
 ): Generator<Command> {
 	for (const command of commands) {
-		if (!showHidden && session.resolve(command.config.hidden)) continue;
+		if (
+			!showHidden &&
+			session.resolve(command.config.hidden)
+		)
+			continue;
 		// 自身可用则产出，否则下钻子指令（子指令可能单独可用）
-		if (command.match(session) && Object.keys(command._aliases).length) {
+		if (
+			command.match(session) &&
+			Object.keys(command._aliases).length
+		) {
 			yield command;
 		} else {
-			yield* getCommands(session, command.children, showHidden);
+			yield* getCommands(
+				session,
+				command.children,
+				showHidden,
+			);
 		}
 	}
 }
@@ -297,7 +371,9 @@ async function formatCommands(
 ) {
 	const cache = new Map<string, Promise<boolean>>();
 	// 第一步：按可见性过滤
-	children = Array.from(getCommands(session, children, options.showHidden));
+	children = Array.from(
+		getCommands(session, children, options.showHidden),
+	);
 	// 第二步：按权限过滤（并行检测并缓存结果）
 	children = (
 		await Promise.all(
@@ -316,18 +392,27 @@ async function formatCommands(
 		.filter(([, result]) => result)
 		.map(([command]) => command);
 	// 第三步：按显示名排序
-	children.sort((a, b) => (a.displayName > b.displayName ? 1 : -1));
+	children.sort((a, b) =>
+		a.displayName > b.displayName ? 1 : -1,
+	);
 	if (!children.length) return [];
 
-	const prefix = session.resolve(session.app.koishi.config.prefix)?.[0] ?? "";
-	const output = children.map(({ name, displayName, config }) => {
-		let output = `    ${prefix}${displayName.replace(/\./g, " ")}`;
-		output += `  ${session.text([`commands.${name}.description`, ""], config.params)}`;
-		return output;
-	});
+	const prefix =
+		session.resolve(
+			session.app.koishi.config.prefix,
+		)?.[0] ?? "";
+	const output = children.map(
+		({ name, displayName, config }) => {
+			let output = `    ${prefix}${displayName.replace(/\./g, " ")}`;
+			output += `  ${session.text([`commands.${name}.description`, ""], config.params)}`;
+			return output;
+		},
+	);
 	const hints: string[] = [];
 	const hintText = hints.length
-		? session.text("general.paren", [hints.join(session.text("general.comma"))])
+		? session.text("general.paren", [
+				hints.join(session.text("general.comma")),
+			])
 		: "";
 	output.unshift(session.text(path, [hintText]));
 	return output;
@@ -338,7 +423,10 @@ function getOptionVisibility(
 	option: Argv.OptionConfig,
 	session: Session<"authority">,
 ) {
-	if (session.user && (option.authority ?? 0) > session.user.authority) {
+	if (
+		session.user &&
+		(option.authority ?? 0) > session.user.authority
+	) {
 		return false;
 	}
 	return !session.resolve(option.hidden);
@@ -350,7 +438,8 @@ function getOptions(
 	session: Session<"authority">,
 	config: HelpOptions,
 ) {
-	if (command.config.hideOptions && !config.showHidden) return [];
+	if (command.config.hideOptions && !config.showHidden)
+		return [];
 	const options = config.showHidden
 		? Object.values(command._options)
 		: Object.values(command._options).filter((option) =>
@@ -360,20 +449,37 @@ function getOptions(
 
 	const output: string[] = [];
 	Object.values(command._options).forEach((option) => {
-		function pushOption(option: Argv.OptionVariant, name: string) {
-			if (!config.showHidden && !getOptionVisibility(option, session)) return;
+		function pushOption(
+			option: Argv.OptionVariant,
+			name: string,
+		) {
+			if (
+				!config.showHidden &&
+				!getOptionVisibility(option, session)
+			)
+				return;
 			let line = `${h.escape(option.syntax)}`;
 			const description = session.text(
-				option.descPath ?? [`commands.${command.name}.options.${name}`, ""],
+				option.descPath ?? [
+					`commands.${command.name}.options.${name}`,
+					"",
+				],
 				option.params,
 			);
 			if (description) line += `  ${description}`;
-			line = command.ctx.chain("help/option", line, option, command, session);
+			line = command.ctx.chain(
+				"help/option",
+				line,
+				option,
+				command,
+				session,
+			);
 			output.push(`    ${line}`);
 		}
 
 		// 无值选项直接输出；带值选项再逐个输出其语法变体
-		if (!("value" in option)) pushOption(option, option.name ?? "");
+		if (!("value" in option))
+			pushOption(option, option.name ?? "");
 		for (const value in option.variants) {
 			const variant = option.variants[value];
 			if (!variant) continue;
@@ -394,7 +500,8 @@ async function showHelp(
 ) {
 	const output = [
 		session.text(".command-title", [
-			command.displayName.replace(/\./g, " ") + command.declaration,
+			command.displayName.replace(/\./g, " ") +
+				command.declaration,
 		]),
 	];
 
@@ -406,11 +513,18 @@ async function showHelp(
 
 	// 有数据库时按目标指令的声明预取 user / channel 字段（usage 等钩子可能用到）
 	if (session.app.database) {
-		const argv: Argv = { command, args: [], options: { help: true } };
+		const argv: Argv = {
+			command,
+			args: [],
+			options: { help: true },
+		};
 		const userFields = session.collect("user", argv);
 		await session.observeUser(userFields);
 		if (!session.isDirect) {
-			const channelFields = session.collect("channel", argv);
+			const channelFields = session.collect(
+				"channel",
+				argv,
+			);
 			await session.observeChannel(channelFields);
 		}
 	}
@@ -418,12 +532,20 @@ async function showHelp(
 	if (Object.keys(command._aliases).length > 1) {
 		output.push(
 			session.text(".command-aliases", [
-				Array.from(Object.keys(command._aliases).slice(1)).join("，"),
+				Array.from(
+					Object.keys(command._aliases).slice(1),
+				).join("，"),
 			]),
 		);
 	}
 
-	session.app.emit(session, "help/command", output, command, session);
+	session.app.emit(
+		session,
+		"help/command",
+		output,
+		command,
+		session,
+	);
 
 	if (command._usage) {
 		output.push(
@@ -445,7 +567,9 @@ async function showHelp(
 	if (command._examples.length) {
 		output.push(
 			session.text(".command-examples"),
-			...command._examples.map((example) => `    ${example}`),
+			...command._examples.map(
+				(example) => `    ${example}`,
+			),
 		);
 	} else {
 		const text = session.text(

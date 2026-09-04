@@ -72,7 +72,9 @@ const groups = computed(() => {
 			delete available[id];
 		}
 	}
-	const list = Object.values(available).sort(([a], [b]) => a.order - b.order);
+	const list = Object.values(available).sort(
+		([a], [b]) => a.order - b.order,
+	);
 	// 放不下时：从头部取出溢出项折叠成一个组，top 位优先、同位再按 order 排，
 	// 并以 "..." 图标作为该组的展示入口
 	if (list.length * unit > total) {
@@ -86,11 +88,17 @@ const groups = computed(() => {
 				return scale;
 			})
 			.flat();
-		hidden.unshift({ icon: "activity:ellipsis" } as Activity);
+		hidden.unshift({
+			icon: "activity:ellipsis",
+		} as Activity);
 	}
 	// top 区按 order 逆序输出（order 大者靠上），bottom 区保持正序
-	const top = list.filter(([data]) => data.position !== "bottom").reverse();
-	const bottom = list.filter(([data]) => data.position === "bottom");
+	const top = list
+		.filter(([data]) => data.position !== "bottom")
+		.reverse();
+	const bottom = list.filter(
+		([data]) => data.position === "bottom",
+	);
 	return { top, bottom, hidden };
 });
 

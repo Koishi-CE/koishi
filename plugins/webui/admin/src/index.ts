@@ -40,14 +40,30 @@ declare module "@koishi-ce/koishi" {
 declare module "@koishi-ce/console" {
 	interface Events {
 		"admin/create-track"(name: string): Promise<number>;
-		"admin/rename-track"(id: number, name: string): Promise<void>;
+		"admin/rename-track"(
+			id: number,
+			name: string,
+		): Promise<void>;
 		"admin/delete-track"(id: number): Promise<void>;
-		"admin/update-track"(id: number, permissions: string[]): Promise<void>;
+		"admin/update-track"(
+			id: number,
+			permissions: string[],
+		): Promise<void>;
 		"admin/create-group"(name: string): Promise<number>;
-		"admin/rename-group"(id: number, name: string): Promise<void>;
+		"admin/rename-group"(
+			id: number,
+			name: string,
+		): Promise<void>;
 		"admin/delete-group"(id: number): Promise<void>;
-		"admin/update-group"(id: number, permissions: string[]): Promise<void>;
-		"admin/add-user"(gid: number, platform: string, aid: string): Promise<void>;
+		"admin/update-group"(
+			id: number,
+			permissions: string[],
+		): Promise<void>;
+		"admin/add-user"(
+			gid: number,
+			platform: string,
+			aid: string,
+		): Promise<void>;
 		"admin/remove-user"(
 			gid: number,
 			platform: string,
@@ -128,11 +144,16 @@ export class Admin extends Service {
 	 */
 	override async start() {
 		this.groups = await this.ctx.database.get("group", {});
-		this.tracks = await this.ctx.database.get("perm_track", {});
+		this.tracks = await this.ctx.database.get(
+			"perm_track",
+			{},
+		);
 		for (const item of this.groups) {
 			item.count =
 				(await this.ctx.database
-					.select("user", { permissions: { ["$el"]: `group:${item.id}` } })
+					.select("user", {
+						permissions: { ["$el"]: `group:${item.id}` },
+					})
 					.execute((row) => $.count(row.id))) || 0;
 			this.setupGroup(item);
 		}
@@ -150,9 +171,17 @@ export class Admin extends Service {
 							`${process.env["KOISHI_BASE"]}/dist/style.css`,
 						]
 					: process.env["KOISHI_ENV"] === "browser"
-						? [import.meta.url.replace(/\/src\/[^/]+$/, "/client/index.ts")]
+						? [
+								import.meta.url.replace(
+									/\/src\/[^/]+$/,
+									"/client/index.ts",
+								),
+							]
 						: {
-								dev: resolve(__dirname, "../client/index.ts"),
+								dev: resolve(
+									__dirname,
+									"../client/index.ts",
+								),
 								prod: resolve(__dirname, "../dist"),
 							},
 				() => ({
@@ -254,7 +283,8 @@ export class Admin extends Service {
 	private setupGroup(item: PermGroup) {
 		item.dispose = this.ctx.permissions.define("(name)", {
 			inherits: ({ name }) => {
-				if (item.permissions.includes(name)) return [`group:${item.id}`];
+				if (item.permissions.includes(name))
+					return [`group:${item.id}`];
 				return undefined;
 			},
 		});
@@ -268,7 +298,10 @@ export class Admin extends Service {
 		item.dispose = this.ctx.permissions.define("(name)", {
 			inherits: ({ name }) => {
 				const index = item.permissions.indexOf(name);
-				const prev = index > 0 ? item.permissions[index - 1] : undefined;
+				const prev =
+					index > 0
+						? item.permissions[index - 1]
+						: undefined;
 				return prev !== undefined ? [prev] : undefined;
 			},
 		});
@@ -276,7 +309,10 @@ export class Admin extends Service {
 
 	/** 创建用户组路线，返回新 id。 */
 	async createTrack(name: string) {
-		const item = await this.ctx.database.create("perm_track", { name });
+		const item = await this.ctx.database.create(
+			"perm_track",
+			{ name },
+		);
 		this.setupTrack(item);
 		this.tracks.push(item);
 		this.entry?.refresh();
@@ -285,7 +321,9 @@ export class Admin extends Service {
 
 	/** 重命名用户组路线（名称未变化时直接跳过）。 */
 	async renameTrack(id: number, name: string) {
-		const item = this.tracks.find((track) => track.id === id);
+		const item = this.tracks.find(
+			(track) => track.id === id,
+		);
 		if (!item) throw new Error("track not found");
 		if (item.name === name) return;
 		item.name = name;
@@ -295,7 +333,9 @@ export class Admin extends Service {
 
 	/** 删除用户组路线：先注销权限定义，再删除数据库记录。 */
 	async deleteTrack(id: number) {
-		const index = this.tracks.findIndex((track) => track.id === id);
+		const index = this.tracks.findIndex(
+			(track) => track.id === id,
+		);
 		if (index < 0) throw new Error("track not found");
 		const [item] = this.tracks.splice(index, 1);
 		if (!item) throw new Error("track not found");
@@ -306,16 +346,22 @@ export class Admin extends Service {
 
 	/** 整体替换某条路线的权限列表。 */
 	async updateTrack(id: number, permissions: string[]) {
-		const item = this.tracks.find((group) => group.id === id);
+		const item = this.tracks.find(
+			(group) => group.id === id,
+		);
 		if (!item) throw new Error("track not found");
 		item.permissions = permissions;
-		await this.ctx.database.set("perm_track", id, { permissions });
+		await this.ctx.database.set("perm_track", id, {
+			permissions,
+		});
 		this.entry?.refresh();
 	}
 
 	/** 创建用户组（人数从 0 起计），返回新 id。 */
 	async createGroup(name: string) {
-		const item = await this.ctx.database.create("group", { name });
+		const item = await this.ctx.database.create("group", {
+			name,
+		});
 		item.count = 0;
 		this.setupGroup(item);
 		this.groups.push(item);
@@ -325,7 +371,9 @@ export class Admin extends Service {
 
 	/** 重命名用户组（名称未变化时直接跳过）。 */
 	async renameGroup(id: number, name: string) {
-		const item = this.groups.find((group) => group.id === id);
+		const item = this.groups.find(
+			(group) => group.id === id,
+		);
 		if (!item) throw new Error("group not found");
 		if (item.name === name) return;
 		item.name = name;
@@ -339,7 +387,9 @@ export class Admin extends Service {
 	 * 最后删除组本身。任何一步都保持数据库与内存一致。
 	 */
 	async deleteGroup(id: number) {
-		const index = this.groups.findIndex((group) => group.id === id);
+		const index = this.groups.findIndex(
+			(group) => group.id === id,
+		);
 		if (index < 0) throw new Error("group not found");
 		const [item] = this.groups.splice(index, 1);
 		if (!item) throw new Error("group not found");
@@ -365,10 +415,14 @@ export class Admin extends Service {
 
 	/** 整体替换某个用户组的权限列表。 */
 	async updateGroup(id: number, permissions: string[]) {
-		const item = this.groups.find((group) => group.id === id);
+		const item = this.groups.find(
+			(group) => group.id === id,
+		);
 		if (!item) throw new Error("group not found");
 		item.permissions = permissions;
-		await this.ctx.database.set("group", id, { permissions });
+		await this.ctx.database.set("group", id, {
+			permissions,
+		});
 		this.entry?.refresh();
 	}
 
@@ -380,12 +434,15 @@ export class Admin extends Service {
 	 * @param aid 平台内的用户号
 	 */
 	async addUser(id: number, platform: string, aid: string) {
-		const item = this.groups.find((group) => group.id === id);
+		const item = this.groups.find(
+			(group) => group.id === id,
+		);
 		if (!item) throw new Error("group not found");
-		const data = await this.ctx.database.getUser(platform, aid, [
-			"id",
-			"permissions",
-		]);
+		const data = await this.ctx.database.getUser(
+			platform,
+			aid,
+			["id", "permissions"],
+		);
 		if (!data) throw new Error("user not found");
 		if (!data.permissions.includes(`group:${item.id}`)) {
 			data.permissions.push(`group:${item.id}`);
@@ -401,13 +458,20 @@ export class Admin extends Service {
 	 * 把用户移出用户组：从其 permissions 中摘除 `group:<gid>` 并回写，
 	 * 本就不在组内时不做任何写入。
 	 */
-	async removeUser(id: number, platform: string, aid: string) {
-		const item = this.groups.find((group) => group.id === id);
+	async removeUser(
+		id: number,
+		platform: string,
+		aid: string,
+	) {
+		const item = this.groups.find(
+			(group) => group.id === id,
+		);
 		if (!item) throw new Error("group not found");
-		const data = await this.ctx.database.getUser(platform, aid, [
-			"id",
-			"permissions",
-		]);
+		const data = await this.ctx.database.getUser(
+			platform,
+			aid,
+			["id", "permissions"],
+		);
 		if (!data) throw new Error("user not found");
 		if (remove(data.permissions, `group:${item.id}`)) {
 			item.count = (item.count ?? 0) - 1;

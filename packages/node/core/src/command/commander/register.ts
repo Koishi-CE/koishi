@@ -25,11 +25,19 @@ export class CommanderRegister extends CommanderResolve {
 	 * 路径中不存在的中间命令会被隐式创建（无声明无描述）；
 	 * 已存在的命令则更新其配置。返回路径最后一段对应的命令。
 	 */
-	command(def: string, ...args: [Command.Config?] | [string, Command.Config?]) {
-		const desc = typeof args[0] === "string" ? (args.shift() as string) : "";
+	command(
+		def: string,
+		...args: [Command.Config?] | [string, Command.Config?]
+	) {
+		const desc =
+			typeof args[0] === "string"
+				? (args.shift() as string)
+				: "";
 		const config = args[0] as Command.Config;
 		// def.split(" ", 1)[0] 提取首个空白前的路径部分；decl 为其后的声明串
-		const path = normalizeCommand(def.split(" ", 1)[0] ?? def);
+		const path = normalizeCommand(
+			def.split(" ", 1)[0] ?? def,
+		);
 		const decl = def.slice(path.length);
 		// 按 "." 与 "/" 的出现位置切分（保留分隔符，便于区分段类型）
 		const segments = path.split(/(?=[./])/g);
@@ -80,7 +88,9 @@ export class CommanderRegister extends CommanderResolve {
 			command._disposables.push(
 				this.ctx.i18n.define("", {
 					[`commands.${command.name}.$`]: "",
-					[`commands.${command.name}.description`]: isLast ? desc : "",
+					[`commands.${command.name}.description`]: isLast
+						? desc
+						: "",
 				}),
 			);
 			created.push(command);
@@ -91,14 +101,19 @@ export class CommanderRegister extends CommanderResolve {
 			parent = command;
 		});
 
-		if (!parent) throw new Error(`invalid command definition: ${def}`);
+		if (!parent)
+			throw new Error(`invalid command definition: ${def}`);
 		Object.assign(parent.config, config);
 		// 确保 config 就位后再广播 command-added，监听方读到的是最终配置
-		created.forEach((command) => this.ctx.emit("command-added", command));
+		created.forEach((command) =>
+			this.ctx.emit("command-added", command),
+		);
 		parent[Context.current] = this.ctx;
 		if (root) {
 			const created = root;
-			this.ctx.collect(`command <${created.name}>`, () => created.dispose());
+			this.ctx.collect(`command <${created.name}>`, () =>
+				created.dispose(),
+			);
 		}
 		return parent;
 	}

@@ -35,7 +35,10 @@
 
 <script setup lang="ts">
 import { useContext, useI18nText } from "@koishi-ce/client";
-import { type Schema, SchemaBase } from "@koishi-ce/components";
+import {
+	type Schema,
+	SchemaBase,
+} from "@koishi-ce/components";
 import { computed, type PropType } from "vue";
 
 defineProps({

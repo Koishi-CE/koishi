@@ -25,7 +25,9 @@ declare module "@koishi-ce/plugin-console" {
 
 	namespace Console {
 		interface Services {
-			database: DataService<import("@koishi-ce/plugin-dataview").DatabaseInfo>;
+			database: DataService<
+				import("@koishi-ce/plugin-dataview").DatabaseInfo
+			>;
 		}
 	}
 

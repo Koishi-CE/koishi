@@ -10,7 +10,13 @@
  * 迁移回调由外部迁移工具调用 driver.migrate 驱动（memory 驱动自身
  * 不主动执行迁移），测试中手动驱动以覆盖该链路。
  */
-import { afterAll, beforeAll, describe, expect, it } from "bun:test";
+import {
+	afterAll,
+	beforeAll,
+	describe,
+	expect,
+	it,
+} from "bun:test";
 import { App } from "@koishi-ce/koishi";
 import mock from "@koishi-ce/plugin-mock";
 import * as memoryModule from "@koishijs/plugin-database-memory";
@@ -26,20 +32,28 @@ app.plugin(memory);
 
 /** 支持迁移钩子的驱动形态（minato Driver 的最小结构） */
 type MigratableDriver = {
-	migrate(name: string, hooks: Record<string, unknown>): Promise<void>;
+	migrate(
+		name: string,
+		hooks: Record<string, unknown>,
+	): Promise<void>;
 };
 
 beforeAll(async () => {
 	await app.start();
-	await app.database.createUser("mock", "u1", { authority: 1 });
+	await app.database.createUser("mock", "u1", {
+		authority: 1,
+	});
 });
 
 afterAll(() => app.stop());
 
 /** 手动驱动一次 user 表迁移（等价于外部迁移工具的调用方式） */
 function runMigration() {
-	const driver = (app.database as unknown as { drivers: MigratableDriver[] })
-		.drivers[0];
+	const driver = (
+		app.database as unknown as {
+			drivers: MigratableDriver[];
+		}
+	).drivers[0];
 	return driver!.migrate("user", {
 		before: () => true,
 		after: () => {},
@@ -55,11 +69,15 @@ describe("Login Migration", () => {
 		// tables 为索引字典：方括号取表并收窄后复用
 		const userTable = app.model.tables["user"]!;
 		expect("newplat" in userTable.fields).toBe(false);
-		app.emit("login-added", { platform: "newplat" } as never);
+		app.emit("login-added", {
+			platform: "newplat",
+		} as never);
 		expect("newplat" in userTable.fields).toBe(true);
 
 		// 模拟老版本数据：存量用户的平台字段仍写在 user 表上
-		await app.database.set("user", { id: 1 }, { newplat: "p1" } as never);
+		await app.database.set("user", { id: 1 }, {
+			newplat: "p1",
+		} as never);
 		await runMigration();
 		// 迁移把存量数据搬入 binding 绑定表
 		await expect(
@@ -70,8 +88,12 @@ describe("Login Migration", () => {
 	it("同一平台重复触发直接短路", async () => {
 		const userTable = app.model.tables["user"]!;
 		const fields = Object.keys(userTable.fields).length;
-		app.emit("login-added", { platform: "newplat" } as never);
+		app.emit("login-added", {
+			platform: "newplat",
+		} as never);
 		await runMigration();
-		expect(Object.keys(userTable.fields)).toHaveLength(fields);
+		expect(Object.keys(userTable.fields)).toHaveLength(
+			fields,
+		);
 	});
 });

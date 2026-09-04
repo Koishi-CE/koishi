@@ -10,7 +10,11 @@
  * 指令：`bind`（`-r` 解除当前平台账号的绑定）。
  * 依赖数据库（binding / user 表），令牌默认 5 分钟过期。
  */
-import type { Context, Dict, Session } from "@koishi-ce/koishi";
+import type {
+	Context,
+	Dict,
+	Session,
+} from "@koishi-ce/koishi";
 import { Schema, Time } from "@koishi-ce/koishi";
 import enUS from "../locales/en-US.yml";
 import zhCN from "../locales/zh-CN.yml";
@@ -47,11 +51,17 @@ export function apply(ctx: Context, config: Config = {}) {
 	ctx.i18n.define("en-US", enUS);
 
 	// 令牌 phase 含义：1 = 群聊第一步（源平台签发）；0 = 私聊（一步完成）；-1 = 群聊第二步（目标平台签发）
-	type TokenData = [platform: string, id: string, phase: number];
+	type TokenData = [
+		platform: string,
+		id: string,
+		phase: number,
+	];
 	const tokens: Dict<TokenData> = Object.create(null);
 
 	const { tokenPrefix: prefix = "koishi/" } = config;
-	const { generateToken = () => `${prefix}${randomDigits(6)}` } = config;
+	const {
+		generateToken = () => `${prefix}${randomDigits(6)}`,
+	} = config;
 
 	/** 为当前会话用户签发一次性令牌并记录 phase，5 分钟后自动过期 */
 	function generate(session: Session, phase: number) {
@@ -59,13 +69,24 @@ export function apply(ctx: Context, config: Config = {}) {
 		if (!userId) return;
 		const token = generateToken();
 		tokens[token] = [session.platform, userId, phase];
-		ctx.setTimeout(() => delete tokens[token], 5 * Time.minute);
+		ctx.setTimeout(
+			() => delete tokens[token],
+			5 * Time.minute,
+		);
 		return token;
 	}
 
 	/** 将平台账号（platform + pid）绑定到指定用户（aid）名下 */
-	async function bind(aid: number, platform: string, pid: string) {
-		await ctx.database.set("binding", { platform, pid }, { aid });
+	async function bind(
+		aid: number,
+		platform: string,
+		pid: string,
+	) {
+		await ctx.database.set(
+			"binding",
+			{ platform, pid },
+			{ aid },
+		);
 	}
 
 	ctx
@@ -81,7 +102,8 @@ export function apply(ctx: Context, config: Config = {}) {
 					aid: user.id,
 				});
 				const binding = bindings.find(
-					(item) => item.platform === platform && item.pid === pid,
+					(item) =>
+						item.platform === platform && item.pid === pid,
 				);
 				if (!binding) return;
 				if (binding.aid !== binding.bid) {
@@ -89,7 +111,8 @@ export function apply(ctx: Context, config: Config = {}) {
 					await bind(binding.bid, platform, pid);
 					return session.text(".remove-success");
 				} else if (
-					bindings.filter((item) => item.aid === item.bid).length === 1
+					bindings.filter((item) => item.aid === item.bid)
+						.length === 1
 				) {
 					// 原初绑定只剩最后一个时不允许解绑，否则用户将失去入口
 					return session.text(".remove-original");
@@ -98,7 +121,9 @@ export function apply(ctx: Context, config: Config = {}) {
 					const authority = await session.resolve(
 						ctx.root.config.autoAuthorize,
 					);
-					const user = await ctx.database.create("user", { authority });
+					const user = await ctx.database.create("user", {
+						authority,
+					});
 					await bind(user.id, platform, pid);
 					return session.text(".remove-success");
 				}
@@ -117,7 +142,10 @@ export function apply(ctx: Context, config: Config = {}) {
 		const { userId } = session;
 		if (!userId) return next();
 		// 令牌在同一账号上被重复使用：提示不要在同一平台输入
-		if (data[0] === session.platform && data[1] === session.userId) {
+		if (
+			data[0] === session.platform &&
+			data[1] === session.userId
+		) {
 			return session.text(
 				`commands.bind.messages.self-${data[2] < 0 ? "2" : "1"}`,
 			);
@@ -135,20 +163,27 @@ export function apply(ctx: Context, config: Config = {}) {
 			return session.text("commands.bind.messages.success");
 		} else {
 			// 第一步令牌 / 私聊令牌：以当前用户为主体，把令牌签发账号并入自己
-			const user = await ctx.database.getUser(session.platform, userId, [
-				"id",
-				"authority",
-			]);
+			const user = await ctx.database.getUser(
+				session.platform,
+				userId,
+				["id", "authority"],
+			);
 			// 未注册（无 authority）的账号无权拉人绑定
-			if (!user.authority) return session.text("internal.low-authority");
+			if (!user.authority)
+				return session.text("internal.low-authority");
 			if (data[2]) {
 				// 群聊第一步：签发第二枚令牌，请对方回原平台输入
 				const token = generate(session, -1);
-				return session.text("commands.bind.messages.generated-2", [token]);
+				return session.text(
+					"commands.bind.messages.generated-2",
+					[token],
+				);
 			} else {
 				// 私聊一步：直接把令牌签发账号并入当前用户
 				await bind(user.id, data[0], data[1]);
-				return session.text("commands.bind.messages.success");
+				return session.text(
+					"commands.bind.messages.success",
+				);
 			}
 		}
 	}, true);

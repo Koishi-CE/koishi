@@ -12,7 +12,8 @@ import { captureNpm } from "./proc";
 
 /** registry 查询源（可用 RELEASE_REGISTRY 环境变量覆盖）。 */
 export const REGISTRY =
-	process.env["RELEASE_REGISTRY"] ?? "https://registry.npmjs.org";
+	process.env["RELEASE_REGISTRY"] ??
+	"https://registry.npmjs.org";
 
 /** 查询单包全部已发布版本；404 → 空集（首发），其余失败重试 3 次后抛错。 */
 export async function fetchPublishedVersions(
@@ -24,7 +25,8 @@ export async function fetchPublishedVersions(
 		try {
 			const res = await fetch(url, {
 				headers: {
-					accept: "application/vnd.npm.install-v1+json, application/json",
+					accept:
+						"application/vnd.npm.install-v1+json, application/json",
 				},
 				signal: AbortSignal.timeout(15_000),
 			});
@@ -41,13 +43,19 @@ export async function fetchPublishedVersions(
 		} catch (err) {
 			lastError = err;
 			if (attempt < 3) {
-				await new Promise((resolve) => setTimeout(resolve, attempt * 2000));
+				await new Promise((resolve) =>
+					setTimeout(resolve, attempt * 2000),
+				);
 			}
 		}
 	}
 	const message =
-		lastError instanceof Error ? lastError.message : String(lastError);
-	throw new Error(`registry 查询失败 ${name}（重试 3 次）: ${message}`);
+		lastError instanceof Error
+			? lastError.message
+			: String(lastError);
+	throw new Error(
+		`registry 查询失败 ${name}（重试 3 次）: ${message}`,
+	);
 }
 
 /** registry 可达性探测（5s 超时单次；5xx 也算可达，是源站问题不是网络问题）。 */
@@ -69,10 +77,16 @@ export function npmWhoami(cwd: string): string | null {
 }
 
 /** 查询包 owner 用户名列表（查询失败视为空集）。 */
-export function npmOwners(cwd: string, name: string): string[] {
+export function npmOwners(
+	cwd: string,
+	name: string,
+): string[] {
 	// npm 11 的 owner ls 忽略 --json 输出人读格式（user <email>），但保留
 	// 旗标：未来版本若恢复 JSON 输出走 JSON 分支，否则按行取首个空白段
-	const raw = captureNpm(["owner", "ls", "--json", name], cwd);
+	const raw = captureNpm(
+		["owner", "ls", "--json", name],
+		cwd,
+	);
 	if (raw === null || raw === "") {
 		return [];
 	}
@@ -83,7 +97,9 @@ export function npmOwners(cwd: string, name: string): string[] {
 				return [];
 			}
 			return list
-				.map((item) => (typeof item.name === "string" ? item.name : ""))
+				.map((item) =>
+					typeof item.name === "string" ? item.name : "",
+				)
 				.filter(Boolean);
 		} catch {
 			return [];

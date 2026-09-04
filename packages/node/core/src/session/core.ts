@@ -26,7 +26,10 @@ export class SessionCore {
 	 * minato 表达式以 `{ _: this }` 为求值环境，故表达式内可用 `_` 引用会话。
 	 */
 	resolve<T, R extends unknown[]>(
-		source: T | Eval.Expr | ((session: Session, ...args: R) => T),
+		source:
+			| T
+			| Eval.Expr
+			| ((session: Session, ...args: R) => T),
 		...args: R
 	): T extends Eval.Expr
 		? Eval<T>
@@ -36,10 +39,11 @@ export class SessionCore {
 
 	resolve(source: unknown, ...params: unknown[]): unknown {
 		if (typeof source === "function") {
-			return Reflect.apply(source as (...args: unknown[]) => unknown, null, [
-				this,
-				...params,
-			]);
+			return Reflect.apply(
+				source as (...args: unknown[]) => unknown,
+				null,
+				[this, ...params],
+			);
 		}
 		if (!isEvalExpr(source)) return source;
 		return executeEval({ _: this }, source);
@@ -54,8 +58,9 @@ export class SessionCore {
 	_stripNickname(content: string): string | undefined {
 		if (content.startsWith("@")) content = content.slice(1);
 		// nickname 是 Computed 配置：可以是静态数组或按会话计算的函数
-		for (const nickname of this.resolve(this.app.koishi.config.nickname) ??
-			[]) {
+		for (const nickname of this.resolve(
+			this.app.koishi.config.nickname,
+		) ?? []) {
 			if (!content.startsWith(nickname)) continue;
 			const rest = content.slice(nickname.length);
 			// 昵称后必须紧跟逗号或空白作为分隔，避免误匹配同前缀昵称
@@ -95,11 +100,17 @@ export class SessionCore {
 				atSelf = appel = true;
 			}
 			// 被引用消息里的 @ 不算有效称呼，只有直接 @ 别人才计入 hasAt
-			if (!this.quote?.user?.id || this.quote.user.id !== attrs["id"]) {
+			if (
+				!this.quote?.user?.id ||
+				this.quote.user.id !== attrs["id"]
+			) {
 				hasAt = true;
 			}
 			// @ts-expect-error
-			if (elements[0]?.type === "text" && !elements[0].attrs.content.trim()) {
+			if (
+				elements[0]?.type === "text" &&
+				!elements[0].attrs.content.trim()
+			) {
 				elements.shift();
 			}
 		}
@@ -114,13 +125,26 @@ export class SessionCore {
 			}
 		}
 
-		return (this._stripped = { hasAt, content, appel, atSelf, prefix: null });
+		return (this._stripped = {
+			hasAt,
+			content,
+			appel,
+			atSelf,
+			prefix: null,
+		});
 	}
 
 	/** 发送者显示名：用户库昵称 > 作者昵称 > 作者用户名 > userId。 */
 	get username(): string {
-		const user = this.user as User.Observed<"name"> | undefined;
+		const user = this.user as
+			| User.Observed<"name">
+			| undefined;
 		if (user?.name) return user.name;
-		return this.author.nick || this.author.name || this.userId || "";
+		return (
+			this.author.nick ||
+			this.author.name ||
+			this.userId ||
+			""
+		);
 	}
 }

@@ -10,7 +10,10 @@
  * self / platform 两个快捷筛选，并验证过滤器函数与上下文两种实参形态。
  */
 import { describe, expect, it } from "bun:test";
-import { Context as App, type Session } from "@koishi-ce/koishi";
+import {
+	Context as App,
+	type Session,
+} from "@koishi-ce/koishi";
 import mock from "@koishi-ce/plugin-mock";
 
 const app = new App();
@@ -40,7 +43,9 @@ describe("Filter Combinators", () => {
 	it("union 并集语义", () => {
 		const session = createSession();
 		// 与拒绝全部的过滤器取并集：任一通过即通过
-		expect(app.union(() => false).filter(session)).toBe(true);
+		expect(app.union(() => false).filter(session)).toBe(
+			true,
+		);
 		// never 与放行过滤器取并集：通过
 		expect(
 			app
@@ -60,11 +65,21 @@ describe("Filter Combinators", () => {
 	it("exclude 差集语义", () => {
 		const session = createSession();
 		// 根上下文放行全部，排除掉"userId 为 123"的会话后被拒
-		expect(app.exclude((s) => s.userId === "123").filter(session)).toBe(false);
+		expect(
+			app
+				.exclude((s) => s.userId === "123")
+				.filter(session),
+		).toBe(false);
 		// 排除不命中的过滤器则不受影响
-		expect(app.exclude((s) => s.userId === "789").filter(session)).toBe(true);
+		expect(
+			app
+				.exclude((s) => s.userId === "789")
+				.filter(session),
+		).toBe(true);
 		// 也接受另一上下文作为排除条件
-		expect(app.exclude(app.user("789")).filter(session)).toBe(true);
+		expect(
+			app.exclude(app.user("789")).filter(session),
+		).toBe(true);
 	});
 
 	it("union / intersect / exclude 接受 Context 实参", () => {
@@ -72,8 +87,12 @@ describe("Filter Combinators", () => {
 		const rejected = app.never();
 		const allowed = app.any();
 		expect(app.union(rejected).filter(session)).toBe(true);
-		expect(app.intersect(allowed).filter(session)).toBe(true);
-		expect(app.intersect(rejected).filter(session)).toBe(false);
+		expect(app.intersect(allowed).filter(session)).toBe(
+			true,
+		);
+		expect(app.intersect(rejected).filter(session)).toBe(
+			false,
+		);
 	});
 
 	it("self 筛选机器人账号", () => {
@@ -85,7 +104,9 @@ describe("Filter Combinators", () => {
 	it("platform 筛选平台", () => {
 		const session = createSession();
 		expect(app.platform("mock").filter(session)).toBe(true);
-		expect(app.platform("discord").filter(session)).toBe(false);
+		expect(app.platform("discord").filter(session)).toBe(
+			false,
+		);
 	});
 
 	it("channel 筛选频道", () => {

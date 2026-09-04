@@ -9,7 +9,11 @@ import type { Universal } from "@koishi-ce/client";
 // 这里按该枚举定义镜像等值常量（OFFLINE=0 … RECONNECT=4），
 // Record 的键联合与枚举成员一一对应以防遗漏
 const botStatus: Record<
-	"OFFLINE" | "ONLINE" | "CONNECT" | "DISCONNECT" | "RECONNECT",
+	| "OFFLINE"
+	| "ONLINE"
+	| "CONNECT"
+	| "DISCONNECT"
+	| "RECONNECT",
 	number
 > = {
 	OFFLINE: 0,

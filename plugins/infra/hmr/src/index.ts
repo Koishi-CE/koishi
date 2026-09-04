@@ -26,8 +26,16 @@ import {
 	type Plugin,
 	Schema,
 } from "@koishi-ce/koishi";
-import { Loader, type LoaderScope, unwrapExports } from "@koishi-ce/loader";
-import { type ChokidarOptions, type FSWatcher, watch } from "chokidar";
+import {
+	Loader,
+	type LoaderScope,
+	unwrapExports,
+} from "@koishi-ce/loader";
+import {
+	type ChokidarOptions,
+	type FSWatcher,
+	watch,
+} from "chokidar";
 import zhCN from "../locales/zh-CN.yml";
 import { handleError } from "./error.ts";
 
@@ -53,7 +61,10 @@ declare module "@koishi-ce/koishi" {
  * @param ignored 需要排除的文件路径集合
  * @returns 依赖文件路径集合（不含 node_modules 与 ignored 中的文件）
  */
-function loadDependencies(filename: string, ignored: Set<string>) {
+function loadDependencies(
+	filename: string,
+	ignored: Set<string>,
+) {
 	const dependencies = new Set<string>();
 	function traverse({ filename, children }: NodeJS.Module) {
 		if (
@@ -88,7 +99,10 @@ function compileGlobToPrune(
 	if (!match) return;
 	const name = match[1];
 	if (!name) return;
-	const escaped = name.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+	const escaped = name.replace(
+		/[.*+?^${}()|[\]\\]/g,
+		"\\$&",
+	);
 	const regex = new RegExp(`[/\\\\]${escaped}([/\\\\]|$)`);
 	return (path: string) => regex.test(path);
 }
@@ -118,7 +132,11 @@ class Watcher {
 		ignored: Schema.union([
 			Schema.array(String).role("table"),
 			Schema.transform(String, (value) => [value]),
-		]).default(["**/node_modules/**", "**/.git/**", "**/logs/**"]),
+		]).default([
+			"**/node_modules/**",
+			"**/.git/**",
+			"**/logs/**",
+		]),
 		debounce: Schema.natural().role("ms").default(100),
 	}).i18n({
 		"zh-CN": zhCN,
@@ -202,7 +220,8 @@ class Watcher {
 		this.watcher.on("change", async (path) => {
 			const filename = resolve(this.base, path);
 			const isEntry =
-				filename === loader.filename || loader.envFiles.includes(filename);
+				filename === loader.filename ||
+				loader.envFiles.includes(filename);
 			// loader 写回配置文件时置 suspend，跳过这一次自身触发的变动
 			if (loader.suspend && isEntry) {
 				loader.suspend = false;
@@ -324,17 +343,24 @@ class Watcher {
 		this.analyzeChanges();
 
 		/** 待分类的插件 */
-		const pending = new Map<string, [Plugin, MainScope | undefined]>();
+		const pending = new Map<
+			string,
+			[Plugin, MainScope | undefined]
+		>();
 
 		/** 需要重载的插件 */
 		const reloads = new Map<Plugin, Reload>();
 
 		// 假设插件入口文件是“原子”的，即重载它不会连带引发其他插件的重载
-		for (const filename of Object.values(this.ctx.loader.cache)) {
+		for (const filename of Object.values(
+			this.ctx.loader.cache,
+		)) {
 			const module = require.cache[filename];
 			if (!module) continue;
 			// loader 的 unwrapExports 返回 unknown（导出形态动态），此处收窄为插件
-			const plugin = unwrapExports(module.exports) as Plugin | undefined;
+			const plugin = unwrapExports(module.exports) as
+				| Plugin
+				| undefined;
 			if (!plugin || this.declined.has(filename)) continue;
 			const runtime = this.ctx.registry.get(plugin);
 			pending.set(filename, [plugin, runtime]);
@@ -344,11 +370,16 @@ class Watcher {
 		for (const [filename, [plugin, runtime]] of pending) {
 			// 检查该插件是否（直接或间接）依赖了变动的文件
 			this.declined.delete(filename);
-			const dependencies = [...loadDependencies(filename, this.declined)];
+			const dependencies = [
+				...loadDependencies(filename, this.declined),
+			];
 			this.declined.add(filename);
 
 			// 只在插件级别判定重载：任一依赖被 accepted 即重载整个插件
-			if (!dependencies.some((dep) => this.accepted.has(dep))) continue;
+			if (
+				!dependencies.some((dep) => this.accepted.has(dep))
+			)
+				continue;
 			dependencies.forEach((dep) => this.accepted.add(dep));
 
 			// 准备重载：遍历插件的 fork 子树，记录各 fork 的状态与引用名
@@ -370,14 +401,23 @@ class Watcher {
 					}
 				}
 				if (!isMarked) {
-					const children = new Map<ForkScope, string | undefined>();
+					const children = new Map<
+						ForkScope,
+						string | undefined
+					>();
 					reloads.set(plugin, { filename, children });
 					for (const state of runtime.children) {
-						children.set(state, this.ctx.loader.getRefName(state));
+						children.set(
+							state,
+							this.ctx.loader.getRefName(state),
+						);
 					}
 				}
 			} else {
-				reloads.set(plugin, { filename, children: new Map() });
+				reloads.set(plugin, {
+					filename,
+					children: new Map(),
+				});
 			}
 		}
 
@@ -401,7 +441,9 @@ class Watcher {
 		const attempts: Dict<Plugin> = {};
 		try {
 			for (const [, { filename }] of reloads) {
-				attempts[filename] = unwrapExports(this.require(filename)) as Plugin;
+				attempts[filename] = unwrapExports(
+					this.require(filename),
+				) as Plugin;
 			}
 		} catch (e) {
 			handleError(e, this.logger);
@@ -412,7 +454,10 @@ class Watcher {
 		this.ctx.emit("hmr/reload", reloads);
 
 		try {
-			for (const [plugin, { filename, children }] of reloads) {
+			for (const [
+				plugin,
+				{ filename, children },
+			] of reloads) {
 				const path = this.relative(filename);
 
 				try {
@@ -426,7 +471,10 @@ class Watcher {
 
 				// 替换 loader 缓存，保证 keyFor 等方法取到新插件
 				// （attempts 的键集与 reloads 完全一致，上方循环保证已写入，断言安全）
-				this.ctx.loader.replace(plugin, attempts[filename] as Plugin);
+				this.ctx.loader.replace(
+					plugin,
+					attempts[filename] as Plugin,
+				);
 
 				try {
 					for (const [state, name] of children) {
@@ -435,11 +483,12 @@ class Watcher {
 							state.config,
 						);
 						const key = (state as LoaderScope).key;
-						if (key !== undefined) (fork as LoaderScope).key = key;
+						if (key !== undefined)
+							(fork as LoaderScope).key = key;
 						if (name) {
-							const record = ((state.parent.scope as LoaderScope)[
-								Loader.kRecord
-							] ??= Object.create(null));
+							const record = ((
+								state.parent.scope as LoaderScope
+							)[Loader.kRecord] ??= Object.create(null));
 							record[name] = fork;
 						}
 					}
@@ -455,17 +504,26 @@ class Watcher {
 		} catch {
 			// 重载中途失败：回滚 require.cache，并用旧插件对象逐一恢复各 fork 状态
 			rollback();
-			for (const [plugin, { filename, children }] of reloads) {
+			for (const [
+				plugin,
+				{ filename, children },
+			] of reloads) {
 				try {
-					this.ctx.registry.delete(attempts[filename] as Plugin);
+					this.ctx.registry.delete(
+						attempts[filename] as Plugin,
+					);
 					for (const [state, name] of children) {
-						const fork = state.parent.plugin(plugin, state.config);
+						const fork = state.parent.plugin(
+							plugin,
+							state.config,
+						);
 						const key = (state as LoaderScope).key;
-						if (key !== undefined) (fork as LoaderScope).key = key;
+						if (key !== undefined)
+							(fork as LoaderScope).key = key;
 						if (name) {
-							const record = ((state.parent.scope as LoaderScope)[
-								Loader.kRecord
-							] ??= Object.create(null));
+							const record = ((
+								state.parent.scope as LoaderScope
+							)[Loader.kRecord] ??= Object.create(null));
 							record[name] = fork;
 						}
 					}

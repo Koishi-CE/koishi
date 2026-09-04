@@ -54,13 +54,24 @@
  */
 import { router, send, store } from "@koishi-ce/client";
 import { computed } from "vue";
-import { dialogFork, getStatus, plugins, removeItem, type Tree } from "./utils";
+import {
+	dialogFork,
+	getStatus,
+	plugins,
+	removeItem,
+	type Tree,
+} from "./utils";
 
 /** 弹窗对应的插件短名。 */
 const shortname = computed(() =>
-	dialogFork.value?.replace(/(koishi-|^@koishijs\/)plugin-/, ""),
+	dialogFork.value?.replace(
+		/(koishi-|^@koishijs\/)plugin-/,
+		"",
+	),
 );
-const local = computed(() => store.packages?.[dialogFork.value]);
+const local = computed(
+	() => store.packages?.[dialogFork.value],
+);
 
 /** 单个节点的显示文案：`标签 [路径]`。 */
 function getLabel(tree: Tree) {

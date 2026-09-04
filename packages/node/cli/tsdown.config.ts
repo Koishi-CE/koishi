@@ -10,5 +10,9 @@ import { defineConfig } from "tsdown";
  * 相对定位 lib/worker/index.mjs，两者都必须有独立产物。
  */
 export default defineConfig({
-	entry: ["src/index.ts", "src/cli/index.ts", "src/worker/index.ts"],
+	entry: [
+		"src/index.ts",
+		"src/cli/index.ts",
+		"src/worker/index.ts",
+	],
 });

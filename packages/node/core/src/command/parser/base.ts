@@ -30,7 +30,8 @@ export namespace CommandBase {
 
 // 为兼容旧版 Safari，此处不使用后行断言（lookbehind）
 // SYNTAX 匹配一个选项写法：带前导连字符的单词（短选项可连写），或一个非字母数字的符号
-const SYNTAX = /(?:-[\w\x80-\uffff-]*|[^,\s\w\x80-\uffff]+)/.source;
+const SYNTAX = /(?:-[\w\x80-\uffff-]*|[^,\s\w\x80-\uffff]+)/
+	.source;
 // BRACKET 匹配定义中紧随其后的参数声明（<...> 或 [...]，可连续多个）
 const BRACKET = /((?:\s*\[[^\]]+?\]|\s*<[^>]+?>)*)/.source;
 // 完整的选项定义语法：前段为写法列表（逗号分隔），中段为值声明，尾段为描述文本
@@ -38,7 +39,9 @@ const OPTION_REGEXP = new RegExp(
 	`^(${SYNTAX}(?:,\\s*${SYNTAX})*(?=\\s|$))?${BRACKET}(.*)$`,
 );
 
-export class CommandBase<T extends CommandBase.Config = CommandBase.Config> {
+export class CommandBase<
+	T extends CommandBase.Config = CommandBase.Config,
+> {
 	/** 剥离类型标注后的定义部分（如 "<foo> [bar]"），用于 help 展示 */
 	public declaration: string;
 	/** 命令名（点分路径形式，如 "a.b"） */
@@ -59,12 +62,18 @@ export class CommandBase<T extends CommandBase.Config = CommandBase.Config> {
 	/** 按符号注册的选项查找表（如 "#"、"@"，经 h.escape 转义） */
 	_symbolicOptions: Argv.OptionDeclarationMap = {};
 
-	constructor(name: string, declaration: string, ctx: Context, config: T) {
+	constructor(
+		name: string,
+		declaration: string,
+		ctx: Context,
+		config: T,
+	) {
 		this.name = name;
 		this.ctx = ctx;
 		this.config = config;
 		if (!name) throw new Error("expect a command name");
-		const declList = (this._arguments = ctx.$commander.parseDecl(declaration));
+		const declList = (this._arguments =
+			ctx.$commander.parseDecl(declaration));
 		this.declaration = declList.stripped;
 		// 为每个具名参数声明一条 i18n 文案（默认显示参数名本身）
 		for (const decl of declList) {
@@ -88,7 +97,11 @@ export class CommandBase<T extends CommandBase.Config = CommandBase.Config> {
 	 * - 给了 value 的选项按取值变体（variant）登记，用于同一选项多种写法取不同值；
 	 * - fallback 为 string / number 且未标类型时，用 fallback 的类型补全 type。
 	 */
-	_createOption(name: string, def: string, config: Argv.OptionConfig) {
+	_createOption(
+		name: string,
+		def: string,
+		config: Argv.OptionConfig,
+	) {
 		const cap = OPTION_REGEXP.exec(def);
 		if (!cap) return;
 		const param = paramCase(name);
@@ -114,8 +127,11 @@ export class CommandBase<T extends CommandBase.Config = CommandBase.Config> {
 			syntax += `, --${param}`;
 		}
 
-		const declList = this.ctx.$commander.parseDecl(bracket.trimStart());
-		if (declList.stripped) syntax += ` ${declList.stripped}`;
+		const declList = this.ctx.$commander.parseDecl(
+			bracket.trimStart(),
+		);
+		if (declList.stripped)
+			syntax += ` ${declList.stripped}`;
 		// 同名选项重复注册时合并（保留先前登记的别名与变体）
 		const option = (this._options[name] ||= {
 			...declList[0],
@@ -134,21 +150,33 @@ export class CommandBase<T extends CommandBase.Config = CommandBase.Config> {
 			// （对象键运行时本就经字符串强转，String() 与原行为一致）
 			const value = config.value as Argv.OptionValue;
 			path += `.${value}`;
-			option.variants[String(value)] = { ...config, syntax };
+			option.variants[String(value)] = {
+				...config,
+				syntax,
+			};
 			option.valuesSyntax[String(value)] = syntax;
-			aliases.forEach((name) => (option.values[name] = value));
+			aliases.forEach(
+				(name) => (option.values[name] = value),
+			);
 		} else if (!bracket.trim()) {
 			option.type = "boolean";
 		} else if (
 			!option.type &&
-			(fallbackType === "string" || fallbackType === "number")
+			(fallbackType === "string" ||
+				fallbackType === "number")
 		) {
 			option.type = fallbackType;
 		}
 
-		this._disposables.push(this.ctx.i18n.define("", path, desc));
+		this._disposables.push(
+			this.ctx.i18n.define("", path, desc),
+		);
 		this._assignOption(option, aliases, this._namedOptions);
-		this._assignOption(option, symbols, this._symbolicOptions);
+		this._assignOption(
+			option,
+			symbols,
+			this._symbolicOptions,
+		);
 		// 保证 camelCase 主名始终能查到该选项（即使别名里没有它）
 		if (!this._namedOptions[param]) {
 			this._namedOptions[param] = option;
@@ -204,7 +232,9 @@ export class CommandBase<T extends CommandBase.Config = CommandBase.Config> {
 	stringify(args: readonly unknown[], options: object) {
 		let output = this.name;
 		for (const key in options) {
-			const value: unknown = (options as Record<string, unknown>)[key];
+			const value: unknown = (
+				options as Record<string, unknown>
+			)[key];
 			if (value === true) {
 				output += ` --${key}`;
 			} else if (value === false) {

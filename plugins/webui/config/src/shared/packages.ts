@@ -66,11 +66,20 @@ export abstract class PackageProvider extends DataService<
 		super(ctx, "packages", { authority: 4 });
 		this.ctx = ctx;
 
-		this.debouncedRefresh = ctx.debounce(() => this.refresh(false), 0);
+		this.debouncedRefresh = ctx.debounce(
+			() => this.refresh(false),
+			0,
+		);
 		// 插件的加载 / fork / 状态变化都可能影响运行时信息，统一走 update
-		ctx.on("internal/runtime", (scope) => this.update(scope.runtime.plugin));
-		ctx.on("internal/fork", (scope) => this.update(scope.runtime.plugin));
-		ctx.on("internal/status", (scope) => this.update(scope.runtime.plugin));
+		ctx.on("internal/runtime", (scope) =>
+			this.update(scope.runtime.plugin),
+		);
+		ctx.on("internal/fork", (scope) =>
+			this.update(scope.runtime.plugin),
+		);
+		ctx.on("internal/status", (scope) =>
+			this.update(scope.runtime.plugin),
+		);
 		ctx.on("hmr/reload", (reloads) => {
 			for (const [plugin] of reloads) {
 				this.update(plugin);
@@ -94,7 +103,8 @@ export abstract class PackageProvider extends DataService<
 				];
 				for (const key of new Set(candidates)) {
 					if (!key) continue;
-					const result = (this.cache[key] ??= await this.parseExports(key));
+					const result = (this.cache[key] ??=
+						await this.parseExports(key));
 					if (!result.failed) break;
 				}
 				this.debouncedRefresh();
@@ -109,7 +119,9 @@ export abstract class PackageProvider extends DataService<
 	 *
 	 * @param forced 是否强制重新收集（绕过缓存）
 	 */
-	abstract collect(forced: boolean): Promise<PackageProvider.Data[]>;
+	abstract collect(
+		forced: boolean,
+	): Promise<PackageProvider.Data[]>;
 
 	/**
 	 * 某插件的运行时状态发生变化时，重新解析其导出并去抖刷新服务。
@@ -129,7 +141,10 @@ export abstract class PackageProvider extends DataService<
 	 * @param state 插件的主作用域
 	 * @param result 待填充的运行时数据（原地修改）
 	 */
-	parseRuntime(state: MainScope, result: PackageProvider.RuntimeData) {
+	parseRuntime(
+		state: MainScope,
+		result: PackageProvider.RuntimeData,
+	) {
 		// 已销毁的 runtime(uid 为 null)不展示 id
 		if (state.runtime.uid !== null) {
 			result.id = state.runtime.uid;
@@ -155,7 +170,10 @@ export abstract class PackageProvider extends DataService<
 			object.name = object.package?.name || "";
 			// 运行时缓存的键与写入方一致：workspace 包用配置键（./...），
 			// npm 包用短名；paths 为空时退回短名查找
-			const cached = [...(object.paths ?? []), object.shortname]
+			const cached = [
+				...(object.paths ?? []),
+				object.shortname,
+			]
 				.map((key) => this.cache[key])
 				.find(Boolean);
 			if (!cached) continue;
@@ -171,7 +189,9 @@ export abstract class PackageProvider extends DataService<
 			package: { name: "" },
 			// 全局设置条目不带市场元数据字段，用双断言放宽必填约束
 		} as unknown as PackageProvider.Data);
-		return Object.fromEntries(objects.map((data) => [data.name, data]));
+		return Object.fromEntries(
+			objects.map((data) => [data.name, data]),
+		);
 	}
 
 	/**
@@ -184,12 +204,13 @@ export abstract class PackageProvider extends DataService<
 	 * @param name 插件短名（不含 koishi-plugin- 前缀）
 	 * @returns 可序列化的运行时数据
 	 */
-	parseExports(name: string): Promise<PackageProvider.RuntimeData> {
-		const pending = (this.inflight[name] ??= this.resolveExports(name).finally(
-			() => {
+	parseExports(
+		name: string,
+	): Promise<PackageProvider.RuntimeData> {
+		const pending = (this.inflight[name] ??=
+			this.resolveExports(name).finally(() => {
 				delete this.inflight[name];
-			},
-		));
+			}));
 		return pending;
 	}
 
@@ -201,19 +222,25 @@ export abstract class PackageProvider extends DataService<
 				schema?: Schema;
 				usage?: string;
 				filter?: boolean;
-				using?: string[] | { required?: string[]; optional?: string[] };
-				inject?: string[] | { required?: string[]; optional?: string[] };
+				using?:
+					| string[]
+					| { required?: string[]; optional?: string[] };
+				inject?:
+					| string[]
+					| { required?: string[]; optional?: string[] };
 			};
-			const exports = (await this.ctx.loader.resolve(name)) as
-				| (Plugin & Extras)
-				| undefined;
+			const exports = (await this.ctx.loader.resolve(
+				name,
+			)) as (Plugin & Extras) | undefined;
 			const result: PackageProvider.RuntimeData = {};
 			const schema = exports?.Config || exports?.schema;
 			if (schema) result.schema = schema;
 			if (exports?.usage) result.usage = exports.usage;
-			if (exports?.filter !== undefined) result.filter = exports.filter;
+			if (exports?.filter !== undefined)
+				result.filter = exports.filter;
 			// using 与 inject 是新旧两种声明注入服务的方式
-			const inject = exports?.using || exports?.inject || [];
+			const inject =
+				exports?.using || exports?.inject || [];
 			if (Array.isArray(inject)) {
 				result.required = inject;
 				result.optional = [];
@@ -225,7 +252,9 @@ export abstract class PackageProvider extends DataService<
 			// 确保 result 可以被 JSON 序列化（schema 中可能混入不可序列化的值）
 			JSON.stringify(result);
 
-			const runtime = exports ? this.ctx.registry.get(exports) : undefined;
+			const runtime = exports
+				? this.ctx.registry.get(exports)
+				: undefined;
 			if (runtime) this.parseRuntime(runtime, result);
 			return result;
 		} catch (error) {
@@ -255,7 +284,10 @@ export namespace PackageProvider {
 		runtime?: RuntimeData;
 		package: Pick<
 			PackageJson,
-			"name" | "version" | "peerDependencies" | "peerDependenciesMeta"
+			| "name"
+			| "version"
+			| "peerDependencies"
+			| "peerDependenciesMeta"
 		>;
 	}
 

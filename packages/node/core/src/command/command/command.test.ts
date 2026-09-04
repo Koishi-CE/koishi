@@ -19,7 +19,12 @@ import {
 	jest,
 } from "bun:test";
 import { inspect } from "node:util";
-import { App, type Command, Logger, Next } from "@koishi-ce/koishi";
+import {
+	App,
+	type Command,
+	Logger,
+	Next,
+} from "@koishi-ce/koishi";
 import mock from "@koishi-ce/plugin-mock";
 import "../../../tests/shape.ts";
 
@@ -64,10 +69,14 @@ describe("Command API", () => {
 		// 同名重复注册应更新既有命令而非新建，config 以最后一次为准
 		it("modify commands", () => {
 			const d1 = app.command("d", "foo", { authority: 1 });
-			expect(app.$commander.get("d")?.config.authority).toBe(1);
+			expect(
+				app.$commander.get("d")?.config.authority,
+			).toBe(1);
 
 			const d2 = app.command("d", "bar", { authority: 2 });
-			expect(app.$commander.get("d")?.config.authority).toBe(2);
+			expect(
+				app.$commander.get("d")?.config.authority,
+			).toBe(2);
 
 			expect(d1).toBe(d2);
 		});
@@ -172,7 +181,9 @@ describe("Command API", () => {
 			const withDesc = a.subcommand("b", "描述文本");
 			expect(withDesc.name).toBe("b");
 			expect(withDesc.parent).toBe(a);
-			const withConfig = a.subcommand("c", { authority: 2 });
+			const withConfig = a.subcommand("c", {
+				authority: 2,
+			});
 			expect(withConfig.name).toBe("c");
 			expect(withConfig.config.authority).toBe(2);
 		});
@@ -218,7 +229,9 @@ describe("Command API", () => {
 		it("basic 1 (return undefined)", async () => {
 			command.action(() => {});
 
-			await expect(command.execute({ session }, next)).resolves.toBe("");
+			await expect(
+				command.execute({ session }, next),
+			).resolves.toBe("");
 			expect(next.mock.calls).toHaveLength(0);
 		});
 
@@ -226,16 +239,22 @@ describe("Command API", () => {
 		it("basic 2 (return string)", async () => {
 			command.action(() => "result");
 
-			await expect(command.execute({ session }, next)).resolves.toBe("result");
+			await expect(
+				command.execute({ session }, next),
+			).resolves.toBe("result");
 			expect(next.mock.calls).toHaveLength(0);
 		});
 
 		// action 调 next() 空参透传时，由外部 fallback 提供返回值
 		it("compose 1 (return in next function)", async () => {
-			next.mockImplementationOnce(() => Promise.resolve("result"));
+			next.mockImplementationOnce(() =>
+				Promise.resolve("result"),
+			);
 			command.action(({ next }) => next!());
 
-			await expect(command.execute({ session }, next)).resolves.toBe("result");
+			await expect(
+				command.execute({ session }, next),
+			).resolves.toBe("result");
 			expect(next.mock.calls).toHaveLength(1);
 		});
 
@@ -246,7 +265,9 @@ describe("Command API", () => {
 				return arg === "ping" ? "pong" : next!();
 			}, true);
 
-			await expect(command.execute({ session }, next)).resolves.toBe("result");
+			await expect(
+				command.execute({ session }, next),
+			).resolves.toBe("result");
 			await expect(
 				command.execute({ session, args: ["ping"] }, next),
 			).resolves.toBe("pong");
@@ -256,7 +277,9 @@ describe("Command API", () => {
 		// before 的 append 形态：校验钩子追加到队尾，返回非空值中止执行
 		it("checker append (before with append)", async () => {
 			command.before(() => "checked", true);
-			await expect(command.execute({ session }, next)).resolves.toBe("checked");
+			await expect(
+				command.execute({ session }, next),
+			).resolves.toBe("checked");
 			expect(next.mock.calls).toHaveLength(0);
 		});
 
@@ -264,10 +287,12 @@ describe("Command API", () => {
 		it("compose 3 (return in next callback)", async () => {
 			command.action(({ next }) => next!("result"));
 
-			await expect(command.execute({ session }, async () => {})).resolves.toBe(
-				"",
-			);
-			await expect(command.execute({ session }, next)).resolves.toBe("result");
+			await expect(
+				command.execute({ session }, async () => {}),
+			).resolves.toBe("");
+			await expect(
+				command.execute({ session }, next),
+			).resolves.toBe("result");
 			expect(next.mock.calls).toHaveLength(1);
 		});
 
@@ -281,10 +306,12 @@ describe("Command API", () => {
 				});
 			});
 
-			await expect(command.execute({ session }, async () => {})).resolves.toBe(
-				"",
-			);
-			await expect(command.execute({ session }, next)).resolves.toBe("result");
+			await expect(
+				command.execute({ session }, async () => {}),
+			).resolves.toBe("");
+			await expect(
+				command.execute({ session }, next),
+			).resolves.toBe("result");
 			expect(next.mock.calls).toHaveLength(1);
 		});
 
@@ -295,9 +322,13 @@ describe("Command API", () => {
 				throw new Error("message 1");
 			});
 
-			await expect(command.execute({ session }, next)).resolves.toBe("乌拉！");
+			await expect(
+				command.execute({ session }, next),
+			).resolves.toBe("乌拉！");
 			expect(print.mock.calls).toHaveLength(1);
-			expect(print.mock.calls[0]?.[0]).toMatch(/Error: message 1/);
+			expect(print.mock.calls[0]?.[0]).toMatch(
+				/Error: message 1/,
+			);
 			expect(next.mock.calls).toHaveLength(0);
 		});
 
@@ -309,20 +340,26 @@ describe("Command API", () => {
 				});
 			});
 
-			await expect(command.execute({ session }, next)).resolves.toBe(
-				"发生未知错误。",
-			);
+			await expect(
+				command.execute({ session }, next),
+			).resolves.toBe("发生未知错误。");
 			expect(print.mock.calls).toHaveLength(1);
-			expect(print.mock.calls[0]?.[0]).toMatch(/Error: message 2/);
+			expect(print.mock.calls[0]?.[0]).toMatch(
+				/Error: message 2/,
+			);
 			expect(next.mock.calls).toHaveLength(1);
 		});
 
 		// 外部 fallback 本身抛错时不再被命令捕获，向上原样传播
 		it("throw 3 (error in next function)", async () => {
-			next.mockImplementationOnce(() => Promise.reject(new Error("message 3")));
+			next.mockImplementationOnce(() =>
+				Promise.reject(new Error("message 3")),
+			);
 			command.action(({ next }) => next!());
 
-			await expect(command.execute({ session }, next)).rejects.toThrow();
+			await expect(
+				command.execute({ session }, next),
+			).rejects.toThrow();
 			expect(print.mock.calls).toHaveLength(0);
 			expect(next.mock.calls).toHaveLength(1);
 		});
@@ -336,7 +373,9 @@ describe("Command API", () => {
 				throw new Error("message 4");
 			});
 
-			await expect(command.execute({ session }, next)).resolves.toBe("catched");
+			await expect(
+				command.execute({ session }, next),
+			).resolves.toBe("catched");
 			expect(print.mock.calls).toHaveLength(0);
 			expect(next.mock.calls).toHaveLength(0);
 		});
@@ -351,13 +390,16 @@ describe("Command API", () => {
 
 		// 一个抢占式中间件：内容含 "escape" 时直接回复 "early"
 		app.middleware((session, next) => {
-			if (session.content?.includes("escape")) return "early";
+			if (session.content?.includes("escape"))
+				return "early";
 			return next();
 		});
 
 		// action 透传的 next 值可被外部中间件接管
 		it("basic support", async () => {
-			app.command("test1").action(({ next }) => next!("final"));
+			app
+				.command("test1")
+				.action(({ next }) => next!("final"));
 
 			await app.start();
 			await client.shouldReply("test1 foo", "final");
@@ -366,7 +408,9 @@ describe("Command API", () => {
 
 		// action 无限透传 next(Next.compose) 不应造成死循环或报错
 		it("infinite loop", async () => {
-			app.command("test2").action(({ next }) => next!(Next.compose));
+			app
+				.command("test2")
+				.action(({ next }) => next!(Next.compose));
 
 			await app.start();
 			await client.shouldNotReply("test2");

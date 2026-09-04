@@ -11,7 +11,11 @@
  * 绑定右键菜单。作用域变量支持 "a.b" 点分键，经 Flatten 类型
  * 与运行时代理呈现为嵌套对象。
  */
-import { type Dict, type Intersect, remove } from "cosmokit";
+import {
+	type Dict,
+	type Intersect,
+	remove,
+} from "cosmokit";
 import {
 	type MaybeRefOrGetter,
 	markRaw,
@@ -58,7 +62,8 @@ export interface ActionOptions {
 }
 
 /** 旧版菜单项写法（字段与 ActionOptions 部分重叠），仅为兼容保留 */
-export type LegacyMenuItem = Partial<ActionOptions> & Omit<MenuItem, "id">;
+export type LegacyMenuItem = Partial<ActionOptions> &
+	Omit<MenuItem, "id">;
 
 /** 菜单项：label / type / icon 均支持写成随作用域变化的 getter */
 export interface MenuItem {
@@ -70,10 +75,14 @@ export interface MenuItem {
 }
 
 /** 值或（以作用域为参数的）取值函数 */
-export type MaybeGetter<T> = T | ((scope: Flatten<ActionContext>) => T);
+export type MaybeGetter<T> =
+	| T
+	| ((scope: Flatten<ActionContext>) => T);
 
 /** 作用域存储：扁平键到「值或 ref 或 getter」的映射 */
-type Store<S extends {}> = { [K in keyof S]?: MaybeRefOrGetter<S[K]> };
+type Store<S extends {}> = {
+	[K in keyof S]?: MaybeRefOrGetter<S[K]>;
+};
 
 /**
  * 把 "a.b.c" 形式的扁平键名归并为 { a: { b: { c } } } 的嵌套结构，
@@ -103,9 +112,14 @@ export interface ActiveMenu {
  * 触发时把附加值写入作用域，并在鼠标位置弹出自定义菜单（由 global 插槽渲染）。
  * @param id 菜单标识，menu() 注册的条目将展示在该菜单中
  */
-export function useMenu<K extends keyof ActionContext>(id: K) {
+export function useMenu<K extends keyof ActionContext>(
+	id: K,
+) {
 	const ctx = useContext();
-	return (event: MouseEvent, value: MaybeRefOrGetter<ActionContext[K]>) => {
+	return (
+		event: MouseEvent,
+		value: MaybeRefOrGetter<ActionContext[K]>,
+	) => {
 		ctx.define(id, value);
 		event.preventDefault();
 		const { clientX, clientY } = event;
@@ -133,7 +147,9 @@ export default class ActionService extends Service {
 		super(ctx, "$action", true);
 		ctx.mixin("$action", ["action", "menu", "define"]);
 
-		ctx.internal.scope = shallowReactive({} as Store<ActionContext>);
+		ctx.internal.scope = shallowReactive(
+			{} as Store<ActionContext>,
+		);
 		ctx.internal.menus = reactive({});
 		ctx.internal.actions = reactive({});
 		ctx.internal.activeMenus = reactive([]);
@@ -142,7 +158,9 @@ export default class ActionService extends Service {
 		// 与键盘事件逐项比对（ctrl 在 macOS 平台映射为 meta 键）
 		ctx.addEventListener("keydown", (event) => {
 			const scope = this.createScope();
-			for (const action of Object.values(ctx.internal.actions)) {
+			for (const action of Object.values(
+				ctx.internal.actions,
+			)) {
 				if (!action.shortcut) continue;
 				const keys = action.shortcut
 					.split("+")
@@ -158,7 +176,11 @@ export default class ActionService extends Service {
 							continue;
 						case "ctrl":
 							// macOS 没有 ctrl+字母 的快捷键惯例，改用 Cmd（meta）
-							if (navigator.platform.toLowerCase().includes("mac")) {
+							if (
+								navigator.platform
+									.toLowerCase()
+									.includes("mac")
+							) {
 								metaKey = true;
 							} else {
 								ctrlKey = true;
@@ -195,7 +217,8 @@ export default class ActionService extends Service {
 			items.forEach((item) => insert(list, item));
 			return () => {
 				items.forEach((item) => remove(list, item));
-				if (!list.length) delete this.ctx.internal.menus[id];
+				if (!list.length)
+					delete this.ctx.internal.menus[id];
 			};
 		});
 	}
@@ -222,7 +245,10 @@ export default class ActionService extends Service {
 	 * 可用 override 临时覆盖若干键值。
 	 */
 	createScope(override = {}) {
-		const scope = { ...this.ctx.internal.scope, ...override };
+		const scope = {
+			...this.ctx.internal.scope,
+			...override,
+		};
 		return createScope(scope);
 	}
 }
@@ -241,11 +267,18 @@ function createScope(
 			if (typeof key === "symbol")
 				return (target as Record<symbol, unknown>)[key];
 			key = prefix + key;
-			const source = scope as Record<string, MaybeRefOrGetter<unknown>>;
+			const source = scope as Record<
+				string,
+				MaybeRefOrGetter<unknown>
+			>;
 			if (key in scope) return toValue(source[key]);
 			// 键本身不存在，但存在以其为前缀的子键：返回子级作用域代理
 			const _prefix = `${key}.`;
-			if (Object.keys(scope).some((k) => k.startsWith(_prefix))) {
+			if (
+				Object.keys(scope).some((k) =>
+					k.startsWith(_prefix),
+				)
+			) {
 				return createScope(scope, `${key}.`);
 			}
 			// 完全未命中：显式返回 undefined（noImplicitReturns）

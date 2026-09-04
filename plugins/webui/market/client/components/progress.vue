@@ -17,8 +17,12 @@ import { computed } from "vue";
 const ctx = useContext();
 
 const isLoading = computed(() => {
-	if (ctx.bail("activity", ctx.$router.pages["market"])) return false;
-	return !store.market || store.market.total > store.market.progress;
+	if (ctx.bail("activity", ctx.$router.pages["market"]))
+		return false;
+	return (
+		!store.market ||
+		store.market.total > store.market.progress
+	);
 });
 
 const percentage = computed(() => {

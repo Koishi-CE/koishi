@@ -89,7 +89,8 @@ class Analytics extends DataService<Analytics.Payload> {
 		super(ctx, "analytics");
 
 		this.config = {
-			statsInternal: config.statsInternal ?? Time.minute * 10,
+			statsInternal:
+				config.statsInternal ?? Time.minute * 10,
 			recentDayCount: config.recentDayCount ?? 7,
 		};
 
@@ -105,7 +106,13 @@ class Analytics extends DataService<Analytics.Payload> {
 				count: "integer",
 			},
 			{
-				primary: ["date", "hour", "type", "selfId", "platform"],
+				primary: [
+					"date",
+					"hour",
+					"type",
+					"selfId",
+					"platform",
+				],
 			},
 		);
 
@@ -157,20 +164,23 @@ class Analytics extends DataService<Analytics.Payload> {
 			this.upload();
 		});
 
-		ctx.any().before("command/execute", ({ command, session }) => {
-			if (!command || !session) return;
-			// 观察字段在类型上不可索引,按宽泛视图读取(与 createIndex 同理)
-			// biome-ignore lint/suspicious/noExplicitAny: Session<never,...> 的 user
-			const user = (session as Session<any, any, any>).user;
-			this.addAudit(this.commands, {
-				...this.createIndex(session),
-				name: command.name,
-				// 库表列声明为 integer,而 user.id 为字符串,这里按数值归一
-				userId: +(user?.["id"] || 0),
-				channelId: session.channelId ?? "",
+		ctx
+			.any()
+			.before("command/execute", ({ command, session }) => {
+				if (!command || !session) return;
+				// 观察字段在类型上不可索引,按宽泛视图读取(与 createIndex 同理)
+				// biome-ignore lint/suspicious/noExplicitAny: Session<never,...> 的 user
+				const user = (session as Session<any, any, any>)
+					.user;
+				this.addAudit(this.commands, {
+					...this.createIndex(session),
+					name: command.name,
+					// 库表列声明为 integer,而 user.id 为字符串,这里按数值归一
+					userId: +(user?.["id"] || 0),
+					channelId: session.channelId ?? "",
+				});
+				this.upload();
 			});
-			this.upload();
-		});
 
 		ctx.console.addEntry({
 			dev: resolve(__dirname, "../client/index.ts"),
@@ -180,7 +190,9 @@ class Analytics extends DataService<Analytics.Payload> {
 
 	// 不协变,各事件回调处的具体泛型互不相同,内部工具方法统一放宽
 	// biome-ignore lint/suspicious/noExplicitAny: Session 泛型在 user 观察字段上
-	private createIndex(session: Session<any, any, any>): Analytics.Index {
+	private createIndex(
+		session: Session<any, any, any>,
+	): Analytics.Index {
 		return {
 			selfId: session.selfId,
 			platform: session.platform,
@@ -198,7 +210,10 @@ class Analytics extends DataService<Analytics.Payload> {
 		index: Omit<T, "count">,
 	) {
 		const audit = buffer.find((data) =>
-			deepEqual(pick(data, Object.keys(index) as (keyof T)[]), index),
+			deepEqual(
+				pick(data, Object.keys(index) as (keyof T)[]),
+				index,
+			),
 		);
 		if (audit) {
 			audit.count += 1;
@@ -236,14 +251,21 @@ class Analytics extends DataService<Analytics.Payload> {
 		const dateHour = date.getHours();
 		if (
 			forced ||
-			+date - +this.lastUpdate > this.config.statsInternal ||
+			+date - +this.lastUpdate >
+				this.config.statsInternal ||
 			dateHour !== this.updateHour
 		) {
 			this.lastUpdate = date;
 			this.updateHour = dateHour;
 			await Promise.all([
-				this.uploadAudit("analytics.message", this.messages),
-				this.uploadAudit("analytics.command", this.commands),
+				this.uploadAudit(
+					"analytics.message",
+					this.messages,
+				),
+				this.uploadAudit(
+					"analytics.command",
+					this.commands,
+				),
 			]);
 			logger.debug("analytics updated");
 		}
@@ -252,7 +274,8 @@ class Analytics extends DataService<Analytics.Payload> {
 	/** 最近 N 天（不含今天）的日期号查询区间，供各聚合查询复用。 */
 	private queryRecent(): Query.FieldExpr<number> {
 		return {
-			$gte: Time.getDateNumber() - this.config.recentDayCount,
+			$gte:
+				Time.getDateNumber() - this.config.recentDayCount,
 			$lt: Time.getDateNumber(),
 		};
 	}
@@ -263,7 +286,9 @@ class Analytics extends DataService<Analytics.Payload> {
 	 *
 	 * @param lengthTask 参与平均的天数（见 download 中的计算）
 	 */
-	private async getCommandRate(lengthTask: Promise<number>) {
+	private async getCommandRate(
+		lengthTask: Promise<number>,
+	) {
 		const data = await this.ctx.database
 			.select("analytics.command", {
 				date: this.queryRecent(),
@@ -288,14 +313,20 @@ class Analytics extends DataService<Analytics.Payload> {
 	private async getDauHistory() {
 		const data = await this.ctx.database
 			.select("analytics.command", {
-				date: { $gte: Time.getDateNumber() - this.config.recentDayCount },
+				date: {
+					$gte:
+						Time.getDateNumber() -
+						this.config.recentDayCount,
+				},
 				userId: { $gt: 0 },
 			})
 			.groupBy(["date"], {
 				count: (row) => $.count(row.userId),
 			})
 			.execute();
-		const result: number[] = new Array(this.config.recentDayCount + 1).fill(0);
+		const result: number[] = new Array(
+			this.config.recentDayCount + 1,
+		).fill(0);
 		const today = Time.getDateNumber();
 		data.forEach((stat) => {
 			result[today - stat.date] = stat.count;
@@ -310,7 +341,9 @@ class Analytics extends DataService<Analytics.Payload> {
 	 *
 	 * @param lengthTask 参与平均的天数（见 download 中的计算）
 	 */
-	private async getMessageByBot(lengthTask: Promise<number>) {
+	private async getMessageByBot(
+		lengthTask: Promise<number>,
+	) {
 		const data = await this.ctx.database
 			.select("analytics.message", {
 				date: this.queryRecent(),
@@ -321,16 +354,22 @@ class Analytics extends DataService<Analytics.Payload> {
 			.execute();
 		const length = await lengthTask;
 		// 机器人资料(bot.user)运行时可能缺席,按 Partial 记录
-		const result = {} as Dict<Dict<MessageStats & Partial<Universal.User>>>;
+		const result = {} as Dict<
+			Dict<MessageStats & Partial<Universal.User>>
+		>;
 		data.forEach((stat) => {
-			const bot = this.ctx.bots[`${stat.platform}:${stat.selfId}`];
-			const entry = ((result[stat.platform] ||= {})[stat.selfId] ||= {
+			const bot =
+				this.ctx.bots[`${stat.platform}:${stat.selfId}`];
+			const entry = ((result[stat.platform] ||= {})[
+				stat.selfId
+			] ||= {
 				...(bot?.user ?? {}),
 				send: 0,
 				receive: 0,
 			});
 			// type 列的取值集合由写入端约定为 send / receive 两种
-			entry[stat.type as "send" | "receive"] = stat.count / length;
+			entry[stat.type as "send" | "receive"] =
+				stat.count / length;
 		});
 		return result;
 	}
@@ -353,7 +392,10 @@ class Analytics extends DataService<Analytics.Payload> {
 		const today = Time.getDateNumber();
 		const result: MessageStats[] = [];
 		data.forEach((stat) => {
-			const entry = (result[today - stat.date] ||= { send: 0, receive: 0 });
+			const entry = (result[today - stat.date] ||= {
+				send: 0,
+				receive: 0,
+			});
 			entry[stat.type as "send" | "receive"] = stat.count;
 		});
 		for (let i = 0; i < result.length; i++) {
@@ -368,7 +410,9 @@ class Analytics extends DataService<Analytics.Payload> {
 	 *
 	 * @param lengthTask 参与平均的天数（见 download 中的计算）
 	 */
-	private async getMessageByHour(lengthTask: Promise<number>) {
+	private async getMessageByHour(
+		lengthTask: Promise<number>,
+	) {
 		const data = await this.ctx.database
 			.select("analytics.message", {
 				date: this.queryRecent(),
@@ -384,7 +428,8 @@ class Analytics extends DataService<Analytics.Payload> {
 		data.forEach((stat) => {
 			const entry = result[stat.hour];
 			if (!entry) return;
-			entry[stat.type as "send" | "receive"] = stat.count / length;
+			entry[stat.type as "send" | "receive"] =
+				stat.count / length;
 		});
 		return result;
 	}
@@ -400,7 +445,10 @@ class Analytics extends DataService<Analytics.Payload> {
 	async download(): Promise<Analytics.Payload> {
 		const messageByDateTask = this.getMessageByDate();
 		const lengthTask = messageByDateTask.then((data) => {
-			return Math.min(Math.max(data.length - 1, 1), this.config.recentDayCount);
+			return Math.min(
+				Math.max(data.length - 1, 1),
+				this.config.recentDayCount,
+			);
 		});
 		const [
 			userCount,
@@ -414,14 +462,22 @@ class Analytics extends DataService<Analytics.Payload> {
 			messageByHour,
 		] = await Promise.all([
 			// 用户总数
-			this.ctx.database.eval("user", (row) => $.count(row.id)),
+			this.ctx.database.eval("user", (row) =>
+				$.count(row.id),
+			),
 			// 昨日新增用户数（createdAt 落在昨天一整天）
-			this.ctx.database.eval("user", (row) => $.count(row.id), {
-				createdAt: {
-					$gte: Time.fromDateNumber(Time.getDateNumber() - 1),
-					$lt: Time.fromDateNumber(Time.getDateNumber()),
+			this.ctx.database.eval(
+				"user",
+				(row) => $.count(row.id),
+				{
+					createdAt: {
+						$gte: Time.fromDateNumber(
+							Time.getDateNumber() - 1,
+						),
+						$lt: Time.fromDateNumber(Time.getDateNumber()),
+					},
 				},
-			}),
+			),
 			// 群组总数：channel 表中 id === guildId 的行即群本身（而非普通子频道）
 			this.ctx.database.eval(
 				"channel",
@@ -435,8 +491,14 @@ class Analytics extends DataService<Analytics.Payload> {
 				(row) =>
 					$.and(
 						$.eq(row.id, row.guildId),
-						$.gte(row.createdAt, Time.fromDateNumber(Time.getDateNumber() - 1)),
-						$.lt(row.createdAt, Time.fromDateNumber(Time.getDateNumber())),
+						$.gte(
+							row.createdAt,
+							Time.fromDateNumber(Time.getDateNumber() - 1),
+						),
+						$.lt(
+							row.createdAt,
+							Time.fromDateNumber(Time.getDateNumber()),
+						),
 					),
 			),
 			this.getCommandRate(lengthTask),
@@ -465,7 +527,10 @@ class Analytics extends DataService<Analytics.Payload> {
 	 */
 	override async get() {
 		const date = new Date();
-		const dateNumber = Time.getDateNumber(date, date.getTimezoneOffset());
+		const dateNumber = Time.getDateNumber(
+			date,
+			date.getTimezoneOffset(),
+		);
 		if (dateNumber !== this.cachedDate) {
 			this.cachedData = this.download();
 			this.cachedDate = dateNumber;
@@ -511,7 +576,9 @@ namespace Analytics {
 		guildIncrement: number;
 		dauHistory: number[];
 		commandRate: Dict<number>;
-		messageByBot: Dict<Dict<MessageStats & Partial<Universal.User>>>;
+		messageByBot: Dict<
+			Dict<MessageStats & Partial<Universal.User>>
+		>;
 		messageByDate: MessageStats[];
 		messageByHour: MessageStats[];
 	}

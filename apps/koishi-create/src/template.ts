@@ -30,7 +30,11 @@
  *   ~ 禁用条目预写、不预装——loader 跳过禁用条目，装好后在控制台启用；
  * - 依赖版本统一 ^1.0.0 区间（安装时取最新 1.x），shim 版本例外（冻结线）。
  */
-import { existsSync, readdirSync, readFileSync } from "node:fs";
+import {
+	existsSync,
+	readdirSync,
+	readFileSync,
+} from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import type { Manifest } from "./manifest.ts";
@@ -42,10 +46,15 @@ import type { Manifest } from "./manifest.ts";
  */
 function locateTemplateDir(): string {
 	const base = dirname(fileURLToPath(import.meta.url));
-	for (const dir of [join(base, "template"), join(base, "../src/template")]) {
+	for (const dir of [
+		join(base, "template"),
+		join(base, "../src/template"),
+	]) {
 		if (existsSync(dir)) return dir;
 	}
-	throw new Error("create-koishi-ce 内置模板目录缺失（src/template）");
+	throw new Error(
+		"create-koishi-ce 内置模板目录缺失（src/template）",
+	);
 }
 
 const templateDir = locateTemplateDir();
@@ -61,14 +70,15 @@ const dotFiles: Record<string, string> = {
 };
 
 /** 模板静态文件（相对项目根的路径 → 文件内容），package.json 另行渲染 */
-export const templateFiles: Record<string, string> = Object.fromEntries(
-	readdirSync(templateDir)
-		.filter((file) => !file.startsWith("."))
-		.map((file) => [
-			dotFiles[file] ?? file,
-			readFileSync(join(templateDir, file), "utf8"),
-		]),
-);
+export const templateFiles: Record<string, string> =
+	Object.fromEntries(
+		readdirSync(templateDir)
+			.filter((file) => !file.startsWith("."))
+			.map((file) => [
+				dotFiles[file] ?? file,
+				readFileSync(join(templateDir, file), "utf8"),
+			]),
+	);
 
 /**
  * 内置模板的 package.json 基础内容（name/version 会被 renderManifest 覆写，
@@ -120,15 +130,18 @@ export function baseManifest(): Manifest {
 			koishi: "npm:@koishi-ce/koishi-shim@^4.18.11",
 			// 上游 console 名占位：CE 插件的 peer 声明上游名，无归属时 Bun
 			// 会自动装下 npm 官方 console 全家桶形成双实例；版本冻结 5.30.x
-			"@koishijs/plugin-console": "npm:@koishi-ce/console-shim@^5.30.11",
+			"@koishijs/plugin-console":
+				"npm:@koishi-ce/console-shim@^5.30.11",
 			// 上游 core 名占位：@koishi-ce/loader 的 peer 精确锁 4.18.11，
 			// alias 须逐字相等（不带 ^），版本冻结勿 bump。core 与 loader
 			// 两个名字共用 koishi-shim：@koishi-ce/koishi 是 core + loader
 			// 的合并再导出（与上游 koishi 主包同构），named 导出全覆盖
-			"@koishijs/core": "npm:@koishi-ce/koishi-shim@4.18.11",
+			"@koishijs/core":
+				"npm:@koishi-ce/koishi-shim@4.18.11",
 			// 上游 loader 名占位：config / hmr 插件的 peer；同样指向
 			// koishi-shim（4.18.11 满足 ^4.6.11），勿指回已废弃的 loader-shim
-			"@koishijs/loader": "npm:@koishi-ce/koishi-shim@^4.18.11",
+			"@koishijs/loader":
+				"npm:@koishi-ce/koishi-shim@^4.18.11",
 		},
 		devDependencies: {
 			"@koishi-ce/client": "^1.0.0",

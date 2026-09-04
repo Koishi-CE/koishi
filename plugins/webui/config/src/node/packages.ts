@@ -90,13 +90,21 @@ export class PackageProvider extends shared.PackageProvider {
 		shared.PackageProvider.Data[]
 	> {
 		// 以完整包名为键索引全部条目（浅拷贝，避免跨 forced 扫描累积 paths）
-		const index = new Map<string, shared.PackageProvider.Data>();
+		const index = new Map<
+			string,
+			shared.PackageProvider.Data
+		>();
 		for (const object of this.scanner.objects) {
-			index.set(object.package.name, { ...object, paths: [] });
+			index.set(object.package.name, {
+				...object,
+				paths: [],
+			});
 		}
 		try {
 			await walkPlugins(
-				this.ctx.loader?.config?.plugins as Record<string, unknown> | undefined,
+				this.ctx.loader?.config?.plugins as
+					| Record<string, unknown>
+					| undefined,
 				async (key) => {
 					// 配置键形如 ./plugins/webui/config:uid，取 : 前的路径部分
 					const path = key.split(":", 1)[0];
@@ -106,14 +114,19 @@ export class PackageProvider extends shared.PackageProvider {
 					);
 					if (!object) return;
 					const name = object.package.name;
-					const entry = index.get(name) ?? { ...object, paths: [] };
+					const entry = index.get(name) ?? {
+						...object,
+						paths: [],
+					};
 					entry.paths ||= [];
-					if (!entry.paths.includes(path)) entry.paths.push(path);
+					if (!entry.paths.includes(path))
+						entry.paths.push(path);
 					index.set(name, entry);
 					// 登记「包名 → 配置键」反查，供 request-runtime 按路径解析
 					this.pathKeys[name] ||= path;
 					// 顺带解析运行时信息（loader.resolve 对路径键原生支持）
-					this.cache[path] ||= await this.parseExports(path);
+					this.cache[path] ||=
+						await this.parseExports(path);
 				},
 			);
 		} catch (error) {
@@ -136,7 +149,9 @@ async function walkPlugins(
 		if (key.split(":", 1)[0] === "group") {
 			const value = plugins?.[key];
 			await walkPlugins(
-				(value ?? {}) as Record<string, unknown> | undefined,
+				(value ?? {}) as
+					| Record<string, unknown>
+					| undefined,
 				handler,
 			);
 		} else {

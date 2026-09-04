@@ -11,7 +11,12 @@
  * defineConfig 是配置透传的类型断言工具。
  */
 import { describe, expect, it } from "bun:test";
-import { App, type Context, defineConfig, Service } from "@koishi-ce/koishi";
+import {
+	App,
+	type Context,
+	defineConfig,
+	Service,
+} from "@koishi-ce/koishi";
 
 interface MyConfig {
 	foo: string;

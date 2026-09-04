@@ -53,11 +53,22 @@
 </template>
 
 <script lang="ts" setup>
-import { type Dict, send, useContext, useRpc } from "@koishi-ce/client";
+import {
+	type Dict,
+	send,
+	useContext,
+	useRpc,
+} from "@koishi-ce/client";
 import type { CommandData } from "@koishi-ce/plugin-commands";
 import {} from "@koishi-ce/plugin-config";
 import {} from "@koishi-ce/plugin-locales";
-import { computed, nextTick, onActivated, ref, watch } from "vue";
+import {
+	computed,
+	nextTick,
+	onActivated,
+	ref,
+	watch,
+} from "vue";
 import { useRoute, useRouter } from "vue-router";
 import Command from "./command.vue";
 
@@ -85,7 +96,10 @@ const treeData = computed(() => {
 	function traverse(names: string[]) {
 		return names.sort().map((name) => {
 			const command = data.value[name];
-			return { ...command, children: traverse(command.children) };
+			return {
+				...command,
+				children: traverse(command.children),
+			};
 		});
 	}
 	return traverse(Object.keys(topLevel));
@@ -135,7 +149,9 @@ function getClass(data: CommandData) {
 
 // 节点过滤：按指令名做大小写不敏感的包含匹配
 function filterNode(value: string, data: CommandData) {
-	return data.name.toLowerCase().includes(keyword.value.toLowerCase());
+	return data.name
+		.toLowerCase()
+		.includes(keyword.value.toLowerCase());
 }
 
 // 仅顶层指令（名字不含 "."）可拖拽
@@ -149,7 +165,10 @@ function allowDrop(
 	target: Node,
 	type: "inner" | "prev" | "next",
 ) {
-	return source.parent !== (type === "inner" ? target : target.parent);
+	return (
+		source.parent !==
+		(type === "inner" ? target : target.parent)
+	);
 }
 
 function handleClick(data: CommandData) {
@@ -163,8 +182,13 @@ function handleDrop(
 	position: "before" | "after" | "inner",
 	event: DragEvent,
 ) {
-	const parent = position === "inner" ? target : target.parent;
-	void send("command/teleport", source.data.name, parent.data.name);
+	const parent =
+		position === "inner" ? target : target.parent;
+	void send(
+		"command/teleport",
+		source.data.name,
+		parent.data.name,
+	);
 }
 
 async function onEnter() {
@@ -182,7 +206,8 @@ onActivated(async () => {
 	) as HTMLElement;
 	if (!element) return;
 	root.value["setScrollTop"](
-		element.offsetTop - (container.offsetHeight - element.offsetHeight) / 2,
+		element.offsetTop -
+			(container.offsetHeight - element.offsetHeight) / 2,
 	);
 });
 
@@ -194,7 +219,8 @@ ctx.action("command.create", {
 // 顶部菜单：移除指令（仅本插件创建的指令可移除）
 ctx.action("command.remove", {
 	disabled: () => !data.value[active.value]?.create,
-	action: () => send("command/remove", data.value[active.value].name),
+	action: () =>
+		send("command/remove", data.value[active.value].name),
 });
 </script>
 

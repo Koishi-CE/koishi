@@ -64,7 +64,9 @@ export function handleError(e: unknown, logger: Logger) {
 					message: error.text,
 				},
 			);
-			logger.warn(`File: ${file}:${line}:${column}\n${formatted}`);
+			logger.warn(
+				`File: ${file}:${line}:${column}\n${formatted}`,
+			);
 		} catch (e) {
 			logger.warn(e);
 		}

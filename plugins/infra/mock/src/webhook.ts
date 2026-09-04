@@ -40,7 +40,12 @@ export class Webhook {
 
 	/** 发送 HEAD 请求，返回响应头 */
 	async head(path: string, headers?: Dict<unknown>) {
-		const res = await this.receive("HEAD", path, headers, "");
+		const res = await this.receive(
+			"HEAD",
+			path,
+			headers,
+			"",
+		);
 		return res.headers;
 	}
 
@@ -55,17 +60,29 @@ export class Webhook {
 	}
 
 	/** 发送 POST 请求（body 为字符串 / Buffer 时按原类型发送，其余序列化为 JSON） */
-	async post(path: string, body: unknown, headers?: Dict<unknown>) {
+	async post(
+		path: string,
+		body: unknown,
+		headers?: Dict<unknown>,
+	) {
 		return this.receive("POST", path, headers, body);
 	}
 
 	/** 发送 PUT 请求（body 为字符串 / Buffer 时按原类型发送，其余序列化为 JSON） */
-	async put(path: string, body: unknown, headers?: Dict<unknown>) {
+	async put(
+		path: string,
+		body: unknown,
+		headers?: Dict<unknown>,
+	) {
 		return this.receive("PUT", path, headers, body);
 	}
 
 	/** 发送 PATCH 请求（body 为字符串 / Buffer 时按原类型发送，其余序列化为 JSON） */
-	async patch(path: string, body: unknown, headers?: Dict<unknown>) {
+	async patch(
+		path: string,
+		body: unknown,
+		headers?: Dict<unknown>,
+	) {
 		return this.receive("PATCH", path, headers, body);
 	}
 
@@ -96,7 +113,8 @@ export class Webhook {
 			req.headers["content-type"] = "text/plain";
 		} else if (Buffer.isBuffer(body)) {
 			payload = body;
-			req.headers["content-type"] = "application/octet-stream";
+			req.headers["content-type"] =
+				"application/octet-stream";
 		} else {
 			payload = JSON.stringify(body);
 			req.headers["content-type"] = "application/json";

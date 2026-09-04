@@ -57,7 +57,9 @@ declare module "@koishi-ce/console" {
 }
 
 /** 单张表的展示信息：模型定义（剥离 ctx）+ 统计信息 */
-export interface TableInfo extends Driver.TableStats, Model.Config {
+export interface TableInfo
+	extends Driver.TableStats,
+		Model.Config {
 	fields: Field.Config;
 	primary: string[];
 	/**
@@ -79,7 +81,8 @@ class DatabaseProvider extends DataService<DatabaseInfo> {
 
 	// 原本位于 namespace 的 export const Config;erasableSyntaxOnly 禁止携带
 	// 运行时值的 namespace,迁为类静态成员(loader 从插件类上读取静态 Config)
-	static Config: Schema<DatabaseProvider.Config> = Schema.object({});
+	static Config: Schema<DatabaseProvider.Config> =
+		Schema.object({});
 
 	/** 全库概览的计算任务缓存（get(forced) 时清除重算） */
 	task?: Promise<DatabaseInfo>;
@@ -97,20 +100,29 @@ class DatabaseProvider extends DataService<DatabaseInfo> {
 				const callargs = args.map(deserialize);
 				if (name === "set" || name === "remove") {
 					// Mongo 等驱动的主键是包装类型，查询条件须先经其构造器包装
-					const table = (await this.get()).tables[callargs[0] as string];
+					const table = (await this.get()).tables[
+						callargs[0] as string
+					];
 					if (table?.HookObjectId) {
-						const row = callargs[1] as Record<string, unknown>;
+						const row = callargs[1] as Record<
+							string,
+							unknown
+						>;
 						const key = table.primary[0] as string;
 						row[key] = new table.HookObjectId(row[key]);
 					}
 				}
 				// 各方法形参各异且经反序列化后类型不可知，统一按动态调用处理
-				const method = this.ctx.database[name] as unknown as (
+				const method = this.ctx.database[
+					name
+				] as unknown as (
 					...args: unknown[]
 				) => Promise<unknown>;
 				const result = await method(...callargs);
 				if (refresh) void this.refresh();
-				return result === undefined ? undefined : serialize(result);
+				return result === undefined
+					? undefined
+					: serialize(result);
 			},
 			{ authority: 4 },
 		);
@@ -126,7 +138,12 @@ class DatabaseProvider extends DataService<DatabaseInfo> {
 						`${process.env["KOISHI_BASE"]}/dist/style.css`,
 					]
 				: process.env["KOISHI_ENV"] === "browser"
-					? [import.meta.url.replace(/\/src\/[^/]+$/, "/client/index.ts")]
+					? [
+							import.meta.url.replace(
+								/\/src\/[^/]+$/,
+								"/client/index.ts",
+							),
+						]
 					: {
 							dev: resolve(__dirname, "../client/index.ts"),
 							prod: resolve(__dirname, "../dist"),
@@ -150,39 +167,56 @@ class DatabaseProvider extends DataService<DatabaseInfo> {
 		const stats = await this.ctx.database.stats();
 		const result = { ...stats, tables: {} } as DatabaseInfo;
 		await Promise.all(
-			Object.entries(this.ctx.model.tables).map(async ([name, model]) => {
-				// spread 会把可选属性以 undefined 形态带入（与 exactOptionalPropertyTypes
-				// 相抵），此处以断言桥接；stats 无该表数据时补空对象
-				const info = {
-					...clone(omit(model, ["ctx"])),
-					...(stats.tables[name] ?? {}),
-				} as TableInfo;
-				info.primary = makeArray(info.primary);
-				for (const [key, field] of Object.entries(info.fields)) {
-					if (!Field.available(field)) delete info.fields[key];
-				}
-				const primary = info.primary[0] as string;
-				// 主键为 primary 类型且驱动是 Mongo 系时，探测主键包装构造器
-				const driver = Object.values(this.ctx.database.drivers)[0];
-				const isMongo =
-					driver !== undefined &&
-					["mongo", "MongoDriver"].includes(driver.constructor.name);
-				if (isMongo && info.fields[primary]?.type.type === "primary") {
-					const record = await this.ctx.database
-						.select(name as never)
-						.limit(1)
-						.execute();
-					const row = record[0] as Record<string, unknown> | undefined;
-					const ctor = row?.[primary]?.constructor as new (
-						value: unknown,
-					) => object;
-					if (ctor) info.HookObjectId = ctor;
-				}
-				result.tables[name] = info;
-			}),
+			Object.entries(this.ctx.model.tables).map(
+				async ([name, model]) => {
+					// spread 会把可选属性以 undefined 形态带入（与 exactOptionalPropertyTypes
+					// 相抵），此处以断言桥接；stats 无该表数据时补空对象
+					const info = {
+						...clone(omit(model, ["ctx"])),
+						...(stats.tables[name] ?? {}),
+					} as TableInfo;
+					info.primary = makeArray(info.primary);
+					for (const [key, field] of Object.entries(
+						info.fields,
+					)) {
+						if (!Field.available(field))
+							delete info.fields[key];
+					}
+					const primary = info.primary[0] as string;
+					// 主键为 primary 类型且驱动是 Mongo 系时，探测主键包装构造器
+					const driver = Object.values(
+						this.ctx.database.drivers,
+					)[0];
+					const isMongo =
+						driver !== undefined &&
+						["mongo", "MongoDriver"].includes(
+							driver.constructor.name,
+						);
+					if (
+						isMongo &&
+						info.fields[primary]?.type.type === "primary"
+					) {
+						const record = await this.ctx.database
+							.select(name as never)
+							.limit(1)
+							.execute();
+						const row = record[0] as
+							| Record<string, unknown>
+							| undefined;
+						const ctor = row?.[primary]
+							?.constructor as new (
+							value: unknown,
+						) => object;
+						if (ctor) info.HookObjectId = ctor;
+					}
+					result.tables[name] = info;
+				},
+			),
 		);
 		result.tables = Object.fromEntries(
-			Object.entries(result.tables).sort(([a], [b]) => a.localeCompare(b)),
+			Object.entries(result.tables).sort(([a], [b]) =>
+				a.localeCompare(b),
+			),
 		);
 		return result;
 	}

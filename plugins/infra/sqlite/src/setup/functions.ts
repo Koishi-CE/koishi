@@ -10,35 +10,58 @@
  * - `modulo`：取模（SQLite 内建 `%` 对 NULL 语义与 minato 期望不一致）；
  * - `rand`：随机数（$order 随机排序用）。
  */
-import type { DatabaseSync, SQLOutputValue } from "node:sqlite";
+import type {
+	DatabaseSync,
+	SQLOutputValue,
+} from "node:sqlite";
 import { isNullable } from "cosmokit";
 
 export function registerFunctions(db: DatabaseSync) {
-	db.function("regexp", (pattern: SQLOutputValue, str: SQLOutputValue) => {
-		if (isNullable(pattern) || isNullable(str)) return null;
-		return +new RegExp(String(pattern)).test(String(str));
-	});
+	db.function(
+		"regexp",
+		(pattern: SQLOutputValue, str: SQLOutputValue) => {
+			if (isNullable(pattern) || isNullable(str))
+				return null;
+			return +new RegExp(String(pattern)).test(String(str));
+		},
+	);
 	db.function(
 		"regexp2",
-		(pattern: SQLOutputValue, str: SQLOutputValue, flags: SQLOutputValue) => {
-			if (isNullable(pattern) || isNullable(str) || isNullable(flags)) {
+		(
+			pattern: SQLOutputValue,
+			str: SQLOutputValue,
+			flags: SQLOutputValue,
+		) => {
+			if (
+				isNullable(pattern) ||
+				isNullable(str) ||
+				isNullable(flags)
+			) {
 				return null;
 			}
-			return +new RegExp(String(pattern), String(flags)).test(String(str));
+			return +new RegExp(
+				String(pattern),
+				String(flags),
+			).test(String(str));
 		},
 	);
 	db.function(
 		"json_array_contains",
 		(array: SQLOutputValue, value: SQLOutputValue) => {
-			if (isNullable(array) || isNullable(value)) return null;
-			return +(JSON.parse(String(array)) as unknown[]).includes(
-				JSON.parse(String(value)),
-			);
+			if (isNullable(array) || isNullable(value))
+				return null;
+			return +(
+				JSON.parse(String(array)) as unknown[]
+			).includes(JSON.parse(String(value)));
 		},
 	);
-	db.function("modulo", (left: SQLOutputValue, right: SQLOutputValue) => {
-		if (isNullable(left) || isNullable(right)) return null;
-		return Number(left) % Number(right);
-	});
+	db.function(
+		"modulo",
+		(left: SQLOutputValue, right: SQLOutputValue) => {
+			if (isNullable(left) || isNullable(right))
+				return null;
+			return Number(left) % Number(right);
+		},
+	);
 	db.function("rand", () => Math.random());
 }

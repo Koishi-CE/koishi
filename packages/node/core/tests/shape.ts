@@ -12,12 +12,17 @@
  */
 import { expect } from "bun:test";
 
-function isSubsetOf(actual: unknown, expected: unknown): boolean {
+function isSubsetOf(
+	actual: unknown,
+	expected: unknown,
+): boolean {
 	if (expected === actual) return true;
 	if (Array.isArray(expected)) {
 		if (!Array.isArray(actual)) return false;
 		// 超集匹配：仅校验期望侧的索引
-		return expected.every((item, index) => isSubsetOf(actual[index], item));
+		return expected.every((item, index) =>
+			isSubsetOf(actual[index], item),
+		);
 	}
 	if (
 		typeof expected === "object" &&
@@ -28,7 +33,9 @@ function isSubsetOf(actual: unknown, expected: unknown): boolean {
 		const source = expected as Record<string, unknown>;
 		const target = actual as Record<string, unknown>;
 		return Object.keys(source).every(
-			(key) => key in target && isSubsetOf(target[key], source[key]),
+			(key) =>
+				key in target &&
+				isSubsetOf(target[key], source[key]),
 		);
 	}
 	return false;

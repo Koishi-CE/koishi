@@ -31,9 +31,13 @@ interface SharedConfig extends Partial<LoginToken> {
 }
 
 /** localStorage("auth") 的响应式包装：跨页面刷新保留的登录状态。 */
-export const shared = useStorage<SharedConfig>("auth", 2, () => ({
-	authType: 0,
-}));
+export const shared = useStorage<SharedConfig>(
+	"auth",
+	2,
+	() => ({
+		authType: 0,
+	}),
+);
 
 /** 登录对话框开关（个人资料页"添加绑定"时唤起）。 */
 export const showLoginDialog = ref(false);

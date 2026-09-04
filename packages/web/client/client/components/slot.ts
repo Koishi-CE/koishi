@@ -2,7 +2,12 @@
 // Copyright (c) 2019-present Shigma and Koishijs contributors.
 // Copyright (c) 2026-present Koishi-CE contributors.
 
-import { type App, type Component, defineComponent, h } from "vue";
+import {
+	type App,
+	type Component,
+	defineComponent,
+	h,
+} from "vue";
 import { useContext } from "../context";
 
 /** 插槽条目的基础形状：参与排序的组件 */
@@ -47,10 +52,15 @@ export const KSlot = defineComponent({
 				? []
 				: [...(slots["default"]?.() || [])]
 						.filter((node) => node.type === KSlotItem)
-						.map((node) => ({ node, order: node.props?.["order"] || 0 }));
+						.map((node) => ({
+							node,
+							order: node.props?.["order"] || 0,
+						}));
 			// external：ctx.slot() 注册的视图，disabled 的不渲染
 			const external = [
-				...(props.name ? ctx.$router.views[props.name] || [] : []),
+				...(props.name
+					? ctx.$router.views[props.name] || []
+					: []),
 			]
 				.filter((item) => !item.disabled?.())
 				.map((item) => ({
@@ -85,7 +95,12 @@ function defineSlotComponent(name: string) {
 	return defineComponent({
 		inheritAttrs: false,
 		setup(_, { slots, attrs }) {
-			return () => h(KSlot, { name, data: attrs, single: true }, slots);
+			return () =>
+				h(
+					KSlot,
+					{ name, data: attrs, single: true },
+					slots,
+				);
 		},
 	});
 }

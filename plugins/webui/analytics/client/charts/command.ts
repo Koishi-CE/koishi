@@ -27,7 +27,9 @@ export default (ctx: Context) => {
 				return {
 					tooltip: Tooltip.item(({ data }) => {
 						const output = [data.name];
-						output.push(`日均调用：${+data.value.toFixed(1)}`);
+						output.push(
+							`日均调用：${+data.value.toFixed(1)}`,
+						);
 						return output.join("<br>");
 					}),
 					series: [

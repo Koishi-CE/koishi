@@ -24,13 +24,18 @@ export interface Ordered {
  * 按 order 升序将条目插入有序列表（相同 order 的后者排在后面）。
  * 同时 markRaw 标记条目，避免其被 Vue 深度代理。
  */
-export function insert<T extends Ordered>(list: T[], item: T) {
+export function insert<T extends Ordered>(
+	list: T[],
+	item: T,
+) {
 	markRaw(item);
 	// order 为可选属性：任一侧缺失（undefined）时数值比较结果恒为 false，
 	// 与原实现（直接比较）在所有输入下的求值结果一致，这里显式判空以通过严格空检查
 	const index = list.findIndex(
 		(a) =>
-			a.order !== undefined && item.order !== undefined && a.order < item.order,
+			a.order !== undefined &&
+			item.order !== undefined &&
+			a.order < item.order,
 	);
 	if (index >= 0) {
 		list.splice(index, 0, item);

@@ -58,7 +58,8 @@ defineEmits(["update:modelValue"]);
 // 按本地 schema 标注的名称，从服务端下发的 schema 仓库中取出完整定义；
 // 元信息做一层合并，保留本地的 meta 覆盖权
 const inner = computed(() => {
-	const hydrated = store.schema?.[props.schema?.meta.extra?.name];
+	const hydrated =
+		store.schema?.[props.schema?.meta.extra?.name];
 	return hydrated && new Schema(hydrated);
 });
 </script>

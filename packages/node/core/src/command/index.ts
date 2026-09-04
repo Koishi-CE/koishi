@@ -49,7 +49,10 @@ declare module "@koishi-ce/core" {
 
 	interface Events {
 		/** 消息解析前触发；返回 Argv 可接管默认 tokenize 行为 */
-		"before-parse"(content: string, session: Session): Argv | undefined;
+		"before-parse"(
+			content: string,
+			session: Session,
+		): Argv | undefined;
 		/** 新命令注册完成 */
 		"command-added"(command: Command): void;
 		/** 命令的别名 / 选项等定义发生变更 */
@@ -60,13 +63,18 @@ declare module "@koishi-ce/core" {
 		"command-error"(argv: Argv, error: unknown): void;
 		/** 命令执行前的钩子（即内置的第一个 checker）；返回值可短路执行 */
 		// biome-ignore lint/suspicious/noConfusingVoidType: 事件负载：void 表示不短路、Fragment 表示拦截输出，改为 undefined 会破坏 void 返回监听器的可赋值性
-		"command/before-execute"(argv: Argv): Awaitable<void | Fragment>;
+		"command/before-execute"(
+			argv: Argv,
+		): Awaitable<void | Fragment>;
 		/** 数据库频道字段观测收集（session.observeChannel 前触发） */
 		"command/before-attach-channel"(
 			argv: Argv,
 			fields: Set<Channel.Field>,
 		): void;
 		/** 数据库用户字段观测收集（session.observeUser 前触发） */
-		"command/before-attach-user"(argv: Argv, fields: Set<User.Field>): void;
+		"command/before-attach-user"(
+			argv: Argv,
+			fields: Set<User.Field>,
+		): void;
 	}
 }

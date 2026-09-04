@@ -11,62 +11,132 @@
 		"paths": {
 			// nodenext 的 paths 目标必须是具体文件（不做目录 index 探测），否则回退
 			// node_modules 解析到 lib 产物 d.ts，与 src 源码形成双模块视图，增广合并即冲突
-			"@koishi-ce/koishi": ["./packages/node/cli/src/index.ts"],
-			"@koishi-ce/console": ["./packages/node/console/src/index.ts"],
-			"@koishi-ce/core": ["./packages/node/core/src/index.ts"],
-			"@koishi-ce/i18n-utils": ["./packages/node/i18n-utils/src/index.ts"],
-			"@koishi-ce/loader": ["./packages/node/loader/src/index.ts"],
-			"@koishi-ce/registry": ["./packages/node/registry/src/index.ts"],
-			"@koishi-ce/utils": ["./packages/node/utils/src/index.ts"],
-			"@koishi-ce/assets": ["./packages/node/assets/src/index.ts"],
-			"@koishi-ce/client": ["./packages/web/client/src/index.ts"],
-			"@koishi-ce/client/lib": ["./packages/web/client/src/index.ts"],
-			"@koishi-ce/components": ["./packages/web/components/client/index.ts"],
+			"@koishi-ce/koishi": [
+				"./packages/node/cli/src/index.ts"
+			],
+			"@koishi-ce/console": [
+				"./packages/node/console/src/index.ts"
+			],
+			"@koishi-ce/core": [
+				"./packages/node/core/src/index.ts"
+			],
+			"@koishi-ce/i18n-utils": [
+				"./packages/node/i18n-utils/src/index.ts"
+			],
+			"@koishi-ce/loader": [
+				"./packages/node/loader/src/index.ts"
+			],
+			"@koishi-ce/registry": [
+				"./packages/node/registry/src/index.ts"
+			],
+			"@koishi-ce/utils": [
+				"./packages/node/utils/src/index.ts"
+			],
+			"@koishi-ce/assets": [
+				"./packages/node/assets/src/index.ts"
+			],
+			"@koishi-ce/client": [
+				"./packages/web/client/src/index.ts"
+			],
+			"@koishi-ce/client/lib": [
+				"./packages/web/client/src/index.ts"
+			],
+			"@koishi-ce/components": [
+				"./packages/web/components/client/index.ts"
+			],
 			"@koishi-ce/plugin-assets-local": [
 				"./plugins/common/assets-local/src/index.ts"
 			],
-			"@koishi-ce/plugin-bind": ["./plugins/common/bind/src/index.ts"],
+			"@koishi-ce/plugin-bind": [
+				"./plugins/common/bind/src/index.ts"
+			],
 			"@koishi-ce/plugin-broadcast": [
 				"./plugins/common/broadcast/src/index.ts"
 			],
-			"@koishi-ce/plugin-callme": ["./plugins/common/callme/src/index.ts"],
-			"@koishi-ce/plugin-echo": ["./plugins/common/echo/src/index.ts"],
-			"@koishi-ce/plugin-help": ["./plugins/common/help/src/index.ts"],
-			"@koishi-ce/plugin-inspect": ["./plugins/common/inspect/src/index.ts"],
+			"@koishi-ce/plugin-callme": [
+				"./plugins/common/callme/src/index.ts"
+			],
+			"@koishi-ce/plugin-echo": [
+				"./plugins/common/echo/src/index.ts"
+			],
+			"@koishi-ce/plugin-help": [
+				"./plugins/common/help/src/index.ts"
+			],
+			"@koishi-ce/plugin-inspect": [
+				"./plugins/common/inspect/src/index.ts"
+			],
 			"@koishi-ce/plugin-rate-limit": [
 				"./plugins/common/rate-limit/src/index.ts"
 			],
-			"@koishi-ce/plugin-hmr": ["./plugins/infra/hmr/src/index.ts"],
-			"@koishi-ce/plugin-mock": ["./plugins/infra/mock/src/index.ts"],
+			"@koishi-ce/plugin-hmr": [
+				"./plugins/infra/hmr/src/index.ts"
+			],
+			"@koishi-ce/plugin-mock": [
+				"./plugins/infra/mock/src/index.ts"
+			],
 			"@koishi-ce/plugin-database-sqlite": [
 				"./plugins/infra/sqlite/src/index.ts"
 			],
 			"@koishi-ce/plugin-server-temp": [
 				"./plugins/infra/server-temp/src/index.ts"
 			],
-			"@koishi-ce/plugin-actions": ["./plugins/webui/actions/src/index.ts"],
-			"@koishi-ce/plugin-admin": ["./plugins/webui/admin/src/index.ts"],
-			"@koishi-ce/plugin-analytics": ["./plugins/webui/analytics/src/index.ts"],
-			"@koishi-ce/plugin-auth": ["./plugins/webui/auth/src/index.ts"],
-			"@koishi-ce/plugin-commands": ["./plugins/webui/commands/src/index.ts"],
-			"@koishi-ce/plugin-config": ["./plugins/webui/config/src/index.ts"],
-			"@koishi-ce/plugin-console": ["./plugins/webui/console/src/index.ts"],
-			"@koishi-ce/plugin-dataview": ["./plugins/webui/dataview/src/index.ts"],
-			"@koishi-ce/plugin-explorer": ["./plugins/webui/explorer/src/index.ts"],
-			"@koishi-ce/plugin-insight": ["./plugins/webui/insight/src/index.ts"],
-			"@koishi-ce/plugin-locales": ["./plugins/webui/locales/src/index.ts"],
-			"@koishi-ce/plugin-logger": ["./plugins/webui/logger/src/index.ts"],
-			"@koishi-ce/plugin-market": ["./plugins/webui/market/src/index.ts"],
+			"@koishi-ce/plugin-actions": [
+				"./plugins/webui/actions/src/index.ts"
+			],
+			"@koishi-ce/plugin-admin": [
+				"./plugins/webui/admin/src/index.ts"
+			],
+			"@koishi-ce/plugin-analytics": [
+				"./plugins/webui/analytics/src/index.ts"
+			],
+			"@koishi-ce/plugin-auth": [
+				"./plugins/webui/auth/src/index.ts"
+			],
+			"@koishi-ce/plugin-commands": [
+				"./plugins/webui/commands/src/index.ts"
+			],
+			"@koishi-ce/plugin-config": [
+				"./plugins/webui/config/src/index.ts"
+			],
+			"@koishi-ce/plugin-console": [
+				"./plugins/webui/console/src/index.ts"
+			],
+			"@koishi-ce/plugin-dataview": [
+				"./plugins/webui/dataview/src/index.ts"
+			],
+			"@koishi-ce/plugin-explorer": [
+				"./plugins/webui/explorer/src/index.ts"
+			],
+			"@koishi-ce/plugin-insight": [
+				"./plugins/webui/insight/src/index.ts"
+			],
+			"@koishi-ce/plugin-locales": [
+				"./plugins/webui/locales/src/index.ts"
+			],
+			"@koishi-ce/plugin-logger": [
+				"./plugins/webui/logger/src/index.ts"
+			],
+			"@koishi-ce/plugin-market": [
+				"./plugins/webui/market/src/index.ts"
+			],
 			"@koishi-ce/plugin-market/shared": [
 				"./plugins/webui/market/src/shared/index.ts"
 			],
 			"@koishi-ce/plugin-config/client": [
 				"./plugins/webui/config/client/index.ts"
 			],
-			"@koishi-ce/plugin-notifier": ["./plugins/webui/notifier/src/index.ts"],
-			"@koishi-ce/plugin-oobe": ["./plugins/webui/oobe/src/index.ts"],
-			"@koishi-ce/plugin-sandbox": ["./plugins/webui/sandbox/src/index.ts"],
-			"@koishi-ce/plugin-status": ["./plugins/webui/status/src/index.ts"],
+			"@koishi-ce/plugin-notifier": [
+				"./plugins/webui/notifier/src/index.ts"
+			],
+			"@koishi-ce/plugin-oobe": [
+				"./plugins/webui/oobe/src/index.ts"
+			],
+			"@koishi-ce/plugin-sandbox": [
+				"./plugins/webui/sandbox/src/index.ts"
+			],
+			"@koishi-ce/plugin-status": [
+				"./plugins/webui/status/src/index.ts"
+			],
 			"@koishi-ce/plugin-theme-vanilla": [
 				"./plugins/webui/theme-vanilla/src/index.ts"
 			]

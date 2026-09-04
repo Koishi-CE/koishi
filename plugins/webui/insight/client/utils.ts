@@ -12,7 +12,9 @@ import type Insight from "@koishi-ce/plugin-insight";
 import type * as d3 from "d3-force";
 
 /** 图节点：模拟期间由 d3 写入 x/y/vx/vy，lastX/lastY 用于拖拽增量的记录。 */
-export interface Node extends Insight.Node, d3.SimulationNodeDatum {
+export interface Node
+	extends Insight.Node,
+		d3.SimulationNodeDatum {
 	lastX?: number;
 	lastY?: number;
 	active?: boolean;

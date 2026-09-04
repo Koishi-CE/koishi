@@ -19,7 +19,11 @@ import {
 	ref,
 	toValue,
 } from "vue";
-import { createRouter, createWebHistory, START_LOCATION } from "vue-router";
+import {
+	createRouter,
+	createWebHistory,
+	START_LOCATION,
+} from "vue-router";
 import type { SlotOptions } from "../components";
 import Overlay from "../components/chat/overlay.vue";
 import type { Context } from "../context";
@@ -106,8 +110,15 @@ export class Activity {
 		this.options = options;
 		options.order ??= 0;
 		options.position ??= "top";
-		Object.assign(this, omit(options, ["icon", "name", "desc", "disabled"]));
-		const { path, id = getActivityId(path), component } = options;
+		Object.assign(
+			this,
+			omit(options, ["icon", "name", "desc", "disabled"]),
+		);
+		const {
+			path,
+			id = getActivityId(path),
+			component,
+		} = options;
 		// 路由挂载时把 activity 实例放进 meta，供导航守卫与标题栏取用
 		this._disposables.push(
 			ctx.$router.router.addRoute({
@@ -127,7 +138,9 @@ export class Activity {
 	/** 若存在待跳转目标且当前路由已能解析，则立即完成该跳转 */
 	handleUpdate() {
 		if (redirectTo.value) {
-			const location = this.ctx.$router.router.resolve(redirectTo.value);
+			const location = this.ctx.$router.router.resolve(
+				redirectTo.value,
+			);
 			if (location.matched.length) {
 				redirectTo.value = null;
 				this.ctx.$router.router.replace(location);
@@ -156,7 +169,8 @@ export class Activity {
 	 */
 	disabled() {
 		if (this.ctx.bail("activity", this)) return true;
-		if (!this.fields?.every((key) => store[key])) return true;
+		if (!this.fields?.every((key) => store[key]))
+			return true;
 		if (this.when && !this.when()) return true;
 		if (this.options.disabled?.()) return true;
 		return false;
@@ -165,10 +179,13 @@ export class Activity {
 	dispose() {
 		this._disposables.forEach((dispose) => dispose());
 		// 若被卸载的恰是当前展示的页面：暂存目标路由，退回缓存的首页
-		const current = this.ctx.$router.router.currentRoute.value;
+		const current =
+			this.ctx.$router.router.currentRoute.value;
 		if (current?.meta?.activity === this) {
 			redirectTo.value = current.fullPath;
-			this.ctx.$router.router.push(this.ctx.$router.cache["home"] || "/");
+			this.ctx.$router.router.push(
+				this.ctx.$router.cache["home"] || "/",
+			);
 		}
 		return delete this.ctx.$router.pages[this.id];
 	}
@@ -203,7 +220,8 @@ export default class RouterService extends Service {
 		const initialTitle = document.title;
 		ctx.effect(() =>
 			this.router.afterEach((route) => {
-				const { name, fullPath } = this.router.currentRoute.value;
+				const { name, fullPath } =
+					this.router.currentRoute.value;
 				if (name) {
 					// 本应用的路由名均为字符串;reactive 收窄了索引签名,不含 symbol
 					this.cache[name as string] = fullPath;
@@ -211,7 +229,8 @@ export default class RouterService extends Service {
 				// 进入 activity 页面时更新标签页标题为 "页面名 | 原标题"
 				if (route.meta.activity) {
 					document.title = `${route.meta.activity.name}`;
-					if (initialTitle) document.title += ` | ${initialTitle}`;
+					if (initialTitle)
+						document.title += ` | ${initialTitle}`;
 				}
 			}),
 		);
@@ -254,7 +273,9 @@ export default class RouterService extends Service {
 	 */
 	slot(options: SlotOptions) {
 		options.order ??= 0;
-		const component = this.ctx.wrapComponent(options.component);
+		const component = this.ctx.wrapComponent(
+			options.component,
+		);
 		if (component) options.component = component;
 		if (options.when) {
 			const { when } = options;
@@ -272,7 +293,9 @@ export default class RouterService extends Service {
 
 	/** 注册 activity 页面（自动挂到 vue-router 与侧栏）；返回取消注册函数 */
 	page(options: Activity.Options) {
-		const component = this.ctx.wrapComponent(options.component);
+		const component = this.ctx.wrapComponent(
+			options.component,
+		);
 		if (component) options.component = component;
 		return this.ctx.effect(() => {
 			const activity = new Activity(this.ctx, options);

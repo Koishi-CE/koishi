@@ -25,7 +25,15 @@ const immutable = [
 	"function",
 ];
 /** 不允许直接观察的内建类型（Object.prototype.toString 的类型标签） */
-const builtin = ["Date", "RegExp", "Set", "Map", "WeakSet", "WeakMap", "Array"];
+const builtin = [
+	"Date",
+	"RegExp",
+	"Set",
+	"Map",
+	"WeakSet",
+	"WeakMap",
+	"Array",
+];
 
 /**
  * 按值的实际类型选择对应的观察包装：Date / 数组 / 普通对象各走一路。
@@ -33,7 +41,10 @@ const builtin = ["Date", "RegExp", "Set", "Map", "WeakSet", "WeakMap", "Array"];
  * @param value 被读取到的属性值
  * @param update 上层传入的变更通知回调
  */
-function observeProperty(value: unknown, update: () => void) {
+function observeProperty(
+	value: unknown,
+	update: () => void,
+) {
 	if (is("Date", value)) {
 		return observeDate(value, update);
 	} else if (Array.isArray(value)) {
@@ -65,21 +76,30 @@ function observeObject<T extends object>(
 ): T {
 	const update = notify;
 	if (!notify) {
-		const diff: Record<string | symbol, unknown> = Object.create(null);
+		const diff: Record<string | symbol, unknown> =
+			Object.create(null);
 		defineProperty(target, "$diff", diff);
 		notify = (key) => {
 			if (untracked(key)) return;
-			diff[key] = (target as Record<string | symbol, unknown>)[key];
+			diff[key] = (
+				target as Record<string | symbol, unknown>
+			)[key];
 		};
 	}
 
 	const proxy = new Proxy(target as Observed<T>, {
 		get(target, key) {
 			const value = Reflect.get(target, key);
-			if (!value || immutable.includes(typeof value) || untracked(key))
+			if (
+				!value ||
+				immutable.includes(typeof value) ||
+				untracked(key)
+			)
 				return value;
 			// 深层包装：子对象的变更需冒泡通知到上层键（update 优先，缺省时记入本层键）
-			return observeProperty(value, () => (update || notify)(key));
+			return observeProperty(value, () =>
+				(update || notify)(key),
+			);
 		},
 		set(target, key, value) {
 			const unchanged = Reflect.get(target, key) === value;
@@ -123,10 +143,14 @@ function observeArray<T>(target: T[], update: () => void) {
 		const methodFn = arrayProxyMethods[
 			method as keyof typeof arrayProxyMethods
 		] as ArrayMutator;
-		defineProperty(target, method, function (this: T[], ...args: unknown[]) {
-			update();
-			return methodFn.apply(this, args);
-		});
+		defineProperty(
+			target,
+			method,
+			function (this: T[], ...args: unknown[]) {
+				update();
+				return methodFn.apply(this, args);
+			},
+		);
 	}
 
 	return new Proxy(target, {
@@ -160,7 +184,9 @@ function observeArray<T>(target: T[], update: () => void) {
  * 以时间戳是否变化为准——变更才上报，纯读取（如 getFullYear）不上报。
  */
 function observeDate(target: Date, update: () => void) {
-	for (const method of Object.getOwnPropertyNames(Date.prototype)) {
+	for (const method of Object.getOwnPropertyNames(
+		Date.prototype,
+	)) {
 		if (method === "valueOf") continue;
 		const methodFn = (
 			Date.prototype as unknown as Record<
@@ -169,12 +195,16 @@ function observeDate(target: Date, update: () => void) {
 			>
 		)[method];
 		if (typeof methodFn !== "function") continue;
-		defineProperty(target, method, function (this: Date, ...args: unknown[]) {
-			const oldValue = target.valueOf();
-			const result = methodFn.apply(this, args);
-			if (target.valueOf() !== oldValue) update();
-			return result;
-		});
+		defineProperty(
+			target,
+			method,
+			function (this: Date, ...args: unknown[]) {
+				const oldValue = target.valueOf();
+				const result = methodFn.apply(this, args);
+				if (target.valueOf() !== oldValue) update();
+				return result;
+			},
+		);
 	}
 	return target;
 }
@@ -219,18 +249,25 @@ export function observe<T extends object, R>(
 	_label?: string | number,
 ): Observed<T, R> {
 	if (immutable.includes(typeof target)) {
-		throw new Error(`cannot observe immutable type "${typeof target}"`);
+		throw new Error(
+			`cannot observe immutable type "${typeof target}"`,
+		);
 	} else if (!target) {
 		throw new Error("cannot observe null or undefined");
 	}
 
-	const type = Object.prototype.toString.call(target).slice(8, -1);
+	const type = Object.prototype.toString
+		.call(target)
+		.slice(8, -1);
 	if (builtin.includes(type)) {
-		throw new Error(`cannot observe instance of type "${type}"`);
+		throw new Error(
+			`cannot observe instance of type "${type}"`,
+		);
 	}
 
 	let update: UpdateFunction<T, R> = noop;
-	if (typeof updateOrLabel === "function") update = updateOrLabel;
+	if (typeof updateOrLabel === "function")
+		update = updateOrLabel;
 
 	const observer = observeObject(target) as Observed<T, R>;
 
@@ -238,17 +275,19 @@ export function observe<T extends object, R>(
 	 * 取出并清空 $diff，交由 update 回调消费。
 	 * 无变更时不触发回调。
 	 */
-	defineProperty(observer, "$update", function $update(this: Observed<T, R>):
-		| R
-		| undefined {
-		const diff = { ...this.$diff };
-		const fields = Object.keys(diff);
-		if (!fields.length) return undefined;
-		for (const key in this.$diff) {
-			delete this.$diff[key];
-		}
-		return update(diff);
-	});
+	defineProperty(
+		observer,
+		"$update",
+		function $update(this: Observed<T, R>): R | undefined {
+			const diff = { ...this.$diff };
+			const fields = Object.keys(diff);
+			if (!fields.length) return undefined;
+			for (const key in this.$diff) {
+				delete this.$diff[key];
+			}
+			return update(diff);
+		},
+	);
 
 	/**
 	 * 合并外部数据到目标对象（绕过 diff 记录）。

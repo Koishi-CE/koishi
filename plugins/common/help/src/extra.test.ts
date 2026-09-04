@@ -29,7 +29,11 @@ app.plugin(mock);
 app.plugin(help);
 app.plugin(memory);
 
-app.i18n.define("$zh-CN", "commands.help.messages.global-epilog", "");
+app.i18n.define(
+	"$zh-CN",
+	"commands.help.messages.global-epilog",
+	"",
+);
 
 const client = app.mock.client("123", "456");
 
@@ -42,7 +46,9 @@ beforeAll(async () => {
 describe("@koishi-ce/plugin-help 补充用例", () => {
 	it("父指令对当前会话不可见时不进入全局列表", async () => {
 		// 限定 telegram 平台的指令对 mock 会话 match 失败，全局列表不展示
-		const parent = app.platform("telegram").command("tg", "T");
+		const parent = app
+			.platform("telegram")
+			.command("tg", "T");
 		parent.subcommand("tgc", "C");
 		const [reply] = await client.receive("help");
 		expect(reply).toContain("help");
@@ -50,28 +56,43 @@ describe("@koishi-ce/plugin-help 补充用例", () => {
 	});
 
 	it("选项权限不足时从帮助中隐藏", async () => {
-		app.command("adv", "D").option("top", "-t", { authority: 3 });
+		app
+			.command("adv", "D")
+			.option("top", "-t", { authority: 3 });
 		const [reply] = await client.receive("help adv");
 		expect(reply).toBe("指令：adv\nD");
 	});
 
 	it("i18n 定义的示例文本逐行展示", async () => {
 		app.command("demo", "D");
-		app.i18n.define("$zh-CN", "commands.demo.examples", "first\nsecond");
+		app.i18n.define(
+			"$zh-CN",
+			"commands.demo.examples",
+			"first\nsecond",
+		);
 		const [reply] = await client.receive("help demo");
-		expect(reply).toBe("指令：demo\nD\n使用示例：\n    first\n    second");
+		expect(reply).toBe(
+			"指令：demo\nD\n使用示例：\n    first\n    second",
+		);
 	});
 
 	it("快捷调用的模糊命中给出纠错建议", async () => {
 		const probe = app.command("probe", "DESCRIPTION");
 		probe.shortcut("ask", { i18n: true });
-		app.i18n.define("$zh-CN", "commands.probe.shortcuts.ask", "quickbrownfox");
+		app.i18n.define(
+			"$zh-CN",
+			"commands.probe.shortcuts.ask",
+			"quickbrownfox",
+		);
 		// 与快捷调用文本相差一字母：非精确命中，走候选列表与建议流程
 		await client.shouldReply(
 			"help quickbrownfo",
 			"指令未找到。您要找的是不是“probe”？回复句号以使用推测的指令。",
 		);
 		// 回复句号确认后展示推测指令的帮助
-		await client.shouldReply(".", "指令：probe\nDESCRIPTION");
+		await client.shouldReply(
+			".",
+			"指令：probe\nDESCRIPTION",
+		);
 	});
 });

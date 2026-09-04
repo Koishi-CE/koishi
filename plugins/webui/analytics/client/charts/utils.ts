@@ -22,7 +22,9 @@ import {
 import "./index.scss";
 
 // 异步加载按需装配的 echarts，避免首屏即拉入图表代码
-const VChart = defineAsyncComponent(() => import("./echarts"));
+const VChart = defineAsyncComponent(
+	() => import("./echarts"),
+);
 
 /** createChart 的入参描述。 */
 export interface ChartOptions {
@@ -76,8 +78,11 @@ export function createChart({
 											{
 												class:
 													"tab-item" +
-													(tabValue.value === "send" ? " active" : ""),
-												onClick: () => (tabValue.value = "send"),
+													(tabValue.value === "send"
+														? " active"
+														: ""),
+												onClick: () =>
+													(tabValue.value = "send"),
 											},
 											["发送"],
 										),
@@ -86,8 +91,11 @@ export function createChart({
 											{
 												class:
 													"tab-item" +
-													(tabValue.value === "receive" ? " active" : ""),
-												onClick: () => (tabValue.value = "receive"),
+													(tabValue.value === "receive"
+														? " active"
+														: ""),
+												onClick: () =>
+													(tabValue.value = "receive"),
 											},
 											["接收"],
 										),
@@ -130,7 +138,9 @@ export const Tooltip = {
 	 * @param formatter 格式化回调，T 为该图表 series data 的元素类型
 	 */
 	item<T = CommonData>(
-		formatter: Tooltip.FormatterCallback<Tooltip.FormatterCallbackParams<T>>,
+		formatter: Tooltip.FormatterCallback<
+			Tooltip.FormatterCallbackParams<T>
+		>,
 	) {
 		return {
 			trigger: "item",
@@ -144,7 +154,9 @@ export const Tooltip = {
 	 * @param formatter 格式化回调，T 为该图表 series data 的元素类型
 	 */
 	axis<T = CommonData>(
-		formatter: Tooltip.FormatterCallback<Tooltip.FormatterCallbackParams<T>[]>,
+		formatter: Tooltip.FormatterCallback<
+			Tooltip.FormatterCallbackParams<T>[]
+		>,
 	) {
 		return {
 			trigger: "axis",

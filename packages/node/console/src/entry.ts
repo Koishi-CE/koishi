@@ -43,7 +43,11 @@ export class Entry<T = unknown> {
 	/** 按客户端惰性求值的初始数据工厂 */
 	public data: ((client: Client) => T) | undefined;
 
-	constructor(ctx: Context, files: Entry.Files, data?: (client: Client) => T) {
+	constructor(
+		ctx: Context,
+		files: Entry.Files,
+		data?: (client: Client) => T,
+	) {
 		this.ctx = ctx;
 		this.files = files;
 		this.data = data;
@@ -62,9 +66,12 @@ export class Entry<T = unknown> {
 	 * 数据按客户端分别求值，附带入口 id 供前端定位。
 	 */
 	refresh() {
-		this.ctx.console.broadcast("entry-data", async (client: Client) => ({
-			id: this.id,
-			data: await this.data?.(client),
-		}));
+		this.ctx.console.broadcast(
+			"entry-data",
+			async (client: Client) => ({
+				id: this.id,
+				data: await this.data?.(client),
+			}),
+		);
 	}
 }

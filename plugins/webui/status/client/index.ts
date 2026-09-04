@@ -55,7 +55,9 @@ export default (ctx: Context) => {
 		schema: Schema.object({
 			mergeThreshold: Schema.number()
 				.default(10)
-				.description("当机器人的数量超过这个值时将合并显示状态指示灯。"),
+				.description(
+					"当机器人的数量超过这个值时将合并显示状态指示灯。",
+				),
 		}).description("机器人设置"),
 	});
 };

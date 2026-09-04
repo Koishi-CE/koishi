@@ -16,4 +16,7 @@
  * 管线，不进入任何类型程序。
  */
 export * from "schemastery-vue";
-export { default, default as SchemaBase } from "schemastery-vue";
+export {
+	default,
+	default as SchemaBase,
+} from "schemastery-vue";

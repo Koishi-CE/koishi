@@ -45,12 +45,18 @@ const { t, setLocaleMessage } = useI18n({
 
 // 开发模式下 yml 文案改动即时热替换，无需整页刷新
 if (import.meta.hot) {
-	import.meta.hot.accept("./welcome.zh-CN.yml", (module) => {
-		setLocaleMessage("zh-CN", module.default);
-	});
-	import.meta.hot.accept("./welcome.en-US.yml", (module) => {
-		setLocaleMessage("en-US", module.default);
-	});
+	import.meta.hot.accept(
+		"./welcome.zh-CN.yml",
+		(module) => {
+			setLocaleMessage("zh-CN", module.default);
+		},
+	);
+	import.meta.hot.accept(
+		"./welcome.en-US.yml",
+		(module) => {
+			setLocaleMessage("en-US", module.default);
+		},
+	);
 }
 </script>
 

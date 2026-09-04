@@ -34,7 +34,10 @@ declare module "schemastery-vue/client" {
 		export interface Extension {
 			type?: string;
 			role?: string;
-			validate?: (value: unknown, schema: Schema) => boolean;
+			validate?: (
+				value: unknown,
+				schema: Schema,
+			) => boolean;
 			component: Component;
 			important?: boolean;
 		}

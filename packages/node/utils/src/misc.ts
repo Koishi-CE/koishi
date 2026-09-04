@@ -11,7 +11,10 @@
  * 判断给定值是否为整数（不区分正负，不含无穷与 NaN）。
  */
 export function isInteger(source: unknown) {
-	return typeof source === "number" && Math.floor(source) === source;
+	return (
+		typeof source === "number" &&
+		Math.floor(source) === source
+	);
 }
 
 /**
@@ -27,7 +30,9 @@ export async function sleep(ms: number): Promise<void> {
  * 提取字符串枚举（或常量对象）中的全部键。
  * 枚举反向映射会产生值侧的字符串，故只保留字符串成员。
  */
-export function enumKeys<T extends string>(data: Record<T, string | number>) {
+export function enumKeys<T extends string>(
+	data: Record<T, string | number>,
+) {
 	return Object.values(data).filter(
 		(value) => typeof value === "string",
 	) as T[];
@@ -43,7 +48,9 @@ export function defineEnumProperty<T extends object>(
 	value: T[keyof T],
 ) {
 	object[key] = value;
-	(object as Record<string | number, unknown>)[value as string | number] = key;
+	(object as Record<string | number, unknown>)[
+		value as string | number
+	] = key;
 }
 
 /**
@@ -56,14 +63,24 @@ export function defineEnumProperty<T extends object>(
  * @param base 提供缺省值的来源
  * @returns 合并后的 head
  */
-export function merge<T extends object>(head: T, base: T): T {
+export function merge<T extends object>(
+	head: T,
+	base: T,
+): T {
 	const target = head as Record<string, unknown>;
 	Object.entries(base).forEach(([key, value]) => {
-		if (typeof target[key] === "undefined") return (target[key] = value);
+		if (typeof target[key] === "undefined")
+			return (target[key] = value);
 		// 键存在于原型链上但并非自有属性时跳过，防止原型污染攻击
 		if (!Object.hasOwn(target, key)) return;
-		if (typeof value === "object" && typeof target[key] === "object") {
-			target[key] = merge(target[key] as object, value as object);
+		if (
+			typeof value === "object" &&
+			typeof target[key] === "object"
+		) {
+			target[key] = merge(
+				target[key] as object,
+				value as object,
+			);
 		} else {
 			target[key] = value;
 		}
@@ -78,11 +95,12 @@ export function merge<T extends object>(head: T, base: T): T {
  * @param key 必需属性键名
  * @returns 该属性的值
  */
-export function assertProperty<O, K extends keyof O & string>(
-	config: O,
-	key: K,
-) {
-	if (!config[key]) throw new Error(`missing configuration "${key}"`);
+export function assertProperty<
+	O,
+	K extends keyof O & string,
+>(config: O, key: K) {
+	if (!config[key])
+		throw new Error(`missing configuration "${key}"`);
 	return config[key];
 }
 
@@ -94,9 +112,13 @@ export function coerce(val: unknown) {
 	// 堆栈可能缺失（如携带 401 状态码的 axios 错误），此时包装为 Error 再取；
 	// 非 Error 抛出值经 String() 转为消息文本（等价于 Error 构造器内部的 ToString）
 	const { message, stack } =
-		val instanceof Error && val.stack ? val : new Error(String(val));
+		val instanceof Error && val.stack
+			? val
+			: new Error(String(val));
 	const lines = stack?.split("\n") ?? [message];
-	const index = lines.findIndex((line) => line.endsWith(message));
+	const index = lines.findIndex((line) =>
+		line.endsWith(message),
+	);
 	return lines.slice(index).join("\n");
 }
 
@@ -117,7 +139,9 @@ export function renameProperty<
  * 供 extend() 以属性描述符方式批量挂载方法。
  */
 type Methods<T> = {
-	[K in keyof T]?: T[K] extends (...args: infer A) => infer R
+	[K in keyof T]?: T[K] extends (
+		...args: infer A
+	) => infer R
 		? (this: T, ...args: A) => R
 		: T[K];
 };
@@ -126,6 +150,12 @@ type Methods<T> = {
  * 将 methods 的全部属性（连同名下可枚举性与 getter/setter）定义到 prototype 上。
  * 用于向既有对象（如 Date.prototype）混入方法。
  */
-export function extend<T>(prototype: T, methods: Methods<T>) {
-	Object.defineProperties(prototype, Object.getOwnPropertyDescriptors(methods));
+export function extend<T>(
+	prototype: T,
+	methods: Methods<T>,
+) {
+	Object.defineProperties(
+		prototype,
+		Object.getOwnPropertyDescriptors(methods),
+	);
 }

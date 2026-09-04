@@ -15,13 +15,20 @@
  * 同目录：locales.ts 内置语言定义、match.ts 模式匹配工具。
  * 权限系统的 `authority:(value)` 模板即复用 match.ts 的匹配机制。
  */
-import { fallback, LocaleTree } from "@koishi-ce/i18n-utils";
+import {
+	fallback,
+	LocaleTree,
+} from "@koishi-ce/i18n-utils";
 import { h, Logger, Schema } from "@satorijs/core";
 import { type Dict, isNullable } from "cosmokit";
 import { distance } from "fastest-levenshtein";
 import type { Context } from "../context/index.ts";
 import { defineBuiltInLocales } from "./locales.ts";
-import { type CompareOptions, findMatches, type MatchResult } from "./match.ts";
+import {
+	type CompareOptions,
+	findMatches,
+	type MatchResult,
+} from "./match.ts";
 
 export * from "./match.ts";
 
@@ -82,11 +89,22 @@ export class I18n {
 	static Config: Schema<I18n.Config> = Schema.object({
 		locales: Schema.array(String)
 			.role("table")
-			.default(["zh-CN", "en-US", "fr-FR", "ja-JP", "de-DE", "ru-RU"])
+			.default([
+				"zh-CN",
+				"en-US",
+				"fr-FR",
+				"ja-JP",
+				"de-DE",
+				"ru-RU",
+			])
 			.description("可用的语言列表。按照回退顺序排列。"),
 		output: Schema.union([
-			Schema.const("prefer-user").description("优先使用用户语言"),
-			Schema.const("prefer-channel").description("优先使用频道语言"),
+			Schema.const("prefer-user").description(
+				"优先使用用户语言",
+			),
+			Schema.const("prefer-channel").description(
+				"优先使用频道语言",
+			),
 		])
 			.default("prefer-channel")
 			.description("输出语言偏好设置。"),
@@ -121,10 +139,16 @@ export class I18n {
 	 * 模糊比对：以 Levenshtein 距离换算相似度（1 - 距离/期望长度），
 	 * 低于阈值（minSimilarity）按完全不相似（0）处理。
 	 */
-	compare(expect: string, actual: string, options: CompareOptions = {}) {
-		const value = 1 - distance(expect, actual) / expect.length;
+	compare(
+		expect: string,
+		actual: string,
+		options: CompareOptions = {},
+	) {
+		const value =
+			1 - distance(expect, actual) / expect.length;
 		const threshold =
-			options.minSimilarity ?? this.ctx.root.config.minSimilarity;
+			options.minSimilarity ??
+			this.ctx.root.config.minSimilarity;
 		return value >= threshold ? value : 0;
 	}
 
@@ -152,7 +176,11 @@ export class I18n {
 		prefix: string,
 		value: I18n.Node,
 	): Generator<string> {
-		if (typeof value === "object" && value && !prefix.includes("@")) {
+		if (
+			typeof value === "object" &&
+			value &&
+			!prefix.includes("@")
+		) {
 			for (const key in value) {
 				if (key.startsWith("_")) continue;
 				const child = value[key];
@@ -162,7 +190,8 @@ export class I18n {
 		} else if (prefix.includes("@")) {
 			throw new Error("preset is deprecated");
 		} else if (typeof value === "string") {
-			const dict = (this._data[locale] ??= Object.create(null));
+			const dict = (this._data[locale] ??=
+				Object.create(null));
 			const path = prefix.slice(0, -1);
 			if (
 				!isNullable(dict[path]) &&
@@ -174,7 +203,8 @@ export class I18n {
 			dict[path] = value;
 			yield path;
 		} else {
-			const dict = (this._data[locale] ??= Object.create(null));
+			const dict = (this._data[locale] ??=
+				Object.create(null));
 			delete dict[prefix.slice(0, -1)];
 		}
 	}
@@ -184,9 +214,18 @@ export class I18n {
 	 * 撤销动作挂在 ctx 的 i18n 收集器上，随调用方上下文销毁自动执行。
 	 */
 	define(locale: string, dict: I18n.Store): () => void;
-	define(locale: string, key: string, value: I18n.Node): () => void;
-	define(locale: string, dictOrKey: I18n.Store | string, value?: I18n.Node) {
-		const dict = (this._data[locale] ??= Object.create(null));
+	define(
+		locale: string,
+		key: string,
+		value: I18n.Node,
+	): () => void;
+	define(
+		locale: string,
+		dictOrKey: I18n.Store | string,
+		value?: I18n.Node,
+	) {
+		const dict = (this._data[locale] ??=
+			Object.create(null));
 		const paths = [
 			...(typeof dictOrKey === "string"
 				? this.set(locale, `${dictOrKey}.`, value ?? "")
@@ -217,11 +256,19 @@ export class I18n {
 	 * 渲染单个字典节点：字符串走 h.parse（支持 `{参数}` 插值与元素语法）；
 	 * 带 kTemplate 的对象走预置渲染器，找不到渲染器则抛错。
 	 */
-	_render(value: I18n.Node, params: object, locale: string) {
+	_render(
+		value: I18n.Node,
+		params: object,
+		locale: string,
+	) {
 		if (typeof value !== "string") {
 			const preset = value[kTemplate];
-			const render = preset === undefined ? undefined : this._presets[preset];
-			if (!render) throw new Error(`Preset "${preset}" not found`);
+			const render =
+				preset === undefined
+					? undefined
+					: this._presets[preset];
+			if (!render)
+				throw new Error(`Preset "${preset}" not found`);
 			return [h.text(render(value, params, locale))];
 		}
 
@@ -237,7 +284,11 @@ export class I18n {
 	 * 按语言回退顺序渲染文案：逐路径、逐语言尝试（先查 `$` 覆写语言再查
 	 * 原语言）；全部未命中时记警告并以路径本身作为文本兜底（方便排查）。
 	 */
-	render(locales: string[], paths: string[], params: object) {
+	render(
+		locales: string[],
+		paths: string[],
+		params: object,
+	) {
 		locales = this.fallback(locales);
 
 		// 逐个路径、逐个语言尝试渲染
@@ -245,7 +296,10 @@ export class I18n {
 			for (const locale of locales) {
 				for (const key of [`$${locale}`, locale]) {
 					const value = this._data[key]?.[path];
-					if (value === undefined || (!value && !locale && path !== ""))
+					if (
+						value === undefined ||
+						(!value && !locale && path !== "")
+					)
 						continue;
 					return this._render(value, params, locale);
 				}

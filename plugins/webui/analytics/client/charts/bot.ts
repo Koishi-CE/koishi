@@ -22,17 +22,25 @@ export default (ctx: Context) => {
 				// render 侧已按 fields 守卫,此处仅为收窄可选的 store 键
 				if (!analytics) return;
 				// 把 { 平台: { selfId: 统计 } } 转成旭日图的层级 data 结构
-				const data = Object.entries(analytics.messageByBot).map(
-					([key, value]) => ({
-						name: key,
-						children: Object.entries(value).map(([key, value]) => ({
+				const data = Object.entries(
+					analytics.messageByBot,
+				).map(([key, value]) => ({
+					name: key,
+					children: Object.entries(value).map(
+						([key, value]) => ({
 							name: value.name || key,
 							value: value[tab],
-						})),
-					}),
-				);
+						}),
+					),
+				}));
 				const total = data.reduce((sum, { children }) => {
-					return sum + children.reduce((sum, { value }) => sum + value, 0);
+					return (
+						sum +
+						children.reduce(
+							(sum, { value }) => sum + value,
+							0,
+						)
+					);
 				}, 0);
 				if (!total) return;
 

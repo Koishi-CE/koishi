@@ -33,16 +33,23 @@ describe("I18n Service", () => {
 		expect(app.i18n.compare("苹果", "苹果梨")).toBe(0.5);
 		// 显式选项覆盖配置阈值：0.25 低于默认 0.5 但达到 0.1
 		expect(app.i18n.compare("abcd", "a")).toBe(0);
-		expect(app.i18n.compare("abcd", "a", { minSimilarity: 0.1 })).toBe(0.25);
+		expect(
+			app.i18n.compare("abcd", "a", { minSimilarity: 0.1 }),
+		).toBe(0.25);
 	});
 
 	it("get 按语言回退取模板", () => {
 		const result = app.i18n.get("fruits.apple", ["zh-CN"]);
 		// 偏好语言排在最前，其后按配置回退链命中已定义语言
 		expect(Object.keys(result)[0]).toBe("zh-CN");
-		expect(result).toHaveShape({ "zh-CN": "苹果", "en-US": "apple" });
+		expect(result).toHaveShape({
+			"zh-CN": "苹果",
+			"en-US": "apple",
+		});
 		// 未指定语言时按配置列表回退，仅命中已定义的语言
-		expect(app.i18n.get("fruits.banana")).toEqual({ "zh-CN": "香蕉" });
+		expect(app.i18n.get("fruits.banana")).toEqual({
+			"zh-CN": "香蕉",
+		});
 		expect(app.i18n.get("fruits.missing")).toEqual({});
 	});
 
@@ -56,7 +63,9 @@ describe("I18n Service", () => {
 		});
 		expect(results[0]?.similarity).toBe(0.5);
 		// 完全不相似时无结果
-		expect(app.i18n.find("fruits.(name)", "zzzzzz")).toEqual([]);
+		expect(
+			app.i18n.find("fruits.(name)", "zzzzzz"),
+		).toEqual([]);
 	});
 });
 
@@ -69,7 +78,9 @@ describe("createMatch", () => {
 	});
 
 	it("多捕获组按顺序提取", () => {
-		const match = createMatch("commands.(name).options.(key)");
+		const match = createMatch(
+			"commands.(name).options.(key)",
+		);
 		expect(match("commands.foo.options.bar")).toEqual({
 			name: "foo",
 			key: "bar",

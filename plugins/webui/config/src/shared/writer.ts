@@ -15,8 +15,15 @@
  * 前提下增删改键"这一目标实现。
  */
 import { DataService } from "@koishi-ce/console";
-import { type Context, Logger, remove } from "@koishi-ce/koishi";
-import { Loader, type LoaderScope } from "@koishi-ce/loader";
+import {
+	type Context,
+	Logger,
+	remove,
+} from "@koishi-ce/koishi";
+import {
+	Loader,
+	type LoaderScope,
+} from "@koishi-ce/loader";
 
 // 声明合并：浏览器端通过 WebSocket 发送的 manager/* 事件及其载荷类型。
 // 服务端在构造函数中为每个事件注册监听器，见下方 ConfigWriter 构造函数。
@@ -29,7 +36,11 @@ declare module "@koishi-ce/console" {
 			target: string,
 			index: number,
 		): void;
-		"manager/reload"(parent: string, key: string, config: unknown): void;
+		"manager/reload"(
+			parent: string,
+			key: string,
+			config: unknown,
+		): void;
 		"manager/unload"(
 			parent: string,
 			key: string,
@@ -80,7 +91,9 @@ function rename(
 	value: unknown,
 ) {
 	const keys = Object.keys(object);
-	const index = keys.findIndex((key) => key === old || key === `~${old}`);
+	const index = keys.findIndex(
+		(key) => key === old || key === `~${old}`,
+	);
 	const rest = index < 0 ? [] : keys.slice(index + 1);
 	const temp = { [neo]: value };
 	delete object[old];
@@ -95,7 +108,10 @@ function rename(
  * @param plugins 插件配置对象
  * @param name 插件键名
  */
-function dropKey(plugins: Record<string, unknown>, name: string) {
+function dropKey(
+	plugins: Record<string, unknown>,
+	name: string,
+) {
 	if (!(name in plugins)) {
 		name = `~${name}`;
 	}
@@ -139,7 +155,9 @@ export class ConfigWriter extends DataService<Context.Config> {
 				async (...args: unknown[]) => {
 					try {
 						// 五个方法签名各异,统一视为泛化调用目标后 apply
-						const action = this[key] as (...args: unknown[]) => Promise<void>;
+						const action = this[key] as (
+							...args: unknown[]
+						) => Promise<void>;
 						await action.apply(this, args);
 					} catch (error) {
 						logger.error(error);
@@ -164,13 +182,21 @@ export class ConfigWriter extends DataService<Context.Config> {
 	 * @param plugins 某层上下文的 plugins 配置对象
 	 * @param ctx 该层对应的运行时上下文（用于查找 fork 记录）
 	 */
-	getGroup(plugins: Record<string, unknown> | undefined, ctx: Context) {
+	getGroup(
+		plugins: Record<string, unknown> | undefined,
+		ctx: Context,
+	) {
 		const result = { ...plugins };
 		for (const key in plugins ?? {}) {
 			if (key.startsWith("$")) continue;
 			// 配置值本质是任意 JSON 对象（插件配置或嵌套分组），此处按字典收窄使用
-			const value = plugins?.[key] as Record<string, unknown> | undefined;
-			const name = (key.split(":", 1)[0] ?? "").replace(/^~/, "");
+			const value = plugins?.[key] as
+				| Record<string, unknown>
+				| undefined;
+			const name = (key.split(":", 1)[0] ?? "").replace(
+				/^~/,
+				"",
+			);
 
 			if (!this.loader.isTruthyLike(value?.["$if"])) {
 				// $if-disabled 的插件不应显示在配置树中
@@ -180,7 +206,9 @@ export class ConfigWriter extends DataService<Context.Config> {
 			}
 
 			// 处理插件分组：分组本身是个子上下文，需要递归
-			const fork = (ctx.scope as LoaderScope)[Loader.kRecord]?.[key];
+			const fork = (ctx.scope as LoaderScope)[
+				Loader.kRecord
+			]?.[key];
 			if (!fork) continue;
 			if (name === "group") {
 				result[key] = this.getGroup(value, fork.ctx);
@@ -191,8 +219,13 @@ export class ConfigWriter extends DataService<Context.Config> {
 
 	/** 数据服务读取入口：返回去除敏感内部键后的整份应用配置。 */
 	override async get() {
-		const result: Context.Config = { ...this.loader.config };
-		result.plugins = this.getGroup(result.plugins, this.loader.entry);
+		const result: Context.Config = {
+			...this.loader.config,
+		};
+		result.plugins = this.getGroup(
+			result.plugins,
+			this.loader.entry,
+		);
 		return result;
 	}
 
@@ -227,7 +260,8 @@ export class ConfigWriter extends DataService<Context.Config> {
 		for (const main of this.ctx.registry.values()) {
 			for (const fork of main.children) {
 				// fork 的 key 由 loader 写入(ForkScope 类型上没有该属性)
-				if ((fork as LoaderScope).key === ident) return fork;
+				if ((fork as LoaderScope).key === ident)
+					return fork;
 			}
 		}
 		return;
@@ -243,17 +277,21 @@ export class ConfigWriter extends DataService<Context.Config> {
 	 */
 	private resolveConfig(
 		ident: string,
-		config: Record<string, unknown> | undefined = this.loader.config.plugins,
+		config: Record<string, unknown> | undefined = this
+			.loader.config.plugins,
 	): [Record<string, unknown>, string] {
 		if (config) {
 			for (const key in config) {
 				const name = key.split(":", 1)[0] ?? "";
-				if (key.slice(name.length + 1) === ident) return [config, key];
+				if (key.slice(name.length + 1) === ident)
+					return [config, key];
 				if (name === "group" || name === "~group") {
 					try {
 						return this.resolveConfig(
 							ident,
-							config[key] as Record<string, unknown> | undefined,
+							config[key] as
+								| Record<string, unknown>
+								| undefined,
 						);
 					} catch {}
 				}
@@ -271,7 +309,10 @@ export class ConfigWriter extends DataService<Context.Config> {
 	 * @param ident 插件路径标识
 	 * @param config 待合并的元数据键值对
 	 */
-	async meta(ident: string, config: Record<string, unknown>) {
+	async meta(
+		ident: string,
+		config: Record<string, unknown>,
+	) {
 		const [parent, key] = this.resolveConfig(ident);
 		const target = parent[key] as Record<string, unknown>;
 		for (const key of Object.keys(config)) {
@@ -291,7 +332,11 @@ export class ConfigWriter extends DataService<Context.Config> {
 	 * @param key 插件键名（形如 `name:ident`）
 	 * @param config 新的插件配置
 	 */
-	async reload(parent: string, key: string, config: unknown) {
+	async reload(
+		parent: string,
+		key: string,
+		config: unknown,
+	) {
 		const scope = this.resolveFork(parent);
 		if (!scope) throw new Error("plugin not found");
 		await this.loader.reload(scope.ctx, key, config);
@@ -320,7 +365,11 @@ export class ConfigWriter extends DataService<Context.Config> {
 		this.loader.unload(scope.ctx, key);
 		if (index) {
 			const rest = Object.keys(scope.config).slice(index);
-			insertKey(scope.config, { [`~${key}`]: config }, rest);
+			insertKey(
+				scope.config,
+				{ [`~${key}`]: config },
+				rest,
+			);
 		} else {
 			rename(scope.config, key, `~${key}`, config);
 		}
@@ -356,19 +405,29 @@ export class ConfigWriter extends DataService<Context.Config> {
 	 * @param target 目标分组的路径标识
 	 * @param index 目标插入位置（目标分组键序列中的序号）
 	 */
-	async teleport(source: string, key: string, target: string, index: number) {
+	async teleport(
+		source: string,
+		key: string,
+		target: string,
+		index: number,
+	) {
 		const parentS = this.resolveFork(source);
 		const parentT = this.resolveFork(target);
-		if (!parentS || !parentT) throw new Error("plugin not found");
+		if (!parentS || !parentT)
+			throw new Error("plugin not found");
 
 		// 第一步：迁移运行时 fork（仅在跨分组时需要）
-		const fork = (parentS as LoaderScope)[Loader.kRecord]?.[key];
+		const fork = (parentS as LoaderScope)[Loader.kRecord]?.[
+			key
+		];
 		if (fork && parentS !== parentT) {
-			const sourceRecord = ((parentS as LoaderScope)[Loader.kRecord] ??=
-				Object.create(null));
+			const sourceRecord = ((parentS as LoaderScope)[
+				Loader.kRecord
+			] ??= Object.create(null));
 			delete sourceRecord[key];
-			const targetRecord = ((parentT as LoaderScope)[Loader.kRecord] ??=
-				Object.create(null));
+			const targetRecord = ((parentT as LoaderScope)[
+				Loader.kRecord
+			] ??= Object.create(null));
 			targetRecord[key] = fork;
 			remove(parentS.disposables, fork.dispose);
 			parentT.disposables.push(fork.dispose);
@@ -378,7 +437,9 @@ export class ConfigWriter extends DataService<Context.Config> {
 			// scope 实例是转发到 config 的 Proxy,用 Reflect.get 保持原读取语义
 			if (
 				Object.keys(fork.runtime.inject).some(
-					(name) => Reflect.get(parentS, name) !== Reflect.get(parentT, name),
+					(name) =>
+						Reflect.get(parentS, name) !==
+						Reflect.get(parentT, name),
 				)
 			) {
 				fork.restart();

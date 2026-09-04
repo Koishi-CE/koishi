@@ -22,7 +22,11 @@ import {
 } from "node:fs/promises";
 import { join, relative, resolve } from "node:path";
 import { DataService } from "@koishi-ce/console";
-import { type Context, type Dict, Schema } from "@koishi-ce/koishi";
+import {
+	type Context,
+	type Dict,
+	Schema,
+} from "@koishi-ce/koishi";
 import type { Tester } from "anymatch";
 import * as anymatchModule from "anymatch";
 
@@ -44,7 +48,10 @@ declare module "@koishi-ce/console" {
 	}
 
 	interface Events {
-		"explorer/read"(filename: string, binary?: boolean): Promise<File>;
+		"explorer/read"(
+			filename: string,
+			binary?: boolean,
+		): Promise<File>;
 		"explorer/write"(
 			filename: string,
 			content: string,
@@ -52,7 +59,10 @@ declare module "@koishi-ce/console" {
 		): Promise<void>;
 		"explorer/mkdir"(filename: string): Promise<void>;
 		"explorer/remove"(filename: string): Promise<void>;
-		"explorer/rename"(oldValue: string, newValue: string): Promise<void>;
+		"explorer/rename"(
+			oldValue: string,
+			newValue: string,
+		): Promise<void>;
 		"explorer/refresh"(): void;
 	}
 }
@@ -125,7 +135,12 @@ class Explorer extends DataService<Entry[]> {
 						`${process.env["KOISHI_BASE"]}/dist/style.css`,
 					]
 				: process.env["KOISHI_ENV"] === "browser"
-					? [import.meta.url.replace(/\/src\/[^/]+$/, "/client/index.ts")]
+					? [
+							import.meta.url.replace(
+								/\/src\/[^/]+$/,
+								"/client/index.ts",
+							),
+						]
 					: {
 							dev: resolve(__dirname, "../client/index.ts"),
 							prod: resolve(__dirname, "../dist"),
@@ -149,7 +164,9 @@ class Explorer extends DataService<Entry[]> {
 				const encoding = detect(buffer);
 				// exactOptionalPropertyTypes:探测失败时不上键,与原先携带 undefined
 				// 值的对象在 JSON 序列化后表现一致
-				const file: File = { base64: buffer.toString("base64") };
+				const file: File = {
+					base64: buffer.toString("base64"),
+				};
 				if (result) file.mime = result.mime;
 				if (encoding) file.encoding = encoding;
 				return file;
@@ -227,34 +244,42 @@ class Explorer extends DataService<Entry[]> {
 	 * 命中的路径（node_modules、隐藏文件等）直接跳过。
 	 */
 	private async traverse(root: string): Promise<Entry[]> {
-		const dirents = await readdir(root, { withFileTypes: true });
+		const dirents = await readdir(root, {
+			withFileTypes: true,
+		});
 		return Promise.all(
-			dirents.map(async (dirent): Promise<Entry | undefined> => {
-				const filename = join(root, dirent.name);
-				if (this.globFilter(relative(this.root, filename))) return;
-				if (dirent.isFile()) {
-					return { type: "file", name: dirent.name };
-				} else if (dirent.isDirectory()) {
-					return {
-						type: "directory",
-						name: dirent.name,
-						children: await this.traverse(filename),
-					};
-				} else if (dirent.isSymbolicLink()) {
-					return {
-						type: "symlink",
-						name: dirent.name,
-						target: await readlink(filename),
-					};
-				}
-				// 其余类型(FIFO / socket 等)不展示,显式返回以通过 noImplicitReturns
-				return;
-			}),
+			dirents.map(
+				async (dirent): Promise<Entry | undefined> => {
+					const filename = join(root, dirent.name);
+					if (
+						this.globFilter(relative(this.root, filename))
+					)
+						return;
+					if (dirent.isFile()) {
+						return { type: "file", name: dirent.name };
+					} else if (dirent.isDirectory()) {
+						return {
+							type: "directory",
+							name: dirent.name,
+							children: await this.traverse(filename),
+						};
+					} else if (dirent.isSymbolicLink()) {
+						return {
+							type: "symlink",
+							name: dirent.name,
+							target: await readlink(filename),
+						};
+					}
+					// 其余类型(FIFO / socket 等)不展示,显式返回以通过 noImplicitReturns
+					return;
+				},
+			),
 		).then((entries) =>
 			entries
 				.filter((entry): entry is Entry => !!entry)
 				.sort((a, b) => {
-					if (a.type !== b.type) return a.type === "directory" ? -1 : 1;
+					if (a.type !== b.type)
+						return a.type === "directory" ? -1 : 1;
 					return a.name.localeCompare(b.name);
 				}),
 		);

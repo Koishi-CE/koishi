@@ -9,7 +9,12 @@
  * 完成全局 Logger 的等级、时间格式等设定。CLI 传入的环境变量优先级高于配置文件。
  */
 
-import { Context, defineProperty, Logger, Schema } from "@koishi-ce/core";
+import {
+	Context,
+	defineProperty,
+	Logger,
+	Schema,
+} from "@koishi-ce/core";
 
 /**
  * 配置文件形态的日志等级表。
@@ -33,11 +38,15 @@ function normalizeLevels(
 	config: LogLevelConfig,
 	base: number,
 ): Logger.LevelConfig {
-	const result: Logger.LevelConfig = { base: config.base ?? base };
+	const result: Logger.LevelConfig = {
+		base: config.base ?? base,
+	};
 	for (const [name, level] of Object.entries(config)) {
 		if (name === "base") continue;
 		result[name] =
-			typeof level === "number" ? level : normalizeLevels(level, result.base);
+			typeof level === "number"
+				? level
+				: normalizeLevels(level, result.base);
 	}
 	return result;
 }
@@ -54,7 +63,9 @@ export interface Config {
 
 export const Config: Schema<Config> = Schema.object({
 	levels: Schema.any().description("默认的日志输出等级。"),
-	showDiff: Schema.boolean().description("标注相邻两次日志输出的时间差。"),
+	showDiff: Schema.boolean().description(
+		"标注相邻两次日志输出的时间差。",
+	),
 	showTime: Schema.union([Boolean, String])
 		.default(true)
 		.description("输出日志所使用的时间格式。"),
@@ -101,7 +112,10 @@ export function prepare(config: Config = {}) {
 	}
 
 	/** 递归为所有子命名空间补全 base 等级（未显式设置时继承父级） */
-	function ensureBaseLevel(config: Logger.LevelConfig, base: number) {
+	function ensureBaseLevel(
+		config: Logger.LevelConfig,
+		base: number,
+	) {
 		config.base ??= base;
 		Object.values(config).forEach((value) => {
 			if (typeof value !== "object") return;
@@ -113,7 +127,9 @@ export function prepare(config: Config = {}) {
 
 	// KOISHI_DEBUG 指定的各个命名空间一律开启 DEBUG 级输出
 	if (process.env["KOISHI_DEBUG"]) {
-		for (const name of process.env["KOISHI_DEBUG"].split(",")) {
+		for (const name of process.env["KOISHI_DEBUG"].split(
+			",",
+		)) {
 			new Logger(name).level = Logger.DEBUG;
 		}
 	}

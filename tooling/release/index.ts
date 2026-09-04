@@ -21,8 +21,17 @@
  * 构建——build 环遗漏任一插件都会导致发布缺前端，故 targets 由 files
  * 字段自动推导而非手工列举。
  */
-import { existsSync, readFileSync, writeFileSync } from "node:fs";
-import { dirname, join, relative, resolve } from "node:path";
+import {
+	existsSync,
+	readFileSync,
+	writeFileSync,
+} from "node:fs";
+import {
+	dirname,
+	join,
+	relative,
+	resolve,
+} from "node:path";
 import { fileURLToPath } from "node:url";
 import { capture, run, runNpm } from "./proc";
 import {
@@ -42,7 +51,11 @@ import {
 	topoSort,
 } from "./workspace";
 
-const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..", "..");
+const ROOT = resolve(
+	dirname(fileURLToPath(import.meta.url)),
+	"..",
+	"..",
+);
 
 /** webui 插件前端的并发构建数（vite 单构建内存可观，不宜拉满）。 */
 const BUILD_CONCURRENCY = 4;
@@ -84,7 +97,9 @@ const HELP = `Koishi-CE 发布工具链（tooling/release）
 环境变量：RELEASE_REGISTRY 可切换 registry 查询源（默认 registry.npmjs.org）。`;
 
 /** 解析旗标；遇到未知旗标 / --only 缺参返回 null。 */
-function parseOptions(args: readonly string[]): Options | null {
+function parseOptions(
+	args: readonly string[],
+): Options | null {
 	const options: Options = {
 		dryRun: false,
 		push: false,
@@ -143,7 +158,10 @@ async function fetchAllPublished(
 	const map = new Map<string, Set<string>>();
 	await Promise.all(
 		pkgs.map(async (pkg) => {
-			map.set(pkg.name, await fetchPublishedVersions(pkg.name));
+			map.set(
+				pkg.name,
+				await fetchPublishedVersions(pkg.name),
+			);
 		}),
 	);
 	return map;
@@ -177,7 +195,10 @@ async function runPool<T>(
 		}
 	}
 	await Promise.all(
-		Array.from({ length: Math.min(limit, items.length) }, () => lane()),
+		Array.from(
+			{ length: Math.min(limit, items.length) },
+			() => lane(),
+		),
 	);
 	if (firstError !== undefined) {
 		throw firstError;
@@ -203,9 +224,14 @@ async function cmdStatus(): Promise<number> {
 	const published = await fetchAllPublished(pkgs);
 	const plan = planPublish(pkgs, published);
 	const downgraded = plan.toPublish.filter((pkg) =>
-		isDowngrade(pkg.version, published.get(pkg.name) ?? new Set<string>()),
+		isDowngrade(
+			pkg.version,
+			published.get(pkg.name) ?? new Set<string>(),
+		),
 	);
-	const toPublish = plan.toPublish.filter((pkg) => !downgraded.includes(pkg));
+	const toPublish = plan.toPublish.filter(
+		(pkg) => !downgraded.includes(pkg),
+	);
 	const fresh = toPublish.filter(
 		(pkg) => (published.get(pkg.name)?.size ?? 0) === 0,
 	);
@@ -250,7 +276,13 @@ async function runVersion(options: Options): Promise<{
 		);
 		return { code: 0, consumed: false, bumpedDirs: [] };
 	}
-	const bin = join(ROOT, "node_modules", "@changesets", "cli", "bin.js");
+	const bin = join(
+		ROOT,
+		"node_modules",
+		"@changesets",
+		"cli",
+		"bin.js",
+	);
 	if (!existsSync(bin)) {
 		process.stderr.write(
 			"[version] ❌ 未找到 @changesets/cli（先 bun install）\n",
@@ -258,18 +290,33 @@ async function runVersion(options: Options): Promise<{
 		return { code: 1, consumed: false, bumpedDirs: [] };
 	}
 	const before = new Map(
-		discoverPackages(ROOT).map((pkg) => [pkg.name, pkg.version]),
+		discoverPackages(ROOT).map((pkg) => [
+			pkg.name,
+			pkg.version,
+		]),
 	);
-	console.log(`[version] 📦 消费 ${pending.count} 个条目：changeset version`);
-	let code = await run(process.execPath, [bin, "version"], ROOT);
+	console.log(
+		`[version] 📦 消费 ${pending.count} 个条目：changeset version`,
+	);
+	let code = await run(
+		process.execPath,
+		[bin, "version"],
+		ROOT,
+	);
 	if (code !== 0) {
-		console.log(`[version] ❌ changeset version 失败（退出码 ${code}）`);
+		console.log(
+			`[version] ❌ changeset version 失败（退出码 ${code}）`,
+		);
 		return { code, consumed: false, bumpedDirs: [] };
 	}
-	console.log("[version] 🔒 bun install 刷新 bun.lock（workspace 版本已变）");
+	console.log(
+		"[version] 🔒 bun install 刷新 bun.lock（workspace 版本已变）",
+	);
 	code = await run(process.execPath, ["install"], ROOT);
 	if (code !== 0) {
-		console.log(`[version] ❌ bun install 失败（退出码 ${code}）`);
+		console.log(
+			`[version] ❌ bun install 失败（退出码 ${code}）`,
+		);
 		return { code, consumed: true, bumpedDirs: [] };
 	}
 	const after = discoverPackages(ROOT);
@@ -280,13 +327,19 @@ async function runVersion(options: Options): Promise<{
 		}
 	}
 	if (bumpedDirs.length === 0) {
-		console.log("[version] ⚠️ 条目已消费但无版本变化（可能全部命中 ignore）");
+		console.log(
+			"[version] ⚠️ 条目已消费但无版本变化（可能全部命中 ignore）",
+		);
 	} else {
-		console.log(`[version] ✅ ${bumpedDirs.length} 个包升版本：`);
+		console.log(
+			`[version] ✅ ${bumpedDirs.length} 个包升版本：`,
+		);
 		for (const pkg of after) {
 			const old = before.get(pkg.name);
 			if (old !== undefined && old !== pkg.version) {
-				console.log(`  ${pkg.name}: ${old} → ${pkg.version}`);
+				console.log(
+					`  ${pkg.name}: ${old} → ${pkg.version}`,
+				);
 			}
 		}
 	}
@@ -297,14 +350,27 @@ async function runVersion(options: Options): Promise<{
 async function commitVersionBumps(
 	bumpedDirs: readonly string[],
 ): Promise<number> {
-	const candidates = [".changeset", "bun.lock", "package.json"];
+	const candidates = [
+		".changeset",
+		"bun.lock",
+		"package.json",
+	];
 	for (const dir of bumpedDirs) {
-		candidates.push(join(dir, "package.json"), join(dir, "CHANGELOG.md"));
+		candidates.push(
+			join(dir, "package.json"),
+			join(dir, "CHANGELOG.md"),
+		);
 	}
-	const addPaths = candidates.filter((p) => existsSync(join(ROOT, p)));
+	const addPaths = candidates.filter((p) =>
+		existsSync(join(ROOT, p)),
+	);
 	await run("git", ["add", ...addPaths], ROOT);
 	const staged = (
-		capture("git", ["diff", "--cached", "--name-only"], ROOT) ?? ""
+		capture(
+			"git",
+			["diff", "--cached", "--name-only"],
+			ROOT,
+		) ?? ""
 	).trim();
 	if (staged === "") {
 		console.log("[pipeline] 版本相关文件无变化，跳过提交");
@@ -312,7 +378,11 @@ async function commitVersionBumps(
 	}
 	const code = await run(
 		"git",
-		["commit", "-m", "chore(release): 消费 changeset，升版本并更新 CHANGELOG"],
+		[
+			"commit",
+			"-m",
+			"chore(release): 消费 changeset，升版本并更新 CHANGELOG",
+		],
 		ROOT,
 	);
 	if (code === 0) {
@@ -322,7 +392,9 @@ async function commitVersionBumps(
 }
 
 /** webui 插件中需要 vite 构建前端 dist 的子集（files 含 dist 且有 client/；console 由宿主总装覆盖）。 */
-function frontendTargets(pkgs: readonly PkgInfo[]): PkgInfo[] {
+function frontendTargets(
+	pkgs: readonly PkgInfo[],
+): PkgInfo[] {
 	const webuiRoot = join(ROOT, "plugins", "webui");
 	return pkgs.filter(
 		(pkg) =>
@@ -334,7 +406,9 @@ function frontendTargets(pkgs: readonly PkgInfo[]): PkgInfo[] {
 }
 
 /** build 环：根 tsdown → 宿主控制台总装 → 各 webui 插件前端（并发池，失败即中断）。 */
-async function runBuildSteps(options: Options): Promise<number> {
+async function runBuildSteps(
+	options: Options,
+): Promise<number> {
 	if (options.dryRun) {
 		const targets = frontendTargets(discoverPackages(ROOT));
 		console.log(
@@ -345,20 +419,30 @@ async function runBuildSteps(options: Options): Promise<number> {
 		}
 		return 0;
 	}
-	console.log("[build] 🔨 根 tsdown：全部 node 侧包 → lib/");
-	let code = await run(process.execPath, ["run", "build"], ROOT);
+	console.log(
+		"[build] 🔨 根 tsdown：全部 node 侧包 → lib/",
+	);
+	let code = await run(
+		process.execPath,
+		["run", "build"],
+		ROOT,
+	);
 	if (code !== 0) {
 		console.log(`[build] ❌ 根构建失败（退出码 ${code}）`);
 		return code;
 	}
-	console.log("[build] 🔨 宿主控制台前端总装 → plugins/webui/console/dist");
+	console.log(
+		"[build] 🔨 宿主控制台前端总装 → plugins/webui/console/dist",
+	);
 	code = await run(
 		process.execPath,
 		["packages/web/client/src/bin.ts", "build"],
 		ROOT,
 	);
 	if (code !== 0) {
-		console.log(`[build] ❌ 宿主控制台总装失败（退出码 ${code}）`);
+		console.log(
+			`[build] ❌ 宿主控制台总装失败（退出码 ${code}）`,
+		);
 		return code;
 	}
 	const targets = frontendTargets(discoverPackages(ROOT));
@@ -367,19 +451,30 @@ async function runBuildSteps(options: Options): Promise<number> {
 	);
 	const startedAt = Date.now();
 	try {
-		await runPool(targets, BUILD_CONCURRENCY, async (pkg) => {
-			const pluginCode = await run(
-				process.execPath,
-				["packages/web/client/src/bin.ts", "build", pkg.dir],
-				ROOT,
-			);
-			if (pluginCode !== 0) {
-				throw new Error(`${pkg.name} 前端构建失败（退出码 ${pluginCode}）`);
-			}
-			console.log(`[build]   ✅ ${pkg.name}`);
-		});
+		await runPool(
+			targets,
+			BUILD_CONCURRENCY,
+			async (pkg) => {
+				const pluginCode = await run(
+					process.execPath,
+					[
+						"packages/web/client/src/bin.ts",
+						"build",
+						pkg.dir,
+					],
+					ROOT,
+				);
+				if (pluginCode !== 0) {
+					throw new Error(
+						`${pkg.name} 前端构建失败（退出码 ${pluginCode}）`,
+					);
+				}
+				console.log(`[build]   ✅ ${pkg.name}`);
+			},
+		);
 	} catch (err) {
-		const message = err instanceof Error ? err.message : String(err);
+		const message =
+			err instanceof Error ? err.message : String(err);
 		console.log(`[build] ❌ ${message}，已中断`);
 		return 1;
 	}
@@ -391,7 +486,9 @@ async function runBuildSteps(options: Options): Promise<number> {
 
 /** test 环：全量自有用例（与 AGENTS 门禁命令一致）。 */
 async function runTestStep(): Promise<number> {
-	console.log("[test] 🧪 bun test（packages + common + admin + commands）");
+	console.log(
+		"[test] 🧪 bun test（packages + common + admin + commands）",
+	);
 	return await run(
 		process.execPath,
 		[
@@ -406,7 +503,9 @@ async function runTestStep(): Promise<number> {
 }
 
 /** publish 环：registry 比对 → 所有权预检 → 拓扑序逐包发布。 */
-async function runPublishSteps(options: Options): Promise<number> {
+async function runPublishSteps(
+	options: Options,
+): Promise<number> {
 	const pkgs = discoverPackages(ROOT);
 	if (!(await probeRegistry())) {
 		process.stderr.write(
@@ -417,20 +516,28 @@ async function runPublishSteps(options: Options): Promise<number> {
 	const published = await fetchAllPublished(pkgs);
 	const plan = planPublish(pkgs, published);
 	const downgraded = plan.toPublish.filter((pkg) =>
-		isDowngrade(pkg.version, published.get(pkg.name) ?? new Set<string>()),
+		isDowngrade(
+			pkg.version,
+			published.get(pkg.name) ?? new Set<string>(),
+		),
 	);
-	const toPublish = plan.toPublish.filter((pkg) => !downgraded.includes(pkg));
+	const toPublish = plan.toPublish.filter(
+		(pkg) => !downgraded.includes(pkg),
+	);
 	for (const pkg of downgraded) {
 		plan.skipped.push({
 			pkg,
-			reason: "本地版本低于 registry 已发布版本（源码落后，先同步源码）",
+			reason:
+				"本地版本低于 registry 已发布版本（源码落后，先同步源码）",
 		});
 	}
 	// --only：精确发布名单（补发漏发 / 重发坏版本）；名单外的待发布包
 	// 记入 skipped 本次不动。名单内拼写错误早报，避免静默漏发。
 	if (options.only.length > 0) {
 		const known = new Set(pkgs.map((pkg) => pkg.name));
-		const unknown = options.only.filter((name) => !known.has(name));
+		const unknown = options.only.filter(
+			(name) => !known.has(name),
+		);
 		if (unknown.length > 0) {
 			process.stderr.write(
 				`[publish] ❌ --only 含未知包名：${unknown.join(", ")}\n`,
@@ -443,7 +550,10 @@ async function runPublishSteps(options: Options): Promise<number> {
 			if (only.has(pkg.name)) {
 				kept.push(pkg);
 			} else {
-				plan.skipped.push({ pkg, reason: "不在 --only 名单内" });
+				plan.skipped.push({
+					pkg,
+					reason: "不在 --only 名单内",
+				});
 			}
 		}
 		toPublish.length = 0;
@@ -479,9 +589,13 @@ async function runPublishSteps(options: Options): Promise<number> {
 		toPublish.push(...kept);
 	}
 	if (plan.skipped.length > 0) {
-		console.log(`[publish] 跳过 ${plan.skipped.length} 个：`);
+		console.log(
+			`[publish] 跳过 ${plan.skipped.length} 个：`,
+		);
 		for (const { pkg, reason } of plan.skipped) {
-			console.log(`  ⏭  ${pkg.name}@${pkg.version}（${reason}）`);
+			console.log(
+				`  ⏭  ${pkg.name}@${pkg.version}（${reason}）`,
+			);
 		}
 	}
 	if (toPublish.length === 0) {
@@ -501,10 +615,15 @@ async function runPublishSteps(options: Options): Promise<number> {
 	}
 	// 逐包发布：发布前把 workspace:* 改写为 caret 真实版本（npm 不认该协议），
 	// finally 还原原文件（不落盘，工作区保持洁净）
-	const versions = new Map(pkgs.map((pkg) => [pkg.name, pkg.version]));
+	const versions = new Map(
+		pkgs.map((pkg) => [pkg.name, pkg.version]),
+	);
 	for (const pkg of ordered) {
 		const original = readFileSync(pkg.manifestPath, "utf8");
-		const { text, changes } = rewriteWorkspaceProtocol(original, versions);
+		const { text, changes } = rewriteWorkspaceProtocol(
+			original,
+			versions,
+		);
 		if (changes.length > 0) {
 			writeFileSync(pkg.manifestPath, text, "utf8");
 			console.log(
@@ -514,16 +633,22 @@ async function runPublishSteps(options: Options): Promise<number> {
 		try {
 			// stdin 直通终端：npm 的 OTP 浏览器认证要求 stdin/stdout 双 TTY，
 			// 断开 stdin 会直接抛 EOTP（逐包弹浏览器逐包认证，属预期流程）
-			const code = await runNpm(["publish", "--access", "public"], pkg.dir, {
-				stdin: "inherit",
-			});
+			const code = await runNpm(
+				["publish", "--access", "public"],
+				pkg.dir,
+				{
+					stdin: "inherit",
+				},
+			);
 			if (code !== 0) {
 				console.log(
 					`[publish] ❌ 发布失败 ${pkg.name}@${pkg.version}（退出码 ${code}），已中断`,
 				);
 				return code;
 			}
-			console.log(`[publish] ✅ 已发布 ${pkg.name}@${pkg.version}`);
+			console.log(
+				`[publish] ✅ 已发布 ${pkg.name}@${pkg.version}`,
+			);
 		} finally {
 			if (changes.length > 0) {
 				writeFileSync(pkg.manifestPath, original, "utf8");
@@ -535,7 +660,9 @@ async function runPublishSteps(options: Options): Promise<number> {
 }
 
 /** pipeline：一条龙。每环失败即中断；全部环节重跑幂等。 */
-async function cmdPipeline(options: Options): Promise<number> {
+async function cmdPipeline(
+	options: Options,
+): Promise<number> {
 	console.log(
 		`[pipeline] === 构建发布一条龙${options.dryRun ? "（dry-run）" : ""} ===`,
 	);
@@ -552,7 +679,9 @@ async function cmdPipeline(options: Options): Promise<number> {
 		return 1;
 	}
 	const dirty =
-		(capture("git", ["status", "--porcelain"], ROOT) ?? "").trim() !== "";
+		(
+			capture("git", ["status", "--porcelain"], ROOT) ?? ""
+		).trim() !== "";
 	if (dirty && !options.allowDirty && !options.dryRun) {
 		process.stderr.write(
 			"[pipeline] ❌ 工作区有未提交改动；先提交，或用 --allow-dirty 跳过检查\n",
@@ -567,7 +696,9 @@ async function cmdPipeline(options: Options): Promise<number> {
 	if (!options.dryRun) {
 		const whoami = npmWhoami(ROOT);
 		if (whoami === null) {
-			process.stderr.write("[pipeline] ❌ npm 未登录（先 npm login）\n");
+			process.stderr.write(
+				"[pipeline] ❌ npm 未登录（先 npm login）\n",
+			);
 			return 1;
 		}
 		console.log(`[pipeline] npm 身份：${whoami}`);
@@ -579,7 +710,9 @@ async function cmdPipeline(options: Options): Promise<number> {
 		return version.code;
 	}
 	if (!options.dryRun && version.consumed) {
-		const commitCode = await commitVersionBumps(version.bumpedDirs);
+		const commitCode = await commitVersionBumps(
+			version.bumpedDirs,
+		);
 		if (commitCode !== 0) {
 			return commitCode;
 		}
@@ -598,7 +731,9 @@ async function cmdPipeline(options: Options): Promise<number> {
 	// test 环
 	if (!options.skipTest) {
 		if (options.dryRun) {
-			console.log("[pipeline] [dry-run] 将执行 bun test（全量自有用例）");
+			console.log(
+				"[pipeline] [dry-run] 将执行 bun test（全量自有用例）",
+			);
 		} else {
 			const testCode = await runTestStep();
 			if (testCode !== 0) {
@@ -624,13 +759,19 @@ async function cmdPipeline(options: Options): Promise<number> {
 	// 推送
 	if (options.push) {
 		console.log("[pipeline] 📤 git push origin main");
-		const code = await run("git", ["push", "origin", "main"], ROOT);
+		const code = await run(
+			"git",
+			["push", "origin", "main"],
+			ROOT,
+		);
 		if (code !== 0) {
 			console.log("[pipeline] ❌ push main 失败");
 			return code;
 		}
 	} else {
-		console.log("[pipeline] 完成。尚未推送：git push origin main");
+		console.log(
+			"[pipeline] 完成。尚未推送：git push origin main",
+		);
 	}
 	return 0;
 }
@@ -638,7 +779,11 @@ async function cmdPipeline(options: Options): Promise<number> {
 /** CLI 入口：解析命令与旗标并分发。 */
 async function main(): Promise<number> {
 	const [command, ...rest] = process.argv.slice(2);
-	if (command === undefined || command === "-h" || command === "--help") {
+	if (
+		command === undefined ||
+		command === "-h" ||
+		command === "--help"
+	) {
 		console.log(HELP);
 		return 0;
 	}
@@ -679,7 +824,8 @@ async function main(): Promise<number> {
 try {
 	process.exitCode = await main();
 } catch (err) {
-	const message = err instanceof Error ? err.message : String(err);
+	const message =
+		err instanceof Error ? err.message : String(err);
 	process.stderr.write(`[release] ❌ ${message}\n`);
 	process.exitCode = 1;
 }

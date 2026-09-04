@@ -18,7 +18,8 @@ import type {} from "@koishi-ce/loader";
 export * from "@koishi-ce/console";
 
 class BrowserConsole extends Console {
-	static Config: Schema<BrowserConsole.Config> = Schema.object({});
+	static Config: Schema<BrowserConsole.Config> =
+		Schema.object({});
 
 	/**
 	 * 接入 loader 提供的 WebSocket（浏览器宿主的通信通道，
@@ -28,9 +29,12 @@ class BrowserConsole extends Console {
 		// 浏览器宿主在 loader 上挂载的 socket 是运行时约定，仅以全局 symbol 注册表键存在，
 		// 无法在 Loader 类型上声明（Symbol.for 的返回值不是 unique symbol，不能用作接口键）
 		// @ts-expect-error koishi.socket symbol 索引不在 Loader 类型定义中
-		const socket = this.ctx.loader[Symbol.for("koishi.socket")];
+		const socket =
+			this.ctx.loader[Symbol.for("koishi.socket")];
 		// 浏览器宿主没有 HTTP 升级请求，构造仅含空 headers 的壳对象以满足 Client.request 形状
-		this.accept(socket, { headers: {} } as unknown as IncomingMessage);
+		this.accept(socket, {
+			headers: {},
+		} as unknown as IncomingMessage);
 	}
 
 	/** 解析 entry 产物：浏览器宿主无开发模式，统一取生产文件列表。 */

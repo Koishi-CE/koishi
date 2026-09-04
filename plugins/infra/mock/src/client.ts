@@ -27,8 +27,10 @@ import {
 import type { MockBot } from "./adapter.ts";
 
 // 断言失败时的错误提示模板（%s 为 util.format 占位符）
-const RECEIVED_UNEXPECTED = 'expected "%s" to be not replied but received "%s"';
-const RECEIVED_NOTHING = 'expected "%s" to be replied but received nothing';
+const RECEIVED_UNEXPECTED =
+	'expected "%s" to be not replied but received "%s"';
+const RECEIVED_NOTHING =
+	'expected "%s" to be replied but received nothing';
 const RECEIVED_OTHERWISE =
 	'expected "%s" to be replied with %s but received "%s"';
 const RECEIVED_NTH_NOTHING =
@@ -53,7 +55,9 @@ export class MockMessageEncoder extends MessageEncoder {
 		if (!this.buffer) return;
 		// options.session 的静态类型是 satori Session，运行时实为 koishi Session
 		// （core 的 Session.send 会执行 options.session = this），其上挂载有 mock 的 client
-		const session = this.options.session as Session | undefined;
+		const session = this.options.session as
+			| Session
+			| undefined;
 		session?.client?.flush(this.buffer);
 		this.buffer = "";
 	}
@@ -123,7 +127,11 @@ export class MessageClient {
 	private replies: string[] = [];
 	private hooks: Dict<Hook> = {};
 
-	constructor(bot: MockBot, userId: string, channelId?: string) {
+	constructor(
+		bot: MockBot,
+		userId: string,
+		channelId?: string,
+	) {
 		this.bot = bot;
 		this.userId = userId;
 		this.channelId = channelId;
@@ -155,7 +163,9 @@ export class MessageClient {
 			if (!hook) return;
 			hook.done = true;
 			if (!hook.resolve) delete this.hooks[session.id];
-			if (Object.values(this.hooks).every((hook) => hook.done)) {
+			if (
+				Object.values(this.hooks).every((hook) => hook.done)
+			) {
 				this.flush();
 				this.hooks = {};
 			}
@@ -167,7 +177,10 @@ export class MessageClient {
 		if (buffer) this.replies.push(buffer);
 		for (const id in this.hooks) {
 			const hook = this.hooks[id];
-			if (!hook?.resolve || (buffer && this.replies.length < hook.count))
+			if (
+				!hook?.resolve ||
+				(buffer && this.replies.length < hook.count)
+			)
 				continue;
 			hook.resolve(this.replies);
 			// exactOptionalPropertyTypes 下可选属性不能显式赋 undefined，用 delete 等价清除
@@ -184,37 +197,39 @@ export class MessageClient {
 	 * @returns 机器人对该消息的全部回复
 	 */
 	async receive(content: string, count = Infinity) {
-		const result = await new Promise<string[]>((resolve) => {
-			let quote: Universal.Message | undefined;
-			let elements = h.parse(content);
-			const quoteElement = elements[0];
-			if (quoteElement?.type === "quote") {
-				elements.shift();
-				quote = {
-					id: quoteElement.attrs["id"],
-					messageId: quoteElement.attrs["id"],
-					elements: quoteElement.children,
-					content: quoteElement.children.join(""),
+		const result = await new Promise<string[]>(
+			(resolve) => {
+				let quote: Universal.Message | undefined;
+				let elements = h.parse(content);
+				const quoteElement = elements[0];
+				if (quoteElement?.type === "quote") {
+					elements.shift();
+					quote = {
+						id: quoteElement.attrs["id"],
+						messageId: quoteElement.attrs["id"],
+						elements: quoteElement.children,
+						content: quoteElement.children.join(""),
+					};
+					content = elements.join("").trimStart();
+					elements = h.parse(content);
+				}
+				// exactOptionalPropertyTypes 下可选属性 quote 不能显式携带 undefined，按需附加
+				const message: Universal.Message = {
+					id: `${++counter}`,
+					content,
+					elements,
 				};
-				content = elements.join("").trimStart();
-				elements = h.parse(content);
-			}
-			// exactOptionalPropertyTypes 下可选属性 quote 不能显式携带 undefined，按需附加
-			const message: Universal.Message = {
-				id: `${++counter}`,
-				content,
-				elements,
-			};
-			if (quote) message.quote = quote;
-			const id = this.bot.receive(
-				{
-					...clone(this.event),
-					message,
-				},
-				this,
-			);
-			this.hooks[id] = { resolve, count };
-		});
+				if (quote) message.quote = quote;
+				const id = this.bot.receive(
+					{
+						...clone(this.event),
+						message,
+					},
+					this,
+				);
+				this.hooks[id] = { resolve, count };
+			},
+		);
 		// 等待下一个 tick，确保后续操作（回复的收发）全部完成。
 		// 不能用 setTimeout：在使用假定时器的测试中会失效。
 		await new Promise(process.nextTick);
@@ -226,19 +241,27 @@ export class MessageClient {
 		message: string,
 		reply?: string | RegExp | (string | RegExp)[],
 	) {
-		function match(reply: string | RegExp, content: string) {
+		function match(
+			reply: string | RegExp,
+			content: string,
+		) {
 			return typeof reply === "string"
 				? reply === content
 				: reply.test(content);
 		}
 
 		function prettify(reply: string | RegExp) {
-			return typeof reply === "string" ? `"${reply}"` : reply.toString();
+			return typeof reply === "string"
+				? `"${reply}"`
+				: reply.toString();
 		}
 
 		if (!reply) {
 			const result = await this.receive(message);
-			assert.ok(result.length, format(RECEIVED_NOTHING, message));
+			assert.ok(
+				result.length,
+				format(RECEIVED_NOTHING, message),
+			);
 			return;
 		}
 
@@ -247,7 +270,12 @@ export class MessageClient {
 			assert.ok(result, format(RECEIVED_NOTHING, message));
 			assert.ok(
 				match(reply, result),
-				format(RECEIVED_OTHERWISE, message, prettify(reply), result),
+				format(
+					RECEIVED_OTHERWISE,
+					message,
+					prettify(reply),
+					result,
+				),
 			);
 			return;
 		}
@@ -255,7 +283,10 @@ export class MessageClient {
 		const result = await this.receive(message);
 		for (const [index, expected] of reply.entries()) {
 			const actual = result[index];
-			assert.ok(actual, format(RECEIVED_NTH_NOTHING, message, index));
+			assert.ok(
+				actual,
+				format(RECEIVED_NTH_NOTHING, message, index),
+			);
 			assert.ok(
 				match(expected, actual),
 				format(
@@ -272,6 +303,9 @@ export class MessageClient {
 	/** 断言机器人对 message 没有任何回复 */
 	async shouldNotReply(message: string) {
 		const result = await this.receive(message);
-		assert.ok(!result.length, format(RECEIVED_UNEXPECTED, message, result));
+		assert.ok(
+			!result.length,
+			format(RECEIVED_UNEXPECTED, message, result),
+		);
 	}
 }

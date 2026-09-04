@@ -77,7 +77,11 @@ function moveToCenter(el: HTMLImageElement) {
 	const { naturalHeight, naturalWidth } = el;
 	const maxHeight = container.value.clientHeight;
 	const maxWidth = container.value.clientWidth;
-	const scale = Math.min(1, maxHeight / naturalHeight, maxWidth / naturalWidth);
+	const scale = Math.min(
+		1,
+		maxHeight / naturalHeight,
+		maxWidth / naturalWidth,
+	);
 	const width = naturalWidth * scale;
 	const height = naturalHeight * scale;
 	el.style.width = `${width}px`;

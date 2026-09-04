@@ -11,7 +11,14 @@
  * - broadcast：按频道列表批量发送，支持字符串 / [guildId, channelId]
  *   元组 / Session 三种形态，带限速间隔且单条失败不中断。
  */
-import { afterAll, afterEach, beforeAll, describe, expect, it } from "bun:test";
+import {
+	afterAll,
+	afterEach,
+	beforeAll,
+	describe,
+	expect,
+	it,
+} from "bun:test";
 import { App, Logger } from "@koishi-ce/koishi";
 import mock from "@koishi-ce/plugin-mock";
 
@@ -28,7 +35,11 @@ type SendCall = {
 };
 let sendCalls: SendCall[] = [];
 
-function wrapSend(impl?: (channelId: string) => string[] | Promise<string[]>) {
+function wrapSend(
+	impl?: (
+		channelId: string,
+	) => string[] | Promise<string[]>,
+) {
 	sendCalls = [];
 	// bot 实例可能被 cordis 的 traceable 代理包裹，直接赋值会触发
 	// 其 set 陷阱，改用 defineProperty 在实例上覆盖
@@ -39,7 +50,12 @@ function wrapSend(impl?: (channelId: string) => string[] | Promise<string[]>) {
 			referrer?: unknown,
 			options?: unknown,
 		) => {
-			sendCalls.push({ channelId, content, referrer, options });
+			sendCalls.push({
+				channelId,
+				content,
+				referrer,
+				options,
+			});
 			return impl ? impl(channelId) : ["id1"];
 		},
 		configurable: true,
@@ -70,7 +86,9 @@ describe("Bot Extensions", () => {
 			yield { user: { id: "3" } };
 			yield { name: "ghost" };
 		} as unknown as typeof bot.getGuildMemberIter;
-		await expect(bot.getGuildMemberMap("guild")).resolves.toEqual({
+		await expect(
+			bot.getGuildMemberMap("guild"),
+		).resolves.toEqual({
 			1: "nick",
 			2: "u2",
 			3: "3",
@@ -79,7 +97,9 @@ describe("Bot Extensions", () => {
 
 	it("broadcast 字符串频道形态", async () => {
 		wrapSend();
-		await expect(bot.broadcast(["ch1"], "hello")).resolves.toEqual(["id1"]);
+		await expect(
+			bot.broadcast(["ch1"], "hello"),
+		).resolves.toEqual(["id1"]);
 		expect(sendCalls).toEqual([
 			{
 				channelId: "ch1",
@@ -129,16 +149,22 @@ describe("Bot Extensions", () => {
 		(Logger.levels as Record<string, number>)["bot"] = 0;
 		try {
 			wrapSend((channelId) => {
-				if (channelId === "bad") throw new Error("send failed");
+				if (channelId === "bad")
+					throw new Error("send failed");
 				return ["id1"];
 			});
 			// delay 取根配置 delay.broadcast，这里调小以加快用例
 			app.root.config.delay!.broadcast = 0;
-			const ids = await bot.broadcast(["bad", "good"], "hello");
+			const ids = await bot.broadcast(
+				["bad", "good"],
+				"hello",
+			);
 			expect(ids).toEqual(["id1"]);
 			expect(sendCalls).toHaveLength(2);
 		} finally {
-			delete (Logger.levels as Record<string, number>)["bot"];
+			delete (Logger.levels as Record<string, number>)[
+				"bot"
+			];
 		}
 	});
 

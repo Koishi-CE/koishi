@@ -8,7 +8,12 @@
  * send 直接调用 bot 发出；sendQueued 进入限速队列按 delay 依次发送，
  * 用于拟人化输出节奏、规避平台风控。cancelQueued 可清空队列并延迟恢复。
  */
-import { type Fragment, h, Logger, type Universal } from "@satorijs/core";
+import {
+	type Fragment,
+	h,
+	Logger,
+	type Universal,
+} from "@satorijs/core";
 import { isNullable } from "cosmokit";
 import { SessionCore } from "./core.ts";
 
@@ -40,7 +45,12 @@ export class SessionMessaging extends SessionCore {
 		if (!elements.length) return [];
 		options.session = this;
 		return this.bot
-			.sendMessage(this.channelId ?? "", elements, this.event.referrer, options)
+			.sendMessage(
+				this.channelId ?? "",
+				elements,
+				this.event.referrer,
+				options,
+			)
 			.catch<string[]>((error) => {
 				logger.warn(error);
 				return [];
@@ -48,10 +58,15 @@ export class SessionMessaging extends SessionCore {
 	}
 
 	/** 取消全部排队中的消息，并在 delay 毫秒后恢复队列发送。 */
-	override cancelQueued(delay = this.app.koishi.config.delay?.cancel ?? 0) {
+	override cancelQueued(
+		delay = this.app.koishi.config.delay?.cancel ?? 0,
+	) {
 		clearTimeout(this._queuedTimeout ?? undefined);
 		this._queuedTasks = [];
-		this._queuedTimeout = setTimeout(() => this._next(), delay);
+		this._queuedTimeout = setTimeout(
+			() => this._next(),
+			delay,
+		);
 	}
 
 	/** 队列驱动：发送队首任务并安排下一条的定时器。 */
@@ -61,8 +76,14 @@ export class SessionMessaging extends SessionCore {
 			this._queuedTimeout = null;
 			return;
 		}
-		this.send(task.content).then((ids) => task.resolve(ids ?? []), task.reject);
-		this._queuedTimeout = setTimeout(() => this._next(), task.delay);
+		this.send(task.content).then(
+			(ids) => task.resolve(ids ?? []),
+			task.reject,
+		);
+		this._queuedTimeout = setTimeout(
+			() => this._next(),
+			task.delay,
+		);
 	}
 
 	/**
@@ -71,15 +92,24 @@ export class SessionMessaging extends SessionCore {
 	 * 未显式指定 delay 时按配置估算：`max(delay.message, delay.character * 字数)`，
 	 * 即消息越长等待越久。
 	 */
-	override async sendQueued(content: Fragment, delay?: number) {
+	override async sendQueued(
+		content: Fragment,
+		delay?: number,
+	) {
 		const text = h.normalize(content).join("");
 		if (!text) return;
 		if (isNullable(delay)) {
-			const { message = 0, character = 0 } = this.app.koishi.config.delay ?? {};
+			const { message = 0, character = 0 } =
+				this.app.koishi.config.delay ?? {};
 			delay = Math.max(message, character * text.length);
 		}
 		return new Promise<string[]>((resolve, reject) => {
-			(this._queuedTasks ??= []).push({ content, delay, resolve, reject });
+			(this._queuedTasks ??= []).push({
+				content,
+				delay,
+				resolve,
+				reject,
+			});
 			if (!this._queuedTimeout) this._next();
 		});
 	}

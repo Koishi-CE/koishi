@@ -37,7 +37,8 @@ export const ScopeStatus = {
 	DISPOSED: 4,
 } as const;
 
-export type ScopeStatus = (typeof ScopeStatus)[keyof typeof ScopeStatus];
+export type ScopeStatus =
+	(typeof ScopeStatus)[keyof typeof ScopeStatus];
 export * from "./components";
 export * from "./context";
 export * from "./data";

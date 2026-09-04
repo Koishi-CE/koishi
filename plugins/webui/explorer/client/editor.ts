@@ -54,8 +54,13 @@ export const model = monaco.editor.createModel("");
 // { deprecated: true },语言配置入口迁移到顶层命名空间
 // 以下四段对 css / less / scss、json、js / ts、html 系语言统一关闭
 // 依赖 worker 的语言服务(补全/悬停/诊断/格式化等),只保留词法着色
-const { cssDefaults, lessDefaults, scssDefaults } = monaco.css;
-for (const service of [cssDefaults, lessDefaults, scssDefaults]) {
+const { cssDefaults, lessDefaults, scssDefaults } =
+	monaco.css;
+for (const service of [
+	cssDefaults,
+	lessDefaults,
+	scssDefaults,
+]) {
 	service.setModeConfiguration({
 		completionItems: false,
 		hovers: false,
@@ -89,8 +94,12 @@ for (const service of [jsonDefaults]) {
 	});
 }
 
-const { javascriptDefaults, typescriptDefaults } = monaco.typescript;
-for (const service of [javascriptDefaults, typescriptDefaults]) {
+const { javascriptDefaults, typescriptDefaults } =
+	monaco.typescript;
+for (const service of [
+	javascriptDefaults,
+	typescriptDefaults,
+]) {
 	service.setModeConfiguration({
 		completionItems: false,
 		hovers: false,
@@ -108,8 +117,13 @@ for (const service of [javascriptDefaults, typescriptDefaults]) {
 	});
 }
 
-const { htmlDefaults, handlebarDefaults, razorDefaults } = monaco.html;
-for (const service of [htmlDefaults, handlebarDefaults, razorDefaults]) {
+const { htmlDefaults, handlebarDefaults, razorDefaults } =
+	monaco.html;
+for (const service of [
+	htmlDefaults,
+	handlebarDefaults,
+	razorDefaults,
+]) {
 	service.setModeConfiguration({
 		completionItems: false,
 		hovers: false,
@@ -127,7 +141,9 @@ for (const service of [htmlDefaults, handlebarDefaults, razorDefaults]) {
 }
 
 /** 当前 model 语言对应的 monaco 语言描述（status.vue 用它显示语言名）。 */
-export const language = shallowRef(monaco.languages.getLanguages()[0]);
+export const language = shallowRef(
+	monaco.languages.getLanguages()[0],
+);
 
 // model 语言切换时同步 language 响应式引用，驱动状态栏更新
 model.onDidChangeLanguage((e) => {

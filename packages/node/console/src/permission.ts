@@ -12,7 +12,9 @@
 import type { Context } from "@koishi-ce/koishi";
 import { DataService } from "./service.ts";
 
-export class PermissionProvider extends DataService<string[]> {
+export class PermissionProvider extends DataService<
+	string[]
+> {
 	constructor(ctx: Context) {
 		super(ctx, "permissions", { immediate: true });
 

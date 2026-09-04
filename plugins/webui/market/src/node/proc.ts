@@ -17,9 +17,15 @@
  * 不真正拉起安装进程（此前 mock execa 包名，全局替换同样可行，
  * 但本地模块拦截范围更小、不受其它包使用 child_process 的干扰）。
  */
-import { type ChildProcess, spawn } from "node:child_process";
+import {
+	type ChildProcess,
+	spawn,
+} from "node:child_process";
 
 /** 在指定工作目录启动 bun 子进程（args 已含子命令与参数），stdio 三路 pipe。 */
-export function spawnBun(args: string[], cwd: string): ChildProcess {
+export function spawnBun(
+	args: string[],
+	cwd: string,
+): ChildProcess {
 	return spawn(process.execPath, args, { cwd });
 }

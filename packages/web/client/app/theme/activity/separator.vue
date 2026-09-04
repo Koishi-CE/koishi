@@ -18,7 +18,11 @@
 </template>
 
 <script lang="ts" setup>
-import { type Activity, useConfig, useContext } from "@koishi-ce/client";
+import {
+	type Activity,
+	useConfig,
+	useContext,
+} from "@koishi-ce/client";
 import { type ComputedRef, inject, ref } from "vue";
 
 type Position = "top" | "bottom";
@@ -28,7 +32,9 @@ const props = defineProps<{
 	position: Position;
 }>();
 
-const groups = inject("groups") as ComputedRef<Record<Position, Activity[][]>>;
+const groups = inject("groups") as ComputedRef<
+	Record<Position, Activity[][]>
+>;
 
 const hasDragOver = ref(false);
 
@@ -45,13 +51,23 @@ const ctx = useContext();
 
 // 原型链保留键：这类键在普通对象上会触发原型链存取器，禁止作为配置键读写
 // （id 来自拖拽事件的 dataTransfer 文本，属外部输入）
-const UNSAFE_KEYS = new Set(["__proto__", "constructor", "prototype"]);
+const UNSAFE_KEYS = new Set([
+	"__proto__",
+	"constructor",
+	"prototype",
+]);
 
 /** 取某活动的覆盖配置（不存在则创建）；保留键返回一次性空对象，防原型污染。
  * 守卫须用显式字符串比较（Set.has 形式 CodeQL 无法识别为阻断） */
-function ensureOverride(id: string): Record<string, unknown> {
+function ensureOverride(
+	id: string,
+): Record<string, unknown> {
 	const activities = (config.value.activities ??= {});
-	if (id === "__proto__" || id === "constructor" || id === "prototype") {
+	if (
+		id === "__proto__" ||
+		id === "constructor" ||
+		id === "prototype"
+	) {
 		return {};
 	}
 	return (activities[id] ??= {});
@@ -63,7 +79,9 @@ function handleDrop(event: DragEvent) {
 	// 只响应活动栏自身的拖拽协议
 	if (!text.startsWith("activity:")) return;
 	const id = text.slice(9);
-	const list = groups.value[props.position].map(([item]) => item);
+	const list = groups.value[props.position].map(
+		([item]) => item,
+	);
 	const oldIndex = list.findIndex((item) => item.id === id);
 	// 落点即原位（含紧邻原位的前一格）时无需移动
 	if (
@@ -99,10 +117,12 @@ function handleDrop(event: DragEvent) {
 	// 介于两锚点之间的项按线性插值重算 order；
 	// 只有一侧锚点时按步长 100 单向递增 / 递减；两侧都没有则恢复默认
 	const anchorL = list.findLastIndex(
-		(item, i) => i < index && item.order === item.options.order,
+		(item, i) =>
+			i < index && item.order === item.options.order,
 	);
 	const anchorR = list.findIndex(
-		(item, i) => i > index && item.order === item.options.order,
+		(item, i) =>
+			i > index && item.order === item.options.order,
 	);
 	if (anchorL === -1) {
 		if (anchorR === -1) {
@@ -117,24 +137,36 @@ function handleDrop(event: DragEvent) {
 	} else {
 		if (anchorR === -1) {
 			let order = list[anchorL].options.order;
-			for (let index = anchorL + 1; index < list.length; index++) {
+			for (
+				let index = anchorL + 1;
+				index < list.length;
+				index++
+			) {
 				const override = ensureOverride(list[index].id);
 				override.order = order -= 100;
 			}
 		} else {
 			let orderL = list[anchorL].options.order;
 			let orderR = list[anchorR].options.order;
-			for (let index = anchorL + 1; index < anchorR; index++) {
+			for (
+				let index = anchorL + 1;
+				index < anchorR;
+				index++
+			) {
 				const override = ensureOverride(list[index].id);
 				override.order =
 					orderL +
-					((orderR - orderL) * (index - anchorL)) / (anchorR - anchorL);
+					((orderR - orderL) * (index - anchorL)) /
+						(anchorR - anchorL);
 			}
 		}
 	}
 
 	// 覆盖配置为空对象时删除该键，避免残留无意义的配置项
-	if (!Object.keys(override).length && !UNSAFE_KEYS.has(id)) {
+	if (
+		!Object.keys(override).length &&
+		!UNSAFE_KEYS.has(id)
+	) {
 		delete config.value.activities[id];
 	}
 }

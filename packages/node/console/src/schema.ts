@@ -9,10 +9,16 @@
  * 供配置界面动态渲染表单；schema 注册变动时自动刷新。
  */
 
-import type { Context, Dict, Schema } from "@koishi-ce/koishi";
+import type {
+	Context,
+	Dict,
+	Schema,
+} from "@koishi-ce/koishi";
 import { DataService } from "./service.ts";
 
-export class SchemaProvider extends DataService<Dict<Schema>> {
+export class SchemaProvider extends DataService<
+	Dict<Schema>
+> {
 	constructor(ctx: Context) {
 		super(ctx, "schema", { immediate: true });
 

@@ -9,7 +9,12 @@
  * 查询或修改当前用户的昵称（写入数据库 user.name）。
  * 其他插件可监听 `common/callme` 事件校验或拒绝昵称修改。
  */
-import { type Context, h, RuntimeError, Schema } from "@koishi-ce/koishi";
+import {
+	type Context,
+	h,
+	RuntimeError,
+	Schema,
+} from "@koishi-ce/koishi";
 import zhCN from "../locales/zh-CN.yml";
 
 // 模块增强：新增 common/callme 事件，监听者返回字符串即可拦截昵称修改。
@@ -46,7 +51,9 @@ export function apply(ctx: Context) {
 			if (!user) return;
 			if (!name) {
 				if (user.name) {
-					return session.text(".current", [session.username]);
+					return session.text(".current", [
+						session.username,
+					]);
 				} else {
 					return session.text(".unnamed");
 				}
@@ -67,7 +74,11 @@ export function apply(ctx: Context) {
 			}
 
 			// 广播 common/callme 事件：任一监听者返回字符串即视为拦截
-			const result = ctx.bail("common/callme", name, session);
+			const result = ctx.bail(
+				"common/callme",
+				name,
+				session,
+			);
 			if (result) return result;
 
 			// 昵称重名（duplicate-entry）给出专门提示，其余异常记日志并告知失败

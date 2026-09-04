@@ -10,7 +10,13 @@
  * regexp 系自定义函数的查询算子、索引、事务回滚、stats、
  * 文件库持久化与目录自动创建，以及与 memory 驱动的行为对拍。
  */
-import { afterAll, beforeAll, describe, expect, it } from "bun:test";
+import {
+	afterAll,
+	beforeAll,
+	describe,
+	expect,
+	it,
+} from "bun:test";
 import { rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
@@ -36,8 +42,16 @@ declare module "@koishi-ce/koishi" {
 		test_tx: { id: number; v: string };
 		test_alter: { id: number; v: string; extra: number };
 		test_stats: { id: number; v: string };
-		test_parity: { id: number; pid: string; authority: number };
-		test_file: { id: number; name?: string; name_old?: string };
+		test_parity: {
+			id: number;
+			pid: string;
+			authority: number;
+		};
+		test_file: {
+			id: number;
+			name?: string;
+			name_old?: string;
+		};
 	}
 }
 
@@ -52,7 +66,13 @@ app.plugin(SQLiteDriver, { path: ":memory:" });
 type TestDriver = {
 	getIndexes(
 		table: string,
-	): Promise<{ name: string; unique: boolean; keys: Record<string, string> }[]>;
+	): Promise<
+		{
+			name: string;
+			unique: boolean;
+			keys: Record<string, string>;
+		}[]
+	>;
 	createIndex(
 		table: string,
 		index: {
@@ -62,16 +82,22 @@ type TestDriver = {
 		},
 	): Promise<void>;
 	dropIndex(table: string, name: string): Promise<void>;
-	withTransaction(callback: () => Promise<void>): Promise<void>;
+	withTransaction(
+		callback: () => Promise<void>,
+	): Promise<void>;
 	stats(): Promise<{
 		size: number;
-		tables: Record<string, { count?: number; size?: number }>;
+		tables: Record<
+			string,
+			{ count?: number; size?: number }
+		>;
 	}>;
 };
 
 function getDriver(): TestDriver {
-	const drivers = (app.database as unknown as { drivers: TestDriver[] })
-		.drivers;
+	const drivers = (
+		app.database as unknown as { drivers: TestDriver[] }
+	).drivers;
 	return drivers[0]!;
 }
 
@@ -80,17 +106,25 @@ afterAll(() => app.stop());
 
 describe("SQLite CRUD", () => {
 	it("user 表 create/get/set/remove 全链路", async () => {
-		await app.database.createUser("mock", "u1", { authority: 1 });
+		await app.database.createUser("mock", "u1", {
+			authority: 1,
+		});
 		const user = await app.database.getUser("mock", "u1");
 		expect(user?.authority).toBe(1);
 
-		await app.database.setUser("mock", "u1", { authority: 3 });
-		await expect(app.database.getUser("mock", "u1")).resolves.toMatchObject({
+		await app.database.setUser("mock", "u1", {
+			authority: 3,
+		});
+		await expect(
+			app.database.getUser("mock", "u1"),
+		).resolves.toMatchObject({
 			authority: 3,
 		});
 
 		await app.database.remove("user", { id: user!.id });
-		await expect(app.database.getUser("mock", "u1")).resolves.toBeUndefined();
+		await expect(
+			app.database.getUser("mock", "u1"),
+		).resolves.toBeUndefined();
 	});
 
 	it("upsert 语义：不存在则插入、存在则更新", async () => {
@@ -108,7 +142,9 @@ describe("SQLite CRUD", () => {
 			],
 			["key"],
 		);
-		expect(await app.database.get("test_upsert", {})).toHaveLength(2);
+		expect(
+			await app.database.get("test_upsert", {}),
+		).toHaveLength(2);
 
 		// 第二轮 upsert 命中已有行，走 UPDATE 分支
 		await app.database.upsert(
@@ -116,9 +152,13 @@ describe("SQLite CRUD", () => {
 			[{ key: "k1", value: 7 }],
 			["key"],
 		);
-		const [row] = await app.database.get("test_upsert", { key: "k1" });
+		const [row] = await app.database.get("test_upsert", {
+			key: "k1",
+		});
 		expect(row?.value).toBe(7);
-		expect(await app.database.get("test_upsert", {})).toHaveLength(2);
+		expect(
+			await app.database.get("test_upsert", {}),
+		).toHaveLength(2);
 	});
 });
 
@@ -150,9 +190,13 @@ describe("SQLite 类型往返", () => {
 			big: 123n,
 		});
 		expect(row.id).toBe(1);
-		await app.database.create("test_types", { flag: false });
+		await app.database.create("test_types", {
+			flag: false,
+		});
 
-		const [got] = await app.database.get("test_types", { id: row.id });
+		const [got] = await app.database.get("test_types", {
+			id: row.id,
+		});
 		expect(got!.flag).toBe(true);
 		expect(got!.when instanceof Date).toBe(true);
 		expect(+got!.when!).toBe(+date);
@@ -163,7 +207,9 @@ describe("SQLite 类型往返", () => {
 		expect(got!.big).toBe(123n);
 
 		// boolean 查询走 define 的 +value dump 通道
-		const falsy = await app.database.get("test_types", { flag: false });
+		const falsy = await app.database.get("test_types", {
+			flag: false,
+		});
 		expect(falsy).toHaveLength(1);
 
 		// list 元素查询（$el / LIKE 通道）
@@ -181,8 +227,12 @@ describe("SQLite regexp 算子", () => {
 			{ id: "unsigned", text: "string" },
 			{ primary: "id", autoInc: true },
 		);
-		await app.database.create("test_regexp", { text: "hello" });
-		await app.database.create("test_regexp", { text: "World" });
+		await app.database.create("test_regexp", {
+			text: "hello",
+		});
+		await app.database.create("test_regexp", {
+			text: "World",
+		});
 
 		const matched = await app.database.get("test_regexp", {
 			text: { $regex: "h.llo" },
@@ -212,20 +262,26 @@ describe("SQLite 索引", () => {
 		);
 		// 触发一次建表（model.extend 的 prepare 是惰性的，driver 直调不经过
 		// database 层的 prepared 队列）
-		await app.database.create("test_indexes", { name: "n0" });
+		await app.database.create("test_indexes", {
+			name: "n0",
+		});
 		const driver = getDriver();
 		await driver.createIndex("test_indexes", {
 			name: "idx_name",
 			keys: { name: "asc" },
 		});
 		let indexes = await driver.getIndexes("test_indexes");
-		const created = indexes.find((i) => i.name === "idx_name");
+		const created = indexes.find(
+			(i) => i.name === "idx_name",
+		);
 		expect(created).toBeDefined();
 		expect(created!.keys["name"]).toBe("asc");
 
 		await driver.dropIndex("test_indexes", "idx_name");
 		indexes = await driver.getIndexes("test_indexes");
-		expect(indexes.find((i) => i.name === "idx_name")).toBeUndefined();
+		expect(
+			indexes.find((i) => i.name === "idx_name"),
+		).toBeUndefined();
 	});
 });
 
@@ -237,19 +293,25 @@ describe("SQLite 事务", () => {
 			{ primary: "id", autoInc: true },
 		);
 		// 先在事务外触发建表，避免 ROLLBACK 连 CREATE 一起回滚
-		const seeded = await app.database.create("test_tx", { v: "seed" });
+		const seeded = await app.database.create("test_tx", {
+			v: "seed",
+		});
 		await app.database.remove("test_tx", { id: seeded.id });
 
 		await app.database.withTransaction(async () => {
 			await app.database.create("test_tx", { v: "kept" });
 		});
-		await expect(app.database.get("test_tx", {})).resolves.toHaveLength(1);
+		await expect(
+			app.database.get("test_tx", {}),
+		).resolves.toHaveLength(1);
 
 		// minato 3.7 的 transact 会吞业务错误（memory 驱动行为一致），
 		// driver 层保证 ROLLBACK 生效——这里直测 driver 层的 rejects 与回滚效果
 		await expect(
 			getDriver().withTransaction(async () => {
-				await app.database.create("test_tx", { v: "rolled" });
+				await app.database.create("test_tx", {
+					v: "rolled",
+				});
 				throw new Error("rollback me");
 			}),
 		).rejects.toThrow("rollback me");
@@ -296,7 +358,10 @@ describe("SQLite stats", () => {
 });
 
 describe("SQLite 文件库", () => {
-	const dir = join(tmpdir(), `koishi-ce-sqlite-test-${Date.now()}`);
+	const dir = join(
+		tmpdir(),
+		`koishi-ce-sqlite-test-${Date.now()}`,
+	);
 	const path = join(dir, "nested", "test.db");
 
 	// 文件库双实例：同时覆盖目录自动创建、持久化与跨版本的
@@ -311,7 +376,9 @@ describe("SQLite 文件库", () => {
 			{ id: "unsigned", name_old: "string" },
 			{ primary: "id", autoInc: true },
 		);
-		await app1.database.create("test_file", { name_old: "alice" });
+		await app1.database.create("test_file", {
+			name_old: "alice",
+		});
 		await app1.stop();
 
 		// v2：同一路径重开，name 以 legacy 归并旧列，数据保留
@@ -338,7 +405,9 @@ describe("SQLite 文件库", () => {
 				await rm(dir, { recursive: true, force: true });
 				return;
 			} catch {
-				await new Promise((resolve) => setTimeout(resolve, 100));
+				await new Promise((resolve) =>
+					setTimeout(resolve, 100),
+				);
 			}
 		}
 	});
@@ -355,7 +424,11 @@ describe("与 memory 驱动行为对拍", () => {
 		for (const target of [app, appMem]) {
 			target.model.extend(
 				"test_parity",
-				{ id: "unsigned", pid: "string", authority: "integer" },
+				{
+					id: "unsigned",
+					pid: "string",
+					authority: "integer",
+				},
 				{ primary: "id", autoInc: true },
 			);
 		}
@@ -364,8 +437,14 @@ describe("与 memory 驱动行为对拍", () => {
 
 	it("同一批查询语句两驱动结果一致", async () => {
 		for (const target of [app.database, appMem.database]) {
-			await target.create("test_parity", { pid: "parity", authority: 2 });
-			await target.create("test_parity", { pid: "parity2", authority: 4 });
+			await target.create("test_parity", {
+				pid: "parity",
+				authority: 2,
+			});
+			await target.create("test_parity", {
+				pid: "parity2",
+				authority: 4,
+			});
 		}
 
 		const query = { pid: { $regex: /^parity/ } };
@@ -378,12 +457,17 @@ describe("与 memory 驱动行为对拍", () => {
 		);
 
 		// 数值比较算子
-		const filter = { pid: { $regex: /^parity/ }, authority: { $gte: 3 } };
+		const filter = {
+			pid: { $regex: /^parity/ },
+			authority: { $gte: 3 },
+		};
 		const [s2, m2] = await Promise.all([
 			app.database.get("test_parity", filter),
 			appMem.database.get("test_parity", filter),
 		]);
-		expect(s2.map((r) => r.pid)).toEqual(m2.map((r) => r.pid));
+		expect(s2.map((r) => r.pid)).toEqual(
+			m2.map((r) => r.pid),
+		);
 		expect(s2).toHaveLength(1);
 	});
 });

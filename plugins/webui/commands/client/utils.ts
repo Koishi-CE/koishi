@@ -11,8 +11,14 @@ import { Schema, store } from "@koishi-ce/client";
  * @param schema 目标 Schema
  * @param value 与该 Schema 对应的数据
  */
-export function assignSchema(schema: Schema, value: object) {
-	if (schema.type === "intersect" || schema.type === "union") {
+export function assignSchema(
+	schema: Schema,
+	value: object,
+) {
+	if (
+		schema.type === "intersect" ||
+		schema.type === "union"
+	) {
 		for (const item of schema.list ?? []) {
 			assignSchema(item, value);
 		}
@@ -21,7 +27,9 @@ export function assignSchema(schema: Schema, value: object) {
 		for (const key in value) {
 			const item = dict[key];
 			if (!item) continue;
-			dict[key] = item.default((value as Record<string, unknown>)[key]);
+			dict[key] = item.default(
+				(value as Record<string, unknown>)[key],
+			);
 		}
 	}
 }

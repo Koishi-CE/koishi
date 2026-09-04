@@ -32,7 +32,9 @@ const props = defineProps({
 const emit = defineEmits(["update:modelValue"]);
 
 // modelValue 被显式传入时才呈现手型光标并响应点击（开关语义）
-const pointer = computed(() => props.modelValue !== undefined);
+const pointer = computed(
+	() => props.modelValue !== undefined,
+);
 
 function onClick() {
 	if (!pointer.value) return;

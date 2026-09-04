@@ -81,8 +81,12 @@ export function apply(ctx: Context) {
 	ctx.schema.extend(
 		"command",
 		Schema.object({
-			usageName: Schema.string().description("调用次数的标识符。"),
-			maxUsage: Schema.computed(Schema.number(), { userFields: ["authority"] })
+			usageName: Schema.string().description(
+				"调用次数的标识符。",
+			),
+			maxUsage: Schema.computed(Schema.number(), {
+				userFields: ["authority"],
+			})
 				.default(0)
 				.description("每天的调用次数上限。"),
 			minInterval: Schema.computed(Schema.number(), {
@@ -97,7 +101,9 @@ export function apply(ctx: Context) {
 	ctx.schema.extend(
 		"command-option",
 		Schema.object({
-			notUsage: Schema.boolean().default(false).description("不计入调用次数。"),
+			notUsage: Schema.boolean()
+				.default(false)
+				.description("不计入调用次数。"),
 		}),
 		800,
 	);
@@ -106,15 +112,16 @@ export function apply(ctx: Context) {
 	ctx.before("command/attach-user", (argv, fields) => {
 		const { command, options = {} } = argv;
 		if (!command) return;
-		const { maxUsage, minInterval, bypassAuthority } = command.config;
+		const { maxUsage, minInterval, bypassAuthority } =
+			command.config;
 		let shouldFetchUsage = !!(maxUsage || minInterval);
-		for (const [name, { notUsage }] of Object.entries(command._options) as [
-			string,
-			UsageOption,
-		][]) {
+		for (const [name, { notUsage }] of Object.entries(
+			command._options,
+		) as [string, UsageOption][]) {
 			// --help 不计入调用次数（上游 koishijs/koishi#772）
 			if (name === "help") continue;
-			if (name in options && notUsage) shouldFetchUsage = false;
+			if (name in options && notUsage)
+				shouldFetchUsage = false;
 		}
 		if (shouldFetchUsage) {
 			fields.add("authority");
@@ -137,7 +144,8 @@ export function apply(ctx: Context) {
 		const bypassAuthority = session.resolve(
 			command.config.bypassAuthority ?? Infinity,
 		);
-		if (session.user.authority >= bypassAuthority) return true;
+		if (session.user.authority >= bypassAuthority)
+			return true;
 		return false;
 	}
 
@@ -147,20 +155,26 @@ export function apply(ctx: Context) {
 		if (!command || !session) return;
 		// authority / usage / timers 字段由上方 command/attach-user 钩子收集，
 		// 事件载荷的 Argv 是擦除泛型，此处还原观察类型
-		const scoped = session as Session<"authority" | "usage" | "timers">;
+		const scoped = session as Session<
+			"authority" | "usage" | "timers"
+		>;
 		if (!scoped.user) return;
 		if (bypassRateLimit(scoped, command)) return;
 
 		function sendHint(path: string, ...param: unknown[]) {
 			if (!command?.config.showWarning) return "";
-			return session?.text([`.${path}`, `internal.${path}`], param) ?? "";
+			return (
+				session?.text(
+					[`.${path}`, `internal.${path}`],
+					param,
+				) ?? ""
+			);
 		}
 
 		let isUsage = true;
-		for (const [name, { notUsage }] of Object.entries(command._options) as [
-			string,
-			UsageOption,
-		][]) {
+		for (const [name, { notUsage }] of Object.entries(
+			command._options,
+		) as [string, UsageOption][]) {
 			if (name in options && notUsage) isUsage = false;
 		}
 
@@ -168,15 +182,23 @@ export function apply(ctx: Context) {
 		if (!isUsage) return;
 
 		const name = getUsageName(command);
-		const minInterval = session.resolve(command.config.minInterval) ?? 0;
-		const maxUsage = session.resolve(command.config.maxUsage) ?? 0;
+		const minInterval =
+			session.resolve(command.config.minInterval) ?? 0;
+		const maxUsage =
+			session.resolve(command.config.maxUsage) ?? 0;
 
 		// 间隔检查应先于次数检查（上游 koishijs/koishi#752）
-		if (minInterval > 0 && checkTimer(name, scoped.user, minInterval)) {
+		if (
+			minInterval > 0 &&
+			checkTimer(name, scoped.user, minInterval)
+		) {
 			return sendHint("too-frequent");
 		}
 
-		if (maxUsage > 0 && checkUsage(name, scoped.user, maxUsage)) {
+		if (
+			maxUsage > 0 &&
+			checkUsage(name, scoped.user, maxUsage)
+		) {
 			return sendHint("usage-exhausted");
 		}
 		return;
@@ -184,13 +206,23 @@ export function apply(ctx: Context) {
 
 	// 扩展 help 的指令输出：已调用次数与下次可调用时间
 	ctx.on("help/command", (output, command, session) => {
-		if (bypassRateLimit(session as Session<"authority">, command)) return;
+		if (
+			bypassRateLimit(
+				session as Session<"authority">,
+				command,
+			)
+		)
+			return;
 
 		// help 指令输出前已按目标指令的声明 observeUser（见 help 插件 showHelp）
-		const user = session.user as User.Observed<"usage" | "timers">;
+		const user = session.user as User.Observed<
+			"usage" | "timers"
+		>;
 		const name = getUsageName(command);
-		const maxUsage = session.resolve(command.config.maxUsage) ?? Infinity;
-		const minInterval = session.resolve(command.config.minInterval) ?? 0;
+		const maxUsage =
+			session.resolve(command.config.maxUsage) ?? Infinity;
+		const minInterval =
+			session.resolve(command.config.minInterval) ?? 0;
 
 		if (maxUsage < Infinity) {
 			const count = getUsage(name, user);
@@ -217,24 +249,43 @@ export function apply(ctx: Context) {
 	});
 
 	// 扩展 help 的选项输出：为 notUsage 选项附加标注
-	ctx.on("help/option", (output, option, command, session) => {
-		if (bypassRateLimit(session as Session<"authority">, command))
+	ctx.on(
+		"help/option",
+		(output, option, command, session) => {
+			if (
+				bypassRateLimit(
+					session as Session<"authority">,
+					command,
+				)
+			)
+				return output;
+			const maxUsage = session.resolve(
+				command.config.maxUsage,
+			);
+			if (
+				(option as UsageOption).notUsage &&
+				maxUsage !== Infinity
+			) {
+				output += session.text("internal.option-not-usage");
+			}
 			return output;
-		const maxUsage = session.resolve(command.config.maxUsage);
-		if ((option as UsageOption).notUsage && maxUsage !== Infinity) {
-			output += session.text("internal.option-not-usage");
-		}
-		return output;
-	});
+		},
+	);
 
 	ctx.plugin(admin);
 }
 
 export function getUsageName(command: Command) {
-	return command.config.usageName || command.name.replace(/\./g, ":");
+	return (
+		command.config.usageName ||
+		command.name.replace(/\./g, ":")
+	);
 }
 
-export function getUsage(name: string, user: Pick<User, "usage">) {
+export function getUsage(
+	name: string,
+	user: Pick<User, "usage">,
+) {
 	const _date = Time.getDateNumber();
 	if (user.usage["_date"] !== _date) {
 		user.usage = { _date };
@@ -266,7 +317,8 @@ export function checkTimer(
 	// _date 记录到期时间：过期则清理全部已到期的定时器并续期（缺省视为已过期）
 	if (!(now <= (timers["_date"] ?? 0))) {
 		for (const key in timers) {
-			if (now > (timers[key] ?? Infinity)) delete timers[key];
+			if (now > (timers[key] ?? Infinity))
+				delete timers[key];
 		}
 		timers["_date"] = now + Time.day;
 	}

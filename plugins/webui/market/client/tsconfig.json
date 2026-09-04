@@ -6,8 +6,12 @@
 			"schemastery-vue/client": [
 				"../../../../packages/web/components/client/schemastery-vue-client.ts"
 			],
-			"@koishi-ce/plugin-config/client": ["../../config/client/index.ts"],
-			"@koishi-ce/plugin-config": ["../../config/lib/index.d.ts"],
+			"@koishi-ce/plugin-config/client": [
+				"../../config/client/index.ts"
+			],
+			"@koishi-ce/plugin-config": [
+				"../../config/lib/index.d.ts"
+			],
 			"@koishi-ce/plugin-market": ["../lib/index.d.ts"],
 			"@koishi-ce/console": [
 				"../../../../packages/node/console/lib/index.d.ts"
@@ -15,7 +19,9 @@
 			"@koishi-ce/registry": [
 				"../../../../packages/node/registry/lib/index.d.ts"
 			],
-			"@koishi-ce/koishi": ["../../../../packages/node/cli/lib/index.d.ts"]
+			"@koishi-ce/koishi": [
+				"../../../../packages/node/cli/lib/index.d.ts"
+			]
 		}
 	}
 }

@@ -2,7 +2,14 @@
 // Copyright (c) 2019-present Shigma and Koishijs contributors.
 // Copyright (c) 2026-present Koishi-CE contributors.
 
-import { afterAll, afterEach, beforeAll, describe, expect, it } from "bun:test";
+import {
+	afterAll,
+	afterEach,
+	beforeAll,
+	describe,
+	expect,
+	it,
+} from "bun:test";
 import { App } from "@koishi-ce/koishi";
 import commands from "@koishi-ce/plugin-commands";
 import * as help from "@koishi-ce/plugin-help";
@@ -81,7 +88,10 @@ describe("@koishi-ce/plugin-commands", () => {
 
 			app.command("bar").action(() => "test");
 			await client.shouldNotReply("baz");
-			await client.shouldReply("command bar -a baz", "已更新指令配置。");
+			await client.shouldReply(
+				"command bar -a baz",
+				"已更新指令配置。",
+			);
 			await client.shouldReply("baz", "test");
 			expect(fork.config).toEqual({
 				bar: {
@@ -91,7 +101,10 @@ describe("@koishi-ce/plugin-commands", () => {
 				},
 			});
 
-			await client.shouldReply("command bar -A baz", "已更新指令配置。");
+			await client.shouldReply(
+				"command bar -A baz",
+				"已更新指令配置。",
+			);
 			await client.shouldNotReply("baz");
 		});
 	});
@@ -173,7 +186,10 @@ describe("@koishi-ce/plugin-commands", () => {
 			expect(foo.children).toHaveLength(1);
 
 			const fork = app.plugin(commands, {});
-			await client.shouldReply("command bar -P -a baz", "已更新指令配置。");
+			await client.shouldReply(
+				"command bar -P -a baz",
+				"已更新指令配置。",
+			);
 			expect(foo.children).toHaveLength(0);
 			await client.shouldReply("bar", "test");
 			await client.shouldReply("baz", "test");
@@ -191,7 +207,10 @@ describe("@koishi-ce/plugin-commands", () => {
 			expect(foo.children).toHaveLength(0);
 
 			const fork = app.plugin(commands, {});
-			await client.shouldReply("command bar -p foo -a baz", "已更新指令配置。");
+			await client.shouldReply(
+				"command bar -p foo -a baz",
+				"已更新指令配置。",
+			);
 			expect(foo.children).toHaveLength(1);
 			await client.shouldReply("bar", "test");
 			await client.shouldReply("baz", "test");
@@ -210,7 +229,10 @@ describe("@koishi-ce/plugin-commands", () => {
 			expect(bar.children).toHaveLength(1);
 
 			const fork = app.plugin(commands, {});
-			await client.shouldReply("command foo -p baz", "已更新指令配置。");
+			await client.shouldReply(
+				"command foo -p baz",
+				"已更新指令配置。",
+			);
 			expect(bar.children).toHaveLength(1);
 			const baz = app.command("baz");
 			await app.sleep(0);
@@ -255,9 +277,18 @@ describe("@koishi-ce/plugin-commands", () => {
 			app.command("bar").action(() => "test");
 
 			const fork = app.plugin(commands, {});
-			await client.shouldReply("command bar -p foo -n baz", "已更新指令配置。");
-			await client.shouldReply("command foo", "指令不存在。");
-			await client.shouldReply("command foo -c", "已创建指令。");
+			await client.shouldReply(
+				"command bar -p foo -n baz",
+				"已更新指令配置。",
+			);
+			await client.shouldReply(
+				"command foo",
+				"指令不存在。",
+			);
+			await client.shouldReply(
+				"command foo -c",
+				"已创建指令。",
+			);
 
 			const foo = app.command("foo");
 			await app.sleep(0);

@@ -6,8 +6,20 @@
  * 应用装配测试：根上下文 dispose 触发整进程重载、CLI 透传的启动消息
  * 在目标机器人上线后送达一次（无 channelId 时仅注销监听）。
  */
-import { afterAll, beforeAll, describe, expect, it, mock } from "bun:test";
-import { type Context, Logger, sleep, type Universal } from "@koishi-ce/koishi";
+import {
+	afterAll,
+	beforeAll,
+	describe,
+	expect,
+	it,
+	mock,
+} from "bun:test";
+import {
+	type Context,
+	Logger,
+	sleep,
+	type Universal,
+} from "@koishi-ce/koishi";
 import type { ResolvedConfigFile } from "./config-file.ts";
 import { Loader } from "./index.ts";
 import { handleStartMessage } from "./wiring.ts";
@@ -40,7 +52,9 @@ class TestLoader extends Loader {
 	}
 
 	protected override locateConfig(): Promise<ResolvedConfigFile> {
-		throw new Error("test loader does not touch the file system");
+		throw new Error(
+			"test loader does not touch the file system",
+		);
 	}
 
 	protected override async parseConfig(): Promise<unknown> {
@@ -62,9 +76,17 @@ type StatusUpdatedBot = Parameters<
 function makeBot(
 	sid: string,
 	status: Universal.Status,
-	sendMessage: (channelId: string, content: string, guildId?: string) => void,
+	sendMessage: (
+		channelId: string,
+		content: string,
+		guildId?: string,
+	) => void,
 ) {
-	return { sid, status, sendMessage } as unknown as StatusUpdatedBot;
+	return {
+		sid,
+		status,
+		sendMessage,
+	} as unknown as StatusUpdatedBot;
 }
 
 describe("wireAppEvents", () => {
@@ -100,25 +122,45 @@ describe("handleStartMessage", () => {
 		// 机器人未上线（status 不匹配）或 sid 不匹配时不发送
 		app.emit(
 			"bot-status-updated",
-			makeBot("discord:1", 0 satisfies Universal.Status, sendMessage),
+			makeBot(
+				"discord:1",
+				0 satisfies Universal.Status,
+				sendMessage,
+			),
 		);
 		app.emit(
 			"bot-status-updated",
-			makeBot("discord:2", 1 satisfies Universal.Status, sendMessage),
+			makeBot(
+				"discord:2",
+				1 satisfies Universal.Status,
+				sendMessage,
+			),
 		);
 		expect(sendMessage).not.toHaveBeenCalled();
 
 		// 目标机器人上线：发送并注销监听
 		app.emit(
 			"bot-status-updated",
-			makeBot("discord:1", 1 satisfies Universal.Status, sendMessage),
+			makeBot(
+				"discord:1",
+				1 satisfies Universal.Status,
+				sendMessage,
+			),
 		);
-		expect(sendMessage).toHaveBeenCalledWith("c1", "hello", "g1");
+		expect(sendMessage).toHaveBeenCalledWith(
+			"c1",
+			"hello",
+			"g1",
+		);
 
 		// 再次上线不再发送（监听器已注销）
 		app.emit(
 			"bot-status-updated",
-			makeBot("discord:1", 1 satisfies Universal.Status, sendMessage),
+			makeBot(
+				"discord:1",
+				1 satisfies Universal.Status,
+				sendMessage,
+			),
 		);
 		expect(sendMessage).toHaveBeenCalledTimes(1);
 	});
@@ -133,13 +175,21 @@ describe("handleStartMessage", () => {
 		handleStartMessage(loader, app);
 		app.emit(
 			"bot-status-updated",
-			makeBot("x:1", 1 satisfies Universal.Status, sendMessage),
+			makeBot(
+				"x:1",
+				1 satisfies Universal.Status,
+				sendMessage,
+			),
 		);
 		expect(sendMessage).not.toHaveBeenCalled();
 		// 监听器已注销：再上线也不会发送
 		app.emit(
 			"bot-status-updated",
-			makeBot("x:1", 1 satisfies Universal.Status, sendMessage),
+			makeBot(
+				"x:1",
+				1 satisfies Universal.Status,
+				sendMessage,
+			),
 		);
 		expect(sendMessage).not.toHaveBeenCalled();
 	});
@@ -154,7 +204,11 @@ describe("handleStartMessage", () => {
 		handleStartMessage(loader, app);
 		app.emit(
 			"bot-status-updated",
-			makeBot("any:1", 1 satisfies Universal.Status, sendMessage),
+			makeBot(
+				"any:1",
+				1 satisfies Universal.Status,
+				sendMessage,
+			),
 		);
 		expect(sendMessage).not.toHaveBeenCalled();
 	});

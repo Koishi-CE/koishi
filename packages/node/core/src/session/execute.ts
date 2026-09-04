@@ -22,7 +22,8 @@ import { collectFields } from "./types.ts";
 const logger = new Logger("session");
 
 /** 会话命令执行层：字段收集与命令执行装配 */
-export interface SessionExecutable extends SessionLocalized {}
+export interface SessionExecutable
+	extends SessionLocalized {}
 
 export class SessionExecutable extends SessionLocalized {
 	/**
@@ -44,7 +45,8 @@ export class SessionExecutable extends SessionLocalized {
 					inters.forEach(collect);
 				}
 			}
-			const command = this.app.$commander.resolveCommand(argv);
+			const command =
+				this.app.$commander.resolveCommand(argv);
 			if (!command) return;
 			// 事件名与 fields 的具体类型由泛型 T 决定，emit 的重载无法表达该映射，
 			// 退化为运行时事件总线签名调用
@@ -54,12 +56,20 @@ export class SessionExecutable extends SessionLocalized {
 				argv: Argv,
 				fields: Set<keyof Tables[T]>,
 			) => void;
-			emit(argv.session, `command/before-attach-${key}`, argv, fields);
+			emit(
+				argv.session,
+				`command/before-attach-${key}`,
+				argv,
+				fields,
+			);
 			collectFields(
 				argv,
-				(command as unknown as Record<`_${T}Fields`, FieldCollector<T>[]>)[
-					`_${key}Fields`
-				],
+				(
+					command as unknown as Record<
+						`_${T}Fields`,
+						FieldCollector<T>[]
+					>
+				)[`_${key}Fields`],
 				fields,
 			);
 		};
@@ -78,7 +88,10 @@ export class SessionExecutable extends SessionLocalized {
 	 * 4. 预取频道/用户数据（群聊含 permissions、locales 等权限相关字段）；
 	 * 5. 进入指令的 i18n 作用域执行；next 为 true 时只返回结果不发送。
 	 */
-	override async execute(argv: string | Argv, next?: true | Next) {
+	override async execute(
+		argv: string | Argv,
+		next?: true | Next,
+	) {
 		if (typeof argv === "string") argv = Argv.parse(argv);
 
 		argv.session = this;
@@ -90,7 +103,8 @@ export class SessionExecutable extends SessionLocalized {
 					const inter = inters[i];
 					if (!inter) continue;
 					const execution = await this.execute(inter, true);
-					const transformed = await this.transform(execution);
+					const transformed =
+						await this.transform(execution);
 					output.push(transformed.join(""));
 				}
 				// 倒序回填：从后往前替换，前面的插值位置才不会因文本变长而错位
@@ -105,11 +119,16 @@ export class SessionExecutable extends SessionLocalized {
 				}
 				arg.inters = [];
 			}
-			if (!this.app.$commander.resolveCommand(argv)) return [];
+			if (!this.app.$commander.resolveCommand(argv))
+				return [];
 		} else {
-			const command = argv.command ?? this.app.$commander.get(argv.name ?? "");
+			const command =
+				argv.command ??
+				this.app.$commander.get(argv.name ?? "");
 			if (!command) {
-				logger.warn(new Error(`cannot find command ${argv.name}`));
+				logger.warn(
+					new Error(`cannot find command ${argv.name}`),
+				);
 				return [];
 			}
 			argv.command = command;
@@ -123,7 +142,11 @@ export class SessionExecutable extends SessionLocalized {
 			// 群聊需要观察频道与群两级数据；用户数据始终观察
 			if (!this.isDirect) {
 				await this.observeChannel(
-					this.collect("channel", argv, new Set(["permissions", "locales"])),
+					this.collect(
+						"channel",
+						argv,
+						new Set(["permissions", "locales"]),
+					),
 				);
 			}
 			await this.observeUser(
@@ -138,14 +161,17 @@ export class SessionExecutable extends SessionLocalized {
 		// next === true 表示本次调用是被别处（如插值）复用的内部执行，不发送结果
 		const shouldEmit = next !== true;
 
-		return this.withScope(`commands.${command.name}.messages`, async () => {
-			const result = await command.execute(
-				argv as Argv,
-				next === true ? undefined : next,
-			);
-			if (!shouldEmit) return h.normalize(result);
-			await this.send(result);
-			return [];
-		});
+		return this.withScope(
+			`commands.${command.name}.messages`,
+			async () => {
+				const result = await command.execute(
+					argv as Argv,
+					next === true ? undefined : next,
+				);
+				if (!shouldEmit) return h.normalize(result);
+				await this.send(result);
+				return [];
+			},
+		);
 	}
 }

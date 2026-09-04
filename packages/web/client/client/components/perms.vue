@@ -32,7 +32,10 @@
 // schemastery-vue 链接(它是 components 的依赖,Bun 隔离布局下不跨包可见)
 
 import { store } from "@koishi-ce/client";
-import { type Schema, SchemaBase } from "@koishi-ce/components";
+import {
+	type Schema,
+	SchemaBase,
+} from "@koishi-ce/components";
 import type { CascaderOption } from "element-plus";
 import { computed, type PropType } from "vue";
 
@@ -53,15 +56,29 @@ const config = SchemaBase.useModel();
  * 逐段查找/创建级联节点；中间段（还有下级时）标记为 disabled，
  * 因为 el-cascader 的父节点勾选会影响子级，而中间段并非真实权限。
  */
-function addNode(nodes: CascaderOption[], path: string[], prefix = "") {
+function addNode(
+	nodes: CascaderOption[],
+	path: string[],
+	prefix = "",
+) {
 	const name = path.shift();
-	let node = nodes.find((node) => node.value === prefix + name);
+	let node = nodes.find(
+		(node) => node.value === prefix + name,
+	);
 	if (!node) {
-		node = { value: prefix + name, label: name, disabled: !!path.length };
+		node = {
+			value: prefix + name,
+			label: name,
+			disabled: !!path.length,
+		};
 		nodes.push(node);
 	}
 	if (!path.length) return;
-	addNode((node.children ||= []), path, `${prefix + name}:`);
+	addNode(
+		(node.children ||= []),
+		path,
+		`${prefix + name}:`,
+	);
 }
 
 // 由全部权限名构建级联选项树

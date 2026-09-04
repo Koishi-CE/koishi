@@ -9,7 +9,12 @@
  * `useTooltip()` 组合式函数：跟随指针移动、支持延迟隐藏与内容清理。
  */
 import { useEventListener } from "@vueuse/core";
-import { computed, reactive, ref, type StyleValue } from "vue";
+import {
+	computed,
+	reactive,
+	ref,
+	type StyleValue,
+} from "vue";
 
 /** 统一的指针位置（兼容鼠标事件与触摸事件）。 */
 export interface Pointer {
@@ -23,8 +28,11 @@ export interface Pointer {
  * @param event 鼠标或触摸事件
  * @returns 触点的 clientX/clientY；触摸事件无触点时回退为事件自身
  */
-export function getEventPoint(event: MouseEvent | TouchEvent): Pointer {
-	if (!event.type.startsWith("touch")) return event as MouseEvent;
+export function getEventPoint(
+	event: MouseEvent | TouchEvent,
+): Pointer {
+	if (!event.type.startsWith("touch"))
+		return event as MouseEvent;
 	const touch = [
 		...(event as TouchEvent).targetTouches,
 		...(event as TouchEvent).changedTouches,
@@ -61,7 +69,10 @@ export function useTooltip() {
 		};
 	});
 
-	function activate(text: string, event: MouseEvent | TouchEvent) {
+	function activate(
+		text: string,
+		event: MouseEvent | TouchEvent,
+	) {
 		const pointer = getEventPoint(event);
 		content.value = text;
 		active.value = true;

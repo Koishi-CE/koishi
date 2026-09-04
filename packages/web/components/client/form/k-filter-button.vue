@@ -77,12 +77,20 @@ const operators: Record<string, string> = {
  * 把 minato 风格的过滤表达式递归转成中文摘要，
  * 如「用户 ID 属于 123 且 平台 等于 discord」。
  */
-function toDesc(expr: FilterExpr | null | undefined): string {
+function toDesc(
+	expr: FilterExpr | null | undefined,
+): string {
 	if (!expr) return "";
 	if (expr.$and) {
-		return expr.$and.map(toDesc).filter(Boolean).join(" 且 ");
+		return expr.$and
+			.map(toDesc)
+			.filter(Boolean)
+			.join(" 且 ");
 	} else if (expr.$or) {
-		return expr.$or.map(toDesc).filter(Boolean).join(" 或 ");
+		return expr.$or
+			.map(toDesc)
+			.filter(Boolean)
+			.join(" 或 ");
 	} else {
 		const op = Object.keys(expr)[0];
 		const operand = op ? expr[op] : undefined;

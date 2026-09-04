@@ -45,7 +45,8 @@ function format(name: string) {
  */
 function getName(plugin: Plugin) {
 	if (!plugin) return "App";
-	if (!plugin.name || plugin.name === "apply") return "Anonymous";
+	if (!plugin.name || plugin.name === "apply")
+		return "Anonymous";
 	return format(plugin.name);
 }
 
@@ -81,7 +82,12 @@ class Insight extends DataService<Insight.Payload> {
 						`${process.env["KOISHI_BASE"]}/dist/style.css`,
 					]
 				: process.env["KOISHI_ENV"] === "browser"
-					? [import.meta.url.replace(/\/src\/[^/]+$/, "/client/index.ts")]
+					? [
+							import.meta.url.replace(
+								/\/src\/[^/]+$/,
+								"/client/index.ts",
+							),
+						]
 					: {
 							dev: resolve(__dirname, "../client/index.ts"),
 							prod: resolve(__dirname, "../dist"),
@@ -186,14 +192,17 @@ class Insight extends DataService<Insight.Payload> {
 
 			/** 为指定 scope 的必需注入（inject 中 required 的服务）生成虚线依赖边。 */
 			const addDeps = (state: EffectScope) => {
-				for (const [name, meta] of Object.entries(runtime.inject)) {
+				for (const [name, meta] of Object.entries(
+					runtime.inject,
+				)) {
 					if (!meta.required) continue;
 					const instance = this.ctx.get(name);
 					if (!(instance instanceof Object)) continue;
-					const ctx: Context = Reflect.getOwnPropertyDescriptor(
-						instance,
-						Context.current,
-					)?.value;
+					const ctx: Context =
+						Reflect.getOwnPropertyDescriptor(
+							instance,
+							Context.current,
+						)?.value;
 					const uid = ctx?.state.uid;
 					if (!uid) continue;
 					addEdge("dashed", uid, state.uid);

@@ -24,8 +24,12 @@ describe("Parser API", () => {
 			cmd = app.command("cmd1 <foo> [...bar]");
 			expect(cmd.parse("")).toHaveShape({ args: [] });
 			expect(cmd.parse("a")).toHaveShape({ args: ["a"] });
-			expect(cmd.parse("a b")).toHaveShape({ args: ["a", "b"] });
-			expect(cmd.parse("a b c")).toHaveShape({ args: ["a", "b", "c"] });
+			expect(cmd.parse("a b")).toHaveShape({
+				args: ["a", "b"],
+			});
+			expect(cmd.parse("a b c")).toHaveShape({
+				args: ["a", "b", "c"],
+			});
 		});
 
 		// stringify：args / options 还原为命令行文本，含空格的值补引号，
@@ -34,11 +38,21 @@ describe("Parser API", () => {
 			cmd = app.command("cmd4");
 			cmd.option("alpha", "-a <val>");
 			cmd.option("beta", "-b");
-			expect(cmd.stringify(["foo", "bar"], {})).toBe("cmd4 foo bar");
-			expect(cmd.stringify([], { alpha: 2 })).toBe("cmd4 --alpha 2");
-			expect(cmd.stringify([], { alpha: " " })).toBe('cmd4 --alpha " "');
-			expect(cmd.stringify([], { beta: true })).toBe("cmd4 --beta");
-			expect(cmd.stringify([], { beta: false })).toBe("cmd4 --no-beta");
+			expect(cmd.stringify(["foo", "bar"], {})).toBe(
+				"cmd4 foo bar",
+			);
+			expect(cmd.stringify([], { alpha: 2 })).toBe(
+				"cmd4 --alpha 2",
+			);
+			expect(cmd.stringify([], { alpha: " " })).toBe(
+				'cmd4 --alpha " "',
+			);
+			expect(cmd.stringify([], { beta: true })).toBe(
+				"cmd4 --beta",
+			);
+			expect(cmd.stringify([], { beta: false })).toBe(
+				"cmd4 --no-beta",
+			);
 		});
 	});
 
@@ -54,13 +68,19 @@ describe("Parser API", () => {
 			// 通过定义串标注参数类型
 			cmd.option("delta", "-d <delta:string>");
 			// 直接给定参数类型时，不应被默认值覆盖
-			cmd.option("epsilon", "-e <epsilon:posint>", { fallback: 1 });
+			cmd.option("epsilon", "-e <epsilon:posint>", {
+				fallback: 1,
+			});
 		});
 
 		// 选项基础解析：boolean 化、取值消费、负数取值、--no- 取反
 		it("option parser", () => {
-			expect(cmd.parse("--alpha")).toHaveShape({ options: { alpha: true } });
-			expect(cmd.parse("--beta")).toHaveShape({ options: { beta: 0 } });
+			expect(cmd.parse("--alpha")).toHaveShape({
+				options: { alpha: true },
+			});
+			expect(cmd.parse("--beta")).toHaveShape({
+				options: { beta: 0 },
+			});
 			expect(cmd.parse("--no-alpha")).toHaveShape({
 				options: { alpha: false },
 			});
@@ -70,15 +90,24 @@ describe("Parser API", () => {
 			expect(cmd.parse("--alpha 1")).toHaveShape({
 				options: { alpha: true },
 			});
-			expect(cmd.parse("--beta 1")).toHaveShape({ options: { beta: 1 } });
-			expect(cmd.parse('--beta "1"')).toHaveShape({ options: { beta: 1 } });
-			expect(cmd.parse("--beta -1")).toHaveShape({ options: { beta: -1 } });
+			expect(cmd.parse("--beta 1")).toHaveShape({
+				options: { beta: 1 },
+			});
+			expect(cmd.parse('--beta "1"')).toHaveShape({
+				options: { beta: 1 },
+			});
+			expect(cmd.parse("--beta -1")).toHaveShape({
+				options: { beta: -1 },
+			});
 		});
 
 		// 类型化选项：类型不符时报错；string 类型接受任意文本；
 		// posint 拒绝非正整数
 		it("typed options", () => {
-			expect(cmd.parse("")).toHaveShape({ error: "", options: { gamma: 0 } });
+			expect(cmd.parse("")).toHaveShape({
+				error: "",
+				options: { gamma: 0 },
+			});
 			expect(cmd.parse("--gamma")).toHaveShape({
 				error: "",
 				options: { gamma: 0 },
@@ -104,7 +133,9 @@ describe("Parser API", () => {
 				error: "",
 				options: { delta: "-1" },
 			});
-			expect(cmd.parse("--epsilon awee").error).toBeTruthy();
+			expect(
+				cmd.parse("--epsilon awee").error,
+			).toBeTruthy();
 			expect(cmd.parse("--epsilon 1.2").error).toBeTruthy();
 		});
 
@@ -134,18 +165,33 @@ describe("Parser API", () => {
 		it("greedy arguments", () => {
 			expect(cmd.parse("")).toHaveShape({ args: [] });
 			expect(cmd.parse("a")).toHaveShape({ args: ["a"] });
-			expect(cmd.parse("a b")).toHaveShape({ args: ["a", "b"] });
-			expect(cmd.parse("a b c")).toHaveShape({ args: ["a", "b c"] });
-			expect(cmd.parse("-a b c")).toHaveShape({ args: ["b", "c"] });
-			expect(cmd.parse("a -b c")).toHaveShape({ args: ["a"] });
-			expect(cmd.parse("a b -c")).toHaveShape({ args: ["a", "b -c"] });
+			expect(cmd.parse("a b")).toHaveShape({
+				args: ["a", "b"],
+			});
+			expect(cmd.parse("a b c")).toHaveShape({
+				args: ["a", "b c"],
+			});
+			expect(cmd.parse("-a b c")).toHaveShape({
+				args: ["b", "c"],
+			});
+			expect(cmd.parse("a -b c")).toHaveShape({
+				args: ["a"],
+			});
+			expect(cmd.parse("a b -c")).toHaveShape({
+				args: ["a", "b -c"],
+			});
 		});
 
 		// 严格选项模式：未注册的选项写法一律按普通参数处理
 		it("strict options", () => {
-			cmd = app.command("test-strict", { strictOptions: true });
+			cmd = app.command("test-strict", {
+				strictOptions: true,
+			});
 			cmd.option("gamma", "-c", { value: 1 });
-			expect(cmd.parse("-a")).toHaveShape({ options: {}, args: ["-a"] });
+			expect(cmd.parse("-a")).toHaveShape({
+				options: {},
+				args: ["-a"],
+			});
 			expect(cmd.parse("--alpha")).toHaveShape({
 				options: {},
 				args: ["--alpha"],
@@ -154,7 +200,9 @@ describe("Parser API", () => {
 				options: {},
 				args: ["--no-alpha"],
 			});
-			expect(cmd.parse("-c")).toHaveShape({ options: { gamma: 1 } });
+			expect(cmd.parse("-c")).toHaveShape({
+				options: { gamma: 1 },
+			});
 		});
 
 		// 贪婪参数 + 严格选项：未注册选项整体作为贪婪文本的收入
@@ -163,23 +211,38 @@ describe("Parser API", () => {
 			cmd = app.command("test-greedy-strict [foo:text]", {
 				strictOptions: true,
 			});
-			expect(cmd.parse("-a -b -c")).toHaveShape({ args: ["-a -b -c"] });
+			expect(cmd.parse("-a -b -c")).toHaveShape({
+				args: ["-a -b -c"],
+			});
 		});
 
 		// 固定取值（value）选项：出现即取预设值；
 		// 带默认值时未传入也填充
 		it("valued options", () => {
 			cmd = app.command("cmd2 <foo> [bar:text]");
-			cmd.option("alpha", "-A, --no-alpha", { value: false });
+			cmd.option("alpha", "-A, --no-alpha", {
+				value: false,
+			});
 			cmd.option("gamma", "-C", { value: 1 });
-			expect(cmd.parse("-A")).toHaveShape({ options: { alpha: false } });
-			expect(cmd.parse("-a")).toHaveShape({ options: { alpha: true } });
-			expect(cmd.parse("--alpha")).toHaveShape({ options: { alpha: true } });
+			expect(cmd.parse("-A")).toHaveShape({
+				options: { alpha: false },
+			});
+			expect(cmd.parse("-a")).toHaveShape({
+				options: { alpha: true },
+			});
+			expect(cmd.parse("--alpha")).toHaveShape({
+				options: { alpha: true },
+			});
 			expect(cmd.parse("--no-alpha")).toHaveShape({
 				options: { alpha: false },
 			});
-			expect(cmd.parse("-C")).toHaveShape({ options: { gamma: 1 } });
-			expect(cmd.parse("")).toHaveShape({ options: { gamma: 0 }, args: [] });
+			expect(cmd.parse("-C")).toHaveShape({
+				options: { gamma: 1 },
+			});
+			expect(cmd.parse("")).toHaveShape({
+				options: { gamma: 0 },
+				args: [],
+			});
 		});
 
 		// 同一选项的多种写法取不同固定值：后注册的变体可覆盖默认行为
@@ -200,7 +263,9 @@ describe("Parser API", () => {
 		// 类型化参数：变长 number 参数把每个 token 强转为数字
 		it("typed arguments", () => {
 			cmd = app.command("test3 [...args:number]");
-			expect(cmd.parse("1 2 -3")).toHaveShape({ args: [1, 2, -3] });
+			expect(cmd.parse("1 2 -3")).toHaveShape({
+				args: [1, 2, -3],
+			});
 		});
 	});
 
@@ -224,8 +289,13 @@ describe("Parser API", () => {
 		// 注销选项后，原写法退化为普通参数
 		it("remove option", () => {
 			expect(cmd.removeOption("sharp" as never)).toBe(true);
-			expect(cmd.parse("# 1")).toHaveShape({ args: ["#", "1"], options: {} });
-			expect(cmd.removeOption("sharp" as never)).toBe(false);
+			expect(cmd.parse("# 1")).toHaveShape({
+				args: ["#", "1"],
+				options: {},
+			});
+			expect(cmd.removeOption("sharp" as never)).toBe(
+				false,
+			);
 		});
 
 		// "--" 剩余选项：其后的内容整体作为 text 值，引号与终止符不特殊处理
@@ -275,20 +345,28 @@ describe("Parser API", () => {
 			expect(cmd.parse("-- foo bar baz", ";")).toHaveShape({
 				options: { rest: "foo bar baz" },
 			});
-			expect(cmd.parse('-- "foo bar" baz', ";")).toHaveShape({
+			expect(
+				cmd.parse('-- "foo bar" baz', ";"),
+			).toHaveShape({
 				options: { rest: '"foo bar" baz' },
 			});
-			expect(cmd.parse('-- "foo bar baz"', ";")).toHaveShape({
+			expect(
+				cmd.parse('-- "foo bar baz"', ";"),
+			).toHaveShape({
 				options: { rest: '"foo bar baz"' },
 			});
 			expect(cmd.parse("-- foo;bar baz", ";")).toHaveShape({
 				options: { rest: "foo" },
 				rest: "bar baz",
 			});
-			expect(cmd.parse('-- "foo;bar" baz', ";")).toHaveShape({
+			expect(
+				cmd.parse('-- "foo;bar" baz', ";"),
+			).toHaveShape({
 				options: { rest: '"foo;bar" baz' },
 			});
-			expect(cmd.parse('-- "foo;bar";baz', ";")).toHaveShape({
+			expect(
+				cmd.parse('-- "foo;bar";baz', ";"),
+			).toHaveShape({
 				options: { rest: '"foo;bar"' },
 				rest: "baz",
 			});
@@ -307,7 +385,9 @@ describe("Parser API", () => {
 			expect(cmd.parse("<p></p>")).toHaveShape({
 				error: "internal.invalid-argument",
 			});
-			expect(cmd.parse('<p><img src="/"/></p>')).toHaveShape({
+			expect(
+				cmd.parse('<p><img src="/"/></p>'),
+			).toHaveShape({
 				args: [{ src: "/" }],
 			});
 		});

@@ -148,7 +148,10 @@ watch(
 		schema.value = {
 			config: createSchema("command", initial.config),
 			options: valueMap(initial.options, (_, key) =>
-				createSchema("command-option", initial.options[key]),
+				createSchema(
+					"command-option",
+					initial.options[key],
+				),
 			),
 		};
 		current.value = clone(override);
@@ -178,7 +181,11 @@ function setDefault(name: string) {
 		[name]: item,
 		...current.value.aliases,
 	};
-	void send("command/aliases", props.command.name, current.value.aliases);
+	void send(
+		"command/aliases",
+		props.command.name,
+		current.value.aliases,
+	);
 }
 
 // 删除别名：初始就有的别名改为置 filter=false（禁用），后续新增的直接移除
@@ -188,22 +195,35 @@ function deleteAlias(name: string) {
 	} else {
 		delete current.value.aliases[name];
 	}
-	void send("command/aliases", props.command.name, current.value.aliases);
+	void send(
+		"command/aliases",
+		props.command.name,
+		current.value.aliases,
+	);
 }
 
 // 恢复被禁用的初始别名
 function recoverAlias(name: string) {
-	current.value.aliases[name] = props.command.initial.aliases[name];
-	void send("command/aliases", props.command.name, current.value.aliases);
+	current.value.aliases[name] =
+		props.command.initial.aliases[name];
+	void send(
+		"command/aliases",
+		props.command.name,
+		current.value.aliases,
+	);
 }
 
 // 把别名携带的参数 / 选项还原成可读文本（如 "--foo=bar baz"）
 function stringify(alias: Command.Alias) {
 	return [
 		...(alias?.args || []),
-		...Object.entries(alias?.options || {}).map(([key, value]) => {
-			return value === true ? `--${key}` : `--${key}=${value}`;
-		}),
+		...Object.entries(alias?.options || {}).map(
+			([key, value]) => {
+				return value === true
+					? `--${key}`
+					: `--${key}=${value}`;
+			},
+		),
 	].join(" ");
 }
 
@@ -223,7 +243,9 @@ const aliases = computed(() => {
 
 // 新别名为空或与现有别名冲突时无效
 const invalidName = computed(() => {
-	return !inputName.value || !!aliases.value[inputName.value];
+	return (
+		!inputName.value || !!aliases.value[inputName.value]
+	);
 });
 
 // 服务端解析「别名参数」输入的实时结果（含 error 字段供校验）
@@ -257,7 +279,11 @@ async function onEnter() {
 	} else {
 		current.value.aliases[inputName.value] = {};
 	}
-	await send("command/aliases", props.command.name, current.value.aliases);
+	await send(
+		"command/aliases",
+		props.command.name,
+		current.value.aliases,
+	);
 	showAliasDialog.value = false;
 	inputSource.value = "";
 }

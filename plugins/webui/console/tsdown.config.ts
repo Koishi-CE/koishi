@@ -11,5 +11,9 @@ import { defineConfig } from "tsdown";
  * lib/browser/index.mjs（上游 5.30 生态约定布局），缺一则包解析失败。
  */
 export default defineConfig({
-	entry: ["src/index.ts", "src/node/index.ts", "src/browser/index.ts"],
+	entry: [
+		"src/index.ts",
+		"src/node/index.ts",
+		"src/browser/index.ts",
+	],
 });

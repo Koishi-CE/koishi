@@ -9,7 +9,13 @@
  * deprecated 的 parsed 访问器与无元素会话的 stripped 空对象、
  * 昵称剥离的分隔符边界（@ 前缀、中文逗号、无分隔符、无匹配）。
  */
-import { afterAll, beforeAll, describe, expect, it } from "bun:test";
+import {
+	afterAll,
+	beforeAll,
+	describe,
+	expect,
+	it,
+} from "bun:test";
 import {
 	App,
 	collectFields,
@@ -26,7 +32,10 @@ const bot = app.bots[0]!;
 beforeAll(() => app.start());
 afterAll(() => app.stop());
 
-function createSession(user?: { id: string; name?: string }) {
+function createSession(user?: {
+	id: string;
+	name?: string;
+}) {
 	return bot.session({
 		platform: "mock",
 		// exactOptionalPropertyTypes 下可选属性不接受显式 undefined，按存在性条件展开
@@ -36,13 +45,21 @@ function createSession(user?: { id: string; name?: string }) {
 
 describe("Session Core", () => {
 	it("username 优先取用户库昵称", () => {
-		const session = createSession({ id: "1", name: "作者名" });
-		(session as unknown as { user: object }).user = { name: "库昵称" };
+		const session = createSession({
+			id: "1",
+			name: "作者名",
+		});
+		(session as unknown as { user: object }).user = {
+			name: "库昵称",
+		};
 		expect(session.username).toBe("库昵称");
 	});
 
 	it("username 回退到作者名", () => {
-		const session = createSession({ id: "1", name: "作者名" });
+		const session = createSession({
+			id: "1",
+			name: "作者名",
+		});
 		expect(session.username).toBe("作者名");
 	});
 
@@ -70,7 +87,10 @@ describe("Session Core", () => {
 		//（stripped 有惰性缓存，每个用例用独立会话）
 		const s1 = createSession({ id: "1" });
 		s1.content = "kou, foo";
-		expect(s1.stripped).toHaveShape({ content: "foo", appel: true });
+		expect(s1.stripped).toHaveShape({
+			content: "foo",
+			appel: true,
+		});
 		const s2 = createSession({ id: "1" });
 		s2.content = "kou foo";
 		expect(s2.stripped.content).toBe("foo");
@@ -80,7 +100,10 @@ describe("Session Core", () => {
 		// 昵称后无分隔符不视为称呼
 		const s4 = createSession({ id: "1" });
 		s4.content = "koufoo";
-		expect(s4.stripped).toHaveShape({ content: "koufoo", appel: false });
+		expect(s4.stripped).toHaveShape({
+			content: "koufoo",
+			appel: false,
+		});
 		// 不匹配任何昵称时正文原样保留
 		const s5 = createSession({ id: "1" });
 		s5.content = "bar";
@@ -93,9 +116,13 @@ describe("Session Core", () => {
 		// nickname 运行时是 Computed 配置（亦接受函数），Config 类型只声明了静态形态，
 		// 经扩展视图按运行时形态赋值
 		const config = app.koishi.config as unknown as {
-			nickname?: string | string[] | ((session: Session) => string[]);
+			nickname?:
+				| string
+				| string[]
+				| ((session: Session) => string[]);
 		};
-		config.nickname = (session) => (session.userId === "1" ? ["kou"] : []);
+		config.nickname = (session) =>
+			session.userId === "1" ? ["kou"] : [];
 		const session = createSession({ id: "1" });
 		session.content = "kou, foo";
 		expect(session.stripped.content).toBe("foo");
@@ -115,8 +142,14 @@ describe("Session Core", () => {
 		const fields = collectFields(
 			argv,
 			collectors,
-			new Set<string>() as unknown as Parameters<typeof collectFields>[2],
+			new Set<string>() as unknown as Parameters<
+				typeof collectFields
+			>[2],
 		) as Set<string>;
-		expect([...fields].sort()).toEqual(["alpha", "beta", "gamma"]);
+		expect([...fields].sort()).toEqual([
+			"alpha",
+			"beta",
+			"gamma",
+		]);
 	});
 });

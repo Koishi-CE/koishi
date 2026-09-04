@@ -33,21 +33,32 @@ interface BuildResult {
 // 将全部工作区包名映射到其源码目录,行为对齐根 tsconfig 的 paths 别名。
 // 没有被任何工作区包依赖的插件(如 plugin-logger)不会出现在 node_modules
 // 的链接里,bundler 无法按包名解析,必须显式提供这层映射。
-async function collectWorkspaceAliases(): Promise<Record<string, string>> {
+async function collectWorkspaceAliases(): Promise<
+	Record<string, string>
+> {
 	// 源码形态(src/)与产物形态(lib/)都在包根下一级,上跳四级到仓库根一致
-	const repoRoot = resolve(import.meta.dir, "../../../..").replace(/\\/g, "/");
-	const manifest = await Bun.file(`${repoRoot}/package.json`).json();
+	const repoRoot = resolve(
+		import.meta.dir,
+		"../../../..",
+	).replace(/\\/g, "/");
+	const manifest = await Bun.file(
+		`${repoRoot}/package.json`,
+	).json();
 	const aliases: Record<string, string> = {};
 	for (const pattern of manifest.workspaces ?? []) {
 		// scanSync 产出的相对路径在 Windows 上是反斜杠,统一归一化为正斜杠
-		const files = new Bun.Glob(`${pattern}/package.json`).scanSync({
+		const files = new Bun.Glob(
+			`${pattern}/package.json`,
+		).scanSync({
 			cwd: repoRoot,
 		});
 		for (const file of files) {
 			const rel = file.replaceAll("\\", "/");
 			const dir = `${repoRoot}/${rel.slice(0, -"/package.json".length)}`;
 			try {
-				const { name } = await Bun.file(`${dir}/package.json`).json();
+				const { name } = await Bun.file(
+					`${dir}/package.json`,
+				).json();
 				if (!name) continue;
 				// 控制台前端语境下,裸包名对到浏览器端入口(替代上游 lib 的 browser
 				// 导出条件);`<name>/src` 子路径对到源码目录,供共享代码引用;
@@ -56,9 +67,13 @@ async function collectWorkspaceAliases(): Promise<Record<string, string>> {
 				// 上游与 npm 产物的 exports 均未声明它,同样靠仓库内别名解析)。
 				// 子路径键必须先插入——别名解析按插入序取首个命中项
 				const clientEntry = `${dir}/client/index.ts`;
-				if (existsSync(`${dir}/src`)) aliases[`${name}/src`] = `${dir}/src`;
-				if (existsSync(clientEntry)) aliases[`${name}/client`] = clientEntry;
-				aliases[name] = existsSync(clientEntry) ? clientEntry : `${dir}/src`;
+				if (existsSync(`${dir}/src`))
+					aliases[`${name}/src`] = `${dir}/src`;
+				if (existsSync(clientEntry))
+					aliases[`${name}/client`] = clientEntry;
+				aliases[name] = existsSync(clientEntry)
+					? clientEntry
+					: `${dir}/src`;
 			} catch {}
 		}
 	}
@@ -72,7 +87,10 @@ const workspaceAliases = await collectWorkspaceAliases();
 // 类型面由根 tsconfig.client.json 的 paths 解析到 schemastery-vue-client.ts
 const runtimeShimPath = (
 	workspaceAliases["@koishi-ce/components"] ?? ""
-).replace(/client\/index\.ts$/, "client/schemastery-vue-runtime.ts");
+).replace(
+	/client\/index\.ts$/,
+	"client/schemastery-vue-runtime.ts",
+);
 
 /**
  * 构建单个 webui 插件的前端产物。
@@ -80,7 +98,10 @@ const runtimeShimPath = (
  * @param root 插件目录（无 `client/` 子目录时视为该插件没有前端，直接跳过）
  * @param config 额外的 vite 配置，逐层合并覆盖下方默认值
  */
-export async function build(root: string, config: vite.UserConfig = {}) {
+export async function build(
+	root: string,
+	config: vite.UserConfig = {},
+) {
 	if (!existsSync(`${root}/client`)) return;
 
 	// 插件可自带 `build/client.ts` 导出额外的 vite 配置覆盖下方默认值
@@ -88,7 +109,9 @@ export async function build(root: string, config: vite.UserConfig = {}) {
 	// 如 analytics 的 fuck-echarts 符号遮蔽修补
 	const overridePath = `${root}/build/client.ts`;
 	if (existsSync(overridePath)) {
-		const mod = await import(pathToFileURL(overridePath).href);
+		const mod = await import(
+			pathToFileURL(overridePath).href
+		);
 		config = vite.mergeConfig(config, mod.default ?? mod);
 	}
 
@@ -124,7 +147,9 @@ export async function build(root: string, config: vite.UserConfig = {}) {
 						// 仓库侧无法根治，直接静默
 						onwarn(warning, warn) {
 							if (
-								warning.message.includes("is being imported multiple times")
+								warning.message.includes(
+									"is being imported multiple times",
+								)
 							) {
 								return;
 							}
@@ -171,7 +196,8 @@ export async function build(root: string, config: vite.UserConfig = {}) {
 						// 源码发布的组件库），其内部以 npm 名引用组件库；重定向到
 						// 本仓库同版本（1.5.22）components 源码，避免 npm 版整套
 						// 组件库被打进插件产物
-						"@koishijs/components": workspaceAliases["@koishi-ce/components"],
+						"@koishijs/components":
+							workspaceAliases["@koishi-ce/components"],
 						// 虚拟子路径的运行时载体（补齐真实包缺失的 SchemaBase
 						// 具名导出）；类型面由 tsconfig.client.json 的 paths
 						// 解析到 schemastery-vue-client.ts

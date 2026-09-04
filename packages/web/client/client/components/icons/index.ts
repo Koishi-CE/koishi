@@ -116,7 +116,10 @@ register("undo", Undo);
 register("user", User);
 
 /** 向注册表登记一个图标（markRaw 避免组件被响应式代理） */
-export function register(name: string, component: Component) {
+export function register(
+	name: string,
+	component: Component,
+) {
 	registry[name] = markRaw(component);
 }
 
@@ -129,7 +132,9 @@ export function install(app: App) {
 				name: String,
 			},
 			render(props: { name?: string }) {
-				const component = props.name ? registry[props.name] : undefined;
+				const component = props.name
+					? registry[props.name]
+					: undefined;
 				return component && h(component);
 			},
 		}),

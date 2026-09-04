@@ -47,17 +47,26 @@ export function interpolate(
 	let from = 0;
 	let index = template.indexOf(start);
 	while (index >= 0) {
-		const close = template.indexOf(end, index + start.length);
+		const close = template.indexOf(
+			end,
+			index + start.length,
+		);
 		// 无闭合定界符：剩余部分原样保留
 		if (close < 0) break;
-		const content = template.slice(index + start.length, close);
+		const content = template.slice(
+			index + start.length,
+			close,
+		);
 		if (!content) {
 			// 空内容不构成占位符（原 `+?` 量词要求至少一个字符），从下一字符继续找
 			index = template.indexOf(start, index + 1);
 			continue;
 		}
 		// 整串就是单个占位符：保留求值结果的原始类型
-		if (index === 0 && close + end.length === template.length) {
+		if (
+			index === 0 &&
+			close + end.length === template.length
+		) {
 			return evaluate(context, content);
 		}
 		result += template.slice(from, index);
@@ -73,5 +82,7 @@ export function interpolate(
  * 连字符转义为 \x2d 以避免被误解析为字符类范围（即便脱离 [...] 上下文）。
  */
 export function escapeRegExp(source: string) {
-	return source.replace(/[|\\{}()[\]^$+*?.]/g, "\\$&").replace(/-/g, "\\x2d");
+	return source
+		.replace(/[|\\{}()[\]^$+*?.]/g, "\\$&")
+		.replace(/-/g, "\\x2d");
 }

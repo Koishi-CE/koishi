@@ -14,7 +14,9 @@
 import { DataService } from "@koishi-ce/console";
 import { Context, type Dict } from "@koishi-ce/koishi";
 
-export class ServiceProvider extends DataService<Dict<number>> {
+export class ServiceProvider extends DataService<
+	Dict<number>
+> {
 	constructor(ctx: Context) {
 		super(ctx, "services");
 		// 任何服务的注册 / 注销都会改变统计结果
@@ -28,21 +30,28 @@ export class ServiceProvider extends DataService<Dict<number>> {
 		 *
 		 * @param internal 当前层级的 internal 对象
 		 */
-		const attach = (internal: Context[typeof Context.internal]) => {
+		const attach = (
+			internal: Context[typeof Context.internal],
+		) => {
 			if (!internal) return;
 			attach(Object.getPrototypeOf(internal));
-			for (const [key, { type }] of Object.entries(internal)) {
+			for (const [key, { type }] of Object.entries(
+				internal,
+			)) {
 				if (type !== "service") continue;
 				const instance = this.ctx.get(key);
 				if (!(instance instanceof Object)) continue;
 				// Context.current 是个访问器属性，其值即服务实例所属的上下文
-				const ctx: Context = Reflect.getOwnPropertyDescriptor(
-					instance,
-					Context.current,
-				)?.value;
+				const ctx: Context =
+					Reflect.getOwnPropertyDescriptor(
+						instance,
+						Context.current,
+					)?.value;
 				if (!ctx) continue;
 				// 服务内部名形如 __foo__，对外展示时去掉首尾下划线
-				const name = key.replace(/^__/, "").replace(/__$/, "");
+				const name = key
+					.replace(/^__/, "")
+					.replace(/__$/, "");
 				// 已销毁的 scope(uid 为 null)不参与统计
 				if (ctx.scope.uid !== null) {
 					services[name] = ctx.scope.uid;

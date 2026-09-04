@@ -1,7 +1,14 @@
 // SPDX-License-Identifier: MIT
 // Copyright (c) 2026-present Koishi-CE contributors.
 
-import { afterAll, beforeAll, describe, expect, it, mock } from "bun:test";
+import {
+	afterAll,
+	beforeAll,
+	describe,
+	expect,
+	it,
+	mock,
+} from "bun:test";
 import { spawnSync } from "node:child_process";
 import {
 	existsSync,
@@ -24,7 +31,9 @@ import { basename, join } from "node:path";
  * process.exit 替换为可捕获的异常，从而覆盖全部交互分支。
  */
 
-const workspaceRoot = mkdtempSync(join(tmpdir(), "ckc-run-default-"));
+const workspaceRoot = mkdtempSync(
+	join(tmpdir(), "ckc-run-default-"),
+);
 const previousCwd = process.cwd();
 const previousArgv = process.argv.slice();
 const previousExit = process.exit;
@@ -46,7 +55,11 @@ mock.module("@clack/prompts", () => ({
 }));
 
 /** spawnSync 的调用记录与可编程行为 */
-const spawnLog: Array<{ cmd: string; args: string[]; cwd?: string }> = [];
+const spawnLog: Array<{
+	cmd: string;
+	args: string[];
+	cwd?: string;
+}> = [];
 let installExit = 0;
 
 // 本文件求值时 node:child_process 恒为真实实现（本仓测试中唯一的
@@ -61,15 +74,21 @@ mock.module("node:child_process", () => ({
 		args: readonly string[],
 		options: { cwd?: string },
 	) => {
-		if (cmd === "git" && args[0] === "--version") return { status: 0 };
-		if (cmd === "git" && args[0] === "config" && args[1] === "--get") {
+		if (cmd === "git" && args[0] === "--version")
+			return { status: 0 };
+		if (
+			cmd === "git" &&
+			args[0] === "config" &&
+			args[1] === "--get"
+		) {
 			const key = args[2];
 			const table: Record<string, string> = {
 				"user.name": "Tester",
 				"user.email": "t@e.st",
 				"init.defaultBranch": "trunk",
 			};
-			const value = key !== undefined ? table[key] : undefined;
+			const value =
+				key !== undefined ? table[key] : undefined;
 			return value === undefined
 				? { status: 1, stdout: "" }
 				: { status: 0, stdout: `${value}\n` };
@@ -78,13 +97,21 @@ mock.module("node:child_process", () => ({
 		spawnLog.push({
 			cmd,
 			args: [...args],
-			...(options.cwd === undefined ? {} : { cwd: options.cwd }),
+			...(options.cwd === undefined
+				? {}
+				: { cwd: options.cwd }),
 		});
 		// 依赖安装可编程；agent 启动不真实拉起
-		if (args[0] === "install") return { status: installExit };
-		if (cmd === "bun" && args[0] === "run") return { status: 0 };
+		if (args[0] === "install")
+			return { status: installExit };
+		if (cmd === "bun" && args[0] === "run")
+			return { status: 0 };
 		// 其余命令透传真实执行（副作用均在各自测试的临时目录内）
-		return realSpawnSync(cmd, args, options as Parameters<typeof spawnSync>[2]);
+		return realSpawnSync(
+			cmd,
+			args,
+			options as Parameters<typeof spawnSync>[2],
+		);
 	},
 }));
 
@@ -102,13 +129,16 @@ process.exit = ((code?: number) => {
 	throw new ExitError(code ?? 0);
 }) as typeof process.exit;
 
-process.argv = [process.argv[0] ?? "bun", "create-koishi-ce", "--git"];
+process.argv = [
+	process.argv[0] ?? "bun",
+	"create-koishi-ce",
+	"--git",
+];
 process.chdir(workspaceRoot);
 // query 强制独立实例（说明与写法见 run-help.test.ts）
 const specifier = "../index.ts?default-run";
-const { start, getLocalRegistry, readNpmrcRegistry } = (await import(
-	specifier
-)) as typeof import("../index.ts");
+const { start, getLocalRegistry, readNpmrcRegistry } =
+	(await import(specifier)) as typeof import("../index.ts");
 // cwd 已在被测模块内固化，立即切回，缩小对进程全局的影响窗口
 process.chdir(previousCwd);
 
@@ -150,20 +180,32 @@ function expectTemplateFiles(dir: string): void {
 	) as Record<string, unknown>;
 	expect(manifest["private"]).toBe(true);
 	expect(manifest["version"]).toBe("0.0.0");
-	expect(manifest["workspaces"]).toEqual(["plugins/*", "external/*"]);
+	expect(manifest["workspaces"]).toEqual([
+		"plugins/*",
+		"external/*",
+	]);
 }
 
 describe("create-koishi-ce 默认模板主流程", () => {
 	// 补齐本实例下纯函数分支的行覆盖（registry 既有测试走的是共享实例）
 	it("registry 探测纯函数在本实例同样可用", () => {
 		const npmrc = join(workspaceRoot, ".npmrc");
-		writeFileSync(npmrc, "registry=https://registry.example.com/\n");
-		expect(readNpmrcRegistry(npmrc)).toBe("https://registry.example.com/");
-		expect(readNpmrcRegistry(join(workspaceRoot, "absent"))).toBeUndefined();
-		expect(getLocalRegistry(workspaceRoot, workspaceRoot)).toBe(
+		writeFileSync(
+			npmrc,
+			"registry=https://registry.example.com/\n",
+		);
+		expect(readNpmrcRegistry(npmrc)).toBe(
 			"https://registry.example.com/",
 		);
-		expect(getLocalRegistry(workspaceRoot, workspaceRoot)).toBeDefined();
+		expect(
+			readNpmrcRegistry(join(workspaceRoot, "absent")),
+		).toBeUndefined();
+		expect(
+			getLocalRegistry(workspaceRoot, workspaceRoot),
+		).toBe("https://registry.example.com/");
+		expect(
+			getLocalRegistry(workspaceRoot, workspaceRoot),
+		).toBeDefined();
 		rmSync(npmrc, { force: true });
 	});
 
@@ -176,7 +218,10 @@ describe("create-koishi-ce 默认模板主流程", () => {
 		expect(
 			(
 				JSON.parse(
-					readFileSync(join(workspaceRoot, "package.json"), "utf8"),
+					readFileSync(
+						join(workspaceRoot, "package.json"),
+						"utf8",
+					),
 				) as Record<string, unknown>
 			)["name"],
 		).toBe(basename(workspaceRoot));
@@ -194,7 +239,10 @@ describe("create-koishi-ce 默认模板主流程", () => {
 		expect(
 			(
 				JSON.parse(
-					readFileSync(join(workspaceRoot, "app-a", "package.json"), "utf8"),
+					readFileSync(
+						join(workspaceRoot, "app-a", "package.json"),
+						"utf8",
+					),
 				) as Record<string, unknown>
 			)["name"],
 		).toBe("app-a");
@@ -224,8 +272,12 @@ describe("create-koishi-ce 默认模板主流程", () => {
 		writeFileSync(join(dir, "occupier.txt"), "保留我");
 		nameAnswers.push("app-b");
 		confirmAnswers.push(false);
-		await expect(start()).rejects.toThrow("process.exit(0)");
-		expect(readFileSync(join(dir, "occupier.txt"), "utf8")).toBe("保留我");
+		await expect(start()).rejects.toThrow(
+			"process.exit(0)",
+		);
+		expect(
+			readFileSync(join(dir, "occupier.txt"), "utf8"),
+		).toBe("保留我");
 	});
 
 	it("用户确认清空：emptyDir 后重建模板", async () => {
@@ -233,14 +285,18 @@ describe("create-koishi-ce 默认模板主流程", () => {
 		nameAnswers.push("app-b");
 		confirmAnswers.push(true);
 		await start();
-		expect(existsSync(join(dir, "occupier.txt"))).toBe(false);
+		expect(existsSync(join(dir, "occupier.txt"))).toBe(
+			false,
+		);
 		expectTemplateFiles(dir);
 		logs.length = 0;
 	});
 
 	it("项目名问询被取消（空白输入）：直接退出", async () => {
 		nameAnswers.push("   ");
-		await expect(start()).rejects.toThrow("process.exit(0)");
+		await expect(start()).rejects.toThrow(
+			"process.exit(0)",
+		);
 	});
 
 	it("依赖安装失败：提示后不再尝试启动", async () => {
@@ -266,11 +322,14 @@ describe("create-koishi-ce 默认模板主流程", () => {
 		expect(output).toContain("cd");
 		expect(output).toContain("bun install");
 		expect(output).toContain("bun run start");
-		expect(existsSync(join(workspaceRoot, "sub", "app-c", "koishi.yml"))).toBe(
-			true,
-		);
 		expect(
-			readdirSync(join(workspaceRoot, "sub", "app-c")).length,
+			existsSync(
+				join(workspaceRoot, "sub", "app-c", "koishi.yml"),
+			),
+		).toBe(true);
+		expect(
+			readdirSync(join(workspaceRoot, "sub", "app-c"))
+				.length,
 		).toBeGreaterThan(0);
 	});
 });

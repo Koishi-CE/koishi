@@ -85,7 +85,9 @@ const options = computed<Schemastery.Path.Options>(() => ({
 }));
 
 /** 是否允许选定目录（filters 含 "directory"）。 */
-const allowDir = computed(() => options.value.filters.includes("directory"));
+const allowDir = computed(() =>
+	options.value.filters.includes("directory"),
+);
 /** 是否允许选定文件（filters 中存在非 "directory" 的过滤项）。 */
 const allowFile = computed(() =>
 	options.value.filters.some((x) => x !== "directory"),
@@ -108,13 +110,16 @@ const current = ref("/"); // 弹窗内当前浏览到的目录（始终以 / 结
 // 当前目录下的可见条目：目录恒显示，文件/符号链接按 filters 的扩展名过滤
 const entries = computed(() => {
 	const children =
-		files[current.value.slice(0, -1)]?.children || store?.explorer || [];
+		files[current.value.slice(0, -1)]?.children ||
+		store?.explorer ||
+		[];
 	const { filters } = options.value;
 	return children.filter((entry) => {
 		if (entry.type === "directory") return true;
 		if (entry.type === "file" || entry.type === "symlink") {
 			const index = entry.name.lastIndexOf(".");
-			const ext = index === -1 ? "" : entry.name.slice(index);
+			const ext =
+				index === -1 ? "" : entry.name.slice(index);
 			return filters.some((filter) => {
 				if (filter === "directory") return false;
 				if (filter === "file") return true;
@@ -149,7 +154,9 @@ function createFolder() {
 		newValue: "",
 	};
 	const parent =
-		files[current.value.slice(0, -1)]?.children || store?.explorer || [];
+		files[current.value.slice(0, -1)]?.children ||
+		store?.explorer ||
+		[];
 	parent.push(files[current.value]);
 }
 
@@ -174,7 +181,9 @@ function cancelRename() {
 	if (!entry) return;
 	delete files[current.value];
 	const parent =
-		files[current.value.slice(0, -1)]?.children || store?.explorer || [];
+		files[current.value.slice(0, -1)]?.children ||
+		store?.explorer ||
+		[];
 	parent.splice(parent.indexOf(entry), 1);
 }
 
@@ -184,7 +193,10 @@ const target = computed(() => {
 	if (!config.value) return "根目录";
 	const entry = files[`/${config.value}`];
 	if (!entry) return config.value;
-	return (entry.type === "file" ? "文件：" : "目录：") + entry.name;
+	return (
+		(entry.type === "file" ? "文件：" : "目录：") +
+		entry.name
+	);
 });
 
 /** 返回上一级目录。 */

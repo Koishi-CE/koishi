@@ -27,7 +27,9 @@ export { SessionObservable } from "./observe.ts";
 export * from "./types.ts";
 
 /** Koishi 会话最终类：继承全部能力层，构造时完成服务方法注册。 */
-class KoishiSession<C extends Context> extends SessionInteractive {
+class KoishiSession<
+	C extends Context,
+> extends SessionInteractive {
 	constructor(ctx: C) {
 		super();
 		// 将实例方法注册为 ctx 上的服务（session.xxx），

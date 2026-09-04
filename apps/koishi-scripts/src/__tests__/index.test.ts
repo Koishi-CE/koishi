@@ -46,12 +46,19 @@ describe("共享工具（index.ts）", () => {
 });
 
 describe("进程执行工具（release/run.ts）", () => {
-	const workdir = mkdtempSync(join(tmpdir(), "koishi-scripts-run-"));
+	const workdir = mkdtempSync(
+		join(tmpdir(), "koishi-scripts-run-"),
+	);
 
 	it("runCommand 返回子进程退出码", () => {
-		expect(runCommand(workdir, process.execPath, ["-e", "0"])).toBe(0);
 		expect(
-			runCommand(workdir, process.execPath, ["-e", "process.exit(3)"]),
+			runCommand(workdir, process.execPath, ["-e", "0"]),
+		).toBe(0);
+		expect(
+			runCommand(workdir, process.execPath, [
+				"-e",
+				"process.exit(3)",
+			]),
 		).toBe(3);
 	});
 
@@ -60,8 +67,12 @@ describe("进程执行工具（release/run.ts）", () => {
 		expect(existsSync(missing)).toBe(false);
 		// 启动失败的警告直通 stderr：捕获后转为断言，避免预期告警刷屏
 		const chunks: string[] = [];
-		const originalWrite = process.stderr.write.bind(process.stderr);
-		process.stderr.write = ((chunk: string | Uint8Array) => {
+		const originalWrite = process.stderr.write.bind(
+			process.stderr,
+		);
+		process.stderr.write = ((
+			chunk: string | Uint8Array,
+		) => {
 			chunks.push(`${chunk}`);
 			return true;
 		}) as typeof process.stderr.write;
@@ -75,13 +86,21 @@ describe("进程执行工具（release/run.ts）", () => {
 
 	it("captureCommand 捕获 stdout，失败时返回 null", () => {
 		expect(
-			captureCommand(workdir, process.execPath, ["-e", "console.log('hi')"]),
+			captureCommand(workdir, process.execPath, [
+				"-e",
+				"console.log('hi')",
+			]),
 		).toBe("hi");
 		expect(
-			captureCommand(workdir, process.execPath, ["-e", "process.exit(4)"]),
+			captureCommand(workdir, process.execPath, [
+				"-e",
+				"process.exit(4)",
+			]),
 		).toBeNull();
 		const missing = join(workdir, "definitely-missing-dir");
-		expect(captureCommand(missing, "echo", ["hi"])).toBeNull();
+		expect(
+			captureCommand(missing, "echo", ["hi"]),
+		).toBeNull();
 	});
 
 	it("临时目录清理", () => {

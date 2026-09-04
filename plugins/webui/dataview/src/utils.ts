@@ -20,11 +20,14 @@ export function serialize(obj: unknown): string {
 		if (typeof value === "string") return `s${value}`;
 		if (typeof value === "bigint") return `n${value}`;
 		if (typeof value === "object") {
-			if (value instanceof Date) return `d${new Date(value).toJSON()}`;
+			if (value instanceof Date)
+				return `d${new Date(value).toJSON()}`;
 			if (value === null) return null;
 			const source = value as Record<string, unknown>;
 			// 数组副本也断言为 Record：序列化层按索引写入，运行时两态皆可
-			const copy = (Array.isArray(value) ? [] : {}) as Record<string, unknown>;
+			const copy = (
+				Array.isArray(value) ? [] : {}
+			) as Record<string, unknown>;
 			for (const key in source) {
 				const item = source[key];
 				if (item instanceof Date) {
@@ -45,7 +48,9 @@ export function serialize(obj: unknown): string {
 	});
 }
 
-export function deserialize(str: string | undefined): unknown {
+export function deserialize(
+	str: string | undefined,
+): unknown {
 	if (str === undefined) return undefined;
 	return JSON.parse(str, (_, value) => {
 		if (typeof value !== "string") return value;

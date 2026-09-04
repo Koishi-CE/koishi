@@ -51,7 +51,10 @@ export class Notifier {
 	private actionKeys: string[] = [];
 
 	// constructor 参数属性被 erasableSyntaxOnly 禁止，拆为显式字段赋值
-	constructor(ctx: Context, options: h.Fragment | Notifier.Options) {
+	constructor(
+		ctx: Context,
+		options: h.Fragment | Notifier.Options,
+	) {
 		this.ctx = ctx;
 		this.options = {
 			type: "primary",
@@ -96,15 +99,22 @@ export class Notifier {
 				typeof options.content === "string"
 					? [h("p", options.content)]
 					: h.toElementArray(options.content);
-			options.content = h.transform(content, ({ type, attrs }) => {
-				if (type === "button" && typeof attrs["onClick"] === "function") {
-					const key = Math.random().toString(36).slice(2);
-					this.ctx.notifier.actions[key] = attrs["onClick"];
-					this.actionKeys.push(key);
-					attrs["onClick"] = key;
-				}
-				return true;
-			});
+			options.content = h.transform(
+				content,
+				({ type, attrs }) => {
+					if (
+						type === "button" &&
+						typeof attrs["onClick"] === "function"
+					) {
+						const key = Math.random().toString(36).slice(2);
+						this.ctx.notifier.actions[key] =
+							attrs["onClick"];
+						this.actionKeys.push(key);
+						attrs["onClick"] = key;
+					}
+					return true;
+				},
+			);
 		}
 		Object.assign(this.options, options);
 		this.ctx.notifier.entry?.refresh();
@@ -112,7 +122,9 @@ export class Notifier {
 
 	/** 序列化为浏览器端可渲染的数据：content 拼接为字符串，附带 loader 路径用于归属插件。 */
 	toJSON(): Notifier.Data {
-		const paths = this.ctx.get("loader")?.paths(this.ctx.scope);
+		const paths = this.ctx
+			.get("loader")
+			?.paths(this.ctx.scope);
 		return {
 			...this.options,
 			content: this.options.content.join(""),
@@ -123,7 +135,11 @@ export class Notifier {
 
 export namespace Notifier {
 	/** 通知级别（对应控制台提示条配色）。 */
-	export type Type = "primary" | "success" | "warning" | "danger";
+	export type Type =
+		| "primary"
+		| "success"
+		| "warning"
+		| "danger";
 
 	/** 用户侧传入的选项：content 允许任意元素片段。 */
 	export interface Options<T = h.Fragment> {
@@ -152,7 +168,8 @@ class NotifierService extends Service {
 
 	// 配置 schema 的值侧由类静态承载（erasableSyntaxOnly 不允许 namespace 内运行时值），
 	// 类型侧见下方 namespace NotifierService 的 Config
-	static Config: Schema<NotifierService.Config> = Schema.object({});
+	static Config: Schema<NotifierService.Config> =
+		Schema.object({});
 
 	public store: Notifier[] = [];
 	public actions: Dict<() => void> = Object.create(null);
@@ -162,7 +179,10 @@ class NotifierService extends Service {
 	public override config: NotifierService.Config;
 
 	// constructor 参数属性被 erasableSyntaxOnly 禁止，拆为显式字段赋值
-	constructor(ctx: Context, config: NotifierService.Config) {
+	constructor(
+		ctx: Context,
+		config: NotifierService.Config,
+	) {
 		super(ctx, "notifier", true);
 		this.config = config;
 
@@ -176,19 +196,32 @@ class NotifierService extends Service {
 							`${process.env["KOISHI_BASE"]}/dist/style.css`,
 						]
 					: process.env["KOISHI_ENV"] === "browser"
-						? [import.meta.url.replace(/\/src\/[^/]+$/, "/client/index.ts")]
+						? [
+								import.meta.url.replace(
+									/\/src\/[^/]+$/,
+									"/client/index.ts",
+								),
+							]
 						: {
-								dev: resolve(__dirname, "../client/index.ts"),
+								dev: resolve(
+									__dirname,
+									"../client/index.ts",
+								),
 								prod: resolve(__dirname, "../dist"),
 							},
 				() => ({
-					notifiers: this.store.map((notifier) => notifier.toJSON()),
+					notifiers: this.store.map((notifier) =>
+						notifier.toJSON(),
+					),
 				}),
 			);
 
-			ctx.console.addListener("notifier/button", (id: string) => {
-				return this.actions[id]?.();
-			});
+			ctx.console.addListener(
+				"notifier/button",
+				(id: string) => {
+					return this.actions[id]?.();
+				},
+			);
 		});
 	}
 
@@ -200,9 +233,13 @@ class NotifierService extends Service {
 	message(options?: string | Notifier.Options<string>) {
 		// 显式兜底 undefined，避免对可空入参解引用
 		const data: Notifier.Options<string> =
-			typeof options === "string" ? { content: options } : (options ?? {});
+			typeof options === "string"
+				? { content: options }
+				: (options ?? {});
 		data.type ||= "primary";
-		this.ctx.get("console")?.broadcast("notifier/message", data);
+		this.ctx
+			.get("console")
+			?.broadcast("notifier/message", data);
 	}
 
 	/** 创建一条常驻通知（options 缺省时为空内容通知）。 */

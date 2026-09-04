@@ -32,18 +32,29 @@ export async function attachSession(
 				"permissions",
 				"locales",
 			]);
-			ctx.emit("before-attach-channel", session, channelFields);
-			const channel = await session.observeChannel(channelFields);
+			ctx.emit(
+				"before-attach-channel",
+				session,
+				channelFields,
+			);
+			const channel =
+				await session.observeChannel(channelFields);
 			// 向后兼容：以会话中的 guildId 为准回填频道记录
 			channel.guildId = session.guildId ?? channel.guildId;
 
 			// 触发 attach-channel 事件；返回 true 表示已处理完毕，短路流程
-			if (await ctx.serial(session, "attach-channel", session)) return;
+			if (
+				await ctx.serial(session, "attach-channel", session)
+			)
+				return;
 
 			// 忽略被标记的频道调用
 			if (channel.flag & Channel.Flag.ignore) return;
 			// 频道受理人不是本机器人且未 @ 机器人时，忽略该消息
-			if (channel.assignee !== session.selfId && !session.stripped.atSelf)
+			if (
+				channel.assignee !== session.selfId &&
+				!session.stripped.atSelf
+			)
 				return;
 		}
 
@@ -60,7 +71,8 @@ export async function attachSession(
 		const user = await session.observeUser(userFields);
 
 		// 触发 attach-user 事件；返回 true 短路流程
-		if (await ctx.serial(session, "attach-user", session)) return;
+		if (await ctx.serial(session, "attach-user", session))
+			return;
 
 		// 忽略被标记的用户调用
 		if (user.flag & User.Flag.ignore) return;

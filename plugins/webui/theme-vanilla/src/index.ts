@@ -32,7 +32,12 @@ export function apply(ctx: Context) {
 					`${process.env["KOISHI_BASE"]}/dist/style.css`,
 				]
 			: process.env["KOISHI_ENV"] === "browser"
-				? [import.meta.url.replace(/\/src\/[^/]+$/, "/client/index.ts")]
+				? [
+						import.meta.url.replace(
+							/\/src\/[^/]+$/,
+							"/client/index.ts",
+						),
+					]
 				: {
 						dev: resolve(__dirname, "../client/index.ts"),
 						prod: resolve(__dirname, "../dist"),

@@ -10,7 +10,11 @@
  * integer / natural / bigint / date 数值类，user / channel 标识类。
  */
 import { describe, expect, it } from "bun:test";
-import { Context as App, type Argv, type Session } from "@koishi-ce/koishi";
+import {
+	Context as App,
+	type Argv,
+	type Session,
+} from "@koishi-ce/koishi";
 import mock from "@koishi-ce/plugin-mock";
 
 const app = new App();
@@ -27,18 +31,29 @@ function createArgv(): Argv {
 /** 直接调用值转换，返回 [取值, 错误] */
 function parse(type: string, source: string) {
 	const argv = createArgv();
-	const value = app.$commander.parseValue(source, "argument", argv, {
-		type: type as Argv.DomainType,
-		name: "test",
-	});
+	const value = app.$commander.parseValue(
+		source,
+		"argument",
+		argv,
+		{
+			type: type as Argv.DomainType,
+			name: "test",
+		},
+	);
 	return [value, argv.error] as const;
 }
 
 describe("Builtin Domains", () => {
 	it("integer 接受整数与千位分隔", () => {
 		expect(parse("integer", "42")).toEqual([42, undefined]);
-		expect(parse("integer", "1_000")).toEqual([1000, undefined]);
-		expect(parse("integer", "1,000")).toEqual([1000, undefined]);
+		expect(parse("integer", "1_000")).toEqual([
+			1000,
+			undefined,
+		]);
+		expect(parse("integer", "1,000")).toEqual([
+			1000,
+			undefined,
+		]);
 	});
 
 	it("integer 拒绝非整数", () => {
@@ -69,25 +84,39 @@ describe("Builtin Domains", () => {
 	it("date 日期", () => {
 		const [value, error] = parse("date", "2024-01-01");
 		expect(error).toBeFalsy();
-		expect(Number(value)).toBe(new Date("2024-01-01").getTime());
+		expect(Number(value)).toBe(
+			new Date("2024-01-01").getTime(),
+		);
 		const [, error2] = parse("date", "not-a-date");
 		expect(error2).toBeTruthy();
 	});
 
 	it("user 标识的三种写法", () => {
 		// @id 简写：补全会话平台前缀
-		expect(parse("user", "@123")).toEqual(["mock:123", undefined]);
+		expect(parse("user", "@123")).toEqual([
+			"mock:123",
+			undefined,
+		]);
 		// 已含平台前缀的完整标识原样通过
-		expect(parse("user", "@discord:123")).toEqual(["discord:123", undefined]);
+		expect(parse("user", "@discord:123")).toEqual([
+			"discord:123",
+			undefined,
+		]);
 		// at 元素：取其 id 属性
-		expect(parse("user", '<at id="456"/>')).toEqual(["mock:456", undefined]);
+		expect(parse("user", '<at id="456"/>')).toEqual([
+			"mock:456",
+			undefined,
+		]);
 		// 非法输入
 		const [, error] = parse("user", "nonsense");
 		expect(error).toBeTruthy();
 	});
 
 	it("channel 标识的三种写法", () => {
-		expect(parse("channel", "#123")).toEqual(["mock:123", undefined]);
+		expect(parse("channel", "#123")).toEqual([
+			"mock:123",
+			undefined,
+		]);
 		expect(parse("channel", "#discord:123")).toEqual([
 			"discord:123",
 			undefined,

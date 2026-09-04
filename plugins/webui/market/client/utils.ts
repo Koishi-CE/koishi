@@ -13,7 +13,8 @@ export function hasUpdate(name: string) {
 	const local = store.dependencies?.[name];
 	if (!versions || !local || local.workspace) return;
 	const [latest] = Object.keys(versions);
-	if (latest === undefined || local.resolved === undefined) return;
+	if (latest === undefined || local.resolved === undefined)
+		return;
 	try {
 		return gt(latest, local.resolved);
 	} catch {

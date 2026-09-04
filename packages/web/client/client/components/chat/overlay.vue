@@ -42,7 +42,13 @@
 </template>
 
 <script lang="ts" setup>
-import { computed, onBeforeUnmount, onMounted, ref, watch } from "vue";
+import {
+	computed,
+	onBeforeUnmount,
+	onMounted,
+	ref,
+	watch,
+} from "vue";
 import { shared } from "./utils";
 
 // 用户手动调整的缩放与旋转量（复原即回到 1 / 0）
@@ -58,7 +64,9 @@ const transform = computed(() => {
 const siblings = computed(() => {
 	if (!shared.overlayImage) return;
 	const elements = Array.from(
-		document.querySelectorAll<HTMLImageElement>(".chat-image"),
+		document.querySelectorAll<HTMLImageElement>(
+			".chat-image",
+		),
 	);
 	const index = elements.indexOf(shared.overlayImage);
 	return {
@@ -69,10 +77,15 @@ const siblings = computed(() => {
 
 // 初始（适配屏幕）缩放比：按视口剩余空间把图片等比缩小，不放大
 const defaultScale = computed(() => {
-	const { naturalHeight, naturalWidth } = shared.overlayImage;
+	const { naturalHeight, naturalWidth } =
+		shared.overlayImage;
 	const maxHeight = innerHeight - paddingVertical * 2;
 	const maxWidth = innerWidth - paddingHorizontal * 2;
-	return Math.min(1, maxHeight / naturalHeight, maxWidth / naturalWidth);
+	return Math.min(
+		1,
+		maxHeight / naturalHeight,
+		maxWidth / naturalWidth,
+	);
 });
 
 // 切换/关闭查看器时重置手动缩放与旋转；
@@ -96,7 +109,10 @@ function setImage(el: HTMLImageElement) {
 }
 
 /** 把大图元素摆到原图片所在的位置与尺寸（关闭时的"飞回"动画终点） */
-function moveToOrigin(el: HTMLImageElement, origin = shared.overlayImage) {
+function moveToOrigin(
+	el: HTMLImageElement,
+	origin = shared.overlayImage,
+) {
 	const { height, width } = origin;
 	const { left, top } = origin.getBoundingClientRect();
 	el.style.width = `${width}px`;
@@ -112,7 +128,8 @@ const paddingHorizontal = 0;
 
 /** 把图片按适配缩放比居中摆放到视口中央 */
 function moveToCenter(el: HTMLImageElement) {
-	const { naturalHeight, naturalWidth } = shared.overlayImage;
+	const { naturalHeight, naturalWidth } =
+		shared.overlayImage;
 	const scale = defaultScale.value;
 	const width = naturalWidth * scale;
 	const height = naturalHeight * scale;
@@ -136,13 +153,18 @@ function onKeyDown(ev: KeyboardEvent) {
 	ev.preventDefault();
 	if (ev.key === "ArrowUp" || ev.key === "ArrowLeft") {
 		setImage(siblings.value.prev);
-	} else if (ev.key === "ArrowDown" || ev.key === "ArrowRight") {
+	} else if (
+		ev.key === "ArrowDown" ||
+		ev.key === "ArrowRight"
+	) {
 		setImage(siblings.value.next);
 	} else if (ev.key === "Escape") {
 		setImage(null);
 	} else if (ev.key === "Enter") {
 		// 关闭并把页面滚动到原图所在位置，便于继续浏览消息
-		shared.overlayImage.offsetParent.scrollIntoView({ behavior: "smooth" });
+		shared.overlayImage.offsetParent.scrollIntoView({
+			behavior: "smooth",
+		});
 		setImage(null);
 	}
 }

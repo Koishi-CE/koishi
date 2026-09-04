@@ -21,7 +21,9 @@ interface ReqSnapshot {
 }
 
 const http = new EventEmitter();
-const ctx = { server: { _http: http } } as unknown as Context;
+const ctx = {
+	server: { _http: http },
+} as unknown as Context;
 const webhook = new Webhook(ctx);
 
 let lastReq: ReqSnapshot | undefined;
@@ -67,7 +69,9 @@ describe("Webhook", () => {
 	});
 
 	it("GET：透传方法与路径，回传状态码 / 分块拼合的响应体 / 响应头", async () => {
-		const res = await webhook.get("/foo?a=1", { authorization: "Bearer t" });
+		const res = await webhook.get("/foo?a=1", {
+			authorization: "Bearer t",
+		});
 		expect(res.code).toBe(233);
 		expect(res.body).toBe("part1part2");
 		expect(res.headers["x-custom"]).toBe("yes");
@@ -93,9 +97,15 @@ describe("Webhook", () => {
 		await webhook.post("/json", { foo: 1, bar: "baz" });
 		const req = request();
 		expect(req.method).toBe("POST");
-		expect(req.headers["content-type"]).toBe("application/json");
-		expect(req.body).toBe(JSON.stringify({ foo: 1, bar: "baz" }));
-		expect(req.headers["content-length"]).toBe(`${req.body.length}`);
+		expect(req.headers["content-type"]).toBe(
+			"application/json",
+		);
+		expect(req.body).toBe(
+			JSON.stringify({ foo: 1, bar: "baz" }),
+		);
+		expect(req.headers["content-length"]).toBe(
+			`${req.body.length}`,
+		);
 	});
 
 	it("POST 字符串按 text/plain 原样发送", async () => {
@@ -109,7 +119,9 @@ describe("Webhook", () => {
 		const payload = Buffer.from([1, 2, 3]);
 		await webhook.put("/bin", payload);
 		const req = request();
-		expect(req.headers["content-type"]).toBe("application/octet-stream");
+		expect(req.headers["content-type"]).toBe(
+			"application/octet-stream",
+		);
 		expect(req.headers["content-length"]).toBe("3");
 		expect(req.body).toBe("\x01\x02\x03");
 	});
@@ -117,7 +129,9 @@ describe("Webhook", () => {
 	it("PATCH：其余 HTTP 方法同链路", async () => {
 		await webhook.patch("/p", { k: true });
 		expect(request().method).toBe("PATCH");
-		expect(request().headers["content-type"]).toBe("application/json");
+		expect(request().headers["content-type"]).toBe(
+			"application/json",
+		);
 	});
 
 	it("res.end(callback) 形态会调用回调", async () => {

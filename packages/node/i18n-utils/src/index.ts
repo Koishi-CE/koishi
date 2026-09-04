@@ -43,12 +43,17 @@ export const LocaleTree = {
 type LocaleEntry = readonly [string, LocaleEntry[]];
 
 /** 把 LocaleTree 递归转换为带自身引用的 LocaleEntry 结构 */
-function toLocaleEntry(key: string, tree: LocaleTree): LocaleEntry {
+function toLocaleEntry(
+	key: string,
+	tree: LocaleTree,
+): LocaleEntry {
 	return [
 		key,
 		[
 			[key, []],
-			...Object.entries(tree).map(([key, value]) => toLocaleEntry(key, value)),
+			...Object.entries(tree).map(([key, value]) =>
+				toLocaleEntry(key, value),
+			),
 		],
 	];
 }
@@ -82,17 +87,24 @@ function* traverse(
  * @param locales 用户偏好的语言环境列表（按优先级升序，末尾优先级最高）
  * @returns 去重后的回退查找顺序
  */
-export function fallback(tree: LocaleTree, locales: string[]): string[] {
+export function fallback(
+	tree: LocaleTree,
+	locales: string[],
+): string[] {
 	const root = toLocaleEntry("", tree);
 	const ignored: LocaleEntry[] = [];
 	// 倒序处理偏好列表：越靠后的优先级越高，unshift 保证其排在 ignored 前列
-	for (const locale of deduplicate(locales).filter(Boolean).reverse()) {
+	for (const locale of deduplicate(locales)
+		.filter(Boolean)
+		.reverse()) {
 		let prefix = "",
 			children = root[1];
 		const tokens = locale ? locale.split("-") : [];
 		for (const token of tokens) {
 			const current = prefix + token;
-			const entry = children.find(([key]) => key === current);
+			const entry = children.find(
+				([key]) => key === current,
+			);
 			if (!entry) break;
 			// 把命中节点上移到同级首位，使后续遍历优先产出该分支
 			const index = children.indexOf(entry);

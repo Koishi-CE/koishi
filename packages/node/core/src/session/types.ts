@@ -11,14 +11,25 @@
  * 后者让指令声明所需数据表字段、框架在执行前一次性批量预取。
  */
 import type * as satori from "@satorijs/core";
-import type { Fragment, h, Universal } from "@satorijs/core";
+import type {
+	Fragment,
+	h,
+	Universal,
+} from "@satorijs/core";
 import type { Awaitable } from "cosmokit";
 import type { Eval } from "minato";
 import type { Argv } from "../command/index.ts";
 import type { Context } from "../context/index.ts";
-import type { Channel, Tables, User } from "../database/index.ts";
+import type {
+	Channel,
+	Tables,
+	User,
+} from "../database/index.ts";
 import type { CompareOptions } from "../i18n/index.ts";
-import type { Middleware, Next } from "../middleware/index.ts";
+import type {
+	Middleware,
+	Next,
+} from "../middleware/index.ts";
 
 /** 一次性提问（session.prompt）的选项。 */
 export interface PromptOptions {
@@ -73,7 +84,10 @@ export type FieldCollector<
 	O extends object = object,
 > =
 	| Iterable<K>
-	| ((argv: Argv<never, never, A, O>, fields: Set<keyof Tables[T]>) => void);
+	| ((
+			argv: Argv<never, never, A, O>,
+			fields: Set<keyof Tables[T]>,
+	  ) => void);
 
 /** 汇总多个收集器的结果到同一个字段集合。 */
 export function collectFields<T extends keyof Tables>(
@@ -124,7 +138,10 @@ export interface Session<
 	 * minato Eval 表达式则在本会话上下文（`_`）中执行。
 	 */
 	resolve<T, R extends unknown[]>(
-		source: T | Eval.Expr | ((session: Session, ...args: R) => T),
+		source:
+			| T
+			| Eval.Expr
+			| ((session: Session, ...args: R) => T),
 		...args: R
 	): T extends Eval.Expr
 		? Eval<T>
@@ -136,14 +153,20 @@ export interface Session<
 	/** 发送者显示名：优先用户库昵称，其次消息作者昵称/用户名，最后 userId */
 	username: string;
 	/** 向当前频道发送消息，返回消息 ID 列表；发送失败记录警告并返回空数组 */
-	send(fragment: Fragment, options?: Universal.SendOptions): Promise<string[]>;
+	send(
+		fragment: Fragment,
+		options?: Universal.SendOptions,
+	): Promise<string[]>;
 	/** 清空排队队列，并在 delay 毫秒后恢复发送 */
 	cancelQueued(delay?: number): void;
 	/**
 	 * 排队发送消息：按配置的 message / character 延迟节流，
 	 * 多条消息会依次发出（防风控刷屏），返回最后一条的消息 ID。
 	 */
-	sendQueued(content: Fragment, delay?: number): Promise<string[] | undefined>;
+	sendQueued(
+		content: Fragment,
+		delay?: number,
+	): Promise<string[] | undefined>;
 	/** 查询频道记录；不存在时按 autoAssign 配置决定是否入库创建 */
 	getChannel<K extends Channel.Field = never>(
 		id?: string,
@@ -172,7 +195,10 @@ export interface Session<
 	 * 在指定 i18n 作用域内执行回调：回调内 i18n 元素的相对路径
 	 * 会被解析为 scope + path，结束后恢复原作用域。
 	 */
-	withScope(scope: string, callback: () => Awaitable<h[]>): Promise<h[]>;
+	withScope(
+		scope: string,
+		callback: () => Awaitable<h[]>,
+	): Promise<h[]>;
 	/** 解析 i18n 路径：以 `.` 开头的相对路径拼接当前 scope */
 	resolveScope(path: string): string;
 	/** 以纯文本渲染 i18n 文案（各语言片段拼接为字符串） */
@@ -193,7 +219,10 @@ export interface Session<
 	 * 执行一条指令：解析插值、预取用户/频道数据、进入指令 i18n 作用域，
 	 * 最后把结果发送回当前频道（next 传 true 时只返回不发送）。
 	 */
-	execute(content: string | Argv, next?: true | Next): Promise<h[]>;
+	execute(
+		content: string | Argv,
+		next?: true | Next,
+	): Promise<h[]>;
 	/** 注册仅对当前会话生效的临时中间件，返回注销函数 */
 	middleware(middleware: Middleware): () => boolean;
 	/** 等待当前用户的下一条消息（剥离 @机器人 前缀），超时返回 undefined */
@@ -204,5 +233,7 @@ export interface Session<
 		options?: PromptOptions,
 	): Promise<T>;
 	/** 发送纠错建议；当只剩唯一候选时等待用户输入 `.` 确认，返回确认结果 */
-	suggest(options: SuggestOptions): Promise<string | undefined>;
+	suggest(
+		options: SuggestOptions,
+	): Promise<string | undefined>;
 }

@@ -72,7 +72,9 @@ const boolean = ref<boolean>(false);
  */
 function isValid(key: string) {
 	if (key.startsWith("user.")) {
-		return props.options?.userFields?.includes(key.slice(5));
+		return props.options?.userFields?.includes(
+			key.slice(5),
+		);
 	} else {
 		return true;
 	}
@@ -114,7 +116,9 @@ watch(
 	() => props.modelValue,
 	(modelValue) => {
 		operator.value = Object.keys(modelValue ?? {})[0];
-		const exprValue = modelValue?.[operator.value ?? ""] as Operand | undefined;
+		const exprValue = modelValue?.[operator.value ?? ""] as
+			| Operand
+			| undefined;
 		if (!exprValue) return;
 		entity.value = exprValue[0]?.$;
 		value.value = Array.isArray(exprValue[1])

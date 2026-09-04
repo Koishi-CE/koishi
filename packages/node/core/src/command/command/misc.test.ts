@@ -10,7 +10,13 @@
  * displayName 写入别名表首位、use 回调直通，
  * 以及 Commander.updateCommands 只同步顶层可斜线指令。
  */
-import { afterAll, beforeAll, describe, expect, it } from "bun:test";
+import {
+	afterAll,
+	beforeAll,
+	describe,
+	expect,
+	it,
+} from "bun:test";
 import { App, Command } from "@koishi-ce/koishi";
 import mock from "@koishi-ce/plugin-mock";
 import "../../../tests/shape.ts";
@@ -19,7 +25,10 @@ const app = new App();
 app.plugin(mock);
 const bot = app.bots[0]!;
 
-const cmd = app.command("ser <a:number> [b:text]", "描述文本");
+const cmd = app.command(
+	"ser <a:number> [b:text]",
+	"描述文本",
+);
 cmd.option("reg", "-r <v>", { type: /x/ });
 cmd.option("plain", "-p");
 cmd.usage("用法说明").example("ser 1 2");
@@ -62,7 +71,10 @@ describe("Command Misc", () => {
 	it("displayName 写入别名表首位", () => {
 		cmd.displayName = "renamed";
 		expect(cmd.displayName).toBe("renamed");
-		expect(Object.keys(cmd._aliases)).toEqual(["renamed", "ser"]);
+		expect(Object.keys(cmd._aliases)).toEqual([
+			"renamed",
+			"ser",
+		]);
 	});
 
 	it("use 直接调用回调并返回其结果", () => {
@@ -83,7 +95,10 @@ describe("Command Misc", () => {
 			configurable: true,
 		});
 		await app.$commander.updateCommands(bot);
-		expect(captured.map((item) => item.name)).toEqual(["ser"]);
-		delete (bot as { updateCommands?: unknown }).updateCommands;
+		expect(captured.map((item) => item.name)).toEqual([
+			"ser",
+		]);
+		delete (bot as { updateCommands?: unknown })
+			.updateCommands;
 	});
 });

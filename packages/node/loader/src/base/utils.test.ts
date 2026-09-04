@@ -7,7 +7,11 @@
  */
 import { describe, expect, it } from "bun:test";
 import type { Dict } from "@koishi-ce/core";
-import { rename, separate, unwrapExports } from "./utils.ts";
+import {
+	rename,
+	separate,
+	unwrapExports,
+} from "./utils.ts";
 
 describe("unwrapExports", () => {
 	it("优先取 default 导出", () => {
@@ -15,11 +19,15 @@ describe("unwrapExports", () => {
 	});
 
 	it("无 default 时原样返回模块", () => {
-		expect(unwrapExports({ plugin: true })).toEqual({ plugin: true });
+		expect(unwrapExports({ plugin: true })).toEqual({
+			plugin: true,
+		});
 	});
 
 	it("default 为假值时回退到模块本身", () => {
-		expect(unwrapExports({ default: null, plugin: true })).toEqual({
+		expect(
+			unwrapExports({ default: null, plugin: true }),
+		).toEqual({
 			default: null,
 			plugin: true,
 		});
@@ -40,7 +48,10 @@ describe("separate", () => {
 			$filter: { userId: "123" },
 		});
 		expect(config).toEqual({ a: 1, b: 2 });
-		expect(meta).toEqual({ $if: false, $filter: { userId: "123" } });
+		expect(meta).toEqual({
+			$if: false,
+			$filter: { userId: "123" },
+		});
 	});
 
 	it("组插件保持原对象作为配置体", () => {
@@ -58,10 +69,20 @@ describe("separate", () => {
 
 describe("rename", () => {
 	it("就地改名并保持键的相对顺序", () => {
-		const object: Dict<unknown> = { a: 1, b: 2, c: 3, d: 4 };
+		const object: Dict<unknown> = {
+			a: 1,
+			b: 2,
+			c: 3,
+			d: 4,
+		};
 		rename(object, "b", "e", 5);
 		expect(object).toEqual({ a: 1, e: 5, c: 3, d: 4 });
-		expect(Object.keys(object)).toEqual(["a", "e", "c", "d"]);
+		expect(Object.keys(object)).toEqual([
+			"a",
+			"e",
+			"c",
+			"d",
+		]);
 	});
 
 	it("匹配带 ~ 前缀的形态", () => {

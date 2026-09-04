@@ -63,7 +63,9 @@ class TempServer extends Service {
 		path: Schema.string().default("/temp"),
 		selfUrl: Schema.string()
 			.role("link")
-			.description("此服务暴露在公网的地址。缺省时将使用全局配置。"),
+			.description(
+				"此服务暴露在公网的地址。缺省时将使用全局配置。",
+			),
 		maxAge: Schema.number()
 			.default(Time.minute * 5)
 			.description("临时文件的默认最大存活时间。"),
@@ -92,7 +94,8 @@ class TempServer extends Service {
 
 		this.path = sanitize(config.path);
 		// selfUrl 双重缺省：插件配置 → server 全局配置 → 空串（仅告警）
-		this.selfUrl = config.selfUrl || ctx.server.config.selfUrl || "";
+		this.selfUrl =
+			config.selfUrl || ctx.server.config.selfUrl || "";
 		if (!this.selfUrl) {
 			logger.warn("missing selfUrl configuration");
 		}
@@ -129,7 +132,9 @@ class TempServer extends Service {
 	 * @param data 文本（file: URL 取本地路径，其余按 URL 经 ctx.http 拉流）、
 	 *   Buffer 或 Web ReadableStream（Node 侧为 node:stream/web 的流）
 	 */
-	async create(data: string | Buffer | ReadableStream): Promise<Entry> {
+	async create(
+		data: string | Buffer | ReadableStream,
+	): Promise<Entry> {
 		const name = Math.random().toString(36).slice(2);
 		const url = `${this.selfUrl}${this.path}/${name}`;
 		let path: string;
@@ -147,7 +152,9 @@ class TempServer extends Service {
 			path = this.baseDir + name;
 			await writeFile(
 				path,
-				data instanceof ReadableStream ? Readable.fromWeb(data) : data,
+				data instanceof ReadableStream
+					? Readable.fromWeb(data)
+					: data,
 			);
 		}
 		// 条目由 ctx.effect 托管：上下文销毁时随 dispose 清理；
@@ -158,7 +165,10 @@ class TempServer extends Service {
 				delete this.entries[name];
 				if (path.startsWith(this.baseDir)) await rm(path);
 			};
-			const timer = setTimeout(() => void dispose(), this.config.maxAge);
+			const timer = setTimeout(
+				() => void dispose(),
+				this.config.maxAge,
+			);
 			const entry: Required<Entry> = { path, url, dispose };
 			this.entries[name] = entry;
 			return entry;

@@ -3,10 +3,21 @@
 // Copyright (c) 2026-present Koishi-CE contributors.
 
 import { resolve } from "node:path";
-import { type Context, type Dict, pick, Schema } from "@koishi-ce/koishi";
-import type { DependencyMetaKey, RemotePackage } from "@koishi-ce/registry";
+import {
+	type Context,
+	type Dict,
+	pick,
+	Schema,
+} from "@koishi-ce/koishi";
+import type {
+	DependencyMetaKey,
+	RemotePackage,
+} from "@koishi-ce/registry";
 import { gt } from "semver";
-import { DependencyProvider, RegistryProvider } from "./deps.ts";
+import {
+	DependencyProvider,
+	RegistryProvider,
+} from "./deps.ts";
 import Installer from "./installer.ts";
 import messageZhCN from "./locales/message.zh-CN.yml";
 import schemaZhCN from "./locales/schema.zh-CN.yml";
@@ -31,17 +42,25 @@ declare module "@koishi-ce/console" {
 	}
 
 	interface Events {
-		"market/install"(deps: Dict<string>, forced?: boolean): Promise<number>;
+		"market/install"(
+			deps: Dict<string>,
+			forced?: boolean,
+		): Promise<number>;
 		"market/registry"(
 			names: string[],
-		): Promise<Dict<Dict<Pick<RemotePackage, DependencyMetaKey>>>>;
+		): Promise<
+			Dict<Dict<Pick<RemotePackage, DependencyMetaKey>>>
+		>;
 	}
 }
 
 export const name = "market";
 // loader 由宿主以 builtin 服务提供，生产恒存在；测试等裸 App 环境可缺席，
 // 声明为非必需注入以免 cordis 报「property loader is not registered」
-export const inject = { http: { required: true }, loader: { required: false } };
+export const inject = {
+	http: { required: true },
+	loader: { required: false },
+};
 
 export const usage = `
 如果插件市场页面提示「无法连接到插件市场」，则可以选择一个 Koishi 社区提供的镜像地址，填入下方对应的配置项中。
@@ -103,12 +122,18 @@ export function apply(ctx: Context, config: Config) {
 					return session.text(".already-installed");
 
 				// find proper version
-				const result = await ctx.installer.findVersion(names);
+				const result =
+					await ctx.installer.findVersion(names);
 				if (!result) return session.text(".not-found");
 
 				// set restart message
 				ctx.loader.envData.message = {
-					...pick(session, ["sid", "channelId", "guildId", "isDirect"]),
+					...pick(session, [
+						"sid",
+						"channelId",
+						"guildId",
+						"isDirect",
+					]),
 					content: session.text(".success"),
 				};
 				await ctx.installer.install(result);
@@ -127,7 +152,8 @@ export function apply(ctx: Context, config: Config) {
 				const names = ctx.installer.resolveName(name);
 				const deps = await ctx.installer.getDeps();
 				const installed = names.find((name) => deps[name]);
-				if (!installed) return session.text(".not-installed");
+				if (!installed)
+					return session.text(".not-installed");
 
 				await ctx.installer.install({ [installed]: null });
 				return session.text(".success");
@@ -147,7 +173,9 @@ export function apply(ctx: Context, config: Config) {
 							const names = ctx.installer.resolveName(name);
 							return names.find((name) => deps[name]);
 						})
-						.filter((name): name is string => name !== undefined);
+						.filter(
+							(name): name is string => name !== undefined,
+						);
 					if (options?.self) resolved.push("koishi");
 					return resolved;
 				}
@@ -156,17 +184,25 @@ export function apply(ctx: Context, config: Config) {
 				ctx.installer.refresh(true);
 				const deps = await ctx.installer.getDeps();
 				names = (
-					await getPackages(names.filter((name): name is string => !!name))
+					await getPackages(
+						names.filter((name): name is string => !!name),
+					)
 				).filter((name) => {
-					const { latest, resolved, invalid } = deps[name] ?? {};
-					if (latest === undefined || resolved === undefined) return false;
+					const { latest, resolved, invalid } =
+						deps[name] ?? {};
+					if (
+						latest === undefined ||
+						resolved === undefined
+					)
+						return false;
 					try {
 						return !invalid && gt(latest, resolved);
 					} catch {
 						return false;
 					}
 				});
-				if (!names.length) return session.text(".all-updated");
+				if (!names.length)
+					return session.text(".all-updated");
 
 				const output = names.map((name) => {
 					const { latest, resolved } = deps[name] ?? {};
@@ -182,15 +218,24 @@ export function apply(ctx: Context, config: Config) {
 				}
 
 				ctx.loader.envData.message = {
-					...pick(session, ["sid", "channelId", "guildId", "isDirect"]),
+					...pick(session, [
+						"sid",
+						"channelId",
+						"guildId",
+						"isDirect",
+					]),
 					content: session.text(".success"),
 				};
 				await ctx.installer.install(
-					names.reduce<Dict<string | null>>((result, name) => {
-						const latest = deps[name]?.latest;
-						if (latest !== undefined) result[name] = latest;
-						return result;
-					}, {}),
+					names.reduce<Dict<string | null>>(
+						(result, name) => {
+							const latest = deps[name]?.latest;
+							if (latest !== undefined)
+								result[name] = latest;
+							return result;
+						},
+						{},
+					),
 				);
 				ctx.loader.envData.message = null;
 				return session.text(".success");
@@ -212,7 +257,10 @@ export function apply(ctx: Context, config: Config) {
 		ctx.console.addListener(
 			"market/install",
 			async (deps, forced) => {
-				const code = await ctx.installer.install(deps, forced);
+				const code = await ctx.installer.install(
+					deps,
+					forced,
+				);
 				ctx.get("console")?.refresh("dependencies");
 				ctx.get("console")?.refresh("registry");
 				ctx.get("console")?.refresh("packages");
@@ -225,7 +273,9 @@ export function apply(ctx: Context, config: Config) {
 			"market/registry",
 			async (names) => {
 				const meta = await Promise.all(
-					names.map((name) => ctx.installer.getPackage(name)),
+					names.map((name) =>
+						ctx.installer.getPackage(name),
+					),
 				);
 				return Object.fromEntries(
 					meta.map((meta, index) => [names[index], meta]),

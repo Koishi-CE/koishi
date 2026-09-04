@@ -33,7 +33,9 @@ export namespace DataService {
  * 派生类实现 get() 返回当前数据；如声明了 immediate 选项，
  * 服务启动时会自动触发一次 refresh。
  */
-export abstract class DataService<T = never> extends Service {
+export abstract class DataService<
+	T = never,
+> extends Service {
 	static filter = false;
 	static inject = ["console"];
 
@@ -43,7 +45,10 @@ export abstract class DataService<T = never> extends Service {
 	 * @param forced 是否强制刷新（区别于增量缓存场景）
 	 * @param client 请求方客户端，可据此返回差异化数据
 	 */
-	public async get(_forced?: boolean, _client?: Client): Promise<T> {
+	public async get(
+		_forced?: boolean,
+		_client?: Client,
+	): Promise<T> {
 		return null as T;
 	}
 
@@ -58,7 +63,11 @@ export abstract class DataService<T = never> extends Service {
 		key: keyof Console.Services,
 		options: DataService.Options = {},
 	) {
-		super(ctx, `console.services.${key}`, options.immediate);
+		super(
+			ctx,
+			`console.services.${key}`,
+			options.immediate,
+		);
 		this.ctx = ctx;
 		this.key = key;
 		this.options = options;

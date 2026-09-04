@@ -29,14 +29,19 @@ import {
 } from "vue";
 
 // 由配置管理面板注入的「当前插件」信息（此处仅需 path 字段）
-const current = inject<Ref<{ path: string }>>("manager.settings.current");
+const current = inject<Ref<{ path: string }>>(
+	"manager.settings.current",
+);
 
 const data = useRpc<NotifierService.Data>();
 
 // 仅保留归属当前插件、且内容非空的通知
 const notifiers = computed(() => {
 	return data.value.notifiers.filter((item) => {
-		return item.paths?.includes(current.value.path) && item.content;
+		return (
+			item.paths?.includes(current.value.path) &&
+			item.content
+		);
 	});
 });
 
@@ -71,10 +76,9 @@ const forward = [
  *   notifier/button 事件回调 node 侧登记的 onClick）；
  * - progress 渲染为 el-progress；template 仅展开子元素。
  */
-const render: FunctionalComponent<{ children: segment[] }> = (
-	{ children },
-	ctx,
-) => {
+const render: FunctionalComponent<{
+	children: segment[];
+}> = ({ children }, ctx) => {
 	return children.map(({ type, attrs, children }) => {
 		if (type === "text") {
 			return attrs.content;
@@ -95,7 +99,8 @@ const render: FunctionalComponent<{ children: segment[] }> = (
 				resolveComponent("el-button"),
 				{
 					...attrs,
-					onClick: () => send("notifier/button", attrs.onClick),
+					onClick: () =>
+						send("notifier/button", attrs.onClick),
 				},
 				{
 					default: () => render({ children }, ctx),

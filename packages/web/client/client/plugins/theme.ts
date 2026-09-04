@@ -11,7 +11,13 @@
  */
 import { usePreferredDark } from "@vueuse/core";
 import type { Dict } from "cosmokit";
-import { type Component, computed, markRaw, reactive, watchEffect } from "vue";
+import {
+	type Component,
+	computed,
+	markRaw,
+	reactive,
+	watchEffect,
+} from "vue";
 import { Schema } from "../../../components/client/index.ts";
 import type { Context } from "../context";
 import { Service } from "../utils";
@@ -100,11 +106,15 @@ export default class ThemeService extends Service {
 			watchEffect(
 				() => {
 					if (!config.value.theme) return;
-					const root = window.document.querySelector("html");
+					const root =
+						window.document.querySelector("html");
 					if (!root) return;
 					// 把当前主题名写到 <html theme="...">，并同步 dark 类；
 					// 主题样式与深色变量均由 CSS 依据这两个标记选择
-					root.setAttribute("theme", config.value.theme[colorMode.value]);
+					root.setAttribute(
+						"theme",
+						config.value.theme[colorMode.value],
+					);
 					if (colorMode.value === "dark") {
 						root.classList.add("dark");
 					} else {
@@ -123,16 +133,21 @@ export default class ThemeService extends Service {
 	 */
 	theme(options: ThemeOptions) {
 		markRaw(options);
-		for (const [type, component] of Object.entries(options.components || {})) {
+		for (const [type, component] of Object.entries(
+			options.components || {},
+		)) {
 			this.ctx.slot({
 				type,
-				disabled: () => config.value.theme[colorMode.value] !== options.id,
+				disabled: () =>
+					config.value.theme[colorMode.value] !==
+					options.id,
 				component,
 			});
 		}
 		return this.ctx.effect(() => {
 			this.ctx.internal.themes[options.id] = options;
-			return () => delete this.ctx.internal.themes[options.id];
+			return () =>
+				delete this.ctx.internal.themes[options.id];
 		});
 	}
 }

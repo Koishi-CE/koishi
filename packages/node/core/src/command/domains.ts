@@ -39,13 +39,23 @@ function defineElementDomain(
 
 /** 注册内置参数类型（domain）表 */
 export function registerBuiltinDomains(cmdr: Commander) {
-	cmdr.domain("el", (source) => h.parse(source), { greedy: true });
-	cmdr.domain("elements", (source) => h.parse(source), { greedy: true });
-	cmdr.domain("string", (source) => h.unescape(source));
-	cmdr.domain("text", (source) => h.unescape(source), { greedy: true });
-	cmdr.domain("rawtext", (source) => h("", h.parse(source)).toString(true), {
+	cmdr.domain("el", (source) => h.parse(source), {
 		greedy: true,
 	});
+	cmdr.domain("elements", (source) => h.parse(source), {
+		greedy: true,
+	});
+	cmdr.domain("string", (source) => h.unescape(source));
+	cmdr.domain("text", (source) => h.unescape(source), {
+		greedy: true,
+	});
+	cmdr.domain(
+		"rawtext",
+		(source) => h("", h.parse(source)).toString(true),
+		{
+			greedy: true,
+		},
+	);
 	cmdr.domain("boolean", () => true);
 
 	cmdr.domain(
@@ -65,7 +75,8 @@ export function registerBuiltinDomains(cmdr: Commander) {
 		(source, _session) => {
 			const value = +source.replace(/[,_]/g, "");
 			// "value * 0 === 0" 排除 NaN 与 Infinity，再校验整数性
-			if (value * 0 === 0 && Math.floor(value) === value) return value;
+			if (value * 0 === 0 && Math.floor(value) === value)
+				return value;
 			throw new Error("internal.invalid-integer");
 		},
 		{ numeric: true },
@@ -75,7 +86,11 @@ export function registerBuiltinDomains(cmdr: Commander) {
 		"posint",
 		(source, _session) => {
 			const value = +source.replace(/[,_]/g, "");
-			if (value * 0 === 0 && Math.floor(value) === value && value > 0)
+			if (
+				value * 0 === 0 &&
+				Math.floor(value) === value &&
+				value > 0
+			)
 				return value;
 			throw new Error("internal.invalid-posint");
 		},
@@ -86,7 +101,11 @@ export function registerBuiltinDomains(cmdr: Commander) {
 		"natural",
 		(source, _session) => {
 			const value = +source.replace(/[,_]/g, "");
-			if (value * 0 === 0 && Math.floor(value) === value && value >= 0)
+			if (
+				value * 0 === 0 &&
+				Math.floor(value) === value &&
+				value >= 0
+			)
 				return value;
 			throw new Error("internal.invalid-natural");
 		},
@@ -152,5 +171,7 @@ export const commandOptionSchema = Schema.object({
 		.role("perms")
 		.default(["authority:0"])
 		.description("权限继承。"),
-	dependencies: Schema.array(String).role("perms").description("权限依赖。"),
+	dependencies: Schema.array(String)
+		.role("perms")
+		.description("权限依赖。"),
 });

@@ -20,10 +20,15 @@ import type {
  * Scanner 构造器要求的泛型请求形状；桩函数返回具体类型，
  * 统一经该形状收窄注入（运行时仅按返回值消费）。
  */
-type ScannerRequest = ConstructorParameters<typeof Scanner>[0];
+type ScannerRequest = ConstructorParameters<
+	typeof Scanner
+>[0];
 
 /** 生成搜索端点的单条结果（满足 SearchObject 的展示字段占位） */
-function makeObject(name: string, date?: string): SearchObject {
+function makeObject(
+	name: string,
+	date?: string,
+): SearchObject {
 	return {
 		shortname: name,
 		package: {
@@ -36,13 +41,20 @@ function makeObject(name: string, date?: string): SearchObject {
 			maintainers: [],
 		},
 		searchScore: 1,
-		score: { final: 1, detail: { quality: 1, popularity: 1, maintenance: 1 } },
+		score: {
+			final: 1,
+			detail: { quality: 1, popularity: 1, maintenance: 1 },
+		},
 		rating: 0,
 		license: "MIT",
 		manifest: {
 			description: "",
 			locales: [],
-			service: { required: [], optional: [], implements: [] },
+			service: {
+				required: [],
+				optional: [],
+				implements: [],
+			},
 		},
 		createdAt: "",
 		updatedAt: "",
@@ -92,15 +104,25 @@ function makeRegistry(
 
 describe("Scanner.isPlugin", () => {
 	it("官方与社区两种组织形式均判定为插件", () => {
-		expect(Scanner.isPlugin("@koishijs/plugin-foo")).toBe(true);
-		expect(Scanner.isPlugin("koishi-plugin-foo")).toBe(true);
-		expect(Scanner.isPlugin("@scope/koishi-plugin-foo")).toBe(true);
+		expect(Scanner.isPlugin("@koishijs/plugin-foo")).toBe(
+			true,
+		);
+		expect(Scanner.isPlugin("koishi-plugin-foo")).toBe(
+			true,
+		);
+		expect(
+			Scanner.isPlugin("@scope/koishi-plugin-foo"),
+		).toBe(true);
 	});
 
 	it("非插件名与大写内层名判定为否", () => {
 		expect(Scanner.isPlugin("foo")).toBe(false);
-		expect(Scanner.isPlugin("@koishijs/plugin-Foo")).toBe(false);
-		expect(Scanner.isPlugin("@scope/plugin-foo")).toBe(false);
+		expect(Scanner.isPlugin("@koishijs/plugin-Foo")).toBe(
+			false,
+		);
+		expect(Scanner.isPlugin("@scope/plugin-foo")).toBe(
+			false,
+		);
 		expect(Scanner.isPlugin("koishi-plugin-")).toBe(false);
 	});
 });
@@ -159,11 +181,12 @@ describe("collect", () => {
 
 		const scanner = new Scanner(request as ScannerRequest);
 		await scanner.collect({ ignored: ["koishi-plugin-c"] });
-		expect(urls).toEqual(["/-/v1/search?text=koishi+plugin&size=250&from=0"]);
-		expect(scanner.objects.map((o) => o.package.name)).toEqual([
-			"koishi-plugin-a",
-			"@koishijs/plugin-b",
+		expect(urls).toEqual([
+			"/-/v1/search?text=koishi+plugin&size=250&from=0",
 		]);
+		expect(
+			scanner.objects.map((o) => o.package.name),
+		).toEqual(["koishi-plugin-a", "@koishijs/plugin-b"]);
 		expect(scanner.total).toBe(2);
 		expect(scanner.time).toBeTruthy();
 	});
@@ -216,7 +239,9 @@ describe("process", () => {
 		const registry = makeRegistry(
 			{
 				"0.9.0": remotePackage("0.9.0"),
-				"1.0.0": remotePackage("1.0.0", { deprecated: "old release" }),
+				"1.0.0": remotePackage("1.0.0", {
+					deprecated: "old release",
+				}),
 				"1.1.0": remotePackage("1.1.0", {
 					peerDependencies: { koishi: "^3.0.0" },
 				}),
@@ -251,14 +276,23 @@ describe("process", () => {
 		const onRegistry = mock();
 
 		const scanner = new Scanner(request as ScannerRequest);
-		const versions = await scanner.process(object, "^4.0.0", onRegistry);
+		const versions = await scanner.process(
+			object,
+			"^4.0.0",
+			onRegistry,
+		);
 
 		// 返回降序的兼容且未废弃版本（1.0.0 废弃、1.1.0 不兼容被剔除）
-		expect(versions?.map((item) => item.version)).toEqual(["1.2.0", "0.9.0"]);
+		expect(versions?.map((item) => item.version)).toEqual([
+			"1.2.0",
+			"0.9.0",
+		]);
 		// onRegistry 收到的兼容列表含废弃版本
 		expect(onRegistry).toHaveBeenCalledWith(
 			registry,
-			expect.arrayContaining([expect.objectContaining({ version: "1.0.0" })]),
+			expect.arrayContaining([
+				expect.objectContaining({ version: "1.0.0" }),
+			]),
 		);
 
 		expect(object.shortname).toBe("demo");
@@ -268,8 +302,12 @@ describe("process", () => {
 		expect(object.manifest.description).toBe("");
 		expect(object.insecure).toBe(true);
 		expect(object.category).toBe("tool");
-		expect(object.createdAt).toBe("2023-01-01T00:00:00.000Z");
-		expect(object.updatedAt).toBe("2024-01-01T00:00:00.000Z");
+		expect(object.createdAt).toBe(
+			"2023-01-01T00:00:00.000Z",
+		);
+		expect(object.updatedAt).toBe(
+			"2024-01-01T00:00:00.000Z",
+		);
 		// contributors 回退到 author
 		expect(object.package.contributors).toEqual([
 			{ name: "author-name", email: "a@b.c" },
@@ -285,7 +323,9 @@ describe("process", () => {
 			{ "1.0.0": remotePackage("1.0.0") },
 			{ "1.0.0": "2024-01-01T00:00:00.000Z" },
 		);
-		const scanner = new Scanner((async () => registry) as ScannerRequest);
+		const scanner = new Scanner(
+			(async () => registry) as ScannerRequest,
+		);
 		await scanner.process(object, "^4.0.0", undefined);
 		expect(object.shortname).toBe("official");
 		expect(object.verified).toBe(true);
@@ -302,12 +342,20 @@ describe("process", () => {
 				{ "1.0.0": "2024-01-01T00:00:00.000Z" },
 			)) as ScannerRequest);
 		expect(
-			await scanner.process(makeObject("koishi-plugin-x"), "^4.0.0", undefined),
+			await scanner.process(
+				makeObject("koishi-plugin-x"),
+				"^4.0.0",
+				undefined,
+			),
 		).toBeUndefined();
 
 		const scanner2 = new Scanner((async () =>
 			makeRegistry(
-				{ "1.0.0": remotePackage("1.0.0", { deprecated: "gone" }) },
+				{
+					"1.0.0": remotePackage("1.0.0", {
+						deprecated: "gone",
+					}),
+				},
 				{ "1.0.0": "2024-01-01T00:00:00.000Z" },
 			)) as ScannerRequest);
 		expect(
@@ -329,8 +377,12 @@ describe("process", () => {
 			// time 表缺失 0.9.0 的时间
 			{ "1.0.0": "2024-01-01T00:00:00.000Z" },
 		);
-		const scanner = new Scanner((async () => registry) as ScannerRequest);
-		expect(await scanner.process(object, "^4.0.0", undefined)).toBeUndefined();
+		const scanner = new Scanner(
+			(async () => registry) as ScannerRequest,
+		);
+		expect(
+			await scanner.process(object, "^4.0.0", undefined),
+		).toBeUndefined();
 		// 时间字段未被写入（createdAt 保持初值）
 		expect(object.createdAt).toBe("");
 	});
@@ -341,7 +393,9 @@ describe("process", () => {
 			{ "1.0.0": remotePackage("1.0.0") },
 			{ "1.0.0": "2024-01-01T00:00:00.000Z" },
 		);
-		const scanner = new Scanner((async () => registry) as ScannerRequest);
+		const scanner = new Scanner(
+			(async () => registry) as ScannerRequest,
+		);
 		await scanner.process(object, "^4.0.0", undefined);
 		expect(object.package.contributors).toEqual([]);
 	});
@@ -352,7 +406,9 @@ describe("analyze", () => {
 		const good = makeObject("koishi-plugin-good");
 		const empty = makeObject("koishi-plugin-empty");
 		const broken = makeObject("koishi-plugin-broken");
-		const preIgnored = makeObject("koishi-plugin-pre-ignored");
+		const preIgnored = makeObject(
+			"koishi-plugin-pre-ignored",
+		);
 		preIgnored.ignored = true;
 
 		const goodRegistry = makeRegistry(
@@ -361,8 +417,10 @@ describe("analyze", () => {
 		);
 		const emptyRegistry = makeRegistry({}, {});
 		const request = async (url: string) => {
-			if (url === "/koishi-plugin-good") return goodRegistry;
-			if (url === "/koishi-plugin-empty") return emptyRegistry;
+			if (url === "/koishi-plugin-good")
+				return goodRegistry;
+			if (url === "/koishi-plugin-empty")
+				return emptyRegistry;
 			throw new Error("network down");
 		};
 
@@ -387,22 +445,30 @@ describe("analyze", () => {
 
 		// 只有 good 产出了版本列表
 		expect(result).toHaveLength(1);
-		expect(result[0]?.map((item) => item.version)).toEqual(["1.0.0"]);
+		expect(result[0]?.map((item) => item.version)).toEqual([
+			"1.0.0",
+		]);
 		expect(onSuccess).toHaveBeenCalledTimes(1);
 		expect(onSuccess.mock.calls[0]?.[0]).toBe(good);
 
 		// 无兼容版本 → onSkipped + ignored
-		expect(onSkipped.mock.calls.map((call) => call[0])).toEqual([
-			"koishi-plugin-empty",
-		]);
+		expect(
+			onSkipped.mock.calls.map((call) => call[0]),
+		).toEqual(["koishi-plugin-empty"]);
 		expect(empty.ignored).toBe(true);
 
 		// 请求抛错 → onFailure + ignored
-		expect(onFailure.mock.calls[0]?.[0]).toBe("koishi-plugin-broken");
+		expect(onFailure.mock.calls[0]?.[0]).toBe(
+			"koishi-plugin-broken",
+		);
 		expect(broken.ignored).toBe(true);
 
 		// 预 ignored 的对象不进入处理（before/after 均不计）
-		expect(before.mock.calls.map((call) => call[0]?.package.name)).toEqual([
+		expect(
+			before.mock.calls.map(
+				(call) => call[0]?.package.name,
+			),
+		).toEqual([
 			"koishi-plugin-good",
 			"koishi-plugin-empty",
 			"koishi-plugin-broken",

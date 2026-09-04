@@ -18,7 +18,12 @@ import {
 	mock,
 } from "bun:test";
 import type { Plugin } from "@koishi-ce/core";
-import { Context, type Dict, Logger, sleep } from "@koishi-ce/koishi";
+import {
+	Context,
+	type Dict,
+	Logger,
+	sleep,
+} from "@koishi-ce/koishi";
 import mockClient from "@koishi-ce/plugin-mock";
 import type { ResolvedConfigFile } from "../../base/config-file.ts";
 import { Loader } from "../index.ts";
@@ -47,7 +52,8 @@ class TestLoader extends Loader {
 		return (this.data[name] ||= {
 			name,
 			apply: (ctx: Context) => {
-				if (name === "foo") throw new Error("error from plugin");
+				if (name === "foo")
+					throw new Error("error from plugin");
 				const listener = mock();
 				this.listeners[name] = listener;
 				ctx.on(`test/${name}` as never, listener as never);
@@ -62,14 +68,21 @@ class TestLoader extends Loader {
 	}
 
 	protected override locateConfig(): Promise<ResolvedConfigFile> {
-		throw new Error("test loader does not touch the file system");
+		throw new Error(
+			"test loader does not touch the file system",
+		);
 	}
 
 	protected override async parseConfig(): Promise<unknown> {
-		throw new Error("test loader does not touch the file system");
+		throw new Error(
+			"test loader does not touch the file system",
+		);
 	}
 
-	protected override async saveConfig(filename: string, config: unknown) {
+	protected override async saveConfig(
+		filename: string,
+		config: unknown,
+	) {
 		this.writes.push({ filename, config });
 	}
 }
@@ -110,10 +123,20 @@ describe("@koishi-ce/loader", () => {
 		const app = await loader.createApp();
 		expect(app).toBeInstanceOf(Context);
 		expect(app.koishi.config.prefix).toEqual(["."]);
-		expect(app.registry.get(loader.data["foo"]! as Plugin)).toBeTruthy();
-		expect(app.registry.get(loader.data["foo"]! as Plugin)?.config).toEqual({});
-		expect(app.registry.get(loader.data["bar"]! as Plugin)).toBeTruthy();
-		expect(app.registry.get(loader.data["bar"]! as Plugin)?.config).toEqual({
+		expect(
+			app.registry.get(loader.data["foo"]! as Plugin),
+		).toBeTruthy();
+		expect(
+			app.registry.get(loader.data["foo"]! as Plugin)
+				?.config,
+		).toEqual({});
+		expect(
+			app.registry.get(loader.data["bar"]! as Plugin),
+		).toBeTruthy();
+		expect(
+			app.registry.get(loader.data["bar"]! as Plugin)
+				?.config,
+		).toEqual({
 			a: 1,
 		});
 	});
@@ -144,19 +167,33 @@ describe("@koishi-ce/loader", () => {
 		app.scope.update(loader.config);
 		await sleep(0);
 		expect(app.koishi.config.prefix).toEqual(["/"]);
-		expect(app.registry.get(loader.data["foo"]! as Plugin)).toBeFalsy();
-		expect(app.registry.get(loader.data["bar"]! as Plugin)).toBeTruthy();
-		expect(app.registry.get(loader.data["bar"]! as Plugin)?.config).toEqual({
+		expect(
+			app.registry.get(loader.data["foo"]! as Plugin),
+		).toBeFalsy();
+		expect(
+			app.registry.get(loader.data["bar"]! as Plugin),
+		).toBeTruthy();
+		expect(
+			app.registry.get(loader.data["bar"]! as Plugin)
+				?.config,
+		).toEqual({
 			a: 2,
 		});
-		expect(app.registry.get(loader.data["baz"]! as Plugin)).toBeTruthy();
-		expect(app.registry.get(loader.data["baz"]! as Plugin)?.config).toEqual({});
+		expect(
+			app.registry.get(loader.data["baz"]! as Plugin),
+		).toBeTruthy();
+		expect(
+			app.registry.get(loader.data["baz"]! as Plugin)
+				?.config,
+		).toEqual({});
 	});
 
 	// 验证运行期更新插件配置会同步回写 loader 的配置对象
 	it("plugin update", async () => {
 		const { app } = loader;
-		const runtime = app.registry.get(loader.data["bar"]! as Plugin);
+		const runtime = app.registry.get(
+			loader.data["bar"]! as Plugin,
+		);
 		runtime?.update({ a: 3 });
 		expect(loader.config.plugins).toEqual({
 			foo: {
@@ -181,8 +218,12 @@ describe("@koishi-ce/loader", () => {
 	it("filter", async () => {
 		const { app } = loader;
 		app.plugin(mockClient);
-		expect(app.lifecycle._hooks["test/bar"]).toHaveLength(1);
-		expect(app.lifecycle._hooks["test/baz"]).toHaveLength(1);
+		expect(app.lifecycle._hooks["test/bar"]).toHaveLength(
+			1,
+		);
+		expect(app.lifecycle._hooks["test/baz"]).toHaveLength(
+			1,
+		);
 		const bar = loader.listeners["bar"]!;
 		const baz = loader.listeners["baz"]!;
 		// mock 插件的监听器注册后未被调用

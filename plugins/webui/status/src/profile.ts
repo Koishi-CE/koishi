@@ -52,7 +52,10 @@ class TickCounter {
 	};
 
 	constructor(ctx: Context) {
-		this.stop = ctx.setInterval(() => this.tick(), Time.second);
+		this.stop = ctx.setInterval(
+			() => this.tick(),
+			Time.second,
+		);
 	}
 
 	/** 在当前秒的槽位上累加计数。 */
@@ -83,7 +86,10 @@ let usedRate: number;
 /** 采集内存负载率：[进程 RSS / 总内存, 1 - 空闲内存 / 总内存]。 */
 async function memoryRate(): Promise<LoadRate> {
 	const total = totalmem();
-	return [process.memoryUsage().rss / total, 1 - freemem() / total];
+	return [
+		process.memoryUsage().rss / total,
+		1 - freemem() / total,
+	];
 }
 
 /**
@@ -139,7 +145,10 @@ class ProfileProvider extends DataService<ProfileProvider.Payload> {
 	// 基类链（cordis Service）上已有 config 成员，故需 override
 	override config: ProfileProvider.Config;
 
-	constructor(ctx: Context, config: ProfileProvider.Config) {
+	constructor(
+		ctx: Context,
+		config: ProfileProvider.Config,
+	) {
 		super(ctx, "status");
 
 		this.config = config;
@@ -213,7 +222,9 @@ class ProfileProvider extends DataService<ProfileProvider.Payload> {
 		const bots: Dict<ProfileProvider.BotData> = {};
 		for (const bot of this.ctx.bots) {
 			if (bot.hidden) continue;
-			const paths = this.ctx.get("loader")?.paths(bot.ctx.scope);
+			const paths = this.ctx
+				.get("loader")
+				?.paths(bot.ctx.scope);
 			bots[bot.sid] = {
 				...bot.toJSON(),
 				error: bot.error?.message,
@@ -228,12 +239,13 @@ class ProfileProvider extends DataService<ProfileProvider.Payload> {
 
 	// erasableSyntaxOnly 禁止含运行时值的 namespace，
 	// 原 namespace 内的 Config 常量移到此处的静态字段，对外形状不变
-	static Config: Schema<ProfileProvider.Config> = Schema.object({
-		tickInterval: Schema.natural()
-			.role("ms")
-			.description("性能数据推送的时间间隔。")
-			.default(Time.second * 5),
-	});
+	static Config: Schema<ProfileProvider.Config> =
+		Schema.object({
+			tickInterval: Schema.natural()
+				.role("ms")
+				.description("性能数据推送的时间间隔。")
+				.default(Time.second * 5),
+		});
 }
 
 namespace ProfileProvider {

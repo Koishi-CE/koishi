@@ -32,5 +32,7 @@ const provider = computed(() => {
 });
 
 // 点击目标跟随解析结果：安装 / 配置流程均按真实包名工作
-const target = computed(() => provider.value?.name || props.name);
+const target = computed(
+	() => provider.value?.name || props.name,
+);
 </script>

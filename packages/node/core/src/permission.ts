@@ -18,10 +18,17 @@
  * 判定（分别委托给适配器的 checkPermission 与本地会话/用户/频道授权列表）。
  */
 import { Logger } from "@satorijs/core";
-import { type Awaitable, defineProperty, remove } from "cosmokit";
+import {
+	type Awaitable,
+	defineProperty,
+	remove,
+} from "cosmokit";
 import { Context } from "./context/index.ts";
 import type { Channel, User } from "./database/index.ts";
-import { createMatch, type MatchResult } from "./i18n/index.ts";
+import {
+	createMatch,
+	type MatchResult,
+} from "./i18n/index.ts";
 import type { Session } from "./session/index.ts";
 
 const logger = new Logger("app");
@@ -100,7 +107,10 @@ export class Permissions {
 		this.define("authority:(value)", {
 			check: ({ value }, { user }: Partial<Session>) => {
 				// 调用方只保证 user 是观察对象，预取字段集合由具体会话决定
-				return !user || (user as User.Observed)["authority"] >= +value;
+				return (
+					!user ||
+					(user as User.Observed)["authority"] >= +value
+				);
 			},
 			list: () =>
 				Array(5)
@@ -111,13 +121,21 @@ export class Permissions {
 		// 兜底判定 1：委托给适配器（session.bot.checkPermission），
 		// 让 QQ 群管理员等平台侧权限也能纳入统一体系
 		this.provide("(name)", async ({ name }, session) => {
-			return (await session.bot?.checkPermission(name, session)) ?? false;
+			return (
+				(await session.bot?.checkPermission(
+					name,
+					session,
+				)) ?? false
+			);
 		});
 
 		// 兜底判定 2：查本地授权列表——会话临时授权 > 用户表 > 频道表
 		this.provide(
 			"(name)",
-			({ name }, { permissions, user, channel }: Partial<Session>) => {
+			(
+				{ name },
+				{ permissions, user, channel }: Partial<Session>,
+			) => {
 				// user / channel 的预取字段由调用方决定，这里按完整表结构
 				// 读取（未预取时值为 undefined，不影响判定结果）
 				const u = user as User.Observed | undefined;
@@ -138,13 +156,17 @@ export class Permissions {
 	 * @param options 判定与关联配置
 	 * @returns 清理函数：随定义方上下文销毁自动注销该规则
 	 */
-	define<P extends string>(pattern: P, options: Permissions.Options<P>) {
+	define<P extends string>(
+		pattern: P,
+		options: Permissions.Options<P>,
+	) {
 		const entry: Permissions.Entry = {
 			...options,
 			match: createMatch(pattern),
 		};
 		// 无捕获组的字面量权限名，默认在权限列表中展示自身
-		if (!pattern.includes("(")) entry.list ||= () => [pattern];
+		if (!pattern.includes("("))
+			entry.list ||= () => [pattern];
 		return this.ctx.effect(() => {
 			this.store.push(entry);
 			return () => remove(this.store, entry);
@@ -152,17 +174,26 @@ export class Permissions {
 	}
 
 	/** 注册权限判定函数的快捷方式（等价于 define(pattern, { check })）。 */
-	provide<P extends string>(pattern: P, check: Permissions.Check<P>) {
+	provide<P extends string>(
+		pattern: P,
+		check: Permissions.Check<P>,
+	) {
 		return this.define(pattern, { check });
 	}
 
 	/** 声明权限的继承关系（满足任一上游权限即视为拥有本权限）。 */
-	inherit<P extends string>(pattern: P, inherits: Permissions.Links<P>) {
+	inherit<P extends string>(
+		pattern: P,
+		inherits: Permissions.Links<P>,
+	) {
 		return this.define(pattern, { inherits });
 	}
 
 	/** 声明权限的依赖关系（须先满足全部依赖才可能拥有本权限）。 */
-	depend<P extends string>(pattern: P, depends: Permissions.Links<P>) {
+	depend<P extends string>(
+		pattern: P,
+		depends: Permissions.Links<P>,
+	) {
 		return this.define(pattern, { depends });
 	}
 
@@ -225,7 +256,8 @@ export class Permissions {
 				const data = entry.match(name);
 				if (!data) continue;
 				let links = entry[type];
-				if (typeof links === "function") links = links(data);
+				if (typeof links === "function")
+					links = links(data);
 				if (Array.isArray(links)) queue.push(...links);
 			}
 		}
@@ -256,7 +288,9 @@ export class Permissions {
 			] as Partial<Session>) || session;
 		if (typeof names === "string") names = [names];
 		for (const name of this.subgraph("depends", names)) {
-			const parents = [...this.subgraph("inherits", [name])];
+			const parents = [
+				...this.subgraph("inherits", [name]),
+			];
 			const results = await Promise.all(
 				parents.map((parent) => {
 					// 缓存的是 Promise 而非结果值：并发场景下防重复发起异步判定

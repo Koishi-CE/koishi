@@ -29,7 +29,9 @@ import { join } from "node:path";
  * 因此可完整验证「registry 比对 → 所有权预检 → 拓扑序发布 → workspace:* 改写与恢复」。
  */
 
-const workspaceRoot = mkdtempSync(join(tmpdir(), "koishi-publish-run-"));
+const workspaceRoot = mkdtempSync(
+	join(tmpdir(), "koishi-publish-run-"),
+);
 
 mock.module("../index.ts", () => ({
 	cwd: workspaceRoot,
@@ -52,12 +54,18 @@ const runExitCodes = new Map<string, number>();
 const captureReplies = new Map<string, string | null>();
 
 mock.module("../release/run.ts", () => ({
-	runCommand: (dir: string, cmd: string, args: readonly string[]) => {
+	runCommand: (
+		dir: string,
+		cmd: string,
+		args: readonly string[],
+	) => {
 		const manifest = JSON.parse(
 			readFileSync(join(dir, "package.json"), "utf8"),
 		) as Record<string, unknown>;
 		runCalls.push({ dir, cmd, args, manifest });
-		return runExitCodes.get(`${manifest["name"]}`) ?? runExitCode;
+		return (
+			runExitCodes.get(`${manifest["name"]}`) ?? runExitCode
+		);
 	},
 	captureCommand: (
 		_dir: string,
@@ -70,7 +78,9 @@ mock.module("../release/run.ts", () => ({
 	},
 }));
 
-const { default: runPublish } = await import("../release/publish.ts");
+const { default: runPublish } = await import(
+	"../release/publish.ts"
+);
 
 // ---------------------------------------------------------------------------
 // fetch 与定时器的可编程 mock（重试退避的 setTimeout 压缩到 1ms）
@@ -80,11 +90,15 @@ const realFetch = globalThis.fetch;
 const realSetTimeout = globalThis.setTimeout;
 const fetchedUrls: string[] = [];
 
-let fetchImpl: (url: string) => Response | Promise<Response> = () =>
+let fetchImpl: (
+	url: string,
+) => Response | Promise<Response> = () =>
 	new Response(null, { status: 404 });
 
 // RequestInfo 在本工程 lib 环境非全局名，改从 fetch 签名取输入类型
-globalThis.fetch = ((input: Parameters<typeof fetch>[0]) => {
+globalThis.fetch = ((
+	input: Parameters<typeof fetch>[0],
+) => {
 	const url = `${input}`;
 	fetchedUrls.push(url);
 	return Promise.resolve(fetchImpl(url));
@@ -96,7 +110,12 @@ function capTimers(): void {
 		fn: (...args: unknown[]) => void,
 		ms?: number,
 		...rest: unknown[]
-	) => realSetTimeout(fn, Math.min(ms ?? 0, 1), ...rest)) as typeof setTimeout;
+	) =>
+		realSetTimeout(
+			fn,
+			Math.min(ms ?? 0, 1),
+			...rest,
+		)) as typeof setTimeout;
 }
 
 function restoreTimers(): void {
@@ -107,7 +126,9 @@ function restoreTimers(): void {
 function respondVersions(versions: string[]): Response {
 	return new Response(
 		JSON.stringify({
-			versions: Object.fromEntries(versions.map((v) => [v, {}])),
+			versions: Object.fromEntries(
+				versions.map((v) => [v, {}]),
+			),
 		}),
 		{ status: 200 },
 	);
@@ -117,7 +138,9 @@ const logs: string[] = [];
 const originalLog = console.log;
 // whoami 缺席等预期告警直通 stderr，捕获收敛避免刷屏（子进程均被 mock，无真实 stderr）
 const stderrChunks: string[] = [];
-const originalStderrWrite = process.stderr.write.bind(process.stderr);
+const originalStderrWrite = process.stderr.write.bind(
+	process.stderr,
+);
 
 beforeAll(() => {
 	console.log = (...args: unknown[]) => {
@@ -154,10 +177,9 @@ function seedPackage(
 }
 
 function readPkg(dir: string): Record<string, unknown> {
-	return JSON.parse(readFileSync(join(dir, "package.json"), "utf8")) as Record<
-		string,
-		unknown
-	>;
+	return JSON.parse(
+		readFileSync(join(dir, "package.json"), "utf8"),
+	) as Record<string, unknown>;
 }
 
 beforeEach(() => {
@@ -169,49 +191,68 @@ beforeEach(() => {
 	fetchedUrls.length = 0;
 	logs.length = 0;
 	fetchImpl = () => new Response(null, { status: 404 });
-	rmSync(join(workspaceRoot, "external"), { recursive: true, force: true });
-	mkdirSync(join(workspaceRoot, "external"), { recursive: true });
+	rmSync(join(workspaceRoot, "external"), {
+		recursive: true,
+		force: true,
+	});
+	mkdirSync(join(workspaceRoot, "external"), {
+		recursive: true,
+	});
 });
 
 describe("runPublish", () => {
 	it("未发现任何可发布包时返回 0", async () => {
-		mkdirSync(join(workspaceRoot, "external", "no-manifest"), {
-			recursive: true,
-		});
+		mkdirSync(
+			join(workspaceRoot, "external", "no-manifest"),
+			{
+				recursive: true,
+			},
+		);
 		expect(await runPublish([])).toBe(0);
 		expect(logs.join("\n")).toContain("未发现任何可发布包");
 	});
 
 	it("首次发布：拓扑序逐包 publish，workspace:* 改写为真实版本且事后恢复", async () => {
-		const dirA = seedPackage("a", "koishi-plugin-a", "1.0.0", {
-			"koishi-plugin-b": "workspace:*",
-		});
+		const dirA = seedPackage(
+			"a",
+			"koishi-plugin-a",
+			"1.0.0",
+			{
+				"koishi-plugin-b": "workspace:*",
+			},
+		);
 		seedPackage("b", "koishi-plugin-b", "1.1.0");
 		// registry 全 404（首发免预检），whoami 可得
 		captureReplies.set("npm whoami", "me");
 
 		expect(await runPublish([])).toBe(0);
 		// 被依赖者 b 在前
-		expect(runCalls.map((c) => c.manifest["name"])).toEqual([
-			"koishi-plugin-b",
-			"koishi-plugin-a",
-		]);
+		expect(runCalls.map((c) => c.manifest["name"])).toEqual(
+			["koishi-plugin-b", "koishi-plugin-a"],
+		);
 		for (const call of runCalls) {
 			expect(call.cmd).toBe("npm");
-			expect(call.args).toEqual(["publish", "--access", "public"]);
+			expect(call.args).toEqual([
+				"publish",
+				"--access",
+				"public",
+			]);
 		}
 		// 发布瞬间 a 的 workspace:* 已改写为 b 的真实版本
-		const depsA = runCalls[1]?.manifest["dependencies"] as Record<
-			string,
-			string
-		>;
+		const depsA = runCalls[1]?.manifest[
+			"dependencies"
+		] as Record<string, string>;
 		expect(depsA["koishi-plugin-b"]).toBe("^1.1.0");
 		// 结束后恢复原样（幂等兜底）
 		expect(readPkg(dirA)["dependencies"]).toEqual({
 			"koishi-plugin-b": "workspace:*",
 		});
-		expect(logs.join("\n")).toContain("workspace:* → 真实版本");
-		expect(logs.join("\n")).toContain("已恢复 koishi-plugin-a/package.json");
+		expect(logs.join("\n")).toContain(
+			"workspace:* → 真实版本",
+		);
+		expect(logs.join("\n")).toContain(
+			"已恢复 koishi-plugin-a/package.json",
+		);
 	});
 
 	it("版本已存在于 registry 的包被跳过", async () => {
@@ -219,7 +260,9 @@ describe("runPublish", () => {
 		fetchImpl = () => respondVersions(["1.0.0"]);
 		expect(await runPublish([])).toBe(0);
 		expect(runCalls).toHaveLength(0);
-		expect(logs.join("\n")).toContain("版本 1.0.0 已在 registry");
+		expect(logs.join("\n")).toContain(
+			"版本 1.0.0 已在 registry",
+		);
 	});
 
 	it("本地版本低于 registry 已发布版本时跳过并警告", async () => {
@@ -255,7 +298,10 @@ describe("runPublish", () => {
 		seedPackage("solo", "koishi-plugin-solo", "2.0.0");
 		fetchImpl = () => respondVersions(["1.0.0"]);
 		captureReplies.set("npm whoami", "me");
-		captureReplies.set("npm owner ls --json koishi-plugin-solo", "not-a-json");
+		captureReplies.set(
+			"npm owner ls --json koishi-plugin-solo",
+			"not-a-json",
+		);
 		expect(await runPublish([])).toBe(0);
 		expect(runCalls).toHaveLength(0);
 		expect(logs.join("\n")).toContain("owner: 未知");
@@ -295,7 +341,10 @@ describe("runPublish", () => {
 		mkdirSync(dir, { recursive: true });
 		writeFileSync(
 			join(dir, "package.json"),
-			JSON.stringify({ name: "@scope/koishi-plugin-x", version: "1.0.0" }),
+			JSON.stringify({
+				name: "@scope/koishi-plugin-x",
+				version: "1.0.0",
+			}),
 		);
 		let attempt = 0;
 		fetchImpl = () => {
@@ -312,7 +361,9 @@ describe("runPublish", () => {
 		}
 		expect(attempt).toBe(3);
 		// scoped 包名的 / 被编码为 %2F
-		expect(fetchedUrls.some((url) => url.includes("%2F"))).toBe(true);
+		expect(
+			fetchedUrls.some((url) => url.includes("%2F")),
+		).toBe(true);
 		expect(runCalls).toHaveLength(1);
 	});
 
@@ -321,30 +372,38 @@ describe("runPublish", () => {
 		fetchImpl = () => new Response(null, { status: 500 });
 		capTimers();
 		try {
-			await expect(runPublish([])).rejects.toThrow("重试 3 次");
+			await expect(runPublish([])).rejects.toThrow(
+				"重试 3 次",
+			);
 		} finally {
 			restoreTimers();
 		}
 	});
 
 	it("发布失败即中断并透传退出码，manifest 仍被恢复", async () => {
-		const dirA = seedPackage("a", "koishi-plugin-a", "1.0.0", {
-			"koishi-plugin-b": "workspace:*",
-		});
+		const dirA = seedPackage(
+			"a",
+			"koishi-plugin-a",
+			"1.0.0",
+			{
+				"koishi-plugin-b": "workspace:*",
+			},
+		);
 		seedPackage("b", "koishi-plugin-b", "1.1.0");
 		// b（首个发布）成功，a（依赖方）失败 → 中断
 		runExitCodes.set("koishi-plugin-a", 4);
 
 		expect(await runPublish([])).toBe(4);
-		expect(runCalls.map((c) => c.manifest["name"])).toEqual([
-			"koishi-plugin-b",
-			"koishi-plugin-a",
-		]);
+		expect(runCalls.map((c) => c.manifest["name"])).toEqual(
+			["koishi-plugin-b", "koishi-plugin-a"],
+		);
 		// a 发布失败后 finally 恢复了 workspace:* 原样
 		expect(readPkg(dirA)["dependencies"]).toEqual({
 			"koishi-plugin-b": "workspace:*",
 		});
 		expect(logs.join("\n")).toContain("已中断");
-		expect(logs.join("\n")).toContain("已恢复 koishi-plugin-a/package.json");
+		expect(logs.join("\n")).toContain(
+			"已恢复 koishi-plugin-a/package.json",
+		);
 	});
 });

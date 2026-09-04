@@ -38,7 +38,10 @@ export default defineConfig({
 			name: "fuck-echarts",
 			renderChunk(code, chunk) {
 				if (chunk.fileName.includes("echarts")) {
-					return code.replace(/\bSymbol(?!\.toStringTag)/g, "FuckSymbol");
+					return code.replace(
+						/\bSymbol(?!\.toStringTag)/g,
+						"FuckSymbol",
+					);
 				}
 			},
 		},

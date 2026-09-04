@@ -2,10 +2,6 @@
 // Copyright (c) 2019-present Shigma and Koishijs contributors.
 // Copyright (c) 2026-present Koishi-CE contributors.
 
-import { mkdirSync } from "node:fs";
-import { dirname, resolve } from "node:path";
-import type { DatabaseSync, StatementSync } from "node:sqlite";
-import type { Dict } from "cosmokit";
 /**
  * SQLite 数据库驱动（minato 3 / cordis 3 冻结线）。
  *
@@ -28,7 +24,18 @@ import type { Dict } from "cosmokit";
  * 超过 Number.MAX_SAFE_INTEGER 的整数读回会抛 RangeError（写入不受
  * 影响）；自增主键、时间戳等常规业务值远低于该阈值。
  */
-import type { Eval, MigrationHooks, Selection } from "minato";
+import { mkdirSync } from "node:fs";
+import { dirname, resolve } from "node:path";
+import type {
+	DatabaseSync,
+	StatementSync,
+} from "node:sqlite";
+import type { Dict } from "cosmokit";
+import type {
+	Eval,
+	MigrationHooks,
+	Selection,
+} from "minato";
 import { Driver, z } from "minato";
 import enUS from "../locales/en-US.yml";
 import zhCN from "../locales/zh-CN.yml";
@@ -40,6 +47,11 @@ import { defineTypes } from "./setup/datatypes.ts";
 import { registerFunctions } from "./setup/functions.ts";
 import { SQLiteBuilder } from "./sql/builder.ts";
 
+/**
+ * 驱动本体。本类只保留有状态的部分——连接生命周期、执行原语、
+ * 事务串行化——Driver 抽象方法一律薄委托到 operations/ 下的实现
+ * 函数（首参回传 this），对外 API 面与上游单文件形态保持一致。
+ */
 export class SQLiteDriver extends Driver<SQLiteDriver.Config> {
 	static override name = "sqlite";
 
@@ -52,13 +64,19 @@ export class SQLiteDriver extends Driver<SQLiteDriver.Config> {
 			"zh-CN": zhCN,
 		});
 
+	/** 解析后的库文件绝对路径；`:memory:` 表示内存库。 */
 	path!: string;
+	/** node:sqlite 同步连接句柄，start() 后可用。 */
 	db!: DatabaseSync;
+	/** 缺省 SQL 生成器（带多表上下文的查询由各操作自建实例）。 */
 	sql = new SQLiteBuilder(this);
+	/** 上游遗留钩子位：停机前回调（本驱动不消费，保留字段兼容外部赋值）。 */
 	beforeUnload?: () => void;
 
+	/** 事务串行化锚点：下一个事务须等上一个落地（无论成败）才开启。 */
 	private _transactionTask?: Promise<void>;
 
+	/** 建立连接，并注册自定义 SQL 函数与类型 transformer（见 setup/）。 */
 	async start() {
 		this.path = this.config.path;
 		if (this.path !== ":memory:") {
@@ -73,11 +91,15 @@ export class SQLiteDriver extends Driver<SQLiteDriver.Config> {
 	}
 
 	async stop() {
+		// 让出一拍事件循环，等挂起的微任务收尾后再关库
 		await new Promise((resolve) => setTimeout(resolve, 0));
 		this.db?.close();
 	}
 
-	/** 执行语句的原语：成功走 debug、失败带语句上下文重新抛出。 */
+	/**
+	 * 执行语句的原语：成功走 debug、失败带语句与参数上下文重新抛出
+	 * （其余 _all / _get / _run 都经由此处，日志只需看一处）。
+	 */
 	_exec<T>(
 		sql: string,
 		params: unknown[],
@@ -94,6 +116,7 @@ export class SQLiteDriver extends Driver<SQLiteDriver.Config> {
 		}
 	}
 
+	/** 多行读取；`useBigInt` 时 INTEGER 列以 bigint 读回防精度丢失。 */
 	_all(
 		sql: string,
 		params: unknown[] = [],
@@ -106,6 +129,7 @@ export class SQLiteDriver extends Driver<SQLiteDriver.Config> {
 		});
 	}
 
+	/** 单行读取，参数语义同 _all。 */
 	_get(
 		sql: string,
 		params: unknown[] = [],
@@ -118,7 +142,15 @@ export class SQLiteDriver extends Driver<SQLiteDriver.Config> {
 		});
 	}
 
-	_run(sql: string, params: unknown[] = [], callback?: () => unknown) {
+	/**
+	 * 写入语句；callback 在语句执行后同步调用，用于同连接上紧接着
+	 * 取 `changes()` / `last_insert_rowid()` 这类连接级状态。
+	 */
+	_run(
+		sql: string,
+		params: unknown[] = [],
+		callback?: () => unknown,
+	) {
 		this._exec(sql, params, (stmt) => {
 			const args = params as Parameters<typeof stmt.run>;
 			return stmt.run(...args);
@@ -126,8 +158,14 @@ export class SQLiteDriver extends Driver<SQLiteDriver.Config> {
 		return callback?.();
 	}
 
+	/**
+	 * 事务排队串行：先等上一个事务落地（失败也放行，.catch 吞掉等待
+	 * 误差），再开启自己的 BEGIN/COMMIT；业务错误先 ROLLBACK 再原样
+	 * 抛出（ROLLBACK 自身失败不遮蔽业务错误）。
+	 */
 	async withTransaction(callback: () => Promise<void>) {
-		if (this._transactionTask) await this._transactionTask.catch(() => {});
+		if (this._transactionTask)
+			await this._transactionTask.catch(() => {});
 		return (this._transactionTask = (async () => {
 			this._run("BEGIN TRANSACTION");
 			try {
@@ -141,6 +179,8 @@ export class SQLiteDriver extends Driver<SQLiteDriver.Config> {
 			}
 		})());
 	}
+
+	// ---- Driver 抽象方法的薄委托（实现体见 operations/ 与 stats.ts）----
 
 	async prepare(table: string, dropKeys?: string[]) {
 		return schema.prepare(this, table, dropKeys);
@@ -179,7 +219,11 @@ export class SQLiteDriver extends Driver<SQLiteDriver.Config> {
 		return crud.create(this, sel, data);
 	}
 
-	async upsert(sel: Selection.Mutable, data: Dict[], keys: string[]) {
+	async upsert(
+		sel: Selection.Mutable,
+		data: Dict[],
+		keys: string[],
+	) {
 		return crud.upsert(this, sel, data, keys);
 	}
 

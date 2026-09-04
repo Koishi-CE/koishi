@@ -23,14 +23,26 @@ import { resolve } from "node:path";
 import { type Dict, Logger } from "@koishi-ce/core";
 import type { ResolvedConfigFile } from "../base/config-file.ts";
 import Loader from "../base/index.ts";
-import { locateConfig, parseConfig, saveConfig } from "./config-file.ts";
-import { injectEnv, parseEnvFiles, revertEnv } from "./env.ts";
+import {
+	locateConfig,
+	parseConfig,
+	saveConfig,
+} from "./config-file.ts";
+import {
+	injectEnv,
+	parseEnvFiles,
+	revertEnv,
+} from "./env.ts";
 import { seedCjsInterop } from "./interop.ts";
 import { migrateManifest } from "./migration.ts";
 import { resolvePlugin } from "./resolve.ts";
 
 export { Loader } from "../base/index.ts";
-export type { LoaderScope, SharedData, StartMessage } from "../base/types.ts";
+export type {
+	LoaderScope,
+	SharedData,
+	StartMessage,
+} from "../base/types.ts";
 export { unwrapExports } from "../base/utils.ts";
 
 const logger = new Logger("app");
@@ -81,10 +93,17 @@ export default class NodeLoader extends Loader {
 	 * - sqlite：补默认数据库路径 data/koishi.db。
 	 * 其余交给基类处理。
 	 */
-	override migrateEntry(name: string, config: Dict<unknown> | undefined) {
+	override migrateEntry(
+		name: string,
+		config: Dict<unknown> | undefined,
+	) {
 		config ??= {};
 		if (
-			["database-mysql", "database-mongo", "database-postgres"].includes(name)
+			[
+				"database-mysql",
+				"database-mongo",
+				"database-postgres",
+			].includes(name)
 		) {
 			config["database"] ??= "koishi";
 		} else if (name === "database-sqlite") {
@@ -96,7 +115,9 @@ export default class NodeLoader extends Loader {
 	}
 
 	override async migrate() {
-		await migrateManifest(this.config as unknown as Dict<unknown>);
+		await migrateManifest(
+			this.config as unknown as Dict<unknown>,
+		);
 		await super.migrate();
 	}
 
@@ -126,9 +147,14 @@ export default class NodeLoader extends Loader {
 	override async import(name: string) {
 		let filename: string;
 		try {
-			filename = this.cache[name] ??= resolvePlugin(name, this.baseDir);
+			filename = this.cache[name] ??= resolvePlugin(
+				name,
+				this.baseDir,
+			);
 		} catch (err) {
-			logger.error(err instanceof Error ? err.message : err);
+			logger.error(
+				err instanceof Error ? err.message : err,
+			);
 			return;
 		}
 		seedCjsInterop(filename);

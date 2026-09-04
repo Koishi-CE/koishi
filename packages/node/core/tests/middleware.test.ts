@@ -30,7 +30,10 @@ import {
 } from "@koishi-ce/koishi";
 import mock from "@koishi-ce/plugin-mock";
 
-type NextCallback = Extract<Next.Callback, (...args: never[]) => unknown>;
+type NextCallback = Extract<
+	Next.Callback,
+	(...args: never[]) => unknown
+>;
 
 const app = new App();
 app.plugin(mock);
@@ -65,7 +68,9 @@ describe("Middleware Runtime", () => {
 	});
 
 	/** 包装中间件：调用时把自身记入 callSequence，用于断言执行顺序。 */
-	function trace<T extends (...args: never[]) => unknown>(callback: T) {
+	function trace<T extends (...args: never[]) => unknown>(
+		callback: T,
+	) {
 		const wrapper = jest.fn((...args: Parameters<T>) => {
 			callSequence.push(wrapper);
 			return callback.apply(null, args) as ReturnType<T>;
@@ -75,7 +80,9 @@ describe("Middleware Runtime", () => {
 
 	it("basic 1 (next callback)", async () => {
 		// mid1 异步放行后 mid2 返回 "bar" 作为回复
-		const mid1 = trace<Middleware>((_, next) => sleep(0).then(() => next()));
+		const mid1 = trace<Middleware>((_, next) =>
+			sleep(0).then(() => next()),
+		);
 		const mid2 = trace<Middleware>((_, _next) => "bar");
 		app.middleware(mid1);
 		app.middleware(mid2);
@@ -117,8 +124,12 @@ describe("Middleware Runtime", () => {
 
 	it("next 1 (parameter)", async () => {
 		// next(字符串)：作为本层返回值直接透传，最外层的生效（"bar"）
-		const mid1 = trace<Middleware>((_, next) => next("bar"));
-		const mid2 = trace<Middleware>((_, next) => next("baz"));
+		const mid1 = trace<Middleware>((_, next) =>
+			next("bar"),
+		);
+		const mid2 = trace<Middleware>((_, next) =>
+			next("baz"),
+		);
 		app.middleware(mid1);
 		app.middleware(mid2);
 		await client.shouldReply("foo", "bar");
@@ -127,8 +138,12 @@ describe("Middleware Runtime", () => {
 
 	it("next 2 (callback)", async () => {
 		// next(函数)：函数追加到队列尾部，返回值同样取最外层（"bar"）
-		const mid1 = trace<Middleware>((_, next) => next(() => "bar"));
-		const mid2 = trace<Middleware>((_, next) => next(() => "baz"));
+		const mid1 = trace<Middleware>((_, next) =>
+			next(() => "bar"),
+		);
+		const mid2 = trace<Middleware>((_, next) =>
+			next(() => "baz"),
+		);
 		app.middleware(mid1);
 		app.middleware(mid2);
 		await client.shouldReply("foo", "bar");
@@ -140,13 +155,21 @@ describe("Middleware Runtime", () => {
 		// （按依赖顺序先声明内层，避免闭包内前向引用）
 		const mid5 = trace<NextCallback>((next) => next?.());
 		const mid4 = trace<NextCallback>((next) => next?.());
-		const mid3 = trace<NextCallback>((next) => next?.(mid5));
+		const mid3 = trace<NextCallback>((next) =>
+			next?.(mid5),
+		);
 		const mid1 = trace<Middleware>((_, next) => next(mid3));
 		const mid2 = trace<Middleware>((_, next) => next(mid4));
 		app.middleware(mid1);
 		app.middleware(mid2);
 		await client.shouldNotReply("foo");
-		expect(callSequence).toEqual([mid1, mid2, mid3, mid4, mid5]);
+		expect(callSequence).toEqual([
+			mid1,
+			mid2,
+			mid3,
+			mid4,
+			mid5,
+		]);
 	});
 
 	const path = "internal.low-authority";
@@ -186,7 +209,9 @@ describe("Middleware Runtime", () => {
 			next();
 			return undefined;
 		});
-		app.middleware((_, next) => sleep(0).then(() => next()));
+		app.middleware((_, next) =>
+			sleep(0).then(() => next()),
+		);
 		await client.shouldNotReply("foo");
 		await sleep(0);
 		expect(print.mock.calls).toHaveLength(1);
@@ -194,7 +219,8 @@ describe("Middleware Runtime", () => {
 
 	it("edge case 2 (stack exceeded)", async () => {
 		// 无限 next 自递归：超过 MAX_DEPTH 后报错并记日志
-		const compose: Next.Callback = (next) => next?.(compose);
+		const compose: Next.Callback = (next) =>
+			next?.(compose);
 		app.middleware((_, next) => next(compose));
 		await client.shouldNotReply("foo");
 		await sleep(0);

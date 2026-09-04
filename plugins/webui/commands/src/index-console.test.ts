@@ -2,7 +2,13 @@
 // Copyright (c) 2019-present Shigma and Koishijs contributors.
 // Copyright (c) 2026-present Koishi-CE contributors.
 
-import { afterAll, beforeAll, describe, expect, it } from "bun:test";
+import {
+	afterAll,
+	beforeAll,
+	describe,
+	expect,
+	it,
+} from "bun:test";
 import { Console, type Entry } from "@koishi-ce/console";
 import { App, type Plugin } from "@koishi-ce/koishi";
 import commands, { type CommandData } from "./index.ts";
@@ -16,12 +22,17 @@ import commands, { type CommandData } from "./index.ts";
 class StubConsole extends Console {
 	static override inject = { optional: ["console"] };
 
-	protected override resolveEntry(files: Entry.Files, _key: string): string[] {
+	protected override resolveEntry(
+		files: Entry.Files,
+		_key: string,
+	): string[] {
 		if (typeof files === "string") return [files];
 		if (Array.isArray(files)) return files;
 		return [
 			files.dev,
-			...(Array.isArray(files.prod) ? files.prod : [files.prod]),
+			...(Array.isArray(files.prod)
+				? files.prod
+				: [files.prod]),
 		];
 	}
 }
@@ -29,7 +40,9 @@ class StubConsole extends Console {
 const app = new App();
 // Console 基类的 static inject 是 cordis 3 旧形态（{ optional: [...] }），
 // 与 Plugin.Constructor 期待的 Dict<Meta> 不兼容，仅做类型层转型
-app.plugin(StubConsole as unknown as Plugin.Constructor<App>);
+app.plugin(
+	StubConsole as unknown as Plugin.Constructor<App>,
+);
 
 // 预置两条指令：command（插件自身注册）之外再造一条可覆盖的普通指令
 app.command("bar").action(() => "test");
@@ -42,7 +55,9 @@ afterAll(() => app.stop());
 /** 取 commands 前端入口的数据工厂产物 */
 function entryData(): Record<string, CommandData> {
 	const entry = Object.values(app.console.entries).find(
-		(item) => typeof item.files === "object" && !Array.isArray(item.files),
+		(item) =>
+			typeof item.files === "object" &&
+			!Array.isArray(item.files),
 	);
 	expect(entry).toBeDefined();
 	const data = entry?.data as
@@ -54,16 +69,20 @@ function entryData(): Record<string, CommandData> {
 }
 
 /** 取 command/* 监听器回调（参数形态逐监听器不同，统一按 unknown 数组收窄） */
-function listener(name: string): (...args: unknown[]) => unknown {
+function listener(
+	name: string,
+): (...args: unknown[]) => unknown {
 	const callback = app.console.listeners[name]?.callback;
 	expect(callback).toBeDefined();
-	return callback as unknown as (...args: unknown[]) => unknown;
+	return callback as unknown as (
+		...args: unknown[]
+	) => unknown;
 }
 
 describe("installWebUI 装配", () => {
 	it("注册 command/* RPC 监听器", () => {
-		const names = Object.keys(app.console.listeners).filter((name) =>
-			name.startsWith("command/"),
+		const names = Object.keys(app.console.listeners).filter(
+			(name) => name.startsWith("command/"),
 		);
 		expect(names.sort()).toEqual([
 			"command/aliases",
@@ -81,7 +100,9 @@ describe("installWebUI 装配", () => {
 		expect(first["bar"]).toBeDefined();
 		expect(first["bar"]?.create).toBe(false);
 		// 指令自身名也在别名表中（koishi 的注册约定）
-		expect(first["bar"]?.initial.aliases).toEqual({ bar: {} });
+		expect(first["bar"]?.initial.aliases).toEqual({
+			bar: {},
+		});
 		expect(first["bar"]?.paths).toEqual([]);
 		// 无覆盖的指令 override 以空值占位（config 为 null）
 		expect(first["bar"]?.override.config).toBeNull();
@@ -91,14 +112,17 @@ describe("installWebUI 装配", () => {
 	});
 
 	it("command/parse 解析指令参数；指令不存在时报错", () => {
-		const argv = listener("command/parse")("bar", "abc --opt x") as {
+		const argv = listener("command/parse")(
+			"bar",
+			"abc --opt x",
+		) as {
 			args?: unknown[];
 			options?: Record<string, unknown>;
 		};
 		expect(argv.args).toBeDefined();
-		expect(() => listener("command/parse")("missing-cmd", "x")).toThrow(
-			"command not found: missing-cmd",
-		);
+		expect(() =>
+			listener("command/parse")("missing-cmd", "x"),
+		).toThrow("command not found: missing-cmd");
 	});
 });
 
@@ -111,15 +135,24 @@ describe("command/* RPC 监听器", () => {
 		});
 		const bar = app.$commander.get("bar");
 		expect(bar?.config.authority).toBe(3);
-		const stored = fork.config["bar"] as Record<string, unknown>;
+		const stored = fork.config["bar"] as Record<
+			string,
+			unknown
+		>;
 		expect(stored["config"]).toEqual({ authority: 3 });
 		expect(stored).not.toHaveProperty("options");
 	});
 
 	it("command/aliases：整体替换别名表（差异才落盘，保留自身名）", async () => {
-		await listener("command/aliases")("bar", { bar: {}, br: {} });
+		await listener("command/aliases")("bar", {
+			bar: {},
+			br: {},
+		});
 		expect(app.$commander.resolve("br")).toBeDefined();
-		const stored = fork.config["bar"] as Record<string, unknown>;
+		const stored = fork.config["bar"] as Record<
+			string,
+			unknown
+		>;
 		// bar 自身名与 initial 相同 → 差异过滤后只落盘 br
 		expect(stored["aliases"]).toEqual({ br: {} });
 	});
@@ -127,10 +160,15 @@ describe("command/* RPC 监听器", () => {
 	it("command/teleport：挂到父指令并写入归属", async () => {
 		app.command("foo");
 		await listener("command/teleport")("bar", "foo");
-		expect(app.$commander.get("foo")?.children.map((c) => c.name)).toContain(
-			"bar",
-		);
-		const stored = fork.config["bar"] as Record<string, unknown>;
+		expect(
+			app.$commander
+				.get("foo")
+				?.children.map((c) => c.name),
+		).toContain("bar");
+		const stored = fork.config["bar"] as Record<
+			string,
+			unknown
+		>;
 		expect(stored["name"]).toBe("foo/bar");
 	});
 
@@ -138,7 +176,9 @@ describe("command/* RPC 监听器", () => {
 		await listener("command/create")("brand-new");
 		expect(app.$commander.get("brand-new")).toBeDefined();
 		expect(
-			(fork.config["brand-new"] as Record<string, unknown>)["create"],
+			(fork.config["brand-new"] as Record<string, unknown>)[
+				"create"
+			],
 		).toBe(true);
 		// 数据工厂对快照指令标记 create 并带 initial（refresh 的 debounce 与
 		// write 触发的插件重启均需等 tick 生效）
@@ -158,11 +198,19 @@ describe("command/* RPC 监听器", () => {
 		app.command("keeper/kid").action(() => "kid");
 		app.command("victim");
 		// 注意子指令的注册名与别名键均为尾段 "kid"
-		await listener("command/aliases")("kid", { kid: {}, kd: {} });
-		await listener("command/aliases")("victim", { victim: {}, vic: {} });
+		await listener("command/aliases")("kid", {
+			kid: {},
+			kd: {},
+		});
+		await listener("command/aliases")("victim", {
+			victim: {},
+			vic: {},
+		});
 		await listener("command/teleport")("kid", "victim");
 		const victim = app.$commander.get("victim");
-		expect(victim?.children.map((c) => c.name)).toContain("kid");
+		expect(victim?.children.map((c) => c.name)).toContain(
+			"kid",
+		);
 
 		await listener("command/remove")("victim");
 		expect(app.$commander.get("victim")).toBeUndefined();
@@ -170,9 +218,11 @@ describe("command/* RPC 监听器", () => {
 		expect(kid).toBeDefined();
 		// 子指令回到快照记录的原父级（keeper）之下
 		expect(kid?.parent?.name).toBe("keeper");
-		expect(app.$commander.get("keeper")?.children.map((c) => c.name)).toContain(
-			"kid",
-		);
+		expect(
+			app.$commander
+				.get("keeper")
+				?.children.map((c) => c.name),
+		).toContain("kid");
 	});
 });
 
@@ -188,7 +238,10 @@ describe("配置侧 Schema", () => {
 			// 这里仅做类型层断言以保持既有运行时行为
 		} as never);
 		expect(app.$commander.resolve("sa")).toBeDefined();
-		const stored = second.config["standalone"] as Record<string, unknown>;
+		const stored = second.config["standalone"] as Record<
+			string,
+			unknown
+		>;
 		expect(stored["aliases"]).toEqual({ sa: {} });
 		await second.dispose();
 		await app.registry.delete(commands);

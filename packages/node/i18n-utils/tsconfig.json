@@ -11,31 +11,51 @@
 			"@koishi-ce/loader": ["../loader/src/index.ts"],
 			"@koishi-ce/registry": ["../registry/src/index.ts"],
 			"@koishi-ce/utils": ["../utils/src/index.ts"],
-			"@koishi-ce/client": ["../../web/client/src/index.ts"],
-			"@koishi-ce/client/lib": ["../../web/client/src/index.ts"],
-			"@koishi-ce/components": ["../../web/components/client/index.ts"],
-			"@koishi-ce/plugin-bind": ["../../../plugins/common/bind/src/index.ts"],
+			"@koishi-ce/client": [
+				"../../web/client/src/index.ts"
+			],
+			"@koishi-ce/client/lib": [
+				"../../web/client/src/index.ts"
+			],
+			"@koishi-ce/components": [
+				"../../web/components/client/index.ts"
+			],
+			"@koishi-ce/plugin-bind": [
+				"../../../plugins/common/bind/src/index.ts"
+			],
 			"@koishi-ce/plugin-broadcast": [
 				"../../../plugins/common/broadcast/src/index.ts"
 			],
 			"@koishi-ce/plugin-callme": [
 				"../../../plugins/common/callme/src/index.ts"
 			],
-			"@koishi-ce/plugin-echo": ["../../../plugins/common/echo/src/index.ts"],
-			"@koishi-ce/plugin-help": ["../../../plugins/common/help/src/index.ts"],
+			"@koishi-ce/plugin-echo": [
+				"../../../plugins/common/echo/src/index.ts"
+			],
+			"@koishi-ce/plugin-help": [
+				"../../../plugins/common/help/src/index.ts"
+			],
 			"@koishi-ce/plugin-inspect": [
 				"../../../plugins/common/inspect/src/index.ts"
 			],
-			"@koishi-ce/plugin-hmr": ["../../../plugins/infra/hmr/src/index.ts"],
-			"@koishi-ce/plugin-mock": ["../../../plugins/infra/mock/src/index.ts"],
+			"@koishi-ce/plugin-hmr": [
+				"../../../plugins/infra/hmr/src/index.ts"
+			],
+			"@koishi-ce/plugin-mock": [
+				"../../../plugins/infra/mock/src/index.ts"
+			],
 			"@koishi-ce/plugin-actions": [
 				"../../../plugins/webui/actions/src/index.ts"
 			],
-			"@koishi-ce/plugin-admin": ["../../../plugins/webui/admin/src/index.ts"],
+			"@koishi-ce/plugin-admin": [
+				"../../../plugins/webui/admin/src/index.ts"
+			],
 			"@koishi-ce/plugin-analytics": [
 				"../../../plugins/webui/analytics/src/index.ts"
 			],
-			"@koishi-ce/plugin-auth": ["../../../plugins/webui/auth/src/index.ts"],
+			"@koishi-ce/plugin-auth": [
+				"../../../plugins/webui/auth/src/index.ts"
+			],
 			"@koishi-ce/plugin-commands": [
 				"../../../plugins/webui/commands/src/index.ts"
 			],
@@ -69,11 +89,15 @@
 			"@koishi-ce/plugin-notifier": [
 				"../../../plugins/webui/notifier/src/index.ts"
 			],
-			"@koishi-ce/plugin-oobe": ["../../../plugins/webui/oobe/src/index.ts"],
+			"@koishi-ce/plugin-oobe": [
+				"../../../plugins/webui/oobe/src/index.ts"
+			],
 			"@koishi-ce/plugin-sandbox": [
 				"../../../plugins/webui/sandbox/src/index.ts"
 			],
-			"@koishi-ce/plugin-status": ["../../../plugins/webui/status/src/index.ts"]
+			"@koishi-ce/plugin-status": [
+				"../../../plugins/webui/status/src/index.ts"
+			]
 		}
 	}
 }

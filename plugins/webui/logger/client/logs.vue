@@ -25,7 +25,11 @@
  * 虚拟滚动渲染全部记录，把每条记录拼装成带 ANSI 颜色的终端风格行，
  * 可选显示指向日志来源插件的跳转链接；本次启动的首条日志上方绘制分隔线。
  */
-import { store, Time, VirtualList } from "@koishi-ce/client";
+import {
+	store,
+	Time,
+	VirtualList,
+} from "@koishi-ce/client";
 import {} from "@koishi-ce/plugin-config";
 import { AnsiUp } from "ansi_up";
 import { Logger, type Message } from "reggol";
@@ -47,7 +51,11 @@ const props = defineProps<{
 const converter = new AnsiUp();
 
 /** 生成一段 ANSI 颜色转义序列（8/16 色码 + 可选装饰，如加粗 ";1"）。 */
-function renderColor(code: number, value: string, decoration = "") {
+function renderColor(
+	code: number,
+	value: string,
+	decoration = "",
+) {
 	return `\u001b[3${code < 8 ? code : `8;5;${code}`}${decoration}m${value}\u001b[0m`;
 }
 
@@ -77,12 +85,19 @@ function renderLine(record: LogRecord) {
 		output = "";
 	indent += showTime.length + space.length;
 	output +=
-		renderColor(8, Time.template(showTime, new Date(record.timestamp))) + space;
+		renderColor(
+			8,
+			Time.template(showTime, new Date(record.timestamp)),
+		) + space;
 	const code = Logger.code(record.name, { colors: 3 });
 	const label = renderColor(code, record.name, ";1");
 	const padLength = label.length - record.name.length;
-	output += prefix + space + label.padEnd(padLength) + space;
-	output += record.content.replace(/\n/g, `\n${" ".repeat(indent)}`);
+	output +=
+		prefix + space + label.padEnd(padLength) + space;
+	output += record.content.replace(
+		/\n/g,
+		`\n${" ".repeat(indent)}`,
+	);
 	return converter.ansi_to_html(output);
 }
 </script>

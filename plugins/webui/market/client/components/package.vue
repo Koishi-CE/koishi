@@ -37,7 +37,11 @@
 </template>
 
 <script lang="ts" setup>
-import { isNullable, store, useConfig } from "@koishi-ce/client";
+import {
+	isNullable,
+	store,
+	useConfig,
+} from "@koishi-ce/client";
 import { computed } from "vue";
 import { active, hasUpdate } from "../utils";
 import { analyzeVersions } from "./utils";
@@ -48,7 +52,9 @@ const props = defineProps({
 
 const config = useConfig();
 
-const dep = computed(() => store.dependencies?.[props.name]);
+const dep = computed(
+	() => store.dependencies?.[props.name],
+);
 
 const compare = computed(() => {
 	const result = hasUpdate(props.name);
@@ -66,7 +72,10 @@ const version = computed({
 		}
 	},
 	set(value) {
-		if (dep.value?.resolved === value || (!value && !dep.value)) {
+		if (
+			dep.value?.resolved === value ||
+			(!value && !dep.value)
+		) {
 			delete config.value.market.override[props.name];
 		} else {
 			config.value.market.override[props.name] = value;

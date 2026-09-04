@@ -23,7 +23,10 @@ interface NotifierMessage {
 
 declare module "@koishi-ce/client" {
 	interface Events<C> {
-		"notifier/message"(this: C, payload: NotifierMessage): void;
+		"notifier/message"(
+			this: C,
+			payload: NotifierMessage,
+		): void;
 	}
 }
 

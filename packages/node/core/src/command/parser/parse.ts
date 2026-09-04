@@ -44,7 +44,10 @@ export function parseCommand(
 		// 变长参数：取当前位置对应的声明；越界后沿用 lastArgDecl
 		const argDecl: Argv.Declaration =
 			cmd._arguments[args.length] || lastArgDecl || {};
-		if (args.length === cmd._arguments.length - 1 && argDecl.variadic) {
+		if (
+			args.length === cmd._arguments.length - 1 &&
+			argDecl.variadic
+		) {
 			lastArgDecl = argDecl;
 		}
 
@@ -71,7 +74,10 @@ export function parseCommand(
 		let names: string | string[];
 		let param = "";
 		// 符号选项（如 "#1" 的 "#"）：未被引号包裹且命中符号表
-		if (!quoted && (option = cmd._symbolicOptions[content])) {
+		if (
+			!quoted &&
+			(option = cmd._symbolicOptions[content])
+		) {
 			names = [camelCase(option.name ?? "")];
 		} else {
 			// 普通参数判定：不以 "-" 开头、被引号包裹，
@@ -80,10 +86,16 @@ export function parseCommand(
 				content[0] !== "-" ||
 				quoted ||
 				(+content * 0 === 0 &&
-					cmd.ctx.$commander.resolveDomain(argDecl.type).numeric)
+					cmd.ctx.$commander.resolveDomain(argDecl.type)
+						.numeric)
 			) {
 				args.push(
-					cmd.ctx.$commander.parseValue(content, "argument", argv, argDecl),
+					cmd.ctx.$commander.parseValue(
+						content,
+						"argument",
+						argv,
+						argDecl,
+					),
 				);
 				continue;
 			}
@@ -104,8 +116,14 @@ export function parseCommand(
 			names = i > 1 ? [name] : name;
 			// 严格选项模式：未注册的写法不当作选项，
 			// 而是回退为普通参数（贪婪类型则整体吞掉剩余输入）
-			if (cmd.config.strictOptions && !cmd._namedOptions[names[0] ?? ""]) {
-				if (cmd.ctx.$commander.resolveDomain(argDecl.type).greedy) {
+			if (
+				cmd.config.strictOptions &&
+				!cmd._namedOptions[names[0] ?? ""]
+			) {
+				if (
+					cmd.ctx.$commander.resolveDomain(argDecl.type)
+						.greedy
+				) {
 					argv.tokens.unshift(token);
 					args.push(
 						cmd.ctx.$commander.parseValue(
@@ -118,17 +136,27 @@ export function parseCommand(
 					break;
 				}
 				args.push(
-					cmd.ctx.$commander.parseValue(content, "argument", argv, argDecl),
+					cmd.ctx.$commander.parseValue(
+						content,
+						"argument",
+						argv,
+						argDecl,
+					),
 				);
 				continue;
 			}
 			// "--no-xxx" 且 xxx 未注册：直接置 options.xxx = false（隐式取反）
-			if (i > 1 && name.startsWith("no-") && !cmd._namedOptions[name]) {
+			if (
+				i > 1 &&
+				name.startsWith("no-") &&
+				!cmd._namedOptions[name]
+			) {
 				options[camelCase(name.slice(3))] = false;
 				continue;
 			}
 			param = content.slice(++j);
-			option = cmd._namedOptions[names[names.length - 1] ?? ""];
+			option =
+				cmd._namedOptions[names[names.length - 1] ?? ""];
 		}
 
 		// 选项取值：本 token 未带 "=" 赋值时尝试从下一个 token 取值
@@ -145,8 +173,8 @@ export function parseCommand(
 				// 有固定取值（value 变体）或 boolean 型选项不需要额外值；
 				// 其余情况只要还有 token（且不是新的 "-" 开头写法）就消费它作为值
 				const isValued =
-					(names[names.length - 1] ?? "") in (values || {}) ||
-					type === "boolean";
+					(names[names.length - 1] ?? "") in
+						(values || {}) || type === "boolean";
 				if (
 					!isValued &&
 					argv.tokens.length &&
@@ -165,7 +193,9 @@ export function parseCommand(
 			const name = names[j];
 			if (!name) continue;
 			const optDecl = cmd._namedOptions[name];
-			const key = optDecl ? (optDecl.name ?? "") : camelCase(name);
+			const key = optDecl
+				? (optDecl.name ?? "")
+				: camelCase(name);
 			if (optDecl && name in optDecl.values) {
 				options[key] = optDecl.values[name];
 			} else {
@@ -182,7 +212,9 @@ export function parseCommand(
 	}
 
 	// 填充 fallback：未显式传入且声明了默认值的选项在此补齐
-	for (const { name, fallback } of Object.values(cmd._options)) {
+	for (const { name, fallback } of Object.values(
+		cmd._options,
+	)) {
 		if (!name) continue;
 		if (fallback !== undefined && !(name in options)) {
 			options[name] = fallback;

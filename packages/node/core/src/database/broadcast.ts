@@ -24,7 +24,9 @@ import { Channel } from "./tables.ts";
  */
 export async function broadcastDatabase(
 	db: KoishiDatabase,
-	...args: [Fragment, boolean?] | [readonly string[], Fragment, boolean?]
+	...args:
+		| [Fragment, boolean?]
+		| [readonly string[], Fragment, boolean?]
 ): Promise<string[]> {
 	let channels: string[] | undefined;
 	let platforms: string[] | undefined;
@@ -38,12 +40,20 @@ export async function broadcastDatabase(
 
 	const selfIdMap = db.getSelfIds(platforms);
 	const data = await db.getAssignedChannels(
-		["id", "assignee", "flag", "platform", "guildId", "locales"],
+		[
+			"id",
+			"assignee",
+			"flag",
+			"platform",
+			"guildId",
+			"locales",
+		],
 		selfIdMap,
 	);
 	// assignMap: platform -> assignee(selfId) -> 待发频道列表
-	const assignMap: Dict<Dict<Pick<Channel, "id" | "guildId" | "locales">[]>> =
-		{};
+	const assignMap: Dict<
+		Dict<Pick<Channel, "id" | "guildId" | "locales">[]>
+	> = {};
 	for (const channel of data) {
 		const { platform, id, assignee, flag } = channel;
 		if (channels) {
@@ -54,13 +64,19 @@ export async function broadcastDatabase(
 		}
 		// 非强制模式下跳过静默频道
 		if (!forced && flag & Channel.Flag.silent) continue;
-		((assignMap[platform] ||= {})[assignee] ||= []).push(channel);
+		((assignMap[platform] ||= {})[assignee] ||= []).push(
+			channel,
+		);
 	}
 
 	if (channels?.length) {
 		db.ctx
 			.logger("app")
-			.warn("broadcast", "channel not found: ", channels.join(", "));
+			.warn(
+				"broadcast",
+				"channel not found: ",
+				channels.join(", "),
+			);
 	}
 
 	return (
@@ -72,15 +88,20 @@ export async function broadcastDatabase(
 				if (!targets) return Promise.resolve([]);
 				// 为每个目标频道构造合成会话（复用频道语言设置），
 				// 让发送走 bot.broadcast 的统一链路（限速、错误容忍）
-				const sessions = targets.map(({ id, guildId, locales }) => {
-					const session = bot.session({
-						type: "message",
-						channel: { id, type: 0 satisfies Universal.Channel.Type },
-						guild: { id: guildId },
-					});
-					session.locales = locales;
-					return session;
-				});
+				const sessions = targets.map(
+					({ id, guildId, locales }) => {
+						const session = bot.session({
+							type: "message",
+							channel: {
+								id,
+								type: 0 satisfies Universal.Channel.Type,
+							},
+							guild: { id: guildId },
+						});
+						session.locales = locales;
+						return session;
+					},
+				);
 				return bot.broadcast(sessions, content);
 			}),
 		)

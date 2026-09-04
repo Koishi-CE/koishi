@@ -107,10 +107,21 @@ import {
 import type { Entry } from "@koishi-ce/plugin-explorer";
 import { useElementSize } from "@vueuse/core";
 import * as monaco from "monaco-editor";
-import { computed, nextTick, onActivated, ref, watch } from "vue";
+import {
+	computed,
+	nextTick,
+	onActivated,
+	ref,
+	watch,
+} from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { model } from "./editor";
-import { files, type TreeEntry, uploading, vFocus } from "./store";
+import {
+	files,
+	type TreeEntry,
+	uploading,
+	vFocus,
+} from "./store";
 
 const ctx = useContext();
 const route = useRoute();
@@ -130,8 +141,11 @@ const trigger = useMenu("explorer.tree");
 ctx.action("explorer.save", {
 	shortcut: "ctrl+s",
 	disabled: () =>
-		files[active.value]?.newValue === files[active.value]?.oldValue ||
-		!["files"].includes(router.currentRoute.value?.meta?.activity.id),
+		files[active.value]?.newValue ===
+			files[active.value]?.oldValue ||
+		!["files"].includes(
+			router.currentRoute.value?.meta?.activity.id,
+		),
 	action: async () => {
 		const content = files[active.value].newValue;
 		await send("explorer/write", active.value, content);
@@ -143,7 +157,9 @@ ctx.action("explorer.save", {
 ctx.action("explorer.refresh", {
 	shortcut: "ctrl+r",
 	disabled: () =>
-		!["files"].includes(router.currentRoute.value?.meta?.activity.id),
+		!["files"].includes(
+			router.currentRoute.value?.meta?.activity.id,
+		),
 	action: () => send("explorer/refresh"),
 });
 
@@ -151,25 +167,33 @@ ctx.action("explorer.refresh", {
 
 // 新建文件 / 新建文件夹：在目标目录下插入待命名条目（两者仅 type 不同）
 ctx.action("explorer.tree.create-file", {
-	disabled: ({ explorer }) => explorer.tree.type !== "directory",
-	action: ({ explorer }) => createEntry(explorer.tree, "file"),
+	disabled: ({ explorer }) =>
+		explorer.tree.type !== "directory",
+	action: ({ explorer }) =>
+		createEntry(explorer.tree, "file"),
 });
 
 ctx.action("explorer.tree.create-directory", {
-	disabled: ({ explorer }) => explorer.tree.type !== "directory",
-	action: ({ explorer }) => createEntry(explorer.tree, "directory"),
+	disabled: ({ explorer }) =>
+		explorer.tree.type !== "directory",
+	action: ({ explorer }) =>
+		createEntry(explorer.tree, "directory"),
 });
 
 // 上传：记录目标目录并弹出全局上传对话框（upload.vue 接管拖拽/粘贴）
 ctx.action("explorer.tree.upload", {
-	disabled: ({ explorer }) => explorer.tree.type !== "directory",
-	action: ({ explorer }) => (uploading.value = `${explorer.tree.filename}/`),
+	disabled: ({ explorer }) =>
+		explorer.tree.type !== "directory",
+	action: ({ explorer }) =>
+		(uploading.value = `${explorer.tree.filename}/`),
 });
 
 // 下载：仅文件可下载
 ctx.action("explorer.tree.download", {
-	disabled: ({ explorer }) => explorer.tree.type === "directory",
-	action: ({ explorer }) => downloadFile(explorer.tree.filename),
+	disabled: ({ explorer }) =>
+		explorer.tree.type === "directory",
+	action: ({ explorer }) =>
+		downloadFile(explorer.tree.filename),
 });
 
 // 删除：先取消可能的重命名态，再弹确认框
@@ -201,7 +225,9 @@ function* getExpanded(tree: TreeEntry[]) {
 }
 
 // 由本地展开状态推导 default-expanded-keys，文件树数据刷新后不丢展开态
-const expandedKeys = computed(() => [...getExpanded(data.value)]);
+const expandedKeys = computed(() => [
+	...getExpanded(data.value),
+]);
 
 /**
  * 用服务端新树 head 合并本地树 base：
@@ -211,7 +237,8 @@ const expandedKeys = computed(() => [...getExpanded(data.value)]);
 function merge(base: TreeEntry[], head: Entry[]) {
 	return head?.map((entry) => {
 		const old = base.find(
-			(old) => old.type === entry.type && old.name === entry.name,
+			(old) =>
+				old.type === entry.type && old.name === entry.name,
 		);
 		if (old) {
 			return {
@@ -286,14 +313,19 @@ function getClass(data: TreeEntry) {
 
 /** el-tree 过滤回调：节点名包含关键字即保留（大小写不敏感）。 */
 function filterNode(value: string, data: TreeEntry) {
-	return data.name.toLowerCase().includes(keyword.value.toLowerCase());
+	return data.name
+		.toLowerCase()
+		.includes(keyword.value.toLowerCase());
 }
 
 /**
  * 新建条目：在目标目录下插入一个待命名的占位条目并展开父目录，
  * 名字在 confirmRename 时才真正确认（与重命名共用同一流程）。
  */
-function createEntry(entry: TreeEntry, type: "file" | "symlink" | "directory") {
+function createEntry(
+	entry: TreeEntry,
+	type: "file" | "symlink" | "directory",
+) {
 	cancelRename();
 	renaming.value = `${entry.filename}/`;
 	files[renaming.value] = {
@@ -326,14 +358,19 @@ function confirmRename(entry: TreeEntry) {
 		} else {
 			delete files[entry.filename];
 			const parent =
-				files[segments.slice(0, -1).join("/")]?.children || data.value;
+				files[segments.slice(0, -1).join("/")]?.children ||
+				data.value;
 			parent.splice(parent.indexOf(entry), 1);
 		}
 	} else if (entry.filename !== filename) {
 		files[filename] = entry;
 		delete files[entry.filename];
 		if (name) {
-			void send("explorer/rename", entry.filename, filename);
+			void send(
+				"explorer/rename",
+				entry.filename,
+				filename,
+			);
 			active.value = filename;
 		} else if (entry.type === "file") {
 			void send("explorer/write", filename, "");
@@ -358,7 +395,8 @@ function cancelRename() {
 	} else {
 		delete files[entry.filename];
 		const parent =
-			files[segments.slice(0, -1).join("/")]?.children || data.value;
+			files[segments.slice(0, -1).join("/")]?.children ||
+			data.value;
 		parent.splice(parent.indexOf(entry), 1);
 	}
 	renaming.value = null;
@@ -390,9 +428,11 @@ function allowDrop(
 /** 按扩展名匹配 monaco 语言 id，无匹配时回退 plaintext。 */
 function getLanguage(filename: string) {
 	const index = filename.lastIndexOf(".");
-	const extension = index === -1 ? "" : filename.slice(index);
+	const extension =
+		index === -1 ? "" : filename.slice(index);
 	for (const language of monaco.languages.getLanguages()) {
-		if (language.extensions?.includes(extension)) return language.id;
+		if (language.extensions?.includes(extension))
+			return language.id;
 	}
 	return "plaintext";
 }
@@ -409,15 +449,20 @@ watch(
 			entry.loading = null;
 			entry.mime = mime;
 			if (mime) {
-				entry.oldValue = entry.newValue = `data:${mime};base64,${base64}`;
+				entry.oldValue =
+					entry.newValue = `data:${mime};base64,${base64}`;
 			} else {
-				entry.oldValue = entry.newValue = new TextDecoder().decode(
-					Binary.fromBase64(base64),
-				);
+				entry.oldValue = entry.newValue =
+					new TextDecoder().decode(
+						Binary.fromBase64(base64),
+					);
 			}
 		}
 		model.setValue(entry.newValue);
-		monaco.editor.setModelLanguage(model, getLanguage(entry.filename));
+		monaco.editor.setModelLanguage(
+			model,
+			getLanguage(entry.filename),
+		);
 	},
 	{ immediate: true },
 );
@@ -463,7 +508,9 @@ function handleDrop(
 /** 发起删除：先退出重命名态，目录路径补结尾 / 以示区分。 */
 function initRemove(entry: TreeEntry) {
 	cancelRename();
-	removing.value = entry.filename + (entry.type === "directory" ? "/" : "");
+	removing.value =
+		entry.filename +
+		(entry.type === "directory" ? "/" : "");
 }
 
 // keep-alive 页面重新激活时，把当前选中节点滚动到可视区中央
@@ -475,7 +522,8 @@ onActivated(async () => {
 	) as HTMLElement;
 	if (!element) return;
 	root.value["setScrollTop"](
-		element.offsetTop - (container.offsetHeight - element.offsetHeight) / 2,
+		element.offsetTop -
+			(container.offsetHeight - element.offsetHeight) / 2,
 	);
 });
 

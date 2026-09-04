@@ -44,7 +44,12 @@
  * 修改先写入 diff，经右上角"应用更改"统一提交；绑定列表可解绑，
  * 登录历史即 token 会话列表，可逐条移除（登出其它设备）。
  */
-import { message, Schema, send, store } from "@koishi-ce/client";
+import {
+	message,
+	Schema,
+	send,
+	store,
+} from "@koishi-ce/client";
 import type { UserUpdate } from "@koishi-ce/plugin-auth";
 import { computed, ref } from "vue";
 import { shared, showLoginDialog } from "./utils";
@@ -61,7 +66,9 @@ const diff = ref<UserUpdate>({});
 // 基本资料表单 schema：默认值取本地记住的用户名/密码
 const schema = computed(() => {
 	const result: Schema<UserUpdate> = Schema.object({
-		name: Schema.string().description("用户名").default(shared.value.name),
+		name: Schema.string()
+			.description("用户名")
+			.default(shared.value.name),
 		password: Schema.string()
 			.role("secret")
 			.description("密码")
@@ -94,7 +101,9 @@ async function update() {
 
 // 本账号"自身"的绑定（bid === 自身 id）：仅剩一个自身绑定时禁止解绑
 const original = computed(() => {
-	return store.user?.bindings.filter((item) => store.user.id === item.bid);
+	return store.user?.bindings.filter(
+		(item) => store.user.id === item.bid,
+	);
 });
 
 // 右上角操作菜单：应用资料修改 / 退出登录
@@ -102,7 +111,8 @@ const menu = computed(() => [
 	{
 		icon: "check",
 		label: "应用更改",
-		disabled: !diff.value || !Object.keys(diff.value).length,
+		disabled:
+			!diff.value || !Object.keys(diff.value).length,
 		action: update,
 	},
 	{

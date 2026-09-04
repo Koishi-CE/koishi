@@ -15,8 +15,14 @@
 
 import type { Fragment } from "@satorijs/core";
 import { type Awaitable, camelize, remove } from "cosmokit";
-import type { Channel, User } from "../../database/index.ts";
-import type { FieldCollector, Session } from "../../session/index.ts";
+import type {
+	Channel,
+	User,
+} from "../../database/index.ts";
+import type {
+	FieldCollector,
+	Session,
+} from "../../session/index.ts";
 import type { Argv } from "../parser/index.ts";
 import type { Command, Extend } from "./command.ts";
 import { CommandCore } from "./core.ts";
@@ -30,7 +36,10 @@ import { CommandCore } from "./core.ts";
  * FieldCollector 均可赋入；执行装配处通过 apply 以数组还原实参。
  */
 // biome-ignore lint/suspicious/noConfusingVoidType: 内部擦除存储必须原样承接公共 Action 的 void 返回（void 不可赋值给 undefined）
-type ErasedAction = (argv: never, ...args: never) => Awaitable<void | Fragment>;
+type ErasedAction = (
+	argv: never,
+	...args: never
+) => Awaitable<void | Fragment>;
 
 /** 同上，作用于字段收集器：字段名列表或以 argv 为参的回调 */
 type ErasedFieldCollector<K> =
@@ -49,15 +58,23 @@ export class CommandDefinition<
 	_usage?: string | ((session: never) => Awaitable<string>);
 
 	/** 需要观测的用户字段收集器；默认收集 locales 供 i18n 使用 */
-	_userFields: ErasedFieldCollector<User.Field>[] = [["locales"]];
+	_userFields: ErasedFieldCollector<User.Field>[] = [
+		["locales"],
+	];
 	/** 需要观测的频道字段收集器；默认收集 locales */
-	_channelFields: ErasedFieldCollector<Channel.Field>[] = [["locales"]];
+	_channelFields: ErasedFieldCollector<Channel.Field>[] = [
+		["locales"],
+	];
 	/** action 队列：按注册顺序执行，构成洋葱模型 */
 	_actions: ErasedAction[] = [];
 	/** checker 队列：action 之前的校验钩子；首个为内置的 before-execute 事件 */
 	_checkers: ErasedAction[] = [
 		async (argv: Argv) => {
-			return this.ctx.serial(argv.session, "command/before-execute", argv);
+			return this.ctx.serial(
+				argv.session,
+				"command/before-execute",
+				argv,
+			);
 		},
 	];
 
@@ -97,11 +114,19 @@ export class CommandDefinition<
 	): Command<never, never, Argv.ArgumentType<D>>;
 	subcommand(
 		def: string,
-		...args: [first?: string | Command.Config, second?: Command.Config]
+		...args: [
+			first?: string | Command.Config,
+			second?: Command.Config,
+		]
 	): Command<never, never, unknown[]> {
-		def = this.name + (def.charCodeAt(0) === 46 ? "" : "/") + def;
+		def =
+			this.name +
+			(def.charCodeAt(0) === 46 ? "" : "/") +
+			def;
 		const desc = typeof args[0] === "string" ? args[0] : "";
-		const config = (typeof args[0] === "string" ? args[1] : args[0]) ?? {};
+		const config =
+			(typeof args[0] === "string" ? args[1] : args[0]) ??
+			{};
 		return this.ctx.command(def, desc, config);
 	}
 
@@ -165,12 +190,19 @@ export class CommandDefinition<
 		const config = {
 			...(typeof args[0] === "string" ? args[1] : args[0]),
 		};
-		config.permissions ??= [`authority:${config.authority ?? 0}`];
+		config.permissions ??= [
+			`authority:${config.authority ?? 0}`,
+		];
 		this._createOption(name, desc, config);
 		// 运行时实例必为 Command；CommandDefinition 层静态缺 execute 等成员，
 		// 经基类引用中转完成窄化
-		this.caller.emit("command-updated", this as CommandCore as Command);
-		this.caller.collect("option", () => this.removeOption(name));
+		this.caller.emit(
+			"command-updated",
+			this as CommandCore as Command,
+		);
+		this.caller.collect("option", () =>
+			this.removeOption(name),
+		);
 		return this as CommandCore as Command<U, G, A>;
 	}
 
@@ -180,7 +212,10 @@ export class CommandDefinition<
 	}
 
 	/** 注册前置校验（before 的别名）：返回非空值可中止命令执行 */
-	check(callback: Command.Action<U, G, A, O>, append = false) {
+	check(
+		callback: Command.Action<U, G, A, O>,
+		append = false,
+	) {
 		return this.before(callback, append);
 	}
 
@@ -188,13 +223,18 @@ export class CommandDefinition<
 	 * 注册前置校验钩子。默认插队到队首（后注册先执行），
 	 * append 为 true 时追加到队尾；随 caller 作用域自动清理。
 	 */
-	before(callback: Command.Action<U, G, A, O>, append = false) {
+	before(
+		callback: Command.Action<U, G, A, O>,
+		append = false,
+	) {
 		if (append) {
 			this._checkers.push(callback);
 		} else {
 			this._checkers.unshift(callback);
 		}
-		this.caller.scope.disposables?.push(() => remove(this._checkers, callback));
+		this.caller.scope.disposables?.push(() =>
+			remove(this._checkers, callback),
+		);
 		return this;
 	}
 
@@ -203,13 +243,18 @@ export class CommandDefinition<
 	 * 多个 action 构成洋葱模型，通过 argv.next 传递控制权；
 	 * 随 caller 作用域自动清理。
 	 */
-	action(callback: Command.Action<U, G, A, O>, prepend = false) {
+	action(
+		callback: Command.Action<U, G, A, O>,
+		prepend = false,
+	) {
 		if (prepend) {
 			this._actions.unshift(callback);
 		} else {
 			this._actions.push(callback);
 		}
-		this.caller.scope.disposables?.push(() => remove(this._actions, callback));
+		this.caller.scope.disposables?.push(() =>
+			remove(this._actions, callback),
+		);
 		return this;
 	}
 
@@ -232,15 +277,23 @@ export class CommandDefinition<
 		config?: Command.Shortcut & { i18n?: false },
 	): this;
 	/** @deprecated 请改用 `cmd.alias()` */
-	shortcut(pattern: string, config?: Command.Shortcut & { i18n: true }): this;
+	shortcut(
+		pattern: string,
+		config?: Command.Shortcut & { i18n: true },
+	): this;
 	/**
 	 * 注册命令快捷方式：把一段消息模式（字符串 / 正则 / i18n 键）
 	 * 映射为对本命令的调用。预设的 args / options 会拼进
 	 * `<execute>` 指令文本；fuzzy 模式额外追加 "{1}" 捕获剩余内容。
 	 */
-	shortcut(pattern: string | RegExp, config: Command.Shortcut = {}) {
+	shortcut(
+		pattern: string | RegExp,
+		config: Command.Shortcut = {},
+	) {
 		let content = this.displayName ?? this.name;
-		for (const [key, value] of Object.entries(config.options ?? {})) {
+		for (const [key, value] of Object.entries(
+			config.options ?? {},
+		)) {
 			content += ` --${camelize(key)}`;
 			if (value !== true) {
 				content += ` ${this._escape(value)}`;
@@ -263,12 +316,16 @@ export class CommandDefinition<
 				pattern = key;
 			}
 		}
-		const dispose = this.ctx.match(pattern, `<execute>${content}</execute>`, {
-			appel: config.prefix ?? false,
-			fuzzy: config.fuzzy ?? false,
-			i18n: config.i18n as never,
-			regex: regex ?? false,
-		});
+		const dispose = this.ctx.match(
+			pattern,
+			`<execute>${content}</execute>`,
+			{
+				appel: config.prefix ?? false,
+				fuzzy: config.fuzzy ?? false,
+				i18n: config.i18n as never,
+				regex: regex ?? false,
+			},
+		);
 		this._disposables.push(dispose);
 		return this;
 	}

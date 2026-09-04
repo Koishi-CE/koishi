@@ -51,10 +51,8 @@ export namespace User {
 	/** 用户表字段名 */
 	export type Field = keyof User;
 	/** 被观察的用户数据：只含预取字段 K，diff 写回为异步 Promise */
-	export type Observed<K extends Field = Field> = utils.Observed<
-		Pick<User, K>,
-		Promise<void>
-	>;
+	export type Observed<K extends Field = Field> =
+		utils.Observed<Pick<User, K>, Promise<void>>;
 }
 
 // erasableSyntaxOnly 禁止 enum;与同名 namespace 合并声明,保持 User.Flag API
@@ -103,10 +101,8 @@ export namespace Channel {
 	/** 频道表字段名 */
 	export type Field = keyof Channel;
 	/** 被观察的频道数据：只含预取字段 K，diff 写回为异步 Promise */
-	export type Observed<K extends Field = Field> = utils.Observed<
-		Pick<Channel, K>,
-		Promise<void>
-	>;
+	export type Observed<K extends Field = Field> =
+		utils.Observed<Pick<Channel, K>, Promise<void>>;
 }
 
 // erasableSyntaxOnly 禁止 enum;与同名 namespace 合并声明,保持 Channel.Flag API

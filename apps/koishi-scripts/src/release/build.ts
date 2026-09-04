@@ -9,7 +9,11 @@
  * 字段）构建走 corepack pnpm。本命令按各项目实际情况选择包管理器执行其
  * build 脚本，串行构建、失败即中断（发布链不允许多项目半成品）。
  */
-import { existsSync, readdirSync, readFileSync } from "node:fs";
+import {
+	existsSync,
+	readdirSync,
+	readFileSync,
+} from "node:fs";
 import { join } from "node:path";
 import { cwd } from "../index.ts";
 import { runCommand } from "./run.ts";
@@ -26,7 +30,9 @@ interface Project {
 /** 列出 external/ 下有 build 脚本的项目，并探测其包管理器。 */
 function listProjects(): Project[] {
 	const externalDir = join(cwd, "external");
-	const dirs = readdirSync(externalDir, { withFileTypes: true })
+	const dirs = readdirSync(externalDir, {
+		withFileTypes: true,
+	})
 		.filter((entry) => entry.isDirectory())
 		.map((entry) => join(externalDir, entry.name))
 		.sort();
@@ -36,7 +42,9 @@ function listProjects(): Project[] {
 		if (!existsSync(manifestPath)) {
 			continue;
 		}
-		const pkg = JSON.parse(readFileSync(manifestPath, "utf8")) as {
+		const pkg = JSON.parse(
+			readFileSync(manifestPath, "utf8"),
+		) as {
 			scripts?: Record<string, unknown>;
 		};
 		if (pkg.scripts?.["build"] === undefined) {
@@ -45,10 +53,16 @@ function listProjects(): Project[] {
 			);
 			continue;
 		}
-		const pm: Project["pm"] = existsSync(join(dir, "pnpm-lock.yaml"))
+		const pm: Project["pm"] = existsSync(
+			join(dir, "pnpm-lock.yaml"),
+		)
 			? "pnpm"
 			: "yarn";
-		projects.push({ dir, name: dir.split(/[\\/]/).pop() ?? dir, pm });
+		projects.push({
+			dir,
+			name: dir.split(/[\\/]/).pop() ?? dir,
+			pm,
+		});
 	}
 	return projects;
 }
@@ -59,29 +73,43 @@ export default function runBuild(): number {
 	try {
 		projects = listProjects();
 	} catch {
-		console.log("[build] 当前目录下无 external/，请在宿主工作区根执行");
+		console.log(
+			"[build] 当前目录下无 external/，请在宿主工作区根执行",
+		);
 		return 1;
 	}
 	if (projects.length === 0) {
 		console.log("[build] external/ 下未发现任何可构建项目");
 		return 0;
 	}
-	console.log(`[build] 共 ${projects.length} 个项目，开始串行构建\n`);
+	console.log(
+		`[build] 共 ${projects.length} 个项目，开始串行构建\n`,
+	);
 	const startedAt = Date.now();
 	for (const project of projects) {
 		const label = `${project.name}（${project.pm}）`;
 		console.log(`[build] 🔨 ${label}`);
 		const code =
 			project.pm === "pnpm"
-				? runCommand(project.dir, "corepack", ["pnpm", "run", "build"])
+				? runCommand(project.dir, "corepack", [
+						"pnpm",
+						"run",
+						"build",
+					])
 				: runCommand(project.dir, "yarn", ["run", "build"]);
 		if (code !== 0) {
-			console.log(`[build] ❌ ${label} 构建失败（退出码 ${code}），已中断`);
+			console.log(
+				`[build] ❌ ${label} 构建失败（退出码 ${code}），已中断`,
+			);
 			return code;
 		}
 		console.log(`[build] ✅ ${label} 构建完成\n`);
 	}
-	const seconds = ((Date.now() - startedAt) / 1000).toFixed(1);
-	console.log(`[build] 全部完成：${projects.length} 个项目，耗时 ${seconds}s`);
+	const seconds = ((Date.now() - startedAt) / 1000).toFixed(
+		1,
+	);
+	console.log(
+		`[build] 全部完成：${projects.length} 个项目，耗时 ${seconds}s`,
+	);
 	return 0;
 }

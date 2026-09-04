@@ -14,7 +14,14 @@
  */
 
 export { extensions } from "./base/config-file.ts";
-export type { LoaderScope, SharedData, StartMessage } from "./base/types.ts";
+export type {
+	LoaderScope,
+	SharedData,
+	StartMessage,
+} from "./base/types.ts";
 export { unwrapExports } from "./base/utils.ts";
 export { default, Loader } from "./node/index.ts";
-export { pluginCandidates, resolvePlugin } from "./node/resolve.ts";
+export {
+	pluginCandidates,
+	resolvePlugin,
+} from "./node/resolve.ts";

@@ -23,7 +23,11 @@ app.plugin(mock);
 app.plugin(help);
 app.plugin(memory);
 
-app.i18n.define("$zh-CN", "commands.help.messages.global-epilog", "EPILOG");
+app.i18n.define(
+	"$zh-CN",
+	"commands.help.messages.global-epilog",
+	"EPILOG",
+);
 
 const client = app.mock.client("123", "456");
 
@@ -75,20 +79,30 @@ describe("@koishi-ce/plugin-help", () => {
 		app.command("foo1", "DESCRIPTION").alias("foo");
 		app.command("foo3", "DESCRIPTION").shortcut(/foobar/);
 		app.command("foo4", "DESCRIPTION").usage("USAGE TEXT");
-		app.command("foo5", "DESCRIPTION").usage(({ userId }) => `${userId}`);
-		app.command("foo6", "DESCRIPTION").example("EXAMPLE TEXT");
+		app
+			.command("foo5", "DESCRIPTION")
+			.usage(({ userId }) => `${userId}`);
+		app
+			.command("foo6", "DESCRIPTION")
+			.example("EXAMPLE TEXT");
 		app.command("foo7", "DESCRIPTION", { authority: 3 });
 
 		await client.shouldReply(
 			"help foo1",
 			"指令：foo1\nDESCRIPTION\n别名：foo。",
 		);
-		await client.shouldReply("help foobar", "指令：foo3\nDESCRIPTION");
+		await client.shouldReply(
+			"help foobar",
+			"指令：foo3\nDESCRIPTION",
+		);
 		await client.shouldReply(
 			"help foo4",
 			"指令：foo4\nDESCRIPTION\nUSAGE TEXT",
 		);
-		await client.shouldReply("help foo5", "指令：foo5\nDESCRIPTION\n123");
+		await client.shouldReply(
+			"help foo5",
+			"指令：foo5\nDESCRIPTION\n123",
+		);
 		await client.shouldReply(
 			"help foo6",
 			"指令：foo6\nDESCRIPTION\n使用示例：\n    EXAMPLE TEXT",
@@ -99,7 +113,9 @@ describe("@koishi-ce/plugin-help", () => {
 	// 验证 hideOptions、选项权限与 hidden 选项的过滤，以及 -H 的全量展示
 	it("command options", async () => {
 		const bar = app
-			.command("bar <arg:number>", "DESCRIPTION", { hideOptions: true })
+			.command("bar <arg:number>", "DESCRIPTION", {
+				hideOptions: true,
+			})
 			.option("opt1", "选项1", { authority: 2 })
 			.option("opt1", "-n  选项2", { value: false })
 			.option("opt2", "[arg:boolean]  选项3")
@@ -139,7 +155,9 @@ describe("@koishi-ce/plugin-help", () => {
 
 	// 验证多级子指令在父指令帮助中的逐层呈现
 	it("subcommand", async () => {
-		const foo2 = app.command("foo2", "DESCRIPTION", { authority: 0 });
+		const foo2 = app.command("foo2", "DESCRIPTION", {
+			authority: 0,
+		});
 		const foo1 = foo2.subcommand("foo1");
 		foo1.subcommand("foo3");
 
@@ -170,7 +188,11 @@ describe("@koishi-ce/plugin-help", () => {
 		const app = new App();
 		app.plugin(help);
 		app.plugin(mock);
-		app.i18n.define("$zh-CN", "commands.help.messages.global-epilog", "");
+		app.i18n.define(
+			"$zh-CN",
+			"commands.help.messages.global-epilog",
+			"",
+		);
 		await app.start();
 
 		const client = app.mock.client("123");
@@ -210,7 +232,9 @@ describe("@koishi-ce/plugin-help", () => {
 		const app = new App();
 		app.plugin(help);
 		app.plugin(mock);
-		app.command("test <arg>", { checkArgCount: true }).action(() => "pass");
+		app
+			.command("test <arg>", { checkArgCount: true })
+			.action(() => "pass");
 		await app.start();
 
 		const client = app.mock.client("123");

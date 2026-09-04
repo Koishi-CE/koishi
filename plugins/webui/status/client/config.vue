@@ -22,13 +22,17 @@ import { computed, inject, type Ref } from "vue";
 import BotPreview from "./bots/preview.vue";
 
 // 由配置管理面板注入的「当前插件」信息（此处仅需 path 字段）
-const current = inject<Ref<{ path: string }>>("manager.settings.current");
+const current = inject<Ref<{ path: string }>>(
+	"manager.settings.current",
+);
 
 // 过滤出配置路径里包含当前插件路径的机器人（当前正在查看配置的插件）
 const bots = computed(() => {
-	return Object.values(store.status?.bots || {}).filter((bot) => {
-		return bot.paths?.includes(current.value.path);
-	});
+	return Object.values(store.status?.bots || {}).filter(
+		(bot) => {
+			return bot.paths?.includes(current.value.path);
+		},
+	);
 });
 </script>
 

@@ -29,12 +29,17 @@ export function defineExtension(callback: Extension) {
 
 /** 兼容 rollup 与 vite 两种产物：优先取 default 导出 */
 export function unwrapExports(module: unknown): Plugin {
-	const record = module as { default?: unknown } | null | undefined;
+	const record = module as
+		| { default?: unknown }
+		| null
+		| undefined;
 	return (record?.default || module) as Plugin;
 }
 
 /** 按文件后缀分发的加载器：样式表插入 <link>，其余按动态模块导入 */
-const loaders: Dict<(ctx: Context, url: string) => Promise<void>> = {
+const loaders: Dict<
+	(ctx: Context, url: string) => Promise<void>
+> = {
 	async [`.css`](ctx, url) {
 		const link = document.createElement("link");
 		link.rel = "stylesheet";
@@ -53,7 +58,10 @@ const loaders: Dict<(ctx: Context, url: string) => Promise<void>> = {
 	async [``](ctx, url) {
 		const exports = await import(/* @vite-ignore */ url);
 		// 扩展入口均为函数式插件；断言到 Function 形状以走 config 可选的重载
-		ctx.plugin(unwrapExports(exports) as Plugin.Function, ctx.extension?.data);
+		ctx.plugin(
+			unwrapExports(exports) as Plugin.Function,
+			ctx.extension?.data,
+		);
 	},
 };
 
@@ -77,20 +85,25 @@ export default class LoaderService extends Service {
 	private backendId: string | undefined;
 
 	/** 当前已加载扩展的 id → LoadResult 映射 */
-	public extensions: Dict<LoadResult> = shallowReactive({} as Dict<LoadResult>);
+	public extensions: Dict<LoadResult> = shallowReactive(
+		{} as Dict<LoadResult>,
+	);
 
 	constructor(ctx: Context) {
 		super(ctx, "$loader", true);
 
 		// 服务端推送扩展入口的随附数据（entry-data）：
 		// 同步到 store.entry 并刷新已加载扩展的 data ref
-		receive<{ id: string; data: unknown }>("entry-data", ({ id, data }) => {
-			const entry = store.entry?.[id];
-			if (!entry) return;
-			entry.data = data;
-			const extension = this.extensions[id];
-			if (extension) extension.data.value = data;
-		});
+		receive<{ id: string; data: unknown }>(
+			"entry-data",
+			({ id, data }) => {
+				const entry = store.entry?.[id];
+				if (!entry) return;
+				entry.data = data;
+				const extension = this.extensions[id];
+				if (extension) extension.data.value = data;
+			},
+		);
 	}
 
 	/**
@@ -102,10 +115,15 @@ export default class LoaderService extends Service {
 			() => store.entry,
 			async (newValue, oldValue) => {
 				// _id 标识后端实例：变化说明服务端已重启，页面状态不再可信
-				const { _id, ...rest } = (newValue || {}) as Dict<EntryData> & {
+				const { _id, ...rest } = (newValue ||
+					{}) as Dict<EntryData> & {
 					_id?: string | undefined;
 				};
-				if (this.backendId && _id && this.backendId !== _id) {
+				if (
+					this.backendId &&
+					_id &&
+					this.backendId !== _id
+				) {
 					window.location.reload();
 					return;
 				}
@@ -119,38 +137,42 @@ export default class LoaderService extends Service {
 				}
 
 				await Promise.all(
-					Object.entries(rest).map(([key, { files, paths, data }]) => {
-						if (this.extensions[key]) return;
-						// 每个扩展在隔离的 "extension" 作用域中运行，
-						// 并通过 ctx.extension 拿到自己的加载结果
-						const scope = this.ctx.isolate("extension").plugin(() => {});
-						scope.ctx.extension = this.extensions[key] = {
-							done: ref(false),
-							scope,
-							paths,
-							data: ref(data),
-						};
-						// 依次加载入口声明的全部文件，按后缀分发给对应 loader；
-						// task 返回给外层 Promise.all，使 initTask 真正等到全部
-						// 入口文件 settle 后才放行（否则 router install 早于扩展
-						// 注册路由，初始导航会对当前路径报 no match）。
-						// 扩展加载失败不阻塞界面可用性
-						const task = Promise.all(
-							files.map((url) => {
-								for (const ext in loaders) {
-									if (!url.endsWith(ext)) continue;
-									return loaders[ext]?.(scope.ctx, url);
-								}
-								// 无匹配后缀的入口文件：显式跳过（noImplicitReturns）
-								return undefined;
-							}),
-						);
-						void task.finally(() => {
-							const extension = this.extensions[key];
-							if (extension) extension.done.value = true;
-						});
-						return task.catch(() => {});
-					}),
+					Object.entries(rest).map(
+						([key, { files, paths, data }]) => {
+							if (this.extensions[key]) return;
+							// 每个扩展在隔离的 "extension" 作用域中运行，
+							// 并通过 ctx.extension 拿到自己的加载结果
+							const scope = this.ctx
+								.isolate("extension")
+								.plugin(() => {});
+							scope.ctx.extension = this.extensions[key] = {
+								done: ref(false),
+								scope,
+								paths,
+								data: ref(data),
+							};
+							// 依次加载入口声明的全部文件，按后缀分发给对应 loader；
+							// task 返回给外层 Promise.all，使 initTask 真正等到全部
+							// 入口文件 settle 后才放行（否则 router install 早于扩展
+							// 注册路由，初始导航会对当前路径报 no match）。
+							// 扩展加载失败不阻塞界面可用性
+							const task = Promise.all(
+								files.map((url) => {
+									for (const ext in loaders) {
+										if (!url.endsWith(ext)) continue;
+										return loaders[ext]?.(scope.ctx, url);
+									}
+									// 无匹配后缀的入口文件：显式跳过（noImplicitReturns）
+									return undefined;
+								}),
+							);
+							void task.finally(() => {
+								const extension = this.extensions[key];
+								if (extension) extension.done.value = true;
+							});
+							return task.catch(() => {});
+						},
+					),
 				);
 
 				// 首次加载完成（oldValue 为空）时放行 initTask

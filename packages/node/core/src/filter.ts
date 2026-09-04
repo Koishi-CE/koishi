@@ -38,7 +38,10 @@ export namespace Computed {
  *
  * 插件配置中大量使用该类型（如权限等级、开关项），让配置可以按用户/频道变化。
  */
-export type Computed<T> = T | Eval.Expr<T> | ((session: Session) => T);
+export type Computed<T> =
+	| T
+	| Eval.Expr<T>
+	| ((session: Session) => T);
 /**
  * 会话过滤器：接收一个 Session，返回该会话是否允许通过。
  * 挂在 Context 上即成为该上下文的事件准入条件。
@@ -91,7 +94,9 @@ function property<K extends keyof Session>(
 	...values: Session[K][]
 ) {
 	return ctx.intersect((session: Session) => {
-		return values.length ? values.includes(session[key]) : !!session[key];
+		return values.length
+			? values.includes(session[key])
+			: !!session[key];
 	});
 }
 
@@ -112,7 +117,9 @@ export class FilterService {
 			// 父 runtime 的过滤器 = 任一子 runtime 的过滤器通过即通过。
 			// 这样事件分发时只需自顶向下试探，遇到通过的分枝才继续下钻
 			runtime.ctx.filter = (session) => {
-				return runtime.children.some((p) => p.ctx.filter(session));
+				return runtime.children.some((p) =>
+					p.ctx.filter(session),
+				);
 			};
 		});
 	}
@@ -129,25 +136,31 @@ export class FilterService {
 
 	/** 与传入过滤器（或另一上下文的过滤器）取并集，返回新上下文。 */
 	union(arg: Filter | Context) {
-		const filter = typeof arg === "function" ? arg : arg.filter;
+		const filter =
+			typeof arg === "function" ? arg : arg.filter;
 		return this.ctx.extend({
-			filter: (s: Session) => this.ctx.filter(s) || filter(s),
+			filter: (s: Session) =>
+				this.ctx.filter(s) || filter(s),
 		});
 	}
 
 	/** 与传入过滤器取交集，返回新上下文。 */
 	intersect(arg: Filter | Context) {
-		const filter = typeof arg === "function" ? arg : arg.filter;
+		const filter =
+			typeof arg === "function" ? arg : arg.filter;
 		return this.ctx.extend({
-			filter: (s: Session) => this.ctx.filter(s) && filter(s),
+			filter: (s: Session) =>
+				this.ctx.filter(s) && filter(s),
 		});
 	}
 
 	/** 从当前过滤器中排除传入过滤器命中的会话，返回新上下文。 */
 	exclude(arg: Filter | Context) {
-		const filter = typeof arg === "function" ? arg : arg.filter;
+		const filter =
+			typeof arg === "function" ? arg : arg.filter;
 		return this.ctx.extend({
-			filter: (s: Session) => this.ctx.filter(s) && !filter(s),
+			filter: (s: Session) =>
+				this.ctx.filter(s) && !filter(s),
 		});
 	}
 
@@ -178,6 +191,8 @@ export class FilterService {
 
 	/** 只保留私聊会话。 */
 	private() {
-		return this.ctx.intersect((session) => session.isDirect);
+		return this.ctx.intersect(
+			(session) => session.isDirect,
+		);
 	}
 }

@@ -33,7 +33,10 @@ export function interpolate(
 	terminator: string,
 	parse?: (source: string) => Argv,
 ) {
-	bracs[initiator] = { terminator, ...(parse ? { parse } : {}) };
+	bracs[initiator] = {
+		terminator,
+		...(parse ? { parse } : {}),
+	};
 }
 
 // 默认插值语法：$(...)
@@ -75,7 +78,10 @@ export class Tokenizer {
 		terminator: string,
 		parse?: (source: string) => Argv,
 	) {
-		this.bracs[initiator] = { terminator, ...(parse ? { parse } : {}) };
+		this.bracs[initiator] = {
+			terminator,
+			...(parse ? { parse } : {}),
+		};
 	}
 
 	/**
@@ -113,13 +119,18 @@ export class Tokenizer {
 		while (true) {
 			const capture = regExp.exec(source);
 			if (!capture) return parent;
-			content += whitespace.unescape(source.slice(0, capture.index));
+			content += whitespace.unescape(
+				source.slice(0, capture.index),
+			);
 			if (capture[0] in this.bracs) {
 				// 命中插值起始符：递归解析子 argv，剩余原文以解析结果为准
-				source = source.slice(capture.index + capture[0].length).trimStart();
+				source = source
+					.slice(capture.index + capture[0].length)
+					.trimStart();
 				const brac = this.bracs[capture[0]];
 				const argv =
-					brac?.parse?.(source) || this.parse(source, brac?.terminator);
+					brac?.parse?.(source) ||
+					this.parse(source, brac?.terminator);
 				source = argv.rest ?? "";
 				parent.inters.push({
 					...argv,
@@ -136,11 +147,16 @@ export class Tokenizer {
 				if (quoted) {
 					// 闭合引号时，终结符要连同引号后、下一个 token 前的空白一起记录，
 					// 供 stringify 精确还原
-					parent.terminator += rest.slice(0, -parent.rest.length);
+					parent.terminator += rest.slice(
+						0,
+						-parent.rest.length,
+					);
 				} else if (quote) {
 					// 有左引号但未闭合：左引号按普通字符计回 content，插值偏移 +1
 					content = (leftQuotes[index] ?? "") + content;
-					parent.inters.forEach((inter) => (inter.pos = (inter.pos ?? 0) + 1));
+					parent.inters.forEach(
+						(inter) => (inter.pos = (inter.pos ?? 0) + 1),
+					);
 				}
 				parent.content = content;
 				// 单引号内的插值不求值，恢复为原文
@@ -172,7 +188,10 @@ export class Tokenizer {
 			term = "";
 		const stopReg = `\\s+|[${escapeRegExp(terminator)}]|$`;
 		// eslint-disable-next-line no-unmodified-loop-condition
-		while (rest && !(terminator && rest.startsWith(terminator))) {
+		while (
+			rest &&
+			!(terminator && rest.startsWith(terminator))
+		) {
 			const token = this.parseToken(rest, stopReg);
 			tokens.push(token);
 			rest = token.rest ?? "";
@@ -193,14 +212,22 @@ export class Tokenizer {
 	 * 则去掉最后一个字符（对应的终结符），以恢复原始输入。
 	 */
 	stringify(argv: Argv) {
-		const output = (argv.tokens ?? []).reduce((prev, token) => {
-			if (token.quoted)
-				prev +=
-					leftQuotes[rightQuotes.indexOf(token.terminator[0] ?? "")] || "";
-			return prev + token.content + token.terminator;
-		}, "");
+		const output = (argv.tokens ?? []).reduce(
+			(prev, token) => {
+				if (token.quoted)
+					prev +=
+						leftQuotes[
+							rightQuotes.indexOf(token.terminator[0] ?? "")
+						] || "";
+				return prev + token.content + token.terminator;
+			},
+			"",
+		);
 		if (
-			(argv.rest && !rightQuotes.includes(output[output.length - 1] ?? "")) ||
+			(argv.rest &&
+				!rightQuotes.includes(
+					output[output.length - 1] ?? "",
+				)) ||
 			argv.initiator
 		) {
 			return output.slice(0, -1);

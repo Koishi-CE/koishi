@@ -8,7 +8,11 @@
  * - 注册活动栏右键菜单 "theme.activity" 及其动作（重置活动栏自定义配置）。
  */
 
-import { type Context, router, useConfig } from "@koishi-ce/client";
+import {
+	type Context,
+	router,
+	useConfig,
+} from "@koishi-ce/client";
 import App from "./index.vue";
 
 export default function (ctx: Context) {

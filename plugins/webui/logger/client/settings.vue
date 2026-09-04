@@ -21,7 +21,9 @@ import { computed, inject, type Ref } from "vue";
 import Logs from "./logs.vue";
 
 // 由配置管理面板注入的「当前插件」信息（此处仅需 path 字段）
-const current = inject<Ref<{ path: string }>>("manager.settings.current");
+const current = inject<Ref<{ path: string }>>(
+	"manager.settings.current",
+);
 
 // 倒序扫描日志：遇到 id 回绕（重启边界）即停，
 // 其间只保留 meta.paths 包含当前插件路径的记录，最后恢复正序
@@ -29,10 +31,19 @@ const logs = computed(() => {
 	if (!store.logs) return [];
 	const results = [];
 	let last = Infinity;
-	for (let index = store.logs.length - 1; index > 0; --index) {
+	for (
+		let index = store.logs.length - 1;
+		index > 0;
+		--index
+	) {
 		if (store.logs[index].id >= last) break;
 		last = store.logs[index].id;
-		if (!store.logs[index].meta?.paths?.includes(current.value.path)) continue;
+		if (
+			!store.logs[index].meta?.paths?.includes(
+				current.value.path,
+			)
+		)
+			continue;
 		results.unshift(store.logs[index]);
 	}
 	return results;

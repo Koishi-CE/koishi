@@ -16,7 +16,13 @@
  */
 import { createHash } from "node:crypto";
 import { basename } from "node:path";
-import { type Context, type Dict, h, Schema, Service } from "@koishi-ce/koishi";
+import {
+	type Context,
+	type Dict,
+	h,
+	Schema,
+	Service,
+} from "@koishi-ce/koishi";
 // 仅为引入 plugin-http 的模块增强，使下方 ctx.http 的类型可用
 import type {} from "@koishi-ce/plugin-http";
 import { fileTypeFromBuffer } from "file-type";
@@ -53,7 +59,10 @@ export abstract class Assets<
 	public override config: T;
 
 	/** 上传资源文件并返回可访问的 URL */
-	abstract upload(url: string, file: string): Promise<string>;
+	abstract upload(
+		url: string,
+		file: string,
+	): Promise<string>;
 	/** 获取存量资源统计 */
 	abstract stats(): Promise<Assets.Stats>;
 
@@ -77,7 +86,9 @@ export abstract class Assets<
 						const src = attrs["src"];
 						if (
 							typeof src === "string" &&
-							whitelist.some((prefix) => src.startsWith(prefix))
+							whitelist.some((prefix) =>
+								src.startsWith(prefix),
+							)
 						) {
 							return h(type, attrs);
 						}
@@ -100,10 +111,15 @@ export abstract class Assets<
 	 * 指定了文件名时沿用其 basename（不以 . 开头时补 - 前缀分隔），
 	 * 否则按文件魔数（file-type）探测扩展名。
 	 */
-	protected async analyze(url: string, name = ""): Promise<Assets.FileInfo> {
+	protected async analyze(
+		url: string,
+		name = "",
+	): Promise<Assets.FileInfo> {
 		const file = await this.ctx.http.file(url);
 		const buffer = Buffer.from(file.data);
-		const hash = createHash("sha1").update(buffer).digest("hex");
+		const hash = createHash("sha1")
+			.update(buffer)
+			.digest("hex");
 		let suffix: string;
 		if (name) {
 			suffix = basename(name);

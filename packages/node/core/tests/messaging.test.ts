@@ -9,8 +9,19 @@
  * 顺序与延迟估算（message / character 配置）、显式 delay，
  * 以及 cancelQueued 清空队列并延迟恢复的行为。
  */
-import { afterAll, afterEach, beforeAll, describe, expect, it } from "bun:test";
-import { App, Logger, type Session } from "@koishi-ce/koishi";
+import {
+	afterAll,
+	afterEach,
+	beforeAll,
+	describe,
+	expect,
+	it,
+} from "bun:test";
+import {
+	App,
+	Logger,
+	type Session,
+} from "@koishi-ce/koishi";
 import mock from "@koishi-ce/plugin-mock";
 
 const app = new App();
@@ -39,7 +50,9 @@ function restoreSend() {
 }
 
 function createSession() {
-	const session = bot.session({ channel: { id: "c1", type: 0 } });
+	const session = bot.session({
+		channel: { id: "c1", type: 0 },
+	});
 	session.channelId = "c1";
 	return session;
 }
@@ -64,21 +77,28 @@ describe("Session Messaging", () => {
 
 	it("send 发送失败只返回空数组不抛错", async () => {
 		// 失败容忍路径的 session 域告警是被测行为的预期伴生输出，静默之
-		(Logger.levels as Record<string, number>)["session"] = 0;
+		(Logger.levels as Record<string, number>)["session"] =
+			0;
 		try {
 			wrapSend(true);
 			const session = createSession();
-			await expect(session.send("hello")).resolves.toEqual([]);
+			await expect(session.send("hello")).resolves.toEqual(
+				[],
+			);
 			expect(contents).toEqual(["hello"]);
 		} finally {
-			delete (Logger.levels as Record<string, number>)["session"];
+			delete (Logger.levels as Record<string, number>)[
+				"session"
+			];
 		}
 	});
 
 	it("send 正常发送返回消息 ID 列表", async () => {
 		wrapSend();
 		const session = createSession();
-		await expect(session.send("hello")).resolves.toEqual(["id1"]);
+		await expect(session.send("hello")).resolves.toEqual([
+			"id1",
+		]);
 		expect(contents).toEqual(["hello"]);
 	});
 
@@ -107,7 +127,9 @@ describe("Session Messaging", () => {
 		const start = Date.now();
 		await session.sendQueued("short");
 		const shortElapsed = Date.now() - start;
-		const second = session.sendQueued("a-very-long-message");
+		const second = session.sendQueued(
+			"a-very-long-message",
+		);
 		await second;
 		const longElapsed = Date.now() - start;
 		expect(shortElapsed).toBeLessThan(longElapsed);
@@ -118,7 +140,9 @@ describe("Session Messaging", () => {
 	it("sendQueued 空内容不发送", async () => {
 		wrapSend();
 		const session = createSession();
-		await expect(session.sendQueued("")).resolves.toBeUndefined();
+		await expect(
+			session.sendQueued(""),
+		).resolves.toBeUndefined();
 		expect(contents).toEqual([]);
 	});
 

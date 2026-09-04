@@ -9,11 +9,17 @@ import { describe, expect, it } from "bun:test";
 import { promises as fs } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { locateConfig, parseConfig, saveConfig } from "../config-file.ts";
+import {
+	locateConfig,
+	parseConfig,
+	saveConfig,
+} from "../config-file.ts";
 
 /** 建立临时目录并在用后清理 */
 async function withDir(fn: (dir: string) => Promise<void>) {
-	const dir = await fs.mkdtemp(join(tmpdir(), "koishi-loader-cfg-"));
+	const dir = await fs.mkdtemp(
+		join(tmpdir(), "koishi-loader-cfg-"),
+	);
 	try {
 		await fn(dir);
 	} finally {
@@ -24,17 +30,27 @@ async function withDir(fn: (dir: string) => Promise<void>) {
 describe("locateConfig", () => {
 	it("目录为空时抛错", async () => {
 		await withDir(async (dir) => {
-			expect(locateConfig(dir)).rejects.toThrow("config file not found");
+			expect(locateConfig(dir)).rejects.toThrow(
+				"config file not found",
+			);
 		});
 	});
 
 	it("按 basename 与扩展名优先级查找默认配置", async () => {
 		await withDir(async (dir) => {
-			await Bun.write(join(dir, "koishi.yml"), "plugins: {}");
-			await Bun.write(join(dir, "koishi.config.json"), "{}");
+			await Bun.write(
+				join(dir, "koishi.yml"),
+				"plugins: {}",
+			);
+			await Bun.write(
+				join(dir, "koishi.config.json"),
+				"{}",
+			);
 			// koishi.config.* 优先于 koishi.*；同类内 .json 优先于 .yaml/.yml
 			const resolved = await locateConfig(dir);
-			expect(resolved.filename).toBe(join(dir, "koishi.config.json"));
+			expect(resolved.filename).toBe(
+				join(dir, "koishi.config.json"),
+			);
 			expect(resolved.mime).toBe("application/json");
 			expect(resolved.writable).toBe(true);
 		});
@@ -42,9 +58,17 @@ describe("locateConfig", () => {
 
 	it("显式指向文件时直接采用并校验扩展名", async () => {
 		await withDir(async (dir) => {
-			await Bun.write(join(dir, "custom.yml"), "plugins: {}");
-			const resolved = await locateConfig(dir, "custom.yml");
-			expect(resolved.filename).toBe(join(dir, "custom.yml"));
+			await Bun.write(
+				join(dir, "custom.yml"),
+				"plugins: {}",
+			);
+			const resolved = await locateConfig(
+				dir,
+				"custom.yml",
+			);
+			expect(resolved.filename).toBe(
+				join(dir, "custom.yml"),
+			);
 			expect(resolved.baseDir).toBe(dir);
 			expect(resolved.mime).toBe("application/yaml");
 
@@ -58,9 +82,14 @@ describe("locateConfig", () => {
 	it("显式指向目录时在该目录内查找", async () => {
 		await withDir(async (dir) => {
 			await fs.mkdir(join(dir, "instance"));
-			await Bun.write(join(dir, "instance", "koishi.yml"), "plugins: {}");
+			await Bun.write(
+				join(dir, "instance", "koishi.yml"),
+				"plugins: {}",
+			);
 			const resolved = await locateConfig(dir, "instance");
-			expect(resolved.filename).toBe(join(dir, "instance", "koishi.yml"));
+			expect(resolved.filename).toBe(
+				join(dir, "instance", "koishi.yml"),
+			);
 			expect(resolved.baseDir).toBe(join(dir, "instance"));
 		});
 	});
@@ -85,8 +114,13 @@ describe("parseConfig", () => {
 	it("yaml 文件走 Bun 原生解析", async () => {
 		await withDir(async (dir) => {
 			const filename = join(dir, "koishi.yml");
-			await Bun.write(filename, "port: 5140\nplugins:\n  help: {}\n");
-			expect(await parseConfig(filename, "application/yaml")).toEqual({
+			await Bun.write(
+				filename,
+				"port: 5140\nplugins:\n  help: {}\n",
+			);
+			expect(
+				await parseConfig(filename, "application/yaml"),
+			).toEqual({
 				port: 5140,
 				plugins: { help: {} },
 			});
@@ -97,7 +131,9 @@ describe("parseConfig", () => {
 		await withDir(async (dir) => {
 			const filename = join(dir, "koishi.json");
 			await Bun.write(filename, '{"port": 5140}');
-			expect(await parseConfig(filename, "application/json")).toEqual({
+			expect(
+				await parseConfig(filename, "application/json"),
+			).toEqual({
 				port: 5140,
 			});
 		});
@@ -106,8 +142,13 @@ describe("parseConfig", () => {
 	it("其余扩展名按模块加载（Bun 的 require 可加载 ESM）", async () => {
 		await withDir(async (dir) => {
 			const filename = join(dir, "koishi.config.mjs");
-			await Bun.write(filename, "export default { port: 5140, plugins: {} }");
-			expect(await parseConfig(filename, undefined)).toEqual({
+			await Bun.write(
+				filename,
+				"export default { port: 5140, plugins: {} }",
+			);
+			expect(
+				await parseConfig(filename, undefined),
+			).toEqual({
 				port: 5140,
 				plugins: {},
 			});
@@ -117,8 +158,13 @@ describe("parseConfig", () => {
 	it("无 default 导出的模块以模块本身为配置（CJS）", async () => {
 		await withDir(async (dir) => {
 			const filename = join(dir, "koishi.config.cjs");
-			await Bun.write(filename, "module.exports = { port: 5140 }");
-			expect(await parseConfig(filename, undefined)).toEqual({ port: 5140 });
+			await Bun.write(
+				filename,
+				"module.exports = { port: 5140 }",
+			);
+			expect(
+				await parseConfig(filename, undefined),
+			).toEqual({ port: 5140 });
 		});
 	});
 });
@@ -128,10 +174,18 @@ describe("saveConfig", () => {
 		await withDir(async (dir) => {
 			const filename = join(dir, "koishi.yml");
 			const config = { port: 5140, plugins: { help: {} } };
-			await saveConfig(filename, config, "application/yaml");
+			await saveConfig(
+				filename,
+				config,
+				"application/yaml",
+			);
 			// 块级样式输出（与历史 js-yaml 产物形态一致）
-			expect(await Bun.file(filename).text()).toContain("port: 5140");
-			expect(await parseConfig(filename, "application/yaml")).toEqual(config);
+			expect(await Bun.file(filename).text()).toContain(
+				"port: 5140",
+			);
+			expect(
+				await parseConfig(filename, "application/yaml"),
+			).toEqual(config);
 			// 原子写回不留 .tmp 残留
 			expect(await fs.readdir(dir)).toEqual(["koishi.yml"]);
 		});
@@ -141,13 +195,21 @@ describe("saveConfig", () => {
 		await withDir(async (dir) => {
 			const filename = join(dir, "koishi.config.json");
 			const config = { port: 5140 };
-			await saveConfig(filename, config, "application/json");
-			expect(await parseConfig(filename, "application/json")).toEqual(config);
+			await saveConfig(
+				filename,
+				config,
+				"application/json",
+			);
+			expect(
+				await parseConfig(filename, "application/json"),
+			).toEqual(config);
 		});
 	});
 
 	it("不支持的 mime 抛错", async () => {
-		await expect(saveConfig("whatever", {}, "text/plain")).rejects.toThrow(
+		await expect(
+			saveConfig("whatever", {}, "text/plain"),
+		).rejects.toThrow(
 			"unsupported config mime: text/plain",
 		);
 	});

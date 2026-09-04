@@ -39,9 +39,20 @@
  * 统一渲染；标题与页签位置留有具名插槽（title / tabs）供其它插件
  * 定制（如市场页签）。支持关键词过滤与外部 filter 注入。
  */
-import { router, send, store, useI18nText } from "@koishi-ce/client";
+import {
+	router,
+	send,
+	store,
+	useI18nText,
+} from "@koishi-ce/client";
 import type { PackageProvider } from "@koishi-ce/plugin-config";
-import { computed, inject, nextTick, ref, watch } from "vue";
+import {
+	computed,
+	inject,
+	nextTick,
+	ref,
+	watch,
+} from "vue";
 import { dialogSelect } from "./utils";
 
 const tt = useI18nText();
@@ -58,13 +69,15 @@ const filter = inject(
 
 /** 可选插件列表：排除全局设置条目，并应用关键词与注入的过滤器。 */
 const packages = computed(() =>
-	Object.values(store.packages).filter(({ name, shortname }) => {
-		return (
-			name &&
-			shortname.includes(keyword.value.toLowerCase()) &&
-			filter(store.packages[name])
-		);
-	}),
+	Object.values(store.packages).filter(
+		({ name, shortname }) => {
+			return (
+				name &&
+				shortname.includes(keyword.value.toLowerCase()) &&
+				filter(store.packages[name])
+			);
+		},
+	),
 );
 
 /**
@@ -77,7 +90,12 @@ function configure(shortname: string) {
 	const ident = Math.random().toString(36).slice(2, 8);
 	dialogSelect.value = null;
 	keyword.value = "";
-	void send("manager/unload", path, `${shortname}:${ident}`, {});
+	void send(
+		"manager/unload",
+		path,
+		`${shortname}:${ident}`,
+		{},
+	);
 	router.push(`/plugins/${ident}`);
 }
 

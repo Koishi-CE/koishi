@@ -9,10 +9,23 @@
  * （经所有插件 schema 补全后的完整配置），二者双向同步（见文末类注释）。
  * 插件通过 `ctx.settings()` 注册设置分区、`ctx.schema()` 注册自定义控件。
  */
-import { type RemovableRef, useLocalStorage } from "@vueuse/core";
+import {
+	type RemovableRef,
+	useLocalStorage,
+} from "@vueuse/core";
 import { type Dict, remove } from "cosmokit";
-import { type Component, computed, markRaw, reactive, ref, watch } from "vue";
-import { Schema, SchemaBase } from "../../../components/client/index.ts";
+import {
+	type Component,
+	computed,
+	markRaw,
+	reactive,
+	ref,
+	watch,
+} from "vue";
+import {
+	Schema,
+	SchemaBase,
+} from "../../../components/client/index.ts";
 import type { Config } from "..";
 import type { Context } from "../context";
 import { insert, type Ordered, Service } from "../utils";
@@ -56,7 +69,10 @@ export let useStorage = <T extends object>(
 		__version__?: number | undefined;
 	};
 	initial.__version__ = version;
-	const storage = useLocalStorage(`koishi.console.${key}`, initial);
+	const storage = useLocalStorage(
+		`koishi.console.${key}`,
+		initial,
+	);
 	if (storage.value.__version__ !== version) {
 		storage.value = initial;
 	}
@@ -87,7 +103,10 @@ export function createStorage<T extends object>(
 	if (storage.value.version !== version) {
 		storage.value = { version, data: initial };
 	} else if (!Array.isArray(storage.value.data)) {
-		storage.value.data = { ...initial, ...storage.value.data };
+		storage.value.data = {
+			...initial,
+			...storage.value.data,
+		};
 	}
 	return reactive<T>(storage.value["data"]);
 }
@@ -141,14 +160,19 @@ export default class SettingService extends Service {
 			title: "通用设置",
 			order: 1000,
 			schema: Schema.object({
-				locale: Schema.union(["zh-CN", "en-US"]).description("语言设置。"),
+				locale: Schema.union([
+					"zh-CN",
+					"en-US",
+				]).description("语言设置。"),
 			}).description("通用设置"),
 		});
 
 		// 汇总所有分区 schema 为一个相交对象，作为 resolved 的解释器
 		const schema = computed(() => {
 			const list: Schema[] = [];
-			for (const settings of Object.values(ctx.internal.settings)) {
+			for (const settings of Object.values(
+				ctx.internal.settings,
+			)) {
 				for (const options of settings) {
 					if (options.schema) {
 						list.push(options.schema);
@@ -186,7 +210,9 @@ export default class SettingService extends Service {
 		ctx.effect(() => () => stop?.());
 
 		// 原始存储或 schema 集合任一变化，都重新生成 resolved
-		ctx.effect(() => watch(original, update, { deep: true }));
+		ctx.effect(() =>
+			watch(original, update, { deep: true }),
+		);
 		ctx.effect(() => watch(schema, update));
 	}
 
@@ -195,7 +221,9 @@ export default class SettingService extends Service {
 	 * 返回取消注册函数。
 	 */
 	extendSchema(extension: SchemaBase.Extension) {
-		const component = this.ctx.wrapComponent(extension.component);
+		const component = this.ctx.wrapComponent(
+			extension.component,
+		);
 		if (component) extension.component = component;
 		return this.ctx.effect(() => {
 			SchemaBase.extensions.add(extension);
@@ -207,14 +235,19 @@ export default class SettingService extends Service {
 	settings(options: SettingOptions) {
 		markRaw(options);
 		options.order ??= 0;
-		const component = this.ctx.wrapComponent(options.component);
+		const component = this.ctx.wrapComponent(
+			options.component,
+		);
 		if (component) options.component = component;
 		return this.ctx.effect(() => {
-			const list = (this.ctx.internal.settings[options.id] ||= []);
+			const list = (this.ctx.internal.settings[
+				options.id
+			] ||= []);
 			insert(list, options);
 			return () => {
 				remove(list, options);
-				if (!list.length) delete this.ctx.internal.settings[options.id];
+				if (!list.length)
+					delete this.ctx.internal.settings[options.id];
 			};
 		});
 	}

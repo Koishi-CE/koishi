@@ -23,17 +23,31 @@
  */
 
 import { existsSync, readFileSync } from "node:fs";
-import { dirname, isAbsolute, join, resolve } from "node:path";
+import {
+	dirname,
+	isAbsolute,
+	join,
+	resolve,
+} from "node:path";
 
 /** 候选前缀：本组织优先，其次上游官方组织，最后社区前缀 */
-const prefixes = ["@koishi-ce/plugin-", "@koishijs/plugin-", "koishi-plugin-"];
+const prefixes = [
+	"@koishi-ce/plugin-",
+	"@koishijs/plugin-",
+	"koishi-plugin-",
+];
 
 /**
  * Bun require 语义的 exports 条件序：Bun 会把 exports 的 "bun" 条件
  * 应用在 require 链上（见 interop.ts 的分歧修复），兜底入口计算对其
  * 对齐；其余按 require / node / default 常规序。
  */
-const bunRequireConditions = ["bun", "require", "node", "default"];
+const bunRequireConditions = [
+	"bun",
+	"require",
+	"node",
+	"default",
+];
 
 /** 入口目标补全的扩展名序（对齐 Bun require 的模块解析，含 TS 支持） */
 const entryExtensions = ["", ".js", ".cjs", ".mjs", ".ts"];
@@ -58,14 +72,20 @@ function resolveEntry(
 	manifest: EntryManifest,
 ): string | undefined {
 	const targets: string[] = [];
-	if (manifest.exports !== undefined && manifest.exports !== null) {
+	if (
+		manifest.exports !== undefined &&
+		manifest.exports !== null
+	) {
 		if (typeof manifest.exports === "string") {
 			targets.push(manifest.exports);
 		} else if (
 			typeof manifest.exports === "object" &&
 			!Array.isArray(manifest.exports)
 		) {
-			const record = manifest.exports as Record<string, unknown>;
+			const record = manifest.exports as Record<
+				string,
+				unknown
+			>;
 			let map: Record<string, unknown> | undefined;
 			if ("." in record) {
 				const dot = record["."];
@@ -78,7 +98,11 @@ function resolveEntry(
 				) {
 					map = dot as Record<string, unknown>;
 				}
-			} else if (!Object.keys(record).some((key) => key.startsWith("."))) {
+			} else if (
+				!Object.keys(record).some((key) =>
+					key.startsWith("."),
+				)
+			) {
 				// 无 "." 键且无子路径键：整体视作条件表
 				map = record;
 			}
@@ -86,16 +110,19 @@ function resolveEntry(
 				const hit = Object.keys(map).find((key) =>
 					bunRequireConditions.includes(key),
 				);
-				const value = hit === undefined ? undefined : map[hit];
+				const value =
+					hit === undefined ? undefined : map[hit];
 				if (typeof value !== "string") return undefined;
 				targets.push(value);
 			}
 		}
 		if (!targets.length) return undefined;
 	} else {
-		if (typeof manifest.main === "string") targets.push(manifest.main);
+		if (typeof manifest.main === "string")
+			targets.push(manifest.main);
 		targets.push("index.js");
-		if (typeof manifest.module === "string") targets.push(manifest.module);
+		if (typeof manifest.module === "string")
+			targets.push(manifest.module);
 	}
 	for (const target of targets) {
 		for (const ext of entryExtensions) {
@@ -126,7 +153,10 @@ function resolveEntry(
  * 本兜底实际不会被触发，仅作意外污染源（如装包期间的手动解析）的
  * 纵深防御。
  */
-function fsResolvePackage(spec: string, baseDir: string): string | undefined {
+function fsResolvePackage(
+	spec: string,
+	baseDir: string,
+): string | undefined {
 	let dir = resolve(baseDir);
 	for (;;) {
 		const pkgDir = join(dir, "node_modules", spec);
@@ -150,7 +180,10 @@ function fsResolvePackage(spec: string, baseDir: string): string | undefined {
 /**
  * 生成插件名的候选模块说明符列表（按解析优先级排序）。
  */
-export function pluginCandidates(name: string, baseDir: string): string[] {
+export function pluginCandidates(
+	name: string,
+	baseDir: string,
+): string[] {
 	// 绝对路径
 	if (isAbsolute(name)) {
 		return [name];
@@ -169,12 +202,15 @@ export function pluginCandidates(name: string, baseDir: string): string[] {
 	// @scope/name 形式：为内层名补全社区前缀
 	if (name.startsWith("@")) {
 		const index = name.indexOf("/");
-		if (index < 0) throw new Error(`cannot resolve plugin "${name}"`);
+		if (index < 0)
+			throw new Error(`cannot resolve plugin "${name}"`);
 		const scope = name.slice(0, index + 1);
 		const inner = name.slice(index + 1);
 		return [
 			scope +
-				(inner.startsWith("koishi-plugin-") ? inner : `koishi-plugin-${inner}`),
+				(inner.startsWith("koishi-plugin-")
+					? inner
+					: `koishi-plugin-${inner}`),
 		];
 	}
 
@@ -187,7 +223,10 @@ export function pluginCandidates(name: string, baseDir: string): string[] {
  * 对裸名候选做纯 fs 兜底（绝对 / 相对路径候选不经 node_modules 查找，
  * 无需兜底）。全部候选均解析失败时抛错（由调用方决定如何告警）。
  */
-export function resolvePlugin(name: string, baseDir: string): string {
+export function resolvePlugin(
+	name: string,
+	baseDir: string,
+): string {
 	for (const candidate of pluginCandidates(name, baseDir)) {
 		try {
 			return Bun.resolveSync(candidate, baseDir);

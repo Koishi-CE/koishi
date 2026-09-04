@@ -9,7 +9,12 @@
  * （含多候选、忽略建议等分支）；以及 session.suggest() 自定义
  * 纠错（如 find 指令的条目名匹配）的行为。
  */
-import { afterAll, beforeAll, describe, it } from "bun:test";
+import {
+	afterAll,
+	beforeAll,
+	describe,
+	it,
+} from "bun:test";
 import { App } from "@koishi-ce/koishi";
 import mock from "@koishi-ce/plugin-mock";
 
@@ -104,17 +109,22 @@ describe("session.suggest()", () => {
 	const items = ["foo", "bar"];
 
 	// find 指令：条目不存在时用 session.suggest 做条目名纠错
-	app.command("find [item]").action(async ({ session }, item) => {
-		if (items.includes(item)) return `found:${item}`;
-		const name = await session!.suggest({
-			actual: item,
-			expect: ["foo", "bar", "baz"],
-			prefix: "PREFIX",
-			suffix: "SUFFIX",
+	app
+		.command("find [item]")
+		.action(async ({ session }, item) => {
+			if (items.includes(item)) return `found:${item}`;
+			const name = await session!.suggest({
+				actual: item,
+				expect: ["foo", "bar", "baz"],
+				prefix: "PREFIX",
+				suffix: "SUFFIX",
+			});
+			if (!name) return;
+			return session!.execute({
+				args: [name],
+				name: "find",
+			});
 		});
-		if (!name) return;
-		return session!.execute({ args: [name], name: "find" });
-	});
 
 	beforeAll(() => app.start());
 	afterAll(() => app.stop());
@@ -129,9 +139,15 @@ describe("session.suggest()", () => {
 		// 完全不相似时只发 prefix；唯一候选带 suffix 可确认，多候选不可
 		await client.shouldReply(".find 111", "PREFIX");
 		await client.shouldNotReply(".");
-		await client.shouldReply(".find for", `PREFIX您要找的是不是“foo”？SUFFIX`);
+		await client.shouldReply(
+			".find for",
+			`PREFIX您要找的是不是“foo”？SUFFIX`,
+		);
 		await client.shouldReply(".", "found:foo");
-		await client.shouldReply(".find bax", `PREFIX您要找的是不是“bar”或“baz”？`);
+		await client.shouldReply(
+			".find bax",
+			`PREFIX您要找的是不是“bar”或“baz”？`,
+		);
 		await client.shouldNotReply(".");
 	});
 });

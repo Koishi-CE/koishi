@@ -15,7 +15,10 @@ interface SQLiteMasterInfo {
 	sql: string;
 }
 
-export async function getIndexes(driver: SQLiteDriver, table: string) {
+export async function getIndexes(
+	driver: SQLiteDriver,
+	table: string,
+) {
 	const indexes = driver._all(
 		`SELECT type,name,tbl_name,sql FROM sqlite_master WHERE type = 'index' AND tbl_name = ?`,
 		[table],
@@ -24,7 +27,9 @@ export async function getIndexes(driver: SQLiteDriver, table: string) {
 	for (const { name, sql } of indexes) {
 		result.push({
 			name,
-			unique: !sql || sql.toUpperCase().startsWith("CREATE UNIQUE"),
+			unique:
+				!sql ||
+				sql.toUpperCase().startsWith("CREATE UNIQUE"),
 			keys: parseIndexDef(sql),
 		});
 	}
@@ -39,17 +44,26 @@ export async function createIndex(
 	const name =
 		index.name ??
 		Object.entries(index.keys)
-			.map(([key, direction]) => `${key}_${direction ?? "asc"}`)
+			.map(
+				([key, direction]) =>
+					`${key}_${direction ?? "asc"}`,
+			)
 			.join("+");
 	const keyFields = Object.entries(index.keys)
-		.map(([key, direction]) => `${escapeId(key)} ${direction ?? "asc"}`)
+		.map(
+			([key, direction]) =>
+				`${escapeId(key)} ${direction ?? "asc"}`,
+		)
 		.join(", ");
 	await driver._run(
 		`create ${index.unique ? "UNIQUE" : ""} index ${escapeId(name)} ON ${escapeId(table)} (${keyFields})`,
 	);
 }
 
-export async function dropIndex(driver: SQLiteDriver, name: string) {
+export async function dropIndex(
+	driver: SQLiteDriver,
+	name: string,
+) {
 	await driver._run(`DROP INDEX ${escapeId(name)}`);
 }
 
@@ -60,8 +74,12 @@ function parseIndexDef(def: string): Driver.Index["keys"] {
 		const matches = def.match(/\((.*)\)/);
 		matches?.[1]?.split(",").forEach((key) => {
 			const [name = "", direction] = key.trim().split(" ");
-			keys[name.startsWith("`") ? name.slice(1, -1) : name] =
-				direction?.toLowerCase() === "desc" ? "desc" : "asc";
+			keys[
+				name.startsWith("`") ? name.slice(1, -1) : name
+			] =
+				direction?.toLowerCase() === "desc"
+					? "desc"
+					: "asc";
 		});
 		return keys;
 	} catch {

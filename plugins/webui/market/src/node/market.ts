@@ -41,7 +41,8 @@ class MarketProvider extends BaseMarketProvider {
 	constructor(ctx: Context, config: MarketProvider.Config) {
 		super(ctx);
 		this.config = config;
-		if (config.endpoint) this.http = ctx.http.extend(config);
+		if (config.endpoint)
+			this.http = ctx.http.extend(config);
 		this.flushData = ctx.throttle(() => {
 			ctx.console.broadcast("market/patch", {
 				data: this.tempCache,
@@ -88,7 +89,11 @@ class MarketProvider extends BaseMarketProvider {
 				// 可调用的 HTTP 实例本身），须包一层保持绑定
 				return await http.get<T>(url, config);
 			} catch (error) {
-				if (attempt >= maxRetries || !this.isRetryable(error)) throw error;
+				if (
+					attempt >= maxRetries ||
+					!this.isRetryable(error)
+				)
+					throw error;
 				const retryAfter = Number(
 					error.response?.headers.get("retry-after") ?? "",
 				);
@@ -113,16 +118,25 @@ class MarketProvider extends BaseMarketProvider {
 		const registry = this.ctx.installer.http;
 
 		this.failed = [];
-		this.scanner = new Scanner(<T>(url: string, config?: RequestConfig) =>
-			this.request<T>(registry, url, config),
+		this.scanner = new Scanner(
+			<T>(url: string, config?: RequestConfig) =>
+				this.request<T>(registry, url, config),
 		);
 		if (this.http) {
-			const result = await this.request<SearchResult>(this.http, "");
-			this.scanner.objects = result.objects.filter((object) => !object.ignored);
+			const result = await this.request<SearchResult>(
+				this.http,
+				"",
+			);
+			this.scanner.objects = result.objects.filter(
+				(object) => !object.ignored,
+			);
 			this.scanner.total = this.scanner.objects.length;
-			if (result.version !== undefined) this.scanner.version = result.version;
+			if (result.version !== undefined)
+				this.scanner.version = result.version;
 		} else {
-			await this.scanner.collect(timeout !== undefined ? { timeout } : {});
+			await this.scanner.collect(
+				timeout !== undefined ? { timeout } : {},
+			);
 		}
 
 		if (!this.scanner.version) {
@@ -150,16 +164,18 @@ class MarketProvider extends BaseMarketProvider {
 					}
 				},
 				onRegistry: (registry, versions) => {
-					this.ctx.installer.setPackage(registry.name, versions);
+					this.ctx.installer.setPackage(
+						registry.name,
+						versions,
+					);
 				},
 				onSuccess: (object, _versions) => {
 					// npmmirror lacks `links` field
 					object.package.links ||= {
 						npm: `${registry.config.endpoint?.replace("registry.", "www.") ?? ""}/package/${object.package.name}`,
 					};
-					this.fullCache[object.package.name] = this.tempCache[
-						object.package.name
-					] = object;
+					this.fullCache[object.package.name] =
+						this.tempCache[object.package.name] = object;
 				},
 				after: () => this.flushData(),
 			});
@@ -170,13 +186,17 @@ class MarketProvider extends BaseMarketProvider {
 
 	override async get() {
 		await this.prepare();
-		if (this._error) return { data: {}, failed: 0, total: 0, progress: 0 };
+		if (this._error)
+			return { data: {}, failed: 0, total: 0, progress: 0 };
 		const gravatar = process.env["GRAVATAR_MIRROR"];
 		return this.scanner.version
 			? {
 					registry: this.ctx.installer.endpoint,
 					data: Object.fromEntries(
-						this.scanner.objects.map((item) => [item.package.name, item]),
+						this.scanner.objects.map((item) => [
+							item.package.name,
+							item,
+						]),
 					),
 					failed: 0,
 					total: this.scanner.total,
@@ -195,13 +215,14 @@ class MarketProvider extends BaseMarketProvider {
 
 	// erasableSyntaxOnly 禁止含运行时值的 namespace，
 	// 原 namespace 内的 Config 常量移到此处的静态字段，对外形状不变
-	static Config: Schema<MarketProvider.Config> = Schema.object({
-		endpoint: Schema.string().role("link"),
-		timeout: Schema.number()
-			.role("time")
-			.default(Time.second * 30),
-		proxyAgent: Schema.string().role("link"),
-	});
+	static Config: Schema<MarketProvider.Config> =
+		Schema.object({
+			endpoint: Schema.string().role("link"),
+			timeout: Schema.number()
+				.role("time")
+				.default(Time.second * 30),
+			proxyAgent: Schema.string().role("link"),
+		});
 }
 
 declare namespace MarketProvider {

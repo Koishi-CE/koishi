@@ -36,7 +36,10 @@ import {
 import type { WebSocketLayer } from "@koishi-ce/plugin-server";
 import type {} from "@koishijs/plugin-server-proxy";
 import open from "open";
-import type { FileSystemServeOptions, ViteDevServer } from "vite";
+import type {
+	FileSystemServeOptions,
+	ViteDevServer,
+} from "vite";
 import zhCN from "../../locales/zh-CN.yml";
 
 // 上游此处以 `declare module "koishi"` 给 EnvData 增加 clientCount 字段；
@@ -91,7 +94,9 @@ export function rewriteSharedImports(source: string) {
 		right = "",
 	) => {
 		const target = SHARED_IMPORT_MAP[spec];
-		return target === undefined ? stmt : left + quote + target + quote + right;
+		return target === undefined
+			? stmt
+			: left + quote + target + quote + right;
 	};
 	return source
 		.replace(
@@ -115,8 +120,13 @@ export function rewriteSharedImports(source: string) {
 				`(${boundary}\\bimport\\(\\s*)(["'])([^"']+)\\2(\\s*\\))`,
 				"g",
 			),
-			(stmt, left: string, quote: string, spec: string, right: string) =>
-				rewrite(stmt, left, quote, spec, right),
+			(
+				stmt,
+				left: string,
+				quote: string,
+				spec: string,
+				right: string,
+			) => rewrite(stmt, left, quote, spec, right),
 		);
 }
 
@@ -131,7 +141,10 @@ interface HeartbeatConfig {
  * 集成与打开浏览器等均在构造器 / start() 中完成，详见文件头说明。
  */
 class NodeConsole extends Console {
-	static override inject = { required: ["server"], optional: ["console"] };
+	static override inject = {
+		required: ["server"],
+		optional: ["console"],
+	};
 	// static inject = ['server']
 
 	// 规避与 @koishi-ce/plugin-config 的碰撞 edge case 的临时持有字段
@@ -153,7 +166,10 @@ class NodeConsole extends Console {
 			(socket, request) => {
 				// @types/ws 未为 `dispatchEvent` 提供类型声明，
 				// ws 的 WebSocket 与 Universal.WebSocket 结构不一致，故经 unknown 双重断言
-				this.accept(socket as unknown as Universal.WebSocket, request);
+				this.accept(
+					socket as unknown as Universal.WebSocket,
+					request,
+				);
 			},
 		);
 
@@ -164,10 +180,14 @@ class NodeConsole extends Console {
 			loader.envData.clientCount = this.layer.clients.size;
 		});
 
-		const base = import.meta.url || pathToFileURL(__filename).href;
+		const base =
+			import.meta.url || pathToFileURL(__filename).href;
 		const require = createRequire(base);
 		this.root = config.devMode
-			? resolve(require.resolve("@koishi-ce/client/package.json"), "../app")
+			? resolve(
+					require.resolve("@koishi-ce/client/package.json"),
+					"../app",
+				)
 			: fileURLToPath(new URL("../../dist", base));
 	}
 
@@ -199,7 +219,8 @@ class NodeConsole extends Console {
 		} = this.config;
 		global.devMode = devMode;
 		global.uiPath = uiPath;
-		if (heartbeat !== undefined) global.heartbeat = heartbeat;
+		if (heartbeat !== undefined)
+			global.heartbeat = heartbeat;
 		global.endpoint = selfUrl + apiPath;
 		const proxy = this.ctx.get("server.proxy");
 		if (proxy) global.proxyBase = `${proxy.config.path}/`;
@@ -216,7 +237,8 @@ class NodeConsole extends Console {
 
 		this.ctx.on("server/ready", () => {
 			let { host, port } = this.ctx.server;
-			if (["0.0.0.0", "::"].includes(host)) host = "127.0.0.1";
+			if (["0.0.0.0", "::"].includes(host))
+				host = "127.0.0.1";
 			const target = `http://${host}:${port}${this.config.uiPath}`;
 			if (
 				this.config.open &&
@@ -226,13 +248,17 @@ class NodeConsole extends Console {
 				// 打开浏览器失败无需处理，显式忽略返回的 Promise
 				void open(target);
 			}
-			this.ctx.logger.info("webui is available at %c", target);
+			this.ctx.logger.info(
+				"webui is available at %c",
+				target,
+			);
 		});
 	}
 
 	/** 取 entry 在当前模式下实际使用的文件列表：按 devMode 与 dev 路径是否存在回退。 */
 	private getFiles(files: Entry.Files) {
-		if (typeof files === "string" || Array.isArray(files)) return files;
+		if (typeof files === "string" || Array.isArray(files))
+			return files;
 		if (!this.config.devMode) return files.prod;
 		if (!existsSync(files.dev)) return files.prod;
 		return files.dev;
@@ -255,8 +281,8 @@ class NodeConsole extends Console {
 			} else {
 				filenames.push(`${filename}/index.js`);
 				// 早期发布的插件包样式产物名为 index.css，双名兼容探测
-				const css = ["style.css", "index.css"].find((name) =>
-					existsSync(resolve(local, name)),
+				const css = ["style.css", "index.css"].find(
+					(name) => existsSync(resolve(local, name)),
 				);
 				if (css !== undefined) {
 					filenames.push(`${filename}/${css}`);
@@ -276,100 +302,128 @@ class NodeConsole extends Console {
 	private serveAssets() {
 		const { uiPath = "" } = this.config;
 
-		this.ctx.server.get(`${uiPath}(.*)`, async (ctx, next) => {
-			await next();
-			if (ctx.body || ctx.response.body) return;
+		this.ctx.server.get(
+			`${uiPath}(.*)`,
+			async (ctx, next) => {
+				await next();
+				if (ctx.body || ctx.response.body) return;
 
-			// 访问 uiPath 本身时补上末尾斜杠并重定向（保证相对路径资源正确解析）
-			if (ctx.path === uiPath && !uiPath.endsWith("/")) {
-				return ctx.redirect(`${ctx.path}/`);
-			}
-
-			const name = ctx.path.slice(uiPath.length).replace(/^\/+/, "");
-			// 发送产物文件：JS 统一过裸导入改写（devMode 下 npm 安装的插件同样
-			// 会回退到产物 URL，不能按 devMode 短路直出），其余类型直出；
-			// 文件缺失时如实 404，避免流错误或回退 HTML 干扰排查
-			const sendAsset = async (filename: string) => {
-				const type = extname(filename);
-				if (type === ".js" || type === ".mjs") {
-					const source = await fs.readFile(filename, "utf8").catch(() => null);
-					if (source === null) return (ctx.status = 404);
-					ctx.type = type;
-					return (ctx.body = await this.transformImport(source));
+				// 访问 uiPath 本身时补上末尾斜杠并重定向（保证相对路径资源正确解析）
+				if (ctx.path === uiPath && !uiPath.endsWith("/")) {
+					return ctx.redirect(`${ctx.path}/`);
 				}
-				const stats = await fs.stat(filename).catch<Stats>(noop);
-				if (!stats?.isFile()) return (ctx.status = 404);
-				ctx.type = type;
-				return (ctx.body = createReadStream(filename));
-			};
 
-			if (name.startsWith("@plugin-")) {
-				const [key] = name.slice(8).split("/", 1);
-				if (key !== undefined && this.entries[key]) {
-					const files = makeArray(this.getFiles(this.entries[key].files));
-					const file = files[0];
-					if (file === undefined) return (ctx.status = 404);
-					// 防路径穿越：产物只允许位于该 entry 自身声明的文件（或目录）之内。
-					// 上游以 console root / node_modules 为白名单基准，前提是插件装在
-					// node_modules 下；本仓库插件为 workspace 目录布局（plugins/**），
-					// 须以各 entry 的产物路径为基准，否则一律 403。
-					const base = resolve(file);
-					const filename = resolve(file + name.slice(8 + key.length));
-					if (filename !== base && !filename.startsWith(base + sep)) {
-						return (ctx.status = 403);
+				const name = ctx.path
+					.slice(uiPath.length)
+					.replace(/^\/+/, "");
+				// 发送产物文件：JS 统一过裸导入改写（devMode 下 npm 安装的插件同样
+				// 会回退到产物 URL，不能按 devMode 短路直出），其余类型直出；
+				// 文件缺失时如实 404，避免流错误或回退 HTML 干扰排查
+				const sendAsset = async (filename: string) => {
+					const type = extname(filename);
+					if (type === ".js" || type === ".mjs") {
+						const source = await fs
+							.readFile(filename, "utf8")
+							.catch(() => null);
+						if (source === null) return (ctx.status = 404);
+						ctx.type = type;
+						return (ctx.body =
+							await this.transformImport(source));
 					}
-					// devMode 下 entry 的源码形态由 Vite 经 /vite/@fs 编译服务，
-					// @plugin 通道只服务构建产物；误达的源码请求直接 404
-					if (this.config.devMode && /\.(ts|tsx|vue)$/.test(filename)) {
+					const stats = await fs
+						.stat(filename)
+						.catch<Stats>(noop);
+					if (!stats?.isFile()) return (ctx.status = 404);
+					ctx.type = type;
+					return (ctx.body = createReadStream(filename));
+				};
+
+				if (name.startsWith("@plugin-")) {
+					const [key] = name.slice(8).split("/", 1);
+					if (key !== undefined && this.entries[key]) {
+						const files = makeArray(
+							this.getFiles(this.entries[key].files),
+						);
+						const file = files[0];
+						if (file === undefined)
+							return (ctx.status = 404);
+						// 防路径穿越：产物只允许位于该 entry 自身声明的文件（或目录）之内。
+						// 上游以 console root / node_modules 为白名单基准，前提是插件装在
+						// node_modules 下；本仓库插件为 workspace 目录布局（plugins/**），
+						// 须以各 entry 的产物路径为基准，否则一律 403。
+						const base = resolve(file);
+						const filename = resolve(
+							file + name.slice(8 + key.length),
+						);
+						if (
+							filename !== base &&
+							!filename.startsWith(base + sep)
+						) {
+							return (ctx.status = 403);
+						}
+						// devMode 下 entry 的源码形态由 Vite 经 /vite/@fs 编译服务，
+						// @plugin 通道只服务构建产物；误达的源码请求直接 404
+						if (
+							this.config.devMode &&
+							/\.(ts|tsx|vue)$/.test(filename)
+						) {
+							return (ctx.status = 404);
+						}
+						return sendAsset(filename);
+					} else {
 						return (ctx.status = 404);
 					}
-					return sendAsset(filename);
-				} else {
-					return (ctx.status = 404);
 				}
-			}
 
-			const filename = resolve(this.root, name);
-			if (
-				filename !== this.root &&
-				!filename.startsWith(this.root + sep) &&
-				!filename.includes("node_modules")
-			) {
-				return (ctx.status = 403);
-			}
+				const filename = resolve(this.root, name);
+				if (
+					filename !== this.root &&
+					!filename.startsWith(this.root + sep) &&
+					!filename.includes("node_modules")
+				) {
+					return (ctx.status = 403);
+				}
 
-			const stats = await fs.stat(filename).catch<Stats>(noop);
-			if (stats?.isFile()) return sendAsset(filename);
+				const stats = await fs
+					.stat(filename)
+					.catch<Stats>(noop);
+				if (stats?.isFile()) return sendAsset(filename);
 
-			// 控制台主体未命中时，再到各插件产物目录按文件名兜底：插件产物里的
-			// worker / 分包可能以根绝对路径引用（如 monaco 的 /editor.worker-*.js），
-			// 这类请求不带 @plugin- 前缀，会落到主体分支；产物文件名通常带内容
-			// 哈希，按 basename 在各 entry 目录内探测不会产生跨插件混淆
-			const base = name.split("/").pop() ?? "";
-			if (base) {
-				for (const entry of Object.values(this.entries)) {
-					for (const dir of makeArray(this.getFiles(entry.files))) {
-						if (extname(dir)) continue; // 数组形态声明的是具体文件而非目录
-						const root = resolve(String(dir));
-						const candidate = resolve(root, base);
-						if (candidate.startsWith(root + sep) && existsSync(candidate)) {
-							return sendAsset(candidate);
+				// 控制台主体未命中时，再到各插件产物目录按文件名兜底：插件产物里的
+				// worker / 分包可能以根绝对路径引用（如 monaco 的 /editor.worker-*.js），
+				// 这类请求不带 @plugin- 前缀，会落到主体分支；产物文件名通常带内容
+				// 哈希，按 basename 在各 entry 目录内探测不会产生跨插件混淆
+				const base = name.split("/").pop() ?? "";
+				if (base) {
+					for (const entry of Object.values(this.entries)) {
+						for (const dir of makeArray(
+							this.getFiles(entry.files),
+						)) {
+							if (extname(dir)) continue; // 数组形态声明的是具体文件而非目录
+							const root = resolve(String(dir));
+							const candidate = resolve(root, base);
+							if (
+								candidate.startsWith(root + sep) &&
+								existsSync(candidate)
+							) {
+								return sendAsset(candidate);
+							}
 						}
 					}
 				}
-			}
 
-			// 带扩展名的资源请求未命中时如实 404：回退 index.html 会让浏览器把
-			// HTML 当 JS / Worker 解析，报出更费解的语法错误
-			if (extname(name)) return (ctx.status = 404);
+				// 带扩展名的资源请求未命中时如实 404：回退 index.html 会让浏览器把
+				// HTML 当 JS / Worker 解析，报出更费解的语法错误
+				if (extname(name)) return (ctx.status = 404);
 
-			const template = await fs.readFile(
-				resolve(this.root, "index.html"),
-				"utf8",
-			);
-			ctx.type = "html";
-			ctx.body = await this.transformHtml(template);
-		});
+				const template = await fs.readFile(
+					resolve(this.root, "index.html"),
+					"utf8",
+				);
+				ctx.type = "html";
+				ctx.body = await this.transformHtml(template);
+			},
+		);
 	}
 
 	/**
@@ -389,7 +443,10 @@ class NodeConsole extends Console {
 	private async transformHtml(template: string) {
 		const { uiPath = "", head = [] } = this.config;
 		if (this.vite) {
-			template = await this.vite.transformIndexHtml(uiPath, template);
+			template = await this.vite.transformIndexHtml(
+				uiPath,
+				template,
+			);
 		} else {
 			template = template.replace(
 				/(href|src)="(?=\/)/g,
@@ -399,11 +456,17 @@ class NodeConsole extends Console {
 		let headInjection = `<script>KOISHI_CONFIG = ${JSON.stringify(this.createGlobal())}</script>`;
 		for (const { tag, attrs = {}, content } of head) {
 			const attrString = Object.entries(attrs)
-				.map(([key, value]) => ` ${key}="${h.escape(value ?? "", true)}"`)
+				.map(
+					([key, value]) =>
+						` ${key}="${h.escape(value ?? "", true)}"`,
+				)
 				.join("");
 			headInjection += `<${tag}${attrString}>${content ?? ""}</${tag}>`;
 		}
-		return template.replace("<title>", `${headInjection}<title>`);
+		return template.replace(
+			"<title>",
+			`${headInjection}<title>`,
+		);
 	}
 
 	/**
@@ -414,7 +477,9 @@ class NodeConsole extends Console {
 	private async createVite() {
 		const { cacheDir = "cache/vite", dev } = this.config;
 		// 惰性动态加载：避免生产环境（非 devMode）加载 vite 依赖
-		const { createServer } = await import("@koishi-ce/client/lib");
+		const { createServer } = await import(
+			"@koishi-ce/client/lib"
+		);
 
 		this.vite = await createServer(this.ctx.baseDir, {
 			cacheDir: resolve(this.ctx.baseDir, cacheDir),
@@ -491,26 +556,33 @@ class NodeConsole extends Console {
 		]),
 	]);
 
-	static Config: Schema<NodeConsole.Config> = Schema.intersect([
-		Schema.object({
-			uiPath: Schema.string().default(""),
-			apiPath: Schema.string().default("/status"),
-			selfUrl: Schema.string().role("link").default(""),
-			open: Schema.boolean(),
-			head: Schema.array(NodeConsole.Head),
-			heartbeat: Schema.object({
-				interval: Schema.number().default(Time.second * 30),
-				timeout: Schema.number().default(Time.minute),
+	static Config: Schema<NodeConsole.Config> =
+		Schema.intersect([
+			Schema.object({
+				uiPath: Schema.string().default(""),
+				apiPath: Schema.string().default("/status"),
+				selfUrl: Schema.string().role("link").default(""),
+				open: Schema.boolean(),
+				head: Schema.array(NodeConsole.Head),
+				heartbeat: Schema.object({
+					interval: Schema.number().default(
+						Time.second * 30,
+					),
+					timeout: Schema.number().default(Time.minute),
+				}),
+				devMode: Schema.boolean()
+					.default(
+						process.env["NODE_ENV"] === "development",
+					)
+					.hidden(),
+				cacheDir: Schema.string()
+					.default("cache/vite")
+					.hidden(),
+				dev: NodeConsole.Dev,
 			}),
-			devMode: Schema.boolean()
-				.default(process.env["NODE_ENV"] === "development")
-				.hidden(),
-			cacheDir: Schema.string().default("cache/vite").hidden(),
-			dev: NodeConsole.Dev,
-		}),
-	]).i18n({
-		"zh-CN": zhCN,
-	});
+		]).i18n({
+			"zh-CN": zhCN,
+		});
 }
 
 namespace NodeConsole {

@@ -6,5 +6,7 @@
 
 /** 键列表转反引号包裹的列清单，空值兜底为 `*`（DDL / INSERT 列清单共用）。 */
 export function joinKeys(keys?: string[]) {
-	return keys?.length ? keys.map((key) => `\`${key}\``).join(", ") : "*";
+	return keys?.length
+		? keys.map((key) => `\`${key}\``).join(", ")
+		: "*";
 }

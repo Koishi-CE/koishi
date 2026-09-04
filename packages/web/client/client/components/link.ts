@@ -21,7 +21,9 @@ const KActivityLink = defineComponent({
 	setup(props, { slots }) {
 		const ctx = useContext();
 		return () => {
-			const activity = props.id ? ctx.$router.pages[props.id] : undefined;
+			const activity = props.id
+				? ctx.$router.pages[props.id]
+				: undefined;
 			return h(
 				RouterLink,
 				{
@@ -30,7 +32,8 @@ const KActivityLink = defineComponent({
 						activity?.path.replace(/:.+/, "")) as string,
 				},
 				{
-					default: () => slots["default"]?.() ?? activity?.name,
+					default: () =>
+						slots["default"]?.() ?? activity?.name,
 				},
 			);
 		};

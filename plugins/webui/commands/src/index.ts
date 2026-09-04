@@ -36,7 +36,10 @@ declare module "@koishi-ce/console" {
 			config: Pick<CommandState, "config" | "options">,
 		): void;
 		"command/teleport"(name: string, parent: string): void;
-		"command/aliases"(name: string, aliases: Dict<Command.Alias>): void;
+		"command/aliases"(
+			name: string,
+			aliases: Dict<Command.Alias>,
+		): void;
 		"command/parse"(name: string, source: string): Argv;
 	}
 }
@@ -60,15 +63,21 @@ const Override: Schema<Override> = Schema.object({
 				Schema.object({
 					// 内层 Schema.from(null) 运行时等价于 Schema.any()，显式写出以获得正确类型；
 					// .default(null) 的空值占位超出 schemastery 类型定义，用精确断言放宽
-					args: Schema.array(Schema.any()).default(null as never),
-					options: Schema.dict(Schema.any()).default(null as never),
+					args: Schema.array(Schema.any()).default(
+						null as never,
+					),
+					options: Schema.dict(Schema.any()).default(
+						null as never,
+					),
 					filter: Schema.any(),
 				}),
 				Schema.transform(false, () => ({ filter: false })),
 			]).default({} as never),
 		),
 		Schema.transform(Schema.array(String), (aliases) => {
-			return Object.fromEntries(aliases.map((name) => [name, {}]));
+			return Object.fromEntries(
+				aliases.map((name) => [name, {}]),
+			);
 		}),
 	]),
 	options: Schema.dict(Schema.any()).default(null as never),
@@ -99,15 +108,16 @@ export interface Snapshot {
 interface Config extends Override {}
 
 /** 插件配置 Schema：值为覆盖字典，也允许直接写字符串简写（仅声明归属）。 */
-const Config: Schema<string | Config, Config> = Schema.union([
-	Override,
-	Schema.transform(String, (name) => ({
-		name,
-		aliases: {},
-		config: {},
-		options: {},
-	})),
-]);
+const Config: Schema<string | Config, Config> =
+	Schema.union([
+		Override,
+		Schema.transform(String, (name) => ({
+			name,
+			aliases: {},
+			config: {},
+			options: {},
+		})),
+	]);
 
 /** 下发给前端的一份指令数据：快照两态 + 树结构（children / paths）。 */
 export interface CommandData {
@@ -133,8 +143,10 @@ export class CommandManager {
 	static filter = false;
 	// cordis 运行时等价读取 static Config 与 static schema（Config 优先），
 	// 此处对齐 koishi 插件惯例改挂 Config，使 ctx.plugin 的 config 形参获得类型推断
-	static Config: Schema<Dict<string | Config>, Dict<Config>> =
-		Schema.dict(Config).hidden();
+	static Config: Schema<
+		Dict<string | Config>,
+		Dict<Config>
+	> = Schema.dict(Config).hidden();
 
 	private _tasks: Dict<() => void> = Object.create(null);
 	private _cache: Dict<CommandData> | null = null;
@@ -174,7 +186,9 @@ export class CommandManager {
 		// 指令 API 是链式的，此刻指令可能尚未完成初始化，留到下一个事件循环再处理更稳妥
 		ctx.on("command-added", async (cmd) => {
 			this.init(cmd);
-			for (const snapshot of Object.values(this.snapshots)) {
+			for (const snapshot of Object.values(
+				this.snapshots,
+			)) {
 				const { command, pending } = snapshot;
 				if (!pending) continue;
 				const parent = this.ctx.$commander.get(pending);
@@ -205,9 +219,11 @@ export class CommandManager {
 			"dispose",
 			() => {
 				this._tasks = Object.create(null);
-				for (const { command, parent, initial } of Object.values(
-					this.snapshots,
-				)) {
+				for (const {
+					command,
+					parent,
+					initial,
+				} of Object.values(this.snapshots)) {
 					command.config = initial.config;
 					// 初始别名不可能包含 false 值（禁用是覆盖层才有的语义）
 					command._aliases = initial.aliases;
@@ -230,10 +246,13 @@ export class CommandManager {
 	init(command: Command) {
 		const config = this.config[command.name];
 		if (!config) return;
-		this._tasks[command.name] ||= this.ctx.setTimeout(() => {
-			delete this._tasks[command.name];
-			this.accept(command, config, true);
-		}, 0);
+		this._tasks[command.name] ||= this.ctx.setTimeout(
+			() => {
+				delete this._tasks[command.name];
+				this.accept(command, config, true);
+			},
+			0,
+		);
 	}
 
 	/**
@@ -246,13 +265,19 @@ export class CommandManager {
 	ensure(name: string, create?: boolean, patch?: boolean) {
 		// 调用方均保证该名称的指令存在（缺失时行为与原先一致，运行时抛错）
 		const command = this.ctx.$commander.get(name);
-		if (!command) throw new Error(`command not found: ${name}`);
+		if (!command)
+			throw new Error(`command not found: ${name}`);
 		const snapshot = this.snapshots[command.name];
 		if (patch && snapshot) {
 			// 别名与选项可能已被其它插件修改，先把新出现的部分并入初始状态
-			snapshot.initial.options = mapValues(command._options, (option, key) => {
-				return snapshot.initial.options[key] || clone(option);
-			});
+			snapshot.initial.options = mapValues(
+				command._options,
+				(option, key) => {
+					return (
+						snapshot.initial.options[key] || clone(option)
+					);
+				},
+			);
 			for (const key of Object.keys(command._aliases)) {
 				const alias = command._aliases[key];
 				if (!alias) continue;
@@ -281,7 +306,10 @@ export class CommandManager {
 	}
 
 	/** 内部挂载实现：把指令从当前父节点摘下，挂到指定父节点（null 表示成为顶层指令）。 */
-	_teleport(command: Command, parent: Command | null = null) {
+	_teleport(
+		command: Command,
+		parent: Command | null = null,
+	) {
 		if (command.parent === parent) return;
 		if (command.parent) {
 			remove(command.parent.children, command);
@@ -299,7 +327,10 @@ export class CommandManager {
 	teleport(command: Command, name: string, write = false) {
 		// 调用前均已通过 ensure 建立快照
 		const snapshot = this.snapshots[command.name];
-		if (!snapshot) throw new Error(`snapshot not found: ${command.name}`);
+		if (!snapshot)
+			throw new Error(
+				`snapshot not found: ${command.name}`,
+			);
 		snapshot.pending = null;
 		const parent = this.ctx.$commander.get(name);
 		if (name && !parent) {
@@ -322,10 +353,17 @@ export class CommandManager {
 	 * @param aliases 完整的新别名表（值或引用同一指令的显示名）
 	 * @param write 是否写入插件配置
 	 */
-	alias(command: Command, aliases: Dict<Command.Alias>, write = false) {
+	alias(
+		command: Command,
+		aliases: Dict<Command.Alias>,
+		write = false,
+	) {
 		// 调用前均已通过 ensure 建立快照
 		const snapshot = this.snapshots[command.name];
-		if (!snapshot) throw new Error(`snapshot not found: ${command.name}`);
+		if (!snapshot)
+			throw new Error(
+				`snapshot not found: ${command.name}`,
+			);
 		const { initial, override } = snapshot;
 		command._aliases = override.aliases = aliases;
 
@@ -333,7 +371,11 @@ export class CommandManager {
 			const config = (this.config[command.name] ||= {});
 			config.name = `${command.parent?.name || ""}/${command.displayName}`;
 			config.aliases = filterKeys(aliases, (key, value) => {
-				return !deepEqual(initial.aliases[key], value, true);
+				return !deepEqual(
+					initial.aliases[key],
+					value,
+					true,
+				);
 			});
 			this.write(command);
 		}
@@ -352,11 +394,17 @@ export class CommandManager {
 	) {
 		// 调用前均已通过 ensure 建立快照
 		const snapshot = this.snapshots[command.name];
-		if (!snapshot) throw new Error(`snapshot not found: ${command.name}`);
+		if (!snapshot)
+			throw new Error(
+				`snapshot not found: ${command.name}`,
+			);
 		const { initial, override } = snapshot;
 		override.config = data.config || {};
 		override.options = data.options || {};
-		command.config = Object.assign({ ...initial.config }, override.config);
+		command.config = Object.assign(
+			{ ...initial.config },
+			override.config,
+		);
 		for (const key in override.options) {
 			const option = initial.options[key];
 			if (!option) continue;
@@ -393,7 +441,8 @@ export class CommandManager {
 		delete this.snapshots[name];
 		delete this.config[name];
 		for (const child of commands) {
-			const parent = this.snapshots[child.name]?.parent ?? null;
+			const parent =
+				this.snapshots[child.name]?.parent ?? null;
 			this._teleport(child, parent);
 			const config = (this.config[child.name] ??= {});
 			config.name = `${parent?.name || ""}/${child.displayName}`;
@@ -408,7 +457,11 @@ export class CommandManager {
 	 * @param override 覆盖项（可含 name / aliases / options / config / create）
 	 * @param patch 是否以指令现状回填快照（见 {@link ensure} 的 patch 参数）
 	 */
-	accept(target: Command, override: Override, patch?: boolean) {
+	accept(
+		target: Command,
+		override: Override,
+		patch?: boolean,
+	) {
 		const { create, options = {}, config = {} } = override;
 
 		// 建立快照，便于插件卸载时恢复
@@ -447,7 +500,10 @@ export class CommandManager {
 			const override = (this.config[command.name] ??= {});
 
 			// config：空覆盖不落盘
-			if (override.config && !Object.keys(override.config).length) {
+			if (
+				override.config &&
+				!Object.keys(override.config).length
+			) {
 				delete override.config;
 			}
 
@@ -460,18 +516,27 @@ export class CommandManager {
 					delete override.options[key];
 				}
 			}
-			if (override.options && !Object.keys(override.options).length) {
+			if (
+				override.options &&
+				!Object.keys(override.options).length
+			) {
 				delete override.options;
 			}
 
 			// aliases：空字典不落盘
-			if (override.aliases && !Object.keys(override.aliases).length) {
+			if (
+				override.aliases &&
+				!Object.keys(override.aliases).length
+			) {
 				delete override.aliases;
 			}
 			// name：与实际归属一致时不再保留（未改动父级的证据）
 			if (override.name) {
 				const initial = `${snapshot.parent?.name || ""}/${command.name}`;
-				if (override.name === initial || override.name === command.name) {
+				if (
+					override.name === initial ||
+					override.name === command.name
+				) {
 					delete override.name;
 				}
 			}
@@ -501,35 +566,52 @@ export class CommandManager {
 							`${process.env["KOISHI_BASE"]}/dist/style.css`,
 						]
 					: process.env["KOISHI_ENV"] === "browser"
-						? [import.meta.url.replace(/\/src\/[^/]+$/, "/client/index.ts")]
+						? [
+								import.meta.url.replace(
+									/\/src\/[^/]+$/,
+									"/client/index.ts",
+								),
+							]
 						: {
-								dev: resolve(__dirname, "../client/index.ts"),
+								dev: resolve(
+									__dirname,
+									"../client/index.ts",
+								),
 								prod: resolve(__dirname, "../dist"),
 							},
 				() => {
 					return (this._cache ||= Object.fromEntries(
-						ctx.$commander._commandList.map<[string, CommandData]>(
-							(command) => [
-								command.name,
-								{
-									name: command.name,
-									children: command.children.map((child) => child.name),
-									create: this.snapshots[command.name]?.create ?? false,
-									initial: this.snapshots[command.name]?.initial || {
-										aliases: command._aliases,
-										config: command.config,
-										options: command._options,
-									},
-									override: this.snapshots[command.name]?.override || {
-										aliases: command._aliases,
-										// 无覆盖配置时以 null 占位（客户端按可空读取）
-										config: null as never,
-										options: {},
-									},
-									paths: this.ctx.get("loader")?.paths(command.ctx.scope) || [],
+						ctx.$commander._commandList.map<
+							[string, CommandData]
+						>((command) => [
+							command.name,
+							{
+								name: command.name,
+								children: command.children.map(
+									(child) => child.name,
+								),
+								create:
+									this.snapshots[command.name]?.create ??
+									false,
+								initial: this.snapshots[command.name]
+									?.initial || {
+									aliases: command._aliases,
+									config: command.config,
+									options: command._options,
 								},
-							],
-						),
+								override: this.snapshots[command.name]
+									?.override || {
+									aliases: command._aliases,
+									// 无覆盖配置时以 null 占位（客户端按可空读取）
+									config: null as never,
+									options: {},
+								},
+								paths:
+									this.ctx
+										.get("loader")
+										?.paths(command.ctx.scope) || [],
+							},
+						]),
 					));
 				},
 			);
@@ -582,12 +664,16 @@ export class CommandManager {
 				{ authority: 4 },
 			);
 
-			ctx.console.addListener("command/parse", (name, source) => {
-				// 客户端仅对已存在的指令发起解析请求
-				const command = this.ctx.$commander.get(name);
-				if (!command) throw new Error(`command not found: ${name}`);
-				return command.parse(source);
-			});
+			ctx.console.addListener(
+				"command/parse",
+				(name, source) => {
+					// 客户端仅对已存在的指令发起解析请求
+					const command = this.ctx.$commander.get(name);
+					if (!command)
+						throw new Error(`command not found: ${name}`);
+					return command.parse(source);
+				},
+			);
 		});
 	}
 }

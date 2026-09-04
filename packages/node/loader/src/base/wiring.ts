@@ -12,11 +12,19 @@
 
 import type { Context, Universal } from "@koishi-ce/core";
 import type { Loader } from "./index.ts";
-import { kRecord, kUpdate, type LoaderScope } from "./types.ts";
+import {
+	kRecord,
+	kUpdate,
+	type LoaderScope,
+} from "./types.ts";
 import { rename, separate } from "./utils.ts";
 
 /** 记录一条插件生命周期日志（apply / unload / reload） */
-export function logPluginUpdate(app: Context, type: string, key: string) {
+export function logPluginUpdate(
+	app: Context,
+	type: string,
+	key: string,
+) {
 	// 停机销毁期 logger 服务可能先于插件事件被释放（internal/fork 在
 	// teardown 中仍会触发），日志缺失不应升级为事件处理错误
 	app.logger?.("loader")?.info("%s plugin %c", type, key);
@@ -26,13 +34,20 @@ export function logPluginUpdate(app: Context, type: string, key: string) {
  * 订阅配置变更与插件生命周期事件，维护配置文件与应用状态。
  * 事件注册顺序与原 createApp 保持一致。
  */
-export function wireAppEvents(loader: Loader, app: Context) {
+export function wireAppEvents(
+	loader: Loader,
+	app: Context,
+) {
 	// 配置文件中的 plugins 表变化时，重新装载根组
 	app.accept(
 		["plugins"],
 		(config) => {
 			// 语义为 fire-and-forget：重载结果由 internal/* 事件链路自行回写
-			void loader.reload(app, "group:entry", config.plugins);
+			void loader.reload(
+				app,
+				"group:entry",
+				config.plugins,
+			);
 		},
 		{ passive: true },
 	);
@@ -45,7 +60,9 @@ export function wireAppEvents(loader: Loader, app: Context) {
 	// 插件卸载时把配置键改写为 `~` 前缀（保留配置，便于恢复）
 	app.on("internal/fork", (fork) => {
 		// fork.uid 存在：这是新建的 fork（而非卸载）
-		const record = (fork.parent.scope as LoaderScope)[kRecord];
+		const record = (fork.parent.scope as LoaderScope)[
+			kRecord
+		];
 		// record 不存在：该 fork 不由 loader 跟踪
 		if (fork.uid || !record) return;
 		const key = Object.keys(record).find((key) => {
@@ -98,12 +115,19 @@ export function wireAppEvents(loader: Loader, app: Context) {
  * 处理 CLI 透传的启动消息：目标机器人上线后自动发送一条消息。
  * 消息取出后立即清空，避免整进程重启后重复发送。
  */
-export function handleStartMessage(loader: Loader, app: Context) {
+export function handleStartMessage(
+	loader: Loader,
+	app: Context,
+) {
 	if (!loader.envData.message) return;
-	const { sid, channelId, guildId, content } = loader.envData.message;
+	const { sid, channelId, guildId, content } =
+		loader.envData.message;
 	loader.envData.message = null;
 	const dispose = app.on("bot-status-updated", (bot) => {
-		if (bot.sid !== sid || bot.status !== (1 satisfies Universal.Status))
+		if (
+			bot.sid !== sid ||
+			bot.status !== (1 satisfies Universal.Status)
+		)
 			return;
 		dispose();
 		if (channelId === undefined) return;

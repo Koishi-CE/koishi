@@ -11,7 +11,12 @@
  * - autoAuthorize=0 时新用户的权限拦截（指令被拒）与
  *   游离用户数据（middleware 中仍可读写 user 字段）。
  */
-import { afterAll, beforeAll, describe, it } from "bun:test";
+import {
+	afterAll,
+	beforeAll,
+	describe,
+	it,
+} from "bun:test";
 import { App, sleep } from "@koishi-ce/koishi";
 import mock from "@koishi-ce/plugin-mock";
 import * as memoryModule from "@koishijs/plugin-database-memory";
@@ -26,10 +31,14 @@ describe("Session API", () => {
 		app.plugin(mock);
 		const client = app.mock.client("456");
 
-		app.command("echo [content:text]").action((_, text) => text);
+		app
+			.command("echo [content:text]")
+			.action((_, text) => text);
 		app
 			.command("exec [command:text]")
-			.action(({ session }, text) => session!.execute(text));
+			.action(({ session }, text) =>
+				session!.execute(text),
+			);
 
 		beforeAll(() => app.start());
 		afterAll(() => app.stop());
@@ -45,13 +54,22 @@ describe("Session API", () => {
 			await client.shouldReply("echo $(echo 0)", "0");
 			await client.shouldReply("echo $(exec echo 0)", "0");
 			await client.shouldReply("echo 1$(echo 0)2", "102");
-			await client.shouldReply("echo 1 $(echo 0)  2", "1 0  2");
+			await client.shouldReply(
+				"echo 1 $(echo 0)  2",
+				"1 0  2",
+			);
 		});
 
 		it("interpolate 2", async () => {
 			// 插值嵌套：内层插值先展开再执行外层
-			await client.shouldReply("echo $(echo $(echo 0))", "0");
-			await client.shouldReply("echo 1 $(echo $(echo 0))2", "1 02");
+			await client.shouldReply(
+				"echo $(echo $(echo 0))",
+				"0",
+			);
+			await client.shouldReply(
+				"echo 1 $(echo $(echo 0))2",
+				"1 02",
+			);
 		});
 	});
 

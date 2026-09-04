@@ -44,7 +44,9 @@ const logger = new Logger("market");
  * 两者被覆盖或删除都会让 peer 解析失去归属，重新拉下 npm 官方包形成
  * 第二份框架副本。
  */
-function isGuardedRequest(request: string | undefined): boolean {
+function isGuardedRequest(
+	request: string | undefined,
+): boolean {
 	return (
 		request?.startsWith("workspace:") === true ||
 		request?.startsWith("npm:@koishi-ce") === true
@@ -52,10 +54,16 @@ function isGuardedRequest(request: string | undefined): boolean {
 }
 
 /** 从单个 .npmrc 文件提取 registry 配置项；文件不存在或读取出错一律视为未配置 */
-function readNpmrcRegistry(file: string): string | undefined {
+function readNpmrcRegistry(
+	file: string,
+): string | undefined {
 	try {
-		for (const line of readFileSync(file, "utf8").split(/\r?\n/)) {
-			const matched = /^\s*registry\s*=\s*(\S+)\s*$/.exec(line);
+		for (const line of readFileSync(file, "utf8").split(
+			/\r?\n/,
+		)) {
+			const matched = /^\s*registry\s*=\s*(\S+)\s*$/.exec(
+				line,
+			);
 			const value = matched?.[1];
 			if (value) return value;
 		}
@@ -72,14 +80,20 @@ function readNpmrcRegistry(file: string): string | undefined {
  * 源（对齐被移除的 get-registry 的默认值），保证 http 恒有 endpoint
  * 可拼接相对 URL——缺省时相对请求会在 resolveURL 抛 Invalid URL。
  */
-function getLocalRegistry(cwd: string, userHome: string = homedir()): string {
+function getLocalRegistry(
+	cwd: string,
+	userHome: string = homedir(),
+): string {
 	const candidates = [
 		process.env["npm_config_registry"],
 		readNpmrcRegistry(join(cwd, ".npmrc")),
 		readNpmrcRegistry(join(userHome, ".npmrc")),
 	];
 	for (const candidate of candidates) {
-		if (candidate?.startsWith("https://") || candidate?.startsWith("http://")) {
+		if (
+			candidate?.startsWith("https://") ||
+			candidate?.startsWith("http://")
+		) {
 			return candidate;
 		}
 	}
@@ -116,9 +130,15 @@ function loadManifest(name: string) {
 	// resolvePackageJson 以纯 fs 探测为主路径：市场安装流程在包落盘前的
 	// 探测不能触碰解析 API，否则触发 Bun 的父目录快照缓存（装完即失败）
 	const filename = resolvePackageJson(name);
-	const meta: LocalPackage = JSON.parse(readFileSync(filename, "utf8"));
+	const meta: LocalPackage = JSON.parse(
+		readFileSync(filename, "utf8"),
+	);
 	meta.dependencies ||= {};
-	defineProperty(meta, "$workspace", !filename.includes("node_modules"));
+	defineProperty(
+		meta,
+		"$workspace",
+		!filename.includes("node_modules"),
+	);
 	return meta;
 }
 
@@ -143,8 +163,12 @@ function getVersions(versions: RemotePackage[]) {
 class Installer extends Service {
 	declare http: HTTP;
 	declare endpoint: string | undefined;
-	public fullCache: Dict<Dict<Pick<RemotePackage, DependencyMetaKey>>> = {};
-	public tempCache: Dict<Dict<Pick<RemotePackage, DependencyMetaKey>>> = {};
+	public fullCache: Dict<
+		Dict<Pick<RemotePackage, DependencyMetaKey>>
+	> = {};
+	public tempCache: Dict<
+		Dict<Pick<RemotePackage, DependencyMetaKey>>
+	> = {};
 
 	private pkgTasks: Dict<
 		Promise<Dict<Pick<RemotePackage, DependencyMetaKey>>>
@@ -160,7 +184,9 @@ class Installer extends Service {
 		this.config = config;
 		this.manifest = loadManifest(this.cwd);
 		this.flushData = ctx.throttle(() => {
-			ctx.get("console")?.broadcast("market/registry", this.tempCache);
+			ctx
+				.get("console")
+				?.broadcast("market/registry", this.tempCache);
 			this.tempCache = {};
 		}, 500);
 	}
@@ -185,7 +211,10 @@ class Installer extends Service {
 			const [left, right] = name.split("/");
 			return [`${left}/koishi-plugin-${right}`];
 		} else {
-			return [`@koishijs/plugin-${name}`, `koishi-plugin-${name}`];
+			return [
+				`@koishijs/plugin-${name}`,
+				`koishi-plugin-${name}`,
+			];
 		}
 	}
 
@@ -193,7 +222,9 @@ class Installer extends Service {
 		const entries = await Promise.all(
 			names.map(async (name) => {
 				try {
-					const versions = Object.entries(await this.getPackage(name));
+					const versions = Object.entries(
+						await this.getPackage(name),
+					);
 					const [latest] = versions;
 					if (!latest) return undefined;
 					return { [name]: latest[0] };
@@ -202,19 +233,30 @@ class Installer extends Service {
 				}
 			}),
 		);
-		return entries.find((entry): entry is Dict<string> => entry !== undefined);
+		return entries.find(
+			(entry): entry is Dict<string> => entry !== undefined,
+		);
 	}
 
 	private async _getPackage(name: string) {
 		try {
-			const registry = await this.http.get<Registry>(`/${name}`);
-			const versions = getVersions(
-				Object.values(registry.versions).filter((remote) => {
-					if (name === "koishi") return satisfies(remote.version, "4");
-					return !Scanner.isPlugin(name) || Scanner.isCompatible("4", remote);
-				}),
+			const registry = await this.http.get<Registry>(
+				`/${name}`,
 			);
-			this.fullCache[name] = this.tempCache[name] = versions;
+			const versions = getVersions(
+				Object.values(registry.versions).filter(
+					(remote) => {
+						if (name === "koishi")
+							return satisfies(remote.version, "4");
+						return (
+							!Scanner.isPlugin(name) ||
+							Scanner.isCompatible("4", remote)
+						);
+					},
+				),
+			);
+			this.fullCache[name] = this.tempCache[name] =
+				versions;
 			this.flushData();
 			return versions;
 		} catch (error) {
@@ -224,9 +266,12 @@ class Installer extends Service {
 	}
 
 	setPackage(name: string, versions: RemotePackage[]) {
-		this.fullCache[name] = this.tempCache[name] = getVersions(versions);
+		this.fullCache[name] = this.tempCache[name] =
+			getVersions(versions);
 		this.flushData();
-		this.pkgTasks[name] = Promise.resolve(this.fullCache[name]);
+		this.pkgTasks[name] = Promise.resolve(
+			this.fullCache[name],
+		);
 	}
 
 	getPackage(name: string) {
@@ -234,27 +279,36 @@ class Installer extends Service {
 	}
 
 	private async _getDeps() {
-		const result = valueMap(this.manifest.dependencies, (request) => {
-			return { request: request.replace(/^[~^]/, "") } as Dependency;
-		});
-		await mapLimit(Object.keys(result), 10, async (name) => {
-			const dep = result[name];
-			if (!dep) return;
-			try {
-				// some dependencies may be left with no local installation
-				const meta = loadManifest(name);
-				dep.resolved = meta.version;
-				dep.workspace = meta.$workspace;
-				if (meta.$workspace) return;
-			} catch {}
+		const result = valueMap(
+			this.manifest.dependencies,
+			(request) => {
+				return {
+					request: request.replace(/^[~^]/, ""),
+				} as Dependency;
+			},
+		);
+		await mapLimit(
+			Object.keys(result),
+			10,
+			async (name) => {
+				const dep = result[name];
+				if (!dep) return;
+				try {
+					// some dependencies may be left with no local installation
+					const meta = loadManifest(name);
+					dep.resolved = meta.version;
+					dep.workspace = meta.$workspace;
+					if (meta.$workspace) return;
+				} catch {}
 
-			if (!valid(dep.request)) {
-				dep.invalid = true;
-			}
+				if (!valid(dep.request)) {
+					dep.invalid = true;
+				}
 
-			const versions = await this.getPackage(name);
-			if (versions) dep.latest = Object.keys(versions)[0];
-		});
+				const versions = await this.getPackage(name);
+				if (versions) dep.latest = Object.keys(versions)[0];
+			},
+		);
 		return result;
 	}
 
@@ -311,26 +365,35 @@ class Installer extends Service {
 		const filename = resolve(this.cwd, "package.json");
 		// 现读现写：this.manifest 原为构造期的启动快照，运行期间根
 		// package.json 可能已被外部更新，基于快照整体重写会抹掉变更
-		this.manifest = JSON.parse(readFileSync(filename, "utf8")) as LocalPackage;
+		this.manifest = JSON.parse(
+			readFileSync(filename, "utf8"),
+		) as LocalPackage;
 		this.manifest.dependencies ||= {};
 		for (const key in deps) {
 			if (deps[key]) {
-				if (isGuardedRequest(this.manifest.dependencies[key])) {
+				if (
+					isGuardedRequest(this.manifest.dependencies[key])
+				) {
 					continue;
 				}
 				this.manifest.dependencies[key] = deps[key];
-			} else if (!isGuardedRequest(this.manifest.dependencies[key])) {
+			} else if (
+				!isGuardedRequest(this.manifest.dependencies[key])
+			) {
 				delete this.manifest.dependencies[key];
 			}
 		}
 		this.manifest.dependencies = Object.fromEntries(
-			Object.entries(this.manifest.dependencies).sort((a, b) =>
-				a[0].localeCompare(b[0]),
+			Object.entries(this.manifest.dependencies).sort(
+				(a, b) => a[0].localeCompare(b[0]),
 			),
 		);
 		// 仓库格式权威是 biome（tab 缩进），按 tab 写出避免装插件后
 		// package.json 被重排成空格、lint 报格式漂移
-		await Bun.write(filename, `${JSON.stringify(this.manifest, null, "\t")}\n`);
+		await Bun.write(
+			filename,
+			`${JSON.stringify(this.manifest, null, "\t")}\n`,
+		);
 	}
 
 	private _install() {
@@ -353,7 +416,10 @@ class Installer extends Service {
 		});
 	}
 
-	async install(deps: Dict<string | null>, forced?: boolean) {
+	async install(
+		deps: Dict<string | null>,
+		forced?: boolean,
+	) {
 		const localDeps = this._getLocalDeps(deps);
 		await this.override(deps);
 
@@ -365,7 +431,9 @@ class Installer extends Service {
 				local?.workspace ||
 				(request &&
 					local?.resolved &&
-					satisfies(local.resolved, request, { includePrerelease: true }))
+					satisfies(local.resolved, request, {
+						includePrerelease: true,
+					}))
 			)
 				continue;
 			shouldInstall = true;
@@ -386,7 +454,8 @@ class Installer extends Service {
 			if (newDep.resolved === local.resolved) continue;
 			// 版本变化且旧版本仍驻留内存时才需要整进程重载（判定不走
 			// 解析 API，规避 Bun 负缓存，见 isResidentInCache）
-			if (isResidentInCache(name)) this.ctx.loader.fullReload();
+			if (isResidentInCache(name))
+				this.ctx.loader.fullReload();
 		}
 		this.refreshData();
 

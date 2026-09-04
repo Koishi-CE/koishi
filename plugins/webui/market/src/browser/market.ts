@@ -12,10 +12,14 @@ export default class MarketProvider extends BaseMarketProvider {
 
 	override async get() {
 		const market = await this.prepare();
-		if (!market) return { data: {}, failed: 0, total: 0, progress: 0 };
+		if (!market)
+			return { data: {}, failed: 0, total: 0, progress: 0 };
 		return {
 			data: Object.fromEntries(
-				market.objects.map((item) => [item.package.name, item]),
+				market.objects.map((item) => [
+					item.package.name,
+					item,
+				]),
 			),
 			failed: 0,
 			total: market.objects.length,

@@ -57,16 +57,26 @@ const arrow = computed(() => {
 	const dx = target.x - source.x;
 	const dy = target.y - source.y;
 	const theta = Math.atan2(dy, dx);
-	const x0 = target.x - constants.arrowOffset * Math.cos(theta);
-	const y0 = target.y - constants.arrowOffset * Math.sin(theta);
+	const x0 =
+		target.x - constants.arrowOffset * Math.cos(theta);
+	const y0 =
+		target.y - constants.arrowOffset * Math.sin(theta);
 	const x1 =
-		x0 - constants.arrowLength * Math.cos(theta - constants.arrowAngle);
+		x0 -
+		constants.arrowLength *
+			Math.cos(theta - constants.arrowAngle);
 	const y1 =
-		y0 - constants.arrowLength * Math.sin(theta - constants.arrowAngle);
+		y0 -
+		constants.arrowLength *
+			Math.sin(theta - constants.arrowAngle);
 	const x2 =
-		x0 - constants.arrowLength * Math.cos(theta + constants.arrowAngle);
+		x0 -
+		constants.arrowLength *
+			Math.cos(theta + constants.arrowAngle);
 	const y2 =
-		y0 - constants.arrowLength * Math.sin(theta + constants.arrowAngle);
+		y0 -
+		constants.arrowLength *
+			Math.sin(theta + constants.arrowAngle);
 	return { x0, y0, x1, y1, x2, y2 };
 });
 </script>

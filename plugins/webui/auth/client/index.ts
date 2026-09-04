@@ -31,7 +31,12 @@ import type {
 	UserUpdate,
 } from "@koishi-ce/plugin-auth";
 import type { DataService } from "@koishi-ce/plugin-console";
-import { defineComponent, h, resolveComponent, watch } from "vue";
+import {
+	defineComponent,
+	h,
+	resolveComponent,
+	watch,
+} from "vue";
 import BindDialog from "./bind-dialog.vue";
 import At from "./icons/at.vue";
 import Check from "./icons/check.vue";
@@ -42,7 +47,11 @@ import UserFull from "./icons/user-full.vue";
 import Login from "./login.vue";
 import Profile from "./profile.vue";
 import SyncDialog from "./sync-dialog.vue";
-import { shared, showLoginDialog, showSyncDialog } from "./utils";
+import {
+	shared,
+	showLoginDialog,
+	showSyncDialog,
+} from "./utils";
 
 import "virtual:uno.css";
 
@@ -57,7 +66,10 @@ interface AuthData extends Auth {
 
 declare module "@koishi-ce/plugin-console" {
 	interface Events {
-		"login/platform"(platform: string, pid: string): Promise<UserLogin>;
+		"login/platform"(
+			platform: string,
+			pid: string,
+		): Promise<UserLogin>;
 		"login/password"(name: string, password: string): void;
 		"login/token"(id: number, token: string): void;
 		"user/delete-token"(inc: number): void;
@@ -90,13 +102,18 @@ export default (ctx: Context) => {
 		expiredAt !== undefined &&
 		expiredAt > Date.now()
 	) {
-		send("login/token", id, token).catch((e) => message.error(e.message));
+		send("login/token", id, token).catch((e) =>
+			message.error(e.message),
+		);
 	}
 
 	// 声明各活动（页面）的可见性：要求权限高于当前登录态时隐藏
 	ctx.on("activity", (data) => {
 		const authority = data.authority ?? 0;
-		return authority > 0 && (!store.user || store.user.authority < authority);
+		return (
+			authority > 0 &&
+			(!store.user || store.user.authority < authority)
+		);
 	});
 
 	// 全局路由守卫：需要登录（声明 authority 或依赖 user 数据）的页面
@@ -106,11 +123,14 @@ export default (ctx: Context) => {
 			const { activity } = route.meta;
 			if (!activity) return;
 			if (
-				(activity.authority || (activity.fields ?? []).includes("user")) &&
+				(activity.authority ||
+					(activity.fields ?? []).includes("user")) &&
 				!store.user
 			) {
 				// 处理浏览器返回：上一页就是登录页时回到首页，避免返回键在两页间打转
-				return history.state.forward === "/login" ? "/" : "/login";
+				return history.state.forward === "/login"
+					? "/"
+					: "/login";
 			}
 
 			if (
@@ -165,12 +185,15 @@ export default (ctx: Context) => {
 			() => () =>
 				h(resolveComponent("k-form"), {
 					schema: Schema.object({
-						sync: Schema.boolean().description("在多个客户端间同步设置。"),
+						sync: Schema.boolean().description(
+							"在多个客户端间同步设置。",
+						),
 					}).description("同步设置"),
 					initial: shared.value,
 					modelValue: shared.value,
-					"onUpdate:modelValue": (value: typeof shared.value) =>
-						(shared.value = value),
+					"onUpdate:modelValue": (
+						value: typeof shared.value,
+					) => (shared.value = value),
 				}),
 		),
 	});
@@ -191,7 +214,8 @@ export default (ctx: Context) => {
 		watch(
 			config,
 			async (value) => {
-				if (!value || !store.user || !shared.value.sync) return;
+				if (!value || !store.user || !shared.value.sync)
+					return;
 				await send("user/update", { config: value });
 			},
 			{ deep: true },
@@ -227,8 +251,11 @@ export default (ctx: Context) => {
 					shared.value,
 					pick(value, ["id", "name", "token", "expiredAt"]),
 				);
-				message.success(`欢迎回来，${value.name || "Koishi 用户"}！`);
-				const from = router.currentRoute.value.redirectedFrom;
+				message.success(
+					`欢迎回来，${value.name || "Koishi 用户"}！`,
+				);
+				const from =
+					router.currentRoute.value.redirectedFrom;
 				if (from && !from.path.startsWith("/login")) {
 					router.push(from);
 				} else {

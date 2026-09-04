@@ -11,7 +11,12 @@
  * 并以 nonce 关联请求与响应。
  */
 import type { Client } from "@koishi-ce/console";
-import { Bot, type Context, Time, type Universal } from "@koishi-ce/koishi";
+import {
+	Bot,
+	type Context,
+	Time,
+	type Universal,
+} from "@koishi-ce/koishi";
 import { SandboxMessenger } from "./message.ts";
 
 export namespace SandboxBot {
@@ -21,10 +26,9 @@ export namespace SandboxBot {
 	}
 }
 
-export class SandboxBot<C extends Context = Context> extends Bot<
-	C,
-	SandboxBot.Config
-> {
+export class SandboxBot<
+	C extends Context = Context,
+> extends Bot<C, SandboxBot.Config> {
 	// 上游 Bot 基类约定的 MessageEncoder 静态属性名
 	static override MessageEncoder = SandboxMessenger;
 
@@ -34,7 +38,11 @@ export class SandboxBot<C extends Context = Context> extends Bot<
 	// erasableSyntaxOnly 禁止构造器参数属性，改为显式字段声明 + 赋值
 	public client: Client;
 
-	constructor(ctx: C, client: Client, config: SandboxBot.Config) {
+	constructor(
+		ctx: C,
+		client: Client,
+		config: SandboxBot.Config,
+	) {
 		super(ctx, config, "sandbox");
 		this.client = client;
 		this.selfId = config.selfId;
@@ -56,13 +64,16 @@ export class SandboxBot<C extends Context = Context> extends Bot<
 	async request<T = unknown>(method: string, data = {}) {
 		const nonce = Math.random().toString(36).slice(2);
 		return new Promise<T>((resolve, reject) => {
-			const dispose1 = this.ctx.on("sandbox/response", (nonce2, data) => {
-				if (nonce !== nonce2) return;
-				dispose1();
-				dispose2();
-				// 应答载荷由浏览器端提供,按调用方声明的 T 收窄
-				resolve(data as T);
-			});
+			const dispose1 = this.ctx.on(
+				"sandbox/response",
+				(nonce2, data) => {
+					if (nonce !== nonce2) return;
+					dispose1();
+					dispose2();
+					// 应答载荷由浏览器端提供,按调用方声明的 T 收窄
+					resolve(data as T);
+				},
+			);
 			const dispose2 = this.ctx.setTimeout(() => {
 				dispose1();
 				dispose2();
@@ -81,23 +92,38 @@ export class SandboxBot<C extends Context = Context> extends Bot<
 	): Promise<Universal.Channel> {
 		// Universal.Channel.Type 是 ambient const enum（verbatimModuleSyntax 下禁止取值），
 		// 用等价字面量 + satisfies 校验（1 = DIRECT）
-		return { id: `@${userId}`, type: 1 satisfies Universal.Channel.Type };
+		return {
+			id: `@${userId}`,
+			type: 1 satisfies Universal.Channel.Type,
+		};
 	}
 
 	// ---- 以下获取类 API 均为 request() 的薄封装，实际数据由浏览器端提供 ----
 
-	override async deleteMessage(channelId: string, messageId: string) {
-		return this.request<void>("deleteMessage", { channelId, messageId });
+	override async deleteMessage(
+		channelId: string,
+		messageId: string,
+	) {
+		return this.request<void>("deleteMessage", {
+			channelId,
+			messageId,
+		});
 	}
 
-	override async getMessage(channelId: string, messageId: string) {
+	override async getMessage(
+		channelId: string,
+		messageId: string,
+	) {
 		return this.request<Universal.Message>("getMessage", {
 			channelId,
 			messageId,
 		});
 	}
 
-	override async getChannel(channelId: string, guildId?: string) {
+	override async getChannel(
+		channelId: string,
+		guildId?: string,
+	) {
 		return this.request<Universal.Channel>("getChannel", {
 			channelId,
 			guildId,
@@ -105,30 +131,42 @@ export class SandboxBot<C extends Context = Context> extends Bot<
 	}
 
 	override async getChannelList(guildId: string) {
-		return this.request<Universal.List<Universal.Channel>>("getChannelList", {
-			guildId,
-		});
+		return this.request<Universal.List<Universal.Channel>>(
+			"getChannelList",
+			{
+				guildId,
+			},
+		);
 	}
 
 	override async getGuild(guildId: string) {
-		return this.request<Universal.Guild>("getGuild", { guildId });
-	}
-
-	override async getGuildList() {
-		return this.request<Universal.List<Universal.Guild>>("getGuildList");
-	}
-
-	override async getGuildMember(guildId: string, userId: string) {
-		return this.request<Universal.GuildMember>("getGuildMember", {
+		return this.request<Universal.Guild>("getGuild", {
 			guildId,
-			userId,
 		});
 	}
 
-	override async getGuildMemberList(guildId: string) {
-		return this.request<Universal.List<Universal.GuildMember>>(
-			"getGuildMemberList",
-			{ guildId },
+	override async getGuildList() {
+		return this.request<Universal.List<Universal.Guild>>(
+			"getGuildList",
 		);
+	}
+
+	override async getGuildMember(
+		guildId: string,
+		userId: string,
+	) {
+		return this.request<Universal.GuildMember>(
+			"getGuildMember",
+			{
+				guildId,
+				userId,
+			},
+		);
+	}
+
+	override async getGuildMemberList(guildId: string) {
+		return this.request<
+			Universal.List<Universal.GuildMember>
+		>("getGuildMemberList", { guildId });
 	}
 }

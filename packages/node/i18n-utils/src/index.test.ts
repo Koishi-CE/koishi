@@ -9,7 +9,9 @@ import { fallback, LocaleTree } from "./index.ts";
 describe("@koishi-ce/i18n-utils", () => {
 	// 验证 LocaleTree.from 按 `-` 正确逐级展开为嵌套树
 	it("locale tree", () => {
-		expect(LocaleTree.from(["zh-CN", "zh-TW", "en-US", "en-GB"])).toEqual({
+		expect(
+			LocaleTree.from(["zh-CN", "zh-TW", "en-US", "en-GB"]),
+		).toEqual({
 			zh: { "zh-CN": {}, "zh-TW": {} },
 			en: { "en-US": {}, "en-GB": {} },
 		});
@@ -25,7 +27,15 @@ describe("@koishi-ce/i18n-utils", () => {
 				},
 				["zh-TW"],
 			),
-		).toEqual(["zh-TW", "zh", "zh-CN", "", "en", "en-US", "en-GB"]);
+		).toEqual([
+			"zh-TW",
+			"zh",
+			"zh-CN",
+			"",
+			"en",
+			"en-US",
+			"en-GB",
+		]);
 
 		expect(
 			fallback(
@@ -35,7 +45,15 @@ describe("@koishi-ce/i18n-utils", () => {
 				},
 				["en"],
 			),
-		).toEqual(["en", "en-US", "en-GB", "", "zh", "zh-CN", "zh-TW"]);
+		).toEqual([
+			"en",
+			"en-US",
+			"en-GB",
+			"",
+			"zh",
+			"zh-CN",
+			"zh-TW",
+		]);
 
 		expect(
 			fallback(
@@ -45,7 +63,15 @@ describe("@koishi-ce/i18n-utils", () => {
 				},
 				[],
 			),
-		).toEqual(["", "zh", "zh-CN", "zh-TW", "en", "en-US", "en-GB"]);
+		).toEqual([
+			"",
+			"zh",
+			"zh-CN",
+			"zh-TW",
+			"en",
+			"en-US",
+			"en-GB",
+		]);
 
 		expect(
 			fallback(
@@ -55,7 +81,15 @@ describe("@koishi-ce/i18n-utils", () => {
 				},
 				["de-DE"],
 			),
-		).toEqual(["", "zh", "zh-CN", "zh-TW", "en", "en-US", "en-GB"]);
+		).toEqual([
+			"",
+			"zh",
+			"zh-CN",
+			"zh-TW",
+			"en",
+			"en-US",
+			"en-GB",
+		]);
 	});
 
 	// 验证多个偏好语言叠加时的回退顺序：末位优先、重复与未命中环境的处理
@@ -68,7 +102,15 @@ describe("@koishi-ce/i18n-utils", () => {
 				},
 				["en", "zh-TW"],
 			),
-		).toEqual(["en", "en-US", "en-GB", "zh-TW", "zh", "zh-CN", ""]);
+		).toEqual([
+			"en",
+			"en-US",
+			"en-GB",
+			"zh-TW",
+			"zh",
+			"zh-CN",
+			"",
+		]);
 
 		expect(
 			fallback(
@@ -78,7 +120,15 @@ describe("@koishi-ce/i18n-utils", () => {
 				},
 				["zh-TW", "zh-TW-XX", "en"],
 			),
-		).toEqual(["zh-TW", "en", "en-US", "en-GB", "zh", "zh-CN", ""]);
+		).toEqual([
+			"zh-TW",
+			"en",
+			"en-US",
+			"en-GB",
+			"zh",
+			"zh-CN",
+			"",
+		]);
 
 		expect(
 			fallback(
@@ -88,7 +138,15 @@ describe("@koishi-ce/i18n-utils", () => {
 				},
 				["en", "de-DE", "en-GB"],
 			),
-		).toEqual(["en", "en-US", "en-GB", "", "zh", "zh-CN", "zh-TW"]);
+		).toEqual([
+			"en",
+			"en-US",
+			"en-GB",
+			"",
+			"zh",
+			"zh-CN",
+			"zh-TW",
+		]);
 
 		expect(
 			fallback(
@@ -98,6 +156,14 @@ describe("@koishi-ce/i18n-utils", () => {
 				},
 				["en-GB", "zh-CN", "en"],
 			),
-		).toEqual(["en-GB", "zh-CN", "en", "en-US", "zh", "zh-TW", ""]);
+		).toEqual([
+			"en-GB",
+			"zh-CN",
+			"en",
+			"en-US",
+			"zh",
+			"zh-TW",
+			"",
+		]);
 	});
 });

@@ -17,7 +17,9 @@ import zhCN from "../locales/zh-CN.yml";
  * @param target 形如 `platform:id` 的字符串
  * @returns [平台名, 目标 ID] 二元组
  */
-export function parsePlatform(target: string): [platform: string, id: string] {
+export function parsePlatform(
+	target: string,
+): [platform: string, id: string] {
 	const index = target.indexOf(":");
 	const platform = target.slice(0, index);
 	const id = target.slice(index + 1);
@@ -38,7 +40,9 @@ export function apply(ctx: Context, _config: Config) {
 		.option("escape", "-e", { authority: 3 })
 		.option("unescape", "-E", { authority: 3 })
 		.option("user", "-u [user:user]", { authority: 3 })
-		.option("channel", "-c [channel:channel]", { authority: 3 })
+		.option("channel", "-c [channel:channel]", {
+			authority: 3,
+		})
 		.option("guild", "-g [guild:string]", { authority: 3 })
 		.action(async ({ options, session }, message) => {
 			if (!session || !options) return;
@@ -55,12 +59,20 @@ export function apply(ctx: Context, _config: Config) {
 			// 指定了 -u / -c 时改为向目标发送，而不是回复当前会话
 			const target = options.user || options.channel;
 			if (target) {
-				const [platform, id] = parsePlatform(target as string);
-				const bot = ctx.bots.find((bot) => bot.platform === platform);
+				const [platform, id] = parsePlatform(
+					target as string,
+				);
+				const bot = ctx.bots.find(
+					(bot) => bot.platform === platform,
+				);
 				if (!bot) {
 					return session.text(".platform-not-found");
 				} else if (options.user) {
-					await bot.sendPrivateMessage(id, content, session.guildId);
+					await bot.sendPrivateMessage(
+						id,
+						content,
+						session.guildId,
+					);
 				} else {
 					await bot.sendMessage(id, content, options.guild);
 				}

@@ -12,7 +12,10 @@
 
 import { resolve } from "node:path";
 import { type Context, Schema } from "@koishi-ce/koishi";
-import { ConfigWriter, ServiceProvider } from "../shared/index.ts";
+import {
+	ConfigWriter,
+	ServiceProvider,
+} from "../shared/index.ts";
 import { PackageProvider } from "./packages.ts";
 
 export * from "../shared/index.ts";

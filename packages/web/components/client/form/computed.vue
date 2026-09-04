@@ -139,27 +139,41 @@ const tt = useI18nText();
 
 // 当前值是否已展开为 $switch 结构（决定渲染单值形态还是分支列表形态）
 const isSwitch = computed(() => {
-	return props.schema?.meta.role === "computed" && props.modelValue?.$switch;
+	return (
+		props.schema?.meta.role === "computed" &&
+		props.modelValue?.$switch
+	);
 });
 
 // 对分支列表的全部编辑操作：均以不可变方式重建 $switch 对象后整体 emit
 const actions = {
 	up(index: number) {
-		const branches = props.modelValue.$switch.branches.slice();
-		branches.splice(index - 1, 0, ...branches.splice(index, 1));
+		const branches =
+			props.modelValue.$switch.branches.slice();
+		branches.splice(
+			index - 1,
+			0,
+			...branches.splice(index, 1),
+		);
 		emit("update:modelValue", {
 			$switch: { ...props.modelValue.$switch, branches },
 		});
 	},
 	down(index: number) {
-		const branches = props.modelValue.$switch.branches.slice();
-		branches.splice(index + 1, 0, ...branches.splice(index, 1));
+		const branches =
+			props.modelValue.$switch.branches.slice();
+		branches.splice(
+			index + 1,
+			0,
+			...branches.splice(index, 1),
+		);
 		emit("update:modelValue", {
 			$switch: { ...props.modelValue.$switch, branches },
 		});
 	},
 	delete(index: number) {
-		const branches = props.modelValue.$switch.branches.slice();
+		const branches =
+			props.modelValue.$switch.branches.slice();
 		if (branches.length > 1) {
 			branches.splice(index, 1);
 			emit("update:modelValue", {
@@ -167,19 +181,27 @@ const actions = {
 			});
 		} else {
 			// 仅剩最后一个分支时删除整个 $switch，塌缩回普通值（default）
-			emit("update:modelValue", props.modelValue.$switch["default"]);
+			emit(
+				"update:modelValue",
+				props.modelValue.$switch["default"],
+			);
 		}
 	},
 	update(index: number, key: string, value: unknown) {
-		const branches = props.modelValue.$switch.branches.slice();
+		const branches =
+			props.modelValue.$switch.branches.slice();
 		branches[index] = { ...branches[index], [key]: value };
 		emit("update:modelValue", {
 			$switch: { ...props.modelValue.$switch, branches },
 		});
 	},
-	insert(index: number = props.modelValue?.$switch?.branches.length) {
+	insert(
+		index: number = props.modelValue?.$switch?.branches
+			.length,
+	) {
 		if (props.modelValue?.$switch) {
-			const branches = props.modelValue.$switch.branches.slice();
+			const branches =
+				props.modelValue.$switch.branches.slice();
 			branches.splice(index, 0, { case: null, then: null });
 			emit("update:modelValue", {
 				$switch: { ...props.modelValue.$switch, branches },
@@ -196,7 +218,10 @@ const actions = {
 	},
 	default(value: unknown) {
 		emit("update:modelValue", {
-			$switch: { ...props.modelValue.$switch, default: value },
+			$switch: {
+				...props.modelValue.$switch,
+				default: value,
+			},
 		});
 	},
 };

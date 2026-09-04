@@ -16,7 +16,10 @@
 import { createReadStream } from "node:fs";
 import { extname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
-import { type Client, DataService } from "@koishi-ce/console";
+import {
+	type Client,
+	DataService,
+} from "@koishi-ce/console";
 import {
 	$,
 	type Context,
@@ -45,7 +48,11 @@ declare module "@koishi-ce/console" {
 	}
 
 	interface Events {
-		"sandbox/response"(this: Client, nonce: string, data?: unknown): void;
+		"sandbox/response"(
+			this: Client,
+			nonce: string,
+			data?: unknown,
+		): void;
 		"sandbox/send-message"(
 			this: Client,
 			platform: string,
@@ -141,7 +148,12 @@ export function apply(ctx: Context, config: Config) {
 					`${process.env["KOISHI_BASE"]}/dist/style.css`,
 				]
 			: process.env["KOISHI_ENV"] === "browser"
-				? [import.meta.url.replace(/\/src\/[^/]+$/, "/client/index.ts")]
+				? [
+						import.meta.url.replace(
+							/\/src\/[^/]+$/,
+							"/client/index.ts",
+						),
+					]
 				: {
 						dev: resolve(__dirname, "../client/index.ts"),
 						prod: resolve(__dirname, "../dist"),
@@ -154,7 +166,10 @@ export function apply(ctx: Context, config: Config) {
 	 * 构造一条标准化的 Universal.Event：
 	 * 私聊（channelId 形如 `@userId`）只带 channel，群聊额外附带同 id 的 guild。
 	 */
-	const createEvent = (userId: string, channelId: string) => {
+	const createEvent = (
+		userId: string,
+		channelId: string,
+	) => {
 		const isDirect = channelId === `@${userId}`;
 		// exactOptionalPropertyTypes 下可选属性不能显式携带 undefined，guild 按需附加
 		const event: Partial<Universal.Event> = {
@@ -186,14 +201,29 @@ export function apply(ctx: Context, config: Config) {
 	// 派发给本插件的机器人逻辑（含引用消息 quote 的透传）
 	ctx.console.addListener(
 		"sandbox/send-message",
-		async function (platform, userId, channel, content, quote) {
+		async function (
+			platform,
+			userId,
+			channel,
+			content,
+			quote,
+		) {
 			const bot = ensureBot(platform, this);
 			const id = Random.id();
 			this.send({
 				type: "sandbox/message",
-				body: { id, content, user: userId, channel, platform, quote },
+				body: {
+					id,
+					content,
+					user: userId,
+					channel,
+					platform,
+					quote,
+				},
 			});
-			const session = bot.session(createEvent(userId, channel));
+			const session = bot.session(
+				createEvent(userId, channel),
+			);
 			session.type = "message";
 			session.messageId = id;
 			if (quote) {
@@ -213,7 +243,9 @@ export function apply(ctx: Context, config: Config) {
 		"sandbox/delete-message",
 		async function (platform, userId, channel, messageId) {
 			const bot = ensureBot(platform, this);
-			const session = bot.session(createEvent(userId, channel));
+			const session = bot.session(
+				createEvent(userId, channel),
+			);
 			session.type = "message-deleted";
 			session.messageId = messageId;
 			bot.dispatch(session);
@@ -227,9 +259,11 @@ export function apply(ctx: Context, config: Config) {
 		async (platform, pid) => {
 			const database = ctx.get("database");
 			if (!database) return;
-			const [binding] = await database.get("binding", { platform, pid }, [
-				"aid",
-			]);
+			const [binding] = await database.get(
+				"binding",
+				{ platform, pid },
+				["aid"],
+			);
 			if (binding) return database.getUser(platform, pid);
 			return database.createUser(platform, pid, {
 				authority: 1,
@@ -254,9 +288,11 @@ export function apply(ctx: Context, config: Config) {
 			}
 			const database = ctx.get("database");
 			if (!database) return;
-			const [binding] = await database.get("binding", { platform, pid }, [
-				"aid",
-			]);
+			const [binding] = await database.get(
+				"binding",
+				{ platform, pid },
+				["aid"],
+			);
 			if (!binding) {
 				if (!data) return;
 				await database.createUser(platform, pid, {
@@ -301,20 +337,25 @@ export function apply(ctx: Context, config: Config) {
 	// 可选的本地静态文件服务:把沙盒消息里引用的 file: 本地资源暴露为 HTTP,
 	// 供浏览器端展示(仅限本地调试,勿在公网环境开启)
 	if (config.fileServer.enabled) {
-		ctx.server.get("/sandbox/:url(file:.+)", async (koa) => {
-			const { url } = koa.params;
-			// 路由参数 :url(file:.+) 必然存在，此守卫仅为收窄类型
-			if (!url) return;
-			koa.type = extname(url);
-			koa.body = createReadStream(fileURLToPath(url));
-		});
+		ctx.server.get(
+			"/sandbox/:url(file:.+)",
+			async (koa) => {
+				const { url } = koa.params;
+				// 路由参数 :url(file:.+) 必然存在，此守卫仅为收窄类型
+				if (!url) return;
+				koa.type = extname(url);
+				koa.body = createReadStream(fileURLToPath(url));
+			},
+		);
 	}
 
 	ctx.i18n.define("zh-CN", zhCN);
 
 	// clear 命令仅对 sandbox: 平台的会话生效:通知浏览器清空当前频道的消息列表
 	ctx
-		.intersect((session) => session.platform.startsWith("sandbox:"))
+		.intersect((session) =>
+			session.platform.startsWith("sandbox:"),
+		)
 		.command("clear")
 		.action(({ session }) => {
 			if (!session) return;

@@ -14,14 +14,20 @@ import {
 	useConfig,
 } from "@koishi-ce/client";
 import type { MarketProvider } from "@koishi-ce/plugin-market";
-import type { DependencyMetaKey, RemotePackage } from "@koishi-ce/registry";
+import type {
+	DependencyMetaKey,
+	RemotePackage,
+} from "@koishi-ce/registry";
 import { defineComponent, h, watch } from "vue";
 import Confirm from "./components/confirm.vue";
 import Dependencies from "./components/dependencies.vue";
 import Install from "./components/install.vue";
 import Market from "./components/market.vue";
 import Progress from "./components/progress.vue";
-import { showConfirm, showManual } from "./components/utils";
+import {
+	showConfirm,
+	showManual,
+} from "./components/utils";
 import extensions from "./extensions";
 import "./icons";
 
@@ -53,7 +59,11 @@ receive("market/patch", (data: MarketProvider.Payload) => {
 
 receive(
 	"market/registry",
-	(data: Dict<Dict<Pick<RemotePackage, DependencyMetaKey>>>) => {
+	(
+		data: Dict<
+			Dict<Pick<RemotePackage, DependencyMetaKey>>
+		>,
+	) => {
 		store.registry = {
 			...store.registry,
 			...data,
@@ -76,7 +86,10 @@ export default (ctx: Context) => {
 					},
 					[
 						h("h2", "浏览插件"),
-						h("p", "浏览插件市场中的插件，并根据自己的需要安装和配置。"),
+						h(
+							"p",
+							"浏览插件市场中的插件，并根据自己的需要安装和配置。",
+						),
 					],
 				),
 		),
@@ -107,14 +120,20 @@ export default (ctx: Context) => {
 		title: "插件市场设置",
 		schema: Schema.object({
 			market: Schema.object({
-				bulkMode: Schema.boolean().default(false).description("批量操作模式。"),
+				bulkMode: Schema.boolean()
+					.default(false)
+					.description("批量操作模式。"),
 				removeConfig: Schema.union([
 					Schema.const(undefined).description("每次询问"),
 					Schema.const(true).description("总是"),
 					Schema.const(false).description("从不"),
-				]).description("移除插件时是否移除其已经存在的配置。"),
+				]).description(
+					"移除插件时是否移除其已经存在的配置。",
+				),
 				override: Schema.dict(String).hidden(),
-				gravatar: Schema.string().description("Gravatar 镜像地址。"),
+				gravatar: Schema.string().description(
+					"Gravatar 镜像地址。",
+				),
 			}),
 		}),
 	});
@@ -143,14 +162,17 @@ export default (ctx: Context) => {
 	ctx.action("market.refresh", {
 		shortcut: "ctrl+r",
 		disabled: () => {
-			const id = router.currentRoute.value?.meta?.activity?.id;
+			const id =
+				router.currentRoute.value?.meta?.activity?.id;
 			return id !== "market" && id !== "dependencies";
 		},
 		action: (_scope) => send("market/refresh"),
 	});
 
 	ctx.action("market.install", {
-		disabled: () => !Object.keys(config.value.market.override ?? {}).length,
+		disabled: () =>
+			!Object.keys(config.value.market.override ?? {})
+				.length,
 		action() {
 			showConfirm.value = true;
 		},
@@ -173,7 +195,8 @@ export default (ctx: Context) => {
 			icon: "refresh",
 			label: "刷新",
 			type: () =>
-				!store.market || store.market.progress < store.market.total
+				!store.market ||
+				store.market.progress < store.market.total
 					? "spin disabled"
 					: "",
 		},
@@ -200,7 +223,8 @@ export default (ctx: Context) => {
 			icon: "refresh",
 			label: "刷新",
 			type: () =>
-				!store.market || store.market.progress < store.market.total
+				!store.market ||
+				store.market.progress < store.market.total
 					? "spin disabled"
 					: "",
 		},
@@ -214,11 +238,15 @@ export default (ctx: Context) => {
 				for (const key in config.value.market.override) {
 					if (value[key]?.workspace) {
 						delete config.value.market.override[key];
-					} else if (!config.value.market.override[key] && !value[key]) {
+					} else if (
+						!config.value.market.override[key] &&
+						!value[key]
+					) {
 						// package to be removed has been removed
 						delete config.value.market.override[key];
 					} else if (
-						value[key]?.request === config.value.market.override[key]
+						value[key]?.request ===
+						config.value.market.override[key]
 					) {
 						// package has been installed to the right version
 						delete config.value.market.override[key];

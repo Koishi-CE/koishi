@@ -56,10 +56,12 @@ interface Tree {
 }
 
 const data = computed(() =>
-	Object.entries(ctx.internal.settings).map<Tree>(([id, [{ title }]]) => ({
-		id,
-		label: title,
-	})),
+	Object.entries(ctx.internal.settings).map<Tree>(
+		([id, [{ title }]]) => ({
+			id,
+			label: title,
+		}),
+	),
 );
 
 function handleClick(tree: Tree) {

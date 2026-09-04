@@ -17,7 +17,11 @@ import { compare, satisfies } from "semver";
 import { reactive, ref, watch } from "vue";
 import { active } from "../utils";
 
-export type ResultType = "success" | "warning" | "danger" | "primary";
+export type ResultType =
+	| "success"
+	| "warning"
+	| "danger"
+	| "primary";
 
 interface AnalyzeResult {
 	peers: Dict<PeerInfo>;
@@ -34,24 +38,31 @@ export function analyzeVersions(
 	name: string,
 	getVersion: (name: string) => string,
 ): Dict<AnalyzeResult> | undefined {
-	const versions = store.registry?.[name] || manualDeps[name]?.versions;
+	const versions =
+		store.registry?.[name] || manualDeps[name]?.versions;
 	if (!versions) return undefined;
 	return valueMap(versions, (item) => {
-		const peers = valueMap({ ...item.peerDependencies }, (request, name) => {
-			const resolved =
-				(getVersion ? getVersion(name) : null) ??
-				store.dependencies?.[name]?.resolved ??
-				store.packages?.[name]?.package.version;
-			const result: ResultType = !resolved
-				? item.peerDependenciesMeta?.[name]?.optional
-					? "primary"
-					: "danger"
-				: satisfies(resolved, request, { includePrerelease: true })
-					? "success"
-					: "danger";
-			return { request, resolved, result } as PeerInfo;
-		});
-		let result: "success" | "warning" | "danger" = "success";
+		const peers = valueMap(
+			{ ...item.peerDependencies },
+			(request, name) => {
+				const resolved =
+					(getVersion ? getVersion(name) : null) ??
+					store.dependencies?.[name]?.resolved ??
+					store.packages?.[name]?.package.version;
+				const result: ResultType = !resolved
+					? item.peerDependenciesMeta?.[name]?.optional
+						? "primary"
+						: "danger"
+					: satisfies(resolved, request, {
+								includePrerelease: true,
+							})
+						? "success"
+						: "danger";
+				return { request, resolved, result } as PeerInfo;
+			},
+		);
+		let result: "success" | "warning" | "danger" =
+			"success";
 		for (const peer of Object.values(peers)) {
 			if (peer.result === "danger") {
 				result = "danger";
@@ -69,10 +80,14 @@ export function analyzeVersions(
 export const manualDeps = reactive<Dict<Registry>>({});
 
 export async function addManual(name: string) {
-	const response = await fetch(`${store.market?.registry}/${name}`);
+	const response = await fetch(
+		`${store.market?.registry}/${name}`,
+	);
 	const data: Registry = await response.json();
 	data.versions = Object.fromEntries(
-		Object.entries(data.versions).sort((a, b) => compare(b[0], a[0])),
+		Object.entries(data.versions).sort((a, b) =>
+			compare(b[0], a[0]),
+		),
 	);
 	return (manualDeps[name] = data);
 }
@@ -95,7 +110,11 @@ export async function install(
 	});
 	try {
 		active.value = "";
-		const code = await send("market/install", override, forced);
+		const code = await send(
+			"market/install",
+			override,
+			forced,
+		);
 		if (code) {
 			message.error("安装失败！");
 		} else {

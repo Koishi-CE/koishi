@@ -63,23 +63,46 @@ interface TypeColor {
 
 const TypeColor: Schema<TypeColor> = Schema.object({
 	color: Schema.string().role("color"),
-	types: Schema.array(Schema.union(FieldType)).default([]).role("select"),
+	types: Schema.array(Schema.union(FieldType))
+		.default([])
+		.role("select"),
 });
 
 const defaultTypeColors: TypeColor[] = [
-	{ color: "rgba(249,100,94,0.6)", types: ["char", "string", "text"] },
-	{ color: "rgba(251,163,81,0.6)", types: ["list", "json"] },
+	{
+		color: "rgba(249,100,94,0.6)",
+		types: ["char", "string", "text"],
+	},
+	{
+		color: "rgba(251,163,81,0.6)",
+		types: ["list", "json"],
+	},
 	{ color: "rgba(31,200,155,0.6)", types: ["boolean"] },
-	{ color: "rgba(115,202,81,0.6)", types: ["unsigned", "integer"] },
-	{ color: "rgba(134,217,152,0.6)", types: ["float", "double", "decimal"] },
-	{ color: "rgba(207,139,225,0.6)", types: ["timestamp", "date", "time"] },
+	{
+		color: "rgba(115,202,81,0.6)",
+		types: ["unsigned", "integer"],
+	},
+	{
+		color: "rgba(134,217,152,0.6)",
+		types: ["float", "double", "decimal"],
+	},
+	{
+		color: "rgba(207,139,225,0.6)",
+		types: ["timestamp", "date", "time"],
+	},
 ];
 
 export const schema = Schema.object({
 	dataview: Schema.object({
-		autoStats: Schema.boolean().default(true).description("刷新时自动同步"),
-		color: Schema.boolean().default(false).description("默认启用类型染色"),
-		colors: Schema.array(TypeColor).default(defaultTypeColors).role("table"),
+		autoStats: Schema.boolean()
+			.default(true)
+			.description("刷新时自动同步"),
+		color: Schema.boolean()
+			.default(false)
+			.description("默认启用类型染色"),
+		colors: Schema.array(TypeColor)
+			.default(defaultTypeColors)
+			.role("table"),
 	}),
 });
 

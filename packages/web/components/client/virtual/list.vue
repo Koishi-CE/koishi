@@ -66,7 +66,9 @@ const props = defineProps({
 });
 
 // 实际渲染的数据切片（Virtual.range 决定的可视窗口）
-const dataShown = computed(() => props.data.slice(range.start, range.end));
+const dataShown = computed(() =>
+	props.data.slice(range.start, range.end),
+);
 
 const root = ref<typeof ElScrollbar>();
 
@@ -74,7 +76,8 @@ const root = ref<typeof ElScrollbar>();
 watch(
 	() => props.data.length,
 	() => {
-		const { scrollTop, clientHeight, scrollHeight } = root.value.wrapRef;
+		const { scrollTop, clientHeight, scrollHeight } =
+			root.value.wrapRef;
 		if (
 			!props.pinned ||
 			Math.abs(scrollTop + clientHeight - scrollHeight) < 1
@@ -138,7 +141,10 @@ onMounted(() => {
 /** 滚动到指定像素偏移；smooth 时带平滑动画 */
 function scrollToOffset(offset: number, smooth = false) {
 	if (smooth) {
-		root.value.wrapRef.scrollTo({ top: offset, behavior: "smooth" });
+		root.value.wrapRef.scrollTo({
+			top: offset,
+			behavior: "smooth",
+		});
 	} else {
 		root.value.wrapRef.scrollTop = offset;
 	}
@@ -158,9 +164,15 @@ function scrollToBottom() {
 		// 检查是否真的滚到了底部：列表可能还没渲染并计算到
 		// 最后一个范围，所以要在下一个事件循环里重试，直到真正贴底
 		setTimeout(() => {
-			const offset = Math.ceil(root.value.wrapRef.scrollTop);
-			const clientLength = Math.ceil(root.value.wrapRef.clientHeight);
-			const scrollLength = Math.ceil(root.value.wrapRef.scrollHeight);
+			const offset = Math.ceil(
+				root.value.wrapRef.scrollTop,
+			);
+			const clientLength = Math.ceil(
+				root.value.wrapRef.clientHeight,
+			);
+			const scrollLength = Math.ceil(
+				root.value.wrapRef.scrollHeight,
+			);
 			if (offset + clientLength < scrollLength) {
 				scrollToBottom();
 			}
@@ -181,12 +193,22 @@ onActivated(() => {
 });
 
 function onScroll(ev: MouseEvent) {
-	const offset = Math.ceil((scrollTop = root.value.wrapRef.scrollTop));
-	const clientLength = Math.ceil(root.value.wrapRef.clientHeight);
-	const scrollLength = Math.ceil(root.value.wrapRef.scrollHeight);
+	const offset = Math.ceil(
+		(scrollTop = root.value.wrapRef.scrollTop),
+	);
+	const clientLength = Math.ceil(
+		root.value.wrapRef.clientHeight,
+	);
+	const scrollLength = Math.ceil(
+		root.value.wrapRef.scrollHeight,
+	);
 
 	// iOS 的回弹滚动会产出越界 offset，导致方向误判，直接忽略
-	if (offset < 0 || offset + clientLength > scrollLength + 1 || !scrollLength) {
+	if (
+		offset < 0 ||
+		offset + clientLength > scrollLength + 1 ||
+		!scrollLength
+	) {
 		return;
 	}
 

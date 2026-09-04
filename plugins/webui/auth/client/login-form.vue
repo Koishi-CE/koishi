@@ -88,7 +88,11 @@ async function loginWithAccount() {
 	if (!platform || !userId) return;
 	timestamp = now + 1000;
 	try {
-		user.value = await send("login/platform", platform, userId);
+		user.value = await send(
+			"login/platform",
+			platform,
+			userId,
+		);
 	} catch (e) {
 		error.value = e.message;
 	}

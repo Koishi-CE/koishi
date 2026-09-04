@@ -79,7 +79,9 @@ export async function prepare(
 		}
 
 		const legacy = [key, ...(field.legacy || [])];
-		const column = columns.find(({ name }) => legacy.includes(name));
+		const column = columns.find(({ name }) =>
+			legacy.includes(name),
+		);
 		const { initial, nullable = true } = field;
 		const typedef = getTypeDef(field);
 		let def = `${escapeId(key)} ${typedef}`;
@@ -90,7 +92,9 @@ export async function prepare(
 			if (!isNullable(initial)) {
 				def +=
 					" DEFAULT " +
-					driver.sql.escape(driver.sql.dump({ [key]: initial }, model)[key]);
+					driver.sql.escape(
+						driver.sql.dump({ [key]: initial }, model)[key],
+					);
 			}
 		}
 		columnDefs.push(def);
@@ -98,25 +102,32 @@ export async function prepare(
 			alter.push(`ADD ${def}`);
 		} else {
 			mapping[column.name] = key;
-			shouldMigrate ||= column.name !== key || column.type !== typedef;
+			shouldMigrate ||=
+				column.name !== key || column.type !== typedef;
 		}
 	}
 
 	// index definitions
 	if (model.primary && !model.autoInc) {
-		indexDefs.push(`PRIMARY KEY (${joinKeys(makeArray(model.primary))})`);
+		indexDefs.push(
+			`PRIMARY KEY (${joinKeys(makeArray(model.primary))})`,
+		);
 	}
 	if (model.unique) {
 		indexDefs.push(
-			...model.unique.map((keys) => `UNIQUE (${joinKeys(makeArray(keys))})`),
+			...model.unique.map(
+				(keys) => `UNIQUE (${joinKeys(makeArray(keys))})`,
+			),
 		);
 	}
 	if (model.foreign) {
 		indexDefs.push(
-			...Object.entries(model.foreign).map(([key, value]) => {
-				const [table = "", key2 = ""] = value ?? [];
-				return `FOREIGN KEY (\`${key}\`) REFERENCES ${escapeId(table)} (\`${key2}\`)`;
-			}),
+			...Object.entries(model.foreign).map(
+				([key, value]) => {
+					const [table = "", key2 = ""] = value ?? [];
+					return `FOREIGN KEY (\`${key}\`) REFERENCES ${escapeId(table)} (\`${key2}\`)`;
+				},
+			),
 		);
 	}
 
@@ -127,18 +138,28 @@ export async function prepare(
 		);
 	} else if (shouldMigrate) {
 		// preserve old columns
-		for (const { name, type, notnull, pk, dflt_value: value } of columns) {
-			if (mapping[name] || dropKeys?.includes(name)) continue;
+		for (const {
+			name,
+			type,
+			notnull,
+			pk,
+			dflt_value: value,
+		} of columns) {
+			if (mapping[name] || dropKeys?.includes(name))
+				continue;
 			let def = `${escapeId(name)} ${type}`;
 			def += `${notnull ? " NOT " : " "}NULL`;
 			if (pk) def += " PRIMARY KEY";
-			if (value !== null) def += ` DEFAULT ${driver.sql.escape(value)}`;
+			if (value !== null)
+				def += ` DEFAULT ${driver.sql.escape(value)}`;
 			columnDefs.push(def);
 			mapping[name] = name;
 		}
 
 		const temp = `${table}_temp`;
-		const fields = Object.keys(mapping).map(escapeId).join(", ");
+		const fields = Object.keys(mapping)
+			.map(escapeId)
+			.join(", ");
 		driver.logger.info("auto migrating table %c", table);
 		driver._run(
 			`CREATE TABLE ${escapeId(temp)} (${[...columnDefs, ...indexDefs].join(", ")})`,
@@ -152,7 +173,9 @@ export async function prepare(
 			driver._run(`DROP TABLE ${escapeId(temp)}`);
 			throw error;
 		}
-		driver._run(`ALTER TABLE ${escapeId(temp)} RENAME TO ${escapeId(table)}`);
+		driver._run(
+			`ALTER TABLE ${escapeId(temp)} RENAME TO ${escapeId(table)}`,
+		);
 	} else if (alter.length) {
 		driver.logger.info("auto updating table %c", table);
 		for (const def of alter) {
@@ -165,7 +188,9 @@ export async function prepare(
 	await driver.runMigration(table, {
 		error: driver.logger.warn,
 		before: (keys) =>
-			keys.every((key) => columns.some(({ name }) => name === key)),
+			keys.every((key) =>
+				columns.some(({ name }) => name === key),
+			),
 		after: (keys) => dropKeys?.push(...keys),
 		finalize: () => {
 			if (!dropKeys?.length) return;
@@ -174,7 +199,10 @@ export async function prepare(
 	});
 }
 
-export async function drop(driver: SQLiteDriver, table: string) {
+export async function drop(
+	driver: SQLiteDriver,
+	table: string,
+) {
 	driver._run(`DROP TABLE ${escapeId(table)}`);
 }
 

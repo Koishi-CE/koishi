@@ -25,8 +25,12 @@ export const Config: Schema<Config> = Schema.object({
 	autoRestart: Schema.boolean()
 		.description("在运行时崩溃自动重启。")
 		.default(true),
-	heartbeatInterval: Schema.number().description("心跳发送间隔。").default(0),
-	heartbeatTimeout: Schema.number().description("心跳超时时间。").default(0),
+	heartbeatInterval: Schema.number()
+		.description("心跳发送间隔。")
+		.default(0),
+	heartbeatTimeout: Schema.number()
+		.description("心跳超时时间。")
+		.default(0),
 })
 	.description("守护设置")
 	.hidden();
@@ -50,7 +54,9 @@ export function apply(ctx: Context, config: Config = {}) {
 			process.send?.({ type: "exit" });
 		}
 		ctx.logger("app").info(`terminated by ${signal}`);
-		ctx.parallel("exit", signal).finally(() => process.exit());
+		ctx
+			.parallel("exit", signal)
+			.finally(() => process.exit());
 	}
 
 	ctx.on("ready", () => {

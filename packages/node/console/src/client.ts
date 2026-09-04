@@ -62,8 +62,12 @@ export class Client {
 	 * 处理流程：查找监听器 → 拦截器事件鉴权（被拦截则回 unauthorized）→
 	 * 执行回调并按请求 id 回传结果或错误文本（coerce 格式化的堆栈）。
 	 */
-	receive = async (data: Universal.WebSocket.MessageEvent) => {
-		const { type, args, id } = JSON.parse(data.data.toString());
+	receive = async (
+		data: Universal.WebSocket.MessageEvent,
+	) => {
+		const { type, args, id } = JSON.parse(
+			data.data.toString(),
+		);
 		const listener = this.ctx.console.listeners[type];
 		if (!listener) {
 			logger.info("unknown message:", type, ...args);
@@ -73,7 +77,13 @@ export class Client {
 			});
 		}
 
-		if (await this.ctx.serial("console/intercept", this, listener)) {
+		if (
+			await this.ctx.serial(
+				"console/intercept",
+				this,
+				listener,
+			)
+		) {
 			return this.send({
 				type: "response",
 				body: { id, error: "unauthorized" },
@@ -81,12 +91,21 @@ export class Client {
 		}
 
 		try {
-			const value = await listener.callback.call(this, ...args);
-			return this.send({ type: "response", body: { id, value } });
+			const value = await listener.callback.call(
+				this,
+				...args,
+			);
+			return this.send({
+				type: "response",
+				body: { id, value },
+			});
 		} catch (e) {
 			logger.debug(e);
 			const error = coerce(e);
-			return this.send({ type: "response", body: { id, error } });
+			return this.send({
+				type: "response",
+				body: { id, error },
+			});
 		}
 	};
 
@@ -96,23 +115,34 @@ export class Client {
 	 * 被拦截器拦下的服务会下发 null（前端据此清空对应数据）。
 	 */
 	refresh() {
-		Object.keys(this.ctx.root[Context.internal]).forEach(async (name) => {
-			if (!name.startsWith("console.services.")) return;
-			// "console.services.".length === 17
-			const key = name.slice(17);
-			const service = this.ctx.get(name) as DataService;
-			if (!service) return;
-			if (await this.ctx.serial("console/intercept", this, service.options)) {
-				return this.send({ type: "data", body: { key, value: null } });
-			}
+		Object.keys(this.ctx.root[Context.internal]).forEach(
+			async (name) => {
+				if (!name.startsWith("console.services.")) return;
+				// "console.services.".length === 17
+				const key = name.slice(17);
+				const service = this.ctx.get(name) as DataService;
+				if (!service) return;
+				if (
+					await this.ctx.serial(
+						"console/intercept",
+						this,
+						service.options,
+					)
+				) {
+					return this.send({
+						type: "data",
+						body: { key, value: null },
+					});
+				}
 
-			try {
-				const value = await service.get(false, this);
-				if (!value) return;
-				this.send({ type: "data", body: { key, value } });
-			} catch (error) {
-				logger.warn(error);
-			}
-		});
+				try {
+					const value = await service.get(false, this);
+					if (!value) return;
+					this.send({ type: "data", body: { key, value } });
+				} catch (error) {
+					logger.warn(error);
+				}
+			},
+		);
 	}
 }

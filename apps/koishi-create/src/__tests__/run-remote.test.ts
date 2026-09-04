@@ -1,7 +1,14 @@
 // SPDX-License-Identifier: MIT
 // Copyright (c) 2026-present Koishi-CE contributors.
 
-import { afterAll, beforeAll, describe, expect, it, mock } from "bun:test";
+import {
+	afterAll,
+	beforeAll,
+	describe,
+	expect,
+	it,
+	mock,
+} from "bun:test";
 import {
 	existsSync,
 	mkdirSync,
@@ -31,14 +38,20 @@ import { tarPack } from "./tar-pack.ts";
  * utils / remote）的行覆盖完整。
  */
 
-const workspaceRoot = mkdtempSync(join(tmpdir(), "ckc-run-remote-"));
+const workspaceRoot = mkdtempSync(
+	join(tmpdir(), "ckc-run-remote-"),
+);
 const previousCwd = process.cwd();
 const previousArgv = process.argv.slice();
 const previousExit = process.exit;
 
 /** 伪 registry 的场景开关 */
-let scenario: "ok" | "meta-404" | "missing-ref" | "tarball-404" | "corrupt" =
-	"ok";
+let scenario:
+	| "ok"
+	| "meta-404"
+	| "missing-ref"
+	| "tarball-404"
+	| "corrupt" = "ok";
 
 /** 预先打包好的模板 tarball（package/ 前缀目录，strip:1 解包） */
 let tarball: Uint8Array;
@@ -55,7 +68,10 @@ const registry = Bun.serve({
 		const url = new URL(request.url);
 		if (url.pathname === "/fake-tpl") {
 			if (scenario === "meta-404") {
-				return new Response(null, { status: 404, statusText: "Not Found" });
+				return new Response(null, {
+					status: 404,
+					statusText: "Not Found",
+				});
 			}
 			if (scenario === "missing-ref") {
 				return Response.json({
@@ -76,10 +92,15 @@ const registry = Bun.serve({
 		}
 		if (url.pathname === "/fake-tpl/-/fake-tpl-2.0.0.tgz") {
 			if (scenario === "tarball-404") {
-				return new Response(null, { status: 404, statusText: "Not Found" });
+				return new Response(null, {
+					status: 404,
+					statusText: "Not Found",
+				});
 			}
 			if (scenario === "corrupt") {
-				return new Response("definitely not a tarball", { status: 200 });
+				return new Response("definitely not a tarball", {
+					status: 200,
+				});
 			}
 			return new Response(tarball);
 		}
@@ -127,9 +148,8 @@ process.argv = [
 process.chdir(workspaceRoot);
 // query 强制独立实例（说明见 run-help.test.ts）
 const specifier = "../index.ts?remote-run";
-const { start, getLocalRegistry, readNpmrcRegistry } = (await import(
-	specifier
-)) as typeof import("../index.ts");
+const { start, getLocalRegistry, readNpmrcRegistry } =
+	(await import(specifier)) as typeof import("../index.ts");
 process.chdir(previousCwd);
 
 const logs: string[] = [];
@@ -179,11 +199,17 @@ afterAll(() => {
 function reset(sc: typeof scenario): void {
 	scenario = sc;
 	logs.length = 0;
-	rmSync(join(workspaceRoot, "myapp"), { recursive: true, force: true });
+	rmSync(join(workspaceRoot, "myapp"), {
+		recursive: true,
+		force: true,
+	});
 	// giget 把 tarball 缓存到系统临时目录（win32 为 tmpdir()/giget，不受
 	// XDG_CACHE_HOME 影响）；逐用例清理，避免上一场景的缓存（tarball-404
 	// 的缺失或 corrupt 的损坏归档）被 giget 的「下载失败回退缓存」吞掉
-	rmSync(join(tmpdir(), "giget"), { recursive: true, force: true });
+	rmSync(join(tmpdir(), "giget"), {
+		recursive: true,
+		force: true,
+	});
 }
 
 describe("create-koishi-ce 远程模板", () => {
@@ -193,7 +219,9 @@ describe("create-koishi-ce 远程模板", () => {
 		const dir = join(workspaceRoot, "myapp");
 		expect(existsSync(join(dir, "index.js"))).toBe(true);
 		// 超长名文件经 pax 扩展头正常落盘（tarPack 打包 → giget 解包全链路）
-		expect(readFileSync(join(dir, `${longName}.txt`), "utf8")).toBe("pax");
+		expect(
+			readFileSync(join(dir, `${longName}.txt`), "utf8"),
+		).toBe("pax");
 		const manifest = JSON.parse(
 			readFileSync(join(dir, "package.json"), "utf8"),
 		) as Record<string, unknown>;
@@ -207,19 +235,27 @@ describe("create-koishi-ce 远程模板", () => {
 
 	it("模板包元数据 404：HttpError 提示后以码 1 退出", async () => {
 		reset("meta-404");
-		await expect(start()).rejects.toThrow("process.exit(1)");
+		await expect(start()).rejects.toThrow(
+			"process.exit(1)",
+		);
 		expect(logs.join("\n")).toContain("请求失败：HTTP 404");
 	});
 
 	it("dist-tag 引用不存在：以码 1 退出", async () => {
 		reset("missing-ref");
-		await expect(start()).rejects.toThrow("process.exit(1)");
-		expect(logs.join("\n")).toContain("模板 fake-tpl@beta 不存在");
+		await expect(start()).rejects.toThrow(
+			"process.exit(1)",
+		);
+		expect(logs.join("\n")).toContain(
+			"模板 fake-tpl@beta 不存在",
+		);
 	});
 
 	it("tarball 下载 404：以码 1 退出", async () => {
 		reset("tarball-404");
-		await expect(start()).rejects.toThrow("process.exit(1)");
+		await expect(start()).rejects.toThrow(
+			"process.exit(1)",
+		);
 		expect(logs.join("\n")).toContain("请求失败：HTTP 404");
 	});
 
@@ -239,23 +275,36 @@ describe("create-koishi-ce 远程模板", () => {
 		writeFileSync(join(dir, "occupier.txt"), "占位");
 		confirmAnswers.push(true);
 		await start();
-		expect(existsSync(join(dir, "occupier.txt"))).toBe(false);
+		expect(existsSync(join(dir, "occupier.txt"))).toBe(
+			false,
+		);
 		expect(existsSync(join(dir, "index.js"))).toBe(true);
 	});
 
 	it("registry 探测纯函数（补本实例的行覆盖）", () => {
 		const npmrc = join(workspaceRoot, ".npmrc");
-		writeFileSync(npmrc, "registry=https://registry.example.com/\n");
-		expect(readNpmrcRegistry(npmrc)).toBe("https://registry.example.com/");
-		expect(
-			readNpmrcRegistry(join(workspaceRoot, "absent.npmrc")),
-		).toBeUndefined();
-		expect(getLocalRegistry(workspaceRoot, workspaceRoot)).toBe(
+		writeFileSync(
+			npmrc,
+			"registry=https://registry.example.com/\n",
+		);
+		expect(readNpmrcRegistry(npmrc)).toBe(
 			"https://registry.example.com/",
 		);
+		expect(
+			readNpmrcRegistry(
+				join(workspaceRoot, "absent.npmrc"),
+			),
+		).toBeUndefined();
+		expect(
+			getLocalRegistry(workspaceRoot, workspaceRoot),
+		).toBe("https://registry.example.com/");
 		rmSync(npmrc, { force: true });
-		expect(getLocalRegistry(workspaceRoot, workspaceRoot)).toBeUndefined();
+		expect(
+			getLocalRegistry(workspaceRoot, workspaceRoot),
+		).toBeUndefined();
 		// 临时目录内容核对后由 afterAll 统一清理
-		expect(readdirSync(workspaceRoot).length).toBeGreaterThan(0);
+		expect(
+			readdirSync(workspaceRoot).length,
+		).toBeGreaterThan(0);
 	});
 });

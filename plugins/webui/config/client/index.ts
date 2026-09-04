@@ -12,13 +12,22 @@
  * - 注册 /plugins 路由的"插件配置"页面（components/index.vue）；
  * - 声明配置树右键菜单 config.tree 的菜单项与图标。
  */
-import { type Context, router, Service, send } from "@koishi-ce/client";
+import {
+	type Context,
+	router,
+	Service,
+	send,
+} from "@koishi-ce/client";
 import type {} from "@koishi-ce/plugin-config";
 import { defineComponent, h, resolveComponent } from "vue";
 import Forks from "./components/forks.vue";
 import Settings from "./components/index.vue";
 import Select from "./components/select.vue";
-import { dialogFork, plugins, type } from "./components/utils";
+import {
+	dialogFork,
+	plugins,
+	type,
+} from "./components/utils";
 
 import "virtual:uno.css";
 import "./index.scss";
@@ -83,15 +92,18 @@ export default class ConfigWriter extends Service {
 		ctx.menu("config.tree", [
 			{
 				id: "config.tree.toggle",
-				type: ({ config }) => (config.tree?.disabled ? "" : (type.value ?? "")),
-				icon: ({ config }) => (config.tree?.disabled ? "play" : "stop"),
+				type: ({ config }) =>
+					config.tree?.disabled ? "" : (type.value ?? ""),
+				icon: ({ config }) =>
+					config.tree?.disabled ? "play" : "stop",
 				label: ({ config }) =>
 					(config.tree?.disabled ? "启用" : "停用") +
 					(config.tree?.name === "group" ? "分组" : "插件"),
 			},
 			{
 				id: ".save",
-				icon: ({ config }) => (config.tree?.disabled ? "save" : "check"),
+				icon: ({ config }) =>
+					config.tree?.disabled ? "save" : "check",
 				label: ({ config }) =>
 					config.tree?.disabled ? "保存配置" : "重载配置",
 			},
@@ -146,11 +158,19 @@ export default class ConfigWriter extends Service {
 	 * @param passive 为 true 时只确保配置存在，不发生路由跳转 / 弹窗
 	 */
 	ensure(name: string, passive?: boolean) {
-		const shortname = name.replace(/(koishi-|^@koishijs\/)plugin-/, "");
+		const shortname = name.replace(
+			/(koishi-|^@koishijs\/)plugin-/,
+			"",
+		);
 		const forks = plugins.value.forks[shortname];
 		if (!forks?.length) {
 			const key = Math.random().toString(36).slice(2, 8);
-			void send("manager/unload", "", `${shortname}:${key}`, {});
+			void send(
+				"manager/unload",
+				"",
+				`${shortname}:${key}`,
+				{},
+			);
 			if (!passive) router.push(`/plugins/${key}`);
 		} else if (forks.length === 1) {
 			if (!passive) router.push(`/plugins/${forks[0]}`);
@@ -165,12 +185,19 @@ export default class ConfigWriter extends Service {
 	 * @param name 插件完整包名
 	 */
 	remove(name: string) {
-		const shortname = name.replace(/(koishi-|^@koishijs\/)plugin-/, "");
+		const shortname = name.replace(
+			/(koishi-|^@koishijs\/)plugin-/,
+			"",
+		);
 		const forks = plugins.value.forks[shortname];
 		for (const id of forks ?? []) {
 			const tree = plugins.value.paths[id];
 			if (!tree) continue;
-			void send("manager/remove", tree.parent?.path ?? "", tree.id);
+			void send(
+				"manager/remove",
+				tree.parent?.path ?? "",
+				tree.id,
+			);
 		}
 	}
 
@@ -181,7 +208,12 @@ export default class ConfigWriter extends Service {
 	 * @returns 对应的配置树节点列表（无配置时为 undefined）
 	 */
 	get(name: string) {
-		const shortname = name.replace(/(koishi-|^@koishijs\/)plugin-/, "");
-		return plugins.value.forks[shortname]?.map((id) => plugins.value.paths[id]);
+		const shortname = name.replace(
+			/(koishi-|^@koishijs\/)plugin-/,
+			"",
+		);
+		return plugins.value.forks[shortname]?.map(
+			(id) => plugins.value.paths[id],
+		);
 	}
 }

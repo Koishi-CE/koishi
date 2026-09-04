@@ -12,10 +12,15 @@
 import { type Awaitable, isNullable } from "cosmokit";
 import type { Middleware } from "../middleware/index.ts";
 import { SessionExecutable } from "./execute.ts";
-import type { PromptOptions, Session, SuggestOptions } from "./types.ts";
+import type {
+	PromptOptions,
+	Session,
+	SuggestOptions,
+} from "./types.ts";
 
 /** 会话交互层：会话级中间件、追问与建议确认 */
-export interface SessionInteractive extends SessionExecutable {}
+export interface SessionInteractive
+	extends SessionExecutable {}
 
 export class SessionInteractive extends SessionExecutable {
 	/**
@@ -37,18 +42,26 @@ export class SessionInteractive extends SessionExecutable {
 	 * 回调返回 null/undefined 视为"未消费"，继续传递给后续中间件。
 	 * 超时后注销中间件并 resolve(undefined)。
 	 */
-	override prompt(timeout?: number): Promise<string | undefined>;
+	override prompt(
+		timeout?: number,
+	): Promise<string | undefined>;
 	override prompt<T>(
 		callback: (session: Session) => Awaitable<T>,
 		options?: PromptOptions,
 	): Promise<T>;
 	override prompt(...args: unknown[]): unknown {
-		const callback: (session: Session) => Awaitable<unknown> =
+		const callback: (
+			session: Session,
+		) => Awaitable<unknown> =
 			typeof args[0] === "function"
-				? (args.shift() as (session: Session) => Awaitable<unknown>)
+				? (args.shift() as (
+						session: Session,
+					) => Awaitable<unknown>)
 				: (session) => {
 						// 剥离消息开头 @机器人 的元素，只留正文
-						const elements = (session.elements ?? []).slice();
+						const elements = (
+							session.elements ?? []
+						).slice();
 						const first = elements[0];
 						if (
 							first &&
@@ -60,20 +73,25 @@ export class SessionInteractive extends SessionExecutable {
 						return elements.join("").trim();
 					};
 		const options: PromptOptions =
-			typeof args[0] === "number" ? { timeout: args[0] } : (args[0] ?? {});
+			typeof args[0] === "number"
+				? { timeout: args[0] }
+				: (args[0] ?? {});
 		return new Promise<string | undefined>((resolve) => {
-			const dispose = this.middleware(async (session, next) => {
-				clearTimeout(timer);
-				dispose();
-				const value = await callback(session);
-				// 实现内部仅以文本兑现；重载泛型 T 的兑现值由签名表达
-				resolve(value as string | undefined);
-				if (isNullable(value)) return next();
-			});
+			const dispose = this.middleware(
+				async (session, next) => {
+					clearTimeout(timer);
+					dispose();
+					const value = await callback(session);
+					// 实现内部仅以文本兑现；重载泛型 T 的兑现值由签名表达
+					resolve(value as string | undefined);
+					if (isNullable(value)) return next();
+				},
+			);
 			const timer = setTimeout(() => {
 				dispose();
 				resolve(undefined);
-			}, options.timeout ?? this.app.koishi.config.delay?.prompt);
+			}, options.timeout ??
+				this.app.koishi.config.delay?.prompt);
 		});
 	}
 
@@ -84,17 +102,25 @@ export class SessionInteractive extends SessionExecutable {
 	 * 生成"你是不是想输入：xxx"提示；恰好剩一个候选时额外等待用户
 	 * 输入 `.`（或 `。`）确认并返回该候选，其余情况返回 undefined。
 	 */
-	override async suggest(options: SuggestOptions): Promise<string | undefined> {
+	override async suggest(
+		options: SuggestOptions,
+	): Promise<string | undefined> {
 		let { expect, filter, prefix = "" } = options;
 		if (options.actual) {
 			const actual = options.actual;
 			expect = expect.filter((name) => {
-				return name && this.app.i18n.compare(name, actual, options);
+				return (
+					name &&
+					this.app.i18n.compare(name, actual, options)
+				);
 			});
 			if (filter) {
 				expect = (
 					await Promise.all(
-						expect.map(async (name) => [name, await filter(name)] as const),
+						expect.map(
+							async (name) =>
+								[name, await filter(name)] as const,
+						),
 					)
 				)
 					.filter(([, result]) => result)

@@ -49,9 +49,19 @@
  *   并高亮节点的全部祖先子图（向上追溯的所有依赖链）。
  */
 import { store } from "@koishi-ce/client";
-import { useElementSize, useEventListener, watchThrottled } from "@vueuse/core";
+import {
+	useElementSize,
+	useEventListener,
+	watchThrottled,
+} from "@vueuse/core";
 import * as d3 from "d3-force";
-import { computed, onMounted, reactive, ref, watch } from "vue";
+import {
+	computed,
+	onMounted,
+	reactive,
+	ref,
+	watch,
+} from "vue";
 import LinkView from "./link.vue";
 import NodeView from "./node.vue";
 import { getEventPoint, useTooltip } from "./tooltip";
@@ -67,8 +77,12 @@ const fLink = ref<Link>(null);
 
 // 服务端数据为 Insight.Node/Insight.Link 形态;d3 初始化会把节点/连线的
 // 模拟字段与对象引用就地写入同一批对象,故按客户端形态断言使用
-const nodes = reactive<Node[]>(store.insight.nodes as Node[]);
-const links = computed<Link[]>(() => store.insight.edges as unknown as Link[]);
+const nodes = reactive<Node[]>(
+	store.insight.nodes as Node[],
+);
+const links = computed<Link[]>(
+	() => store.insight.edges as unknown as Link[],
+);
 
 /**
  * 计算外层 svg 的尺寸与 transform：先求出全部节点的包围盒，
@@ -118,7 +132,8 @@ function weight(link: Link) {
 function degree(node: Node) {
 	let count = 0;
 	for (const link of links.value) {
-		if (link.source !== node && link.target !== node) continue;
+		if (link.source !== node && link.target !== node)
+			continue;
 		count += weight(link);
 	}
 	return count;
@@ -130,7 +145,10 @@ const forceLink = d3
 	.forceLink<Node, Link>(links.value)
 	.id((node) => node.uid)
 	.strength((link) => {
-		return weight(link) / Math.min(degree(link.source), degree(link.target));
+		return (
+			weight(link) /
+			Math.min(degree(link.source), degree(link.target))
+		);
 	});
 
 const forceManyBody = d3.forceManyBody<Node>();
@@ -154,8 +172,13 @@ const simulation = d3
 function resetForce() {
 	forceLink.distance(100); // (config.value.link.distance)
 	forceManyBody.strength(-200); // (-config.value.strengh.repulsion)
-	forceX.strength(0.1 * (height.value / (width.value + height.value) || 1)); // (config.value.strengh.centering)
-	forceY.strength(0.1 * (width.value / (width.value + height.value) || 1)); // (config.value.strengh.centering)
+	forceX.strength(
+		0.1 *
+			(height.value / (width.value + height.value) || 1),
+	); // (config.value.strengh.centering)
+	forceY.strength(
+		0.1 * (width.value / (width.value + height.value) || 1),
+	); // (config.value.strengh.centering)
 
 	// alphaMin / alphaTicks 取指数刻度：6~7 个数量级,兼顾收敛速度与稳定性
 	const alphaMin = Math.exp(-6); // (-config.value.simulation.logMin)
@@ -194,7 +217,9 @@ watch(
 	(value) => {
 		if (!value) return;
 		nodes.slice().forEach((source, index) => {
-			const target = value.nodes.find((n) => n.uid === source.uid);
+			const target = value.nodes.find(
+				(n) => n.uid === source.uid,
+			);
 			if (!target) nodes.splice(index, 1);
 		});
 		for (const node of value.nodes) {
@@ -246,7 +271,10 @@ function onMouseLeaveLink(link: Link, event: MouseEvent) {
 }
 
 /** 拖拽开始：固定节点坐标（fx/fy 设为当前值）并加热模拟，使拖拽带动画反馈。 */
-function onDragStart(node: Node, event: MouseEvent | TouchEvent) {
+function onDragStart(
+	node: Node,
+	event: MouseEvent | TouchEvent,
+) {
 	dragged.value = node;
 	simulation.alphaTarget(0.3).restart();
 	const point = getEventPoint(event);
@@ -284,7 +312,10 @@ interface Graph {
 	links: Set<Link>;
 }
 
-const getEmptyGraph = (): Graph => ({ nodes: new Set(), links: new Set() });
+const getEmptyGraph = (): Graph => ({
+	nodes: new Set(),
+	links: new Set(),
+});
 
 /** 仅含一条边及其两端节点的子图。 */
 const getLinkGraph = (link: Link): Graph => ({

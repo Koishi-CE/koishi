@@ -30,14 +30,19 @@ export function apply(ctx: Context) {
 
 			if (options.set) {
 				if (!count || !name) {
-					return session.text("internal.insufficient-arguments");
+					return session.text(
+						"internal.insufficient-arguments",
+					);
 				}
 				user.usage[name] = count;
 				return session.text(".updated");
 			}
 
 			if (name) {
-				return session.text(".present", [name, user.usage[name] || 0]);
+				return session.text(".present", [
+					name,
+					user.usage[name] || 0,
+				]);
 			}
 			const output: string[] = [];
 			for (const key of Object.keys(user.usage).sort()) {
@@ -66,7 +71,9 @@ export function apply(ctx: Context) {
 
 			if (options.set) {
 				if (!value || !name) {
-					return session.text("internal.insufficient-arguments");
+					return session.text(
+						"internal.insufficient-arguments",
+					);
 				}
 				user.timers[name] = +value;
 				return session.text(".updated");
@@ -76,7 +83,8 @@ export function apply(ctx: Context) {
 			if (name) {
 				// 缺少记录时按已过期处理（差值为负）
 				const delta = (user.timers[name] ?? 0) - now;
-				if (delta > 0) return session.text(".present", [name, delta]);
+				if (delta > 0)
+					return session.text(".present", [name, delta]);
 				return session.text(".absent", [name]);
 			}
 			const output: string[] = [];

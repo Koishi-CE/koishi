@@ -31,6 +31,12 @@ root.start();
 
 if (!global.static) {
 	// global.static 为真表示纯静态构建（无后端），跳过连接
-	const endpoint = new URL(global.endpoint, location.origin).toString();
-	connect(root, () => new WebSocket(endpoint.replace(/^http/, "ws")));
+	const endpoint = new URL(
+		global.endpoint,
+		location.origin,
+	).toString();
+	connect(
+		root,
+		() => new WebSocket(endpoint.replace(/^http/, "ws")),
+	);
 }

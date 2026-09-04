@@ -10,7 +10,11 @@
  *   数据直接来自本地保存的沙盒消息；
  * - receive()：接收 node 侧推送的 sandbox/message、sandbox/clear 与 sandbox/request。
  */
-import { receive, send, useStorage } from "@koishi-ce/client";
+import {
+	receive,
+	send,
+	useStorage,
+} from "@koishi-ce/client";
 import type { Dict } from "@koishi-ce/koishi";
 import type { Message } from "@koishi-ce/plugin-sandbox";
 import type { RemovableRef } from "@vueuse/core";
@@ -52,17 +56,14 @@ interface SandboxConfig {
  * platform 在首次初始化时生成随机的 `sandbox:` 前缀平台名，与 node 侧
  * SandboxBot 的平台一一对应；messages 以频道 id（`@私聊` / `#` 群聊）分组。
  */
-export const config: RemovableRef<SandboxConfig> = useStorage<SandboxConfig>(
-	"sandbox",
-	1.1,
-	() => ({
+export const config: RemovableRef<SandboxConfig> =
+	useStorage<SandboxConfig>("sandbox", 1.1, () => ({
 		platform: `sandbox:${Math.random().toString(36).slice(2)}`,
 		user: "",
 		index: 0,
 		messages: {},
 		panelType: "private",
-	}),
-);
+	}));
 
 /** 当前会话的频道 id：群聊固定为 `#`，私聊为 `@当前用户`。 */
 export const channel = computed(() => {
@@ -73,7 +74,9 @@ export const channel = computed(() => {
 // 机器人回复到达:归属本平台的消息按频道归档上屏
 receive("sandbox/message", (message: Message) => {
 	if (message.platform !== config.value.platform) return;
-	(config.value.messages[message.channel] ||= []).push(message);
+	(config.value.messages[message.channel] ||= []).push(
+		message,
+	);
 });
 
 // clear 命令:清空当前频道的消息列表
@@ -107,7 +110,10 @@ export const api = {
 			(msg) => msg.id === messageId,
 		);
 	},
-	getChannel(_data: { channelId: string; guildId?: string }) {
+	getChannel(_data: {
+		channelId: string;
+		guildId?: string;
+	}) {
 		return { channelId: "#" };
 	},
 	getChannelList(_data: { guildId: string }) {
@@ -119,7 +125,12 @@ export const api = {
 	getGuildList() {
 		return { data: { guildId: "#" } };
 	},
-	getGuildMember({ userId }: { guildId: string; userId: string }) {
+	getGuildMember({
+		userId,
+	}: {
+		guildId: string;
+		userId: string;
+	}) {
 		return { userId, username: userId };
 	},
 	getGuildMemberList(_data: { guildId: string }) {
@@ -138,7 +149,9 @@ receive<{ method: string; nonce: string; data: unknown }>(
 	"sandbox/request",
 	({ method, nonce, data }) => {
 		// 方法名与载荷形状由服务端 SandboxBot.request 动态约定，按统一签名分发
-		const handler = (api as Record<string, (data: unknown) => unknown>)[method];
+		const handler = (
+			api as Record<string, (data: unknown) => unknown>
+		)[method];
 		const result = handler?.(data);
 		void send("sandbox/response", nonce, result);
 	},

@@ -11,7 +11,14 @@
  * 临时目录；依赖版本取自 koishi 元包依赖表（按 loader 自身位置解析，
  * 与 cwd 无关）。
  */
-import { afterAll, afterEach, beforeAll, describe, expect, it } from "bun:test";
+import {
+	afterAll,
+	afterEach,
+	beforeAll,
+	describe,
+	expect,
+	it,
+} from "bun:test";
 import { promises as fs } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
@@ -32,9 +39,14 @@ async function withDir(
 	fn: (dir: string) => Promise<void>,
 	meta: Record<string, unknown> = { name: "test-app" },
 ) {
-	const dir = await fs.mkdtemp(join(tmpdir(), "koishi-loader-mig-"));
+	const dir = await fs.mkdtemp(
+		join(tmpdir(), "koishi-loader-mig-"),
+	);
 	try {
-		await Bun.write(join(dir, "package.json"), JSON.stringify(meta));
+		await Bun.write(
+			join(dir, "package.json"),
+			JSON.stringify(meta),
+		);
 		process.chdir(dir);
 		await fn(dir);
 	} finally {
@@ -45,7 +57,9 @@ async function withDir(
 
 /** 读取临时目录下 package.json 的解析结果 */
 async function readMeta(dir: string) {
-	return JSON.parse(await Bun.file(join(dir, "package.json")).text()) as {
+	return JSON.parse(
+		await Bun.file(join(dir, "package.json")).text(),
+	) as {
 		name?: string;
 		dependencies?: Record<string, string>;
 	};
@@ -93,9 +107,13 @@ describe("migrateManifest", () => {
 			});
 
 			const meta = await readMeta(dir);
-			expect(Object.keys(meta.dependencies ?? {})).toEqual(pluginDeps);
+			expect(Object.keys(meta.dependencies ?? {})).toEqual(
+				pluginDeps,
+			);
 			// 版本取自 koishi 元包依赖表
-			expect(meta.dependencies?.["@koishi-ce/plugin-http"]).toBeTruthy();
+			expect(
+				meta.dependencies?.["@koishi-ce/plugin-http"],
+			).toBeTruthy();
 		});
 	});
 
@@ -128,7 +146,9 @@ describe("migrateManifest", () => {
 		await withDir(
 			async (dir) => {
 				await migrateManifest({ port: 5140 });
-				const text = await Bun.file(join(dir, "package.json")).text();
+				const text = await Bun.file(
+					join(dir, "package.json"),
+				).text();
 				expect(text.endsWith("\n")).toBe(true);
 				const meta = JSON.parse(text) as {
 					dependencies: Record<string, string>;
@@ -158,7 +178,10 @@ describe("migrateManifest", () => {
 				// 迁移会改写 config 形状（增删嵌套键），按字典声明避免字面量类型锁死
 				const config: Record<string, unknown> = {
 					plugins: {
-						http: { proxyAgent: "http://proxy:1", timeout: 3 },
+						http: {
+							proxyAgent: "http://proxy:1",
+							timeout: 3,
+						},
 						"proxy-agent": { keep: true },
 					},
 				};
@@ -166,7 +189,10 @@ describe("migrateManifest", () => {
 				expect(config).toEqual({
 					plugins: {
 						http: { timeout: 3 },
-						"proxy-agent": { keep: true, proxyAgent: "http://proxy:1" },
+						"proxy-agent": {
+							keep: true,
+							proxyAgent: "http://proxy:1",
+						},
 					},
 				});
 			},
@@ -185,7 +211,10 @@ describe("migrateManifest", () => {
 				const config: Record<string, unknown> = {
 					plugins: {
 						"group:outer": {
-							"~http:old": { proxyAgent: "nested", other: 1 },
+							"~http:old": {
+								proxyAgent: "nested",
+								other: 1,
+							},
 						},
 						"proxy-agent": {},
 					},
@@ -223,7 +252,10 @@ describe("migrateManifest", () => {
 					plugins: {
 						"group:g": {
 							http: {},
-							"proxy-agent": { exist: 1, proxyAgent: "deep" },
+							"proxy-agent": {
+								exist: 1,
+								proxyAgent: "deep",
+							},
 						},
 					},
 				});
@@ -273,18 +305,24 @@ describe("migrateManifest", () => {
 		await withDir(
 			async (dir) => {
 				await migrateManifest({ plugins: { foo: {} } });
-				expect(await Bun.file(join(dir, "package.json")).text()).toBe(raw);
+				expect(
+					await Bun.file(join(dir, "package.json")).text(),
+				).toBe(raw);
 			},
 			JSON.parse(raw) as Record<string, unknown>,
 		);
 	});
 
 	it("package.json 缺失时仅告警不抛错，config 不被修改", async () => {
-		const dir = await fs.mkdtemp(join(tmpdir(), "koishi-loader-mig-"));
+		const dir = await fs.mkdtemp(
+			join(tmpdir(), "koishi-loader-mig-"),
+		);
 		try {
 			process.chdir(dir);
 			const config = { plugins: { foo: {} } };
-			await expect(migrateManifest(config)).resolves.toBeUndefined();
+			await expect(
+				migrateManifest(config),
+			).resolves.toBeUndefined();
 			expect(config).toEqual({ plugins: { foo: {} } });
 		} finally {
 			process.chdir(rootDir);

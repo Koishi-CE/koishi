@@ -30,7 +30,10 @@ const initialKeys = new Set(
 );
 
 /** 找到带引号值的闭合引号位置（跳过转义字符），未闭合返回 -1 */
-function findQuoteClose(raw: string, quote: string): number {
+function findQuoteClose(
+	raw: string,
+	quote: string,
+): number {
 	for (let index = 1; index < raw.length; index++) {
 		if (raw[index] === "\\") {
 			index++;
@@ -69,7 +72,9 @@ export function parseEnv(source: string): Dict<string> {
 		// 空行与注释行跳过；支持可选的 export 前缀
 		if (!line || line.startsWith("#")) continue;
 		line = line.replace(/^export\s+/, "");
-		const assignment = /^([\w.-]+)\s*[=:]\s*(.*)$/.exec(line);
+		const assignment = /^([\w.-]+)\s*[=:]\s*(.*)$/.exec(
+			line,
+		);
 		if (!assignment) continue;
 		const [, key = "", rest = ""] = assignment;
 		const quote = rest[0];
@@ -81,7 +86,10 @@ export function parseEnv(source: string): Dict<string> {
 				raw += `\n${lines[++index] ?? ""}`;
 				close = findQuoteClose(raw, quote);
 			}
-			result[key] = close < 0 ? raw : unquote(raw.slice(0, close + 1), quote);
+			result[key] =
+				close < 0
+					? raw
+					: unquote(raw.slice(0, close + 1), quote);
 		} else {
 			// 无引号值：剥离行内注释（# 前需有空白）与首尾空白
 			result[key] = rest.replace(/\s+#.*$/, "").trim();
@@ -91,11 +99,16 @@ export function parseEnv(source: string): Dict<string> {
 }
 
 /** 读取并合并全部 env 文件（后者覆盖前者），文件缺失时静默跳过 */
-export async function parseEnvFiles(filenames: readonly string[]) {
+export async function parseEnvFiles(
+	filenames: readonly string[],
+) {
 	const parsed: Dict<string> = {};
 	for (const filename of filenames) {
 		try {
-			Object.assign(parsed, parseEnv(await Bun.file(filename).text()));
+			Object.assign(
+				parsed,
+				parseEnv(await Bun.file(filename).text()),
+			);
 		} catch {}
 	}
 	return parsed;

@@ -15,12 +15,20 @@
 
 import type { h } from "@satorijs/core";
 import type { Dict } from "cosmokit";
-import type { Channel, User } from "../../database/index.ts";
+import type {
+	Channel,
+	User,
+} from "../../database/index.ts";
 import type { Next } from "../../middleware/index.ts";
 import type { Permissions } from "../../permission.ts";
 import type { Session } from "../../session/index.ts";
 import type { Command } from "../command/command.ts";
-import { bracs, interpolate, Tokenizer, whitespace } from "./tokenizer.ts";
+import {
+	bracs,
+	interpolate,
+	Tokenizer,
+	whitespace,
+} from "./tokenizer.ts";
 
 /** tokenizer 产出的最小词法单元 */
 export interface Token {
@@ -135,7 +143,10 @@ export namespace Argv {
 	export type DomainType = keyof Domain;
 
 	/** 提取声明段 `foo:bar` 中冒号后的 domain 名并映射到对应类型；未标注则回退 F */
-	type ParamType<S extends string, F> = S extends `${string}:${infer T}`
+	type ParamType<
+		S extends string,
+		F,
+	> = S extends `${string}:${infer T}`
 		? T extends DomainType
 			? Domain[T]
 			: F
@@ -146,27 +157,38 @@ export namespace Argv {
 		S extends string,
 		X extends string,
 		Y extends string,
-	> = S extends `${infer L}${X}${infer R}` ? `${L}${Y}${Replace<R, X, Y>}` : S;
+	> = S extends `${infer L}${X}${infer R}`
+		? `${L}${Y}${Replace<R, X, Y>}`
+		: S;
 
 	/** 提取声明中全部 `...]` 段的类型（对应每个具名参数） */
-	type ExtractAll<S extends string, F> = S extends `${infer L}]${infer R}`
+	type ExtractAll<
+		S extends string,
+		F,
+	> = S extends `${infer L}]${infer R}`
 		? [ParamType<L, F>, ...ExtractAll<R, F>]
 		: [];
 
 	/** 只提取声明中第一个 `...]` 段的类型（选项只取一个值） */
-	type ExtractFirst<S extends string, F> = S extends `${infer L}]${string}`
+	type ExtractFirst<
+		S extends string,
+		F,
+	> = S extends `${infer L}]${string}`
 		? ParamType<L, F>
 		: boolean;
 
 	/** 处理变长参数 `...`：其后的类型展开为不定长数组，前缀保持定长元组 */
-	type ExtractSpread<S extends string> = S extends `${infer L}...${infer R}`
-		? [...ExtractAll<L, string>, ...ExtractFirst<R, string>[]]
-		: [...ExtractAll<S, string>, ...string[]];
+	type ExtractSpread<S extends string> =
+		S extends `${infer L}...${infer R}`
+			? [
+					...ExtractAll<L, string>,
+					...ExtractFirst<R, string>[],
+				]
+			: [...ExtractAll<S, string>, ...string[]];
 
 	/** 从命令定义的参数部分（如 `<a:number> [...b:string]`）推导 args 的元组类型 */
-	export type ArgumentType<S extends string> = ExtractSpread<
-		Replace<S, ">", "]">
-	>;
+	export type ArgumentType<S extends string> =
+		ExtractSpread<Replace<S, ">", "]">>;
 
 	/** 从选项定义（如 `<val:number>`）推导选项值类型；无值声明的选项推导为 boolean，
 	 * 带值声明但未标注类型时推导为 string（与运行时 parseValue 的默认 string 域一致） */
@@ -202,7 +224,10 @@ export namespace Argv {
 	}
 
 	/** 类型转换函数：把原始字符串转换为实际取值；抛出异常即视为校验失败 */
-	export type Transform<T> = (source: string, session: Session) => T;
+	export type Transform<T> = (
+		source: string,
+		session: Session,
+	) => T;
 
 	/** domain 的注册配置 */
 	export interface DomainConfig<T = unknown> {
@@ -215,7 +240,11 @@ export namespace Argv {
 	}
 
 	/** 选项固定取值的类型（value 变体，如 "-A, --anonymous" 预设值） */
-	export type OptionValue = string | number | boolean | null;
+	export type OptionValue =
+		| string
+		| number
+		| boolean
+		| null;
 
 	/** 选项注册配置 */
 	export interface OptionConfig<T extends Type = Type>
@@ -235,7 +264,8 @@ export namespace Argv {
 	}
 
 	/** 强制携带 type 的选项配置（重载签名用，保证推导出的值类型准确） */
-	export interface TypedOptionConfig<T extends Type> extends OptionConfig<T> {
+	export interface TypedOptionConfig<T extends Type>
+		extends OptionConfig<T> {
 		type: T;
 	}
 
@@ -246,7 +276,9 @@ export namespace Argv {
 	}
 
 	/** 选项的完整声明：合并 Declaration 与变体信息 */
-	export interface OptionDeclaration extends Declaration, OptionVariant {
+	export interface OptionDeclaration
+		extends Declaration,
+			OptionVariant {
 		/** 别名到固定取值的映射（value 选项） */
 		values: Dict<OptionValue>;
 		/** @deprecated 已废弃，保留兼容 */
@@ -256,7 +288,8 @@ export namespace Argv {
 	}
 
 	/** 选项名到声明的映射表 */
-	export type OptionDeclarationMap = Dict<OptionDeclaration>;
+	export type OptionDeclarationMap =
+		Dict<OptionDeclaration>;
 }
 
 // 与上方 interface Argv / namespace Argv 合并声明

@@ -18,7 +18,9 @@ export async function collectStats(
 		page_size?: number | bigint;
 	};
 	const stats: Driver.Stats = {
-		size: Number(pageCount?.page_count ?? 0) * Number(pageSize?.page_size ?? 0),
+		size:
+			Number(pageCount?.page_count ?? 0) *
+			Number(pageSize?.page_size ?? 0),
 		tables: {},
 	};
 	const dbstats = driver._all(

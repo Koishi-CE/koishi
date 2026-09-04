@@ -43,7 +43,9 @@ const getImplements = (name: string) =>
 
 const getAvailable = (name: string) =>
 	Object.values(store.market.data ?? {})
-		.filter((data) => getImplements(data.package.name).includes(name))
+		.filter((data) =>
+			getImplements(data.package.name).includes(name),
+		)
 		.map((data) => data.package.name);
 
 const available = computed(() => {

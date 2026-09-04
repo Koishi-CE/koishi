@@ -8,7 +8,12 @@
  * 覆盖 help 扩展输出、运行时拦截与 usage / timer 管理指令。
  * 时间相关用例借 fake-timers 把时钟固定在同一基准上再推进。
  */
-import { afterAll, beforeAll, describe, it } from "bun:test";
+import {
+	afterAll,
+	beforeAll,
+	describe,
+	it,
+} from "bun:test";
 import { App, type Argv, Time } from "@koishi-ce/koishi";
 import * as help from "@koishi-ce/plugin-help";
 import mock from "@koishi-ce/plugin-mock";
@@ -35,7 +40,10 @@ beforeAll(async () => {
 	await app.start();
 	await app.mock.initUser("123", 4, {
 		usage: { foo: 1, _date: Time.getDateNumber() },
-		timers: { bar: now + Time.minute, _date: now + Time.day },
+		timers: {
+			bar: now + Time.minute,
+			_date: now + Time.day,
+		},
 	});
 });
 
@@ -47,7 +55,9 @@ describe("@koishi-ce/plugin-rate-limit", () => {
 			.command("foo", "指令1", { maxUsage: 3 })
 			// notUsage 由 rate-limit 的 schema.extend 运行时注入，类型层未做全局
 			// 增强（避免令 help 插件预留的 @ts-expect-error 失效），这里经断言传入
-			.option("opt1", "选项1", { notUsage: true } as Argv.OptionConfig)
+			.option("opt1", "选项1", {
+				notUsage: true,
+			} as Argv.OptionConfig)
 			.option("opt2", "选项2")
 			.action(() => "test");
 
@@ -70,7 +80,10 @@ describe("@koishi-ce/plugin-rate-limit", () => {
 			cmd.config.showWarning = true;
 			await client1.shouldReply("foo", "test");
 			await client1.shouldReply("foo", "test");
-			await client1.shouldReply("foo", "调用次数已达上限。");
+			await client1.shouldReply(
+				"foo",
+				"调用次数已达上限。",
+			);
 			await client2.shouldReply("foo", "test");
 			await client1.shouldReply("foo --opt1", "test");
 			cmd.config.showWarning = false;
@@ -78,9 +91,18 @@ describe("@koishi-ce/plugin-rate-limit", () => {
 		});
 
 		it("Modify Usages", async () => {
-			await client1.shouldReply("usage", "今日各功能的调用次数为：\nfoo：3");
-			await client1.shouldReply("usage -c foo", "设置成功。");
-			await client1.shouldReply("usage", "今日没有调用过消耗次数的功能。");
+			await client1.shouldReply(
+				"usage",
+				"今日各功能的调用次数为：\nfoo：3",
+			);
+			await client1.shouldReply(
+				"usage -c foo",
+				"设置成功。",
+			);
+			await client1.shouldReply(
+				"usage",
+				"今日没有调用过消耗次数的功能。",
+			);
 			await client1.shouldReply(
 				"usage -s bar",
 				"缺少参数，输入帮助以查看用法。",
@@ -89,11 +111,23 @@ describe("@koishi-ce/plugin-rate-limit", () => {
 				"usage -s bar nan",
 				"参数 value 输入无效，请提供一个正整数。",
 			);
-			await client1.shouldReply("usage -s bar 2", "设置成功。");
-			await client1.shouldReply("usage bar", "今日 bar 功能的调用次数为：2");
-			await client1.shouldReply("usage baz", "今日 baz 功能的调用次数为：0");
+			await client1.shouldReply(
+				"usage -s bar 2",
+				"设置成功。",
+			);
+			await client1.shouldReply(
+				"usage bar",
+				"今日 bar 功能的调用次数为：2",
+			);
+			await client1.shouldReply(
+				"usage baz",
+				"今日 baz 功能的调用次数为：0",
+			);
 			await client1.shouldReply("usage -c", "设置成功。");
-			await client1.shouldReply("usage", "今日没有调用过消耗次数的功能。");
+			await client1.shouldReply(
+				"usage",
+				"今日没有调用过消耗次数的功能。",
+			);
 		});
 	});
 
@@ -104,7 +138,9 @@ describe("@koishi-ce/plugin-rate-limit", () => {
 				hideOptions: true,
 			})
 			// 同上：notUsage 经断言传入（运行时由 schema.extend 注册）
-			.option("opt1", "选项1", { notUsage: true } as Argv.OptionConfig)
+			.option("opt1", "选项1", {
+				notUsage: true,
+			} as Argv.OptionConfig)
 			.option("opt2", "选项2")
 			.action(() => "test");
 
@@ -128,7 +164,10 @@ describe("@koishi-ce/plugin-rate-limit", () => {
 			const clock = install({ now });
 			try {
 				cmd.config.showWarning = true;
-				await client1.shouldReply("bar", "调用过于频繁，请稍后再试。");
+				await client1.shouldReply(
+					"bar",
+					"调用过于频繁，请稍后再试。",
+				);
 				await client2.shouldReply("bar", "test");
 				clock.tick(Time.minute + 1);
 				now = clock.now;
@@ -148,8 +187,14 @@ describe("@koishi-ce/plugin-rate-limit", () => {
 					"timer",
 					"各定时器的生效时间为：\nbar：剩余 3 分钟",
 				);
-				await client1.shouldReply("timer -c bar", "设置成功。");
-				await client1.shouldReply("timer", "当前没有生效的定时器。");
+				await client1.shouldReply(
+					"timer -c bar",
+					"设置成功。",
+				);
+				await client1.shouldReply(
+					"timer",
+					"当前没有生效的定时器。",
+				);
 				await client1.shouldReply(
 					"timer -s foo",
 					"缺少参数，输入帮助以查看用法。",
@@ -158,14 +203,23 @@ describe("@koishi-ce/plugin-rate-limit", () => {
 					"timer -s foo nan",
 					"参数 value 输入无效，请输入合法的时间。",
 				);
-				await client1.shouldReply("timer -s foo 2min", "设置成功。");
+				await client1.shouldReply(
+					"timer -s foo 2min",
+					"设置成功。",
+				);
 				await client1.shouldReply(
 					"timer foo",
 					"定时器 foo 的生效时间为：剩余 2 分钟",
 				);
-				await client1.shouldReply("timer fox", "定时器 fox 当前并未生效。");
+				await client1.shouldReply(
+					"timer fox",
+					"定时器 fox 当前并未生效。",
+				);
 				await client1.shouldReply("timer -c", "设置成功。");
-				await client1.shouldReply("timer", "当前没有生效的定时器。");
+				await client1.shouldReply(
+					"timer",
+					"当前没有生效的定时器。",
+				);
 			} finally {
 				clock.uninstall();
 			}
@@ -175,11 +229,17 @@ describe("@koishi-ce/plugin-rate-limit", () => {
 	describe("bypassAuthority", () => {
 		it("bypass maxUsage", async () => {
 			app
-				.command("qux", "指令3", { maxUsage: 1, bypassAuthority: 3 })
+				.command("qux", "指令3", {
+					maxUsage: 1,
+					bypassAuthority: 3,
+				})
 				.action(() => "test");
 
 			await client2.shouldReply("qux", "test");
-			await client2.shouldReply("qux", "调用次数已达上限。");
+			await client2.shouldReply(
+				"qux",
+				"调用次数已达上限。",
+			);
 			await client1.shouldReply("qux", "test");
 			await client1.shouldReply("qux", "test");
 			await client1.shouldReply("qux", "test");

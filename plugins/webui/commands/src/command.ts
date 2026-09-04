@@ -11,7 +11,10 @@ import zhCN from "../locales/zh-CN.yml";
  * @param object 目标对象
  * @param key 要摘除的键
  */
-export function remove<O, K extends keyof O>(object: O, key: K) {
+export function remove<O, K extends keyof O>(
+	object: O,
+	key: K,
+) {
 	const value = object[key];
 	delete object[key];
 	return value;
@@ -23,11 +26,17 @@ export function remove<O, K extends keyof O>(object: O, key: K) {
  * @param ctx 运行上下文
  * @param manager 所属的指令管理器实例
  */
-export default function (ctx: Context, manager: CommandManager) {
+export default function (
+	ctx: Context,
+	manager: CommandManager,
+) {
 	ctx.i18n.define("zh-CN", zhCN);
 
 	ctx
-		.command("command <name>", { authority: 4, checkArgCount: true })
+		.command("command <name>", {
+			authority: 4,
+			checkArgCount: true,
+		})
 		// .option('option', '-o [key]')
 		.option("create", "-c")
 		.option("alias", "-a [name]")
@@ -45,8 +54,13 @@ export default function (ctx: Context, manager: CommandManager) {
 			const snapshot = manager.ensure(name);
 			const command = snapshot.command;
 			if (typeof options.alias === "string") {
-				const item = command._aliases[String(options.rename ?? "")] || {};
-				const aliases = { ...command._aliases, [options.alias]: item };
+				const item =
+					command._aliases[String(options.rename ?? "")] ||
+					{};
+				const aliases = {
+					...command._aliases,
+					[options.alias]: item,
+				};
 				manager.alias(command, aliases, true);
 				delete options.alias;
 			}
@@ -58,7 +72,10 @@ export default function (ctx: Context, manager: CommandManager) {
 			}
 			if (typeof options.rename === "string") {
 				const item = command._aliases[options.rename] || {};
-				const aliases = { [options.rename]: item, ...command._aliases };
+				const aliases = {
+					[options.rename]: item,
+					...command._aliases,
+				};
 				manager.alias(command, aliases, true);
 				delete options.rename;
 			}

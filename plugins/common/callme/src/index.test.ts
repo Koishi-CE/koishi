@@ -1,8 +1,19 @@
 // SPDX-License-Identifier: MIT
 // Copyright (c) 2026-present Koishi-CE contributors.
 
-import { afterAll, beforeAll, describe, expect, it } from "bun:test";
-import { App, Database, Logger, RuntimeError } from "@koishi-ce/koishi";
+import {
+	afterAll,
+	beforeAll,
+	describe,
+	expect,
+	it,
+} from "bun:test";
+import {
+	App,
+	Database,
+	Logger,
+	RuntimeError,
+} from "@koishi-ce/koishi";
 import mock from "@koishi-ce/plugin-mock";
 // 同 admin 既有测试：CJS 实现配 ESM 声明，nodenext 互操作视图多包一层 default，转型取真实插件对象
 import * as memoryModule from "@koishijs/plugin-database-memory";
@@ -53,12 +64,17 @@ describe("callme 指令", () => {
 	});
 
 	it("纯文本以外的内容剥离后为空时提示 empty", async () => {
-		const replies = await client.receive('callme <image url="x"/>');
+		const replies = await client.receive(
+			'callme <image url="x"/>',
+		);
 		expect(replies[0]).toBe("称呼不能为空。");
 	});
 
 	it("common/callme 事件监听者返回字符串可拦截修改", async () => {
-		const dispose = app.on("common/callme", (name) => `禁止设置称呼：${name}`);
+		const dispose = app.on(
+			"common/callme",
+			(name) => `禁止设置称呼：${name}`,
+		);
 		const replies = await client.receive("callme 小红");
 		dispose();
 		expect(replies[0]).toBe("禁止设置称呼：小红");
@@ -69,7 +85,9 @@ describe("callme 指令", () => {
 
 	it("快捷方式「叫我」在称呼机器人后可免指令名调用", async () => {
 		// shortcut 带 prefix: true，要求消息以 @机器人 的称呼开头
-		const replies = await client.receive('<at id="514"/>叫我小红');
+		const replies = await client.receive(
+			'<at id="514"/>叫我小红',
+		);
 		expect(replies[0]).toBe("好的，小红，请多指教！");
 	});
 
@@ -88,11 +106,16 @@ describe("callme 指令", () => {
 		const original = proto["set"];
 		// RuntimeError.check 以 message 精确匹配 code 字符串
 		proto["set"] = async () => {
-			throw new RuntimeError("duplicate-entry", "duplicate-entry");
+			throw new RuntimeError(
+				"duplicate-entry",
+				"duplicate-entry",
+			);
 		};
-		const replies = await client.receive("callme 小亮").finally(() => {
-			proto["set"] = original!;
-		});
+		const replies = await client
+			.receive("callme 小亮")
+			.finally(() => {
+				proto["set"] = original!;
+			});
 		expect(replies[0]).toBe("禁止与其他用户重名。");
 	});
 
@@ -112,7 +135,9 @@ describe("callme 指令", () => {
 			expect(replies[0]).toBe("修改称呼失败。");
 		} finally {
 			proto["set"] = original!;
-			delete (Logger.levels as Record<string, number>)["common"];
+			delete (Logger.levels as Record<string, number>)[
+				"common"
+			];
 		}
 	});
 });

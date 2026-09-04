@@ -9,12 +9,26 @@
  * 绝对 / 相对 / 缺失作用域三种情形，以及 i18n / text 的
  * "频道 -> 群 -> 用户"语言偏好合并（prefer-user / prefer-channel）。
  */
-import { afterAll, beforeAll, describe, expect, it, jest } from "bun:test";
-import { App, h, Logger, type Session } from "@koishi-ce/koishi";
+import {
+	afterAll,
+	beforeAll,
+	describe,
+	expect,
+	it,
+	jest,
+} from "bun:test";
+import {
+	App,
+	h,
+	Logger,
+	type Session,
+} from "@koishi-ce/koishi";
 import mock from "@koishi-ce/plugin-mock";
 
 // prefer-user 与默认 prefer-channel 各一个应用
-const appUser = new App({ i18n: { output: "prefer-user" } });
+const appUser = new App({
+	i18n: { output: "prefer-user" },
+});
 const appChannel = new App();
 appUser.plugin(mock);
 appChannel.plugin(mock);
@@ -29,7 +43,10 @@ const print = jest.fn();
 
 beforeAll(() => {
 	Logger.levels.base = 1;
-	Logger.targets.push({ levels: { base: 0, i18n: 2 }, print });
+	Logger.targets.push({
+		levels: { base: 0, i18n: 2 },
+		print,
+	});
 	return Promise.all([appUser.start(), appChannel.start()]);
 });
 
@@ -42,9 +59,10 @@ afterAll(async () => {
 describe("Session Locale", () => {
 	it("withScope 把相对 i18n 路径拼接作用域前缀", async () => {
 		const session = appUser.bots[0]!.session({}) as Session;
-		const output = await session.withScope("sc.op", async () => [
-			h.i18n({ path: ".rel" }),
-		]);
+		const output = await session.withScope(
+			"sc.op",
+			async () => [h.i18n({ path: ".rel" })],
+		);
 		expect(output).toHaveLength(1);
 		expect(output[0]?.attrs["path"]).toBe("sc.op.rel");
 		// 回调结束后恢复原作用域（原本无作用域则删除）
@@ -53,9 +71,10 @@ describe("Session Locale", () => {
 
 	it("withScope 绝对路径保持不变", async () => {
 		const session = appUser.bots[0]!.session({}) as Session;
-		const output = await session.withScope("sc.op", async () => [
-			h.i18n({ path: "abs.path" }),
-		]);
+		const output = await session.withScope(
+			"sc.op",
+			async () => [h.i18n({ path: "abs.path" })],
+		);
 		expect(output[0]?.attrs["path"]).toBe("abs.path");
 	});
 
@@ -63,7 +82,9 @@ describe("Session Locale", () => {
 		const session = appUser.bots[0]!.session({}) as Session;
 		// 会话已带作用域时，withScope 结束应恢复原值
 		session.scope = "outer";
-		await session.withScope("inner.op", async () => [h.i18n({ path: ".x" })]);
+		await session.withScope("inner.op", async () => [
+			h.i18n({ path: ".x" }),
+		]);
 		expect(session.scope).toBe("outer");
 		delete (session as { scope?: string }).scope;
 	});
@@ -84,7 +105,9 @@ describe("Session Locale", () => {
 
 	it("i18n 语言偏好合并：prefer-user", () => {
 		const session = appUser.bots[0]!.session({}) as Session;
-		(session as unknown as { user: object }).user = { locales: ["ja-JP"] };
+		(session as unknown as { user: object }).user = {
+			locales: ["ja-JP"],
+		};
 		(session as unknown as { channel: object }).channel = {
 			locales: ["de-DE"],
 		};
@@ -93,8 +116,12 @@ describe("Session Locale", () => {
 	});
 
 	it("i18n 语言偏好合并：prefer-channel", () => {
-		const session = appChannel.bots[0]!.session({}) as Session;
-		(session as unknown as { user: object }).user = { locales: ["ja-JP"] };
+		const session = appChannel.bots[0]!.session(
+			{},
+		) as Session;
+		(session as unknown as { user: object }).user = {
+			locales: ["ja-JP"],
+		};
 		(session as unknown as { channel: object }).channel = {
 			locales: ["de-DE"],
 		};
@@ -105,7 +132,9 @@ describe("Session Locale", () => {
 	it("会话自带 locales 永远最优先", () => {
 		const session = appUser.bots[0]!.session({}) as Session;
 		session.locales = ["de-DE"];
-		(session as unknown as { user: object }).user = { locales: ["ja-JP"] };
+		(session as unknown as { user: object }).user = {
+			locales: ["ja-JP"],
+		};
 		expect(session.text("greet")).toBe("hallo");
 	});
 });

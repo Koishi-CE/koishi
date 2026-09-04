@@ -8,7 +8,14 @@
  * 与静默语义、resolve/keyFor/replace 的插件反查、paths 的作用域路径
  * 计算、deprecated 别名转发与 group 插件的增删改联动。
  */
-import { afterAll, beforeAll, describe, expect, it, mock } from "bun:test";
+import {
+	afterAll,
+	beforeAll,
+	describe,
+	expect,
+	it,
+	mock,
+} from "bun:test";
 import {
 	type Context,
 	type Dict,
@@ -63,21 +70,29 @@ class TestLoader extends Loader {
 	}
 
 	protected override locateConfig(): Promise<ResolvedConfigFile> {
-		throw new Error("test loader does not touch the file system");
+		throw new Error(
+			"test loader does not touch the file system",
+		);
 	}
 
 	protected override async parseConfig(): Promise<unknown> {
 		return this.parsed;
 	}
 
-	protected override async saveConfig(filename: string, config: unknown) {
+	protected override async saveConfig(
+		filename: string,
+		config: unknown,
+	) {
 		this.writes.push({ filename, config });
 	}
 }
 
 /** 暴露 protected 成员的探针桩（仅供测试直调） */
 class ExposedLoader extends TestLoader {
-	exposedMigrateEntry(name: string, config?: Dict<unknown>) {
+	exposedMigrateEntry(
+		name: string,
+		config?: Dict<unknown>,
+	) {
 		return this.migrateEntry(name, config);
 	}
 }
@@ -96,7 +111,9 @@ function setupLoader(parsed: unknown, writable = true) {
 describe("Loader.migrateEntry", () => {
 	it("非 group 名直接返回 undefined", () => {
 		const loader = setupLoader({});
-		expect(loader.exposedMigrateEntry("foo", {})).toBeUndefined();
+		expect(
+			loader.exposedMigrateEntry("foo", {}),
+		).toBeUndefined();
 	});
 
 	it("group 键重建：$ 前缀原样、已有标识保持、缺标识生成随机标识", () => {
@@ -135,8 +152,11 @@ describe("Loader.migrateEntry", () => {
 		const result = loader.exposedMigrateEntry("group", {
 			"group:outer": { inner: {} },
 		});
-		const outer = (result?.["group:outer"] ?? {}) as Dict<unknown>;
-		expect(Object.keys(outer)[0]).toMatch(/^inner:[0-9a-z]{6}$/);
+		const outer = (result?.["group:outer"] ??
+			{}) as Dict<unknown>;
+		expect(Object.keys(outer)[0]).toMatch(
+			/^inner:[0-9a-z]{6}$/,
+		);
 	});
 });
 
@@ -152,18 +172,24 @@ describe("Loader.readConfig", () => {
 			expect(config.name).toBe("n-value");
 			// 回写一次，内容为插值前的原始配置（plain 键已被迁移规范化）
 			expect(loader.writes).toHaveLength(1);
-			const written = loader.writes[0]?.config as Dict<unknown>;
-			expect(written["name"]).toBe("n-${{ env.LDR_BASE_VAR }}");
-			expect(Object.keys(written["plugins"] as Dict<unknown>)[0]).toMatch(
-				/^plain:[0-9a-z]{6}$/,
+			const written = loader.writes[0]
+				?.config as Dict<unknown>;
+			expect(written["name"]).toBe(
+				"n-${{ env.LDR_BASE_VAR }}",
 			);
+			expect(
+				Object.keys(written["plugins"] as Dict<unknown>)[0],
+			).toMatch(/^plain:[0-9a-z]{6}$/);
 		} finally {
 			delete process.env["LDR_BASE_VAR"];
 		}
 	});
 
 	it("非首次读取不迁移，只读状态不回写", async () => {
-		const loader = setupLoader({ plugins: { plain: {} } }, false);
+		const loader = setupLoader(
+			{ plugins: { plain: {} } },
+			false,
+		);
 		const config = await loader.readConfig();
 		// Context.Config 会展开 schema 默认值，只校验插件表原样透传
 		expect(config.plugins).toEqual({ plain: {} });
@@ -190,7 +216,10 @@ describe("Loader.writeConfig", () => {
 		const loader = setupLoader({});
 		const emit = mock();
 		loader.app = { emit } as unknown as Context;
-		await Promise.all([loader.writeConfig(true), loader.writeConfig(false)]);
+		await Promise.all([
+			loader.writeConfig(true),
+			loader.writeConfig(false),
+		]);
 		expect(emit).toHaveBeenCalledTimes(1);
 		expect(emit).toHaveBeenCalledWith("config");
 	});
@@ -233,10 +262,14 @@ describe("Loader.interpolate / isTruthyLike", () => {
 		const loader = setupLoader({});
 		expect(loader.isTruthyLike(null)).toBe(true);
 		expect(loader.isTruthyLike(undefined)).toBe(true);
-		expect(loader.isTruthyLike("env.LDR_MISSING_VAR")).toBe(false);
+		expect(loader.isTruthyLike("env.LDR_MISSING_VAR")).toBe(
+			false,
+		);
 		process.env["LDR_PRESENT_VAR"] = "1";
 		try {
-			expect(loader.isTruthyLike("env.LDR_PRESENT_VAR")).toBe(true);
+			expect(
+				loader.isTruthyLike("env.LDR_PRESENT_VAR"),
+			).toBe(true);
 		} finally {
 			delete process.env["LDR_PRESENT_VAR"];
 		}
@@ -248,17 +281,25 @@ describe("Loader 插件反查（resolve / keyFor / replace）", () => {
 		const loader = setupLoader({ plugins: {} });
 		const app = await loader.createApp();
 
-		const foo = (await loader.import("koishi-plugin-foo")) as Plugin.Object;
+		const foo = (await loader.import(
+			"koishi-plugin-foo",
+		)) as Plugin.Object;
 		app.plugin(foo);
 		await loader.resolve("koishi-plugin-foo");
 		expect(loader.keyFor(foo)).toBe("foo");
 
 		// 未登记的插件反查为 undefined
-		const unknown: Plugin.Object = { name: "unknown", apply: () => {} };
+		const unknown: Plugin.Object = {
+			name: "unknown",
+			apply: () => {},
+		};
 		expect(loader.keyFor(unknown)).toBeUndefined();
 
 		// replace：把 foo 的反查记录迁移到 bar
-		const bar: Plugin.Object = { name: "bar", apply: () => {} };
+		const bar: Plugin.Object = {
+			name: "bar",
+			apply: () => {},
+		};
 		app.plugin(bar);
 		loader.replace(foo, bar);
 		expect(loader.keyFor(foo)).toBeUndefined();
@@ -274,14 +315,22 @@ describe("Loader 插件反查（resolve / keyFor / replace）", () => {
 		const app = await loader.createApp();
 
 		// resolvePlugin → resolve
-		const plugin = await loader.resolvePlugin("koishi-plugin-alias");
+		const plugin = await loader.resolvePlugin(
+			"koishi-plugin-alias",
+		);
 		// data 注册表按 Dict<unknown> 声明，按被比较侧的 Plugin 形状收窄
 		expect(plugin).toBe(
-			loader.data["koishi-plugin-alias"] as Plugin | undefined,
+			loader.data["koishi-plugin-alias"] as
+				| Plugin
+				| undefined,
 		);
 
 		// reloadPlugin → reload（group 引用键挂载出 fork，可反查完整引用键）
-		const fork = await loader.reloadPlugin(app, "group:alias", {});
+		const fork = await loader.reloadPlugin(
+			app,
+			"group:alias",
+			{},
+		);
 		expect(fork).toBeTruthy();
 		expect(loader.getRefName(fork!)).toBe("group:alias");
 
@@ -302,19 +351,25 @@ describe("Loader.paths", () => {
 		expect(loader.paths(app.scope)).toEqual([]);
 
 		// 根组 fork：key 为 "entry"
-		const entryFork = await loader.reload(app, "group:aux", {});
-		expect(loader.paths(entryFork as unknown as EffectScope)).toEqual(["aux"]);
+		const entryFork = await loader.reload(
+			app,
+			"group:aux",
+			{},
+		);
+		expect(
+			loader.paths(entryFork as unknown as EffectScope),
+		).toEqual(["aux"]);
 
 		// runtime 作用域：聚合其全部子 fork 的路径（顶层各 fork 的标识）
-		expect(loader.paths(loader.entry.scope.runtime)).toEqual([
-			"entry",
-			"g",
-			"aux",
-		]);
+		expect(
+			loader.paths(loader.entry.scope.runtime),
+		).toEqual(["entry", "g", "aux"]);
 
 		// 无标识的 fork（key 为空）沿父级上溯到根
 		const plainFork = await loader.reload(app, "plain", {});
-		expect(loader.paths(plainFork as unknown as EffectScope)).toEqual([]);
+		expect(
+			loader.paths(plainFork as unknown as EffectScope),
+		).toEqual([]);
 	});
 });
 
@@ -324,8 +379,12 @@ describe("group 插件", () => {
 			plugins: { "group:g": { a: {}, b: {} } },
 		});
 		const app = await loader.createApp();
-		expect(app.registry.get(loader.data["a"] as Plugin)).toBeTruthy();
-		expect(app.registry.get(loader.data["b"] as Plugin)).toBeTruthy();
+		expect(
+			app.registry.get(loader.data["a"] as Plugin),
+		).toBeTruthy();
+		expect(
+			app.registry.get(loader.data["b"] as Plugin),
+		).toBeTruthy();
 
 		// 更新：保留 b、新增 c（组配置键变更会触发 cordis 的 fork 重建，
 		// 删除键的行为受 restart 语义影响，此处只断言结果形态）
@@ -335,8 +394,12 @@ describe("group 插件", () => {
 		app.scope.update(loader.config);
 		await sleep(10);
 
-		expect(app.registry.get(loader.data["b"] as Plugin)).toBeTruthy();
-		expect(app.registry.get(loader.data["c"] as Plugin)).toBeTruthy();
+		expect(
+			app.registry.get(loader.data["b"] as Plugin),
+		).toBeTruthy();
+		expect(
+			app.registry.get(loader.data["c"] as Plugin),
+		).toBeTruthy();
 	});
 
 	it("$ 前缀与 ~ 前缀的键不参与加载", async () => {
@@ -348,7 +411,9 @@ describe("group 插件", () => {
 			},
 		});
 		const app = await loader.createApp();
-		expect(app.registry.get(loader.data["enabled"] as Plugin)).toBeTruthy();
+		expect(
+			app.registry.get(loader.data["enabled"] as Plugin),
+		).toBeTruthy();
 		expect(loader.data["~disabled"]).toBeUndefined();
 		expect(loader.data["$comment"]).toBeUndefined();
 	});

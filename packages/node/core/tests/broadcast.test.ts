@@ -9,9 +9,17 @@
  * 默认只发受理频道、静默频道跳过与 forced 覆盖、指定频道列表时
  * 的精确投递与"未找到频道"告警、空内容短路。
  */
-import { afterAll, beforeAll, describe, expect, it } from "bun:test";
+import {
+	afterAll,
+	beforeAll,
+	describe,
+	expect,
+	it,
+} from "bun:test";
 import { App, Channel, Logger } from "@koishi-ce/koishi";
-import mock, { DEFAULT_SELF_ID } from "@koishi-ce/plugin-mock";
+import mock, {
+	DEFAULT_SELF_ID,
+} from "@koishi-ce/plugin-mock";
 import * as memoryModule from "@koishijs/plugin-database-memory";
 
 // CJS 实现配 ESM 声明，Bun 互操作视图多包一层 default，穿透取真实驱动
@@ -72,7 +80,9 @@ describe("Database Broadcast", () => {
 			await app.broadcast(["mock:A", "mock:404"], "hello");
 			expect(delivered).toEqual(["A"]);
 		} finally {
-			delete (Logger.levels as Record<string, number>)["app"];
+			delete (Logger.levels as Record<string, number>)[
+				"app"
+			];
 		}
 	});
 

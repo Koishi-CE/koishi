@@ -14,7 +14,11 @@
  * 使所有适配器产出的 bot 实例都能调用它们。
  */
 import { sleep } from "@koishi-ce/utils";
-import { Adapter, Bot, type Fragment } from "@satorijs/core";
+import {
+	Adapter,
+	Bot,
+	type Fragment,
+} from "@satorijs/core";
 import { type Dict, defineProperty } from "cosmokit";
 import type { Context } from "./context/index.ts";
 import type { Session } from "./session/index.ts";
@@ -22,7 +26,9 @@ import type { Session } from "./session/index.ts";
 declare module "@satorijs/core" {
 	interface Bot {
 		/** @deprecated 已废弃：请改用 {@link Bot.getGuildMemberIter} 迭代器逐个获取成员。 */
-		getGuildMemberMap(guildId: string): Promise<Dict<string>>;
+		getGuildMemberMap(
+			guildId: string,
+		): Promise<Dict<string>>;
 		/**
 		 * 向多个频道批量发送相同内容的消息。
 		 *
@@ -75,7 +81,9 @@ class KoishiBot {
 	 */
 	async getGuildMemberMap(guildId: string) {
 		const result: Dict<string> = {};
-		for await (const member of this.getGuildMemberIter(guildId)) {
+		for await (const member of this.getGuildMemberIter(
+			guildId,
+		)) {
 			if (!member.user) continue;
 			result[member.user.id] =
 				member.name || member.user.name || member.user.id;
@@ -105,7 +113,11 @@ class KoishiBot {
 					...(typeof value === "string"
 						? await this.sendMessage(value, content)
 						: Array.isArray(value)
-							? await this.sendMessage(value[0], content, value[1])
+							? await this.sendMessage(
+									value[0],
+									content,
+									value[1],
+								)
 							: await this.sendMessage(
 									value.channelId ?? "",
 									content,

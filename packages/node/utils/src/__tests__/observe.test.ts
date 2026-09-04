@@ -4,7 +4,11 @@
 
 import { describe, expect, it } from "bun:test";
 import { mock as jest } from "node:test";
-import { type Dict, noop, observe } from "@koishi-ce/koishi";
+import {
+	type Dict,
+	noop,
+	observe,
+} from "@koishi-ce/koishi";
 
 /** 深层观察用例的动态键对象：键名运行时才确定，静态类型不约束属性值 */
 type Cell = { [key: string]: unknown };
@@ -20,7 +24,9 @@ describe("Observer API", () => {
 		expect(() => observe(true as never)).toThrow();
 		expect(() => observe(noop as never)).toThrow();
 		expect(() => observe(Symbol("foo") as never)).toThrow();
-		expect(() => observe(Symbol.for("foo") as never)).toThrow();
+		expect(() =>
+			observe(Symbol.for("foo") as never),
+		).toThrow();
 		expect(() => observe(null as never)).toThrow();
 		expect(() => observe(undefined as never)).toThrow();
 		expect(() => observe([])).toThrow();
@@ -46,21 +52,37 @@ describe("Observer API", () => {
 		expect(object.$diff).toEqual({ a: 2 });
 
 		object["c"] = 3;
-		expect(object).toEqual<Dict<number>>({ a: 2, b: 2, c: 3 });
+		expect(object).toEqual<Dict<number>>({
+			a: 2,
+			b: 2,
+			c: 3,
+		});
 		expect(object.$diff).toEqual({ a: 2, c: 3 });
 
 		delete object["b"];
 		expect(object).toEqual<Dict<number>>({ a: 2, c: 3 });
-		expect(object.$diff).toEqual({ a: 2, b: undefined, c: 3 });
+		expect(object.$diff).toEqual({
+			a: 2,
+			b: undefined,
+			c: 3,
+		});
 
 		delete object["c"];
 		expect(object).toEqual<Dict<number>>({ a: 2 });
-		expect(object.$diff).toEqual({ a: 2, b: undefined, c: undefined });
+		expect(object.$diff).toEqual({
+			a: 2,
+			b: undefined,
+			c: undefined,
+		});
 	});
 
 	// 验证嵌套对象/数组的深层变更会以顶层键为单位汇总进 $diff
 	it("deep observe", () => {
-		const object = observe<{ a: Cell; c: Cell[]; x: unknown[] }>({
+		const object = observe<{
+			a: Cell;
+			c: Cell[];
+			x: unknown[];
+		}>({
 			a: { b: 1 },
 			c: [{ d: 2 }],
 			x: [{ y: 3 }],
@@ -68,7 +90,11 @@ describe("Observer API", () => {
 		expect(object.$diff).toEqual({});
 
 		object.a["e"] = 3;
-		expect(object).toEqual<{ a: Cell; c: Cell[]; x: unknown[] }>({
+		expect(object).toEqual<{
+			a: Cell;
+			c: Cell[];
+			x: unknown[];
+		}>({
 			a: { b: 1, e: 3 },
 			c: [{ d: 2 }],
 			x: [{ y: 3 }],
@@ -78,7 +104,11 @@ describe("Observer API", () => {
 		});
 
 		object.c.push({ f: 4 });
-		expect(object).toEqual<{ a: Cell; c: Cell[]; x: unknown[] }>({
+		expect(object).toEqual<{
+			a: Cell;
+			c: Cell[];
+			x: unknown[];
+		}>({
 			a: { b: 1, e: 3 },
 			c: [{ d: 2 }, { f: 4 }],
 			x: [{ y: 3 }],
@@ -90,7 +120,11 @@ describe("Observer API", () => {
 
 		// 元素是动态键对象与数组的混合，静态类型用断言收窄
 		(object.x[0] as Cell)["y"] = 4;
-		expect(object).toEqual<{ a: Cell; c: Cell[]; x: unknown[] }>({
+		expect(object).toEqual<{
+			a: Cell;
+			c: Cell[];
+			x: unknown[];
+		}>({
 			a: { b: 1, e: 3 },
 			c: [{ d: 2 }, { f: 4 }],
 			x: [{ y: 4 }],
@@ -102,7 +136,11 @@ describe("Observer API", () => {
 		});
 
 		object.x[1] = [5];
-		expect(object).toEqual<{ a: Cell; c: Cell[]; x: unknown[] }>({
+		expect(object).toEqual<{
+			a: Cell;
+			c: Cell[];
+			x: unknown[];
+		}>({
 			a: { b: 1, e: 3 },
 			c: [{ d: 2 }, { f: 4 }],
 			x: [{ y: 4 }, [5]],
@@ -114,7 +152,11 @@ describe("Observer API", () => {
 		});
 
 		delete object.a["b"];
-		expect(object).toEqual<{ a: Cell; c: Cell[]; x: unknown[] }>({
+		expect(object).toEqual<{
+			a: Cell;
+			c: Cell[];
+			x: unknown[];
+		}>({
 			a: { e: 3 },
 			c: [{ d: 2 }, { f: 4 }],
 			x: [{ y: 4 }, [5]],
@@ -166,41 +208,67 @@ describe("Observer API", () => {
 		expect(flush.mock.calls).toHaveLength(0);
 
 		object.b.shift();
-		expect(object).toEqual<{ a: number; b: number[] }>({ a: 1, b: [] });
+		expect(object).toEqual<{ a: number; b: number[] }>({
+			a: 1,
+			b: [],
+		});
 		expect(object.$diff).toEqual({ b: [] });
 
 		object.$update();
 		expect(flush.mock.calls).toHaveLength(1);
-		expect(flush.mock.calls[0]?.arguments).toEqual([{ b: [] }]);
-		expect(object).toEqual<{ a: number; b: number[] }>({ a: 1, b: [] });
+		expect(flush.mock.calls[0]?.arguments).toEqual([
+			{ b: [] },
+		]);
+		expect(object).toEqual<{ a: number; b: number[] }>({
+			a: 1,
+			b: [],
+		});
 		expect(object.$diff).toEqual({});
 
 		object.a = 3;
-		expect(object).toEqual<{ a: number; b: number[] }>({ a: 3, b: [] });
+		expect(object).toEqual<{ a: number; b: number[] }>({
+			a: 3,
+			b: [],
+		});
 		expect(object.$diff).toEqual({ a: 3 });
 
 		object.$update();
 		expect(flush.mock.calls).toHaveLength(2);
-		expect(flush.mock.calls[1]?.arguments).toEqual([{ a: 3 }]);
-		expect(object).toEqual<{ a: number; b: number[] }>({ a: 3, b: [] });
+		expect(flush.mock.calls[1]?.arguments).toEqual([
+			{ a: 3 },
+		]);
+		expect(object).toEqual<{ a: number; b: number[] }>({
+			a: 3,
+			b: [],
+		});
 		expect(object.$diff).toEqual({});
 	});
 
 	// 验证 $merge 合并外部数据不影响既有 diff，且键冲突时抛错拒绝合并
 	it("merge properties", () => {
-		const object = observe<{ a: number; b?: number }>({ a: 1 });
+		const object = observe<{ a: number; b?: number }>({
+			a: 1,
+		});
 		expect(object.$diff).toEqual({});
 
 		object.a = 2;
-		expect(object).toEqual<{ a: number; b?: number }>({ a: 2 });
+		expect(object).toEqual<{ a: number; b?: number }>({
+			a: 2,
+		});
 		expect(object.$diff).toEqual({ a: 2 });
 
 		object.$merge({ b: 3 });
-		expect(object).toEqual<{ a: number; b?: number }>({ a: 2, b: 3 });
+		expect(object).toEqual<{ a: number; b?: number }>({
+			a: 2,
+			b: 3,
+		});
 		expect(object.$diff).toEqual({ a: 2 });
 
 		expect(() => object.$merge({ a: 3 })).toThrow();
-		expect(object).toEqual<{ a: number; b?: number }>({ a: 2, b: 3 });
+		expect(object).toEqual<{ a: number; b?: number }>({
+			a: 2,
+			b: 3,
+		});
 		expect(object.$diff).toEqual({ a: 2 });
 	});
 });

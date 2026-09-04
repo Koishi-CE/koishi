@@ -54,7 +54,10 @@
 </template>
 
 <script lang="ts" setup>
-import { type LegacyMenuItem, useContext } from "@koishi-ce/client";
+import {
+	type LegacyMenuItem,
+	useContext,
+} from "@koishi-ce/client";
 import { computed, ref, useSlots } from "vue";
 import { useRoute } from "vue-router";
 import LayoutHeader from "./header.vue";

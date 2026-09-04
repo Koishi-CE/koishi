@@ -29,7 +29,10 @@ import {
 	valueMap,
 	version,
 } from "@koishi-ce/core";
-import { extensions, type ResolvedConfigFile } from "./config-file.ts";
+import {
+	extensions,
+	type ResolvedConfigFile,
+} from "./config-file.ts";
 import { group } from "./group.ts";
 import {
 	kRecord,
@@ -61,7 +64,9 @@ export abstract class Loader {
 	public baseDir = process.cwd();
 	/** 跨重启共享的数据（KOISHI_SHARED），含启动时间与可选的启动消息 */
 	public envData: SharedData = process.env["KOISHI_SHARED"]
-		? (JSON.parse(process.env["KOISHI_SHARED"]) as SharedData)
+		? (JSON.parse(
+				process.env["KOISHI_SHARED"],
+			) as SharedData)
 		: { startTime: Date.now() };
 
 	/** 配置插值可用的参数上下文（当前为进程环境变量） */
@@ -152,7 +157,10 @@ export abstract class Loader {
 	 * 初始化：定位配置文件、检测可写性。
 	 */
 	async init(filename?: string) {
-		const resolved = await this.locateConfig(this.baseDir, filename);
+		const resolved = await this.locateConfig(
+			this.baseDir,
+			filename,
+		);
 		this.baseDir = resolved.baseDir;
 		this.filename = resolved.filename;
 		this.mime = resolved.mime;
@@ -181,8 +189,10 @@ export abstract class Loader {
 			const [prefix = ""] = key.split(":", 1);
 			const name = prefix.replace(/^~/, "");
 			const value =
-				this.migrateEntry(name, backup[key] as Dict<unknown> | undefined) ??
-				backup[key];
+				this.migrateEntry(
+					name,
+					backup[key] as Dict<unknown> | undefined,
+				) ?? backup[key];
 			let ident = key.slice(prefix.length + 1);
 			// 标识缺失或冲突时生成随机标识，保证引用唯一
 			if (!ident || this.names.has(ident)) {
@@ -214,9 +224,9 @@ export abstract class Loader {
 		if (initial) await this.migrate();
 		if (this.writable) await this.writeConfig(true);
 		return new Context.Config(
-			this.interpolate(this.config) as ConstructorParameters<
-				typeof Context.Config
-			>[0],
+			this.interpolate(
+				this.config,
+			) as ConstructorParameters<typeof Context.Config>[0],
 		);
 	}
 
@@ -230,7 +240,11 @@ export abstract class Loader {
 		if (!this.writable) {
 			throw new Error("cannot overwrite readonly config");
 		}
-		await this.saveConfig(this.filename, this.config, this.mime);
+		await this.saveConfig(
+			this.filename,
+			this.config,
+			this.mime,
+		);
 		if (!silent) this.app.emit("config");
 	}
 
@@ -241,15 +255,17 @@ export abstract class Loader {
 	writeConfig(silent = false) {
 		this._writeSilent &&= silent;
 		if (this._writeTask) return this._writeTask;
-		return (this._writeTask = new Promise((resolve, reject) => {
-			setTimeout(() => {
-				// 取本轮合并后的静默决策，随后复位标志
-				const merged = this._writeSilent;
-				this._writeSilent = true;
-				this._writeTask = undefined;
-				this._writeConfig(merged).then(resolve, reject);
-			}, 0);
-		}));
+		return (this._writeTask = new Promise(
+			(resolve, reject) => {
+				setTimeout(() => {
+					// 取本轮合并后的静默决策，随后复位标志
+					const merged = this._writeSilent;
+					this._writeSilent = true;
+					this._writeTask = undefined;
+					this._writeConfig(merged).then(resolve, reject);
+				}, 0);
+			},
+		));
 	}
 
 	/**
@@ -263,7 +279,9 @@ export abstract class Loader {
 		} else if (Array.isArray(source)) {
 			return source.map((item) => this.interpolate(item));
 		} else {
-			return valueMap(source, (item) => this.interpolate(item));
+			return valueMap(source, (item) =>
+				this.interpolate(item),
+			);
 		}
 	}
 
@@ -271,7 +289,9 @@ export abstract class Loader {
 	 * 按名称导入插件并登记到反查表（供 keyFor 反查）。
 	 */
 	async resolve(name: string): Promise<Plugin | undefined> {
-		const plugin = unwrapExports(await this.import(name)) as Plugin | undefined;
+		const plugin = unwrapExports(await this.import(name)) as
+			| Plugin
+			| undefined;
 		if (plugin) {
 			const target = this.app.registry.resolve(plugin);
 			if (target) this.store.set(target, name);
@@ -287,7 +307,10 @@ export abstract class Loader {
 		if (!target) return undefined;
 		const name = this.store.get(target);
 		if (name)
-			return name.replace(/(koishi-|^@(?:koishijs|koishi-ce)\/)plugin-/, "");
+			return name.replace(
+				/(koishi-|^@(?:koishijs|koishi-ce)\/)plugin-/,
+				"",
+			);
 		return undefined;
 	}
 
@@ -315,7 +338,10 @@ export abstract class Loader {
 
 		// 插件形态（函数/对象/构造器）各自的重载对配置类型推断不同，
 		// 动态加载的场景以 never 桥接（等价于历史上的 any 直传）
-		return parent.plugin(plugin, this.interpolate(config) as never);
+		return parent.plugin(
+			plugin,
+			this.interpolate(config) as never,
+		);
 	}
 
 	/**
@@ -328,7 +354,11 @@ export abstract class Loader {
 	}
 
 	/** 记录一条插件生命周期日志（apply / unload / reload） */
-	private logUpdate(type: string, _parent: Context, key: string) {
+	private logUpdate(
+		type: string,
+		_parent: Context,
+		key: string,
+	) {
 		logPluginUpdate(this.app, type, key);
 	}
 
@@ -343,12 +373,20 @@ export abstract class Loader {
 	 * @param key 插件引用键
 	 * @param source 插件配置源（含 `$` 元属性）
 	 */
-	async reload(parent: Context, key: string, source: unknown) {
-		const record = ((parent.scope as LoaderScope)[kRecord] ??=
-			Object.create(null));
+	async reload(
+		parent: Context,
+		key: string,
+		source: unknown,
+	) {
+		const record = ((parent.scope as LoaderScope)[
+			kRecord
+		] ??= Object.create(null));
 		let fork: ForkScope | undefined = record[key];
 		const [name = ""] = key.split(":", 1);
-		const [config, meta] = separate(source, name === "group");
+		const [config, meta] = separate(
+			source,
+			name === "group",
+		);
 		if (fork) {
 			if (!this.isTruthyLike(meta["$if"])) {
 				this.unload(parent, key);
@@ -356,7 +394,9 @@ export abstract class Loader {
 			}
 			// 标记本次更新来自 loader，避免 internal/before-update 回环写盘
 			(fork as LoaderScope)[kUpdate] = true;
-			fork.update(config as Parameters<typeof fork.update>[0]);
+			fork.update(
+				config as Parameters<typeof fork.update>[0],
+			);
 		} else {
 			if (!this.isTruthyLike(meta["$if"])) return;
 			this.logUpdate("apply", parent, key);
@@ -367,7 +407,9 @@ export abstract class Loader {
 				fork = await this.forkPlugin(name, config, ctx);
 			}
 			if (!fork) return;
-			(fork as LoaderScope).key = key.slice(name.length + 1);
+			(fork as LoaderScope).key = key.slice(
+				name.length + 1,
+			);
 			record[key] = fork;
 		}
 		const filter = this.interpolate(meta["$filter"]);
@@ -393,7 +435,9 @@ export abstract class Loader {
 	 * 反查某个 fork 在其父作用域记录中的引用键。
 	 */
 	getRefName(fork: ForkScope): string | undefined {
-		const record = (fork.parent.scope as LoaderScope)[kRecord];
+		const record = (fork.parent.scope as LoaderScope)[
+			kRecord
+		];
 		if (!record) return undefined;
 		for (const name in record) {
 			if (record[name] !== fork) continue;
@@ -428,7 +472,9 @@ export abstract class Loader {
 		// 运行时作用域：聚合其全部子 fork 的路径
 		if (scope.runtime === scope) {
 			return ([] as string[]).concat(
-				...scope.runtime.children.map((child) => this.paths(child)),
+				...scope.runtime.children.map((child) =>
+					this.paths(child),
+				),
 			);
 		}
 
@@ -453,9 +499,14 @@ export abstract class Loader {
 		app.baseDir = this.baseDir;
 		app.provide("loader", this, true);
 		app.provide("baseDir", this.baseDir, true);
-		(app.scope as LoaderScope)[kRecord] = Object.create(null);
+		(app.scope as LoaderScope)[kRecord] =
+			Object.create(null);
 		// 整个插件表作为一个根组挂载，entry 即根组上下文
-		const fork = await this.reload(app, "group:entry", this.config.plugins);
+		const fork = await this.reload(
+			app,
+			"group:entry",
+			this.config.plugins,
+		);
 		if (fork) this.entry = fork.ctx;
 
 		app.accept((config) => {

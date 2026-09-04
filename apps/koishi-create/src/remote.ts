@@ -16,7 +16,10 @@ import { readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { downloadTemplate } from "giget";
 import pc from "picocolors";
-import { type Manifest, renderManifest } from "./manifest.ts";
+import {
+	type Manifest,
+	renderManifest,
+} from "./manifest.ts";
 
 /** registry 包元数据中本流程消费的字段 */
 interface RegistryMeta {
@@ -69,15 +72,25 @@ export async function scaffoldRemote({
 }: RemoteOptions) {
 	try {
 		const metaRes = await fetch(`${registry}/${template}`);
-		if (!metaRes.ok) throw new HttpError(metaRes.status, metaRes.statusText);
+		if (!metaRes.ok)
+			throw new HttpError(
+				metaRes.status,
+				metaRes.statusText,
+			);
 		const remote = (await metaRes.json()) as RegistryMeta;
 		const version = remote["dist-tags"][ref];
 		if (version === undefined) {
-			throw new HttpError(404, `模板 ${template}@${ref} 不存在`);
+			throw new HttpError(
+				404,
+				`模板 ${template}@${ref} 不存在`,
+			);
 		}
 		const url = remote.versions[version]?.dist?.tarball;
 		if (url === undefined) {
-			throw new HttpError(404, `模板 ${template}@${ref} 不存在`);
+			throw new HttpError(
+				404,
+				`模板 ${template}@${ref} 不存在`,
+			);
 		}
 
 		// 解包交给 giget：provider 的 tar 字段是函数，giget 需要时才发起
@@ -93,7 +106,10 @@ export async function scaffoldRemote({
 					tar: async () => {
 						const tarballRes = await fetch(url);
 						if (!tarballRes.ok || !tarballRes.body) {
-							throw new HttpError(tarballRes.status, tarballRes.statusText);
+							throw new HttpError(
+								tarballRes.status,
+								tarballRes.statusText,
+							);
 						}
 						return tarballRes.body;
 					},
@@ -113,8 +129,17 @@ export async function scaffoldRemote({
 }
 
 /** 把改写结果写回下载解包出的 package.json */
-function writePackageJson(rootDir: string, project: string, prod: boolean) {
+function writePackageJson(
+	rootDir: string,
+	project: string,
+	prod: boolean,
+) {
 	const filename = join(rootDir, "package.json");
-	const meta = JSON.parse(readFileSync(filename, "utf8")) as Manifest;
-	writeFileSync(filename, renderManifest(meta, project, prod));
+	const meta = JSON.parse(
+		readFileSync(filename, "utf8"),
+	) as Manifest;
+	writeFileSync(
+		filename,
+		renderManifest(meta, project, prod),
+	);
 }

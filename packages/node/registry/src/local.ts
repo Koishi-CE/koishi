@@ -15,9 +15,24 @@
 
 import { existsSync, realpathSync } from "node:fs";
 import { readdir, readFile } from "node:fs/promises";
-import { dirname, isAbsolute, join, resolve, sep } from "node:path";
-import { type Dict, defineProperty, isNonNullable, pick } from "cosmokit";
-import type { PackageJson, SearchObject, SearchResult } from "./types.ts";
+import {
+	dirname,
+	isAbsolute,
+	join,
+	resolve,
+	sep,
+} from "node:path";
+import {
+	type Dict,
+	defineProperty,
+	isNonNullable,
+	pick,
+} from "cosmokit";
+import type {
+	PackageJson,
+	SearchObject,
+	SearchResult,
+} from "./types.ts";
 import { conclude } from "./utils.ts";
 
 /**
@@ -25,7 +40,10 @@ import { conclude } from "./utils.ts";
  * 上游 @koishijs/plugin-* 与社区 koishi-plugin-* 三种组织形式。
  */
 export function getPluginShortname(name: string) {
-	return name.replace(/(koishi-|^@(?:koishijs|koishi-ce)\/)plugin-/, "");
+	return name.replace(
+		/(koishi-|^@(?:koishijs|koishi-ce)\/)plugin-/,
+		"",
+	);
 }
 
 /**
@@ -45,17 +63,31 @@ export function getPluginShortname(name: string) {
  * 不经过解析缓存），落空即抛错；本仓运行时为 Bun + node_modules 布局，
  * PnP 等无 node_modules 的形态不在支持面，无需解析 API 兜底。
  */
-export function resolvePackageJson(name: string, from = process.cwd()): string {
+export function resolvePackageJson(
+	name: string,
+	from = process.cwd(),
+): string {
 	// name 可能是宿主项目的目录路径（market 构造期读宿主清单的用法：
 	// loadManifest(cwd)），直接按路径解析其 package.json
-	if (isAbsolute(name) || name.startsWith("./") || name.startsWith("../")) {
+	if (
+		isAbsolute(name) ||
+		name.startsWith("./") ||
+		name.startsWith("../")
+	) {
 		const direct = resolve(from, name, "package.json");
 		if (existsSync(direct)) return direct;
-		throw new Error(`Cannot resolve '${name}/package.json'`);
+		throw new Error(
+			`Cannot resolve '${name}/package.json'`,
+		);
 	}
 	let dir = resolve(from);
 	for (;;) {
-		const candidate = join(dir, "node_modules", name, "package.json");
+		const candidate = join(
+			dir,
+			"node_modules",
+			name,
+			"package.json",
+		);
 		if (existsSync(candidate)) return candidate;
 		const parent = dirname(dir);
 		if (parent === dir) break;
@@ -66,7 +98,9 @@ export function resolvePackageJson(name: string, from = process.cwd()): string {
 
 /** 缓存键归一（win32 大小写不敏感），对齐 require.cache 键与探测路径的比对 */
 function normalizeCacheKey(path: string): string {
-	return process.platform === "win32" ? path.toLowerCase() : path;
+	return process.platform === "win32"
+		? path.toLowerCase()
+		: path;
 }
 
 /**
@@ -84,10 +118,13 @@ export function isResidentInCache(name: string): boolean {
 		const prefixes = [normalizeCacheKey(dir + sep)];
 		try {
 			const real = realpathSync(dir);
-			if (real !== dir) prefixes.push(normalizeCacheKey(real + sep));
+			if (real !== dir)
+				prefixes.push(normalizeCacheKey(real + sep));
 		} catch {}
 		return Object.keys(require.cache).some((key) =>
-			prefixes.some((prefix) => normalizeCacheKey(key).startsWith(prefix)),
+			prefixes.some((prefix) =>
+				normalizeCacheKey(key).startsWith(prefix),
+			),
 		);
 	} catch {
 		return true;
@@ -130,7 +167,9 @@ export class LocalScanner {
 		}
 		await Promise.all(tasks);
 		// 加载失败的包（onError 已记录）不混入 undefined 元素
-		const objects = await Promise.all(Object.values(this.cache));
+		const objects = await Promise.all(
+			Object.values(this.cache),
+		);
 		return objects.filter(isNonNullable);
 	}
 
@@ -158,13 +197,13 @@ export class LocalScanner {
 				const files = await readdir(base2).catch(() => []);
 				for (const name2 of files) {
 					if (
-						((name === "@koishi-ce" || name === "@koishijs") &&
+						((name === "@koishi-ce" ||
+							name === "@koishijs") &&
 							name2.startsWith("plugin-")) ||
 						name2.startsWith("koishi-plugin-")
 					) {
-						this.cache[`${name}/${name2}`] ||= this.loadPackage(
-							`${name}/${name2}`,
-						);
+						this.cache[`${name}/${name2}`] ||=
+							this.loadPackage(`${name}/${name2}`);
 					}
 				}
 			}
@@ -172,7 +211,9 @@ export class LocalScanner {
 	}
 
 	/** 加载单个包，异常经 onError 上报后返回 undefined（不中断整体扫描） */
-	private async loadPackage(name: string): Promise<SearchObject | undefined> {
+	private async loadPackage(
+		name: string,
+	): Promise<SearchObject | undefined> {
 		try {
 			return await this.parsePackage(name);
 		} catch (error) {
@@ -190,8 +231,13 @@ export class LocalScanner {
 		// 解析锚点与 _collect 的扫描锚点（baseDir）保持一致：
 		// 默认的 cwd 在宿主以非 cwd 启动时会与扫描起点脱节，扫到却解析不到
 		const filename = resolvePackageJson(name, this.baseDir);
-		const meta: PackageJson = JSON.parse(await readFile(filename, "utf8"));
-		return [meta, !filename.includes("node_modules")] as const;
+		const meta: PackageJson = JSON.parse(
+			await readFile(filename, "utf8"),
+		);
+		return [
+			meta,
+			!filename.includes("node_modules"),
+		] as const;
 	}
 
 	/**
@@ -200,7 +246,10 @@ export class LocalScanner {
 	 * @param data 已读取的包清单（原地补全 peer 依赖字段）
 	 * @param workspace 是否为 workspace 源码形态
 	 */
-	private toSearchObject(data: PackageJson, workspace: boolean) {
+	private toSearchObject(
+		data: PackageJson,
+		workspace: boolean,
+	) {
 		data.peerDependencies ||= {};
 		data.peerDependenciesMeta ||= {};
 		return {
@@ -222,7 +271,9 @@ export class LocalScanner {
 	 * workspace 链接出现在 node_modules 里的源码包。
 	 * @param dir 包目录的绝对路径
 	 */
-	async loadPath(dir: string): Promise<SearchObject | undefined> {
+	async loadPath(
+		dir: string,
+	): Promise<SearchObject | undefined> {
 		this.cache[dir] ||= (async () => {
 			try {
 				const data: PackageJson = JSON.parse(

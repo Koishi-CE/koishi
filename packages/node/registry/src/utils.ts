@@ -29,7 +29,9 @@ const ensureArray: Ensure<string[]> = (
 	fallback?: string[],
 ): string[] => {
 	if (!Array.isArray(value)) return fallback as string[];
-	return value.filter((x): x is string => typeof x === "string");
+	return value.filter(
+		(x): x is string => typeof x === "string",
+	);
 };
 
 /** 清洗为字符串字典：丢弃值不是 string 的键，类型不符时取回退值 */
@@ -39,10 +41,13 @@ const ensureDict: Ensure<Dict<string>> = (
 ): Dict<string> => {
 	if (typeof value !== "object" || value === null)
 		return fallback as Dict<string>;
-	return Object.entries(value).reduce<Dict<string>>((dict, [key, value]) => {
-		if (typeof value === "string") dict[key] = value;
-		return dict;
-	}, {});
+	return Object.entries(value).reduce<Dict<string>>(
+		(dict, [key, value]) => {
+			if (typeof value === "string") dict[key] = value;
+			return dict;
+		},
+		{},
+	);
 };
 
 // https://github.com/microsoft/TypeScript/issues/15713#issuecomment-499474386
@@ -88,47 +93,81 @@ export function conclude(meta: PackageJson) {
 	const koishi = meta.koishi;
 	const manifest: Manifest = {
 		description:
-			Ensure.dict(koishi?.description) || Ensure.string(meta.description, ""),
+			Ensure.dict(koishi?.description) ||
+			Ensure.string(meta.description, ""),
 		locales: Ensure.array(koishi?.locales, []),
 		service: {
 			required: Ensure.array(koishi?.service?.required, []),
 			optional: Ensure.array(koishi?.service?.optional, []),
-			implements: Ensure.array(koishi?.service?.implements, []),
+			implements: Ensure.array(
+				koishi?.service?.implements,
+				[],
+			),
 		},
 	};
-	assignIfDefined(manifest, "hidden", Ensure.boolean(koishi?.hidden));
-	assignIfDefined(manifest, "preview", Ensure.boolean(koishi?.preview));
-	assignIfDefined(manifest, "insecure", Ensure.boolean(koishi?.insecure));
-	assignIfDefined(manifest, "browser", Ensure.boolean(koishi?.browser));
-	assignIfDefined(manifest, "category", Ensure.string(koishi?.category));
-	assignIfDefined(manifest, "public", Ensure.array(koishi?.public));
+	assignIfDefined(
+		manifest,
+		"hidden",
+		Ensure.boolean(koishi?.hidden),
+	);
+	assignIfDefined(
+		manifest,
+		"preview",
+		Ensure.boolean(koishi?.preview),
+	);
+	assignIfDefined(
+		manifest,
+		"insecure",
+		Ensure.boolean(koishi?.insecure),
+	);
+	assignIfDefined(
+		manifest,
+		"browser",
+		Ensure.boolean(koishi?.browser),
+	);
+	assignIfDefined(
+		manifest,
+		"category",
+		Ensure.string(koishi?.category),
+	);
+	assignIfDefined(
+		manifest,
+		"public",
+		Ensure.array(koishi?.public),
+	);
 
 	if (typeof manifest.description === "string") {
-		manifest.description = manifest.description.slice(0, 1024);
+		manifest.description = manifest.description.slice(
+			0,
+			1024,
+		);
 	} else if (manifest.description) {
 		const dict = manifest.description;
 		for (const key in dict) {
 			const text = dict[key];
-			if (text !== undefined) dict[key] = text.slice(0, 1024);
+			if (text !== undefined)
+				dict[key] = text.slice(0, 1024);
 		}
 	}
 
-	meta.keywords = Ensure.array(meta.keywords, []).filter((keyword) => {
-		if (!keyword.includes(":")) return true;
-		if (keyword === "market:hidden") {
-			manifest.hidden = true;
-		} else if (keyword.startsWith("required:")) {
-			manifest.service.required.push(keyword.slice(9));
-		} else if (keyword.startsWith("optional:")) {
-			manifest.service.optional.push(keyword.slice(9));
-		} else if (keyword.startsWith("impl:")) {
-			manifest.service.implements.push(keyword.slice(5));
-		} else if (keyword.startsWith("locale:")) {
-			manifest.locales.push(keyword.slice(7));
-		}
-		// 含 ":" 的关键词在被消费后一律从 keywords 中剔除
-		return false;
-	});
+	meta.keywords = Ensure.array(meta.keywords, []).filter(
+		(keyword) => {
+			if (!keyword.includes(":")) return true;
+			if (keyword === "market:hidden") {
+				manifest.hidden = true;
+			} else if (keyword.startsWith("required:")) {
+				manifest.service.required.push(keyword.slice(9));
+			} else if (keyword.startsWith("optional:")) {
+				manifest.service.optional.push(keyword.slice(9));
+			} else if (keyword.startsWith("impl:")) {
+				manifest.service.implements.push(keyword.slice(5));
+			} else if (keyword.startsWith("locale:")) {
+				manifest.locales.push(keyword.slice(7));
+			}
+			// 含 ":" 的关键词在被消费后一律从 keywords 中剔除
+			return false;
+		},
+	);
 
 	return manifest;
 }
@@ -179,7 +218,10 @@ export async function mapLimit<T, R>(
 			try {
 				// Awaitable<R> 对未约束泛型 R 在 await 展开后仍保留条件类型，
 				// 无法直接化简为 R，此处断言一次
-				results[index] = (await mapper(items[index] as T, index)) as R;
+				results[index] = (await mapper(
+					items[index] as T,
+					index,
+				)) as R;
 			} catch (reason) {
 				if (!failed) {
 					failed = true;
@@ -193,8 +235,14 @@ export async function mapLimit<T, R>(
 	if (concurrency === Number.POSITIVE_INFINITY) {
 		// 不设上限：与任务数一致（全部并发）
 		limit = items.length;
-	} else if (Number.isFinite(concurrency) && concurrency > 0) {
-		limit = Math.min(items.length, Math.max(1, Math.floor(concurrency)));
+	} else if (
+		Number.isFinite(concurrency) &&
+		concurrency > 0
+	) {
+		limit = Math.min(
+			items.length,
+			Math.max(1, Math.floor(concurrency)),
+		);
 	} else {
 		// NaN / 0 / 负数：保守按 1 串行
 		limit = 1;

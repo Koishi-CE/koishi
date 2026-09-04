@@ -3,7 +3,10 @@
 // Copyright (c) 2026-present Koishi-CE contributors.
 
 /// <reference path="./shims.d.ts" />
-import type { Promisify, Universal } from "@koishi-ce/koishi";
+import type {
+	Promisify,
+	Universal,
+} from "@koishi-ce/koishi";
 import type {
 	ClientConfig,
 	Console,
@@ -43,7 +46,8 @@ export function withProxy(url: string) {
 /** 当前与服务端的 WebSocket 连接（未连接时为 null） */
 export const socket = ref<Universal.WebSocket | null>(null);
 /** 按事件名登记的推送监听器（receive 注册） */
-const listeners: Record<string, (data: unknown) => void> = {};
+const listeners: Record<string, (data: unknown) => void> =
+	{};
 /** 按报文 id 暂存的 RPC 应答钩子 [resolve, reject]（send 写入） */
 const responseHooks: Record<
 	string,
@@ -93,19 +97,26 @@ type StoreValue = Store[keyof Store];
 
 // 服务端整表推送：直接覆盖 store 中对应键
 // （key 为联合类型时直写 store[key] 会被要求交叉类型，故经 Record 视图写入）
-receive<{ key: keyof Store; value: unknown }>("data", ({ key, value }) => {
-	(store as Record<keyof Store, StoreValue>)[key] = value as StoreValue;
-});
+receive<{ key: keyof Store; value: unknown }>(
+	"data",
+	({ key, value }) => {
+		(store as Record<keyof Store, StoreValue>)[key] =
+			value as StoreValue;
+	},
+);
 
 // 服务端增量推送：数组做追加，对象做浅合并
-receive<{ key: keyof Store; value: unknown }>("patch", ({ key, value }) => {
-	const current = store[key];
-	if (Array.isArray(current)) {
-		(current as unknown[]).push(...(value as unknown[]));
-	} else if (current) {
-		Object.assign(current, value);
-	}
-});
+receive<{ key: keyof Store; value: unknown }>(
+	"patch",
+	({ key, value }) => {
+		const current = store[key];
+		if (Array.isArray(current)) {
+			(current as unknown[]).push(...(value as unknown[]));
+		} else if (current) {
+			Object.assign(current, value);
+		}
+	},
+);
 
 // RPC 应答分发：按报文 id 找到 send() 留下的 resolve/reject 并结算
 receive<{ id: string; value?: unknown; error?: unknown }>(
@@ -131,7 +142,10 @@ receive<{ id: string; value?: unknown; error?: unknown }>(
  * @param ctx 根 Context，用于把消息转发为 cordis 事件
  * @param callback 创建 WebSocket 实例的工厂函数
  */
-export function connect(ctx: Context, callback: () => Universal.WebSocket) {
+export function connect(
+	ctx: Context,
+	callback: () => Universal.WebSocket,
+) {
 	const value = callback();
 
 	let sendTimer: number;
@@ -142,8 +156,14 @@ export function connect(ctx: Context, callback: () => Universal.WebSocket) {
 		if (!global.heartbeat) return;
 		clearTimeout(sendTimer);
 		clearTimeout(closeTimer);
-		sendTimer = +setTimeout(() => send("ping"), global.heartbeat.interval);
-		closeTimer = +setTimeout(() => value?.close(), global.heartbeat.timeout);
+		sendTimer = +setTimeout(
+			() => send("ping"),
+			global.heartbeat.interval,
+		);
+		closeTimer = +setTimeout(
+			() => value?.close(),
+			global.heartbeat.timeout,
+		);
 	};
 
 	const reconnect = () => {
@@ -152,10 +172,14 @@ export function connect(ctx: Context, callback: () => Universal.WebSocket) {
 		for (const key in store) {
 			(store as Record<string, unknown>)[key] = undefined;
 		}
-		console.log("[koishi] websocket disconnected, will retry in 1s...");
+		console.log(
+			"[koishi] websocket disconnected, will retry in 1s...",
+		);
 		setTimeout(() => {
 			connect(ctx, callback).then(location.reload, () => {
-				console.log("[koishi] websocket disconnected, will retry in 1s...");
+				console.log(
+					"[koishi] websocket disconnected, will retry in 1s...",
+				);
 			});
 		}, 1000);
 	};
@@ -163,7 +187,12 @@ export function connect(ctx: Context, callback: () => Universal.WebSocket) {
 	value.addEventListener("message", (ev) => {
 		refresh();
 		const data = JSON.parse(ev.data);
-		console.debug("↓%c", "color:purple", data.type, data.body);
+		console.debug(
+			"↓%c",
+			"color:purple",
+			data.type,
+			data.body,
+		);
 		if (data.type in listeners) {
 			listeners[data.type]?.(data.body);
 		}
@@ -172,11 +201,13 @@ export function connect(ctx: Context, callback: () => Universal.WebSocket) {
 
 	value.addEventListener("close", reconnect);
 
-	return new Promise<Universal.WebSocket.Event>((resolve, reject) => {
-		value.addEventListener("open", (event) => {
-			socket.value = markRaw(value);
-			resolve(event);
-		});
-		value.addEventListener("error", reject);
-	});
+	return new Promise<Universal.WebSocket.Event>(
+		(resolve, reject) => {
+			value.addEventListener("open", (event) => {
+				socket.value = markRaw(value);
+				resolve(event);
+			});
+			value.addEventListener("error", reject);
+		},
+	);
 }

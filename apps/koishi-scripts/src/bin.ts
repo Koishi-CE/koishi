@@ -40,7 +40,9 @@ const HELP = `koishi-scripts v${version} —— Koishi 插件脚手架与发布�
   -h, --help          显示本帮助
   -v, --version       显示版本号`;
 
-type Run = (args: readonly string[]) => Promise<number> | number;
+type Run = (
+	args: readonly string[],
+) => Promise<number> | number;
 
 const commands: Record<string, Run> = {
 	setup: runSetup,
@@ -57,11 +59,15 @@ const argv = process.argv.slice(2);
 
 if (argv.includes("-h") || argv.includes("--help")) {
 	console.log(HELP);
-} else if (argv.includes("-v") || argv.includes("--version")) {
+} else if (
+	argv.includes("-v") ||
+	argv.includes("--version")
+) {
 	console.log(version);
 } else {
 	const [command, ...rest] = argv;
-	const run = command === undefined ? undefined : commands[command];
+	const run =
+		command === undefined ? undefined : commands[command];
 	if (run === undefined) {
 		console.log(HELP);
 		// 裸执行（无参数）只是看帮助，不算错误；拼错命令名则报退出码
@@ -70,8 +76,11 @@ if (argv.includes("-h") || argv.includes("--help")) {
 		try {
 			process.exitCode = await run(rest);
 		} catch (err) {
-			const message = err instanceof Error ? err.message : String(err);
-			process.stderr.write(`[koishi-scripts] ❌ ${message}\n`);
+			const message =
+				err instanceof Error ? err.message : String(err);
+			process.stderr.write(
+				`[koishi-scripts] ❌ ${message}\n`,
+			);
 			process.exitCode = 1;
 		}
 	}

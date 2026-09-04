@@ -41,20 +41,38 @@ describe("Admin Commands", () => {
 	it("user/authorize", async () => {
 		// 校验缺参 / 非法目标 / 参数格式错误的报错路径，
 		// 以及权限边界（不可操作同级或更高权限用户）与正常改写
-		await client1.shouldReply("authorize", "请指定目标用户。");
+		await client1.shouldReply(
+			"authorize",
+			"请指定目标用户。",
+		);
 		await client1.shouldReply(
 			"authorize -u nan",
 			"选项 user 输入无效，请指定正确的用户。",
 		);
-		await client1.shouldReply("authorize -u @789", "权限不足。");
+		await client1.shouldReply(
+			"authorize -u @789",
+			"权限不足。",
+		);
 		await client1.shouldReply(
 			"authorize -u @456 1.5",
 			"参数 value 输入无效，请提供一个非负整数。",
 		);
-		await client1.shouldReply("authorize -u @456 3", "用户数据未改动。");
-		await client1.shouldReply("authorize -u @456 4", "权限不足。");
-		await client1.shouldReply("authorize -u @456 2", "用户数据已修改。");
-		await client1.shouldReply("authorize -u @111 1", "用户数据已修改。");
+		await client1.shouldReply(
+			"authorize -u @456 3",
+			"用户数据未改动。",
+		);
+		await client1.shouldReply(
+			"authorize -u @456 4",
+			"权限不足。",
+		);
+		await client1.shouldReply(
+			"authorize -u @456 2",
+			"用户数据已修改。",
+		);
+		await client1.shouldReply(
+			"authorize -u @111 1",
+			"用户数据已修改。",
+		);
 	});
 
 	it("channel/assign", async () => {
@@ -70,7 +88,10 @@ describe("Admin Commands", () => {
 			"assign -c nan",
 			"选项 channel 输入无效，请指定正确的频道。",
 		);
-		await client1.shouldReply("assign -c #321", "频道数据未改动。");
+		await client1.shouldReply(
+			"assign -c #321",
+			"频道数据未改动。",
+		);
 		await client1.shouldReply(
 			"assign -c #321 nan",
 			"参数 bot 输入无效，请指定正确的用户。",
@@ -79,18 +100,27 @@ describe("Admin Commands", () => {
 			"assign -c #321 @foo:bar",
 			"受理人应与目标频道属于同一平台。",
 		);
-		await client1.shouldReply("assign -c #333", "频道数据已修改。");
+		await client1.shouldReply(
+			"assign -c #333",
+			"频道数据已修改。",
+		);
 
-		await expect(app.database.getChannel("mock", "321")).resolves.toMatchObject(
-			{ assignee: "514" },
+		await expect(
+			app.database.getChannel("mock", "321"),
+		).resolves.toMatchObject({ assignee: "514" });
+		await client1.shouldReply(
+			"assign -c #321 @123",
+			"频道数据已修改。",
 		);
-		await client1.shouldReply("assign -c #321 @123", "频道数据已修改。");
-		await expect(app.database.getChannel("mock", "321")).resolves.toMatchObject(
-			{ assignee: "123" },
+		await expect(
+			app.database.getChannel("mock", "321"),
+		).resolves.toMatchObject({ assignee: "123" });
+		await client2.shouldReply(
+			"assign -c #321",
+			"频道数据已修改。",
 		);
-		await client2.shouldReply("assign -c #321", "频道数据已修改。");
-		await expect(app.database.getChannel("mock", "321")).resolves.toMatchObject(
-			{ assignee: "514" },
-		);
+		await expect(
+			app.database.getChannel("mock", "321"),
+		).resolves.toMatchObject({ assignee: "514" });
 	});
 });

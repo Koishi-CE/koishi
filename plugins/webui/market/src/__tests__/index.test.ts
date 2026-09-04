@@ -2,8 +2,20 @@
 // Copyright (c) 2019-present Shigma and Koishijs contributors.
 // Copyright (c) 2026-present Koishi-CE contributors.
 
-import { afterAll, beforeAll, describe, expect, it, mock } from "bun:test";
-import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import {
+	afterAll,
+	beforeAll,
+	describe,
+	expect,
+	it,
+	mock,
+} from "bun:test";
+import {
+	mkdirSync,
+	mkdtempSync,
+	rmSync,
+	writeFileSync,
+} from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import memory from "@koishijs/plugin-database-memory";
@@ -36,20 +48,24 @@ const spawnBunMock = (_args: string[], _cwd: string) => {
 		stderr: {
 			on(event: string, cb: (data: Buffer) => void) {
 				// 同步派发：异步派发会晚于用例的日志静默窗口，导致转发告警漏出刷屏
-				if (event === "data") cb(Buffer.from("stderr line\n"));
+				if (event === "data")
+					cb(Buffer.from("stderr line\n"));
 				return this;
 			},
 		},
 		stdout: {
 			on(event: string, cb: (data: Buffer) => void) {
-				if (event === "data") cb(Buffer.from("stdout line\n"));
+				if (event === "data")
+					cb(Buffer.from("stdout line\n"));
 				return this;
 			},
 		},
 	};
 };
 
-mock.module("../node/proc.ts", () => ({ spawnBun: spawnBunMock }));
+mock.module("../node/proc.ts", () => ({
+	spawnBun: spawnBunMock,
+}));
 
 import type { Entry } from "@koishi-ce/console";
 // 均为 type-only 导入：编译期擦除，不干扰 mock.module 先于插件加载的时序
@@ -57,18 +73,29 @@ import type { Plugin } from "@koishi-ce/koishi";
 import type { RemotePackage } from "@koishi-ce/registry";
 
 const { Console } = await import("@koishi-ce/console");
-const { App, Logger, Service } = await import("@koishi-ce/koishi");
-const http = (await import("@koishi-ce/plugin-http")).default;
-const { isResidentInCache } = await import("@koishi-ce/registry");
+const { App, Logger, Service } = await import(
+	"@koishi-ce/koishi"
+);
+const http = (await import("@koishi-ce/plugin-http"))
+	.default;
+const { isResidentInCache } = await import(
+	"@koishi-ce/registry"
+);
 const market = await import("../node/index.ts");
-const { default: Installer } = await import("../node/installer.ts");
-const mockPlugin = (await import("@koishi-ce/plugin-mock")).default;
+const { default: Installer } = await import(
+	"../node/installer.ts"
+);
+const mockPlugin = (await import("@koishi-ce/plugin-mock"))
+	.default;
 // 加载包入口占位文件（纯 re-export，无独立逻辑），保证 src 全量被加载
 await import("../index.ts");
 
 /** 控制台服务桩：仅实现入口登记所需的最小面。 */
 class FakeConsole extends Console {
-	protected resolveEntry(_files: Entry.Files, _key: string): string[] {
+	protected resolveEntry(
+		_files: Entry.Files,
+		_key: string,
+	): string[] {
 		return [];
 	}
 }
@@ -81,7 +108,9 @@ class FakeLoader extends Service {
 		return ["group:entry", "plugins"];
 	}
 	fullReload() {}
-	constructor(ctx: ConstructorParameters<typeof Service>[0]) {
+	constructor(
+		ctx: ConstructorParameters<typeof Service>[0],
+	) {
 		super(ctx, "loader", true);
 	}
 }
@@ -102,7 +131,10 @@ const registryData: {
 } = {};
 
 /** 搜索接口响应（/-/v1/search，collect 阶段消费）。初始给空结果，避免启动期空转 404。 */
-let searchResponse: { objects: unknown[]; total: number } | null = {
+let searchResponse: {
+	objects: unknown[];
+	total: number;
+} | null = {
 	objects: [],
 	total: 0,
 };
@@ -116,7 +148,10 @@ const itQuiet = (
 	it(
 		name,
 		async () => {
-			const levels = Logger.levels as Record<string, number>;
+			const levels = Logger.levels as Record<
+				string,
+				number
+			>;
 			levels["market"] = 0;
 			try {
 				await fn();
@@ -139,7 +174,9 @@ const registryServer = Bun.serve({
 			return Response.json(searchResponse);
 		}
 		// 模拟 registry 限流：恒定 429 + 极短的 Retry-After，驱动重试后失败
-		if (url.pathname.includes("koishi-plugin-ratelimited")) {
+		if (
+			url.pathname.includes("koishi-plugin-ratelimited")
+		) {
 			return new Response("rate limited", {
 				status: 429,
 				headers: { "Retry-After": "0.01" },
@@ -157,15 +194,27 @@ const registryServer = Bun.serve({
 // 预置一个兼容插件包：最新版 2.0.0，旧版 1.0.0 均声明 koishi ^4 peer
 registryData["koishi-plugin-demo"] = {
 	versions: {
-		"1.0.0": { version: "1.0.0", peerDependencies: { koishi: "^4.17.0" } },
-		"2.0.0": { version: "2.0.0", peerDependencies: { koishi: "^4.17.0" } },
+		"1.0.0": {
+			version: "1.0.0",
+			peerDependencies: { koishi: "^4.17.0" },
+		},
+		"2.0.0": {
+			version: "2.0.0",
+			peerDependencies: { koishi: "^4.17.0" },
+		},
 	},
-	time: { "1.0.0": "2024-01-01T00:00:00Z", "2.0.0": "2024-06-01T00:00:00Z" },
+	time: {
+		"1.0.0": "2024-01-01T00:00:00Z",
+		"2.0.0": "2024-06-01T00:00:00Z",
+	},
 };
 // 预置一个未安装的插件包（plugin.install 安装路径使用）
 registryData["koishi-plugin-newpkg"] = {
 	versions: {
-		"1.0.0": { version: "1.0.0", peerDependencies: { koishi: "^4.17.0" } },
+		"1.0.0": {
+			version: "1.0.0",
+			peerDependencies: { koishi: "^4.17.0" },
+		},
 	},
 	time: { "1.0.0": "2024-01-01T00:00:00Z" },
 };
@@ -200,7 +249,10 @@ const originalCwd = process.cwd();
 writeFileSync(
 	join(tmp, "package.json"),
 	JSON.stringify(
-		{ name: "market-host", dependencies: initialDependencies },
+		{
+			name: "market-host",
+			dependencies: initialDependencies,
+		},
 		null,
 		"\t",
 	),
@@ -216,10 +268,14 @@ const app = new App();
 app.plugin(memory as unknown as typeof memory.default);
 app.plugin(http);
 // Console 基类的 static inject 是 cordis 3 旧形态，与 Plugin.Constructor 期待类型不兼容，仅做类型层转型
-app.plugin(FakeConsole as unknown as Plugin.Constructor<TestApp>);
+app.plugin(
+	FakeConsole as unknown as Plugin.Constructor<TestApp>,
+);
 app.plugin(FakeLoader);
 app.plugin(market, {
-	registry: { endpoint: `http://127.0.0.1:${registryServer.port}/` },
+	registry: {
+		endpoint: `http://127.0.0.1:${registryServer.port}/`,
+	},
 });
 app.plugin(mockPlugin);
 
@@ -241,21 +297,31 @@ afterAll(async () => {
 
 describe("market 插件", () => {
 	it("注册三个数据服务与浏览器监听器", () => {
-		expect(app.get("console.services.market")).toBeDefined();
-		expect(app.get("console.services.dependencies")).toBeDefined();
-		expect(app.get("console.services.registry")).toBeDefined();
-		expect(app.console.listeners["market/install"]).toBeDefined();
-		expect(app.console.listeners["market/registry"]).toBeDefined();
+		expect(
+			app.get("console.services.market"),
+		).toBeDefined();
+		expect(
+			app.get("console.services.dependencies"),
+		).toBeDefined();
+		expect(
+			app.get("console.services.registry"),
+		).toBeDefined();
+		expect(
+			app.console.listeners["market/install"],
+		).toBeDefined();
+		expect(
+			app.console.listeners["market/registry"],
+		).toBeDefined();
 	});
 
 	it("resolveName 解析插件短名的候选全名", () => {
 		const installer = app.installer;
-		expect(installer.resolveName("@koishijs/plugin-echo")).toEqual([
-			"@koishijs/plugin-echo",
-		]);
-		expect(installer.resolveName("koishi-plugin-echo")).toEqual([
-			"koishi-plugin-echo",
-		]);
+		expect(
+			installer.resolveName("@koishijs/plugin-echo"),
+		).toEqual(["@koishijs/plugin-echo"]);
+		expect(
+			installer.resolveName("koishi-plugin-echo"),
+		).toEqual(["koishi-plugin-echo"]);
 		expect(installer.resolveName("@scope/echo")).toEqual([
 			"@scope/koishi-plugin-echo",
 		]);
@@ -268,27 +334,40 @@ describe("market 插件", () => {
 	it("getDeps 汇总本地依赖并带出远端最新版", async () => {
 		const deps = await app.installer.getDeps();
 		// 语义化区间去除前缀符号
-		expect(deps["koishi-plugin-demo"]?.request).toBe("1.0.0");
+		expect(deps["koishi-plugin-demo"]?.request).toBe(
+			"1.0.0",
+		);
 		// 远端最新版（本地 registry 预置 2.0.0）
-		expect(deps["koishi-plugin-demo"]?.latest).toBe("2.0.0");
+		expect(deps["koishi-plugin-demo"]?.latest).toBe(
+			"2.0.0",
+		);
 		// 非法 semver 标记 invalid
 		expect(deps["bad-range"]?.invalid).toBe(true);
 	});
 
-	itQuiet("findVersion 返回首个存在的候选包版本", async () => {
-		const found = await app.installer.findVersion([
-			"@koishijs/plugin-none",
-			"koishi-plugin-demo",
-		]);
-		expect(found).toEqual({ "koishi-plugin-demo": "2.0.0" });
-		// 全部不存在时返回 undefined
-		expect(
-			await app.installer.findVersion(["@koishijs/plugin-none"]),
-		).toBeUndefined();
-	});
+	itQuiet(
+		"findVersion 返回首个存在的候选包版本",
+		async () => {
+			const found = await app.installer.findVersion([
+				"@koishijs/plugin-none",
+				"koishi-plugin-demo",
+			]);
+			expect(found).toEqual({
+				"koishi-plugin-demo": "2.0.0",
+			});
+			// 全部不存在时返回 undefined
+			expect(
+				await app.installer.findVersion([
+					"@koishijs/plugin-none",
+				]),
+			).toBeUndefined();
+		},
+	);
 
 	itQuiet("getPackage 拉取失败时回退为空表", async () => {
-		const versions = await app.installer.getPackage("koishi-plugin-missing");
+		const versions = await app.installer.getPackage(
+			"koishi-plugin-missing",
+		);
 		expect(versions).toEqual({});
 	});
 
@@ -301,10 +380,14 @@ describe("market 插件", () => {
 			} as unknown as RemotePackage,
 		]);
 		expect(
-			Object.keys(app.installer.fullCache["koishi-plugin-demo"] ?? {}),
+			Object.keys(
+				app.installer.fullCache["koishi-plugin-demo"] ?? {},
+			),
 		).toEqual(["3.0.0"]);
 		// 等待节流窗口
-		await new Promise((resolve) => setTimeout(resolve, 600));
+		await new Promise((resolve) =>
+			setTimeout(resolve, 600),
+		);
 	});
 });
 
@@ -327,11 +410,15 @@ describe("Installer 安装链路", () => {
 			const manifest = JSON.parse(
 				await Bun.file(join(tmp, "package.json")).text(),
 			) as { dependencies: Record<string, string> };
-			expect(manifest.dependencies["koishi"]).toBe("workspace:*");
+			expect(manifest.dependencies["koishi"]).toBe(
+				"workspace:*",
+			);
 			expect(manifest.dependencies["market-alias"]).toBe(
 				"npm:@koishi-ce/anything@^1.0.0",
 			);
-			expect(manifest.dependencies["koishi-plugin-demo"]).toBe("^1.0.0");
+			expect(
+				manifest.dependencies["koishi-plugin-demo"],
+			).toBe("^1.0.0");
 		},
 		15000,
 	);
@@ -373,12 +460,15 @@ describe("Installer 安装链路", () => {
 		expect(code).toBe(-1);
 	});
 
-	itQuiet("exec 收集子进程 stdout / stderr 输出行", async () => {
-		nextExitCode = 0;
-		nextSpawnError = false;
-		const code = await app.installer.exec(["install"]);
-		expect(code).toBe(0);
-	});
+	itQuiet(
+		"exec 收集子进程 stdout / stderr 输出行",
+		async () => {
+			nextExitCode = 0;
+			nextSpawnError = false;
+			const code = await app.installer.exec(["install"]);
+			expect(code).toBe(0);
+		},
+	);
 });
 
 describe("isResidentInCache（装后重载判定）", () => {
@@ -388,9 +478,16 @@ describe("isResidentInCache（装后重载判定）", () => {
 		mkdirSync(pkgDir, { recursive: true });
 		writeFileSync(
 			join(pkgDir, "package.json"),
-			JSON.stringify({ name, version: "1.0.0", main: "index.js" }),
+			JSON.stringify({
+				name,
+				version: "1.0.0",
+				main: "index.js",
+			}),
 		);
-		writeFileSync(join(pkgDir, "index.js"), "module.exports = {}");
+		writeFileSync(
+			join(pkgDir, "index.js"),
+			"module.exports = {}",
+		);
 		return pkgDir;
 	}
 
@@ -398,16 +495,22 @@ describe("isResidentInCache（装后重载判定）", () => {
 		const pkgDir = placePkg("koishi-plugin-resident-check");
 		// 入口经 require 进入 require.cache，模拟旧版本驻留内存
 		require(join(pkgDir, "index.js"));
-		expect(isResidentInCache("koishi-plugin-resident-check")).toBe(true);
+		expect(
+			isResidentInCache("koishi-plugin-resident-check"),
+		).toBe(true);
 	});
 
 	it("已安装但无模块驻留内存时返回 false", () => {
 		placePkg("koishi-plugin-idle-check");
-		expect(isResidentInCache("koishi-plugin-idle-check")).toBe(false);
+		expect(
+			isResidentInCache("koishi-plugin-idle-check"),
+		).toBe(false);
 	});
 
 	it("包不存在时保守返回 true（宁可多重载不漏判）", () => {
-		expect(isResidentInCache("koishi-plugin-absent-check")).toBe(true);
+		expect(
+			isResidentInCache("koishi-plugin-absent-check"),
+		).toBe(true);
 	});
 });
 
@@ -435,7 +538,9 @@ describe("registry 配置探测", () => {
 		app3.plugin(http);
 		app3.plugin(Installer, {});
 		await app3.start();
-		expect(app3.installer.endpoint).toBe("http://registry.example.npm/");
+		expect(app3.installer.endpoint).toBe(
+			"http://registry.example.npm/",
+		);
 		await app3.stop();
 		rmSync(join(tmp, ".npmrc"), { force: true });
 	});
@@ -456,79 +561,126 @@ describe("MarketProvider 市场数据服务", () => {
 						keywords: ["koishi", "plugin", "Tool"],
 					},
 				},
-				{ package: { name: "not-a-plugin", date: "2024-01-01T00:00:00Z" } },
+				{
+					package: {
+						name: "not-a-plugin",
+						date: "2024-01-01T00:00:00Z",
+					},
+				},
 			],
 			total: 1,
 		};
 		// start(true) 强制刷新市场数据（重新 collect）
 		await svc?.start(true);
 		// 等待节流窗口与逐包分析完成
-		await new Promise((resolve) => setTimeout(resolve, 700));
+		await new Promise((resolve) =>
+			setTimeout(resolve, 700),
+		);
 		const payload = await svc?.get();
 		expect(payload).toBeDefined();
 		// 非 plugin 条目被剔除，只保留 demo
-		expect(Object.keys(payload?.data ?? {})).toEqual(["koishi-plugin-demo"]);
+		expect(Object.keys(payload?.data ?? {})).toEqual([
+			"koishi-plugin-demo",
+		]);
 		expect(payload?.total).toBe(1);
 		expect(payload?.failed).toBe(0);
-		expect(payload?.registry).toBe(`http://127.0.0.1:${registryServer.port}/`);
-	});
-
-	it("依赖 / 注册表数据服务读取安装器缓存", async () => {
-		const dependencies = await app.get("console.services.dependencies")?.get();
-		expect(dependencies?.["koishi-plugin-demo"]?.request).toBeTruthy();
-		expect(dependencies?.["koishi-plugin-demo"]?.latest).toBe("2.0.0");
-
-		const registry = await app.get("console.services.registry")?.get();
-		expect(Object.keys(registry?.["koishi-plugin-demo"] ?? {})).toContain(
-			"2.0.0",
+		expect(payload?.registry).toBe(
+			`http://127.0.0.1:${registryServer.port}/`,
 		);
 	});
 
-	itQuiet("搜索接口失败时 get 返回空数据与错误标记", async () => {
-		const svc = app.get("console.services.market");
-		searchResponse = null;
-		// 强制重扫：collect 失败置 _error，get 返回空 payload
-		await svc?.start(true);
-		const payload = await svc?.get();
-		expect(payload).toEqual({ data: {}, failed: 0, total: 0, progress: 0 });
-		searchResponse = {
-			objects: [],
-			total: 0,
-		};
+	it("依赖 / 注册表数据服务读取安装器缓存", async () => {
+		const dependencies = await app
+			.get("console.services.dependencies")
+			?.get();
+		expect(
+			dependencies?.["koishi-plugin-demo"]?.request,
+		).toBeTruthy();
+		expect(
+			dependencies?.["koishi-plugin-demo"]?.latest,
+		).toBe("2.0.0");
+
+		const registry = await app
+			.get("console.services.registry")
+			?.get();
+		expect(
+			Object.keys(registry?.["koishi-plugin-demo"] ?? {}),
+		).toContain("2.0.0");
 	});
+
+	itQuiet(
+		"搜索接口失败时 get 返回空数据与错误标记",
+		async () => {
+			const svc = app.get("console.services.market");
+			searchResponse = null;
+			// 强制重扫：collect 失败置 _error，get 返回空 payload
+			await svc?.start(true);
+			const payload = await svc?.get();
+			expect(payload).toEqual({
+				data: {},
+				failed: 0,
+				total: 0,
+				progress: 0,
+			});
+			searchResponse = {
+				objects: [],
+				total: 0,
+			};
+		},
+	);
 
 	it("控制台连接事件在数据过期时触发刷新", async () => {
 		const svc = app.get("console.services.market");
 		expect(svc).toBeDefined();
 		// 伪造一个在线客户端，使连接事件通过在线检查（broadcast 需可用的 socket）
-		const fakeClient = { id: "conn-1", socket: { send() {} } };
-		(app.console.clients as Record<string, unknown>)["conn-1"] = fakeClient;
+		const fakeClient = {
+			id: "conn-1",
+			socket: { send() {} },
+		};
+		(app.console.clients as Record<string, unknown>)[
+			"conn-1"
+		] = fakeClient;
 		// 刚刷新过：12 小时窗口内直接返回，不重新收集
-		const timestamp = svc?.["_timestamp" as keyof typeof svc] as number;
+		const timestamp = svc?.[
+			"_timestamp" as keyof typeof svc
+		] as number;
 		// console/connection 载荷声明为 Client，桩对象仅含在线检查所需的最小面，类型层断言穿透
 		app.emit("console/connection", fakeClient as never);
-		expect(svc?.["_timestamp" as keyof typeof svc] as number).toBe(timestamp);
+		expect(
+			svc?.["_timestamp" as keyof typeof svc] as number,
+		).toBe(timestamp);
 		// 将时间戳回拨到窗口外，连接事件重新触发 start（异步监听，稍等）
 		(svc as Record<string, unknown>)["_timestamp"] = 0;
 		app.emit("console/connection", fakeClient as never);
 		await new Promise((resolve) => setTimeout(resolve, 20));
 		expect(
-			(svc as Record<string, unknown>)["_timestamp"] as number,
+			(svc as Record<string, unknown>)[
+				"_timestamp"
+			] as number,
 		).toBeGreaterThan(0);
 		delete app.console.clients["conn-1"];
 	});
 });
 
 describe("market 聊天指令", () => {
-	itQuiet("plugin.install 缺参与未找到的报错路径", async () => {
-		const missing = await client.receive("plugin.install");
-		expect(missing[0]).toContain("请输入插件名。");
-		const notFound = await client.receive("plugin.install absent-pkg");
-		expect(notFound[0]).toContain("未找到该插件。");
-	});
+	itQuiet(
+		"plugin.install 缺参与未找到的报错路径",
+		async () => {
+			const missing = await client.receive(
+				"plugin.install",
+			);
+			expect(missing[0]).toContain("请输入插件名。");
+			const notFound = await client.receive(
+				"plugin.install absent-pkg",
+			);
+			expect(notFound[0]).toContain("未找到该插件。");
+		},
+	);
 
 	it("plugin.install 已安装时提示重复", async () => {
-		const replies = await client.receive("plugin.install demo");
+		const replies = await client.receive(
+			"plugin.install demo",
+		);
 		expect(replies[0]).toContain("该插件已安装。");
 	});
 
@@ -537,16 +689,22 @@ describe("market 聊天指令", () => {
 		async () => {
 			nextExitCode = 0;
 			spawnCalls.length = 0;
-			const replies = await client.receive("plugin.install newpkg");
+			const replies = await client.receive(
+				"plugin.install newpkg",
+			);
 			expect(replies[0]).toContain("安装成功！");
 			expect(spawnCalls.length).toBe(1);
 			const manifest = JSON.parse(
 				await Bun.file(join(tmp, "package.json")).text(),
 			) as { dependencies: Record<string, string> };
-			expect(manifest.dependencies["koishi-plugin-newpkg"]).toBe("1.0.0");
+			expect(
+				manifest.dependencies["koishi-plugin-newpkg"],
+			).toBe("1.0.0");
 			// 重启消息在安装完成后复位（Loader 与桩形状不同，经 unknown 二段式断言）
 			expect(
-				(app.loader as unknown as FakeLoader).envData["message"],
+				(app.loader as unknown as FakeLoader).envData[
+					"message"
+				],
 			).toBeNull();
 		},
 		15000,
@@ -557,18 +715,24 @@ describe("market 聊天指令", () => {
 		async () => {
 			nextExitCode = 0;
 			spawnCalls.length = 0;
-			const replies = await client.receive("plugin.uninstall newpkg");
+			const replies = await client.receive(
+				"plugin.uninstall newpkg",
+			);
 			expect(replies[0]).toContain("卸载成功！");
 			const manifest = JSON.parse(
 				await Bun.file(join(tmp, "package.json")).text(),
 			) as { dependencies: Record<string, string> };
-			expect(manifest.dependencies["koishi-plugin-newpkg"]).toBeUndefined();
+			expect(
+				manifest.dependencies["koishi-plugin-newpkg"],
+			).toBeUndefined();
 		},
 		15000,
 	);
 
 	it("plugin.uninstall 未安装时提示", async () => {
-		const replies = await client.receive("plugin.uninstall absent-pkg");
+		const replies = await client.receive(
+			"plugin.uninstall absent-pkg",
+		);
 		expect(replies[0]).toContain("该插件未安装。");
 	});
 
@@ -586,9 +750,13 @@ describe("market 进阶链路", () => {
 		try {
 			const appNoLoader = new App();
 			appNoLoader.plugin(http);
-			appNoLoader.plugin(FakeConsole as unknown as Plugin.Constructor<TestApp>);
+			appNoLoader.plugin(
+				FakeConsole as unknown as Plugin.Constructor<TestApp>,
+			);
 			appNoLoader.plugin(market, {
-				registry: { endpoint: `http://127.0.0.1:${registryServer.port}/` },
+				registry: {
+					endpoint: `http://127.0.0.1:${registryServer.port}/`,
+				},
 			});
 			await appNoLoader.start();
 			// apply 在 loader 缺席时仅告警并提前返回
@@ -603,7 +771,8 @@ describe("market 进阶链路", () => {
 		"浏览器 market/install 监听器执行安装并刷新服务",
 		async () => {
 			nextExitCode = 0;
-			const listener = app.console.listeners["market/install"];
+			const listener =
+				app.console.listeners["market/install"];
 			expect(listener).toBeDefined();
 			const code = (await listener?.callback.call(
 				{} as never,
@@ -615,23 +784,32 @@ describe("market 进阶链路", () => {
 		15000,
 	);
 
-	itQuiet("浏览器 market/registry 监听器批量查询包元数据", async () => {
-		const listener = app.console.listeners["market/registry"];
-		expect(listener).toBeDefined();
-		const meta = (await listener?.callback.call({} as never, [
-			"koishi-plugin-demo",
-			"koishi-plugin-missing",
-		])) as Record<string, unknown>;
-		expect(Object.keys(meta["koishi-plugin-demo"] ?? {})).toContain("2.0.0");
-		expect(meta["koishi-plugin-missing"]).toEqual({});
-	});
+	itQuiet(
+		"浏览器 market/registry 监听器批量查询包元数据",
+		async () => {
+			const listener =
+				app.console.listeners["market/registry"];
+			expect(listener).toBeDefined();
+			const meta = (await listener?.callback.call(
+				{} as never,
+				["koishi-plugin-demo", "koishi-plugin-missing"],
+			)) as Record<string, unknown>;
+			expect(
+				Object.keys(meta["koishi-plugin-demo"] ?? {}),
+			).toContain("2.0.0");
+			expect(meta["koishi-plugin-missing"]).toEqual({});
+		},
+	);
 
 	it("搜索结果中不兼容的包被跳过（analyze onSkipped/ignored）", async () => {
 		const svc = app.get("console.services.market");
 		// ghost 有 registry 条目，但版本声明的 koishi peer 与 4.x 不相交
 		registryData["koishi-plugin-ghost"] = {
 			versions: {
-				"1.0.0": { version: "1.0.0", peerDependencies: { koishi: "^5.0.0" } },
+				"1.0.0": {
+					version: "1.0.0",
+					peerDependencies: { koishi: "^5.0.0" },
+				},
 			},
 			time: { "1.0.0": "2024-01-01T00:00:00Z" },
 		};
@@ -649,7 +827,9 @@ describe("market 进阶链路", () => {
 		};
 		await svc?.start(true);
 		// collect 对 analyze 为即发即忘，等待逐包分析完成
-		await new Promise((resolve) => setTimeout(resolve, 300));
+		await new Promise((resolve) =>
+			setTimeout(resolve, 300),
+		);
 		const payload = await svc?.get();
 		// 无兼容版本：对象标记 ignored，不进入数据缓存。
 		// progress 恒为 0：Scanner 以 defineProperty 定义 progress（不可写），
@@ -661,43 +841,63 @@ describe("market 进阶链路", () => {
 		delete registryData["koishi-plugin-ghost"];
 	});
 
-	itQuiet("搜索结果中被限流的包经重试后计入 failed（onFailure）", async () => {
-		const svc = app.get("console.services.market");
-		searchResponse = {
-			objects: [
-				{
-					package: {
-						name: "koishi-plugin-ratelimited",
-						version: "1.0.0",
-						date: "2024-01-01T00:00:00Z",
+	itQuiet(
+		"搜索结果中被限流的包经重试后计入 failed（onFailure）",
+		async () => {
+			const svc = app.get("console.services.market");
+			searchResponse = {
+				objects: [
+					{
+						package: {
+							name: "koishi-plugin-ratelimited",
+							version: "1.0.0",
+							date: "2024-01-01T00:00:00Z",
+						},
 					},
-				},
-			],
-			total: 1,
-		};
-		await svc?.start(true);
-		// 等待限流重试（Retry-After 10ms × 3 次）与即发即忘的 analyze。
-		// 注意不能经 get() 断言：super.start() 会清空 _task，get() 触发的
-		// 二次 collect 会把 failed 重置（即发即忘的 analyze 尚未完成）。
-		await new Promise((resolve) => setTimeout(resolve, 400));
-		// 不可达/被限流的包名进入 failed 列表（上一个用例中 registry
-		// 条目已删除的 ghost 包经 404 路径同样落入此处）
-		const provider = svc as unknown as { failed: string[] };
-		expect(
-			provider.failed.some((name) => name.startsWith("koishi-plugin-")),
-		).toBe(true);
-	});
+				],
+				total: 1,
+			};
+			await svc?.start(true);
+			// 等待限流重试（Retry-After 10ms × 3 次）与即发即忘的 analyze。
+			// 注意不能经 get() 断言：super.start() 会清空 _task，get() 触发的
+			// 二次 collect 会把 failed 重置（即发即忘的 analyze 尚未完成）。
+			await new Promise((resolve) =>
+				setTimeout(resolve, 400),
+			);
+			// 不可达/被限流的包名进入 failed 列表（上一个用例中 registry
+			// 条目已删除的 ghost 包经 404 路径同样落入此处）
+			const provider = svc as unknown as {
+				failed: string[];
+			};
+			expect(
+				provider.failed.some((name) =>
+					name.startsWith("koishi-plugin-"),
+				),
+			).toBe(true);
+		},
+	);
 
 	itQuiet(
 		"plugin.upgrade 检出可升级项并输出确认提示",
 		async () => {
 			// 本地放置旧版安装，使 resolved 有值且低于远端 latest
-			mkdirSync(join(tmp, "node_modules", "koishi-plugin-demo"), {
-				recursive: true,
-			});
+			mkdirSync(
+				join(tmp, "node_modules", "koishi-plugin-demo"),
+				{
+					recursive: true,
+				},
+			);
 			writeFileSync(
-				join(tmp, "node_modules", "koishi-plugin-demo", "package.json"),
-				JSON.stringify({ name: "koishi-plugin-demo", version: "1.0.0" }),
+				join(
+					tmp,
+					"node_modules",
+					"koishi-plugin-demo",
+					"package.json",
+				),
+				JSON.stringify({
+					name: "koishi-plugin-demo",
+					version: "1.0.0",
+				}),
 			);
 			app.installer.refresh();
 
@@ -706,8 +906,12 @@ describe("market 进阶链路", () => {
 			// 注：mock 环境下指令 ctx 对 loader 服务的可见性受 cordis
 			// isolate 语义限制（见仓库测试任务记录），确认后的安装段
 			// 由 market/install 监听器用例覆盖。
-			const question = client.receive("plugin.upgrade demo");
-			await new Promise((resolve) => setTimeout(resolve, 200));
+			const question = client.receive(
+				"plugin.upgrade demo",
+			);
+			await new Promise((resolve) =>
+				setTimeout(resolve, 200),
+			);
 			await client.receive("Y");
 			const replies = await question;
 			const output = replies.join("\n");
@@ -731,11 +935,19 @@ describe("market 进阶链路", () => {
 					},
 				},
 			};
-			mkdirSync(join(tmp, "node_modules", "koishi-plugin-weird"), {
-				recursive: true,
-			});
+			mkdirSync(
+				join(tmp, "node_modules", "koishi-plugin-weird"),
+				{
+					recursive: true,
+				},
+			);
 			writeFileSync(
-				join(tmp, "node_modules", "koishi-plugin-weird", "package.json"),
+				join(
+					tmp,
+					"node_modules",
+					"koishi-plugin-weird",
+					"package.json",
+				),
 				JSON.stringify({
 					name: "koishi-plugin-weird",
 					version: "not.a.version",
@@ -748,9 +960,15 @@ describe("market 进阶链路", () => {
 			});
 			expect(code).toBe(0);
 			const deps = await app.installer.getDeps();
-			expect(deps["koishi-plugin-weird"]?.resolved).toBe("not.a.version");
-			const replies = await client.receive("plugin.upgrade weird");
-			expect(replies[0]).toContain("所有插件已是最新版本。");
+			expect(deps["koishi-plugin-weird"]?.resolved).toBe(
+				"not.a.version",
+			);
+			const replies = await client.receive(
+				"plugin.upgrade weird",
+			);
+			expect(replies[0]).toContain(
+				"所有插件已是最新版本。",
+			);
 		},
 		20000,
 	);
