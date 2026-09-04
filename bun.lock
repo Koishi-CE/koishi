@@ -20,7 +20,7 @@
     },
     "apps/koishi-create": {
       "name": "create-koishi-ce",
-      "version": "1.4.0",
+      "version": "1.5.0",
       "bin": {
         "create-koishi-ce": "./lib/bin.mjs",
       },
