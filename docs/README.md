@@ -5,7 +5,7 @@
 
 ## 文档地图
 
-docs 根下只有本导航页；文档按性质分层：**指南**（guides，怎么开发）、**参考**（reference，仓库是什么）、**流程**（process，特定流程怎么走）与**档案**（decisions，Why / 历史快照，只读）。
+docs 根下有本导航页与 [roadmap.md](roadmap.md)（规划讨论稿）；手册按性质分层：**指南**（guides，怎么开发）、**参考**（reference，仓库是什么）、**流程**（process，特定流程怎么走）与**档案**（decisions，Why / 历史快照，只读）。
 
 ```mermaid
 flowchart LR
@@ -63,7 +63,7 @@ flowchart LR
 | 文档 | 内容 | 状态 |
 |---|---|---|
 | [decisions/upgrade-plan.md](decisions/upgrade-plan.md) | 依赖六阶段升级计划书 | Phase 0-4 已完成；Phase 5（cordis 4.x）被上游阻塞、已回退——重启条件仍是活约束 |
-| [decisions/dependency-audit.md](decisions/dependency-audit.md) | 99 个外部依赖立项前全量审计快照 | 历史快照（2026-08-27） |
+| [decisions/dependency-audit.md](decisions/dependency-audit.md) | 99 个外部依赖立项前全量审计快照（文末附 2026-09-05 后续变化补记） | 历史快照（2026-08-27）+ 补记 |
 
 ## 文档组织约定
 
@@ -72,7 +72,8 @@ flowchart LR
 1. **分层**：手册（guides / reference / process）持续维护；档案（decisions）只读（开头注明日期与状态）。阶段性设计 / 交接直接写进提交信息，不单独立档。
 2. **页面模板**：`# 标题` → 引用块（定位 + 「本文结构」）→ 编号章节。长文档可在开头加节内目录。
 3. **章节编号**：中文手册 `## N. 标题` 二级、`### 小节` 三级；引用章节写作「见 §N」或锚点 `目标.md#n-标题`。
-4. **交叉引用**：一律相对路径、不带 `./` 前缀（同目录 `release.md`、跨目录 `../guides/development.md`、指仓库根 `../../AGENTS.md`）；docs 根下不新增散落 md，新手册按性质入层。
-5. **与 AGENTS.md 不重复**：AGENTS 放铁律（精简），docs 放方法与理由；需要时用链接而非抄写。
-6. **不写死漂移数据**：版本号、文件数等以 package.json / 命令输出为准；确需记录时注明日期。
-7. **语言**：简体中文、不用 emoji；`process/upstream.md` 为面向公开受众的英文例外。
+4. **交叉引用**：一律相对路径、不带 `./` 前缀（同目录 `release.md`、跨目录 `../guides/development.md`、指仓库根 `../../AGENTS.md`）；`.github/` 顶层社区健康文件（CONTRIBUTING 等）按 GitHub 规则从仓库根解析，须带 `./` 前缀。docs 根下不新增散落 md，新手册按性质入层。
+5. **链接存活**：改动文档后跑 `bun tooling/check-docs-links.ts` 校验全部相对链接与锚点（覆盖 docs 全树与根部 / `.github/` 文档），应当保持通过。
+6. **与 AGENTS.md 不重复**：AGENTS 放铁律（精简），docs 放方法与理由；需要时用链接而非抄写。
+7. **不写死漂移数据**：版本号、文件数、用例数等以 package.json / 命令输出为准，不在文档中写死；确需记录时注明日期。
+8. **语言**：简体中文、不用 emoji；`process/upstream.md` 为面向公开受众的英文例外。
