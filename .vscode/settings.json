@@ -11,6 +11,15 @@
     // Material Icon Theme
     "material-icon-theme.folders.associations": {
         "webui": "client",
+        // apps
+        "koishi-create": "generator",
+        "koishi-scripts": "scripts",
+        // packages/node
+        "i18n-utils": "i18n",
+        // packages/shim
+        "shim": "middleware",
+        "console-shim": "console",
+        "koishi-shim": "core",
         // plugins/common
         "assets-local": "resource",
         // plugins/infra
