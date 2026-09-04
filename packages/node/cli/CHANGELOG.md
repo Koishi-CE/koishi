@@ -1,5 +1,15 @@
 # @koishi-ce/koishi
 
+## 1.0.7
+
+### Patch Changes
+
+- f6c5088: 启动横幅标识由 `Koishi/版本` 改为 `Koishi-CE/版本`，并在交互终端下于启动时输出 KOISHI CE 字符画（非 TTY 环境自动跳过）。
+- Updated dependencies [f6c5088]
+  - @koishi-ce/loader@1.0.6
+  - @koishi-ce/core@1.0.1
+  - @koishi-ce/utils@1.0.0
+
 ## 1.0.6
 
 ### Patch Changes
