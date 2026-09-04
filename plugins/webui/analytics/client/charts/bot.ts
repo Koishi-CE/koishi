@@ -15,7 +15,7 @@ export default (ctx: Context) => {
 	ctx.slot({
 		type: "analytic-chart",
 		component: createChart({
-			title: "各平台消息占比",
+			title: () => ctx.$i18n.t("analytics.bot.title"),
 			fields: ["analytics"],
 			showTab: true,
 			options({ analytics }, tab) {
@@ -46,7 +46,12 @@ export default (ctx: Context) => {
 
 				return {
 					tooltip: Tooltip.item(({ data }) => {
-						return `${data.children ? "平台" : "昵称"}：${data.name}<br>日均消息数量：${+data.value.toFixed(1)}`;
+						return ctx.$i18n.t(
+							data.children
+								? "analytics.bot.tipPlatform"
+								: "analytics.bot.tipAccount",
+							[data.name, +data.value.toFixed(1)],
+						);
 					}),
 					series: [
 						{

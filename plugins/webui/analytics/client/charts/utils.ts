@@ -10,7 +10,7 @@
  * 图表本体是异步加载的 vue-echarts，options() 回调按当前 store 数据与页签
  * 产出 echarts 配置，返回 undefined 时整个卡片不渲染（数据未就绪 / 为空）。
  */
-import { type Store, store } from "@koishi-ce/client";
+import { root, type Store, store } from "@koishi-ce/client";
 import type * as echarts from "echarts";
 import {
 	defineAsyncComponent,
@@ -28,8 +28,8 @@ const VChart = defineAsyncComponent(
 
 /** createChart 的入参描述。 */
 export interface ChartOptions {
-	/** 卡片标题。 */
-	title: string;
+	/** 卡片标题（支持 getter，随界面语言实时切换）。 */
+	title: string | (() => string);
 	/** 依赖的 store 键；任一未就绪则整个卡片不渲染。 */
 	fields?: (keyof Store)[];
 	/** 是否显示"发送 / 接收"切换页签。 */
@@ -64,12 +64,16 @@ export function createChart({
 			if (!fields.every((key) => store[key])) return null;
 			const option = options(store, tabValue.value);
 			if (!option) return;
+			// render 内调用全局 t：对 locale 建立依赖，切语言时卡片随之重渲染
+			const t = (key: string) => root.$i18n.t(key);
 			return h(
 				resolveComponent("k-card"),
 				{ class: "frameless analytic-chart" },
 				{
 					header: () => [
-						h("span", { class: "left" }, [title]),
+						h("span", { class: "left" }, [
+							typeof title === "function" ? title() : title,
+						]),
 						...(showTab
 							? [
 									h("span", { class: "right" }, [
@@ -84,7 +88,7 @@ export function createChart({
 												onClick: () =>
 													(tabValue.value = "send"),
 											},
-											["发送"],
+											[t("analytics.stats.send")],
 										),
 										h(
 											"span",
@@ -97,7 +101,7 @@ export function createChart({
 												onClick: () =>
 													(tabValue.value = "receive"),
 											},
-											["接收"],
+											[t("analytics.stats.receive")],
 										),
 									]),
 								]

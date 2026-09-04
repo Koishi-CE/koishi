@@ -13,7 +13,7 @@ export default (ctx: Context) => {
 	ctx.slot({
 		type: "analytic-chart",
 		component: createChart({
-			title: "指令调用频率",
+			title: () => ctx.$i18n.t("analytics.command.title"),
 			fields: ["analytics"],
 			options({ analytics }) {
 				// render 侧已按 fields 守卫,此处仅为收窄可选的 store 键
@@ -28,7 +28,9 @@ export default (ctx: Context) => {
 					tooltip: Tooltip.item(({ data }) => {
 						const output = [data.name];
 						output.push(
-							`日均调用：${+data.value.toFixed(1)}`,
+							ctx.$i18n.t("analytics.command.tip", [
+								+data.value.toFixed(1),
+							]),
 						);
 						return output.join("<br>");
 					}),

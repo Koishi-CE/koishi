@@ -1,0 +1,29 @@
+# SPDX-License-Identifier: AGPL-3.0-only
+# Copyright (c) 2019-present Shigma and Koishijs contributors.
+# Copyright (c) 2026-present Koishi-CE contributors.
+
+analytics:
+  hour:
+    title: Messages par heure
+    tip: "Moyenne quotidienne de messages : {0}"
+  bot:
+    title: Répartition des messages par plateforme
+    tipPlatform: "Plateforme : {0}<br>Moyenne quotidienne : {1}"
+    tipAccount: "Pseudo : {0}<br>Moyenne quotidienne : {1}"
+  command:
+    title: Fréquence d'appel des commandes
+    tip: "Appels quotidiens moyens : {0}"
+  history:
+    title: Historique des messages
+    weekdays: dim. lun. mar. mer. jeu. ven. sam.
+    tip: "{0} {1}<br>Messages : {2}"
+  stats:
+    send: Envoyés
+    receive: Reçus
+  numbers:
+    users: Utilisateurs
+    newUsers: Nouveaux utilisateurs hier
+    guilds: Groupes
+    newGuilds: Nouveaux groupes hier
+    dauToday: DAU du jour
+    dauRecent: DAU récent

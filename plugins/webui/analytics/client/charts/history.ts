@@ -11,14 +11,11 @@
 import type { Context } from "@koishi-ce/client";
 import { createChart, Tooltip } from "./utils";
 
-// 星期的中文缩写，供 tooltip 中按 getDay() 取字符拼接"星期几"
-const week = "日一二三四五六";
-
 export default (ctx: Context) => {
 	ctx.slot({
 		type: "analytic-chart",
 		component: createChart({
-			title: "历史消息数量",
+			title: () => ctx.$i18n.t("analytics.history.title"),
 			fields: ["analytics"],
 			showTab: true,
 			options({ analytics }, tab) {
@@ -26,13 +23,23 @@ export default (ctx: Context) => {
 				if (!analytics) return;
 				if (!analytics.messageByDate.length) return;
 				const data = analytics.messageByDate.slice(1);
+				// 当前界面语言（x 轴日期格式与星期缩写均随之切换）
+				const locale = ctx.$i18n.i18n.global.locale.value;
 
 				return {
 					tooltip: Tooltip.axis(([first]) => {
 						if (!first) return "";
 						const { name, value } = first;
 						const day = new Date(name).getDay();
-						return `${name} 星期${week[day]}<br>消息数量：${value}`;
+						// weekdays 为空格分隔的星期缩写表（词典提供）
+						const weekday = ctx.$i18n
+							.t("analytics.history.weekdays")
+							.split(" ")[day];
+						return ctx.$i18n.t("analytics.history.tip", [
+							name,
+							weekday,
+							value,
+						]);
 					}),
 					xAxis: {
 						type: "category",
@@ -40,7 +47,7 @@ export default (ctx: Context) => {
 							.map((_, index) =>
 								new Date(
 									Date.now() - (index + 1) * 86400000,
-								).toLocaleDateString("zh-CN"),
+								).toLocaleDateString(locale),
 							)
 							.reverse(),
 					},

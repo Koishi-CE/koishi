@@ -1,0 +1,29 @@
+# SPDX-License-Identifier: AGPL-3.0-only
+# Copyright (c) 2019-present Shigma and Koishijs contributors.
+# Copyright (c) 2026-present Koishi-CE contributors.
+
+analytics:
+  hour:
+    title: 每小時訊息數量
+    tip: "日均訊息數量：{0}"
+  bot:
+    title: 各平台訊息佔比
+    tipPlatform: "平台：{0}<br>日均訊息數量：{1}"
+    tipAccount: "暱稱：{0}<br>日均訊息數量：{1}"
+  command:
+    title: 指令呼叫頻率
+    tip: "日均呼叫：{0}"
+  history:
+    title: 歷史訊息數量
+    weekdays: 日 一 二 三 四 五 六
+    tip: "{0} 星期{1}<br>訊息數量：{2}"
+  stats:
+    send: 傳送
+    receive: 接收
+  numbers:
+    users: 使用者數量
+    newUsers: 昨日新增使用者
+    guilds: 群組數量
+    newGuilds: 昨日新增群組
+    dauToday: 今日 DAU
+    dauRecent: 近期 DAU

@@ -1,0 +1,29 @@
+# SPDX-License-Identifier: AGPL-3.0-only
+# Copyright (c) 2019-present Shigma and Koishijs contributors.
+# Copyright (c) 2026-present Koishi-CE contributors.
+
+analytics:
+  hour:
+    title: Сообщений по часам
+    tip: "В среднем сообщений в день: {0}"
+  bot:
+    title: Доля сообщений по платформам
+    tipPlatform: "Платформа: {0}<br>В среднем сообщений в день: {1}"
+    tipAccount: "Ник: {0}<br>В среднем сообщений в день: {1}"
+  command:
+    title: Частота вызова команд
+    tip: "В среднем вызовов в день: {0}"
+  history:
+    title: История сообщений
+    weekdays: Вс Пн Вт Ср Чт Пт Сб
+    tip: "{0} {1}<br>Сообщений: {2}"
+  stats:
+    send: Отправлено
+    receive: Получено
+  numbers:
+    users: Пользователи
+    newUsers: Новые пользователи за вчера
+    guilds: Группы
+    newGuilds: Новые группы за вчера
+    dauToday: DAU сегодня
+    dauRecent: DAU за последнее время

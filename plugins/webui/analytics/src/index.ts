@@ -28,6 +28,13 @@ import {
 	Time,
 	type Universal,
 } from "@koishi-ce/koishi";
+import deDE from "../locales/de-DE.yml";
+import enUS from "../locales/en-US.yml";
+import frFR from "../locales/fr-FR.yml";
+import jaJP from "../locales/ja-JP.yml";
+import ruRU from "../locales/ru-RU.yml";
+import zhCN from "../locales/zh-CN.yml";
+import zhTW from "../locales/zh-TW.yml";
 
 declare module "@koishi-ce/koishi" {
 	interface Tables {
@@ -65,6 +72,14 @@ class Analytics extends DataService<Analytics.Payload> {
 		recentDayCount: Schema.natural()
 			.description("统计最近几天的数据。")
 			.default(7),
+	}).i18n({
+		"de-DE": deDE,
+		"en-US": enUS,
+		"fr-FR": frFR,
+		"ja-JP": jaJP,
+		"ru-RU": ruRU,
+		"zh-CN": zhCN,
+		"zh-TW": zhTW,
 	});
 
 	// 基类 Service 声明了 config: unknown;此处收敛为必填并在构造时归一化

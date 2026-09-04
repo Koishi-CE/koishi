@@ -18,7 +18,7 @@ export default (ctx: Context) => {
 	ctx.slot({
 		type: "analytic-chart",
 		component: createChart({
-			title: "每小时消息数量",
+			title: () => ctx.$i18n.t("analytics.hour.title"),
 			fields: ["analytics"],
 			showTab: true,
 			options({ analytics }, tab) {
@@ -38,7 +38,9 @@ export default (ctx: Context) => {
 							analytics.messageByHour[dataIndex];
 						const output = [
 							`${formatHour(x)}`,
-							`日均消息数量：${+(source?.[tab] || 0).toFixed(1)}`,
+							ctx.$i18n.t("analytics.hour.tip", [
+								+(source?.[tab] || 0).toFixed(1),
+							]),
 						];
 						return output.join("<br>");
 					}),

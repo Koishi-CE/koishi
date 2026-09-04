@@ -109,9 +109,12 @@ export default class I18nService extends Service {
 		this.i18n.global.mergeLocaleMessage(locale, messages);
 	}
 
-	/** 全局翻译函数（非组件上下文使用，如 activity 名的 getter） */
-	t(key: string) {
-		return this.i18n.global.t(key);
+	/**
+	 * 全局翻译函数（非组件上下文使用，如 activity 名的 getter 与
+	 * echarts 等纯 ts 模块）。可携带位置插值参数。
+	 */
+	t(key: string, args?: unknown[]) {
+		return this.i18n.global.t(key, args ?? []);
 	}
 }
 

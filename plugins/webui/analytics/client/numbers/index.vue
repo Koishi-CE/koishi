@@ -9,19 +9,19 @@
   <div class="card-grid numeric-grid" v-if="store.analytics">
     <k-slot name="analytic-number">
       <k-slot-item>
-        <numeric icon="analytic:user" title="用户数量">
+        <numeric icon="analytic:user" :title="t('analytics.numbers.users')">
           <template #default>{{ store.analytics.userCount }}</template>
-          <template #footer-left>昨日新增用户</template>
+          <template #footer-left>{{ t('analytics.numbers.newUsers') }}</template>
           <template #footer-right>{{ store.analytics.userIncrement }}</template>
         </numeric>
-        <numeric icon="analytic:guild" title="群组数量">
+        <numeric icon="analytic:guild" :title="t('analytics.numbers.guilds')">
           <template #default>{{ store.analytics.guildCount }}</template>
-          <template #footer-left>昨日新增群组</template>
+          <template #footer-left>{{ t('analytics.numbers.newGuilds') }}</template>
           <template #footer-right>{{ store.analytics.guildIncrement }}</template>
         </numeric>
-        <numeric icon="analytic:heart" title="今日 DAU">
+        <numeric icon="analytic:heart" :title="t('analytics.numbers.dauToday')">
           <template #default>{{ store.analytics.dauHistory[0] }}</template>
-          <template #footer-left>近期 DAU</template>
+          <template #footer-left>{{ t('analytics.numbers.dauRecent') }}</template>
           <template #footer-right>{{ +recentDau.toFixed(1) }}</template>
         </numeric>
       </k-slot-item>
@@ -33,7 +33,10 @@
 import { store } from "@koishi-ce/client";
 import type {} from "@koishi-ce/plugin-analytics/src";
 import { computed, provide } from "vue";
+import { useI18n } from "vue-i18n";
 import Numeric from "./numeric.vue";
+
+const { t } = useI18n();
 
 provide("component:analytic-number", Numeric);
 

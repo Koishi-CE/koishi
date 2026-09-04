@@ -1,0 +1,29 @@
+# SPDX-License-Identifier: AGPL-3.0-only
+# Copyright (c) 2019-present Shigma and Koishijs contributors.
+# Copyright (c) 2026-present Koishi-CE contributors.
+
+analytics:
+  hour:
+    title: 毎時間のメッセージ数
+    tip: "日平均メッセージ数：{0}"
+  bot:
+    title: プラットフォーム別メッセージ割合
+    tipPlatform: "プラットフォーム：{0}<br>日平均メッセージ数：{1}"
+    tipAccount: "ニックネーム：{0}<br>日平均メッセージ数：{1}"
+  command:
+    title: コマンド実行頻度
+    tip: "日平均実行回数：{0}"
+  history:
+    title: 履歴メッセージ数
+    weekdays: 日 月 火 水 木 金 土
+    tip: "{0} {1}曜日<br>メッセージ数：{2}"
+  stats:
+    send: 送信
+    receive: 受信
+  numbers:
+    users: ユーザー数
+    newUsers: 昨日の新規ユーザー
+    guilds: グループ数
+    newGuilds: 昨日の新規グループ
+    dauToday: 本日の DAU
+    dauRecent: 最近の DAU
