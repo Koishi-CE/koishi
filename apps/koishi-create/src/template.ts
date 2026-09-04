@@ -25,11 +25,13 @@
  *   不会拉入 npm 官方全家桶形成第二份框架副本；市场安装亦不改写该声明
  *   （installer 的 isGuardedRequest 护栏将 npm:@koishi-ce alias 与
  *   workspace: 同等保护）；
- * - koishi.yml 对齐官方实例的预写策略：控制台与基础插件全量预装（依赖
- *   数据库的保持 ~ 禁用）；database-sqlite 已随模板预装，去掉 ~ 即用；
- *   本仓不再分发的 adapter 官方插件与未再分发的 database（mongo / mysql
- *   / postgres）只以 ~ 禁用条目预写、不预装——loader 跳过禁用条目，装
- *   好后在控制台启用；
+ * - koishi.yml 采用配置页导出形态：插件键带 uid 实例后缀，分组带中文
+ *   $label 与 $collapsed 元数据；database-sqlite 默认启用，开箱即得数
+ *   据库；依赖数据库但非必需的插件（admin / bind / auth / broadcast /
+ *   callme）保持 ~ 禁用；本仓不再分发的 adapter 官方插件只以 ~ 禁用条
+ *   目预写、不预装——loader 跳过禁用条目，装好后在控制台启用（mongo /
+ *   mysql / postgres 等未再分发的 database 不再预写占位条目，市场装后
+ *   自动出现）；
  * - 依赖版本统一 ^1.0.0 区间（安装时取最新 1.x），shim 版本例外（冻结线）。
  */
 import {

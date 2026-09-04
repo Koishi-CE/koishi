@@ -92,51 +92,56 @@ test("内置模板静态文件齐备，koishi.yml 预配 market 镜像源", () =
 	);
 });
 
-test("koishi.yml 预写策略对齐官方实例：CE 插件全量预装（依赖数据库者禁用），官方 adapter / 未分发 database 只写不装", () => {
+test("koishi.yml 预写策略：sqlite 默认启用开箱数据库，非必需件与官方 adapter 保持 ~ 禁用", () => {
 	const yml = templateFiles["koishi.yml"] ?? "";
-	// 依赖数据库 / 暂无需启用的 CE 插件：预装但 ~ 禁用
+	// 配置页导出形态：插件键带 uid 实例后缀，分组带 $collapsed / $label 元数据
+	expect(yml).toMatch(/database-sqlite:[a-z0-9]{6}:/);
+	expect(yml).toContain("$collapsed: true");
+	expect(yml).toContain("$label: ");
+	// 依赖数据库但非必需 / 暂无需启用的 CE 插件：预装但 ~ 禁用
 	for (const name of [
 		"~admin",
 		"~bind",
 		"~broadcast",
 		"~callme",
-		"~analytics",
 		"~auth",
-		"~dataview",
-		"~rate-limit",
 		"~inspect",
 		"~server-temp",
 		"~mock",
 	]) {
 		expect(yml).toContain(name);
 	}
-	// 无需数据库即可工作的 CE 插件：直接启用
+	// 随模板默认启用的 CE 插件（含 sqlite 数据库）：条目存在且无 ~ 前缀
 	for (const name of [
-		"assets-local",
+		"database-sqlite",
+		"dataview",
+		"analytics",
+		"rate-limit",
 		"echo",
-		"theme-vanilla",
+		"assets-local",
 		"status",
 		"sandbox",
+		"theme-vanilla",
 	]) {
 		expect(yml).toContain(name);
+		expect(yml).not.toContain(`~${name}`);
 	}
-	// database-sqlite 已随模板预装：依赖在册 + yml 保持 ~ 禁用（启用即可用）
+	// database-sqlite 依赖在册（随模板预装，启用即得数据库）
 	expect(
 		baseManifest().dependencies?.[
 			"@koishi-ce/plugin-database-sqlite"
 		],
 	).toBe("^1.0.0");
-	expect(yml).toContain("~database-sqlite");
-	// 官方 adapter / 未再分发的 database 只以 ~ 禁用条目预写（未预装，市场装后启用）
+	// 官方 adapter 只以 ~ 禁用条目预写（未预装，市场装后启用）；
+	// 未再分发的 database（mongo / mysql / postgres）不再预写占位条目
 	for (const name of [
 		"~adapter-discord",
 		"~adapter-telegram",
 		"~adapter-qq",
-		"~database-mongo",
-		"~database-postgres",
 	]) {
 		expect(yml).toContain(name);
 	}
+	expect(yml).not.toContain("database-mongo");
 	// 模板依赖里不得出现官方 adapter / database 包名（只预写不预装）
 	expect(JSON.stringify(baseManifest())).not.toContain(
 		"adapter-",

@@ -1,69 +1,75 @@
 plugins:
   group:server:
-    server:
+    $collapsed: true
+    $label: 服务器
+    server:nhf2rf:
       port: 5140
       maxPort: 5149
-    ~server-temp: {}
-  group:basic:
-    ~admin: {}
-    ~bind: {}
-    ~broadcast: {}
-    ~callme: {}
-    commands: {}
-    echo: {}
-    help: {}
-    http: {}
-    ~inspect: {}
-    locales: {}
-    proxy-agent: {}
-    ~rate-limit: {}
+    ~server-temp:z9nmes: {}
+    ~adapter-satori:euyuu6: {}
+  group:storage:
+    $collapsed: true
+    $label: 持久化
+    assets-local:0bp951: {}
+    database-sqlite:60m3ri:
+      path: data/koishi.db
   group:console:
-    actions: {}
-    ~analytics: {}
-    ~auth: {}
-    config: {}
-    console:
+    $collapsed: true
+    $label: 控制台
+    console:p179rv:
       open: true
-    ~dataview: {}
-    explorer: {}
-    insight: {}
-    logger: {}
-    market:
+    ~auth:decpjz: {}
+    oobe:kw667y: {}
+    config:hrvlki: {}
+    market:n1dg4c:
       search:
         endpoint: https://registry.koishi.chat/index.json
-    notifier: {}
-    oobe: {}
-    sandbox: {}
-    status: {}
-    theme-vanilla: {}
-  group:storage:
-    ~database-mongo:
-      database: koishi
-    ~database-mysql:
-      database: koishi
-    ~database-postgres:
-      database: koishi
-    ~database-sqlite:
-      path: data/koishi.db
-    assets-local: {}
+    explorer:5e7k13: {}
+    actions:ttgal7: {}
+    sandbox:bbkwu5: {}
+    status:hc51wq: {}
+    logger:akzyyp: {}
+    dataview:eklvzg: {}
+    analytics:smgmme: {}
+    insight:ozp3by: {}
+    notifier:30g7rg: {}
+    theme-vanilla:029kuh: {}
+  group:basic:
+    $collapsed: true
+    $label: 基础库
+    commands:lgrbci: {}
+    help:nrbz2h: {}
+    echo:t6r9sk: {}
+    ~admin:e0sr2y: {}
+    ~bind:zxx2sn: {}
+    ~broadcast:q8x3jd: {}
+    ~callme:m4v7wt: {}
+    ~inspect:2t107r: {}
+    locales:bi9lco: {}
+    http:rwe3ck: {}
+    proxy-agent:p6jj15: {}
+    rate-limit:cghjaw: {}
   group:adapter:
-    ~adapter-dingtalk: {}
-    ~adapter-discord: {}
-    ~adapter-kook: {}
-    ~adapter-lark: {}
-    ~adapter-line: {}
-    ~adapter-mail: {}
-    ~adapter-matrix: {}
-    ~adapter-qq: {}
-    ~adapter-satori: {}
-    ~adapter-slack: {}
-    ~adapter-telegram: {}
-    ~adapter-wechat-official: {}
-    ~adapter-wecom: {}
-    ~adapter-whatsapp: {}
-    ~adapter-zulip: {}
+    $collapsed: true
+    $label: 适配器
+    ~adapter-qq:lr3f6b: {}
+    ~adapter-telegram:memc76: {}
+    ~adapter-discord:4n11rk: {}
+    ~adapter-kook:2s0qw0: {}
+    ~adapter-wecom:euh20s: {}
+    ~adapter-wechat-official:ufqejg: {}
+    ~adapter-dingtalk:76isk2: {}
+    ~adapter-lark:vtfsz0: {}
+    ~adapter-line:hfsd6d: {}
+    ~adapter-slack:ctdrr0: {}
+    ~adapter-whatsapp:xn68t0: {}
+    ~adapter-mail:cjnxrb: {}
+    ~adapter-matrix:phadis: {}
+    ~adapter-zulip:fg64tb: {}
   group:develop:
-    $if: env.NODE_ENV === 'development'
-    hmr:
-      root: .
-    ~mock: {}
+    $if: "env.NODE_ENV === 'development'"
+    $collapsed: true
+    $label: 开发
+    hmr:i3xkbw:
+      root: "."
+    ~mock:w2y5nh: {}
