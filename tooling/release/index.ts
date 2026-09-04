@@ -154,7 +154,12 @@ function parseOptions(
 /** 并行查询全部包的 registry 版本集（包名 → 已发布版本集合）。 */
 async function fetchAllPublished(
 	pkgs: readonly PkgInfo[],
+	prefix: string,
 ): Promise<Map<string, Set<string>>> {
+	console.log(
+		`${prefix} 🔍 正在比对 registry 已发布版本（${pkgs.length} 个包）…`,
+	);
+	const startedAt = Date.now();
 	const map = new Map<string, Set<string>>();
 	await Promise.all(
 		pkgs.map(async (pkg) => {
@@ -163,6 +168,9 @@ async function fetchAllPublished(
 				await fetchPublishedVersions(pkg.name),
 			);
 		}),
+	);
+	console.log(
+		`${prefix} ✅ 比对完成（${((Date.now() - startedAt) / 1000).toFixed(1)}s）`,
 	);
 	return map;
 }
@@ -221,7 +229,10 @@ async function cmdStatus(): Promise<number> {
 		);
 		return 0;
 	}
-	const published = await fetchAllPublished(pkgs);
+	const published = await fetchAllPublished(
+		pkgs,
+		"[status]",
+	);
 	const plan = planPublish(pkgs, published);
 	const downgraded = plan.toPublish.filter((pkg) =>
 		isDowngrade(
@@ -513,7 +524,10 @@ async function runPublishSteps(
 		);
 		return 1;
 	}
-	const published = await fetchAllPublished(pkgs);
+	const published = await fetchAllPublished(
+		pkgs,
+		"[publish]",
+	);
 	const plan = planPublish(pkgs, published);
 	const downgraded = plan.toPublish.filter((pkg) =>
 		isDowngrade(
