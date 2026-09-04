@@ -26,8 +26,10 @@
  *   （installer 的 isGuardedRequest 护栏将 npm:@koishi-ce alias 与
  *   workspace: 同等保护）；
  * - koishi.yml 对齐官方实例的预写策略：控制台与基础插件全量预装（依赖
- *   数据库的保持 ~ 禁用）；本仓不再分发的 adapter / database 官方插件只以
- *   ~ 禁用条目预写、不预装——loader 跳过禁用条目，装好后在控制台启用；
+ *   数据库的保持 ~ 禁用）；database-sqlite 已随模板预装，去掉 ~ 即用；
+ *   本仓不再分发的 adapter 官方插件与未再分发的 database（mongo / mysql
+ *   / postgres）只以 ~ 禁用条目预写、不预装——loader 跳过禁用条目，装
+ *   好后在控制台启用；
  * - 依赖版本统一 ^1.0.0 区间（安装时取最新 1.x），shim 版本例外（冻结线）。
  */
 import {
@@ -104,10 +106,14 @@ export function baseManifest(): Manifest {
 			"@koishi-ce/plugin-assets-local": "^1.0.0",
 			"@koishi-ce/plugin-auth": "^1.0.0",
 			"@koishi-ce/plugin-bind": "^1.0.0",
+			"@koishi-ce/plugin-broadcast": "^1.0.0",
+			"@koishi-ce/plugin-callme": "^1.0.0",
 			"@koishi-ce/plugin-commands": "^1.0.0",
 			"@koishi-ce/plugin-config": "^1.0.0",
 			"@koishi-ce/plugin-console": "^1.0.0",
+			"@koishi-ce/plugin-database-sqlite": "^1.0.0",
 			"@koishi-ce/plugin-dataview": "^1.0.0",
+			"@koishi-ce/plugin-echo": "^1.0.0",
 			"@koishi-ce/plugin-explorer": "^1.0.0",
 			"@koishi-ce/plugin-help": "^1.0.0",
 			"@koishi-ce/plugin-http": "^1.0.0",
@@ -146,6 +152,7 @@ export function baseManifest(): Manifest {
 		devDependencies: {
 			"@koishi-ce/client": "^1.0.0",
 			"@koishi-ce/plugin-hmr": "^1.0.0",
+			"@koishi-ce/plugin-mock": "^1.0.0",
 			"@koishi-ce/scripts": "^1.0.0",
 			"bun-types": "^1.4.0",
 		},

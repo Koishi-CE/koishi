@@ -18,8 +18,9 @@ bun run dev          # 启动（开发模式，启用 HMR 热更新）
 
 ## 预装与预写
 
-- **已预装**：基础与控制台插件（@koishi-ce 全家桶）。其中依赖数据库的（admin / bind / analytics / auth / dataview / rate-limit 等）与暂无需启用的（inspect / server-temp）在 `koishi.yml` 中以 `~` 前缀保持禁用——安装并启用任一数据库插件后，去掉对应 `~` 即可。
-- **只预写、未预装**：adapter（discord / telegram / qq …）与数据库（sqlite / mongo / postgres …）官方插件以 `~` 禁用条目预写在 `koishi.yml` 的 `group:adapter` / `group:storage`——loader 会跳过禁用条目，不安装也能正常启动；需要时在控制台「插件市场」搜索安装，回到配置页点击启用即可。
+- **已预装**：基础与控制台插件（@koishi-ce 全家桶）。其中依赖数据库的（admin / bind / broadcast / callme / analytics / auth / dataview / rate-limit 等）与暂无需启用的（inspect / server-temp / mock）在 `koishi.yml` 中以 `~` 前缀保持禁用——启用任一数据库插件后，去掉对应 `~` 即可。
+- **数据库开箱即用**：`@koishi-ce/plugin-database-sqlite` 已预装（`~database-sqlite` 保持禁用），无需市场安装，在配置页启用即可，数据落在 `data/koishi.db`。
+- **只预写、未预装**：adapter（discord / telegram / qq …）与数据库（mongo / mysql / postgres …）官方插件以 `~` 禁用条目预写在 `koishi.yml` 的 `group:adapter` / `group:storage`——loader 会跳过禁用条目，不安装也能正常启动；需要时在控制台「插件市场」搜索安装，回到配置页点击启用即可。
 
 ## 安装插件
 
