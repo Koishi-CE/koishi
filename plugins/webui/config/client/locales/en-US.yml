@@ -1,0 +1,74 @@
+# SPDX-License-Identifier: AGPL-3.0-only
+# Copyright (c) 2019-present Shigma and Koishijs contributors.
+# Copyright (c) 2026-present Koishi-CE contributors.
+
+config:
+  title: Plugin Configurations
+  menu:
+    enableGroup: Enable Group
+    disableGroup: Disable Group
+    enablePlugin: Enable Plugin
+    disablePlugin: Disable Plugin
+    saveConfig: Save Configuration
+    reloadConfig: Reload Configuration
+    rename: Rename
+    removeGroup: Remove Group
+    removePlugin: Remove Plugin
+    clone: Clone Configuration
+    manage: Manage Multiple Configurations
+    addPlugin: Add Plugin
+    addGroup: Add Group
+    globalSettings: Global Settings
+  tree:
+    group: "Group: {0}"
+    pending: Pending
+  forks:
+    workspace: " (workspace)"
+    count: This plugin currently has {0} configurations.
+    none: This plugin has not been configured yet.
+    add: Add New Configuration
+  modifier:
+    title: Filter Settings
+  select:
+    title: Select Plugin
+  plugin:
+    loading: Loading plugin configuration...
+    failure: Failed to load the plugin, which may be caused by the plugin itself. {0}
+    hintSource: Please check the plugin source code.
+    hintAuthor: Please contact the plugin author and report this issue.
+    dependency: "{0}: {1} ({2})"
+    dependencyRequired: Required dependency
+    dependencyOptional: Optional dependency
+    service: "{0}: {1} ({2})"
+    serviceRequired: Required service
+    serviceOptional: Optional service
+    loaded: loaded
+    notLoaded: not loaded
+    serviceConflict: This plugin will provide the {0} service, but this service is already implemented by another plugin.
+    serviceProvided: This plugin provides the {0} service.
+    serviceFuture: This plugin will provide the {0} service once enabled.
+    notReusable: This plugin is already running and is not reusable. Enabling it again may cause unexpected problems.
+    multiplePrefix: This plugin has multiple configurations.
+    multipleAction: Click to manage
+    multipleSuffix: ""
+    pages: "Pages provided by this plugin:"
+    noSchema: This plugin declares no configuration options, which may not be intended. {0}
+    notInstalled: This plugin is not installed yet.
+  view:
+    globalSettings: Global Settings
+    group: "Group: {0}"
+    removeTitle: Confirm Removal
+    removeConfirmGroup: "Are you sure you want to remove the group {0}? This action cannot be undone!"
+    removeConfirmPlugin: "Are you sure you want to remove the plugin {0}? This action cannot be undone!"
+    renameTitle: Rename
+    createGroupTitle: Create Group
+    cancel: Cancel
+    confirm: OK
+    constraintError: The current configuration does not satisfy the constraints. Please check it!
+    saved: Configuration saved.
+    reloaded: Configuration reloaded.
+    operationError: Operation failed. Please check the logs!
+    groupEnabled: Group enabled.
+    groupDisabled: Group disabled.
+    pluginEnabled: Plugin enabled.
+    pluginDisabled: Plugin disabled.

@@ -54,6 +54,7 @@
 import { send, useMenu } from "@koishi-ce/client";
 import type { ElScrollbar, ElTree } from "element-plus";
 import { nextTick, onActivated, ref, watch } from "vue";
+import { useI18n } from "vue-i18n";
 import { useRoute } from "vue-router";
 import {
 	getFullName,
@@ -61,6 +62,8 @@ import {
 	plugins,
 	type Tree,
 } from "./utils";
+
+const { t } = useI18n();
 
 const props = defineProps<{
 	modelValue: string;
@@ -132,9 +135,15 @@ interface Node {
 /** 节点显示文案：分组用"分组：xxx"，普通插件用 $label 或短名，待添加节点显示占位符。 */
 function getLabel(node: Node) {
 	if (node.data.name === "group") {
-		return `分组：${node.label || node.data.path}`;
+		return t("config.tree.group", [
+			node.label || node.data.path,
+		]);
 	} else {
-		return node.label || node.data.name || "待添加";
+		return (
+			node.label ||
+			node.data.name ||
+			t("config.tree.pending")
+		);
 	}
 }
 

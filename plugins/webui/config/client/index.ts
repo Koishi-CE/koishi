@@ -28,6 +28,13 @@ import {
 	plugins,
 	type,
 } from "./components/utils";
+import deDE from "./locales/de-DE.yml";
+import enUS from "./locales/en-US.yml";
+import frFR from "./locales/fr-FR.yml";
+import jaJP from "./locales/ja-JP.yml";
+import ruRU from "./locales/ru-RU.yml";
+import zhCN from "./locales/zh-CN.yml";
+import zhTW from "./locales/zh-TW.yml";
 
 import "virtual:uno.css";
 import "./index.scss";
@@ -45,6 +52,15 @@ declare module "@koishi-ce/client" {
 export default class ConfigWriter extends Service {
 	constructor(ctx: Context) {
 		super(ctx, "configWriter", true);
+
+		// 注入本扩展的 UI 语言包（各语种键均收纳在 config.* 命名空间下）
+		ctx.$i18n.extend("de-DE", deDE);
+		ctx.$i18n.extend("en-US", enUS);
+		ctx.$i18n.extend("fr-FR", frFR);
+		ctx.$i18n.extend("ja-JP", jaJP);
+		ctx.$i18n.extend("ru-RU", ruRU);
+		ctx.$i18n.extend("zh-CN", zhCN);
+		ctx.$i18n.extend("zh-TW", zhTW);
 
 		// 全局插槽 plugin-select:默认渲染插件选择弹窗,允许其它插件填充内容
 		ctx.slot({
@@ -80,7 +96,7 @@ export default class ConfigWriter extends Service {
 		ctx.page({
 			id: "config",
 			path: "/plugins/:name*",
-			name: "插件配置",
+			name: () => ctx.$i18n.t("config.title"),
 			icon: "activity:plugin",
 			order: 800,
 			authority: 4,
@@ -97,15 +113,26 @@ export default class ConfigWriter extends Service {
 				icon: ({ config }) =>
 					config.tree?.disabled ? "play" : "stop",
 				label: ({ config }) =>
-					(config.tree?.disabled ? "启用" : "停用") +
-					(config.tree?.name === "group" ? "分组" : "插件"),
+					ctx.$i18n.t(
+						config.tree?.disabled
+							? config.tree?.name === "group"
+								? "config.menu.enableGroup"
+								: "config.menu.enablePlugin"
+							: config.tree?.name === "group"
+								? "config.menu.disableGroup"
+								: "config.menu.disablePlugin",
+					),
 			},
 			{
 				id: ".save",
 				icon: ({ config }) =>
 					config.tree?.disabled ? "save" : "check",
 				label: ({ config }) =>
-					config.tree?.disabled ? "保存配置" : "重载配置",
+					ctx.$i18n.t(
+						config.tree?.disabled
+							? "config.menu.saveConfig"
+							: "config.menu.reloadConfig",
+					),
 			},
 			{
 				id: "@separator",
@@ -113,14 +140,18 @@ export default class ConfigWriter extends Service {
 			{
 				id: ".rename",
 				icon: "edit",
-				label: "重命名",
+				label: () => ctx.$i18n.t("config.menu.rename"),
 			},
 			{
 				id: ".remove",
 				type: "danger",
 				icon: "delete",
 				label: ({ config }) =>
-					config.tree?.children ? "移除分组" : "移除插件",
+					ctx.$i18n.t(
+						config.tree?.children
+							? "config.menu.removeGroup"
+							: "config.menu.removePlugin",
+					),
 			},
 			{
 				id: "@separator",
@@ -128,22 +159,22 @@ export default class ConfigWriter extends Service {
 			{
 				id: ".clone",
 				icon: "clone",
-				label: "克隆配置",
+				label: () => ctx.$i18n.t("config.menu.clone"),
 			},
 			{
 				id: ".manage",
 				icon: "manage",
-				label: "管理多份配置",
+				label: () => ctx.$i18n.t("config.menu.manage"),
 			},
 			{
 				id: ".add-plugin",
 				icon: "add-plugin",
-				label: "添加插件",
+				label: () => ctx.$i18n.t("config.menu.addPlugin"),
 			},
 			{
 				id: ".add-group",
 				icon: "add-group",
-				label: "添加分组",
+				label: () => ctx.$i18n.t("config.menu.addGroup"),
 			},
 		]);
 	}

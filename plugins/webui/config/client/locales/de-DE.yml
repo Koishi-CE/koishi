@@ -1,0 +1,74 @@
+# SPDX-License-Identifier: AGPL-3.0-only
+# Copyright (c) 2019-present Shigma and Koishijs contributors.
+# Copyright (c) 2026-present Koishi-CE contributors.
+
+config:
+  title: Plugin-Konfigurationen
+  menu:
+    enableGroup: Gruppe aktivieren
+    disableGroup: Gruppe deaktivieren
+    enablePlugin: Plugin aktivieren
+    disablePlugin: Plugin deaktivieren
+    saveConfig: Konfiguration speichern
+    reloadConfig: Konfiguration neu laden
+    rename: Umbenennen
+    removeGroup: Gruppe entfernen
+    removePlugin: Plugin entfernen
+    clone: Konfiguration klonen
+    manage: Mehrere Konfigurationen verwalten
+    addPlugin: Plugin hinzufügen
+    addGroup: Gruppe hinzufügen
+    globalSettings: Globale Einstellungen
+  tree:
+    group: "Gruppe: {0}"
+    pending: Ausstehend
+  forks:
+    workspace: " (Arbeitsbereich)"
+    count: Dieses Plugin hat derzeit {0} Konfigurationen.
+    none: Dieses Plugin wurde noch nicht konfiguriert.
+    add: Neue Konfiguration hinzufügen
+  modifier:
+    title: Filtereinstellungen
+  select:
+    title: Plugin auswählen
+  plugin:
+    loading: Plugin-Konfiguration wird geladen...
+    failure: Das Plugin konnte nicht geladen werden, möglicherweise aufgrund eines Problems im Plugin selbst. {0}
+    hintSource: Bitte prüfen Sie den Quellcode des Plugins.
+    hintAuthor: Bitte kontaktieren Sie den Plugin-Autor und melden Sie das Problem.
+    dependency: "{0}: {1} ({2})"
+    dependencyRequired: Erforderliche Abhängigkeit
+    dependencyOptional: Optionale Abhängigkeit
+    service: "{0}: {1} ({2})"
+    serviceRequired: Erforderlicher Service
+    serviceOptional: Optionaler Service
+    loaded: geladen
+    notLoaded: nicht geladen
+    serviceConflict: Dieses Plugin wird den Service {0} bereitstellen, aber dieser Service wird bereits von einem anderen Plugin implementiert.
+    serviceProvided: Dieses Plugin stellt den Service {0} bereit.
+    serviceFuture: Dieses Plugin wird nach der Aktivierung den Service {0} bereitstellen.
+    notReusable: Dieses Plugin läuft bereits und ist nicht wiederverwendbar. Eine erneute Aktivierung kann zu unerwarteten Problemen führen.
+    multiplePrefix: Dieses Plugin hat mehrere Konfigurationen.
+    multipleAction: Klicken Sie hier, um sie zu verwalten
+    multipleSuffix: ""
+    pages: "Von diesem Plugin bereitgestellte Seiten:"
+    noSchema: Dieses Plugin deklariert keine Konfigurationsoptionen, was möglicherweise nicht beabsichtigt ist. {0}
+    notInstalled: Dieses Plugin ist noch nicht installiert.
+  view:
+    globalSettings: Globale Einstellungen
+    group: "Gruppe: {0}"
+    removeTitle: Entfernen bestätigen
+    removeConfirmGroup: "Möchten Sie die Gruppe {0} wirklich entfernen? Diese Aktion kann nicht rückgängig gemacht werden!"
+    removeConfirmPlugin: "Möchten Sie das Plugin {0} wirklich entfernen? Diese Aktion kann nicht rückgängig gemacht werden!"
+    renameTitle: Umbenennen
+    createGroupTitle: Gruppe erstellen
+    cancel: Abbrechen
+    confirm: OK
+    constraintError: Die aktuelle Konfiguration erfüllt die Einschränkungen nicht. Bitte überprüfen Sie sie!
+    saved: Konfiguration gespeichert.
+    reloaded: Konfiguration neu geladen.
+    operationError: Vorgang fehlgeschlagen. Bitte überprüfen Sie die Protokolle!
+    groupEnabled: Gruppe aktiviert.
+    groupDisabled: Gruppe deaktiviert.
+    pluginEnabled: Plugin aktiviert.
+    pluginDisabled: Plugin deaktiviert.

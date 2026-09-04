@@ -1,0 +1,74 @@
+# SPDX-License-Identifier: AGPL-3.0-only
+# Copyright (c) 2019-present Shigma and Koishijs contributors.
+# Copyright (c) 2026-present Koishi-CE contributors.
+
+config:
+  title: 插件配置
+  menu:
+    enableGroup: 启用分组
+    disableGroup: 停用分组
+    enablePlugin: 启用插件
+    disablePlugin: 停用插件
+    saveConfig: 保存配置
+    reloadConfig: 重载配置
+    rename: 重命名
+    removeGroup: 移除分组
+    removePlugin: 移除插件
+    clone: 克隆配置
+    manage: 管理多份配置
+    addPlugin: 添加插件
+    addGroup: 添加分组
+    globalSettings: 全局设置
+  tree:
+    group: "分组：{0}"
+    pending: 待添加
+  forks:
+    workspace: " (工作区)"
+    count: 此插件目前存在 {0} 份配置。
+    none: 此插件尚未被配置。
+    add: 添加新配置
+  modifier:
+    title: 过滤器设置
+  select:
+    title: 选择插件
+  plugin:
+    loading: 正在加载插件配置……
+    failure: 插件加载失败，这可能是插件本身的问题所致。{0}
+    hintSource: 请检查插件源代码。
+    hintAuthor: 请联系插件作者并反馈此问题。
+    dependency: "{0}：{1}（{2}）"
+    dependencyRequired: 必需依赖
+    dependencyOptional: 可选依赖
+    service: "{0}：{1}（{2}）"
+    serviceRequired: 必需服务
+    serviceOptional: 可选服务
+    loaded: 已加载
+    notLoaded: 未加载
+    serviceConflict: 此插件将会提供 {0} 服务，但此服务已被其他插件实现。
+    serviceProvided: 此插件提供了 {0} 服务。
+    serviceFuture: 此插件启用后将会提供 {0} 服务。
+    notReusable: 此插件已在运行且不可重用，启用可能会导致非预期的问题。
+    multiplePrefix: 此插件存在多份配置，
+    multipleAction: 点击前往管理
+    multipleSuffix: 。
+    pages: 此插件提供了页面：
+    noSchema: 此插件未声明配置项，这可能并非预期行为。{0}
+    notInstalled: 此插件尚未安装。
+  view:
+    globalSettings: 全局设置
+    group: "分组：{0}"
+    removeTitle: 确认移除
+    removeConfirmGroup: 确定要移除分组 {0} 吗？此操作不可撤销！
+    removeConfirmPlugin: 确定要移除插件 {0} 吗？此操作不可撤销！
+    renameTitle: 重命名
+    createGroupTitle: 创建分组
+    cancel: 取消
+    confirm: 确定
+    constraintError: 当前配置项不满足约束，请检查配置！
+    saved: 配置已保存。
+    reloaded: 配置已重载。
+    operationError: 操作失败，请检查日志！
+    groupEnabled: 分组已启用。
+    groupDisabled: 分组已停用。
+    pluginEnabled: 插件已启用。
+    pluginDisabled: 插件已停用。

@@ -4,7 +4,7 @@
 
 <template>
   <div class="modifier">
-    <h2 class="k-schema-header">过滤器设置</h2>
+    <h2 class="k-schema-header">{{ t('config.modifier.title') }}</h2>
     <k-filter v-model="filter"></k-filter>
   </div>
 </template>
@@ -16,6 +16,9 @@
  * 以 v-model 形式与父级配置对象双向绑定。
  */
 import { computed } from "vue";
+import { useI18n } from "vue-i18n";
+
+const { t } = useI18n();
 
 const props = defineProps<{
 	modelValue: Record<string, unknown>;

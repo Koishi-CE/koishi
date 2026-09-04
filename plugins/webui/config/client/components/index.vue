@@ -6,11 +6,11 @@
   <k-layout menu="config.tree" :menu-data="current">
     <template #header>
       <!-- 根节点:全局设置 -->
-      <template v-if="!current.path">全局设置</template>
+      <template v-if="!current.path">{{ t('config.view.globalSettings') }}</template>
 
       <!-- 分组节点 -->
       <template v-else-if="current.children">
-        分组：{{ current.label || current.id }}
+        {{ t('config.view.group', [current.label || current.id]) }}
       </template>
 
       <!-- 普通插件节点 -->
@@ -31,22 +31,22 @@
 
     <el-dialog
       v-model="showRemove"
-      title="确认移除"
+      :title="t('config.view.removeTitle')"
       destroy-on-close
       @closed="remove = null"
     >
       <template v-if="remove">
-        确定要移除{{ remove.children ? `分组 ${remove.label || remove.path}` : `插件 ${remove.label || remove.name}` }} 吗？此操作不可撤销！
+        {{ t(remove.children ? 'config.view.removeConfirmGroup' : 'config.view.removeConfirmPlugin', [remove.label || (remove.children ? remove.path : remove.name)]) }}
       </template>
       <template #footer>
-        <el-button @click="showRemove = false">取消</el-button>
-        <el-button type="danger" @click="(showRemove = false, removeItem(remove), tree?.activate())">确定</el-button>
+        <el-button @click="showRemove = false">{{ t('config.view.cancel') }}</el-button>
+        <el-button type="danger" @click="(showRemove = false, removeItem(remove), tree?.activate())">{{ t('config.view.confirm') }}</el-button>
       </template>
     </el-dialog>
 
     <el-dialog
       v-model="showRename"
-      title="重命名"
+      :title="t('config.view.renameTitle')"
       destroy-on-close
       @open="handleOpen"
       @closed="rename = null"
@@ -55,22 +55,22 @@
         <el-input ref="inputEl" v-model="input" @keydown.enter.stop.prevent="renameItem(rename, input)"/>
       </template>
       <template #footer>
-        <el-button @click="showRename = false">取消</el-button>
-        <el-button type="primary" @click="renameItem(rename, input)">确定</el-button>
+        <el-button @click="showRename = false">{{ t('config.view.cancel') }}</el-button>
+        <el-button type="primary" @click="renameItem(rename, input)">{{ t('config.view.confirm') }}</el-button>
       </template>
     </el-dialog>
 
     <el-dialog
       :model-value="groupCreate !== null"
       @update:model-value="groupCreate = null"
-      title="创建分组"
+      :title="t('config.view.createGroupTitle')"
       destroy-on-close
       @open="handleOpen"
     >
       <el-input ref="inputEl" v-model="input" @keydown.enter.stop.prevent="createGroup(input)"/>
       <template #footer>
-        <el-button @click="groupCreate = null">取消</el-button>
-        <el-button type="primary" @click="createGroup(input)">确定</el-button>
+        <el-button @click="groupCreate = null">{{ t('config.view.cancel') }}</el-button>
+        <el-button type="primary" @click="createGroup(input)">{{ t('config.view.confirm') }}</el-button>
       </template>
     </el-dialog>
   </k-layout>
@@ -96,6 +96,7 @@ import {
 	useContext,
 } from "@koishi-ce/client";
 import { computed, nextTick, ref, watch } from "vue";
+import { useI18n } from "vue-i18n";
 import { useRoute, useRouter } from "vue-router";
 import GlobalSettings from "./global.vue";
 import GroupSettings from "./group.vue";
@@ -111,6 +112,8 @@ import {
 	removeItem,
 	type Tree,
 } from "./utils";
+
+const { t } = useI18n();
 
 const route = useRoute();
 const router = useRouter();
@@ -267,7 +270,7 @@ function checkConfig(name: string) {
 		new Schema(schema)(config.value);
 		return true;
 	} catch {
-		message.error("当前配置项不满足约束，请检查配置！");
+		message.error(t("config.view.constraintError"));
 		return false;
 	}
 }
@@ -288,10 +291,14 @@ ctx.action("config.tree.save", {
 		try {
 			await execute(tree, disabled ? "unload" : "reload");
 			message.success(
-				disabled ? "配置已保存。" : "配置已重载。",
+				t(
+					disabled
+						? "config.view.saved"
+						: "config.view.reloaded",
+				),
 			);
 		} catch (error) {
-			message.error("操作失败，请检查日志！");
+			message.error(t("config.view.operationError"));
 		}
 	},
 });
@@ -306,11 +313,18 @@ ctx.action("config.tree.toggle", {
 		try {
 			await execute(tree, disabled ? "reload" : "unload");
 			message.success(
-				(name === "group" ? "分组" : "插件") +
-					(disabled ? "已启用。" : "已停用。"),
+				t(
+					name === "group"
+						? disabled
+							? "config.view.groupEnabled"
+							: "config.view.groupDisabled"
+						: disabled
+							? "config.view.pluginEnabled"
+							: "config.view.pluginDisabled",
+				),
 			);
 		} catch (error) {
-			message.error("操作失败，请检查日志！");
+			message.error(t("config.view.operationError"));
 		}
 	},
 });

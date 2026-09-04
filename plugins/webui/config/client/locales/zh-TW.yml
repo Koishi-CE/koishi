@@ -1,0 +1,74 @@
+# SPDX-License-Identifier: AGPL-3.0-only
+# Copyright (c) 2019-present Shigma and Koishijs contributors.
+# Copyright (c) 2026-present Koishi-CE contributors.
+
+config:
+  title: 外掛設定
+  menu:
+    enableGroup: 啟用分組
+    disableGroup: 停用分組
+    enablePlugin: 啟用外掛
+    disablePlugin: 停用外掛
+    saveConfig: 儲存設定
+    reloadConfig: 重新載入設定
+    rename: 重新命名
+    removeGroup: 移除分組
+    removePlugin: 移除外掛
+    clone: 複製設定
+    manage: 管理多份設定
+    addPlugin: 新增外掛
+    addGroup: 新增分組
+    globalSettings: 全域設定
+  tree:
+    group: "分組：{0}"
+    pending: 待新增
+  forks:
+    workspace: " (工作區)"
+    count: 此外掛目前存在 {0} 份設定。
+    none: 此外掛尚未被設定。
+    add: 新增設定
+  modifier:
+    title: 過濾器設定
+  select:
+    title: 選擇外掛
+  plugin:
+    loading: 正在載入外掛設定……
+    failure: 外掛載入失敗，這可能是外掛本身的問題所致。{0}
+    hintSource: 請檢查外掛原始碼。
+    hintAuthor: 請聯絡外掛作者並回報此問題。
+    dependency: "{0}：{1}（{2}）"
+    dependencyRequired: 必需相依性
+    dependencyOptional: 可選相依性
+    service: "{0}：{1}（{2}）"
+    serviceRequired: 必需服務
+    serviceOptional: 可選服務
+    loaded: 已載入
+    notLoaded: 未載入
+    serviceConflict: 此外掛將會提供 {0} 服務，但此服務已被其他外掛實作。
+    serviceProvided: 此外掛提供了 {0} 服務。
+    serviceFuture: 此外掛啟用後將會提供 {0} 服務。
+    notReusable: 此外掛已在執行且不可重用，啟用可能會導致非預期的問題。
+    multiplePrefix: 此外掛存在多份設定，
+    multipleAction: 點擊前往管理
+    multipleSuffix: 。
+    pages: 此外掛提供了頁面：
+    noSchema: 此外掛未宣告設定項，這可能並非預期行為。{0}
+    notInstalled: 此外掛尚未安裝。
+  view:
+    globalSettings: 全域設定
+    group: "分組：{0}"
+    removeTitle: 確認移除
+    removeConfirmGroup: 確定要移除分組 {0} 嗎？此操作不可復原！
+    removeConfirmPlugin: 確定要移除外掛 {0} 嗎？此操作不可復原！
+    renameTitle: 重新命名
+    createGroupTitle: 建立分組
+    cancel: 取消
+    confirm: 確定
+    constraintError: 目前設定項不滿足約束，請檢查設定！
+    saved: 設定已儲存。
+    reloaded: 設定已重新載入。
+    operationError: 操作失敗，請檢查日誌！
+    groupEnabled: 分組已啟用。
+    groupDisabled: 分組已停用。
+    pluginEnabled: 外掛已啟用。
+    pluginDisabled: 外掛已停用。

@@ -10,7 +10,7 @@
     destroy-on-close>
     <template #header="{ titleId, titleClass }">
       <span :id="titleId" :class="titleClass">
-        {{ dialogFork + (local?.workspace ? ' (工作区)' : '') }}
+        {{ dialogFork + (local?.workspace ? t('config.forks.workspace') : '') }}
       </span>
     </template>
     <table>
@@ -30,14 +30,14 @@
     <template #footer>
       <div class="left">
         <template v-if="plugins.forks[shortname]?.length">
-          此插件目前存在 {{ plugins.forks[shortname]?.length }} 份配置。
+          {{ t('config.forks.count', [plugins.forks[shortname]?.length]) }}
         </template>
         <template v-else>
-          此插件尚未被配置。
+          {{ t('config.forks.none') }}
         </template>
       </div>
       <div class="right">
-        <el-button @click.stop="configure()">添加新配置</el-button>
+        <el-button @click.stop="configure()">{{ t('config.forks.add') }}</el-button>
       </div>
     </template>
   </el-dialog>
@@ -54,6 +54,7 @@
  */
 import { router, send, store } from "@koishi-ce/client";
 import { computed } from "vue";
+import { useI18n } from "vue-i18n";
 import {
 	dialogFork,
 	getStatus,
@@ -61,6 +62,8 @@ import {
 	removeItem,
 	type Tree,
 } from "./utils";
+
+const { t } = useI18n();
 
 /** 弹窗对应的插件短名。 */
 const shortname = computed(() =>

@@ -5,10 +5,10 @@
 <template>
   <template v-if="name">
     <k-comment v-if="!local.runtime">
-      <p>正在加载插件配置……</p>
+      <p>{{ t('config.plugin.loading') }}</p>
     </k-comment>
     <k-comment v-else-if="local.runtime.failed" type="danger">
-      <p>插件加载失败，这可能是插件本身的问题所致。{{ hint }}</p>
+      <p>{{ t('config.plugin.failure', [hint]) }}</p>
     </k-comment>
 
     <k-slot v-else name="plugin-details">
@@ -19,14 +19,22 @@
             v-for="({ required, active }, name) in env.peer" :key="name"
             :type="active ? 'success' : required ? 'warning' : 'primary'">
             <p>
-              {{ required ? '必需' : '可选' }}依赖：{{ name }} ({{ active ? '已加载' : '未加载' }})
+              {{ t('config.plugin.dependency', [
+                t(required ? 'config.plugin.dependencyRequired' : 'config.plugin.dependencyOptional'),
+                name,
+                t(active ? 'config.plugin.loaded' : 'config.plugin.notLoaded'),
+              ]) }}
             </p>
           </k-comment>
           <k-comment
             v-for="({ required }, name) in env.using" :key="name"
             :type="name in store.services ? 'success' : required ? 'warning' : 'primary'">
             <p>
-              {{ required ? '必需' : '可选' }}服务：{{ name }} ({{ name in store.services ? '已加载' : '未加载' }})
+              {{ t('config.plugin.service', [
+                t(required ? 'config.plugin.serviceRequired' : 'config.plugin.serviceOptional'),
+                name,
+                t(name in store.services ? 'config.plugin.loaded' : 'config.plugin.notLoaded'),
+              ]) }}
             </p>
           </k-comment>
         </k-slot>
@@ -36,10 +44,10 @@
       <k-slot-item :order="600">
         <template v-for="name in env.impl" :key="name">
           <k-comment v-if="name in store.services && current.disabled" type="warning">
-            <p>此插件将会提供 {{ name }} 服务，但此服务已被其他插件实现。</p>
+            <p>{{ t('config.plugin.serviceConflict', [name]) }}</p>
           </k-comment>
           <k-comment v-else :type="current.disabled ? 'primary' : 'success'">
-            <p>此插件{{ current.disabled ? '启用后将会提供' : '提供了' }} {{ name }} 服务。</p>
+            <p>{{ t(current.disabled ? 'config.plugin.serviceFuture' : 'config.plugin.serviceProvided', [name]) }}</p>
           </k-comment>
         </template>
       </k-slot-item>
@@ -47,10 +55,10 @@
       <!-- 可重用性：不可重用插件的重复启用警告与多份配置提示 -->
       <k-slot-item :order="400">
         <k-comment v-if="local.runtime.id && !local.runtime.forkable && current.disabled" type="warning">
-          <p>此插件已在运行且不可重用，启用可能会导致非预期的问题。</p>
+          <p>{{ t('config.plugin.notReusable') }}</p>
         </k-comment>
         <k-comment v-if="plugins.forks[current.name]?.length > 1" type="primary">
-          <p>此插件存在多份配置，<span class="k-link" @click.stop="dialogFork = name">点击前往管理</span>。</p>
+          <p>{{ t('config.plugin.multiplePrefix') }}<span class="k-link" @click.stop="dialogFork = name">{{ t('config.plugin.multipleAction') }}</span>{{ t('config.plugin.multipleSuffix') }}</p>
         </k-comment>
       </k-slot-item>
 
@@ -59,7 +67,7 @@
         <template v-for="(activity, key) in ctx.$router.pages" :key="key">
           <k-comment type="success" v-if="activity.ctx.extension?.paths.includes(current.path) && !activity.disabled()">
             <p>
-              <span>此插件提供了页面：</span>
+              <span>{{ t('config.plugin.pages') }}</span>
               <k-activity-link :id="activity.id" />
             </p>
           </k-comment>
@@ -79,7 +87,7 @@
       <!-- 配置表单：按 schema 生成的设置项 -->
       <k-slot-item :order="-1000">
         <k-comment v-if="!local.runtime.schema" type="warning">
-          <p>此插件未声明配置项，这可能并非预期行为。{{ hint }}</p>
+          <p>{{ t('config.plugin.noSchema', [hint]) }}</p>
         </k-comment>
         <k-form v-else :schema="local.runtime.schema" :initial="current.config" v-model="config">
           <template #hint>{{ hint }}</template>
@@ -91,7 +99,7 @@
   <template v-else>
     <k-slot name="plugin-missing" single>
       <k-comment type="danger">
-        <p>此插件尚未安装。</p>
+        <p>{{ t('config.plugin.notInstalled') }}</p>
       </k-comment>
     </k-slot>
   </template>
@@ -109,6 +117,7 @@
  */
 import { send, store, useContext } from "@koishi-ce/client";
 import { computed, provide, watch } from "vue";
+import { useI18n } from "vue-i18n";
 import KModifier from "./modifier.vue";
 import {
 	dialogFork,
@@ -117,6 +126,8 @@ import {
 	plugins,
 	type Tree,
 } from "./utils";
+
+const { t } = useI18n();
 
 const props = defineProps<{
 	current: Tree;
@@ -137,8 +148,8 @@ const local = computed(() => store.packages[name.value]);
 // 提示语按插件来源区分:工作区插件提示检查源码,市场插件提示联系作者
 const hint = computed(() =>
 	local.value.workspace
-		? "请检查插件源代码。"
-		: "请联系插件作者并反馈此问题。",
+		? t("config.plugin.hintSource")
+		: t("config.plugin.hintAuthor"),
 );
 
 // store 中缺少该插件的运行时信息时,主动向服务端请求解析

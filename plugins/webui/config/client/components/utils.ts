@@ -15,6 +15,7 @@
  * - 维护跨组件共享的响应式状态（current、dialogFork、dialogSelect）。
  */
 import {
+	root as rootContext,
 	router,
 	ScopeStatus,
 	send,
@@ -350,7 +351,10 @@ export const plugins = computed(() => {
 		name: "",
 		id: "",
 		path: "",
-		label: "全局设置",
+		// computed 内调用全局 t 会建立对 locale 的依赖，切语言时整棵树重算
+		label: rootContext.$i18n.t(
+			"config.view.globalSettings",
+		),
 		config: store.config,
 		children: [],
 	};

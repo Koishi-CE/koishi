@@ -11,7 +11,7 @@
   >
     <template #header>
       <slot name="title" :packages="packages">
-        <span class="title">选择插件</span>
+        <span class="title">{{ t('config.select.title') }}</span>
       </slot>
       <el-input ref="input" v-model="keyword">
         <template #suffix>
@@ -53,8 +53,10 @@ import {
 	ref,
 	watch,
 } from "vue";
+import { useI18n } from "vue-i18n";
 import { dialogSelect } from "./utils";
 
+const { t } = useI18n();
 const tt = useI18nText();
 
 const keyword = ref("");

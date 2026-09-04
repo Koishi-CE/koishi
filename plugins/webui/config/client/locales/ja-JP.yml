@@ -1,0 +1,74 @@
+# SPDX-License-Identifier: AGPL-3.0-only
+# Copyright (c) 2019-present Shigma and Koishijs contributors.
+# Copyright (c) 2026-present Koishi-CE contributors.
+
+config:
+  title: プラグイン設定
+  menu:
+    enableGroup: グループを有効化
+    disableGroup: グループを無効化
+    enablePlugin: プラグインを有効化
+    disablePlugin: プラグインを無効化
+    saveConfig: 設定を保存
+    reloadConfig: 設定を再読み込み
+    rename: 名前の変更
+    removeGroup: グループを削除
+    removePlugin: プラグインを削除
+    clone: 設定を複製
+    manage: 複数の設定を管理
+    addPlugin: プラグインを追加
+    addGroup: グループを追加
+    globalSettings: グローバル設定
+  tree:
+    group: "グループ：{0}"
+    pending: 追加予定
+  forks:
+    workspace: "（ワークスペース）"
+    count: このプラグインには現在 {0} 件の設定があります。
+    none: このプラグインはまだ設定されていません。
+    add: 新しい設定を追加
+  modifier:
+    title: フィルター設定
+  select:
+    title: プラグインを選択
+  plugin:
+    loading: プラグイン設定を読み込み中……
+    failure: プラグインの読み込みに失敗しました。プラグイン自体の問題の可能性があります。{0}
+    hintSource: プラグインのソースコードを確認してください。
+    hintAuthor: プラグインの作者に連絡してこの問題を報告してください。
+    dependency: "{0}：{1}（{2}）"
+    dependencyRequired: 必須の依存関係
+    dependencyOptional: 任意の依存関係
+    service: "{0}：{1}（{2}）"
+    serviceRequired: 必須のサービス
+    serviceOptional: 任意のサービス
+    loaded: 読み込み済み
+    notLoaded: 未読み込み
+    serviceConflict: このプラグインは {0} サービスを提供しようとしていますが、このサービスはすでに他のプラグインが実装しています。
+    serviceProvided: このプラグインは {0} サービスを提供しています。
+    serviceFuture: このプラグインは有効化後に {0} サービスを提供します。
+    notReusable: このプラグインはすでに実行中で再利用できません。有効化すると予期しない問題が発生する可能性があります。
+    multiplePrefix: このプラグインには複数の設定があります。
+    multipleAction: クリックして管理
+    multipleSuffix: ""
+    pages: このプラグインが提供するページ：
+    noSchema: このプラグインは設定項目を宣言していません。これは意図した動作ではない可能性があります。{0}
+    notInstalled: このプラグインはまだインストールされていません。
+  view:
+    globalSettings: グローバル設定
+    group: "グループ：{0}"
+    removeTitle: 削除の確認
+    removeConfirmGroup: "本当にグループ {0} を削除しますか？この操作は元に戻せません！"
+    removeConfirmPlugin: "本当にプラグイン {0} を削除しますか？この操作は元に戻せません！"
+    renameTitle: 名前の変更
+    createGroupTitle: グループを作成
+    cancel: キャンセル
+    confirm: 確定
+    constraintError: 現在の設定項目が制約を満たしていません。設定を確認してください！
+    saved: 設定を保存しました。
+    reloaded: 設定を再読み込みしました。
+    operationError: 操作に失敗しました。ログを確認してください！
+    groupEnabled: グループを有効化しました。
+    groupDisabled: グループを無効化しました。
+    pluginEnabled: プラグインを有効化しました。
+    pluginDisabled: プラグインを無効化しました。

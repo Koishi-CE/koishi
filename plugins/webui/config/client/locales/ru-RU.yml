@@ -1,0 +1,74 @@
+# SPDX-License-Identifier: AGPL-3.0-only
+# Copyright (c) 2019-present Shigma and Koishijs contributors.
+# Copyright (c) 2026-present Koishi-CE contributors.
+
+config:
+  title: Конфигурации плагинов
+  menu:
+    enableGroup: Включить группу
+    disableGroup: Отключить группу
+    enablePlugin: Включить плагин
+    disablePlugin: Отключить плагин
+    saveConfig: Сохранить конфигурацию
+    reloadConfig: Перезагрузить конфигурацию
+    rename: Переименовать
+    removeGroup: Удалить группу
+    removePlugin: Удалить плагин
+    clone: Клонировать конфигурацию
+    manage: Управлять несколькими конфигурациями
+    addPlugin: Добавить плагин
+    addGroup: Добавить группу
+    globalSettings: Глобальные настройки
+  tree:
+    group: "Группа: {0}"
+    pending: Ожидает добавления
+  forks:
+    workspace: " (рабочая область)"
+    count: У этого плагина сейчас {0} конфигураций.
+    none: Этот плагин ещё не настроен.
+    add: Добавить новую конфигурацию
+  modifier:
+    title: Настройки фильтра
+  select:
+    title: Выберите плагин
+  plugin:
+    loading: Загрузка конфигурации плагина...
+    failure: Не удалось загрузить плагин — возможно, проблема в самом плагине. {0}
+    hintSource: Проверьте исходный код плагина.
+    hintAuthor: Свяжитесь с автором плагина и сообщите о проблеме.
+    dependency: "{0}: {1} ({2})"
+    dependencyRequired: Обязательная зависимость
+    dependencyOptional: Необязательная зависимость
+    service: "{0}: {1} ({2})"
+    serviceRequired: Обязательный сервис
+    serviceOptional: Необязательный сервис
+    loaded: загружен
+    notLoaded: не загружен
+    serviceConflict: Этот плагин предоставит сервис {0}, но этот сервис уже реализован другим плагином.
+    serviceProvided: Этот плагин предоставляет сервис {0}.
+    serviceFuture: Этот плагин будет предоставлять сервис {0} после включения.
+    notReusable: Этот плагин уже запущен и не может использоваться повторно. Его повторное включение может привести к непредвиденным проблемам.
+    multiplePrefix: У этого плагина несколько конфигураций.
+    multipleAction: Нажмите, чтобы управлять ими
+    multipleSuffix: ""
+    pages: "Страницы, предоставляемые этим плагином:"
+    noSchema: Этот плагин не объявляет параметров конфигурации, что может быть непреднамеренным. {0}
+    notInstalled: Этот плагин ещё не установлен.
+  view:
+    globalSettings: Глобальные настройки
+    group: "Группа: {0}"
+    removeTitle: Подтвердите удаление
+    removeConfirmGroup: "Вы действительно хотите удалить группу {0}? Это действие нельзя отменить!"
+    removeConfirmPlugin: "Вы действительно хотите удалить плагин {0}? Это действие нельзя отменить!"
+    renameTitle: Переименовать
+    createGroupTitle: Создать группу
+    cancel: Отмена
+    confirm: ОК
+    constraintError: Текущая конфигурация не удовлетворяет ограничениям. Проверьте её!
+    saved: Конфигурация сохранена.
+    reloaded: Конфигурация перезагружена.
+    operationError: Операция не удалась. Проверьте журналы!
+    groupEnabled: Группа включена.
+    groupDisabled: Группа отключена.
+    pluginEnabled: Плагин включён.
+    pluginDisabled: Плагин отключён.
