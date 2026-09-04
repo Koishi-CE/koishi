@@ -106,10 +106,12 @@ export class SessionCore {
 			) {
 				hasAt = true;
 			}
-			// @ts-expect-error
+			// 剥离紧跟 @ 的空白文本节点：经 .at() 读取以绕开 while 条件对
+			// elements[0] 的判别收窄（shift 之后 TS 仍把它当 at 元素看）
+			const next = elements.at(0);
 			if (
-				elements[0]?.type === "text" &&
-				!elements[0].attrs.content.trim()
+				next?.type === "text" &&
+				!next.attrs["content"].trim()
 			) {
 				elements.shift();
 			}
