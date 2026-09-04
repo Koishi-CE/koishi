@@ -53,7 +53,7 @@
     },
     "packages/node/cli": {
       "name": "@koishi-ce/koishi",
-      "version": "1.0.4",
+      "version": "1.0.5",
       "bin": "lib/cli/index.mjs",
       "dependencies": {
         "@koishi-ce/core": "workspace:*",
@@ -100,7 +100,7 @@
     },
     "packages/node/loader": {
       "name": "@koishi-ce/loader",
-      "version": "1.0.4",
+      "version": "1.0.5",
       "devDependencies": {
         "@koishi-ce/core": "workspace:*",
         "@koishi-ce/koishi": "workspace:*",
@@ -345,7 +345,7 @@
     },
     "plugins/infra/server": {
       "name": "@koishi-ce/plugin-server",
-      "version": "1.0.0",
+      "version": "1.0.1",
       "dependencies": {
         "@cordisjs/plugin-server": "^0.2.9",
       },
@@ -371,7 +371,7 @@
     },
     "plugins/infra/sqlite": {
       "name": "@koishi-ce/plugin-database-sqlite",
-      "version": "1.0.0",
+      "version": "1.1.0",
       "dependencies": {
         "@minatojs/sql-utils": "^5.6.0",
         "cosmokit": "^1.8.1",
@@ -473,7 +473,7 @@
     },
     "plugins/webui/config": {
       "name": "@koishi-ce/plugin-config",
-      "version": "1.0.8",
+      "version": "1.0.9",
       "dependencies": {
         "@koishi-ce/console": "workspace:*",
         "@koishi-ce/loader": "workspace:*",
@@ -616,7 +616,7 @@
     },
     "plugins/webui/market": {
       "name": "@koishi-ce/plugin-market",
-      "version": "1.0.9",
+      "version": "1.0.10",
       "dependencies": {
         "@koishi-ce/console": "workspace:*",
         "@koishi-ce/registry": "workspace:*",
