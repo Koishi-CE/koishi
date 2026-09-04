@@ -489,7 +489,7 @@ export abstract class Loader {
 	 * 具体的事件订阅与启动消息处理见 wiring.ts。
 	 */
 	async createApp() {
-		new Logger("app").info("%C", `Koishi/${version}`);
+		new Logger("app").info("%C", `Koishi-CE/${version}`);
 		const app = (this.app = new Context(
 			this.interpolate(this.config) as Context.Config,
 		));

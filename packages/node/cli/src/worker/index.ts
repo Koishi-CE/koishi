@@ -22,6 +22,7 @@ import {
 	Time,
 } from "@koishi-ce/core";
 import Loader, { resolvePlugin } from "@koishi-ce/loader";
+import pc from "picocolors";
 import * as daemon from "./daemon.ts";
 import * as logger from "./logger.ts";
 
@@ -200,12 +201,33 @@ async function checkPorts(plugins: Dict, baseDir: string) {
 	}
 }
 
+/** 启动字符画（ANSI Shadow 字体的 KOISHI CE） */
+const banner = [
+	"██╗  ██╗ ██████╗ ██╗███████╗██╗  ██╗██╗       ██████╗███████╗",
+	"██║ ██╔╝██╔═══██╗██║██╔════╝██║  ██║██║      ██╔════╝██╔════╝",
+	"█████╔╝ ██║   ██║██║███████╗███████║██║█████╗██║     █████╗",
+	"██╔═██╗ ██║   ██║██║╚════██║██╔══██║██║╚════╝██║     ██╔══╝",
+	"██║  ██╗╚██████╔╝██║███████║██║  ██║██║      ╚██████╗███████╗",
+	"╚═╝  ╚═╝ ╚═════╝ ╚═╝╚══════╝╚═╝  ╚═╝╚═╝       ╚═════╝╚══════╝",
+].join("\n");
+
+/**
+ * 输出启动字符画。直走 stdout 而非 Logger 通道（多行消息会被日志器
+ * 统一缩进、首行混入时间戳前缀，破坏字符画对齐），因此以 isTTY 收敛：
+ * 测试与重定向/CI 等非交互环境自动跳过，不产生输出噪音。
+ */
+function printBanner() {
+	if (!process.stdout.isTTY) return;
+	console.log(pc.cyan(banner));
+}
+
 /** 应用启动主流程 */
 async function start() {
 	const loader = new Loader();
 	await loader.init(process.env["KOISHI_CONFIG_FILE"]);
 	const config = await loader.readConfig(true);
 	logger.prepare(config.logger);
+	printBanner();
 
 	// 端口预检须在日志配置生效后、应用创建前执行
 	await checkPorts(config.plugins ?? {}, loader.baseDir);
