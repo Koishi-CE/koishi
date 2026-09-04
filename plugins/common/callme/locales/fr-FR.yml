@@ -3,13 +3,13 @@
 
 commands:
   callme:
-    description: 修改自己的称呼
+    description: Modifier votre surnom
     messages:
-      current: 好的呢，{0}！
-      unnamed: 你还没有给自己起一个称呼呢~
-      unchanged: 称呼未发生变化。
-      empty: 称呼不能为空。
-      invalid: 称呼中禁止包含纯文本以外的内容。
-      duplicate: 禁止与其他用户重名。
-      updated: 好的，{0}，请多指教！
-      failed: 修改称呼失败。
+      current: "Entendu, {0} !"
+      unnamed: Vous ne vous êtes pas encore choisi de surnom~
+      unchanged: Le surnom n'a pas changé.
+      empty: Le surnom ne peut pas être vide.
+      invalid: Le surnom ne doit contenir que du texte brut.
+      duplicate: Ce surnom est déjà utilisé par un autre utilisateur.
+      updated: "Très bien, {0}, ravi de faire votre connaissance !"
+      failed: Échec de la modification du surnom.

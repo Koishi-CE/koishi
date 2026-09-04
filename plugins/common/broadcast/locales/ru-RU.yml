@@ -3,9 +3,9 @@
 
 commands:
   broadcast:
-    description: 全服广播
+    description: Рассылка по всем каналам
     options:
-      forced: 无视 silent 标签进行广播
-      only: 仅向当前账号负责的群进行广播
+      forced: Рассылка с игнорированием метки silent
+      only: Рассылка только в группы, обслуживаемые текущим аккаунтом
     messages:
-      expect-text: 请输入要发送的文本。
+      expect-text: Пожалуйста, введите текст для отправки.

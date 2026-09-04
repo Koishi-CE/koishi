@@ -2,6 +2,6 @@
 # Copyright (c) 2019-present Shigma and Koishijs contributors.
 # Copyright (c) 2026-present Koishi-CE contributors.
 
-root: 存放输出日志的本地目录。
-maxAge: 日志文件保存的最大天数。
-maxSize: 单个日志文件的最大大小。
+root: Local directory for storing output logs.
+maxAge: Maximum number of days to keep log files.
+maxSize: Maximum size of a single log file.

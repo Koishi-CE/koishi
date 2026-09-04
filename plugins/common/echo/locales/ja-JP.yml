@@ -3,13 +3,13 @@
 
 commands:
   echo:
-    description: 发送消息
+    description: メッセージを送信する
     options:
-      escape: 发送转义消息
-      unescape: 发送反转义消息
-      user: 发送到用户
-      channel: 发送到频道
-      guild: 指定群组编号
+      escape: エスケープされたメッセージを送信する
+      unescape: アンエスケープされたメッセージを送信する
+      user: ユーザーに送信する
+      channel: チャンネルに送信する
+      guild: グループ番号を指定する
     messages:
-      expect-text: 请输入要发送的文本。
-      platform-not-found: 找不到指定的平台。
+      expect-text: 送信するテキストを入力してください。
+      platform-not-found: 指定されたプラットフォームが見つかりません。

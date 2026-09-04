@@ -3,9 +3,9 @@
 
 commands:
   broadcast:
-    description: 全服广播
+    description: サーバー全体にブロードキャスト
     options:
-      forced: 无视 silent 标签进行广播
-      only: 仅向当前账号负责的群进行广播
+      forced: silent タグを無視してブロードキャストする
+      only: 現在のアカウントが担当するグループのみにブロードキャストする
     messages:
-      expect-text: 请输入要发送的文本。
+      expect-text: 送信するテキストを入力してください。

@@ -4,31 +4,31 @@
 
 commands:
   user:
-    description: 用户管理
+    description: Управление пользователями
   channel:
-    description: 频道管理
+    description: Управление каналами
   authorize:
-    description: 权限管理
+    description: Управление правами
   assign:
-    description: 受理者账号
+    description: Аккаунт получателя
   user.locale:
-    description: 语言偏好
+    description: Языковые предпочтения
   channel.locale:
-    description: 语言偏好
+    description: Языковые предпочтения
 admin:
-  user-option: 指定目标用户
-  user-not-found: 未找到指定的用户。
-  user-unchanged: 用户数据未改动。
-  user-updated: 用户数据已修改。
-  channel-option: 指定目标频道
-  channel-not-found: 未找到指定的频道。
-  channel-unchanged: 频道数据未改动。
-  channel-updated: 频道数据已修改。
-  not-in-group: 当前不在群组上下文中，请使用 -c 参数指定目标频道。
-  user-expected: 请指定目标用户。
-  channel-expected: 请指定目标频道。
-  invalid-assignee-platform: 受理人应与目标频道属于同一平台。
-  current-locale: 当前语言偏好为：{0}。
-  no-locale: 未设置语言偏好。
+  user-option: Указать целевого пользователя
+  user-not-found: Указанный пользователь не найден.
+  user-unchanged: Данные пользователя не изменены.
+  user-updated: Данные пользователя изменены.
+  channel-option: Указать целевой канал
+  channel-not-found: Указанный канал не найден.
+  channel-unchanged: Данные канала не изменены.
+  channel-updated: Данные канала изменены.
+  not-in-group: Сейчас вы не находитесь в контексте группы. Используйте параметр -c, чтобы указать целевой канал.
+  user-expected: Укажите целевого пользователя.
+  channel-expected: Укажите целевой канал.
+  invalid-assignee-platform: Получатель должен находиться на той же платформе, что и целевой канал.
+  current-locale: "Текущее языковое предпочтение: {0}."
+  no-locale: Языковое предпочтение не задано.
   options:
-    remove: 重置设置
+    remove: Сбросить настройки

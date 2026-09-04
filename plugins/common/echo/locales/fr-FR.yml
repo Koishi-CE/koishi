@@ -3,13 +3,13 @@
 
 commands:
   echo:
-    description: 发送消息
+    description: Envoyer des messages
     options:
-      escape: 发送转义消息
-      unescape: 发送反转义消息
-      user: 发送到用户
-      channel: 发送到频道
-      guild: 指定群组编号
+      escape: Envoyer un message échappé
+      unescape: Envoyer un message déséchappé
+      user: Envoyer à l'utilisateur
+      channel: Envoyer au canal
+      guild: Indiquer l'identifiant du groupe
     messages:
-      expect-text: 请输入要发送的文本。
-      platform-not-found: 找不到指定的平台。
+      expect-text: Veuillez saisir le texte à envoyer.
+      platform-not-found: La plateforme spécifiée est introuvable.

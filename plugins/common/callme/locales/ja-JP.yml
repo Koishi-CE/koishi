@@ -3,13 +3,13 @@
 
 commands:
   callme:
-    description: 修改自己的称呼
+    description: 自分の呼び名を変更する
     messages:
-      current: 好的呢，{0}！
-      unnamed: 你还没有给自己起一个称呼呢~
-      unchanged: 称呼未发生变化。
-      empty: 称呼不能为空。
-      invalid: 称呼中禁止包含纯文本以外的内容。
-      duplicate: 禁止与其他用户重名。
-      updated: 好的，{0}，请多指教！
-      failed: 修改称呼失败。
+      current: わかったよ、{0}！
+      unnamed: まだ自分の呼び名を設定していないよ〜
+      unchanged: 呼び名は変更されていません。
+      empty: 呼び名は空にできません。
+      invalid: 呼び名にはプレーンテキスト以外の内容を含めることはできません。
+      duplicate: 他のユーザーと同じ呼び名は使用できません。
+      updated: わかった、{0}、これからよろしく！
+      failed: 呼び名の変更に失敗しました。

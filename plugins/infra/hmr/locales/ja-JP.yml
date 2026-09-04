@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: MIT
 # Copyright (c) 2019-present Shigma and Koishijs contributors.
 
-base: 用户显示路径的根目录，默认为当前工作路径。
-root: 要监听的文件或目录列表，相对于 `base` 路径。
-ignored: 要忽略的文件或目录。支持 [Glob Patterns](https://github.com/micromatch/micromatch) 语法。
-debounce: 延迟触发更新的等待时间。
+base: ユーザーに表示されるパスのルートディレクトリ。デフォルトは現在の作業ディレクトリです。
+root: 監視するファイルまたはディレクトリのリスト。`base` パスからの相対パスで指定します。
+ignored: 無視するファイルまたはディレクトリ。[Glob Patterns](https://github.com/micromatch/micromatch) 構文に対応しています。
+debounce: 更新をトリガーするまでの待機時間。

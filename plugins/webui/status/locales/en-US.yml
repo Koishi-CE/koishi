@@ -7,13 +7,13 @@ commands:
     description: Display the status
     messages:
       status:
-        1: 运行中
-        0: 离线
-        2: 正在连接
-        4: 正在重连
-        3: 正在断开
-      bot: <p>{user.name}：<i18n path={"commands.status.messages.status." + status}/></p>
+        1: Running
+        0: Offline
+        2: Connecting
+        4: Reconnecting
+        3: Disconnecting
+      bot: '<p>{user.name}: <i18n path={"commands.status.messages.status." + status}/></p>'
       epilog: |-
         ==========
-        CPU 使用率：{ (cpu[0] * 100).toFixed() }% / { (cpu[1] * 100).toFixed() }%
-        内存使用率：{ (memory[0] * 100).toFixed() }% / { (memory[1] * 100).toFixed() }%
+        CPU usage: { (cpu[0] * 100).toFixed() }% / { (cpu[1] * 100).toFixed() }%
+        Memory usage: { (memory[0] * 100).toFixed() }% / { (memory[1] * 100).toFixed() }%

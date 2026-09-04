@@ -4,16 +4,16 @@
 
 commands:
   status:
-    description: 查看运行状态
+    description: Показать статус
     messages:
       status:
-        1: 运行中
-        0: 离线
-        2: 正在连接
-        4: 正在重连
-        3: 正在断开
-      bot: <p>{user.name}：<i18n path={"commands.status.messages.status." + status}/></p>
+        1: Работает
+        0: Не в сети
+        2: Подключение
+        4: Переподключение
+        3: Отключение
+      bot: '<p>{user.name}: <i18n path={"commands.status.messages.status." + status}/></p>'
       epilog: |-
         ==========
-        CPU 使用率：{ (cpu[0] * 100).toFixed() }% / { (cpu[1] * 100).toFixed() }%
-        内存使用率：{ (memory[0] * 100).toFixed() }% / { (memory[1] * 100).toFixed() }%
+        Использование CPU: { (cpu[0] * 100).toFixed() }% / { (cpu[1] * 100).toFixed() }%
+        Использование памяти: { (memory[0] * 100).toFixed() }% / { (memory[1] * 100).toFixed() }%

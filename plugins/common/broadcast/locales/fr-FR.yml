@@ -3,9 +3,9 @@
 
 commands:
   broadcast:
-    description: 全服广播
+    description: Diffuser sur tous les canaux
     options:
-      forced: 无视 silent 标签进行广播
-      only: 仅向当前账号负责的群进行广播
+      forced: Diffuser en ignorant le marqueur silent
+      only: Ne diffuser que vers les groupes gérés par le compte actuel
     messages:
-      expect-text: 请输入要发送的文本。
+      expect-text: Veuillez saisir le texte à envoyer.
