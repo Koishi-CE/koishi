@@ -1,5 +1,11 @@
 # @koishi-ce/plugin-insight
 
+## 1.0.2
+
+### Patch Changes
+
+- 随前端构建钉死剥离 Vue 模板注释（@koishi-ce/client 1.0.4）重建前端产物：上述插件的存量 npm 产物里，模板根元素前带注释的组件（侧栏 activity 图标、文件树 / 登录表单图标等）被烘焙成多根 fragment，宿主传入的 class 透传不进去——侧栏图标缩水（24px 落回 16px）即此因。重构建后产物恢复单根语义，下游更新即修复。
+
 ## 1.0.1
 
 ### Patch Changes

@@ -1,7 +1,7 @@
 {
 	"name": "@koishi-ce/plugin-logger",
 	"description": "Dump log files for Koishi",
-	"version": "1.0.1",
+	"version": "1.0.2",
 	"type": "module",
 	"main": "lib/index.mjs",
 	"typings": "lib/index.d.ts",
