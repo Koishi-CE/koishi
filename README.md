@@ -12,13 +12,13 @@
 bun create koishi-ce
 ```
 
-脚手架生成一个以 Bun 为运行时的 CE 实例：内置纯 `@koishi-ce` 模板、以 npm alias 钉住上游包名（防误装官方包）、不预装 adapter / database（可后续从市场安装）。启动后访问 <http://127.0.0.1:5140> 进入控制台。
+脚手架生成一个以 Bun 为运行时的 CE 实例：内置纯 `@koishi-ce` 模板、以 npm alias 钉住上游包名（防误装官方包）、不预装 adapter（可后续从市场安装），SQLite 数据库插件默认启用、开箱即得本地数据库。启动后访问 <http://127.0.0.1:5140> 进入控制台。
 
 ### 仓库状态
 
 - 47 个 workspace 包全部 ESM-only（`index.mjs` + `index.d.ts`），运行时与包管理均为 [Bun](https://bun.sh)
 - 类型检查走 TS7 原生编译器（`@typescript/native`），全仓 0 错误
-- 97 个测试文件 / 约 800 用例（`bun test`），总体约 99.8% 行覆盖
+- 全量自有测试覆盖全部 node 侧包（`bun test`；规模与覆盖率以实跑输出为准）
 - 独立工具链已一步到位：vite 8 / tsdown / biome 2 / bun test；cordis 生态冻结在 3.x（上游 cordis 4 被 `@satorijs/core` 阻塞，实证见 [docs/decisions/upgrade-plan.md](./docs/decisions/upgrade-plan.md)）
 
 ### 目录结构
@@ -29,7 +29,7 @@ bun create koishi-ce
 | `packages/web/` | 浏览器侧库（client / components），源码直出，无独立构建 |
 | `packages/shim/` | 上游包名占位 shim ×2（下游 npm alias 目标，版本冻结） |
 | `plugins/common/` | 通用 bot 插件 ×8（MIT） |
-| `plugins/infra/` | 基础设施插件 ×6（http / proxy / server 为 vendored 预编译） |
+| `plugins/infra/` | 基础设施插件 ×7（http / proxy / server 为 vendored 预编译） |
 | `plugins/webui/` | 控制台插件 ×18（`src/` 为 Node 侧、`client/` 为 Vue 侧） |
 | `apps/` | `create-koishi-ce` 脚手架 CLI、`@koishi-ce/scripts` 插件开发 CLI |
 | `tooling/` | 发布链脚本（`bun run release`） |
@@ -58,18 +58,18 @@ MIT 与 AGPL-3.0 分区授权，各目录归属见 [NOTICE](./NOTICE)。
 bun create koishi-ce
 ```
 
-The scaffold generates a Bun-based CE instance with a pure `@koishi-ce` template: upstream package names are pinned via npm aliases to frozen shims (preventing accidental installs of the official packages), and no adapter / database is preinstalled (install them from the market later). The console is served at <http://127.0.0.1:5140>.
+The scaffold generates a Bun-based CE instance with a pure `@koishi-ce` template: upstream package names are pinned via npm aliases to frozen shims (preventing accidental installs of the official packages), no adapter is preinstalled (install them from the market later), and the SQLite database plugin is enabled by default. The console is served at <http://127.0.0.1:5140>.
 
 ### Status
 
 - 47 workspace packages, all ESM-only, on the [Bun](https://bun.sh) runtime and package manager
 - Type-checked by the TS7 native compiler (`@typescript/native`) with zero errors
-- 97 test files / ~800 cases (`bun test`), ~99.8% overall line coverage
+- Full in-repo test coverage of all node-side packages (`bun test`; scale and coverage figures follow actual runs)
 - Modern toolchain in place: vite 8 / tsdown / biome 2 / bun test; the cordis ecosystem stays on 3.x (cordis 4 is blocked upstream, see [docs/decisions/upgrade-plan.md](./docs/decisions/upgrade-plan.md))
 
 ### Layout
 
-`packages/node` (8 core libraries), `packages/web` (browser-side), `packages/shim` (2 frozen name-occupation shims), `plugins/{common,infra,webui}` (8 + 6 + 18 plugins), `apps` (create-koishi-ce scaffold CLI, plugin-dev CLI), `tooling` (release pipeline), `docs` (see [docs/README.md](./docs/README.md)).
+`packages/node` (8 core libraries), `packages/web` (browser-side), `packages/shim` (2 frozen name-occupation shims), `plugins/{common,infra,webui}` (8 + 7 + 18 plugins), `apps` (create-koishi-ce scaffold CLI, plugin-dev CLI), `tooling` (release pipeline), `docs` (see [docs/README.md](./docs/README.md)).
 
 ### Contributing
 

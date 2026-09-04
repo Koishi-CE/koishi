@@ -24,9 +24,8 @@
 ### 2.1 依赖面原生化精简
 
 - **目标**：能用 Bun / node 原生能力替代的外部依赖持续删除，压缩依赖面与安全审计面。
-- **状态**：进行中。近期已移除：execa / p-map（d236e27）、envinfo / which-pm-runs（4b07454）、create-koishi-ce 的 yargs-parser / tar / prompts / kleur（5b65d63 等，改 Bun 内置 + @clack/prompts + giget）。
-- **后续候选**（升级计划书立项时明确「顺带评估 / 后续可选」的遗留项）：`fs-extra` → `node:fs/promises`（koishi-scripts）；`dotenv` → Bun 原生 .env 加载（loader）。
-- **依据**：git 历史代表提交如上；[decisions/upgrade-plan.md](decisions/upgrade-plan.md) Phase 1。
+- **状态**：进行中。近期已移除：execa / p-map（d236e27）、envinfo / which-pm-runs（4b07454）、create-koishi-ce 的 yargs-parser / tar / prompts / kleur（5b65d63 等，改 Bun 内置 + @clack/prompts + giget + picocolors）。原「后续候选」`fs-extra`（koishi-scripts）与 `dotenv`（loader）已于 2026-08-29 随 048e3ba、d6b4093 删除，当前无排队候选。
+- **依据**：git 历史代表提交如上；[decisions/upgrade-plan.md](decisions/upgrade-plan.md) Phase 1；[decisions/dependency-audit.md](decisions/dependency-audit.md) 后续变化补记。
 
 ## 3. 计划与候选
 
@@ -52,7 +51,5 @@
 
 体量小、暂不成线的待办，随手机会清掉：
 
-- `packages/node/core/src/command/command/command.ts:110`：FIXME——空 action 列表会无限循环，现以提前返回规避。
-- `plugins/webui/market/src/node/installer.ts:403`：TODO——`Installer.Config` 的 `.hidden()`。
-- 根 README 的规模数字（46 包 / 97 测试文件 / 约 99.8% 覆盖）为写死数据，随仓库演进需复核——组织约定要求不写死漂移数据，存量例外待消化。
-- 工作区进行中的修复线（截至 2026-09-02 的 git 实况）：registry 的 `resolvePackageJson` 补 `baseDir` 锚点、loader 停机期日志防御、各包 tsconfig 手工 paths 块回填——待提交收尾。
+- `packages/node/core/src/command/command/command.ts:140`：FIXME——空 action 列表会无限循环，现以提前返回规避。
+- `plugins/webui/market/src/node/installer.ts:472`：TODO——`Installer.Config` 的 `.hidden()`。

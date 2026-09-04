@@ -1,6 +1,6 @@
 # 仓库架构（ARCHITECTURE）
 
-> `koishi`（Koishi-CE）的**仓库结构文档**：目录与包清单、依赖纪律、构建 / 类型检查 / 测试体系、许可证分区。以实际代码为准，文档滞后时听代码的。包版本不在此罗列（统一 1.0.0 基线、随发布漂移，以各包 package.json 为准）。
+> `koishi`（Koishi-CE）的**仓库结构文档**：目录与包清单、依赖纪律、构建 / 类型检查 / 测试体系、许可证分区。以实际代码为准，文档滞后时听代码的。包版本不在此罗列（1.0.0 起步基线、changesets 递进、随发布漂移，以各包 package.json 为准）。
 > **先读**：开发环境与命令见 [../guides/development.md](../guides/development.md)；上游目录映射见 [../process/upstream.md](../process/upstream.md)；发布见 [../process/release.md](../process/release.md)。
 > **本文结构**：1 定位 · 2 目录与包清单 · 3 依赖纪律 · 4 构建体系 · 5 测试体系 · 6 许可证分区。
 
@@ -83,7 +83,7 @@ node 侧在 `src/`、Vue 侧在 `client/`（上游约定），`koishi.public: ["
 
 | 目录 | 包名 | 构建 | 说明 |
 |---|---|---|---|
-| `koishi-create` | `create-koishi-ce`（无 scope） | 自己的 tsdown.config.ts | 脚手架 CLI；默认内置纯 `@koishi-ce` 模板（`src/template/` 目录外置，Bun 运行时 + 上游名 alias 钉 shim），`--template <包名>` 保留远程模板逃生舱 |
+| `koishi-create` | `create-koishi-ce`（无 scope） | 根 tsdown（包级配置补 bin 入口） | 脚手架 CLI；默认内置纯 `@koishi-ce` 模板（`src/template/` 目录外置，Bun 运行时 + 上游名 alias 钉 shim），`--template <包名>` 保留远程模板逃生舱 |
 | `koishi-scripts` | `@koishi-ce/scripts` | 根 tsdown（包级配置补 bin 入口） | 插件开发 CLI（面向宿主工作区 external/* 插件项目），内嵌 TS7 + tsdown + biome + Changesets 脚手架模板与 version/build/publish 发布链 |
 
 ### tooling/ 与预留位

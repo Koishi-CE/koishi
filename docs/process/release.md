@@ -14,30 +14,30 @@ bun run release publish                   # registry 比对 → 所有权预检 
 bun run release pipeline                  # 一条龙：preflight → version → 提交 → build → test → publish → push
 ```
 
-通用旗标：`--dry-run`（只打印计划不落盘）、`--only <包名,逗号分隔>`（仅发布名单内的包）、`--skip-build` / `--skip-test` / `--push` / `--allow-dirty`。
+旗标：`--dry-run`（只打印计划不落盘）、`--only <包名,逗号分隔>`（仅 publish 环生效，只发布名单内的包）、`--skip-build` / `--skip-test` / `--push`（仅 pipeline 环生效）、`--allow-dirty`（跳过工作区洁净检查）；另有 `--help` 与环境变量 `RELEASE_REGISTRY`（切换 registry 查询源，默认 registry.npmjs.org）。
 
-行为约定：任何一步失败立即中断并保留现场；重跑幂等（已发布版本经 registry 比对自动跳过）。webui 插件 dist 不入 git，发布前必须现构建——build 环的 targets 由各包 files 字段自动推导，遗漏任一插件都会导致发布缺前端。
+行为约定：任何一步失败立即中断并保留现场；重跑幂等（已发布版本经 registry 比对自动跳过）。webui 插件 dist 不入 git，发布前必须现构建——build 环的前端 targets 为 `plugins/webui` 下 files 含 `dist` 且带 `client/` 的插件（宿主 console 除外，由总装覆盖），遗漏任一插件都会导致发布缺前端。
 
 ## 2. 发布链环节（pipeline）
 
-1. **preflight**：工作区状态与 changeset 前置检查。
+1. **preflight**：分支（须在 main）、工作区洁净与 npm 登录前置检查（无 changeset 时不阻断——version 环遇到空条目自行跳过）。
 2. **version**：消费 `.changeset/` 条目 bump 版本，刷新 `bun.lock`，产生版本提交。
 3. **提交**：版本变更落为一个 git 提交。
 4. **build**：node 侧 lib 产物 + 宿主控制台总装 + 各 webui 插件前端。
-5. **test**：`bun test` 全量。
-6. **publish**：按拓扑序逐包发布。publish 环负责把 `workspace:*` 等协议改写为真实版本号，并带**终局断言**（依赖字段不得残留 `workspace:` / `file:` / `link:`）。
+5. **test**：`bun test packages plugins/common plugins/webui/admin plugins/webui/commands`——范围化子集（源码 `runTestStep`），不含 apps 与 tooling 用例；全量测试仍以本地 `bun test` 为准。
+6. **publish**：按拓扑序逐包发布。publish 环负责把 `workspace:*` 协议改写为真实版本号（`workspace:^` 等其他协议形式直接拒绝），并带**终局断言**（依赖字段不得残留 `workspace:` / `file:` / `link:`）。
 7. **push**：推送 `main`（只推 main，不打 tag——tag 环已删除）。
 
 ## 3. changesets 约定
 
 - 面向发布的包改动，**随提交写 `.changeset/` 条目**（`bun run changeset`）；纯内部 / 文档 / 私有包改动不写。
-- 版本基线：全部可发布包统一 1.0.0 线（不镜像上游版本号，版本漂移以各包 package.json 与 `release status` 为准，怀疑不一致先 `npm view <pkg> dist-tags` 核实）。
+- 版本基线：全部可发布包从 1.0.0 起步、由 changesets 递进（不镜像上游版本号，随发布自然漂移，以各包 package.json 与 `release status` 为准，怀疑不一致先 `npm view <pkg> dist-tags` 核实）。
 - **shim 两包（`@koishi-ce/koishi-shim` / `@koishi-ce/console-shim`）与 workspace 私有包在 changesets ignore 列表**：勿写 changeset、勿 bump——shim 版本冻结跟随上游线（4.18.x / 5.30.x），Bun 对 npm alias 的 peer 判定看落盘包的 version，动它会让下游 alias 的 peer 匹配失效。
 - `bumpVersionsWithWorkspaceProtocolOnly: true`：只有以 `workspace:*` 被内部消费的包才随依赖连动 bump。
 
 ## 4. 发布顺序与补发
 
-- **顺序约束**：`console-shim` 须先于 `create-koishi-ce` 发布（模板依赖它）。发布链按拓扑序自动处理。
+- **顺序约束**：`console-shim` 须先于 `create-koishi-ce` 发布——但该依赖只以 npm alias 形式写死在脚手架模板文本里（`apps/koishi-create/src/template.ts`），不在 create-koishi-ce 的 manifest 依赖字段中，**拓扑序不覆盖此约束**；当前靠 console-shim 版本冻结（changesets ignore）兜底，若手动 bump console-shim，须人工确认其先于 create-koishi-ce 发布。
 - **补发 / 重发坏版本**：先手动 bump 该包版本，再 `bun run release publish --only <包名,逗号分隔>`——同样走协议改写与终局断言。
 - `@koishijs/client` 之类的 optional peer 无需处理：Bun 不自动安装 optional peer。
 
