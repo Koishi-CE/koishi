@@ -35,10 +35,10 @@ import { CommandCore } from "./core.ts";
  * 回调参数取 never 以满足逆变——任意泛型实例的 Command.Action /
  * FieldCollector 均可赋入；执行装配处通过 apply 以数组还原实参。
  */
-// biome-ignore lint/suspicious/noConfusingVoidType: 内部擦除存储必须原样承接公共 Action 的 void 返回（void 不可赋值给 undefined）
 type ErasedAction = (
 	argv: never,
 	...args: never
+	// biome-ignore lint/suspicious/noConfusingVoidType: 内部擦除存储必须原样承接公共 Action 的 void 返回（void 不可赋值给 undefined）
 ) => Awaitable<void | Fragment>;
 
 /** 同上，作用于字段收集器：字段名列表或以 argv 为参的回调 */

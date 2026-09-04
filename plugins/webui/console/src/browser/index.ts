@@ -15,7 +15,7 @@ import { Console, type Entry } from "@koishi-ce/console";
 import {
 	makeArray,
 	Schema,
-	Universal,
+	type Universal,
 } from "@koishi-ce/koishi";
 import type {} from "@koishi-ce/loader";
 

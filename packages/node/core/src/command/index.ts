@@ -62,9 +62,9 @@ declare module "@koishi-ce/core" {
 		/** 命令执行抛出未被 handleError 接管的异常 */
 		"command-error"(argv: Argv, error: unknown): void;
 		/** 命令执行前的钩子（即内置的第一个 checker）；返回值可短路执行 */
-		// biome-ignore lint/suspicious/noConfusingVoidType: 事件负载：void 表示不短路、Fragment 表示拦截输出，改为 undefined 会破坏 void 返回监听器的可赋值性
 		"command/before-execute"(
 			argv: Argv,
+			// biome-ignore lint/suspicious/noConfusingVoidType: 事件负载：void 表示不短路、Fragment 表示拦截输出，改为 undefined 会破坏 void 返回监听器的可赋值性
 		): Awaitable<void | Fragment>;
 		/** 数据库频道字段观测收集（session.observeChannel 前触发） */
 		"command/before-attach-channel"(

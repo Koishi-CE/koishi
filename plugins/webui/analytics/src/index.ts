@@ -189,8 +189,8 @@ class Analytics extends DataService<Analytics.Payload> {
 	}
 
 	// 不协变,各事件回调处的具体泛型互不相同,内部工具方法统一放宽
-	// biome-ignore lint/suspicious/noExplicitAny: Session 泛型在 user 观察字段上
 	private createIndex(
+		// biome-ignore lint/suspicious/noExplicitAny: Session 泛型在 user 观察字段上
 		session: Session<any, any, any>,
 	): Analytics.Index {
 		return {
