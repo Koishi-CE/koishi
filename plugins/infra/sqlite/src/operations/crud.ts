@@ -3,6 +3,7 @@
 // Copyright (c) 2026-present Koishi-CE contributors.
 
 import type { StatementSync } from "node:sqlite";
+
 /** 数据操作（DML）：查询、求值、写入、创建与批量 upsert。 */
 import { escapeId } from "@minatojs/sql-utils";
 import type { Dict } from "cosmokit";
@@ -24,6 +25,7 @@ import type { SQLiteDriver } from "../index.ts";
 import { SQLiteBuilder } from "../sql/builder.ts";
 import { joinKeys } from "../sql/utils.ts";
 
+/** 删除：永假查询（"0"）直接短路不落引擎；changes() 取实际删除行数。 */
 export async function remove(
 	driver: SQLiteDriver,
 	sel: Selection.Mutable,
@@ -43,6 +45,7 @@ export async function remove(
 	return { matched: result.count, removed: result.count };
 }
 
+/** 查询：useBigInt 读原始行防聚合/大主键精度丢失，load 按模型还原 JS 值。 */
 export async function get(
 	driver: SQLiteDriver,
 	sel: Selection.Immutable,
@@ -57,6 +60,7 @@ export async function get(
 	return rows.map((row) => builder.load(row, model));
 }
 
+/** 标量求值：把目标行包成内层 SELECT，在外层对表达式求值后按类型还原。 */
 export async function evaluate(
 	driver: SQLiteDriver,
 	sel: Selection.Immutable,
@@ -79,6 +83,7 @@ export async function evaluate(
 	return builder.load(value, expr);
 }
 
+/** 单行更新：executeUpdate 先把更新语义套到旧值上，再按索引字段定位写回。 */
 function updateRow(
 	driver: SQLiteDriver,
 	sel: Selection.Mutable,
@@ -107,6 +112,13 @@ function updateRow(
 	);
 }
 
+/**
+ * 更新的双分支：
+ * - 条件或更新值带 $expr / 子查询：逐行 UPDATE 无法正确求值，改为把
+ *   「主键 + 新值」投影成行集（新值以表达式在库端求值），交给
+ *   database 层的 upsert 落库；
+ * - 普通条件：查出命中行，逐行走 updateRow。
+ */
 export async function set(
 	driver: SQLiteDriver,
 	sel: Selection.Mutable,
@@ -190,6 +202,7 @@ export async function set(
 	}
 }
 
+/** 插入并在同一连接批里取回 last_insert_rowid()（自增主键回填用）。 */
 function insert(
 	driver: SQLiteDriver,
 	table: string,
@@ -212,6 +225,7 @@ function insert(
 	) as { id: number | bigint };
 }
 
+/** 创建：仅 autoInc 单字段主键时把取回的自增 id 回填到返回行。 */
 export async function create(
 	driver: SQLiteDriver,
 	sel: Selection.Mutable,
@@ -224,6 +238,12 @@ export async function create(
 	return { ...data, [primary]: id };
 }
 
+/**
+ * 批量 upsert：按主键分块，每块先一次 $or 查询取回命中行集，再逐项
+ * 判定走更新或插入。分块大小 = 960 / 键数，绕开 SQLite 表达式树深度
+ * 上限（"Expression tree is too large"）。命中判定对两边先 format，
+ * 以容忍存储值与入参值的类型差异（deepEqual 宽松模式）。
+ */
 export async function upsert(
 	driver: SQLiteDriver,
 	sel: Selection.Mutable,
@@ -250,7 +270,6 @@ export async function upsert(
 	let updateFields = difference(dataFields, keys);
 	if (!updateFields.length)
 		updateFields = [dataFields[0] ?? ""];
-	// Error: Expression tree is too large (maximum depth 1000)
 	const step = Math.floor(960 / keys.length);
 	for (let i = 0; i < data.length; i += step) {
 		const chunk = data.slice(i, i + step);

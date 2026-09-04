@@ -15,6 +15,10 @@ interface SQLiteMasterInfo {
 	sql: string;
 }
 
+/**
+ * 列举表的二级索引：查 `sqlite_master` 只读目录。主键/唯一约束
+ * 自动建的隐式索引 `sql` 列为 NULL，也按 unique 计入。
+ */
 export async function getIndexes(
 	driver: SQLiteDriver,
 	table: string,
@@ -36,6 +40,7 @@ export async function getIndexes(
 	return result;
 }
 
+/** 建索引；未显式命名时按 `键_方向` 拼接生成默认名。 */
 export async function createIndex(
 	driver: SQLiteDriver,
 	table: string,
@@ -60,6 +65,7 @@ export async function createIndex(
 	);
 }
 
+/** 删索引：SQLite 索引是库级对象，不需要表名（驱动签名里的 table 弃用）。 */
 export async function dropIndex(
 	driver: SQLiteDriver,
 	name: string,
@@ -67,6 +73,10 @@ export async function dropIndex(
 	await driver._run(`DROP INDEX ${escapeId(name)}`);
 }
 
+/**
+ * 从索引 DDL 解析 `键 → 方向` 映射（取首个括号段，剥离反引号）；
+ * 解析失败返回空对象，容忍隐式索引等非常规形态。
+ */
 function parseIndexDef(def: string): Driver.Index["keys"] {
 	if (!def) return {};
 	try {

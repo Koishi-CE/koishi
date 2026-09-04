@@ -159,6 +159,7 @@ export class SQLiteBuilder extends Builder {
 		};
 	}
 
+	/** 字面量转义：日期出毫秒数、正则出 source、二进制出 X'hex' 裸字面量。 */
 	override escapePrimitive(value: unknown, type?: Type) {
 		if (value instanceof Date) value = +value;
 		else if (value instanceof RegExp) value = value.source;
@@ -169,6 +170,12 @@ export class SQLiteBuilder extends Builder {
 		return super.escapePrimitive(value, type);
 	}
 
+	/**
+	 * 成员判断（$in / $nin 共用）按目标形态分四路：
+	 * 数组拼 IN 列表（嵌套数组为多列元组）；$exec 走子查询；
+	 * list 类型字段走 LIKE 通道；其余（json 数组）走自定义
+	 * contains 函数。notStr 非空时对结果取逻辑非。
+	 */
 	protected createMemberEval(
 		rawKey: unknown,
 		value: unknown,
@@ -209,6 +216,7 @@ export class SQLiteBuilder extends Builder {
 		}
 	}
 
+	/** $el（list 元素匹配）：json 列走 contains 函数，list 列走逗号包裹 LIKE。 */
 	protected override createElementQuery(
 		key: string,
 		value: unknown,
@@ -223,6 +231,7 @@ export class SQLiteBuilder extends Builder {
 		}
 	}
 
+	/** 查询侧 $regex：与求值侧同构的双函数通道（见 evalOperators.$regex）。 */
 	protected override createRegExpQuery(
 		key: string,
 		value: string | RegExpLike,
@@ -237,6 +246,7 @@ export class SQLiteBuilder extends Builder {
 		}
 	}
 
+	/** list 字段包含：两端补逗号后 LIKE，避免子串误命中（"b" 不匹配 "abc"）。 */
 	protected override listContains(
 		list: string,
 		value: string,
@@ -251,6 +261,7 @@ export class SQLiteBuilder extends Builder {
 		);
 	}
 
+	/** json 数组包含：委派 setup/functions.ts 注册的同名自定义函数。 */
 	protected override jsonContains(
 		obj: string,
 		value: string,
@@ -261,6 +272,10 @@ export class SQLiteBuilder extends Builder {
 		);
 	}
 
+	/**
+	 * 编码态（JSON 存储列）的标量还原：`->> '$'` 取出 JSON 标量后按
+	 * 类型 decode，使其以原生标量参与后续 SQL 表达式。
+	 */
 	protected override encode(
 		value: string,
 		encoded: boolean,
@@ -281,6 +296,10 @@ export class SQLiteBuilder extends Builder {
 					);
 	}
 
+	/**
+	 * 无 GROUP BY 时的聚合退化：SQLite 聚合函数不吃数组参数，改写成
+	 * json_each 展开的关联子查询（尾随 randomId 作表别名防重）。
+	 */
 	protected override createAggr(
 		expr: unknown,
 		aggr: (value: string) => string,
@@ -294,6 +313,7 @@ export class SQLiteBuilder extends Builder {
 		}
 	}
 
+	/** 聚合为数组：group_concat 手工拼 JSON 数组字面量，空集兜底 json_array()。 */
 	protected override groupArray(value: string) {
 		const res = this.isEncoded()
 			? `('[' || group_concat(${value}) || ']')`
@@ -304,6 +324,7 @@ export class SQLiteBuilder extends Builder {
 		);
 	}
 
+	/** JSON 字段访问出 `->` 路径表达式（保留 JSON 形态，配 encode 做标量还原）。 */
 	protected override transformJsonField(
 		obj: string,
 		path: string,

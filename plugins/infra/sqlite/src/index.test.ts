@@ -64,9 +64,7 @@ app.plugin(SQLiteDriver, { path: ":memory:" });
 
 /** 测试内窥驱动实例的手法（minato Database 的 drivers 不在公开类型上） */
 type TestDriver = {
-	getIndexes(
-		table: string,
-	): Promise<
+	getIndexes(table: string): Promise<
 		{
 			name: string;
 			unique: boolean;

@@ -7,6 +7,10 @@ import { escapeId } from "@minatojs/sql-utils";
 import type { Driver } from "minato";
 import type { SQLiteDriver } from "../index.ts";
 
+/**
+ * 库大小 = page_count × page_size；逐表占用查 dbstat 虚表（官方构建
+ * 默认开启的编译特性），行数逐表 COUNT。表在 dbstat 无记录时占位为 0。
+ */
 export async function collectStats(
 	driver: SQLiteDriver,
 ): Promise<Driver.Stats> {

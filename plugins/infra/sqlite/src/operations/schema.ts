@@ -16,6 +16,7 @@ import { Field } from "minato";
 import type { SQLiteDriver } from "../index.ts";
 import { joinKeys } from "../sql/utils.ts";
 
+/** minato 字段类型 → SQLite 存储类型的静态映射表。 */
 function getTypeDef({ deftype: type }: Field) {
 	switch (type) {
 		case "primary":
@@ -54,7 +55,14 @@ interface SQLiteFieldInfo {
 	pk: boolean;
 }
 
-/** synchronize table schema */
+/**
+ * 表结构同步：对比 `PRAGMA table_info` 与 model 定义，按差异走三路之一——
+ * 1. 库中无表 → 直接 CREATE TABLE；
+ * 2. 列名/类型漂移（含 legacy 归并、dropKeys 剔除）→ 建临时表搬数据重建；
+ * 3. 仅新增列 → 逐条 ALTER TABLE ADD。
+ * 尾段再走基类 migrate（字段级数据迁移钩子），迁移产物由 finalize
+ * 递归调 prepare 收编进表结构。
+ */
 export async function prepare(
 	driver: SQLiteDriver,
 	table: string,
@@ -70,7 +78,7 @@ export async function prepare(
 	const mapping: Dict<string> = {};
 	let shouldMigrate = false;
 
-	// field definitions
+	// field definitions：legacy 声明允许新列名归并旧列（改名迁移的依据）
 	for (const key in model.fields) {
 		const field = model.fields[key];
 		if (!field || !Field.available(field)) {
@@ -107,7 +115,7 @@ export async function prepare(
 		}
 	}
 
-	// index definitions
+	// index definitions：表级约束随建表 DDL 一起声明（SQLite 无独立语法）
 	if (model.primary && !model.autoInc) {
 		indexDefs.push(
 			`PRIMARY KEY (${joinKeys(makeArray(model.primary))})`,
@@ -137,7 +145,8 @@ export async function prepare(
 			`CREATE TABLE ${escapeId(table)} (${[...columnDefs, ...indexDefs].join(", ")})`,
 		);
 	} else if (shouldMigrate) {
-		// preserve old columns
+		// 重建式迁移：旧列原样保留（model 未声明的列也不丢数据），
+		// 搬运失败时删掉临时表保住原表
 		for (const {
 			name,
 			type,
@@ -183,6 +192,8 @@ export async function prepare(
 		}
 	}
 
+	// 尾段：dropKeys 为 undefined 说明是首轮调用，执行基类 migrate
+	//（字段级数据迁移）；finalize 里递归重跑 prepare，把迁移产物收编进结构
 	if (dropKeys) return;
 	dropKeys = [];
 	await driver.runMigration(table, {
@@ -199,6 +210,7 @@ export async function prepare(
 	});
 }
 
+/** 删表；dropAll 以 driver.database.tables 注册面为准清空全部表。 */
 export async function drop(
 	driver: SQLiteDriver,
 	table: string,
