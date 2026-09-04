@@ -1,0 +1,37 @@
+# SPDX-License-Identifier: AGPL-3.0-only
+# Copyright (c) 2019-present Shigma and Koishijs contributors.
+# Copyright (c) 2026-present Koishi-CE contributors.
+
+explorer:
+  title: 资源管理器
+  menu:
+    save: 保存
+    refresh: 刷新
+    createFile: 新建文件
+    createDirectory: 新建文件夹
+    upload: 上传文件
+    download: 下载文件
+    rename: 重命名
+    remove: 删除
+  upload:
+    hint: 请将文件拖动到窗口内以上传。
+  picker:
+    from: 从 {0} {1}
+    upload: 上传文件
+    createFolder: 创建文件夹
+    cancel: 取消
+    selectDirectory: 选定当前目录
+    chooseFile: 选择文件
+    chooseEither: 选择目录或文件
+    chooseDirectory: 选择目录
+    root: 根目录
+    file: "文件：{0}"
+    directory: "目录：{0}"
+  view:
+    empty: 在左侧栏选择要查看的文件
+    loading: 正在加载……
+    unsupported: "不支持的文件格式：{0}"
+    removeFile: 你真的要删除文件 {0} 吗？
+    removeDirectory: 你真的要删除文件夹 {0} 吗？
+    cancel: 取消
+    confirm: 确认

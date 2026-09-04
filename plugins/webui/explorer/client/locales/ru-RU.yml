@@ -1,0 +1,37 @@
+# SPDX-License-Identifier: AGPL-3.0-only
+# Copyright (c) 2019-present Shigma and Koishijs contributors.
+# Copyright (c) 2026-present Koishi-CE contributors.
+
+explorer:
+  title: Проводник
+  menu:
+    save: Сохранить
+    refresh: Обновить
+    createFile: Новый файл
+    createDirectory: Новая папка
+    upload: Загрузить файл
+    download: Скачать файл
+    rename: Переименовать
+    remove: Удалить
+  upload:
+    hint: Перетащите файлы в окно, чтобы загрузить их.
+  picker:
+    from: "Из {0}: {1}"
+    upload: Загрузить файл
+    createFolder: Создать папку
+    cancel: Отмена
+    selectDirectory: Выбрать текущий каталог
+    chooseFile: выбрать файл
+    chooseEither: выбрать каталог или файл
+    chooseDirectory: выбрать каталог
+    root: Корневой каталог
+    file: "Файл: {0}"
+    directory: "Каталог: {0}"
+  view:
+    empty: Выберите файл в боковой панели, чтобы просмотреть его
+    loading: Загрузка...
+    unsupported: "Неподдерживаемый формат файла: {0}"
+    removeFile: "Вы действительно хотите удалить файл {0}?"
+    removeDirectory: "Вы действительно хотите удалить папку {0}?"
+    cancel: Отмена
+    confirm: Подтвердить

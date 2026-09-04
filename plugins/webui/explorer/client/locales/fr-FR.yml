@@ -1,0 +1,37 @@
+# SPDX-License-Identifier: AGPL-3.0-only
+# Copyright (c) 2019-present Shigma and Koishijs contributors.
+# Copyright (c) 2026-present Koishi-CE contributors.
+
+explorer:
+  title: Explorateur
+  menu:
+    save: Enregistrer
+    refresh: Actualiser
+    createFile: Nouveau fichier
+    createDirectory: Nouveau dossier
+    upload: Téléverser un fichier
+    download: Télécharger un fichier
+    rename: Renommer
+    remove: Supprimer
+  upload:
+    hint: Glissez-déposez des fichiers dans la fenêtre pour les téléverser.
+  picker:
+    from: "Depuis {0} : {1}"
+    upload: Téléverser un fichier
+    createFolder: Créer un dossier
+    cancel: Annuler
+    selectDirectory: Sélectionner le répertoire actuel
+    chooseFile: choisir un fichier
+    chooseEither: choisir un répertoire ou un fichier
+    chooseDirectory: choisir un répertoire
+    root: Répertoire racine
+    file: "Fichier : {0}"
+    directory: "Répertoire : {0}"
+  view:
+    empty: Sélectionnez un fichier dans le panneau latéral pour l'afficher
+    loading: Chargement...
+    unsupported: "Format de fichier non pris en charge : {0}"
+    removeFile: "Voulez-vous vraiment supprimer le fichier {0} ?"
+    removeDirectory: "Voulez-vous vraiment supprimer le dossier {0} ?"
+    cancel: Annuler
+    confirm: Confirmer

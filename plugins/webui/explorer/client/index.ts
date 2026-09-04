@@ -15,6 +15,13 @@ import type { Context } from "@koishi-ce/client";
 import type { Entry } from "@koishi-ce/plugin-explorer";
 import FilePicker from "./file-picker.vue";
 import Layout from "./index.vue";
+import deDE from "./locales/de-DE.yml";
+import enUS from "./locales/en-US.yml";
+import frFR from "./locales/fr-FR.yml";
+import jaJP from "./locales/ja-JP.yml";
+import ruRU from "./locales/ru-RU.yml";
+import zhCN from "./locales/zh-CN.yml";
+import zhTW from "./locales/zh-TW.yml";
 import Status from "./status.vue";
 import Upload from "./upload.vue";
 import "./icons";
@@ -35,6 +42,15 @@ declare module "@koishi-ce/plugin-console" {
 }
 
 export default (ctx: Context) => {
+	// 注入本扩展的 UI 语言包（各语种键均收纳在 explorer.* 命名空间下）
+	ctx.$i18n.extend("de-DE", deDE);
+	ctx.$i18n.extend("en-US", enUS);
+	ctx.$i18n.extend("fr-FR", frFR);
+	ctx.$i18n.extend("ja-JP", jaJP);
+	ctx.$i18n.extend("ru-RU", ruRU);
+	ctx.$i18n.extend("zh-CN", zhCN);
+	ctx.$i18n.extend("zh-TW", zhTW);
+
 	// 注册 path 角色的 string 控件:配置表单中的路径字段
 	// 会渲染为 FilePicker 弹窗选择器
 	ctx.schema({
@@ -54,7 +70,8 @@ export default (ctx: Context) => {
 	ctx.page({
 		id: "files",
 		path: "/files/:name*",
-		name: "资源管理器",
+		// name / label 传 getter：渲染层解析，随界面语言切换
+		name: () => ctx.$i18n.t("explorer.title"),
 		icon: "activity:explorer",
 		order: 600,
 		fields: ["explorer"],
@@ -72,12 +89,12 @@ export default (ctx: Context) => {
 		{
 			id: "explorer.save",
 			icon: "save",
-			label: "保存",
+			label: () => ctx.$i18n.t("explorer.menu.save"),
 		},
 		{
 			id: "explorer.refresh",
 			icon: "refresh",
-			label: "刷新",
+			label: () => ctx.$i18n.t("explorer.menu.refresh"),
 		},
 	]);
 
@@ -86,22 +103,23 @@ export default (ctx: Context) => {
 		{
 			id: ".create-file",
 			icon: "file-create",
-			label: "新建文件",
+			label: () => ctx.$i18n.t("explorer.menu.createFile"),
 		},
 		{
 			id: ".create-directory",
 			icon: "directory-create",
-			label: "新建文件夹",
+			label: () =>
+				ctx.$i18n.t("explorer.menu.createDirectory"),
 		},
 		{
 			id: ".upload",
 			icon: "upload",
-			label: "上传文件",
+			label: () => ctx.$i18n.t("explorer.menu.upload"),
 		},
 		{
 			id: ".download",
 			icon: "download",
-			label: "下载文件",
+			label: () => ctx.$i18n.t("explorer.menu.download"),
 		},
 		{
 			id: "@separator",
@@ -109,13 +127,13 @@ export default (ctx: Context) => {
 		{
 			id: ".rename",
 			icon: "edit",
-			label: "重命名",
+			label: () => ctx.$i18n.t("explorer.menu.rename"),
 		},
 		{
 			id: ".remove",
 			icon: "delete",
 			type: "danger",
-			label: "删除",
+			label: () => ctx.$i18n.t("explorer.menu.remove"),
 		},
 	]);
 };

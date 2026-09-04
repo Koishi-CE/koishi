@@ -1,0 +1,37 @@
+# SPDX-License-Identifier: AGPL-3.0-only
+# Copyright (c) 2019-present Shigma and Koishijs contributors.
+# Copyright (c) 2026-present Koishi-CE contributors.
+
+explorer:
+  title: Explorer
+  menu:
+    save: Speichern
+    refresh: Aktualisieren
+    createFile: Neue Datei
+    createDirectory: Neuer Ordner
+    upload: Datei hochladen
+    download: Datei herunterladen
+    rename: Umbenennen
+    remove: Löschen
+  upload:
+    hint: Ziehen Sie Dateien zum Hochladen in das Fenster.
+  picker:
+    from: "Von {0}: {1}"
+    upload: Datei hochladen
+    createFolder: Ordner erstellen
+    cancel: Abbrechen
+    selectDirectory: Aktuelles Verzeichnis auswählen
+    chooseFile: eine Datei auswählen
+    chooseEither: ein Verzeichnis oder eine Datei auswählen
+    chooseDirectory: ein Verzeichnis auswählen
+    root: Stammverzeichnis
+    file: "Datei: {0}"
+    directory: "Verzeichnis: {0}"
+  view:
+    empty: Wählen Sie eine Datei in der Seitenleiste aus, um sie anzuzeigen
+    loading: Wird geladen...
+    unsupported: "Nicht unterstütztes Dateiformat: {0}"
+    removeFile: "Möchten Sie die Datei {0} wirklich löschen?"
+    removeDirectory: "Möchten Sie den Ordner {0} wirklich löschen?"
+    cancel: Abbrechen
+    confirm: Bestätigen

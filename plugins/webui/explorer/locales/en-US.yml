@@ -2,6 +2,5 @@
 # Copyright (c) 2019-present Shigma and Koishijs contributors.
 # Copyright (c) 2026-present Koishi-CE contributors.
 
-root: 资源管理器的根目录，默认为当前工作路径。
+root: Root directory of the explorer, defaults to the current working path.
 ignored: Files or directories to ignore. Supports [Glob Patterns](https://github.com/micromatch/micromatch) syntax.
-

@@ -5,7 +5,7 @@
 <template>
   <k-layout menu="explorer">
     <template #header>
-      资源管理器{{ active ? ' - ' + active : '' }}
+      {{ t('explorer.title') }}{{ active ? ' - ' + active : '' }}
     </template>
 
     <!-- 左侧栏：搜索框 + 可搜索/可重命名的文件树 -->
@@ -55,32 +55,32 @@
     </template>
 
     <!-- 主区域四态：未选文件 / 加载中 / 媒体预览（图片、音视频）/ monaco 编辑器 -->
-    <k-empty v-if="!files[active] || files[active].type === 'directory'">在左侧栏选择要查看的文件</k-empty>
+    <k-empty v-if="!files[active] || files[active].type === 'directory'">{{ t('explorer.view.empty') }}</k-empty>
     <div v-else-if="files[active]?.loading">
       <div class="el-loading-spinner">
         <svg class="circular" viewBox="25 25 50 50">
           <circle class="path" cx="50" cy="50" r="20" fill="none"></circle>
         </svg>
-        <p class="el-loading-text">正在加载……</p>
+        <p class="el-loading-text">{{ t('explorer.view.loading') }}</p>
       </div>
     </div>
     <template v-else-if="files[active]?.mime">
       <k-image-viewer v-if="files[active].mime.startsWith('image/')" :src="files[active].newValue" />
       <audio v-else-if="files[active].mime.startsWith('audio/')" :src="files[active].newValue" controls />
       <video v-else-if="files[active].mime.startsWith('video/')" :src="files[active].newValue" controls />
-      <div v-else>不支持的文件格式：{{ files[active].mime }}</div>
+      <div v-else>{{ t('explorer.view.unsupported', [files[active].mime]) }}</div>
     </template>
     <div ref="editor" v-else class="editor"></div>
   </k-layout>
 
   <!-- 删除确认对话框：目录名的结尾补 / 以区分文件与文件夹 -->
   <el-dialog v-model="showRemoving" destroy-on-close>
-    你真的要删除文件{{ removing?.endsWith('/') ? '夹' : '' }} {{ removing }} 吗？
+    {{ t(removing?.endsWith('/') ? 'explorer.view.removeDirectory' : 'explorer.view.removeFile', [removing]) }}
     <template #footer>
       <span class="dialog-footer">
-        <el-button @click="removing = null">取消</el-button>
+        <el-button @click="removing = null">{{ t('explorer.view.cancel') }}</el-button>
         <el-button type="primary" @click="send('explorer/remove', removing), removing = null">
-          确认
+          {{ t('explorer.view.confirm') }}
         </el-button>
       </span>
     </template>
@@ -114,6 +114,7 @@ import {
 	ref,
 	watch,
 } from "vue";
+import { useI18n } from "vue-i18n";
 import { useRoute, useRouter } from "vue-router";
 import { model } from "./editor";
 import {
@@ -123,6 +124,7 @@ import {
 	vFocus,
 } from "./store";
 
+const { t } = useI18n();
 const ctx = useContext();
 const route = useRoute();
 const router = useRouter();

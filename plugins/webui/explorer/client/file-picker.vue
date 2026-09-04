@@ -16,7 +16,7 @@
           <el-button class="back-button" :disabled="current === '/'" @click="toPrevious()">
             <k-icon name="chevron-left"></k-icon>
           </el-button>
-          从 {{ current }} {{ hint }}
+          {{ t('explorer.picker.from', [current, hint]) }}
         </template>
         <el-scrollbar>
           <div class="entry" v-for="entry in entries" :key="entry.name" @click="handleClick(entry)">
@@ -34,13 +34,13 @@
         <template #footer>
           <div class="left">
             <template v-if="options.allowCreate">
-              <el-button v-if="allowFile" @click="uploading = current + '/'">上传文件</el-button>
-              <el-button v-if="allowDir" @click="createFolder()">创建文件夹</el-button>
+              <el-button v-if="allowFile" @click="uploading = current + '/'">{{ t('explorer.picker.upload') }}</el-button>
+              <el-button v-if="allowDir" @click="createFolder()">{{ t('explorer.picker.createFolder') }}</el-button>
             </template>
           </div>
           <div class="right">
-            <el-button @click="showDialog = false">取消</el-button>
-            <el-button v-if="allowDir" type="primary" @click="confirm()">选定当前目录</el-button>
+            <el-button @click="showDialog = false">{{ t('explorer.picker.cancel') }}</el-button>
+            <el-button v-if="allowDir" type="primary" @click="confirm()">{{ t('explorer.picker.selectDirectory') }}</el-button>
           </div>
         </template>
       </el-dialog>
@@ -64,7 +64,10 @@ import {
 import type {} from "@koishi-ce/koishi";
 import type { Entry } from "@koishi-ce/plugin-explorer";
 import { computed, type PropType, ref } from "vue";
+import { useI18n } from "vue-i18n";
 import { files, uploading, vFocus } from "./store";
+
+const { t } = useI18n();
 
 const props = defineProps({
 	schema: {} as PropType<Schema>,
@@ -96,11 +99,11 @@ const allowFile = computed(() =>
 /** 按钮文案：根据可选类型给出提示。 */
 const hint = computed(() => {
 	if (!allowDir.value) {
-		return "选择文件";
+		return t("explorer.picker.chooseFile");
 	} else if (allowFile.value) {
-		return "选择目录或文件";
+		return t("explorer.picker.chooseEither");
 	} else {
-		return "选择目录";
+		return t("explorer.picker.chooseDirectory");
 	}
 });
 
@@ -190,13 +193,12 @@ function cancelRename() {
 /** 按钮上展示的已选路径：可识别时标注为文件/目录并显示名称。 */
 const target = computed(() => {
 	if (isNullable(config.value)) return;
-	if (!config.value) return "根目录";
+	if (!config.value) return t("explorer.picker.root");
 	const entry = files[`/${config.value}`];
 	if (!entry) return config.value;
-	return (
-		(entry.type === "file" ? "文件：" : "目录：") +
-		entry.name
-	);
+	return entry.type === "file"
+		? t("explorer.picker.file", [entry.name])
+		: t("explorer.picker.directory", [entry.name]);
 });
 
 /** 返回上一级目录。 */

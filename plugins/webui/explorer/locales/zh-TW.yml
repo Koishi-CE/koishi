@@ -2,6 +2,5 @@
 # Copyright (c) 2019-present Shigma and Koishijs contributors.
 # Copyright (c) 2026-present Koishi-CE contributors.
 
-root: 資源管理器的根目錄，默認為當前工作路徑。
-ignored: 要忽略的文件或目錄。支援 [Glob Patterns](https://github.com/micromatch/micromatch) 語法。
-
+root: 檔案總管的根目錄，預設為當前工作路徑。
+ignored: 要忽略的檔案或目錄。支援 [Glob Patterns](https://github.com/micromatch/micromatch) 語法。

@@ -2,6 +2,5 @@
 # Copyright (c) 2019-present Shigma and Koishijs contributors.
 # Copyright (c) 2026-present Koishi-CE contributors.
 
-root: 资源管理器的根目录，默认为当前工作路径。
-ignored: 要忽略的文件或目录。支持 [Glob Patterns](https://github.com/micromatch/micromatch) 语法。
-
+root: エクスプローラーのルートディレクトリ。デフォルトは現在の作業パスです。
+ignored: 除外するファイルまたはディレクトリ。[Glob Patterns](https://github.com/micromatch/micromatch) 記法に対応しています。

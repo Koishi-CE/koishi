@@ -1,0 +1,37 @@
+# SPDX-License-Identifier: AGPL-3.0-only
+# Copyright (c) 2019-present Shigma and Koishijs contributors.
+# Copyright (c) 2026-present Koishi-CE contributors.
+
+explorer:
+  title: 檔案總管
+  menu:
+    save: 儲存
+    refresh: 重新整理
+    createFile: 新增檔案
+    createDirectory: 新增資料夾
+    upload: 上傳檔案
+    download: 下載檔案
+    rename: 重新命名
+    remove: 刪除
+  upload:
+    hint: 請將檔案拖曳到視窗內以上傳。
+  picker:
+    from: 從 {0} {1}
+    upload: 上傳檔案
+    createFolder: 建立資料夾
+    cancel: 取消
+    selectDirectory: 選定目前目錄
+    chooseFile: 選擇檔案
+    chooseEither: 選擇目錄或檔案
+    chooseDirectory: 選擇目錄
+    root: 根目錄
+    file: "檔案：{0}"
+    directory: "目錄：{0}"
+  view:
+    empty: 在左側欄選擇要查看的檔案
+    loading: 正在載入……
+    unsupported: "不支援的檔案格式：{0}"
+    removeFile: "你真的要刪除檔案 {0} 嗎？"
+    removeDirectory: "你真的要刪除資料夾 {0} 嗎？"
+    cancel: 取消
+    confirm: 確認

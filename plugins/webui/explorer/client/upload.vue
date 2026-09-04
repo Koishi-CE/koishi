@@ -4,10 +4,10 @@
 
 <template>
   <el-dialog v-model="showUploading" destroy-on-close>
-    请将文件拖动到窗口内以上传。
+    {{ t('explorer.upload.hint') }}
     <template #footer>
       <span class="dialog-footer">
-        <el-button @click="uploading = null">取消</el-button>
+        <el-button @click="uploading = null">{{ t('explorer.picker.cancel') }}</el-button>
       </span>
     </template>
   </el-dialog>
@@ -21,7 +21,10 @@
 import { Binary, send } from "@koishi-ce/client";
 import { useEventListener } from "@vueuse/core";
 import { computed } from "vue";
+import { useI18n } from "vue-i18n";
 import { uploading } from "./store";
+
+const { t } = useI18n();
 
 const showUploading = computed({
 	get: () => !!uploading.value,

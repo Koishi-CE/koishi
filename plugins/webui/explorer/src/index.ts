@@ -38,7 +38,13 @@ const anymatch =
 import { detect } from "chardet";
 import type { FSWatcher } from "chokidar";
 import { fileTypeFromBuffer } from "file-type";
+import deDE from "../locales/de-DE.yml";
+import enUS from "../locales/en-US.yml";
+import frFR from "../locales/fr-FR.yml";
+import jaJP from "../locales/ja-JP.yml";
+import ruRU from "../locales/ru-RU.yml";
 import zhCN from "../locales/zh-CN.yml";
+import zhTW from "../locales/zh-TW.yml";
 
 declare module "@koishi-ce/console" {
 	namespace Console {
@@ -114,7 +120,13 @@ class Explorer extends DataService<Entry[]> {
 			.role("table")
 			.default(["**/node_modules", "**/.*", "cache"]),
 	}).i18n({
+		"de-DE": deDE,
+		"en-US": enUS,
+		"fr-FR": frFR,
+		"ja-JP": jaJP,
+		"ru-RU": ruRU,
 		"zh-CN": zhCN,
+		"zh-TW": zhTW,
 	});
 
 	task!: Promise<Entry[]>;

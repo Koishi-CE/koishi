@@ -1,0 +1,37 @@
+# SPDX-License-Identifier: AGPL-3.0-only
+# Copyright (c) 2019-present Shigma and Koishijs contributors.
+# Copyright (c) 2026-present Koishi-CE contributors.
+
+explorer:
+  title: Explorer
+  menu:
+    save: Save
+    refresh: Refresh
+    createFile: New File
+    createDirectory: New Folder
+    upload: Upload File
+    download: Download File
+    rename: Rename
+    remove: Delete
+  upload:
+    hint: Drag and drop files into the window to upload.
+  picker:
+    from: "From {0}: {1}"
+    upload: Upload File
+    createFolder: New Folder
+    cancel: Cancel
+    selectDirectory: Select Current Directory
+    chooseFile: choose a file
+    chooseEither: choose a directory or file
+    chooseDirectory: choose a directory
+    root: Root directory
+    file: "File: {0}"
+    directory: "Directory: {0}"
+  view:
+    empty: Select a file in the sidebar to view it
+    loading: Loading...
+    unsupported: "Unsupported file format: {0}"
+    removeFile: "Are you sure you want to delete the file {0}?"
+    removeDirectory: "Are you sure you want to delete the folder {0}?"
+    cancel: Cancel
+    confirm: Confirm

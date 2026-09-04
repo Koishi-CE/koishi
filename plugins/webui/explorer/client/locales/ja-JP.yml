@@ -1,0 +1,37 @@
+# SPDX-License-Identifier: AGPL-3.0-only
+# Copyright (c) 2019-present Shigma and Koishijs contributors.
+# Copyright (c) 2026-present Koishi-CE contributors.
+
+explorer:
+  title: エクスプローラー
+  menu:
+    save: 保存
+    refresh: 更新
+    createFile: 新規ファイル
+    createDirectory: 新規フォルダー
+    upload: ファイルをアップロード
+    download: ファイルをダウンロード
+    rename: 名前の変更
+    remove: 削除
+  upload:
+    hint: ファイルをウィンドウにドラッグ＆ドロップしてアップロードしてください。
+  picker:
+    from: "{0} から{1}"
+    upload: ファイルをアップロード
+    createFolder: フォルダーを作成
+    cancel: キャンセル
+    selectDirectory: 現在のディレクトリを選択
+    chooseFile: ファイルを選択
+    chooseEither: ディレクトリまたはファイルを選択
+    chooseDirectory: ディレクトリを選択
+    root: ルートディレクトリ
+    file: "ファイル：{0}"
+    directory: "ディレクトリ：{0}"
+  view:
+    empty: 左側のサイドバーで表示するファイルを選択してください
+    loading: 読み込み中……
+    unsupported: "サポートされていないファイル形式：{0}"
+    removeFile: "本当にファイル {0} を削除しますか？"
+    removeDirectory: "本当にフォルダー {0} を削除しますか？"
+    cancel: キャンセル
+    confirm: 確認
