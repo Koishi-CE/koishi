@@ -1,0 +1,26 @@
+# SPDX-License-Identifier: AGPL-3.0-only
+# Copyright (c) 2019-present Shigma and Koishijs contributors.
+# Copyright (c) 2026-present Koishi-CE contributors.
+
+dataview:
+  title: Base de données
+  settingsTitle: Paramètres de la base de données
+  autoSync: Synchroniser automatiquement lors du rafraîchissement
+  typeHighlight: Activer la coloration par type par défaut
+  view:
+    empty: Sélectionnez une table dans le panneau latéral pour la parcourir
+  table:
+    apply: Appliquer les modifications
+    cancel: Annuler les modifications
+    hint: Double-cliquez sur une cellule pour modifier
+    operations: Actions
+    insert: Insérer
+    removeTitle: Voulez-vous vraiment supprimer cette ligne ?
+    confirm: Oui
+    dismiss: Non
+    updateFailed: Échec de la mise à jour des données
+    updated: "{0} lignes mises à jour avec succès"
+    removed: Données supprimées avec succès
+    removeFailed: Échec de la suppression des données
+    inserted: Données ajoutées avec succès
+    insertFailed: Échec de l'ajout de données

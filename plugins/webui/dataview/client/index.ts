@@ -9,11 +9,34 @@
  * 订阅 database 数据服务（类型镜像见 console-services.ts）。
  */
 
-import { type Context, Schema } from "@koishi-ce/client";
+import {
+	type Context,
+	pickFrom,
+	Schema,
+} from "@koishi-ce/client";
+import type { Dict } from "@koishi-ce/koishi";
 import Database from "./index.vue";
+import deDE from "./locales/de-DE.yml";
+import enUS from "./locales/en-US.yml";
+import frFR from "./locales/fr-FR.yml";
+import jaJP from "./locales/ja-JP.yml";
+import ruRU from "./locales/ru-RU.yml";
+import zhCN from "./locales/zh-CN.yml";
+import zhTW from "./locales/zh-TW.yml";
 import "./icons";
 
 import "virtual:uno.css";
+
+/** 本扩展的语言包（extend 注入全局词典 / 摘取 schema 词典段） */
+const messages: Record<string, unknown> = {
+	"de-DE": deDE,
+	"en-US": enUS,
+	"fr-FR": frFR,
+	"ja-JP": jaJP,
+	"ru-RU": ruRU,
+	"zh-CN": zhCN,
+	"zh-TW": zhTW,
+};
 
 declare module "@koishi-ce/client" {
 	interface Config {
@@ -96,10 +119,17 @@ export const schema = Schema.object({
 	dataview: Schema.object({
 		autoStats: Schema.boolean()
 			.default(true)
-			.description("刷新时自动同步"),
+			// const/叶子项的显示名走 Dict 形态的 meta.description（extra 写入）
+			.extra(
+				"description",
+				pickFrom(messages, "dataview", "autoSync"),
+			),
 		color: Schema.boolean()
 			.default(false)
-			.description("默认启用类型染色"),
+			.extra(
+				"description",
+				pickFrom(messages, "dataview", "typeHighlight"),
+			),
 		colors: Schema.array(TypeColor)
 			.default(defaultTypeColors)
 			.role("table"),
@@ -107,15 +137,20 @@ export const schema = Schema.object({
 });
 
 export default (ctx: Context) => {
+	// 注入本扩展的 UI 语言包（各语种键均收纳在 dataview.* 命名空间下）
+	for (const [locale, dict] of Object.entries(messages)) {
+		ctx.$i18n.extend(locale, dict as Dict);
+	}
+
 	ctx.settings({
 		id: "dataview",
-		title: "数据库设置",
+		title: () => ctx.$i18n.t("dataview.settingsTitle"),
 		schema,
 	});
 
 	ctx.page({
 		path: "/database/:name*",
-		name: "数据库",
+		name: () => ctx.$i18n.t("dataview.title"),
 		icon: "database",
 		order: 410,
 		authority: 4,

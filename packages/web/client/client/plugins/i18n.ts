@@ -34,21 +34,33 @@ export const localeMessages: Dict<Dict> = {
 };
 
 /**
- * 从宿主词典中按路径摘取各语种的同一子树，
- * 构造 Schemastery `.i18n()` 的入参形态（`{ locale: 子树 }`），
- * 或叶节点上的 `Dict<string>`（const 选项的显示名直接传 description）。
- * yaml 为动态数据，收窄集中在这一处。
+ * 从一组 `{ locale: 词典 }` 映射中按路径摘取各语种的同一子树，
+ * 构造 Schemastery `.i18n()` 的入参形态（`{ locale: 子树 }`）。
+ * 宿主与扩展的 schema 词典均可经此摘取；yaml 为动态数据，
+ * 收窄集中在这一处。
  */
-export function pickMessages<T = unknown>(
+export function pickFrom(
+	messages: Dict<unknown>,
 	...path: string[]
-): Dict<T> {
-	return valueMap(localeMessages, (data) => {
+): Dict {
+	return valueMap(messages, (data) => {
 		let node: unknown = data;
 		for (const key of path) {
 			node = (node as Dict<unknown> | undefined)?.[key];
 		}
 		return node;
-	}) as Dict<T>;
+	});
+}
+
+/**
+ * 从宿主词典中按路径摘取各语种的同一子树（`pickFrom` 的宿主词典
+ * 专用便捷形式），叶节点上亦可取得 `Dict<string>`（const 选项的
+ * 显示名直接传 description）。
+ */
+export function pickMessages<T = unknown>(
+	...path: string[]
+): Dict<T> {
+	return pickFrom(localeMessages, ...path) as Dict<T>;
 }
 
 /**

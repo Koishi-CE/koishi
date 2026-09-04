@@ -1,0 +1,26 @@
+# SPDX-License-Identifier: AGPL-3.0-only
+# Copyright (c) 2019-present Shigma and Koishijs contributors.
+# Copyright (c) 2026-present Koishi-CE contributors.
+
+dataview:
+  title: База данных
+  settingsTitle: Настройки базы данных
+  autoSync: Автоматическая синхронизация при обновлении
+  typeHighlight: Включить подсветку типов по умолчанию
+  view:
+    empty: Выберите таблицу в боковой панели для просмотра
+  table:
+    apply: Применить изменения
+    cancel: Отменить изменения
+    hint: Дважды щёлкните ячейку, чтобы изменить её
+    operations: Действия
+    insert: Вставить
+    removeTitle: Вы действительно хотите удалить эту запись?
+    confirm: Да
+    dismiss: Нет
+    updateFailed: Не удалось обновить данные
+    updated: "Успешно обновлено записей: {0}"
+    removed: Данные удалены
+    removeFailed: Не удалось удалить данные
+    inserted: Данные добавлены
+    insertFailed: Не удалось добавить данные

@@ -1,0 +1,26 @@
+# SPDX-License-Identifier: AGPL-3.0-only
+# Copyright (c) 2019-present Shigma and Koishijs contributors.
+# Copyright (c) 2026-present Koishi-CE contributors.
+
+dataview:
+  title: データベース
+  settingsTitle: データベース設定
+  autoSync: 更新時に自動同期
+  typeHighlight: 既定でタイプの色分けを有効化
+  view:
+    empty: 左側で表示するテーブルを選択してください
+  table:
+    apply: 変更を適用
+    cancel: 変更を取り消す
+    hint: セルをダブルクリックして編集
+    operations: 操作
+    insert: 挿入
+    removeTitle: 本当にこのデータを削除しますか？
+    confirm: はい
+    dismiss: いいえ
+    updateFailed: データの更新に失敗しました
+    updated: "{0} 件のデータを更新しました"
+    removed: データを削除しました
+    removeFailed: データの削除に失敗しました
+    inserted: データを追加しました
+    insertFailed: データの追加に失敗しました

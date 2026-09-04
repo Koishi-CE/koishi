@@ -1,0 +1,26 @@
+# SPDX-License-Identifier: AGPL-3.0-only
+# Copyright (c) 2019-present Shigma and Koishijs contributors.
+# Copyright (c) 2026-present Koishi-CE contributors.
+
+dataview:
+  title: 数据库
+  settingsTitle: 数据库设置
+  autoSync: 刷新时自动同步
+  typeHighlight: 默认启用类型染色
+  view:
+    empty: 在左侧选择要访问的数据表
+  table:
+    apply: 应用修改
+    cancel: 取消修改
+    hint: 双击单元格修改数据
+    operations: 操作
+    insert: 插入
+    removeTitle: 真的要删除这条数据吗？
+    confirm: 是
+    dismiss: 否
+    updateFailed: 更新数据失败
+    updated: 成功修改 {0} 项数据
+    removed: 成功删除数据
+    removeFailed: 数据删除失败
+    inserted: 成功添加数据
+    insertFailed: 添加数据失败

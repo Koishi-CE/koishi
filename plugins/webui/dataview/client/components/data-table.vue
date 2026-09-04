@@ -14,10 +14,10 @@
       </span>
       <div class="operations">
         <span v-if="existChanges">
-          <el-button type="primary" :disabled="!existValidChanges" @click="onSubmitChanges">应用修改</el-button>
-          <el-button type="danger" @click="onCancelChanges">取消修改</el-button>
+          <el-button type="primary" :disabled="!existValidChanges" @click="onSubmitChanges">{{ t('dataview.table.apply') }}</el-button>
+          <el-button type="danger" @click="onCancelChanges">{{ t('dataview.table.cancel') }}</el-button>
         </span>
-        <span v-else>双击单元格修改数据</span>
+        <span v-else>{{ t('dataview.table.hint') }}</span>
       </div>
     </div>
     <el-table
@@ -86,20 +86,20 @@
           </div>
         </template>
       </el-table-column>
-      <el-table-column label="操作" width="60" fixed="right" align="center">
+      <el-table-column :label="t('dataview.table.operations')" width="60" fixed="right" align="center">
         <template #header="{ column }">
           {{ column.label }}
           <div class="insertion" @click.stop>
-            <k-button frameless :disabled="!newRowValid || existChanges" @click="onInsertRow">插入</k-button>
+            <k-button frameless :disabled="!newRowValid || existChanges" @click="onInsertRow">{{ t('dataview.table.insert') }}</k-button>
           </div>
         </template>
 
         <template #default="scope">
           <el-popconfirm
             @confirm="onDeleteRow(scope)"
-            title="真的要删除这条数据吗？"
-            confirm-button-text="是"
-            cancel-button-text="否"
+            :title="t('dataview.table.removeTitle')"
+            :confirm-button-text="t('dataview.table.confirm')"
+            :cancel-button-text="t('dataview.table.dismiss')"
           >
             <template #reference>
               <k-button frameless type="danger" :disabled="existChanges">
@@ -148,6 +148,7 @@ import {
 	watch,
 	watchEffect,
 } from "vue";
+import { useI18n } from "vue-i18n";
 import { schema } from "../index.ts";
 import {
 	dateStr,
@@ -156,6 +157,8 @@ import {
 	sendQuery,
 	timeStr,
 } from "../utils.ts";
+
+const { t } = useI18n();
 
 /** 单元格输入模型（el-input 的字符串/数字输入，或日期选择器的 Date） */
 type CellModel = string | number | Date;
@@ -630,7 +633,7 @@ async function onSubmitChanges() {
 				submitted.push({ idx, field });
 			}
 		} catch (e) {
-			handleError(e, "更新数据失败");
+			handleError(e, t("dataview.table.updateFailed"));
 		}
 	}
 
@@ -644,7 +647,9 @@ async function onSubmitChanges() {
 	}
 	await updateData();
 	if (submitted.length)
-		message.success(`成功修改 ${submitted.length} 项数据`);
+		message.success(
+			t("dataview.table.updated", [submitted.length]),
+		);
 	state.loading = false;
 }
 
@@ -660,9 +665,9 @@ async function onDeleteRow(scope: {
 			pick(scope.row, table.value?.primary ?? []) as never,
 		);
 		await updateData();
-		message.success("成功删除数据");
+		message.success(t("dataview.table.removed"));
 	} catch (e) {
-		handleError(e, "数据删除失败");
+		handleError(e, t("dataview.table.removeFailed"));
 	}
 	state.loading = false;
 }
@@ -687,12 +692,12 @@ async function onInsertRow() {
 			row as never,
 		);
 		await updateData();
-		message.success("成功添加数据");
+		message.success(t("dataview.table.inserted"));
 		for (const field in state.newRow) {
 			state.newRow[field] = "";
 		}
 	} catch (e) {
-		handleError(e, "添加数据失败");
+		handleError(e, t("dataview.table.insertFailed"));
 	}
 	state.loading = false;
 }

@@ -1,0 +1,26 @@
+# SPDX-License-Identifier: AGPL-3.0-only
+# Copyright (c) 2019-present Shigma and Koishijs contributors.
+# Copyright (c) 2026-present Koishi-CE contributors.
+
+dataview:
+  title: Database
+  settingsTitle: Database Settings
+  autoSync: Sync automatically on refresh
+  typeHighlight: Enable type highlighting by default
+  view:
+    empty: Select a table in the sidebar to browse
+  table:
+    apply: Apply Changes
+    cancel: Discard Changes
+    hint: Double-click a cell to edit
+    operations: Actions
+    insert: Insert
+    removeTitle: Are you sure you want to delete this row?
+    confirm: Yes
+    dismiss: No
+    updateFailed: Failed to update data
+    updated: Successfully updated {0} rows
+    removed: Data deleted successfully
+    removeFailed: Failed to delete data
+    inserted: Data added successfully
+    insertFailed: Failed to add data

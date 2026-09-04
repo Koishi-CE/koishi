@@ -1,0 +1,26 @@
+# SPDX-License-Identifier: AGPL-3.0-only
+# Copyright (c) 2019-present Shigma and Koishijs contributors.
+# Copyright (c) 2026-present Koishi-CE contributors.
+
+dataview:
+  title: Datenbank
+  settingsTitle: Datenbank-Einstellungen
+  autoSync: Beim Aktualisieren automatisch synchronisieren
+  typeHighlight: Typ-Hervorhebung standardmäßig aktivieren
+  view:
+    empty: Wählen Sie links eine Tabelle aus, um sie zu durchsuchen
+  table:
+    apply: Änderungen übernehmen
+    cancel: Änderungen verwerfen
+    hint: Doppelklicken Sie auf eine Zelle, um sie zu bearbeiten
+    operations: Aktionen
+    insert: Einfügen
+    removeTitle: Möchten Sie diesen Datensatz wirklich löschen?
+    confirm: Ja
+    dismiss: Nein
+    updateFailed: Aktualisieren der Daten fehlgeschlagen
+    updated: "{0} Datensätze erfolgreich aktualisiert"
+    removed: Daten erfolgreich gelöscht
+    removeFailed: Löschen der Daten fehlgeschlagen
+    inserted: Daten erfolgreich hinzugefügt
+    insertFailed: Hinzufügen der Daten fehlgeschlagen

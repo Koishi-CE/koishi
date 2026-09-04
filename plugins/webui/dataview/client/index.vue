@@ -5,7 +5,7 @@
 <template>
   <k-layout class="page-database">
     <template #header>
-      数据库
+      {{ t('dataview.title') }}
       <span v-if="store.database?.size">({{ formatSize(store.database.size) }})</span>
     </template>
 
@@ -29,7 +29,7 @@
 
     <keep-alive>
       <k-empty v-if="!current">
-        <div>在左侧选择要访问的数据表</div>
+        <div>{{ t('dataview.view.empty') }}</div>
       </k-empty>
       <table-view v-else :key="current" :name="current" :filter="filter" :color="color" ref="table"></table-view>
     </keep-alive>
@@ -49,9 +49,12 @@ import {
 	useConfig,
 } from "@koishi-ce/client";
 import { computed, ref, watch } from "vue";
+import { useI18n } from "vue-i18n";
 import { useRoute } from "vue-router";
 import TableView from "./components/data-table.vue";
 import { formatSize } from "./utils.ts";
+
+const { t } = useI18n();
 
 function join(source: string | string[]) {
 	return Array.isArray(source)

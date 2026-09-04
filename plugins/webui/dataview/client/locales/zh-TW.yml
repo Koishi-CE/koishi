@@ -1,0 +1,26 @@
+# SPDX-License-Identifier: AGPL-3.0-only
+# Copyright (c) 2019-present Shigma and Koishijs contributors.
+# Copyright (c) 2026-present Koishi-CE contributors.
+
+dataview:
+  title: 資料庫
+  settingsTitle: 資料庫設定
+  autoSync: 重新整理時自動同步
+  typeHighlight: 預設啟用類型標色
+  view:
+    empty: 在左側選擇要存取的資料表
+  table:
+    apply: 應用修改
+    cancel: 取消修改
+    hint: 雙擊儲存格修改資料
+    operations: 操作
+    insert: 插入
+    removeTitle: 真的要刪除這筆資料嗎？
+    confirm: 是
+    dismiss: 否
+    updateFailed: 更新資料失敗
+    updated: 成功修改 {0} 項資料
+    removed: 成功刪除資料
+    removeFailed: 資料刪除失敗
+    inserted: 成功新增資料
+    insertFailed: 新增資料失敗
