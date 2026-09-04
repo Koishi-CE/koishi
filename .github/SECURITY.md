@@ -8,10 +8,10 @@
 
 | 版本线 | 支持情况 |
 | ------ | -------- |
-| 1.x（当前发布线，如 `@koishi-ce/koishi`、`@koishi-ce/loader`、`@koishi-ce/plugin-console` 等） | ✅  |
-| `@koishi-ce/koishi-shim`（4.18.x）、`@koishi-ce/console-shim`（5.30.x）——冻结的占位再导出包 | ✅ 随主发布线提供安全修复 |
-| 0.x（早期预发布）及已被取代或删除的包（如 `plugin-marketn`、`core-shim` 等） | ❌  |
-| 上游官方 [koishijs/koishi](https://github.com/koishijs/koishi) 与 [koishijs/webui](https://github.com/koishijs/webui) 的版本 | ❌ 请到上游仓库报告 |
+| 1.x（当前发布线，如 `@koishi-ce/koishi`、`@koishi-ce/loader`、`@koishi-ce/plugin-console` 等） | 支持 |
+| `@koishi-ce/koishi-shim`（4.18.x）、`@koishi-ce/console-shim`（5.30.x）——冻结的占位再导出包 | 支持，随主发布线提供安全修复 |
+| 0.x（早期预发布）及已被取代或删除的包（如 `plugin-marketn`、`core-shim` 等） | 不支持 |
+| 上游官方 [koishijs/koishi](https://github.com/koishijs/koishi) 与 [koishijs/webui](https://github.com/koishijs/webui) 的版本 | 不支持，请到上游仓库报告 |
 
 ## 报告漏洞
 
@@ -23,7 +23,7 @@
 报告后的流程与预期：
 
 * 我们通常会在 **48 小时内**确认收到报告，并给出初步评估。
-* 确认有效的漏洞将以补丁版本修复，并在变更日志（CHANGELOG）中记录；在修复落地前，我们不会公开漏洞细节，以免影响未升级的用户。
+* 确认有效的漏洞将以补丁版本修复，并记录于受影响包的 CHANGELOG；在修复落地前，我们不会公开漏洞细节，以免影响未升级的用户。
 * 若漏洞被评估为不适用或无法在社区版范围内修复（例如问题根因在上游 koishijs），我们会说明原因，并视情况将问题转交上游。
 * **请不要**在公开渠道（Issues、讨论区、社交媒体等）披露尚未修复的漏洞细节。
 
@@ -39,10 +39,10 @@ This project is a community redistribution (Community Edition) of [Koishi](https
 
 | Version | Supported |
 | ------- | --------- |
-| 1.x (current release line, e.g. `@koishi-ce/koishi`, `@koishi-ce/loader`, `@koishi-ce/plugin-console`, ...) | ✅ |
-| `@koishi-ce/koishi-shim` (4.18.x), `@koishi-ce/console-shim` (5.30.x) — frozen placeholder re-export packages | ✅ Security fixes follow the main release line |
-| 0.x (early pre-releases) and superseded/removed packages (e.g. `plugin-marketn`, `core-shim`, ...) | ❌ |
-| Upstream official [koishijs/koishi](https://github.com/koishijs/koishi) and [koishijs/webui](https://github.com/koishijs/webui) versions | ❌ Report to the upstream repositories |
+| 1.x (current release line, e.g. `@koishi-ce/koishi`, `@koishi-ce/loader`, `@koishi-ce/plugin-console`, ...) | Yes |
+| `@koishi-ce/koishi-shim` (4.18.x), `@koishi-ce/console-shim` (5.30.x) — frozen placeholder re-export packages | Yes, security fixes follow the main release line |
+| 0.x (early pre-releases) and superseded/removed packages (e.g. `plugin-marketn`, `core-shim`, ...) | No |
+| Upstream official [koishijs/koishi](https://github.com/koishijs/koishi) and [koishijs/webui](https://github.com/koishijs/webui) versions | No, report to the upstream repositories |
 
 ## Reporting a Vulnerability
 
@@ -54,6 +54,6 @@ Please report vulnerabilities through the following channels:
 What to expect after reporting:
 
 * We typically **acknowledge receipt within 48 hours** and provide an initial assessment.
-* Confirmed vulnerabilities are fixed in a patch release and recorded in the CHANGELOG; until the fix lands, we will not disclose details publicly, so that users who have not yet upgraded are not exposed.
+* Confirmed vulnerabilities are fixed in a patch release and recorded in the affected package's CHANGELOG; until the fix lands, we will not disclose details publicly, so that users who have not yet upgraded are not exposed.
 * If the report is assessed as not applicable, or cannot be fixed within the scope of this community edition (e.g. the root cause lives upstream in koishijs), we will explain why and, where appropriate, forward the issue upstream.
 * **Please do not** disclose details of unfixed vulnerabilities in public channels (Issues, discussions, social media, etc.).

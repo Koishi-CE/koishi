@@ -187,3 +187,18 @@ koishi-bun/
 4. 存在 4 项弃用/死依赖与一批幽灵依赖、历史残留,应先行清理。
 
 后续行动见 **[upgrade-plan.md](upgrade-plan.md)**。
+
+---
+
+## 后续变化补记（2026-09-05）
+
+快照正文（§1-§6）保持 2026-08-27 原样；本节记录其后的实际演进，现势以 [../guides/development.md](../guides/development.md) 与 [../reference/architecture.md](../reference/architecture.md) 为准。
+
+**总账**：外部依赖（含 peerDependencies、去重、排除 `workspace:*`）由快照的 **99 个降至约 60 个**（-40%）；package.json 由 42 个变为 48 个（47 个 workspace 包 + 根）。
+
+- **测试栈整体退役**：mocha / @types/mocha / @sinonjs/fake-timers / chai / chai-as-promised / chai-shape 及相关 @types 全部移除，断言迁移至 `bun:test` 原生 `expect`（2026-08-27 起分批，2026-09-02 f63650b 完成；shape 断言内联为 `packages/node/core/tests/shape.ts`）。
+- **原生化删除**：ws / uuid / @types/uuid（Phase 0，90ee3e2）；axios 改原生 fetch（随 create ESM-only 化，ac7e8a9）；js-yaml 全链与 @maikolib/vite-plugin-yaml（fe89812）；ns-require / dotenv（d6b4093）；fs-extra / globby（koishi-scripts 外部依赖清零，048e3ba）；execa / p-map（d236e27）；envinfo / which-pm-runs（4b07454）；get-registry（改原生 npmrc 读取）。
+- **替换**：create-koishi-ce 的 prompts → @clack/prompts、kleur → picocolors、自研 tar 远程解包 → giget（2026-09-02）；cli 的 kleur → picocolors（kleur 全仓清零）。
+- **升级**：file-type ^16 → ^22（随 assets / assets-local 移植，d1329eb）；cac 升 ^7 并保留。
+- **定性勘误**：dompurify 从来不是本仓直接依赖，仅为 monaco-editor 的传递依赖（新版已内置修复），无需治理——快照期漏洞清单中该条就此关闭。
+- **目录重组**（快照正文引用的旧路径以此为准）：`apps/online` 已删除；`apps/registry` 迁入 `packages/node/registry`（163a116）；`apps/create-koishi-ce` 更名 `apps/koishi-create`；`packages/web/client/.eslintrc.yml` 与 `UPSTREAM.md` 已删（上游纪律现居 `docs/process/upstream.md`）；根 `bunfig.toml` 已建立；`LICENSES/` 目录已建立（496bb73）。

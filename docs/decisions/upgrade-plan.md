@@ -1,6 +1,6 @@
 # 依赖升级计划书
 
-> **状态：Phase 0-4 已完成（2026-08）；Phase 5（cordis 生态 4.x）已执行、被上游阻塞并整体回退**——实证结论与重启条件见 Phase 5 节，该节仍是活约束（仓库依赖纪律的依据）。本文是决策记录，文中命令与版本号为当时数据。
+> **状态：Phase 0-4 已完成（2026-08）；Phase 5（cordis 生态 4.x）已执行、被上游阻塞并整体回退**——实证结论与重启条件见 Phase 5 节，该节仍是活约束（仓库依赖纪律的依据）。本文是决策记录，文中命令与版本号为当时数据；与当前仓库实况的出入以 [../guides/development.md](../guides/development.md) 与 [../reference/architecture.md](../reference/architecture.md) 为准（依赖删改流水另见 [dependency-audit.md](dependency-audit.md) 后续变化补记）。
 >
 > 前置文档:[dependency-audit.md](dependency-audit.md) · 日期:2026-08-27
 > 原则:**最现代、高性能、Bun 原生优先;允许破坏性更新;git 分阶段提交可回滚。**
