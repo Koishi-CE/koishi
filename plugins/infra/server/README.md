@@ -2,7 +2,7 @@
 
 **简体中文** | [English](#english)
 
-Koishi 的服务器与路由服务，提供 `ctx.server`。本包是 [@cordisjs/plugin-server](https://github.com/cordiverse/server)（基于 Node 原生 http 的轻量路由服务）在 `@koishi-ce` 名下的再分发存根：内联再导出上游包的全部导出，peer 指向 `@koishi-ce/koishi`。控制台（plugin-console）、资源服务、server-temp 等都建立在它之上。
+Koishi 的服务器与路由服务，提供 `ctx.server`。本包是 [@cordisjs/plugin-server](https://github.com/cordiverse/server)（基于 Node 原生 http 的轻量路由服务）在 `@koishi-ce` 名下的再分发存根：内联再导出上游包的导出（default 导出叠加了一处本地补丁——为 Server 类加装停机期 logger 防护），peer 指向 `@koishi-ce/koishi`。它是预编译产物包——无 `src/` 目录、不走根 tsdown 构建（根配置显式 exclude），发布内容即 `index.mjs` 与 `index.d.ts`。控制台（plugin-console）、资源服务、server-temp 等都建立在它之上。
 
 ## 服务
 
@@ -46,7 +46,7 @@ export function apply(ctx) {
 
 ## English
 
-The server and router service for Koishi, providing `ctx.server`. This package is a redistribution stub of [@cordisjs/plugin-server](https://github.com/cordiverse/server) (a lightweight router over Node's native http) under the `@koishi-ce` scope: it re-exports the upstream package in full, with a peer on `@koishi-ce/koishi`. The console (plugin-console), assets services and server-temp all build on it.
+The server and router service for Koishi, providing `ctx.server`. This package is a redistribution stub of [@cordisjs/plugin-server](https://github.com/cordiverse/server) (a lightweight router over Node's native http) under the `@koishi-ce` scope: it re-exports the upstream package (the default export carries one local patch — a logger guard for the Server class during teardown), with a peer on `@koishi-ce/koishi`. It is a prebuilt artifact package — no `src/` directory, excluded from the root tsdown build — whose published content is just `index.mjs` and `index.d.ts`. The console (plugin-console), assets services and server-temp all build on it.
 
 ## Service
 

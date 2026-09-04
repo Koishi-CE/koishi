@@ -15,7 +15,7 @@ SQLite 数据库驱动插件，合并自上游两线源码：cordis 3 线的
 | `path` | string | 必填 | 数据库文件路径，相对路径基于运行目录解析；`:memory:` 为内存库 |
 
 - 父目录不存在时会自动创建。
-- 以 Bun 为运行时（本插件的引擎 `node:sqlite` 由 Bun 原生实现）。
+- 以 Node 22.5+ 或 Bun 为运行时（引擎为 Node 原生模块 `node:sqlite`，Bun 原生实现该模块，无第三方驱动依赖）。
 
 ## 用法
 
@@ -67,7 +67,7 @@ targets the cordis 3 freeze line (minato 3), powered by the synchronous
 | `path` | string | required | Database file path, resolved against the working directory; `:memory:` for an in-memory database |
 
 - Missing parent directories are created automatically.
-- Runs on Bun (the `node:sqlite` engine is natively implemented by Bun).
+- Runs on Node 22.5+ or Bun (the engine is Node's native `node:sqlite` module, which Bun implements natively; no third-party driver dependency).
 
 ## Usage
 

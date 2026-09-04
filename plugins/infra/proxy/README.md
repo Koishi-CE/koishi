@@ -2,7 +2,7 @@
 
 **简体中文** | [English](#english)
 
-Koishi 的请求代理支持，为全部 `ctx.http` 请求提供统一的代理默认值。本包是 [@cordisjs/plugin-proxy-agent](https://github.com/cordiverse/http) 在 `@koishi-ce` 名下的再分发存根：内联再导出上游包的全部导出，peer 指向 `@koishi-ce/koishi`。
+Koishi 的请求代理支持，为全部 `ctx.http` 请求提供统一的代理默认值。本包是 [@cordisjs/plugin-proxy-agent](https://github.com/cordiverse/http) 在 `@koishi-ce` 名下的再分发存根：内联再导出上游包的全部导出，peer 指向 `@koishi-ce/koishi`。它是预编译产物包——无 `src/` 目录、不走根 tsdown 构建（根配置显式 exclude），发布内容即 `index.mjs` 与 `index.d.ts`；上游目录名为 `proxy-agent`，本仓按装载语义改名 `proxy`。
 
 ## 配置项
 
@@ -32,7 +32,7 @@ plugins:
 
 ## English
 
-Proxy agent support for Koishi, providing a unified proxy default for all `ctx.http` requests. This package is a redistribution stub of [@cordisjs/plugin-proxy-agent](https://github.com/cordiverse/http) under the `@koishi-ce` scope: it re-exports the upstream package in full, with a peer on `@koishi-ce/koishi`.
+Proxy agent support for Koishi, providing a unified proxy default for all `ctx.http` requests. This package is a redistribution stub of [@cordisjs/plugin-proxy-agent](https://github.com/cordiverse/http) under the `@koishi-ce` scope: it re-exports the upstream package in full, with a peer on `@koishi-ce/koishi`. It is a prebuilt artifact package — no `src/` directory, excluded from the root tsdown build — whose published content is just `index.mjs` and `index.d.ts`; the upstream directory is named `proxy-agent`, renamed to `proxy` in this repository to match its loading semantics.
 
 ## Configuration
 

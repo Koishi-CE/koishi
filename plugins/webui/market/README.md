@@ -35,7 +35,8 @@
 
 - **守护请求**：安装清单永不覆盖或删除 `workspace:` 前缀与 `npm:@koishi-ce` alias 的依赖声明——前者是本仓 monorepo 归属，后者是下游脚手架的 shim 归属，防止重新拉下 npm 官方包形成第二份框架副本；
 - **Bun 适配**：npmrc 读取改为原生文件解析（Bun 无 config 子命令）；manifest 探测纯 fs 化；安装后按 `isResidentInCache` 判定是否需要整进程重载；
-- **网络韧性**：市场请求对 429 / 408 / 5xx 指数退避重试并遵循 Retry-After。
+- **网络韧性**：市场请求对 429 / 408 / 5xx 指数退避重试并遵循 Retry-After；
+- **client 侧依赖重定向**：前端依赖 npm 包 `@koishijs/market`（上游以源码发布的组件库），其内部以 npm 名引用的 `@koishijs/components` 在构建时经 alias 重定向到本仓 workspace 版 `@koishi-ce/components`，避免组件库双实例。
 
 ## 许可证
 
@@ -79,6 +80,7 @@ Without `search.endpoint` the plugin falls back to raw npm search, which crawls 
 - **Guarded requests** — the install manifest never overwrites or deletes dependencies declared with the `workspace:` prefix or `npm:@koishi-ce` aliases (monorepo ownership and downstream shim ownership respectively), preventing the official npm packages from being pulled back in as a second framework copy.
 - **Bun adaptations** — native npmrc file parsing (Bun has no config subcommand), pure-fs manifest probing, and post-install process-reload decisions via `isResidentInCache`.
 - **Network resilience** — exponential backoff with Retry-After support for 429 / 408 / 5xx market responses.
+- **Client-side dependency redirect** — the client depends on the npm package `@koishijs/market` (an upstream component library published as source); its internal references to `@koishijs/components` are aliased at build time to this repository's workspace `@koishi-ce/components`, avoiding a duplicate component library instance.
 
 ## License
 

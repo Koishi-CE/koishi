@@ -27,11 +27,11 @@ npm create koishi-ce my-app
 
 ## 生成的项目
 
-- **package.json**：`type: module`、`packageManager` 钉 Bun、workspaces 含 `plugins/*` 与 `external/*`；dependencies 预装全套 `@koishi-ce` 常用插件（console、config、market、auth、admin、help、sandbox 等），并预置四行 npm alias 钉住上游名——`koishi` / `@koishijs/core` / `@koishijs/loader` 指向 `@koishi-ce/koishi-shim`、`@koishijs/plugin-console` 指向 `@koishi-ce/console-shim`，社区插件由此全部解析到 CE 框架；
-- **koishi.yml**：按 server（端口 5140-5149）/ basic / console（自动打开、市场指向 registry.koishi.chat 镜像）/ storage / adapter / develop（开发模式启用热重载）分组预写；官方 adapter / database 插件以 `~` 停用条目预写，可按需启用；
+- **package.json**：`type: module`、`packageManager` 钉 Bun、workspaces 含 `plugins/*` 与 `external/*`；dependencies 预装全套 `@koishi-ce` 常用插件（console、config、market、auth、admin、help、sandbox、database-sqlite 等），并预置四行 npm alias 钉住上游名——`koishi` / `@koishijs/core` / `@koishijs/loader` 指向 `@koishi-ce/koishi-shim`、`@koishijs/plugin-console` 指向 `@koishi-ce/console-shim`，社区插件由此全部解析到 CE 框架；
+- **koishi.yml**：按 server（端口 5140-5149）/ basic / console（自动打开、市场指向 registry.koishi.chat 镜像）/ storage / adapter / develop（开发模式启用热重载）分组预写；官方 adapter 插件以 `~` 停用条目预写、不预装，装好后在控制台按需启用；数据库开箱即用——`database-sqlite` 默认启用，mongo / mysql / postgres 等其余 database 不预写占位条目，市场安装后自动出现；
 - **开发工具链**：devDependencies 预置 `@koishi-ce/client`、`@koishi-ce/plugin-hmr` 与 `@koishi-ce/scripts`（`koishi-scripts setup` 可在 external/ 下继续创建插件项目）。
 
-不预装任何 adapter 与 database——官方版本可后续从市场安装，peer 已被 alias 钉住不会形成双实例。
+不预装任何 adapter——官方 adapter 可后续从市场安装，peer 已被 alias 钉住不会形成双实例；数据库已由默认启用的 `database-sqlite` 覆盖，其他官方 database 同样可从市场安装。
 
 ## 许可证
 
@@ -66,11 +66,11 @@ Interactive flow: project name; confirm cleaning a non-empty target directory; c
 
 ## Generated project
 
-- **package.json** — `type: module`, `packageManager` pinned to Bun, workspaces covering `plugins/*` and `external/*`; dependencies preinstall the common `@koishi-ce` plugin set (console, config, market, auth, admin, help, sandbox, etc.) plus the four npm-alias lines pinning the upstream names (`koishi` / `@koishijs/core` / `@koishijs/loader` to `@koishi-ce/koishi-shim`, `@koishijs/plugin-console` to `@koishi-ce/console-shim`), so community plugins all resolve to the CE framework.
-- **koishi.yml** — grouped prewrites for server (ports 5140-5149), basic, console (auto-open, market pointed at the registry.koishi.chat mirror), storage, adapter and develop (HMR in development mode); official adapter / database plugins are prewritten as `~`-disabled entries.
+- **package.json** — `type: module`, `packageManager` pinned to Bun, workspaces covering `plugins/*` and `external/*`; dependencies preinstall the common `@koishi-ce` plugin set (console, config, market, auth, admin, help, sandbox, database-sqlite, etc.) plus the four npm-alias lines pinning the upstream names (`koishi` / `@koishijs/core` / `@koishijs/loader` to `@koishi-ce/koishi-shim`, `@koishijs/plugin-console` to `@koishi-ce/console-shim`), so community plugins all resolve to the CE framework.
+- **koishi.yml** — grouped prewrites for server (ports 5140-5149), basic, console (auto-open, market pointed at the registry.koishi.chat mirror), storage, adapter and develop (HMR in development mode); official adapter plugins are prewritten as `~`-disabled entries without being installed — enable them in the console after installing; the database works out of the box (`database-sqlite` enabled by default), while other official databases (mongo / mysql / postgres, ...) leave no placeholder entries and appear automatically once installed from the market.
 - **Toolchain** — devDependencies include `@koishi-ce/client`, `@koishi-ce/plugin-hmr` and `@koishi-ce/scripts` (`koishi-scripts setup` scaffolds further plugin projects under external/).
 
-No adapter or database is preinstalled — official ones can be installed from the market later; their peers are already pinned by the aliases.
+No adapter is preinstalled — official adapters can be installed from the market later, with their peers already pinned by the aliases; the database is covered by the default-enabled `database-sqlite`, and other official databases are equally one market install away.
 
 ## License
 

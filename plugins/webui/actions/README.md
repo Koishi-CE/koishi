@@ -53,6 +53,10 @@ This package is a Node-side placeholder: `apply` is an empty implementation with
 - `ctx.action()`: registers actions with optional shortcuts, dispatched by a global keydown listener (`ctrl` is mapped to `meta` on macOS).
 - `ctx.menu()`: registers menu entries rendered in the action panel and page menus.
 
+## Features and Pages
+
+This plugin has no standalone page and no configuration UI. Once enabled, the action panel and menu entries in the console are provided by the shared frontend and other plugins.
+
 ## Configuration
 
 None.

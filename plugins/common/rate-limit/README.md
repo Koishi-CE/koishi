@@ -24,7 +24,7 @@
 | `usageName` | string | 取指令名（`.` 换 `:`） | 调用次数的标识符 |
 | `maxUsage` | 计算属性 number | `0` | 每天的调用次数上限，`0` 表示不限制 |
 | `minInterval` | 计算属性 number | `0` | 连续调用的最小间隔（毫秒），`0` 表示不限制 |
-| `bypassAuthority` | 计算属性 number | — | 已废弃，建议改用过滤器放行高权限用户 |
+| `bypassAuthority` | 计算属性 number | — | 已废弃，建议改用过滤器放行高权限用户（未注册进控制台 schema，仅手工配置生效） |
 
 ### 选项配置
 
@@ -84,7 +84,7 @@ The plugin itself has no configuration. Once enabled, the following fields appea
 | `usageName` | string | command name (`.` replaced by `:`) | Identifier for usage counting |
 | `maxUsage` | computed number | `0` | Daily usage cap; `0` means unlimited |
 | `minInterval` | computed number | `0` | Minimum interval between calls in ms; `0` means unlimited |
-| `bypassAuthority` | computed number | — | Deprecated; use a filter to exempt high-authority users instead |
+| `bypassAuthority` | computed number | — | Deprecated; use a filter to exempt high-authority users instead (not registered in the console schema; manual configuration only) |
 
 ### Option Config
 

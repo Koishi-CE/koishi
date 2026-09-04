@@ -73,6 +73,7 @@ A help command plugin, ported from `plugins/common/help` of the upstream [koishi
 
 - Without arguments it lists all available commands; with an argument it shows detailed help for the target command.
 - Registers the global shortcut "帮助" (Chinese, fuzzy matching).
+- Besides command names, the argument also accepts a command's shortcut text to locate it.
 - When a command is not found, it suggests similar ones.
 
 ## Configuration

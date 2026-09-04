@@ -20,7 +20,7 @@
 
 | 字段 | 类型 | 默认值 | 说明 |
 | --- | --- | --- | --- |
-| `tokenPrefix` | string | `koishi/` | 令牌前缀 |
+| `tokenPrefix` | string | `koishi/` | 令牌前缀（未注册进控制台 schema，仅手工配置生效） |
 | `generateToken` | function | 内置随机生成 | 自定义令牌生成函数（控制台中隐藏） |
 
 ## 用法
@@ -65,7 +65,7 @@ Binding flow: run `bind` on the target platform (the side whose user data will b
 
 | Field | Type | Default | Description |
 | --- | --- | --- | --- |
-| `tokenPrefix` | string | `koishi/` | Token prefix |
+| `tokenPrefix` | string | `koishi/` | Token prefix (not registered in the console schema; manual configuration only) |
 | `generateToken` | function | built-in generator | Custom token generator (hidden in the console) |
 
 ## Usage

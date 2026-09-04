@@ -2,7 +2,7 @@
 
 **简体中文** | [English](#english)
 
-Koishi 的 HTTP 与 WebSocket 客户端基础服务，提供 `ctx.http`。本包是 [@cordisjs/plugin-http](https://github.com/cordiverse/http)（fetch 实现的 axios 风格客户端）在 `@koishi-ce` 名下的再分发存根：内联再导出上游包的全部导出，peer 指向 `@koishi-ce/koishi`，使 CE 生态获得统一的 HTTP 服务而不引入官方包双实例。
+Koishi 的 HTTP 与 WebSocket 客户端基础服务，提供 `ctx.http`。本包是 [@cordisjs/plugin-http](https://github.com/cordiverse/http)（fetch 实现的 axios 风格客户端）在 `@koishi-ce` 名下的再分发存根：内联再导出上游包的全部导出，peer 指向 `@koishi-ce/koishi`，使 CE 生态获得统一的 HTTP 服务而不引入官方包双实例。它是预编译产物包——无 `src/` 目录、不走根 tsdown 构建（根配置显式 exclude），发布内容即 `index.mjs` 与 `index.d.ts`。
 
 ## 服务
 
@@ -46,7 +46,7 @@ export async function apply(ctx) {
 
 ## English
 
-The HTTP and WebSocket client service for Koishi, providing `ctx.http`. This package is a redistribution stub of [@cordisjs/plugin-http](https://github.com/cordiverse/http) (a fetch-based, axios-style client) under the `@koishi-ce` scope: it re-exports the upstream package in full, with a peer on `@koishi-ce/koishi`, giving the CE ecosystem a unified HTTP service without a duplicate official instance.
+The HTTP and WebSocket client service for Koishi, providing `ctx.http`. This package is a redistribution stub of [@cordisjs/plugin-http](https://github.com/cordiverse/http) (a fetch-based, axios-style client) under the `@koishi-ce` scope: it re-exports the upstream package in full, with a peer on `@koishi-ce/koishi`, giving the CE ecosystem a unified HTTP service without a duplicate official instance. It is a prebuilt artifact package — no `src/` directory, excluded from the root tsdown build — whose published content is just `index.mjs` and `index.d.ts`.
 
 ## Service
 
