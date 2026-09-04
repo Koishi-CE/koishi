@@ -16,8 +16,8 @@ workspace 内部不需要这些 shim（本仓代码一律直接 `import ... from
 
 | 包名 | 版本 | 占用的上游名 | re-export 源 |
 | --- | --- | --- | --- |
-| `@koishi-ce/koishi-shim` | 4.18.11 | `koishi` / `@koishijs/core` / `@koishijs/loader` | `@koishi-ce/koishi` |
-| `@koishi-ce/console-shim` | 5.30.11 | `@koishijs/plugin-console` | `@koishi-ce/plugin-console` |
+| `@koishi-ce/koishi-shim` | 4.18.x 冻结线 | `koishi` / `@koishijs/core` / `@koishijs/loader` | `@koishi-ce/koishi` |
+| `@koishi-ce/console-shim` | 5.30.x 冻结线 | `@koishijs/plugin-console` | `@koishi-ce/plugin-console` |
 
 ### koishi-shim 一名兼三
 
@@ -44,7 +44,7 @@ workspace 内部不需要这些 shim（本仓代码一律直接 `import ... from
 
 ## 维护纪律
 
-- **版本冻结**：Bun 对 npm alias 的 peer 判定看**落盘包的 version**，故 `koishi-shim` 冻结 4.18.x 线（`@koishijs/core` 的 peer 是精确版本 `4.18.11`，alias 必须逐字相等、不带 `^`）、`console-shim` 冻结 5.30.x 线。**勿改为本仓 1.x 基线、勿随 changesets bump**，要动只跟随上游对应版本线。
+- **版本冻结**：Bun 对 npm alias 的 peer 判定看**落盘包的 version**，故 `koishi-shim` 冻结 4.18.x 线（`@koishijs/core` 一行的 alias 必须与 `@koishi-ce/loader` 的 peer 声明逐字相等——那是精确版本、不带 `^`，具体数值以该 peer 声明为准）、`console-shim` 冻结 5.30.x 线。**勿改为本仓 1.x 基线、勿随 changesets bump**，要动只跟随上游对应版本线；本文档与各包 README 示例中的具体版本号随冻结线同步更新。
 - **不写 changeset**：两包均已在 `.changeset/config.json` 的 `ignore` 列表。
 - **发布顺序**：`console-shim` 发布须先于 `create-koishi-ce`（模板依赖它）。
 - **发布走 `bun run release` 发布链**，禁止手动 `npm publish`。

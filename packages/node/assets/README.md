@@ -8,7 +8,7 @@ Koishi 的资源服务抽象基类，移植自上游 [koishijs/assets](https://g
 
 默认导出 `Assets` 抽象基类，以 `assets` 为服务名注入 `ctx.assets`：
 
-- `transform(content)`：遍历消息中的媒体元素，命中 `whitelist` 白名单前缀的 URL 原样保留，其余交由派生类持久化并替换为可访问 URL——发送消息时自动调用；
+- `transform(content)`：遍历消息中的媒体元素，命中 `whitelist` 白名单前缀的 URL 原样保留，其余交由派生类持久化并替换为可访问 URL——供宿主在发送消息前调用（本包不自动挂载发送钩子）；
 - `analyze(url, name)`：受保护方法，经 `ctx.http` 拉取远端文件，计算 sha1 摘要并按文件魔数（file-type）探测扩展名；
 - 抽象方法 `upload(url, file)`（返回可访问 URL）与 `stats()`（存量统计）；
 - 命名空间类型 `Assets.Config`（whitelist 白名单）、`Assets.Stats`（assetCount / assetSize）、`Assets.FileInfo`。
@@ -45,7 +45,7 @@ The abstract assets service for Koishi, ported from `packages/core` of the upstr
 
 The default export `Assets` registers itself as the `assets` service (`ctx.assets`):
 
-- `transform(content)` — walks media elements in a message, leaves whitelisted URLs untouched, and persists the rest through the subclass, replacing them with accessible URLs; invoked automatically when sending messages.
+- `transform(content)` — walks media elements in a message, leaves whitelisted URLs untouched, and persists the rest through the subclass, replacing them with accessible URLs; meant to be invoked by the host before a message is sent (this package does not hook message sending on its own).
 - `analyze(url, name)` — fetches the remote file via `ctx.http`, computes a sha1 digest and detects the extension from magic bytes (file-type).
 - Abstract methods `upload(url, file)` (returns an accessible URL) and `stats()`.
 - Namespace types `Assets.Config` (whitelist), `Assets.Stats`, `Assets.FileInfo`.

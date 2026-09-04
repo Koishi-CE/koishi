@@ -15,7 +15,25 @@
 		"index.mjs",
 		"index.d.mts"
 	],
+	"contributors": [
+		"Shigma <shigma10826@gmail.com>",
+		"Oppenheymu <oppenheymu@gmail.com>"
+	],
 	"license": "MIT",
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/Koishi-CE/koishi.git",
+		"directory": "packages/shim/koishi-shim"
+	},
+	"bugs": {
+		"url": "https://github.com/Koishi-CE/koishi/issues"
+	},
+	"homepage": "https://github.com/Koishi-CE/koishi/tree/main/packages/shim/koishi-shim",
+	"keywords": [
+		"koishi",
+		"shim",
+		"compat"
+	],
 	"dependencies": {
 		"@koishi-ce/koishi": "^1.0.0"
 	}

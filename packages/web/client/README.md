@@ -25,7 +25,7 @@ Koishi 控制台的浏览器端运行时与组件基座，移植自上游 [koish
 
 - CLI：`koishi-console build [root]`（`src/bin.ts`）——带 root 时构建单个插件的前端，否则执行宿主控制台总装（产物硬编码到 `plugins/webui/console/dist`，含共享 chunk 与样式）；
 - 编程式：`build(root, config)` 构建单个插件前端，`createServer(baseDir)` 创建 Vite 开发中间件；
-- `collectWorkspaceAliases()`：读取根 package.json 的 workspaces，为每个工作区包名建立指向其 `client/index.ts` 的别名——未被依赖的 workspace 包不会出现在 node_modules 链接里，必须显式映射才能被 bundler 解析。
+- `collectWorkspaceAliases()`（内部机制，未从包导出）：读取根 package.json 的 workspaces，为每个工作区包名建立指向其 `client/index.ts` 的别名——未被依赖的 workspace 包不会出现在 node_modules 链接里，必须显式映射才能被 bundler 解析。
 
 ## 许可证
 
@@ -49,7 +49,7 @@ The package is consumed as source code rather than shipped as a standalone runti
 
 - CLI: `koishi-console build [root]` — builds a single plugin frontend when a root is given, otherwise performs the host console assembly (output hardcoded to `plugins/webui/console/dist`).
 - Programmatic: `build(root, config)` and `createServer(baseDir)` (a Vite dev middleware).
-- `collectWorkspaceAliases()` — maps every workspace package to its `client/index.ts`; workspace packages absent from node_modules links can only be resolved through this explicit alias map.
+- `collectWorkspaceAliases()` (an internal mechanism, not exported from the package) — maps every workspace package to its `client/index.ts`; workspace packages absent from node_modules links can only be resolved through this explicit alias map.
 
 ## License
 

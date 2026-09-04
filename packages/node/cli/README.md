@@ -33,11 +33,11 @@ bunx create-koishi-ce my-app
 | `--log-level [level]` | 2 | 日志等级 |
 | `--log-time [format]` | - | 日志时间戳格式 |
 
-不带子命令运行 `koishi` 时输出帮助。
+不带子命令运行 `koishi` 时输出帮助。交互终端中启动时还会打印 Koishi-CE 启动横幅与字符画（仅 TTY，输出被重定向时不打印）。
 
 ## 守护进程机制
 
-`koishi start` 是守护父进程：以 Bun.spawn 拉起工作进程并保持 IPC 心跳，心跳超时强制终止。退出码约定：51 = 工作进程请求整体重启（配置文件或框架依赖变更），52 = 请求退出。工作进程内由 loader 读取配置、预检服务器端口（被占则干净退出）、创建应用并挂载 daemon 插件。
+`koishi start` 是守护父进程：以 Bun.spawn 拉起工作进程，工作进程运行时崩溃后默认自动重启；IPC 心跳为可选配置（默认关闭，开启后超时未收到心跳将强制终止工作进程）。退出码约定：51 = 工作进程请求整体重启（配置文件或框架依赖变更），52 = 请求退出。工作进程内由 loader 读取配置、预检服务器端口（被占则干净退出）、创建应用并挂载 daemon 插件。
 
 ## 编程式用法
 
@@ -72,9 +72,9 @@ bunx create-koishi-ce my-app
 
 ## CLI
 
-`koishi start [file]` (alias `run`) starts the app, with options `--debug [namespace]`, `--log-level [level]` (default 2) and `--log-time [format]`. Running `koishi` without a subcommand prints help.
+`koishi start [file]` (alias `run`) starts the app, with options `--debug [namespace]`, `--log-level [level]` (default 2) and `--log-time [format]`. Running `koishi` without a subcommand prints help. When started in an interactive terminal, a Koishi-CE startup banner with ASCII art is printed (TTY only, suppressed when output is redirected).
 
-The `start` command is a daemon parent: it spawns the worker via Bun.spawn with IPC heartbeats. Exit code 51 asks for a full restart, 52 asks to quit. The worker reads the config through the loader, prechecks server ports, creates the app and mounts the daemon plugin.
+The `start` command is a daemon parent: it spawns the worker via Bun.spawn and restarts it by default after runtime crashes; IPC heartbeats are optional (off by default — once enabled, a missed heartbeat force-kills the worker). Exit code 51 asks for a full restart, 52 asks to quit. The worker reads the config through the loader, prechecks server ports, creates the app and mounts the daemon plugin.
 
 ## Programmatic usage
 

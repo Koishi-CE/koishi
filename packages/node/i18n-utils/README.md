@@ -17,7 +17,7 @@ Koishi 的国际化辅助库，移植自上游 [koishijs/koishi](https://github.
 import { LocaleTree, fallback } from "@koishi-ce/i18n-utils";
 
 const tree = LocaleTree.from(["zh-CN", "zh-TW", "en-US"]);
-fallback(tree, ["zh-TW", "en-US"]); // => ["zh-TW", "zh", "en-US", "en"]
+fallback(tree, ["zh-TW", "en-US"]); // => ["zh-TW", "en-US", "zh", "zh-CN", "en", ""]
 ```
 
 普通用户无需安装本包，它由 `@koishi-ce/core` 引入。
@@ -45,7 +45,7 @@ The function signatures intentionally stay compatible with `@intlify/core-base` 
 import { LocaleTree, fallback } from "@koishi-ce/i18n-utils";
 
 const tree = LocaleTree.from(["zh-CN", "zh-TW", "en-US"]);
-fallback(tree, ["zh-TW", "en-US"]); // => ["zh-TW", "zh", "en-US", "en"]
+fallback(tree, ["zh-TW", "en-US"]); // => ["zh-TW", "en-US", "zh", "zh-CN", "en", ""]
 ```
 
 End users never install this package directly; it is a dependency of `@koishi-ce/core`.

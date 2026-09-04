@@ -18,7 +18,7 @@
 }
 ```
 
-注意 `@koishijs/core` 一行是精确版本（不带 `^`）——`@koishi-ce/loader` 的 peer 是精确版本 `4.18.11`，必须逐字相等。
+注意 `@koishijs/core` 一行是精确版本（不带 `^`）——`@koishi-ce/loader` 的 peer 声明是精确版本，alias 必须与其逐字相等（具体数值以该 peer 声明为准，示例随冻结线同步更新）。
 
 ## 维护纪律
 
@@ -50,7 +50,7 @@ Pin the names via npm aliases in `package.json` (preconfigured by the `create-ko
 }
 ```
 
-The `@koishijs/core` line is an exact version (no `^`) — the peer of `@koishi-ce/loader` is the exact `4.18.11` and must match verbatim.
+The `@koishijs/core` line is an exact version (no `^`) — the peer declared by `@koishi-ce/loader` is an exact version and the alias must match it verbatim (see that peer declaration for the current value; the snippet above follows the frozen line).
 
 ## Maintenance notes
 

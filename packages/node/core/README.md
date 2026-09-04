@@ -71,6 +71,14 @@ End users normally install [`@koishi-ce/koishi`](https://github.com/Koishi-CE/ko
 - **Filters and permissions** — filter algebra with `Computed<T>` values and an `authority:N` permission template.
 - **Schema extensions** — `Schema.computed` / `filter` / `path` / `dynamic` constructors.
 
+## Exports overview
+
+`src/index.ts` re-exports:
+
+- everything from [`@koishi-ce/utils`](https://github.com/Koishi-CE/koishi/tree/main/packages/node/utils) plus the full minato ORM;
+- core classes such as `Context` / `App` / `Session` / `Command` / `Commander` / `I18n` / `KoishiDatabase` / `FilterService` / `Permissions`;
+- the ecosystem `Service` base class, `defineConfig` and the `version` constant.
+
 ## Usage
 
 ```ts
@@ -79,6 +87,11 @@ import { App, defineConfig } from "@koishi-ce/core";
 const app = new App(defineConfig({ plugins: {} }));
 await app.start();
 ```
+
+## Differences from upstream
+
+- One built-in patch: `satori.Bot.prototype.dispose` is guarded to work around a satori 4.6.0 TypeError thrown on `app.stop()` (to be removed once satori ships the fix upstream).
+- Imports inside the package point to `@koishi-ce/*` workspace packages; otherwise behavior matches upstream — see [docs/process/upstream.md](https://github.com/Koishi-CE/koishi/blob/main/docs/process/upstream.md) for the directory mapping.
 
 ## License
 
