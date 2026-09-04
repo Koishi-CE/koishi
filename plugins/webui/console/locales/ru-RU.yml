@@ -1,0 +1,28 @@
+# SPDX-License-Identifier: AGPL-3.0-only
+# Copyright (c) 2019-present Shigma and Koishijs contributors.
+# Copyright (c) 2026-present Koishi-CE contributors.
+
+root: Корневой каталог интерфейсных страниц.
+uiPath: Путь, по которому отображаются интерфейсные страницы.
+apiPath: Путь сервиса серверного API.
+selfUrl: Публичный адрес сервиса Koishi.
+open: Автоматически открывать консоль в браузере после запуска приложения.
+head:
+  $desc: Настроить информацию заголовка страницы.
+  $inner:
+    tag:
+      $desc: Имя тега.
+      $inner:
+        - title
+        - link
+        - meta
+        - script
+        - style
+        - Пользовательский
+    attrs: Атрибуты тега.
+    content: Содержимое тега.
+heartbeat:
+  interval: Интервал отправки пульса (в миллисекундах).
+  timeout: Время ожидания пульса (в миллисекундах).
+devMode: Включить режим отладки (только для разработчиков).
+cacheDir: Каталог кэша отладочного сервера.

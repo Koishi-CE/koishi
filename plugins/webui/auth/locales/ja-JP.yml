@@ -2,13 +2,11 @@
 # Copyright (c) 2019-present Shigma and Koishijs contributors.
 # Copyright (c) 2026-present Koishi-CE contributors.
 
-- 
-  $description: 管理员设置
+- $description: 管理者設定
   admin:
-    enabled: 启用管理员账号。
-    username: 管理员用户名。
-    password: 管理员密码。
-- 
-  $description: 高级设置
-  authTokenExpire: 用户令牌有效期。
-  loginTokenExpire: 登录令牌有效期。
+    enabled: 管理者アカウントを有効にします。
+    username: 管理者のユーザー名。
+    password: 管理者のパスワード。
+- $description: 詳細設定
+  authTokenExpire: ユーザートークンの有効期間。
+  loginTokenExpire: ログイントークンの有効期間。

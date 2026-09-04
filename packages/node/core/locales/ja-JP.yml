@@ -31,6 +31,10 @@ internal:
   invalid-date: 日付を指定してください。
   invalid-user: ユーザー名を指定してください。
   invalid-channel: チャンネル名を指定してください。
+  invalid-image: 画像を送信してください。
+  invalid-audio: 音声を送信してください。
+  invalid-video: 動画を送信してください。
+  invalid-file: ファイルを送信してください。
   suggest-hint: '「{0}」を実行したいですか？'
   suggest-command: 句点を送信してコマンドを実行します。
 commands:

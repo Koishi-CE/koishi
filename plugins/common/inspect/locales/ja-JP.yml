@@ -3,19 +3,19 @@
 
 commands:
   inspect:
-    description: 查看用户、频道或消息的详细信息
+    description: ユーザー、チャンネルまたはメッセージの詳細を表示
     usage: |-
       inspect @user
       inspect #channel
       inspect
     messages:
-      invalid: 参数无法解析。
-      user: 用户 ID：{id}
-      channel: 频道 ID：{id}
+      invalid: 引数を解析できませんでした。
+      user: ユーザー ID：{id}
+      channel: チャンネル ID：{id}
       message: |-
-        平台名：{platform}
-        消息 ID：{messageId}
-        频道 ID：{channelId}
-        群组 ID：{guildId}
-        用户 ID：{userId}
+        プラットフォーム名：{platform}
+        メッセージ ID：{messageId}
+        チャンネル ID：{channelId}
+        グループ ID：{guildId}
+        ユーザー ID：{userId}
         自身 ID：{selfId}

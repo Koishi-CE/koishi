@@ -31,6 +31,10 @@ internal:
   invalid-date: 請輸入合法的時間。
   invalid-user: 請指定正確的使用者。
   invalid-channel: 請指定正確的頻道。
+  invalid-image: 請上傳圖片。
+  invalid-audio: 請上傳音訊。
+  invalid-video: 請上傳影片。
+  invalid-file: 請上傳檔案。
   suggest-hint: 您要找的是不是{0}？
   suggest-command: 發送句號以使用推測的指令。
 commands:

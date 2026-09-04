@@ -1,0 +1,28 @@
+# SPDX-License-Identifier: AGPL-3.0-only
+# Copyright (c) 2019-present Shigma and Koishijs contributors.
+# Copyright (c) 2026-present Koishi-CE contributors.
+
+root: フロントエンドページのルートディレクトリ。
+uiPath: フロントエンドページを表示するパス。
+apiPath: バックエンド API サービスのパス。
+selfUrl: Koishi サービスが公開されているアドレス。
+open: アプリケーションの起動後にブラウザでコンソールを自動的に開く。
+head:
+  $desc: ページのヘッダー情報をカスタマイズします。
+  $inner:
+    tag:
+      $desc: タグ名。
+      $inner:
+        - title
+        - link
+        - meta
+        - script
+        - style
+        - カスタム
+    attrs: タグの属性。
+    content: タグの内容。
+heartbeat:
+  interval: ハートビートの送信間隔 (ミリ秒)。
+  timeout: ハートビートのタイムアウト時間 (ミリ秒)。
+devMode: デバッグモードを有効にする (開発者専用)。
+cacheDir: デバッグサーバーのキャッシュディレクトリ。

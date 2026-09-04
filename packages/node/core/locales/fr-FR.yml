@@ -31,6 +31,10 @@ internal:
   invalid-date: Entrez une date valide.
   invalid-user: Entrez un nom d'utilisateur valide.
   invalid-channel: Entrez un nom de canal valide.
+  invalid-image: Veuillez envoyer une image.
+  invalid-audio: Veuillez envoyer un fichier audio.
+  invalid-video: Veuillez envoyer une vidéo.
+  invalid-file: Veuillez envoyer un fichier.
   suggest-hint: Voulez-vous dire {0} ?
   suggest-command: Tapez un point pour appliquer la suggestion.
 commands:

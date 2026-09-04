@@ -1,0 +1,28 @@
+# SPDX-License-Identifier: AGPL-3.0-only
+# Copyright (c) 2019-present Shigma and Koishijs contributors.
+# Copyright (c) 2026-present Koishi-CE contributors.
+
+root: 前端頁面的根目錄。
+uiPath: 前端頁面呈現的路徑。
+apiPath: 後端 API 服務的路徑。
+selfUrl: Koishi 服務暴露在公網的地址。
+open: 在應用啟動後自動在瀏覽器中開啟控制檯。
+head:
+  $desc: 自訂頁面頭部資訊。
+  $inner:
+    tag:
+      $desc: 標籤名。
+      $inner:
+        - title
+        - link
+        - meta
+        - script
+        - style
+        - 自訂
+    attrs: 標籤屬性。
+    content: 標籤內容。
+heartbeat:
+  interval: 心跳傳送間隔 (單位毫秒)。
+  timeout: 心跳逾時時間 (單位毫秒)。
+devMode: 啟用除錯模式 (僅供開發者使用)。
+cacheDir: 除錯伺服器快取目錄。

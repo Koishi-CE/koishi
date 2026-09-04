@@ -2,20 +2,22 @@
 # Copyright (c) 2019-present Shigma and Koishijs contributors.
 
 commands.bind:
-  description: 绑定到账号
+  description: An Konto binden
   options:
-    remove: 解除绑定
+    remove: Bindung aufheben
   messages:
     generated-1: |-
-      Bind 指令可用于在多个平台间绑定用户数据。绑定过程中，原始平台的用户数据将完全保留，而目标平台的用户数据将被原始平台的数据所覆盖。
-      请确认当前平台是你的目标平台，并在 5 分钟内使用你的账号在原始平台内向机器人发送以下文本：
+      Der Befehl „Bind“ kann verwendet werden, um Benutzerdaten über mehrere Plattformen hinweg zu binden. Während des Bindungsvorgangs werden die Benutzerdaten der ursprünglichen Plattform vollständig erhalten, während die Benutzerdaten der Ziel-Plattform mit den Daten der ursprünglichen Plattform überschrieben werden.
+      Bitte stellen Sie sicher, dass die aktuelle Plattform Ihre Ziel-Plattform ist, und senden Sie innerhalb von 5 Minuten mit Ihrem Konto den folgenden Text an den Bot auf der ursprünglichen Plattform:
       {0}
-      绑定完成后，你可以随时使用「bind -r」来解除绑定状态。
+      Nach Abschluss der Bindung können Sie den Status jederzeit mit „bind -r“ wieder aufheben.
     generated-2: |-
-      令牌核验成功！下面将进行第二步操作。
-      请在 5 分钟内使用你的账号在目标平台内向机器人发送以下文本：
+      Token erfolgreich verifiziert! Nun folgt der zweite Schritt.
+      Bitte senden Sie innerhalb von 5 Minuten mit Ihrem Konto den folgenden Text an den Bot auf der Ziel-Plattform:
       {0}
-      注意：当前平台是你的原始平台，这里的用户数据将覆盖目标平台的数据。
-    success: 账号绑定成功！
-    remove-success: 账号解绑成功！
-    remove-original: 无法解除绑定：这是你的原始账号。
+      Hinweis: Die aktuelle Plattform ist Ihre ursprüngliche Plattform. Die Benutzerdaten hier überschreiben die Daten der Ziel-Plattform.
+    self-1: Bitte geben Sie den Text auf der ursprünglichen Plattform ein.
+    self-2: Bitte geben Sie den Text auf der Ziel-Plattform ein.
+    success: Das Konto wurde erfolgreich gebunden!
+    remove-success: Die Bindung des Kontos wurde erfolgreich aufgehoben!
+    remove-original: 'Bindung kann nicht aufgehoben werden: Dies ist Ihr ursprüngliches Konto.'

@@ -3,19 +3,19 @@
 
 commands:
   inspect:
-    description: 查看用户、频道或消息的详细信息
+    description: Afficher les détails des utilisateurs, canaux ou messages
     usage: |-
       inspect @user
       inspect #channel
       inspect
     messages:
-      invalid: 参数无法解析。
-      user: 用户 ID：{id}
-      channel: 频道 ID：{id}
+      invalid: Impossible d'analyser les arguments.
+      user: "Identifiant de l'utilisateur : {id}"
+      channel: 'Identifiant du canal : {id}'
       message: |-
-        平台名：{platform}
-        消息 ID：{messageId}
-        频道 ID：{channelId}
-        群组 ID：{guildId}
-        用户 ID：{userId}
-        自身 ID：{selfId}
+        Nom de la plateforme : {platform}
+        Identifiant du message : {messageId}
+        Identifiant du canal : {channelId}
+        Identifiant du groupe : {guildId}
+        Identifiant de l'utilisateur : {userId}
+        Identifiant propre : {selfId}

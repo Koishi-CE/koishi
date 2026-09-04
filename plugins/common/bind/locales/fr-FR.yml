@@ -2,20 +2,22 @@
 # Copyright (c) 2019-present Shigma and Koishijs contributors.
 
 commands.bind:
-  description: 绑定到账号
+  description: Lier au compte
   options:
-    remove: 解除绑定
+    remove: Délier
   messages:
     generated-1: |-
-      Bind 指令可用于在多个平台间绑定用户数据。绑定过程中，原始平台的用户数据将完全保留，而目标平台的用户数据将被原始平台的数据所覆盖。
-      请确认当前平台是你的目标平台，并在 5 分钟内使用你的账号在原始平台内向机器人发送以下文本：
+      La commande Bind permet de lier les données utilisateur entre plusieurs plateformes. Pendant le processus de liaison, les données utilisateur de la plateforme d'origine sont entièrement conservées, tandis que celles de la plateforme cible sont remplacées par celles de la plateforme d'origine.
+      Veuillez vérifier que la plateforme actuelle est votre plateforme cible, puis envoyez avec votre compte le texte suivant au bot sur la plateforme d'origine dans les 5 minutes :
       {0}
-      绑定完成后，你可以随时使用「bind -r」来解除绑定状态。
+      Une fois la liaison terminée, vous pouvez à tout moment utiliser « bind -r » pour la délier.
     generated-2: |-
-      令牌核验成功！下面将进行第二步操作。
-      请在 5 分钟内使用你的账号在目标平台内向机器人发送以下文本：
+      Jeton vérifié avec succès ! La deuxième étape va maintenant être effectuée.
+      Veuillez envoyer avec votre compte le texte suivant au bot sur la plateforme cible dans les 5 minutes :
       {0}
-      注意：当前平台是你的原始平台，这里的用户数据将覆盖目标平台的数据。
-    success: 账号绑定成功！
-    remove-success: 账号解绑成功！
-    remove-original: 无法解除绑定：这是你的原始账号。
+      Remarque : la plateforme actuelle est votre plateforme d'origine. Les données utilisateur présentes ici remplaceront celles de la plateforme cible.
+    self-1: Veuillez saisir le texte sur la plateforme d'origine.
+    self-2: Veuillez saisir le texte sur la plateforme cible.
+    success: Le compte a été lié avec succès !
+    remove-success: Le compte a été délié avec succès !
+    remove-original: "Impossible de délier : il s'agit de votre compte d'origine."

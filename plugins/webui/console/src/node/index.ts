@@ -40,7 +40,13 @@ import type {
 	FileSystemServeOptions,
 	ViteDevServer,
 } from "vite";
+import deDE from "../../locales/de-DE.yml";
+import enUS from "../../locales/en-US.yml";
+import frFR from "../../locales/fr-FR.yml";
+import jaJP from "../../locales/ja-JP.yml";
+import ruRU from "../../locales/ru-RU.yml";
 import zhCN from "../../locales/zh-CN.yml";
+import zhTW from "../../locales/zh-TW.yml";
 
 // 上游此处以 `declare module "koishi"` 给 EnvData 增加 clientCount 字段；
 // 本仓 @koishi-ce/core 将 EnvData 定义为 type alias（无法做 interface 合并），
@@ -581,7 +587,13 @@ class NodeConsole extends Console {
 				dev: NodeConsole.Dev,
 			}),
 		]).i18n({
+			"de-DE": deDE,
+			"en-US": enUS,
+			"fr-FR": frFR,
+			"ja-JP": jaJP,
+			"ru-RU": ruRU,
 			"zh-CN": zhCN,
+			"zh-TW": zhTW,
 		});
 }
 

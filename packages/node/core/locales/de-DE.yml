@@ -31,6 +31,10 @@ internal:
   invalid-date: Bitte geben Sie eine gültige Zeit ein.
   invalid-user: Bitte geben Sie einen gültigen Benutzer an.
   invalid-channel: Bitte geben Sie einen gültigen Kanal an.
+  invalid-image: Bitte senden Sie ein Bild.
+  invalid-audio: Bitte senden Sie eine Audiodatei.
+  invalid-video: Bitte senden Sie ein Video.
+  invalid-file: Bitte senden Sie eine Datei.
   suggest-hint: Ist das, wonach Sie suchen, {0}?
   suggest-command: Senden Sie einen Punkt, um den Vorschlag anzuwenden.
 commands:

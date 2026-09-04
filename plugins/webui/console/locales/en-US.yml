@@ -1,0 +1,28 @@
+# SPDX-License-Identifier: AGPL-3.0-only
+# Copyright (c) 2019-present Shigma and Koishijs contributors.
+# Copyright (c) 2026-present Koishi-CE contributors.
+
+root: Root directory of the frontend pages.
+uiPath: Path where the frontend pages are served.
+apiPath: Path of the backend API service.
+selfUrl: Public URL where the Koishi service is exposed.
+open: Open the console in the browser automatically after the app starts.
+head:
+  $desc: Customize the page header information.
+  $inner:
+    tag:
+      $desc: Tag name.
+      $inner:
+        - title
+        - link
+        - meta
+        - script
+        - style
+        - custom
+    attrs: Tag attributes.
+    content: Tag content.
+heartbeat:
+  interval: Heartbeat interval (in milliseconds).
+  timeout: Heartbeat timeout (in milliseconds).
+devMode: Enable debug mode (for developers only).
+cacheDir: Cache directory of the debug server.

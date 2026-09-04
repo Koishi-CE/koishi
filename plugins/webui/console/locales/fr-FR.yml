@@ -1,0 +1,28 @@
+# SPDX-License-Identifier: AGPL-3.0-only
+# Copyright (c) 2019-present Shigma and Koishijs contributors.
+# Copyright (c) 2026-present Koishi-CE contributors.
+
+root: Répertoire racine des pages frontend.
+uiPath: Chemin où les pages frontend sont présentées.
+apiPath: Chemin du service API backend.
+selfUrl: Adresse publique du service Koishi.
+open: Ouvrir automatiquement la console dans le navigateur après le démarrage de l'application.
+head:
+  $desc: Personnaliser les informations d'en-tête de la page.
+  $inner:
+    tag:
+      $desc: Nom de la balise.
+      $inner:
+        - title
+        - link
+        - meta
+        - script
+        - style
+        - Personnalisé
+    attrs: Attributs de la balise.
+    content: Contenu de la balise.
+heartbeat:
+  interval: Intervalle d'envoi des pulsations (en millisecondes).
+  timeout: Délai d'expiration des pulsations (en millisecondes).
+devMode: Activer le mode débogage (réservé aux développeurs).
+cacheDir: Répertoire de cache du serveur de débogage.

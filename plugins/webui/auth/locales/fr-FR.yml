@@ -2,13 +2,11 @@
 # Copyright (c) 2019-present Shigma and Koishijs contributors.
 # Copyright (c) 2026-present Koishi-CE contributors.
 
-- 
-  $description: 管理员设置
+- $description: Paramètres administrateur
   admin:
-    enabled: 启用管理员账号。
-    username: 管理员用户名。
-    password: 管理员密码。
-- 
-  $description: 高级设置
-  authTokenExpire: 用户令牌有效期。
-  loginTokenExpire: 登录令牌有效期。
+    enabled: Activer le compte administrateur.
+    username: Nom d'utilisateur administrateur.
+    password: Mot de passe administrateur.
+- $description: Paramètres avancés
+  authTokenExpire: Durée de validité des jetons utilisateur.
+  loginTokenExpire: Durée de validité des jetons de connexion.
