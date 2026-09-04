@@ -6,9 +6,10 @@
  * dataview 插件（node 侧）：在控制台中查看和管理数据库内容。
  *
  * 以 `database` 数据服务向浏览器下发全库概览（各表的结构定义 + 统计信息），
- * 并注册 8 个 `database/*` RPC 事件，把前端的 get / set / create / remove /
- * upsert / eval / drop / stats 调用代理到本地数据库（参数与返回值经
- * serialize / deserialize 编解码，authority 4 权限门槛）。
+ * 并注册 7 个 `database/*` RPC 事件，把前端的 get / set / create / remove /
+ * upsert / eval / stats 调用代理到本地数据库（参数与返回值经
+ * serialize / deserialize 编解码，authority 4 权限门槛；Methods 类型面
+ * 含 drop，但未注册监听、不向前端开放）。
  */
 
 import { resolve } from "node:path";
