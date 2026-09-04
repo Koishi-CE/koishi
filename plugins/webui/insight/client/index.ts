@@ -11,6 +11,13 @@
 import type { Context } from "@koishi-ce/client";
 import type Insight from "@koishi-ce/plugin-insight";
 import Graph from "./index.vue";
+import deDE from "./locales/de-DE.yml";
+import enUS from "./locales/en-US.yml";
+import frFR from "./locales/fr-FR.yml";
+import jaJP from "./locales/ja-JP.yml";
+import ruRU from "./locales/ru-RU.yml";
+import zhCN from "./locales/zh-CN.yml";
+import zhTW from "./locales/zh-TW.yml";
 import "./icons";
 
 import "virtual:uno.css";
@@ -27,9 +34,18 @@ declare module "@koishi-ce/plugin-console" {
 }
 
 export default (ctx: Context) => {
+	// 注入本扩展的 UI 语言包（各语种键均收纳在 insight.* 命名空间下）
+	ctx.$i18n.extend("de-DE", deDE);
+	ctx.$i18n.extend("en-US", enUS);
+	ctx.$i18n.extend("fr-FR", frFR);
+	ctx.$i18n.extend("ja-JP", jaJP);
+	ctx.$i18n.extend("ru-RU", ruRU);
+	ctx.$i18n.extend("zh-CN", zhCN);
+	ctx.$i18n.extend("zh-TW", zhTW);
+
 	ctx.page({
 		path: "/graph",
-		name: "依赖图",
+		name: () => ctx.$i18n.t("insight.title"),
 		icon: "activity:network",
 		order: 550,
 		fields: ["insight"],

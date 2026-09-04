@@ -1,0 +1,11 @@
+# SPDX-License-Identifier: AGPL-3.0-only
+# Copyright (c) 2019-present Shigma and Koishijs contributors.
+# Copyright (c) 2026-present Koishi-CE contributors.
+
+insight:
+  title: Abhängigkeitsgraph
+  plugin: "Plugin: {0}"
+  services: "Stellt Dienste bereit: {0}"
+  linkService: Dienst
+  linkInvoke: Aufruf
+  linkText: "{0}: {1} → {2}"

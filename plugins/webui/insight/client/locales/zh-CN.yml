@@ -1,0 +1,11 @@
+# SPDX-License-Identifier: AGPL-3.0-only
+# Copyright (c) 2019-present Shigma and Koishijs contributors.
+# Copyright (c) 2026-present Koishi-CE contributors.
+
+insight:
+  title: 依赖图
+  plugin: "插件：{0}"
+  services: "提供服务：{0}"
+  linkService: 服务
+  linkInvoke: 调用
+  linkText: "{0}：{1} → {2}"

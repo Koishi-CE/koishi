@@ -62,10 +62,13 @@ import {
 	ref,
 	watch,
 } from "vue";
+import { useI18n } from "vue-i18n";
 import LinkView from "./link.vue";
 import NodeView from "./node.vue";
 import { getEventPoint, useTooltip } from "./tooltip";
 import type { Link, Node } from "./utils";
+
+const { t } = useI18n();
 
 const root = ref<HTMLElement>();
 const { width, height } = useElementSize(root);
@@ -244,9 +247,11 @@ useEventListener("touchend", onDragEnd);
 /** 悬停节点：记录焦点节点并弹出 tooltip（插件名 + 提供的服务列表）。 */
 function onMouseEnterNode(node: Node, event: MouseEvent) {
 	fNode.value = node;
-	const result = [`插件：${node.name}`];
+	const result = [t("insight.plugin", [node.name])];
 	if (node.services) {
-		result.push(`提供服务：${node.services.join("，")}`);
+		result.push(
+			t("insight.services", [node.services.join("，")]),
+		);
 	}
 	tooltip.activate(result.join("\n"), event);
 }
@@ -260,9 +265,18 @@ function onMouseLeaveNode(node: Node, event: MouseEvent) {
 /** 悬停连线：tooltip 显示边的类型（服务/调用）与两端插件名。 */
 function onMouseEnterLink(link: Link, event: MouseEvent) {
 	fLink.value = link;
-	const type = link.type === "dashed" ? "服务" : "调用";
-	const text = `${type}：${link.source.name} → ${link.target.name}`;
-	tooltip.activate(text, event);
+	const type =
+		link.type === "dashed"
+			? t("insight.linkService")
+			: t("insight.linkInvoke");
+	tooltip.activate(
+		t("insight.linkText", [
+			type,
+			link.source.name,
+			link.target.name,
+		]),
+		event,
+	);
 }
 
 function onMouseLeaveLink(link: Link, event: MouseEvent) {
