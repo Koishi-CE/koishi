@@ -59,20 +59,23 @@ function toLocaleEntry(
 }
 
 /**
- * 深度优先遍历树节点，产出叶子（及无未忽略子节点的节点）对应的语言环境名。
+ * 深度优先遍历树节点，产出语言环境名。
  * ignored 中的节点已被更高优先级消费，跳过以避免重复。
+ * 每个分支内更特异的环境（如 zh-CN-ZAKO / zh-CN）先于父语言（zh）
+ * 产出：回退查找应精确优先、逐级向父语言回退
+ * upstream: koishijs/koishi#1464
  */
 function* traverse(
-	[key, children]: LocaleEntry,
+	[, children]: LocaleEntry,
 	ignored: LocaleEntry[],
 ): Generator<string> {
-	if (!children.length) {
-		return yield key;
+	const [self, ...branches] = children;
+	// 子分支（更特异）递归产出完毕后才轮到本节点自身
+	for (const branch of branches) {
+		if (ignored.includes(branch)) continue;
+		yield* traverse(branch, ignored);
 	}
-	for (const child of children) {
-		if (ignored.includes(child)) continue;
-		yield* traverse(child, ignored);
-	}
+	if (self && !ignored.includes(self)) yield self[0];
 }
 
 /**
@@ -106,11 +109,13 @@ export function fallback(
 				([key]) => key === current,
 			);
 			if (!entry) break;
-			// 把命中节点上移到同级首位，使后续遍历优先产出该分支
+			// 把命中节点上移到分支首位（自身引用 self 之后），使后续
+			// 遍历优先产出该分支——上移不得越过 self，保证 children
+			// 首位恒为自身引用的结构约定
 			const index = children.indexOf(entry);
-			if (index > 0) {
+			if (index > 1) {
 				children.splice(index, 1);
-				children.unshift(entry);
+				children.splice(1, 0, entry);
 			}
 			children = entry[1];
 			prefix = `${current}-`;

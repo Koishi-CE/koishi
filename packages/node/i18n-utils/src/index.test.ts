@@ -17,7 +17,8 @@ describe("@koishi-ce/i18n-utils", () => {
 		});
 	});
 
-	// 验证单个偏好语言时的回退顺序：精确匹配 -> 父语言 -> 同级其它 -> 根兜底
+	// 验证单个偏好语言时的回退顺序：精确匹配 -> 同分支更特异/更泛化 ->
+	// 其余分支（各分支内特异优先）-> 根兜底
 	it("single fallbacking", () => {
 		expect(
 			fallback(
@@ -29,12 +30,12 @@ describe("@koishi-ce/i18n-utils", () => {
 			),
 		).toEqual([
 			"zh-TW",
-			"zh",
 			"zh-CN",
-			"",
-			"en",
+			"zh",
 			"en-US",
 			"en-GB",
+			"en",
+			"",
 		]);
 
 		expect(
@@ -46,13 +47,13 @@ describe("@koishi-ce/i18n-utils", () => {
 				["en"],
 			),
 		).toEqual([
-			"en",
 			"en-US",
 			"en-GB",
-			"",
-			"zh",
+			"en",
 			"zh-CN",
 			"zh-TW",
+			"zh",
+			"",
 		]);
 
 		expect(
@@ -64,13 +65,13 @@ describe("@koishi-ce/i18n-utils", () => {
 				[],
 			),
 		).toEqual([
-			"",
-			"zh",
 			"zh-CN",
 			"zh-TW",
-			"en",
+			"zh",
 			"en-US",
 			"en-GB",
+			"en",
+			"",
 		]);
 
 		expect(
@@ -82,13 +83,13 @@ describe("@koishi-ce/i18n-utils", () => {
 				["de-DE"],
 			),
 		).toEqual([
-			"",
-			"zh",
 			"zh-CN",
 			"zh-TW",
-			"en",
+			"zh",
 			"en-US",
 			"en-GB",
+			"en",
+			"",
 		]);
 	});
 
@@ -103,12 +104,12 @@ describe("@koishi-ce/i18n-utils", () => {
 				["en", "zh-TW"],
 			),
 		).toEqual([
-			"en",
 			"en-US",
 			"en-GB",
+			"en",
 			"zh-TW",
-			"zh",
 			"zh-CN",
+			"zh",
 			"",
 		]);
 
@@ -122,11 +123,11 @@ describe("@koishi-ce/i18n-utils", () => {
 			),
 		).toEqual([
 			"zh-TW",
-			"en",
 			"en-US",
 			"en-GB",
-			"zh",
+			"en",
 			"zh-CN",
+			"zh",
 			"",
 		]);
 
@@ -139,13 +140,13 @@ describe("@koishi-ce/i18n-utils", () => {
 				["en", "de-DE", "en-GB"],
 			),
 		).toEqual([
-			"en",
 			"en-US",
+			"en",
 			"en-GB",
-			"",
-			"zh",
 			"zh-CN",
 			"zh-TW",
+			"zh",
+			"",
 		]);
 
 		expect(
@@ -159,10 +160,10 @@ describe("@koishi-ce/i18n-utils", () => {
 		).toEqual([
 			"en-GB",
 			"zh-CN",
-			"en",
 			"en-US",
-			"zh",
+			"en",
 			"zh-TW",
+			"zh",
 			"",
 		]);
 	});
