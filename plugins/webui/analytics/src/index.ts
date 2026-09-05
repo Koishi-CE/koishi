@@ -209,7 +209,10 @@ class Analytics extends DataService<Analytics.Payload> {
 		session: Session<any, any, any>,
 	): Analytics.Index {
 		return {
-			selfId: session.selfId,
+			// selfId 为联合主键之一且列非空，沙盒等无 selfId 的会话落
+			// 空串行，避免整批 upsert 因非空约束失败丢统计
+			// upstream: koishijs/koishi#1501
+			selfId: session.selfId ?? "",
 			platform: session.platform,
 			date: Time.getDateNumber(),
 			hour: new Date().getHours(),

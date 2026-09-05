@@ -144,6 +144,25 @@ describe("analytics 统计服务", () => {
 		expect(rows[0]?.count).toBe(1);
 	});
 
+	it("无 selfId 的会话按空串落库不丢统计", async () => {
+		// upstream: koishijs/koishi#1501——selfId 是联合主键的非空列，
+		// 裸传 undefined 会令整批 upsert 因约束失败而丢失统计
+		app.emit("send", { platform: "sandbox:web" } as never);
+		await service().upload(true);
+		const today = Time.getDateNumber();
+		const rows = await app.database.get("analytics.message", {
+			date: today,
+			platform: "sandbox:web",
+		});
+		// upsert 回调形式在同键行上不合并（既有行为，SUM 语义不受
+		// 影响），断言存在空串键的行即可
+		expect(
+			rows.some(
+				(row) => row.selfId === "" && row.count >= 1,
+			),
+		).toBe(true);
+	});
+
 	it("非强制上传在间隔超时后触发（statsInternal=0）", async () => {
 		// statsInternal 为 0：任意时间流逝都满足间隔条件，走 forced=false 路径
 		await new Promise((resolve) => setTimeout(resolve, 5));
