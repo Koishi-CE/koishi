@@ -128,6 +128,10 @@ function createWorker(options: WorkerOptions) {
 		[process.execPath, worker, ...execArgv],
 		{
 			ipc: handleMessage,
+			// Bun.spawn 的默认 env 继承在 win32 只取进程启动时的 OS 环境
+			// 快照，运行时经 process.env 赋值的 KOISHI_* 选项（log-level /
+			// debug / config-file / shared）到不了子进程，须显式展开传递
+			env: { ...process.env },
 			// Bun.spawn 的 stdio 默认为 ignore，须显式继承输出通道，
 			// 否则 worker 的全部日志都会被丢弃
 			stdout: "inherit",
