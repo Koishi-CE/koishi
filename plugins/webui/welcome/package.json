@@ -1,0 +1,66 @@
+{
+	"name": "@koishi-ce/plugin-welcome",
+	"description": "Welcome page for Koishi console",
+	"version": "1.0.0",
+	"type": "module",
+	"main": "lib/index.mjs",
+	"typings": "lib/index.d.ts",
+	"files": [
+		"lib",
+		"dist",
+		"src"
+	],
+	"contributors": [
+		"Shigma <shigma10826@gmail.com>",
+		"Oppenheymu <oppenheymu@gmail.com>"
+	],
+	"license": "AGPL-3.0",
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/Koishi-CE/koishi.git",
+		"directory": "plugins/webui/welcome"
+	},
+	"bugs": {
+		"url": "https://github.com/Koishi-CE/koishi/issues"
+	},
+	"homepage": "https://koishi.chat",
+	"keywords": [
+		"bot",
+		"chatbot",
+		"koishi",
+		"webui",
+		"console",
+		"welcome"
+	],
+	"koishi": {
+		"public": [
+			"dist"
+		],
+		"description": {
+			"en": "Welcome page for Koishi console, with a Lottie splash animation",
+			"zh": "控制台欢迎页（含 Lottie 开屏描线动画）"
+		},
+		"service": {
+			"required": [
+				"console"
+			]
+		}
+	},
+	"peerDependencies": {
+		"@koishi-ce/plugin-console": "^1.0.0",
+		"@koishi-ce/koishi": "^1.0.0"
+	},
+	"devDependencies": {
+		"@koishi-ce/client": "workspace:*",
+		"@koishi-ce/koishi": "workspace:*",
+		"lottie-web": "^5.13.0"
+	},
+	"exports": {
+		".": {
+			"source": "./src/index.ts",
+			"types": "./lib/index.d.ts",
+			"import": "./lib/index.mjs",
+			"default": "./lib/index.mjs"
+		}
+	}
+}

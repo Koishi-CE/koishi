@@ -12,7 +12,7 @@
 
 ## 2. 目录结构与包清单
 
-共 48 个 workspace 包，全部 `"type": "module"`。
+共 49 个 workspace 包，全部 `"type": "module"`。
 
 ```
 koishi/（Bun workspaces：packages/node/* · packages/shim/* · packages/web/* · plugins/{common,infra,webui}/* · apps/* · tooling/*）
@@ -21,7 +21,7 @@ koishi/（Bun workspaces：packages/node/* · packages/shim/* · packages/web/* 
 ├── packages/web/    浏览器侧库（client / components，源码直出，无独立构建产物）
 ├── plugins/common/  通用 bot 插件 ×8（MIT）
 ├── plugins/infra/   基础设施插件 ×7（http/proxy/server 为 vendored 预编译）
-├── plugins/webui/   控制台插件 ×18（src/=Node 侧，client/=Vue 侧）
+├── plugins/webui/   控制台插件 ×19（src/=Node 侧，client/=Vue 侧）
 ├── apps/            可部署应用（koishi-create / koishi-scripts）
 └── tooling/         发布链脚本（release/）
 ```
@@ -74,11 +74,11 @@ CE 包 peer 一律指 CE 名，但外部真包依赖（analytics 的 `@koishijs/
 | `server` | `@koishi-ce/plugin-server` | 同上（`@cordisjs/plugin-server ^0.2.9`）；Phase 5 原计划从 1.x 重建，随 cordis 4 回退一并冻结 |
 | `server-temp` | `@koishi-ce/plugin-server-temp` | 临时文件服务（来自 [cordiverse/server](https://github.com/cordiverse/server) `packages/temp`） |
 
-### plugins/webui/*（控制台插件 ×18，均 AGPL-3.0）
+### plugins/webui/*（控制台插件 ×19，均 AGPL-3.0）
 
 node 侧在 `src/`、Vue 侧在 `client/`（上游约定），`koishi.public: ["dist"]` 声明前端产物目录：
 
-`actions`（应用指令面板）、`admin`（权限管理）、`analytics`（统计图表，echarts）、`auth`（登录）、`commands`（指令配置）、`config`（插件配置管理，唯一带 `./shared` 与 node/browser 分入口，依赖 `@koishi-ce/registry`）、`console`（**宿主**，其 `dist/` 承载全部插件前端产物）、`explorer`（文件管理，monaco）、`insight`（依赖图，d3-force）、`locales`（翻译覆盖）、`logger`（日志）、`notifier`（通知服务）、`oobe`（开箱体验）、`sandbox`（虚拟沙箱）、`status`（运行状态）——以上 15 个来自 webui `plugins/*`；**`market`**（插件市场，来自 webui `plugins/market` 原版 v2.11.11 的再分发，社区版 `plugin-marketn` 已被其取代并移除；client 侧依赖 npm 包 `@koishijs/market`，其内部 npm 名 `@koishijs/components` 由单插件构建 alias 重定向到本仓 workspace 版避免双实例）；`dataview` 与 `theme-vanilla` 来自独立上游仓库（见 `NOTICE`）。
+`actions`（应用指令面板）、`admin`（权限管理）、`analytics`（统计图表，echarts）、`auth`（登录）、`commands`（指令配置）、`config`（插件配置管理，唯一带 `./shared` 与 node/browser 分入口，依赖 `@koishi-ce/registry`）、`console`（**宿主**，其 `dist/` 承载全部插件前端产物）、`explorer`（文件管理，monaco）、`insight`（依赖图，d3-force）、`locales`（翻译覆盖）、`logger`（日志）、`notifier`（通知服务）、`oobe`（开箱体验）、`sandbox`（虚拟沙箱）、`status`（运行状态）——以上 15 个来自 webui `plugins/*`；**`market`**（插件市场，来自 webui `plugins/market` 原版 v2.11.11 的再分发，社区版 `plugin-marketn` 已被其取代并移除；client 侧依赖 npm 包 `@koishijs/market`，其内部 npm 名 `@koishijs/components` 由单插件构建 alias 重定向到本仓 workspace 版避免双实例）；`dataview` 与 `theme-vanilla` 来自独立上游仓库（见 `NOTICE`）；**`welcome`**（欢迎页，本仓原创独立插件——上游 client 内建欢迎卡迁出，宿主首页仅保留 home 插槽，含 Lottie 开屏描线动画，动画数据移植自 MIT 的 koishi-plugin-telemetry，见 `NOTICE`）。
 
 ### apps/*
 

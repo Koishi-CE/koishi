@@ -3,17 +3,14 @@
 <!-- Copyright (c) 2026-present Koishi-CE contributors. -->
 
 <!--
-  控制台首页：WebSocket 就绪后渲染 "home" 插槽内容（默认为欢迎卡片），
+  控制台首页：WebSocket 就绪后渲染 "home" 插槽内容（默认为空——欢迎卡
+  由 @koishi-ce/plugin-welcome 提供，统计面板由 plugin-analytics 提供），
   未连接时显示连接提示卡片。
 -->
 <template>
   <k-layout :main="`darker page-home${socket ? '' : ' loading'}`">
     <el-scrollbar v-if="socket">
-      <k-slot name="home">
-        <k-slot-item :order="1000">
-          <welcome></welcome>
-        </k-slot-item>
-      </k-slot>
+      <k-slot name="home"></k-slot>
     </el-scrollbar>
     <div v-else>
       <k-card class="connect">{{ t('home.connecting') }}</k-card>
@@ -24,7 +21,6 @@
 <script lang="ts" setup>
 import { global, socket } from "@koishi-ce/client";
 import { useI18n } from "vue-i18n";
-import Welcome from "./welcome.vue";
 
 const { t } = useI18n();
 </script>
@@ -37,10 +33,6 @@ const { t } = useI18n();
     flex-direction: column;
     align-items: center;
     justify-content: center;
-  }
-
-  .k-card.welcome {
-    margin: var(--card-margin);
   }
 
   .k-card.connect {

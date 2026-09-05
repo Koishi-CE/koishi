@@ -5,7 +5,7 @@
 <!--
   欢迎卡片：文档 / 社区论坛等入口链接，背景为开屏描线动画（splash.vue，
   移植自 koishi-plugin-telemetry，MIT），内容沉底排布。
-  文案走宿主全局词典（client/locales/，7 语种），
+  文案走本插件注入的全局词典（client/locales/，7 语种），
   其余扩展可通过 "welcome-choice" 插槽追加自定义入口。
 -->
 <template>
@@ -40,7 +40,7 @@
 import { useI18n } from "vue-i18n";
 import Splash from "./splash.vue";
 
-// 全局 composer：词典由宿主 $i18n 服务在挂载前注入
+// 全局 composer：词典由本插件入口经 ctx.$i18n.extend 注入
 const { t } = useI18n();
 </script>
 
@@ -57,6 +57,7 @@ const { t } = useI18n();
   display: flex;
   flex-direction: column;
   justify-content: flex-end;
+  margin: var(--card-margin);
   // 全高卡片：动画铺满，内容沉底（对齐 splash 原版页面的观感）
   height: max(
     calc(

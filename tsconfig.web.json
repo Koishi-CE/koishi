@@ -1,5 +1,5 @@
 // client 侧大一统类型检查入口：浏览器端工程（extends tsconfig.client 的
-// 16 个 client tsconfig.json）的 include 并集，与 tsconfig.json（node 侧）
+// 17 个 client tsconfig.json）的 include 并集，与 tsconfig.json（node 侧）
 // 一同构成全量类型检查的两条 bunx tsc 指令。基座 tsconfig.client.json
 // 保持纯净（仅被 extends，不带 include）。
 //
@@ -28,7 +28,8 @@
 		"plugins/webui/notifier/client",
 		"plugins/webui/sandbox/client",
 		"plugins/webui/status/client",
-		"plugins/webui/theme-vanilla/client"
+		"plugins/webui/theme-vanilla/client",
+		"plugins/webui/welcome/client"
 	],
 	"exclude": [
 		"packages/web/components/client/schemastery-vue-runtime.ts",

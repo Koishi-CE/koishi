@@ -7,15 +7,6 @@ pages:
   settings: 使用者設定
 home:
   connecting: 正在連線到 Koishi 伺服器……
-welcome:
-  title: 歡迎使用 Koishi！
-  description: 你的機器人已經準備就緒。點擊下面的任一選項，開啟你的 Koishi 之旅吧。
-  docs:
-    title: 閱讀文件
-    description: 開始閱讀官方文件。官方文件裡包含了你想要了解的全部內容。
-  forum:
-    title: 前往論壇
-    description: 前往論壇與其他使用者交流。如果你遇到了問題，可以在這裡尋求幫助。
 settings:
   general: 一般設定
   appearance: 外觀設定

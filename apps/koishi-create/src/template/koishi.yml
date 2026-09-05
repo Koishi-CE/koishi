@@ -34,6 +34,7 @@ plugins:
     insight:ozp3by: {}
     notifier:30g7rg: {}
     theme-vanilla:029kuh: {}
+    welcome:q7m2vx: {}
   group:basic:
     $collapsed: true
     $label: 基础库

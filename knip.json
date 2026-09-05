@@ -8,8 +8,7 @@
 		},
 		"packages/web/client": {
 			"entry": ["client/**/*.ts", "app/**/*.ts"],
-			"ignore": ["app/theme/blank.vue"],
-			"ignoreDependencies": ["lottie-web"]
+			"ignore": ["app/theme/blank.vue"]
 		},
 		"packages/web/components": {
 			"entry": ["client/**/*.ts"]
@@ -93,6 +92,10 @@
 		},
 		"plugins/webui/theme-vanilla": {
 			"entry": ["client/**/*.ts"]
+		},
+		"plugins/webui/welcome": {
+			"entry": ["client/**/*.ts"],
+			"ignoreDependencies": ["lottie-web"]
 		}
 	}
 }

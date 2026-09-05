@@ -1,0 +1,9 @@
+welcome:
+  title: Willkommen bei Koishi!
+  description: Ihr Chatbot ist einsatzbereit. Wählen Sie eine der Optionen unten, um Ihre Koishi-Reise zu beginnen.
+  docs:
+    title: Dokumentation
+    description: Lesen Sie die offizielle Dokumentation. Sie enthält alles, was Sie wissen möchten.
+  forum:
+    title: Forum
+    description: Tauschen Sie sich im Forum mit anderen Nutzern aus. Wenn Probleme auftreten, finden Sie dort Hilfe.

@@ -7,15 +7,6 @@ pages:
   settings: Paramètres utilisateur
 home:
   connecting: Connexion au serveur Koishi...
-welcome:
-  title: Bienvenue sur Koishi !
-  description: Votre chatbot est prêt. Choisissez une option ci-dessous pour commencer votre aventure Koishi.
-  docs:
-    title: Documentation
-    description: "Lisez la documentation officielle : elle contient tout ce que vous voulez savoir."
-  forum:
-    title: Forum
-    description: Échangez avec d'autres utilisateurs sur le forum. Si vous rencontrez des problèmes, vous pouvez y demander de l'aide.
 settings:
   general: Paramètres généraux
   appearance: Apparence

@@ -7,15 +7,6 @@ pages:
   settings: ユーザー設定
 home:
   connecting: Koishi サーバーに接続しています……
-welcome:
-  title: Koishi へようこそ！
-  description: ボットの準備が整いました。以下の選択肢からどれかを選んで、Koishi の旅を始めましょう。
-  docs:
-    title: ドキュメントを読む
-    description: 公式ドキュメントを読み始めましょう。知りたいことがすべて書かれています。
-  forum:
-    title: フォーラムへ
-    description: フォーラムで他のユーザーと交流しましょう。問題が起きたときは、ここで助けを求めることができます。
 settings:
   general: 一般設定
   appearance: 外観設定

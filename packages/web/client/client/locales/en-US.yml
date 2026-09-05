@@ -7,15 +7,6 @@ pages:
   settings: User Settings
 home:
   connecting: Connecting to the Koishi server...
-welcome:
-  title: Welcome to Koishi!
-  description: Your chatbot is ready to go. Pick any option below to start your Koishi journey.
-  docs:
-    title: Documentation
-    description: Read the official documentation, which contains everything you want to know.
-  forum:
-    title: Forum
-    description: Talk with other users on the forum. If you run into problems, you can always ask for help there.
 settings:
   general: General Settings
   appearance: Appearance

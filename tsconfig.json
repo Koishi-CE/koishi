@@ -54,7 +54,8 @@
 		"plugins/webui/oobe/src",
 		"plugins/webui/sandbox/src",
 		"plugins/webui/status/src",
-		"plugins/webui/theme-vanilla/src"
+		"plugins/webui/theme-vanilla/src",
+		"plugins/webui/welcome/src"
 	],
 	// koishi-scripts 的模板载荷是给下游脚手架项目的源文件（依赖 koishi /
 	// @koishijs/client 等下游包名），不参与本仓类型程序

@@ -38,8 +38,8 @@ The AGPL-3.0 portions remain under AGPL-3.0 in this repository; the MIT portions
 | `plugins/common/assets-local` | [koishijs/assets](https://github.com/koishijs/assets) `packages/local` | [MIT](./LICENSE) |
 | `plugins/common/rate-limit` | [koishijs/common](https://github.com/koishijs/common) `packages/rate-limit` | [MIT](./LICENSE) |
 | `packages/web/{client,components}` | [koishijs/webui](https://github.com/koishijs/webui) `packages/*` | [AGPL-3.0](./LICENSES/AGPL-3.0.txt) |
-| `packages/web/client/app/home/splash.{json,vue}`（欢迎页开屏动画，类名已本地化） | [koishi-plugin-telemetry](https://www.npmjs.com/package/koishi-plugin-telemetry) `clients/oob/client/splash.json` | [MIT](./LICENSE) \*\* |
-| `plugins/webui/*`（其余 16 个） | [koishijs/webui](https://github.com/koishijs/webui) `plugins/*`（含 `market`，对齐原版 v2.11.11） | [AGPL-3.0](./LICENSES/AGPL-3.0.txt) |
+| `plugins/webui/welcome/client/splash.{json,vue}`（欢迎页开屏动画，类名已本地化） | [koishi-plugin-telemetry](https://www.npmjs.com/package/koishi-plugin-telemetry) `clients/oob/client/splash.json` | [MIT](./LICENSE) \*\* |
+| `plugins/webui/*`（其余 17 个，`welcome` 系上游 client 内建欢迎卡迁出为本仓独立插件） | [koishijs/webui](https://github.com/koishijs/webui) `plugins/*`（含 `market`，对齐原版 v2.11.11） | [AGPL-3.0](./LICENSES/AGPL-3.0.txt) |
 | `plugins/webui/{dataview,theme-vanilla}` | [koishijs/koishi-plugin-dataview](https://github.com/koishijs/koishi-plugin-dataview) · [koishijs/theme-vanilla](https://github.com/koishijs/theme-vanilla) | [AGPL-3.0](./LICENSES/AGPL-3.0.txt) |
 | `packages/shim/*`、`apps/*`、`tooling/*` 与根级文件 | 本仓库原创（original work of this repository） | [MIT](./LICENSE) |
 
