@@ -430,7 +430,8 @@ describe("Loader.reload", () => {
 				[kRecordProp]?: Dict<unknown>;
 			}
 		)[kRecordProp] as Dict<{ parent: unknown }>;
-		(forkRecord["probe"] as { parent: unknown }).parent = app;
+		(forkRecord["probe"] as { parent: unknown }).parent =
+			app;
 		await loader.reload(app, "probe", { $filter: null });
 		// 修复前：app.filter 已是自递归闭包，调用即 Maximum call stack
 		expect(() => app.filter({} as never)).not.toThrow();

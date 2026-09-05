@@ -130,7 +130,11 @@ export class Tokenizer {
 				const brac = this.bracs[capture[0]];
 				const argv =
 					brac?.parse?.(source) ||
-					this.parseTokens(source, brac?.terminator, false);
+					this.parseTokens(
+						source,
+						brac?.terminator ?? "",
+						false,
+					);
 				source = argv.rest ?? "";
 				parent.inters.push({
 					...argv,
@@ -166,73 +170,73 @@ export class Tokenizer {
 		}
 	}
 
-		/**
-		 * 把原文完整解析为 Argv。
-		 *
-		 * 先用 h.parse 做元素级预处理：文本元素保持原样，
-		 * 其它元素序列化后转义内部空白，防止被当作分隔符。
-		 * 随后循环取 token 直到遇到 terminator 开头或耗尽；
-		 * 最终从尾部反推出 source（被 tokens + rest 消费掉的部分）。
-		 */
-		parse(source: string, terminator = ""): Argv {
-			source = h
-				.parse(source)
-				.map((el) => {
-					return el.type === "text"
-						? el.toString()
-						: whitespace.escape(el.toString());
-				})
-				.join("");
-			return this.parseTokens(source, terminator, true);
-		}
+	/**
+	 * 把原文完整解析为 Argv。
+	 *
+	 * 先用 h.parse 做元素级预处理：文本元素保持原样，
+	 * 其它元素序列化后转义内部空白，防止被当作分隔符。
+	 * 随后循环取 token 直到遇到 terminator 开头或耗尽；
+	 * 最终从尾部反推出 source（被 tokens + rest 消费掉的部分）。
+	 */
+	parse(source: string, terminator = ""): Argv {
+		source = h
+			.parse(source)
+			.map((el) => {
+				return el.type === "text"
+					? el.toString()
+					: whitespace.escape(el.toString());
+			})
+			.join("");
+		return this.parseTokens(source, terminator, true);
+	}
 
-		/**
-		 * 对已预处理的文本做 token 化（parse 的后半段）。
-		 *
-		 * 插值递归（parseToken 内）必须走本方法：递归拿到的已是外层
-		 * 预处理过的文本，再次 h.parse/escape 会破坏已转义的元素、
-		 * 再次 unescape 会把外层尚未消费的 rest 提前还原，元素被拆成
-		 * 多个垃圾 token
-		 * upstream: koishijs/koishi#1541
-		 *
-		 * @param root 最外层调用：rest/source 在结尾统一还原；
-		 *             插值子层仅还原 source（供 revert 复原原文），
-		 *             rest 保持转义形态交回外层继续切
-		 */
-		private parseTokens(
-			source: string,
-			terminator: string,
-			root: boolean,
-		): Argv {
-			const tokens: Token[] = [];
-			let rest = source,
-				term = "";
-			const stopReg = `\\s+|[${escapeRegExp(terminator)}]|$`;
-			// eslint-disable-next-line no-unmodified-loop-condition
-			while (
-				rest &&
-				!(terminator && rest.startsWith(terminator))
-			) {
-				const token = this.parseToken(rest, stopReg);
-				tokens.push(token);
-				rest = token.rest ?? "";
-				term = token.terminator;
-				delete token.rest;
-			}
-			if (rest.startsWith(terminator)) rest = rest.slice(1);
-			// source = 原文去掉尾部未被消费的 rest 与最后一个终结符
-			source = source.slice(0, -(rest + term).length);
-			if (!root) {
-				return {
-					tokens,
-					rest,
-					source: whitespace.unescape(source),
-				};
-			}
-			rest = whitespace.unescape(rest);
-			source = whitespace.unescape(source);
-			return { tokens, rest, source };
+	/**
+	 * 对已预处理的文本做 token 化（parse 的后半段）。
+	 *
+	 * 插值递归（parseToken 内）必须走本方法：递归拿到的已是外层
+	 * 预处理过的文本，再次 h.parse/escape 会破坏已转义的元素、
+	 * 再次 unescape 会把外层尚未消费的 rest 提前还原，元素被拆成
+	 * 多个垃圾 token
+	 * upstream: koishijs/koishi#1541
+	 *
+	 * @param root 最外层调用：rest/source 在结尾统一还原；
+	 *             插值子层仅还原 source（供 revert 复原原文），
+	 *             rest 保持转义形态交回外层继续切
+	 */
+	private parseTokens(
+		source: string,
+		terminator: string,
+		root: boolean,
+	): Argv {
+		const tokens: Token[] = [];
+		let rest = source,
+			term = "";
+		const stopReg = `\\s+|[${escapeRegExp(terminator)}]|$`;
+		// eslint-disable-next-line no-unmodified-loop-condition
+		while (
+			rest &&
+			!(terminator && rest.startsWith(terminator))
+		) {
+			const token = this.parseToken(rest, stopReg);
+			tokens.push(token);
+			rest = token.rest ?? "";
+			term = token.terminator;
+			delete token.rest;
 		}
+		if (rest.startsWith(terminator)) rest = rest.slice(1);
+		// source = 原文去掉尾部未被消费的 rest 与最后一个终结符
+		source = source.slice(0, -(rest + term).length);
+		if (!root) {
+			return {
+				tokens,
+				rest,
+				source: whitespace.unescape(source),
+			};
+		}
+		rest = whitespace.unescape(rest);
+		source = whitespace.unescape(source);
+		return { tokens, rest, source };
+	}
 
 	/**
 	 * 把 argv 的 tokens / rest 还原为字符串。

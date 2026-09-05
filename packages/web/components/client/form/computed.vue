@@ -146,7 +146,11 @@ const innerSchema = computed(() => {
 	const { meta, ...rest } = props.schema.list[0];
 	return {
 		...rest,
-		meta: { ...props.schema.meta, ...meta, role: meta.role },
+		meta: {
+			...props.schema.meta,
+			...meta,
+			role: meta.role,
+		},
 	};
 });
 

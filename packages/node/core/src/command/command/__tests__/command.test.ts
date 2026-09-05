@@ -426,9 +426,7 @@ describe("Command API", () => {
 		app.plugin(mock);
 		const client = app.mock.client("123");
 
-		app
-			.command("probe <n:number>")
-			.action(() => "ok");
+		app.command("probe <n:number>").action(() => "ok");
 
 		beforeAll(async () => {
 			await app.start();
@@ -448,7 +446,10 @@ describe("Command API", () => {
 			await app.database.setUser("mock", "123", {
 				authority: 1,
 			});
-			await client.shouldReply(".probe abc", /^参数 n 输入无效/);
+			await client.shouldReply(
+				".probe abc",
+				/^参数 n 输入无效/,
+			);
 		});
 	});
 });
