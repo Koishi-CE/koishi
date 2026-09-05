@@ -1,5 +1,18 @@
 # @koishi-ce/plugin-console
 
+## 1.3.0
+
+### Minor Changes
+
+- f90fa0a: 宿主控制台前端重 build：内建欢迎卡移除，欢迎页改由 @koishi-ce/plugin-welcome 提供（需另行启用该插件，脚手架默认模板已预写）。
+
+### Patch Changes
+
+- 08733b3: 宿主控制台前端重 build：带入 @koishi-ce/components 虚拟列表首屏渲染区间修复（日志页冷加载空白，见同期 components 条目）。
+- Updated dependencies [cab60d9]
+- Updated dependencies [f90fa0a]
+  - @koishi-ce/client@1.2.0
+
 ## 1.2.0
 
 ### Minor Changes
