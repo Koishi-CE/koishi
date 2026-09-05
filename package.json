@@ -37,7 +37,12 @@
         "@typescript-eslint/parser": "^8.68.0",
         "vue-eslint-parser": "^10.4.1",
         "@biomejs/biome": "^2.5.10",
-        "tsdown": "^0.22.14",
+        "tsdown": "^0.23.0",
         "@changesets/cli": "^3.0.1"
+    },
+    "dependencies": {
+        "@koishi-ce/plugin-http": "workspace:*",
+        "@koishi-ce/plugin-proxy-agent": "workspace:*",
+        "@koishi-ce/plugin-server": "workspace:*"
     }
 }
