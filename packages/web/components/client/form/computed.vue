@@ -13,7 +13,7 @@
 <template>
   <k-schema
     v-bind="$attrs"
-    :schema="{ ...schema.list[0], meta: { ...schema.meta, ...schema.list[0].meta } }"
+    :schema="innerSchema"
     :modelValue="modelValue"
     @update:modelValue="emit('update:modelValue', $event)"
     :disabled="disabled"
@@ -42,7 +42,7 @@
         :modelValue="modelValue.$switch.branches[index].then"
         @update:modelValue="actions.update(index, 'then', $event)"
         :key="index"
-        :schema="{ ...schema.list[0], meta: { ...schema.meta, ...schema.list[0].meta, description: null } }"
+        :schema="{ ...innerSchema, meta: { ...innerSchema.meta, description: null } }"
         :disabled="disabled"
       >
         <template #menu>
@@ -81,7 +81,7 @@
       <k-schema
         :modelValue="modelValue.$switch.default"
         @update:modelValue="actions.default"
-        :schema="{ ...schema.list[0], meta: { ...schema.meta, ...schema.list[0].meta, description: null } }"
+        :schema="{ ...innerSchema, meta: { ...innerSchema.meta, description: null } }"
         :disabled="disabled"
         :initial="initial?.$switch ? initial.$switch.default : initial"
       >
@@ -136,6 +136,19 @@ const props = defineProps({
 const emit = defineEmits(["update:modelValue"]);
 
 const tt = useI18nText();
+
+// 内层 schema：沿用外层 meta 但以内层自身的 role 覆写。外层的
+// role: computed 专属于本组件，合并时若被内层继承，内层为 union 时
+// 会再次命中本扩展的注册条件（type=union + role=computed）导致递归
+// 接管、值控件不渲染
+// upstream: koishijs/koishi#1382
+const innerSchema = computed(() => {
+	const { meta, ...rest } = props.schema.list[0];
+	return {
+		...rest,
+		meta: { ...props.schema.meta, ...meta, role: meta.role },
+	};
+});
 
 // 当前值是否已展开为 $switch 结构（决定渲染单值形态还是分支列表形态）
 const isSwitch = computed(() => {
