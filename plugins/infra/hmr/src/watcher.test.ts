@@ -17,6 +17,30 @@ import {
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 import watcher from "@parcel/watcher";
+import { isInNodeModules } from "./index.ts";
+
+describe("isInNodeModules 路径分隔符归一", () => {
+	// upstream: koishijs/koishi#1232——win32 的 require.cache 键
+	// 为反斜杠路径，字面量 includes("/node_modules/") 从不命中
+	it("正斜杠与反斜杠路径形态均正确识别", () => {
+		expect(
+			isInNodeModules("/proj/node_modules/foo/index.js"),
+		).toBe(true);
+		expect(
+			isInNodeModules(
+				"C:\\proj\\node_modules\\foo\\index.js",
+			),
+		).toBe(true);
+		expect(
+			isInNodeModules("/proj/plugins/my-plugin/index.ts"),
+		).toBe(false);
+		expect(
+			isInNodeModules(
+				"C:\\proj\\plugins\\my-plugin\\index.ts",
+			),
+		).toBe(false);
+	});
+});
 
 const dir = mkdtempSync(join(tmpdir(), "hmr-watch-"));
 const probe = join(dir, "probe.txt");

@@ -54,6 +54,16 @@ declare module "@koishi-ce/koishi" {
 }
 
 /**
+ * 判断模块路径是否位于 node_modules 内。
+ * win32 下 Bun 的 require.cache 键是反斜杠路径，字面量 includes
+ * 从不命中，node_modules 模块会全量混入依赖图引发误重载
+ * upstream: koishijs/koishi#1232
+ */
+export function isInNodeModules(filename: string): boolean {
+	return filename.split(/[\\/]/).includes("node_modules");
+}
+
+/**
  * 收集某模块及其全部子依赖的文件路径
  * @param filename 入口模块的绝对路径
  * @param ignored 需要排除的文件路径集合
@@ -68,7 +78,7 @@ function loadDependencies(
 		if (
 			ignored.has(filename) ||
 			dependencies.has(filename) ||
-			filename.includes("/node_modules/")
+			isInNodeModules(filename)
 		)
 			return;
 		dependencies.add(filename);
@@ -294,7 +304,7 @@ class Watcher {
 				if (
 					this.accepted.has(filename) ||
 					this.declined.has(filename) ||
-					filename.includes("/node_modules/")
+					isInNodeModules(filename)
 				)
 					continue;
 				pending.push(filename);
@@ -322,7 +332,7 @@ class Watcher {
 					// 忽略已判定为 declined 的子模块
 					if (
 						this.declined.has(filename) ||
-						filename.includes("/node_modules/")
+						isInNodeModules(filename)
 					)
 						continue;
 					if (this.accepted.has(filename)) {
