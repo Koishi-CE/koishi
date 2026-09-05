@@ -8,7 +8,8 @@
 		},
 		"packages/web/client": {
 			"entry": ["client/**/*.ts", "app/**/*.ts"],
-			"ignore": ["app/theme/blank.vue"]
+			"ignore": ["app/theme/blank.vue"],
+			"ignoreDependencies": ["lottie-web"]
 		},
 		"packages/web/components": {
 			"entry": ["client/**/*.ts"]

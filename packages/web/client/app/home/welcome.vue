@@ -3,35 +3,42 @@
 <!-- Copyright (c) 2026-present Koishi-CE contributors. -->
 
 <!--
-  欢迎卡片：文档 / 社区论坛等入口链接。
+  欢迎卡片：文档 / 社区论坛等入口链接，背景为开屏描线动画（splash.vue，
+  移植自 koishi-plugin-telemetry，MIT），内容沉底排布。
   文案走宿主全局词典（client/locales/，7 语种），
   其余扩展可通过 "welcome-choice" 插槽追加自定义入口。
 -->
 <template>
   <div class="k-card welcome">
-    <h1>{{ t('welcome.title') }}</h1>
-    <p>{{ t('welcome.description') }}</p>
-    <div class="choices">
-      <k-slot name="welcome-choice">
-        <k-slot-item :order="1000">
-          <a class="choice" href="https://koishi.chat" rel="noopener noreferer" target="_blank">
-            <h2>{{ t('welcome.docs.title') }}</h2>
-            <p>{{ t('welcome.docs.description') }}</p>
-          </a>
-        </k-slot-item>
-        <k-slot-item :order="500">
-          <a class="choice" href="https://k.ilharp.cc" rel="noopener noreferer" target="_blank">
-            <h2>{{ t('welcome.forum.title') }}</h2>
-            <p>{{ t('welcome.forum.description') }}</p>
-          </a>
-        </k-slot-item>
-      </k-slot>
+    <div class="splash-layer">
+      <splash></splash>
+    </div>
+    <div class="content">
+      <h1>{{ t('welcome.title') }}</h1>
+      <p>{{ t('welcome.description') }}</p>
+      <div class="choices">
+        <k-slot name="welcome-choice">
+          <k-slot-item :order="1000">
+            <a class="choice" href="https://koishi.chat" rel="noopener noreferer" target="_blank">
+              <h2>{{ t('welcome.docs.title') }}</h2>
+              <p>{{ t('welcome.docs.description') }}</p>
+            </a>
+          </k-slot-item>
+          <k-slot-item :order="500">
+            <a class="choice" href="https://k.ilharp.cc" rel="noopener noreferer" target="_blank">
+              <h2>{{ t('welcome.forum.title') }}</h2>
+              <p>{{ t('welcome.forum.description') }}</p>
+            </a>
+          </k-slot-item>
+        </k-slot>
+      </div>
     </div>
   </div>
 </template>
 
 <script lang="ts" setup>
 import { useI18n } from "vue-i18n";
+import Splash from "./splash.vue";
 
 // 全局 composer：词典由宿主 $i18n 服务在挂载前注入
 const { t } = useI18n();
@@ -45,7 +52,36 @@ const { t } = useI18n();
   --welcome-choice-padding: 0.5rem 1.5rem;
   --welcome-gap: 2rem;
 
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  // 全高卡片：动画铺满，内容沉底（对齐 splash 原版页面的观感）
+  height: max(
+    calc(
+      100vh - var(--header-height) - var(--footer-height) - var(
+          --card-margin
+        ) - var(--card-margin)
+    ),
+    400px
+  );
   padding: var(--welcome-padding);
+
+  // 动画未挂载（prefers-reduced-motion）时回落为原紧凑卡片
+  &:not(:has(.splash svg)) {
+    height: auto;
+  }
+
+  .splash-layer {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+  }
+
+  .content {
+    position: relative;
+  }
 
   h1 {
     font-size: var(--welcome-title);

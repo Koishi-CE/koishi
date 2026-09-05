@@ -38,8 +38,11 @@ The AGPL-3.0 portions remain under AGPL-3.0 in this repository; the MIT portions
 | `plugins/common/assets-local` | [koishijs/assets](https://github.com/koishijs/assets) `packages/local` | [MIT](./LICENSE) |
 | `plugins/common/rate-limit` | [koishijs/common](https://github.com/koishijs/common) `packages/rate-limit` | [MIT](./LICENSE) |
 | `packages/web/{client,components}` | [koishijs/webui](https://github.com/koishijs/webui) `packages/*` | [AGPL-3.0](./LICENSES/AGPL-3.0.txt) |
+| `packages/web/client/app/home/splash.{json,vue}`（欢迎页开屏动画，类名已本地化） | [koishi-plugin-telemetry](https://www.npmjs.com/package/koishi-plugin-telemetry) `clients/oob/client/splash.json` | [MIT](./LICENSE) \*\* |
 | `plugins/webui/*`（其余 16 个） | [koishijs/webui](https://github.com/koishijs/webui) `plugins/*`（含 `market`，对齐原版 v2.11.11） | [AGPL-3.0](./LICENSES/AGPL-3.0.txt) |
 | `plugins/webui/{dataview,theme-vanilla}` | [koishijs/koishi-plugin-dataview](https://github.com/koishijs/koishi-plugin-dataview) · [koishijs/theme-vanilla](https://github.com/koishijs/theme-vanilla) | [AGPL-3.0](./LICENSES/AGPL-3.0.txt) |
 | `packages/shim/*`、`apps/*`、`tooling/*` 与根级文件 | 本仓库原创（original work of this repository） | [MIT](./LICENSE) |
 
 \* MIT as declared in the upstream `package.json` of each package.
+
+\*\* MIT 文件包含于 AGPL 目录：该文件仍以 MIT 授权（© ilharp），其余部分适用所在目录的 AGPL-3.0。MIT files inside an AGPL directory remain under MIT (© ilharp); the rest of the directory stays under AGPL-3.0.
