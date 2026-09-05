@@ -97,7 +97,20 @@ export function baseManifest(): Manifest {
 			start: "koishi start",
 			// bun run 走 Bun Shell，`NODE_ENV=...` 前缀天然跨平台，无需 cross-env
 			dev: "NODE_ENV=development koishi start",
+			// 插件开发链（devDep @koishi-ce/scripts 的 koishi-scripts CLI，操作
+			// 本工作区 plugins/ 与 external/；纯运行 bot 的项目用不到这些入口，
+			// prod 模式删 devDependencies 后它们自然失效）：
+			// new 生成插件骨架到 external/，clone 克隆已有插件仓库本地联动，
+			// build / release* 构建并发布 external/ 下的插件（version → build
+			// → publish 三环，dry-run 为演练形态）
 			new: "koishi-scripts setup",
+			clone: "koishi-scripts clone",
+			build: "koishi-scripts build",
+			"release:version": "koishi-scripts version",
+			"release:dryrun":
+				"bun run release:version && bun run build && koishi-scripts publish --dry-run",
+			release:
+				"bun run release:version && bun run build && koishi-scripts publish",
 		},
 		dependencies: {
 			"@koishi-ce/koishi": "^1.0.0",

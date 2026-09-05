@@ -48,6 +48,27 @@ test("内置模板 packageManager 钉 Bun，脚本用 Bun Shell 环境变量前�
 	);
 });
 
+test("内置模板提供插件开发全链脚本入口（koishi-scripts 子命令形态）", () => {
+	const { scripts } = baseManifest() as unknown as {
+		scripts: Record<string, string>;
+	};
+	// 插件开发链 = devDep @koishi-ce/scripts 的 koishi-scripts CLI 子命令；
+	// new 用主命令名 setup（new/create/init 是 koishi-scripts 的别名）
+	expect(scripts["new"]).toBe("koishi-scripts setup");
+	expect(scripts["clone"]).toBe("koishi-scripts clone");
+	expect(scripts["build"]).toBe("koishi-scripts build");
+	expect(scripts["release:version"]).toBe(
+		"koishi-scripts version",
+	);
+	// release 链 = version → build → publish 三环串联（前环自引用脚本）
+	expect(scripts["release"]).toBe(
+		"bun run release:version && bun run build && koishi-scripts publish",
+	);
+	expect(scripts["release:dryrun"]).toBe(
+		"bun run release:version && bun run build && koishi-scripts publish --dry-run",
+	);
+});
+
 test("内置模板以 npm alias 钉住 koishi 裸名，版本保持 4.18.x 冻结线", () => {
 	const request = baseManifest().dependencies?.["koishi"];
 	expect(typeof request).toBe("string");

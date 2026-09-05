@@ -30,4 +30,18 @@ bun run dev          # 启动（开发模式，启用 HMR 热更新）
 
 ## 自定义插件
 
-在 `plugins/` 目录下创建插件包（可用 `bun run new <名称>` 生成骨架），在 `koishi.yml` 中以相对路径引用（如 `./plugins/my-plugin`）即可启用；Bun 直接加载 TypeScript 源码，无需预编译。
+手动在 `plugins/` 目录下创建插件包，或经脚手架进入 `external/` 工作区：
+
+- `bun run new <名称>` —— 生成插件骨架到 `external/`（`--console` 附带控制台前端扩展）
+- `bun run clone <仓库>` —— 克隆已有插件源码到 `external/` 本地联动调试
+
+两种来源的插件都在 `koishi.yml` 中以相对路径引用（如 `./plugins/my-plugin`、`./external/my-plugin`）即可启用；Bun 直接加载 TypeScript 源码，无需预编译。
+
+## 插件构建与发布
+
+针对 `external/` 工作区的插件项目：
+
+- `bun run build` —— 串行构建 `external/` 下全部可构建项目
+- `bun run release:version` —— 消费 pending changeset 提升版本号
+- `bun run release:dryrun` —— 完整发布链演练（version → build → publish --dry-run）
+- `bun run release` —— 完整发布链（version → build → publish）
