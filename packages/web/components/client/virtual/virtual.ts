@@ -66,7 +66,15 @@ export default class Virtual {
 
 	constructor(param: VirtualConfig) {
 		this.param = param;
-		this.checkRange(0, param.count);
+		// 上游 range 初始为空对象（start 为 undefined），checkRange 的
+		// start 相等守卫不会拦住首次计算；本仓因严格 TS 把零值写死后，
+		// 守卫 0 !== 0 恒假会跳过初始 updateRange，导致 end 停留在 0、
+		// 首屏渲染区间为空（日志页首屏空白，直到首次数据变化才被唤醒）。
+		// 故构造时绕过守卫直接写入初始渲染区间 [0, min(count, 总数))
+		this.updateRange(
+			0,
+			Math.min(param.count, param.uids.length),
+		);
 	}
 
 	/** 数据源变化后同步 uid 列表，并清掉已消失项的尺寸记录（保留 header/footer） */

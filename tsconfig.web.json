@@ -31,7 +31,10 @@
 		"plugins/webui/theme-vanilla/client"
 	],
 	"exclude": [
-		"packages/web/components/client/schemastery-vue-runtime.ts"
+		"packages/web/components/client/schemastery-vue-runtime.ts",
+		// web 侧测试文件运行时由 bun test 覆盖；client 工程 types: [] 保持
+		// 浏览器纯净（不载 bun-types），故测试代码不进入本类型检查
+		"packages/web/components/client/**/*.test.ts"
 	],
 	"compilerOptions": {
 		// 与 tsconfig.json（node 侧）各自独立一份 buildinfo，共用会互相判失效（见该文件头注释）。
