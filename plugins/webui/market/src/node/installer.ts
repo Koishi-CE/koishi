@@ -174,7 +174,7 @@ class Installer extends Service {
 		Promise<Dict<Pick<RemotePackage, DependencyMetaKey>>>
 	> = {};
 	private manifest: LocalPackage;
-	private declare depTask: Promise<Dict<Dependency>>;
+	declare private depTask: Promise<Dict<Dependency>>;
 	private flushData: () => void;
 
 	override config: Installer.Config;
