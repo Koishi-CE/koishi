@@ -3,6 +3,10 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <!-- 外链头像/图片（平台 CDN、gravatar 等）对携带本站 Referer 的请求
+         回 403，CSS 背景图无法逐元素设置 referrerpolicy，全局不发送
+         upstream: koishijs/koishi#1377 -->
+    <meta name="referrer" content="no-referrer" />
     <title>Koishi 控制台</title>
     <link rel="icon" href="/assets/logo.png" />
   </head>
