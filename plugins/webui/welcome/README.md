@@ -2,7 +2,7 @@
 
 **简体中文** | [English](#english)
 
-控制台首页欢迎卡插件：全高卡片、内容沉底，背景为 Lottie 开屏描线动画（射线扫过 + 圆环与四芒星成形），描线颜色经 CSS 类映射到控制台主题变量，自动适配明暗主题；`prefers-reduced-motion` 偏好下不挂动画、卡片回落紧凑形态。欢迎卡的「文档 / 论坛」入口与文案（7 语种）承自上游 webui client 的内建欢迎页，由本插件迁出为独立插件；动画数据移植自 MIT 授权的 [koishi-plugin-telemetry](https://www.npmjs.com/package/koishi-plugin-telemetry)（见仓库 `NOTICE`）。
+控制台首页欢迎卡插件：全高卡片、内容沉底，背景为 Lottie 开屏描线动画（射线扫过 + 圆环与四芒星成形），描线颜色经 CSS 类映射到控制台主题变量，自动适配明暗主题；`prefers-reduced-motion` 偏好下不挂动画、卡片回落紧凑形态。欢迎卡的「文档 / 论坛」入口与文案（7 语种）承自上游 webui client 的内建欢迎页，由本插件迁出为独立插件；开屏动画（数据与加载接线）移植自 [koishi-plugin-telemetry](https://github.com/koishijs/koishi-plugin-telemetry)（MIT，唯一开发者 Il Harper，见仓库 `NOTICE`），该部分保持 MIT 授权。
 
 ## 功能与页面
 
@@ -34,13 +34,13 @@ plugins:
 
 ## 许可证
 
-[AGPL-3.0](https://github.com/Koishi-CE/koishi/blob/main/LICENSES/AGPL-3.0.txt)。版权归 Shigma 及 Koishijs 贡献者（上游内建欢迎卡部分）、ilharp（MIT 的 splash 动画数据）与 Koishi-CE 贡献者，见 [NOTICE](https://github.com/Koishi-CE/koishi/blob/main/NOTICE)。
+[AGPL-3.0](https://github.com/Koishi-CE/koishi/blob/main/LICENSES/AGPL-3.0.txt)（splash 开屏动画文件为 MIT，见上）。版权归 Shigma 及 Koishijs 贡献者（上游内建欢迎卡部分）、Il Harper（splash 开屏动画，移植自其 MIT 授权的 telemetry 插件）与 Koishi-CE 贡献者，见 [NOTICE](https://github.com/Koishi-CE/koishi/blob/main/NOTICE)。
 
 ---
 
 ## English
 
-Welcome card plugin for the console home page: a full-height card with bottom-anchored content over a Lottie line-drawing splash animation (sweeping rays, then a ring and four-pointed star taking shape). Stroke colors are mapped to console theme variables via CSS classes and adapt to light/dark themes; with `prefers-reduced-motion` the animation is skipped and the card falls back to a compact form. The card's docs/forum entries and texts (7 locales) originate from the built-in welcome page of the upstream webui client, moved into this standalone plugin; the animation data is ported from the MIT-licensed [koishi-plugin-telemetry](https://www.npmjs.com/package/koishi-plugin-telemetry) (see the repository `NOTICE`).
+Welcome card plugin for the console home page: a full-height card with bottom-anchored content over a Lottie line-drawing splash animation (sweeping rays, then a ring and four-pointed star taking shape). Stroke colors are mapped to console theme variables via CSS classes and adapt to light/dark themes; with `prefers-reduced-motion` the animation is skipped and the card falls back to a compact form. The card's docs/forum entries and texts (7 locales) originate from the built-in welcome page of the upstream webui client, moved into this standalone plugin; the splash animation (data and loading wiring) is ported from [koishi-plugin-telemetry](https://github.com/koishijs/koishi-plugin-telemetry) (MIT, sole developer Il Harper, see the repository `NOTICE`), and those files remain under MIT.
 
 ## Features
 
@@ -72,4 +72,4 @@ plugins:
 
 ## License
 
-[AGPL-3.0](https://github.com/Koishi-CE/koishi/blob/main/LICENSES/AGPL-3.0.txt). Copyright belongs to Shigma and Koishijs contributors (upstream built-in welcome card), ilharp (MIT splash animation data), and Koishi-CE contributors; see [NOTICE](https://github.com/Koishi-CE/koishi/blob/main/NOTICE).
+[AGPL-3.0](https://github.com/Koishi-CE/koishi/blob/main/LICENSES/AGPL-3.0.txt) (the splash animation files are MIT, see above). Copyright belongs to Shigma and Koishijs contributors (upstream built-in welcome card), Il Harper (splash animation, ported from his MIT-licensed telemetry plugin), and Koishi-CE contributors; see [NOTICE](https://github.com/Koishi-CE/koishi/blob/main/NOTICE).

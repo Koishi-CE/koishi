@@ -1,10 +1,13 @@
-<!-- SPDX-License-Identifier: AGPL-3.0-only -->
-<!-- Copyright (c) 2026-present Koishi-CE contributors. -->
+<!-- SPDX-License-Identifier: MIT -->
+<!-- Copyright (c) 2024 Il Harper (ilharp). -->
+<!-- Modifications Copyright (c) 2026-present Koishi-CE contributors. -->
 
 <!--
-  欢迎页开屏动画：lottie-web（SVG-only 精简构建）驱动的描线动画，
-  动画数据 splash.json 移植自 koishi-plugin-telemetry（MIT，© ilharp），
-  详见 NOTICE 溯源表。
+  欢迎页开屏动画：lottie-web（SVG-only 精简构建）驱动的描线动画。
+  本文件与 splash.json 均移植自 koishi-plugin-telemetry（MIT，唯一开发者
+  Il Harper，https://github.com/koishijs/koishi-plugin-telemetry）的 oob
+  客户端：动画数据取自 splash.json，加载接线取自 home.vue，类名已本地化，
+  详见 NOTICE 溯源表。该文件保持 MIT 授权，不随所在目录适用 AGPL。
 
   动画内描线颜色不在 JSON 里指定（透明），而是经 cl class
   （welcome-splash-ray / welcome-splash-figure）映射到宿主主题变量，
