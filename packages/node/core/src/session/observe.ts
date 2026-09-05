@@ -6,7 +6,8 @@
  * 会话数据装配层：频道与用户数据的获取、创建与观察缓存。
  *
  * getXxx 只做一次性查询（记录不存在时按 autoAssign / autoAuthorize
- * 配置决定是否入库创建）；observeXxx 在此之上包装 observe 观察对象，
+ * 配置决定是否入库创建，创建路径撞唯一键时重查回退——并发 get-or-create
+ * 竞态见上游 issue #1545）；observeXxx 在此之上包装 observe 观察对象，
  * 修改会在事件循环收尾时自动 diff 写回数据库（见 middleware/index.ts）。
  * 未入库的"游离"数据带 $detached 标记，写回前被拦截。
  */
@@ -44,11 +45,29 @@ export class SessionObservable extends SessionMessaging {
 			? this.selfId
 			: "";
 		if (assignee) {
-			return app.database.createChannel(platform, id, {
-				assignee,
-				guildId: guildId ?? "",
-				createdAt: new Date(),
-			});
+			try {
+				return await app.database.createChannel(
+					platform,
+					id,
+					{
+						assignee,
+						guildId: guildId ?? "",
+						createdAt: new Date(),
+					},
+				);
+			} catch (error) {
+				// check-then-act 竞态：同 tick 多条消息并发发现记录缺失，
+				// 首个 INSERT 成功后其余撞 (id, platform) 唯一键。
+				// 重查命中说明记录已被并发方创建，返回它；未命中才向上抛
+				// https://github.com/koishijs/koishi/issues/1545
+				const existing = await app.database.getChannel(
+					platform,
+					id,
+					fields,
+				);
+				if (existing) return existing as unknown as Channel;
+				throw error;
+			}
 		} else {
 			// 游离频道：仅存在于内存，写回会被 $detached 守卫拦截
 			const table = app.model.tables["channel"];
@@ -158,11 +177,26 @@ export class SessionObservable extends SessionMessaging {
 			createdAt: new Date(),
 		};
 		if (authority) {
-			return app.database.createUser(
-				platform,
-				userId,
-				data,
-			);
+			try {
+				return await app.database.createUser(
+					platform,
+					userId,
+					data,
+				);
+			} catch (error) {
+				// 同 getChannel：并发创建撞 binding 表 (pid, platform)
+				// 唯一键时重查返回并发方创建的记录。
+				// 注：createUser = create user + create binding 两步非事务，
+				// 竞态落败方已插入的 user 行成为孤儿（无 binding 指向），
+				// 属上游继承的结构性问题，此处仅消除报错并保证语义正确
+				const existing = await app.database.getUser(
+					platform,
+					userId,
+					fields,
+				);
+				if (existing) return existing as unknown as User;
+				throw error;
+			}
 		} else {
 			// 游离用户：仅存在于内存，写回会被 $detached 守卫拦截
 			const table = app.model.tables["user"];

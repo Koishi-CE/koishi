@@ -220,4 +220,111 @@ describe("Session Observable", () => {
 			app.database.getUser("mock", "u-anon"),
 		).resolves.toBeUndefined();
 	});
+
+	// 上游 issue #1545：同 tick 多条同频道消息并发走 check-then-act，
+	// SELECT 均未命中、多个 INSERT 撞 (id, platform) 唯一键。
+	// 修复后创建路径撞键时重查返回既有记录，不再抛错。
+	//
+	// 注：memory 驱动的 create 查重有 TOCTOU 窗口（查重与 push 间可让位），
+	// 并发 create 只会静默落重复行、不抛错，无法自然复现 sqlite 的
+	// UNIQUE 约束冲突——因此用假 database 在 session.app 边界模拟竞态落败方
+	// （不直接 stub database 服务：app.database 每次访问返回新的 cordis
+	// 包装，方法绑定的混合 this 无法从外部重建）
+
+	/** 向 session 注入假 database（session.app 是原型 getter，实例遮蔽） */
+	function injectFakeDatabase(
+		session: Session,
+		database: Record<string, () => unknown>,
+	) {
+		Object.defineProperty(session, "app", {
+			configurable: true,
+			value: { koishi: app.koishi, database },
+		});
+	}
+
+	it("getChannel 创建撞唯一键时重查返回既有记录", async () => {
+		const session = createSession({ channelId: "RACE-CH" });
+		const existing = {
+			platform: "mock",
+			id: "RACE-CH",
+			assignee: bot.selfId,
+			flag: 0,
+		};
+		let selectCount = 0;
+		injectFakeDatabase(session, {
+			// 入口查询谎报未命中（并发窗口），竞态回退的重查命中既有记录
+			getChannel: async () =>
+				++selectCount === 1 ? undefined : existing,
+			createChannel: async () => {
+				// 撞键错误以 sqlite 形态模拟（session 层不识别错误形态）
+				throw new Error(
+					"UNIQUE constraint failed: channel.id, channel.platform",
+				);
+			},
+		});
+		const channel = await session.getChannel("RACE-CH", [
+			"flag",
+		]);
+		expect(channel).toHaveShape({
+			id: "RACE-CH",
+			assignee: bot.selfId,
+		});
+		// 入口查询 + 竞态回退重查
+		expect(selectCount).toBe(2);
+	});
+
+	it("getUser 创建撞唯一键时重查返回既有记录", async () => {
+		const session = createSession({
+			channelId: "C7",
+			userId: "u-race",
+		});
+		const existing = { id: 1, authority: 1, flag: 0 };
+		let selectCount = 0;
+		injectFakeDatabase(session, {
+			getUser: async () =>
+				++selectCount === 1 ? undefined : existing,
+			createUser: async () => {
+				throw new Error("duplicate-entry");
+			},
+		});
+		const user = await session.getUser("u-race", [
+			"authority",
+		]);
+		expect(user).toHaveShape({ authority: 1 });
+		expect(selectCount).toBe(2);
+	});
+
+	it("getChannel 创建失败且重查未命中时原样抛出", async () => {
+		const session = createSession({
+			channelId: "RACE-FAIL",
+		});
+		injectFakeDatabase(session, {
+			getChannel: async () => undefined,
+			createChannel: async () => {
+				throw new Error(
+					"UNIQUE constraint failed: channel.id, channel.platform",
+				);
+			},
+		});
+		// 非竞态错误（重查仍无记录）不得被 catch 吞掉
+		await expect(
+			session.getChannel("RACE-FAIL", ["flag"]),
+		).rejects.toThrow("UNIQUE constraint");
+	});
+
+	it("同 tick 并发 getChannel 全部拿到频道记录", async () => {
+		// 冒烟用例：memory 驱动下并发 create 不抛错（见上注），
+		// 仅保证并发观察路径不引入串行阻塞或异常
+		const sessions = Array.from({ length: 4 }, () =>
+			createSession({ channelId: "CONC" }),
+		);
+		const channels = await Promise.all(
+			sessions.map((session) =>
+				session.getChannel("CONC", ["flag"]),
+			),
+		);
+		for (const channel of channels) {
+			expect(channel).toHaveShape({ id: "CONC" });
+		}
+	});
 });
