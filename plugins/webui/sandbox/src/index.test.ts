@@ -8,6 +8,8 @@ import {
 	describe,
 	expect,
 	it,
+	// 别名避开顶部既有的 `import mock from "@koishi-ce/plugin-mock"`
+	mock as spy,
 } from "bun:test";
 import {
 	mkdtempSync,
@@ -259,6 +261,37 @@ describe("sandbox 插件", () => {
 			"404",
 		);
 		expect(none).toBeUndefined();
+	});
+
+	it("set-user 成员事件经 dispatch 派发、受上下文过滤器约束", async () => {
+		// upstream: koishijs/koishi#1470——裸 ctx.emit(事件名, session) 不带
+		// 过滤载体，会绕过所有监听方的过滤器
+		const { client } = createFakeClient();
+		const received = spy();
+		const disposeReceived = app.on(
+			"guild-member-added",
+			received,
+		);
+		const isolated = app.never();
+		const rejected = spy();
+		const disposeRejected = isolated.on(
+			"guild-member-added",
+			rejected,
+		);
+		try {
+			await call(
+				"sandbox/set-user",
+				client,
+				"sandbox:web",
+				"9527",
+				{ authority: 1 },
+			);
+			expect(received).toHaveBeenCalledTimes(1);
+			expect(rejected).not.toHaveBeenCalled();
+		} finally {
+			disposeReceived();
+			disposeRejected();
+		}
 	});
 
 	it("response 监听器把浏览器应答转发为应用事件", async () => {

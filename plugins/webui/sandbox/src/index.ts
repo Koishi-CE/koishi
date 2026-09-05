@@ -280,10 +280,13 @@ export function apply(ctx: Context, config: Config) {
 			const session = bot.session(createEvent(pid, "#"));
 			if (data) {
 				session.type = "guild-member-added";
-				ctx.emit("guild-member-added", session);
+				// 经 bot.dispatch 派发（session 作为过滤载体），与消息事件
+				// 一致；直接 ctx.emit(事件名, session) 会绕过过滤器
+				// upstream: koishijs/koishi#1470
+				bot.dispatch(session);
 			} else {
 				session.type = "guild-member-removed";
-				ctx.emit("guild-member-removed", session);
+				bot.dispatch(session);
 			}
 			const database = ctx.get("database");
 			if (!database) return;
