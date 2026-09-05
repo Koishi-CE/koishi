@@ -1,1 +1,2 @@
 path: 数据库路径。
+extensions: 启动时加载的 SQLite 扩展文件列表（相对 baseDir 解析，同名 SQL 函数会被扩展实现覆盖）。

@@ -58,6 +58,7 @@ export class SQLiteDriver extends Driver<SQLiteDriver.Config> {
 	static Config: z<SQLiteDriver.Config> = z
 		.object({
 			path: z.string().role("path").required(),
+			extensions: z.array(z.string().role("path")),
 		})
 		.i18n({
 			"en-US": enUS,
@@ -85,9 +86,28 @@ export class SQLiteDriver extends Driver<SQLiteDriver.Config> {
 		}
 
 		const { DatabaseSync } = await import("node:sqlite");
-		this.db = new DatabaseSync(this.path);
+		this.db = new DatabaseSync(this.path, {
+			// 为下方 extensions 配置的 loadExtension 打开门；
+			// 未配置扩展时该开关无副作用
+			allowExtension: true,
+		});
 		registerFunctions(this.db);
 		defineTypes(this);
+
+		// 扩展在内置函数之后加载：同名 SQL 函数会被扩展实现覆盖
+		// （例如以原生 PCRE 版 regexp 替换 JS 版）。路径相对
+		// baseDir 解析，绝对路径原样使用。
+		for (const extension of this.config.extensions ?? []) {
+			const target = resolve(this.ctx.baseDir, extension);
+			try {
+				this.db.loadExtension(target);
+			} catch (error) {
+				throw new Error(`加载 SQLite 扩展失败：${target}`, {
+					cause: error,
+				});
+			}
+			this.logger.info("已加载 SQLite 扩展：%s", target);
+		}
 	}
 
 	async stop() {
@@ -248,6 +268,8 @@ export class SQLiteDriver extends Driver<SQLiteDriver.Config> {
 namespace SQLiteDriver {
 	export interface Config {
 		path: string;
+		/** 启动时经 loadExtension 加载的扩展文件列表（相对 baseDir 解析）。 */
+		extensions?: string[];
 	}
 }
 

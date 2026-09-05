@@ -64,6 +64,7 @@ app.plugin(SQLiteDriver, { path: ":memory:" });
 
 /** 测试内窥驱动实例的手法（minato Database 的 drivers 不在公开类型上） */
 type TestDriver = {
+	_get(sql: string, params?: unknown[]): unknown;
 	getIndexes(table: string): Promise<
 		{
 			name: string;
@@ -248,6 +249,77 @@ describe("SQLite regexp 算子", () => {
 			text: { $regex: "w.rld" },
 		});
 		expect(cs).toHaveLength(0);
+	});
+});
+
+describe("SQLite regexp 编译缓存", () => {
+	it("同 pattern 重复调用命中缓存且结果一致", () => {
+		const driver = getDriver();
+		const scalar = (sql: string) =>
+			(driver._get(sql) as { v: number }).v;
+		expect(
+			scalar("select regexp('l+o', 'hello') as v"),
+		).toBe(1);
+		// 缓存命中路径：同 pattern 换目标串，结果随串而非随缓存走
+		expect(
+			scalar("select regexp('l+o', 'hellx') as v"),
+		).toBe(0);
+		expect(
+			scalar("select regexp2('w.rld', 'World', 'i') as v"),
+		).toBe(1);
+		expect(
+			scalar("select regexp2('w.rld', 'hellx', 'i') as v"),
+		).toBe(0);
+	});
+
+	it("g 标志正则复用缓存时 lastIndex 复位", () => {
+		const driver = getDriver();
+		const one = driver._get(
+			"select regexp2('a', 'a', 'g') as v",
+		) as { v: number };
+		const two = driver._get(
+			"select regexp2('a', 'a', 'g') as v",
+		) as { v: number };
+		// 若未复位，第二次 test 从 lastIndex=1 起匹配会返回 0
+		expect(one.v).toBe(1);
+		expect(two.v).toBe(1);
+	});
+
+	it("非法 flags 照常抛错且不污染缓存", () => {
+		const driver = getDriver();
+		expect(() =>
+			driver._get("select regexp2('a', 'a', 'zz') as v"),
+		).toThrow();
+	});
+});
+
+describe("SQLite extensions 配置", () => {
+	it("扩展路径不存在时报加载错误（非 allowExtension 门控拒绝）", async () => {
+		// cordis 会吞掉 ready 钩子里的驱动错误（app.start() 照常
+		// resolve、database 服务挂掉），故绕开插件装载、按
+		// Driver.Constructor 签名直接构造驱动断言；App 不 start
+		// 则 ready 不触发，start() 只由本用例手动调用一次
+		const host = new App();
+		const driver = new SQLiteDriver(host, {
+			path: ":memory:",
+			extensions: ["no-such-extension"],
+		});
+		let error: Error | undefined;
+		try {
+			await driver.start();
+		} catch (e) {
+			error = e as Error;
+		}
+		expect(error).toBeInstanceOf(Error);
+		expect(error!.message).toContain(
+			"加载 SQLite 扩展失败",
+		);
+		// 错误须源于真实文件加载（allowExtension 已开），而非
+		// "extension loading is not allowed" 的门控拒绝
+		expect((error!.cause as Error).message).not.toMatch(
+			/extension loading is not allowed/,
+		);
+		await driver.stop();
 	});
 });
 

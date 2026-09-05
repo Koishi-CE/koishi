@@ -1,1 +1,2 @@
 path: Database path.
+extensions: SQLite extension files to load at startup (resolved against baseDir; same-name SQL functions get overridden by the extension).
