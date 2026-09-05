@@ -227,11 +227,15 @@ export interface Session<
 	middleware(middleware: Middleware): () => boolean;
 	/** 等待当前用户的下一条消息（剥离 @机器人 前缀），超时返回 undefined */
 	prompt(timeout?: number): Promise<string | undefined>;
-	/** prompt 的回调版本：以自定义逻辑处理下一条消息并返回结果 */
+	/**
+	 * prompt 的回调版本：以自定义逻辑处理下一条消息并返回结果。
+	 * 超时同样 resolve(undefined)（不抛异常），回调自身也可返回可空值
+	 * upstream: koishijs/koishi#1516
+	 */
 	prompt<T>(
 		callback: (session: Session) => Awaitable<T>,
 		options?: PromptOptions,
-	): Promise<T>;
+	): Promise<T | undefined>;
 	/** 发送纠错建议；当只剩唯一候选时等待用户输入 `.` 确认，返回确认结果 */
 	suggest(
 		options: SuggestOptions,

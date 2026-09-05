@@ -40,7 +40,8 @@ export class SessionInteractive extends SessionExecutable {
 	 *
 	 * 无回调重载直接返回去前缀后的消息文本；
 	 * 回调返回 null/undefined 视为"未消费"，继续传递给后续中间件。
-	 * 超时后注销中间件并 resolve(undefined)。
+	 * 两个重载超时后均 resolve(undefined)、不抛异常
+	 * （upstream: koishijs/koishi#1516）。
 	 */
 	override prompt(
 		timeout?: number,
@@ -48,7 +49,7 @@ export class SessionInteractive extends SessionExecutable {
 	override prompt<T>(
 		callback: (session: Session) => Awaitable<T>,
 		options?: PromptOptions,
-	): Promise<T>;
+	): Promise<T | undefined>;
 	override prompt(...args: unknown[]): unknown {
 		const callback: (
 			session: Session,
