@@ -1,5 +1,14 @@
 # @koishi-ce/koishi
 
+## 1.0.9
+
+### Patch Changes
+
+- Updated dependencies [0b68ace]
+  - @koishi-ce/core@1.1.1
+  - @koishi-ce/loader@1.0.6
+  - @koishi-ce/utils@1.0.0
+
 ## 1.0.8
 
 ### Patch Changes
