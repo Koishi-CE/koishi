@@ -48,8 +48,6 @@
 		"@koishi-ce/koishi": "^1.0.0"
 	},
 	"devDependencies": {
-		"@types/babel__code-frame": "^7.0.6",
-		"esbuild": "^0.28.2",
 		"@koishi-ce/koishi": "workspace:*"
 	},
 	"dependencies": {

@@ -144,7 +144,7 @@ expect(app.database.getUser("mock", "A")).resolves.toHaveShape({ authority: 1 })
 8. **TS7 的跨文件 `declare module` 增强对「经 lib 产物 d.ts 的模块骨架」不生效**：浏览器端工程对 console 类型的消费走 `packages/web/client/client/shims.d.ts` 手写的 `"@koishi-ce/plugin-console"` 骨架，各插件 client 工程须向同一模块名镜像自己的 Services / Events 注入，载荷要用骨架自带的 `DataService<T>` 包装。market 的镜像是 `plugins/webui/market/client/console-services.ts`（类型实体经 `market/client/tsconfig.json` 指向各包 lib 产物 d.ts 解析）——**node 侧声明变更时须同步该文件**。
 9. **前端构建没有 vite 配置文件**，全部编程式 `vite.build()`：宿主总装 `packages/web/client/scripts/client.ts`（产物硬编码到 `plugins/webui/console/dist`）；单插件 `build(root)` 内置 `collectWorkspaceAliases()`——未被依赖的 workspace 包不会出现在 node_modules 链接里，必须显式映射才能被 bundler 解析。
 10. **特殊构建 hack**（动对应构建链必须复核）：analytics 的 "fuck-echarts"（`build/client.ts`，echarts chunk 内 `Symbol` 重命名）、explorer 的 monaco manualChunks（位于 `client/editor.ts`）、client 构建的 vue-i18n `esm-browser.prod` 别名。
-11. **hmr 的 esbuild 仅剩类型引用**：TS 即时编译由 Bun 原生完成，esbuild 已降为 devDep（仅 `import type { BuildFailure }`，编译期擦除）；hmr 注释里的「loader 借助 esbuild 即时编译」为上游 Node 生态的历史表述。
+11. **hmr 的 TS 即时编译由 Bun 原生完成**：require 坏 TS 抛 `AggregateError`（errors 为 Bun 的 BuildMessage，带 `message` 与 `position.{file,line,column}`，无 esbuild 式 `.text`/`.location` 字段——上游按 esbuild BuildFailure 写的错误识别分支在 Bun 下永不命中，现已在 `hmr/src/error.ts` 按真实形态重写）；`@babel/code-frame`@8 自带类型（`@types/babel__code-frame` 为 v7 线存根、从未生效，已删），esbuild devDep 已移除。
 12. **上游 port 须补 `.ts` 扩展名**：上游源码是无后缀的 bundler 风格相对导入，本仓 nodenext 类型检查要求相对导入带扩展名；port 流程见 [../process/upstream.md](../process/upstream.md)。
 13. **Biome 的 JSON 行尾不可见字符**：已知、正常、无害，看到即跳过，不调查、不修复、不报告。
 14. **`apps/koishi-create`（目录）≠ `create-koishi-ce`（包名）**：历史遗留的命名不一致，引用一律以 `apps/koishi-create` 为准。
