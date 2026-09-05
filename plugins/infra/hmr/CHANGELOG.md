@@ -1,5 +1,16 @@
 # @koishi-ce/plugin-hmr
 
+## 1.1.1
+
+### Patch Changes
+
+- 4c38b94: 修复 win32 下 Bun 的 require.cache 键为反斜杠路径导致 node_modules 过滤从不命中、外部依赖全量混入热重载依赖图引发误重载的问题（upstream: koishijs/koishi#1232）
+- Updated dependencies [f429185]
+- Updated dependencies [361be0b]
+- Updated dependencies [7eb0706]
+  - @koishi-ce/loader@1.0.7
+  - @koishi-ce/koishi@1.0.11
+
 ## 1.1.0
 
 ### Minor Changes

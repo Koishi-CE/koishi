@@ -58,7 +58,7 @@
     },
     "packages/node/cli": {
       "name": "@koishi-ce/koishi",
-      "version": "1.0.10",
+      "version": "1.0.11",
       "bin": "lib/cli/index.mjs",
       "dependencies": {
         "@koishi-ce/core": "workspace:*",
@@ -80,7 +80,7 @@
     },
     "packages/node/core": {
       "name": "@koishi-ce/core",
-      "version": "1.1.1",
+      "version": "1.1.2",
       "dependencies": {
         "@koishi-ce/i18n-utils": "workspace:*",
         "@koishi-ce/utils": "workspace:*",
@@ -98,14 +98,14 @@
     },
     "packages/node/i18n-utils": {
       "name": "@koishi-ce/i18n-utils",
-      "version": "1.0.0",
+      "version": "1.0.1",
       "dependencies": {
         "cosmokit": "^1.8.1",
       },
     },
     "packages/node/loader": {
       "name": "@koishi-ce/loader",
-      "version": "1.0.6",
+      "version": "1.0.7",
       "devDependencies": {
         "@koishi-ce/core": "workspace:*",
         "@koishi-ce/koishi": "workspace:*",
@@ -153,7 +153,7 @@
     },
     "packages/web/client": {
       "name": "@koishi-ce/client",
-      "version": "1.1.0",
+      "version": "1.1.1",
       "bin": {
         "koishi-console": "./lib/bin.mjs",
       },
@@ -180,7 +180,7 @@
     },
     "packages/web/components": {
       "name": "@koishi-ce/components",
-      "version": "1.0.1",
+      "version": "1.0.2",
       "dependencies": {
         "@satorijs/element": "^3.2.0",
         "cosmokit": "^1.8.1",
@@ -295,7 +295,7 @@
     },
     "plugins/infra/hmr": {
       "name": "@koishi-ce/plugin-hmr",
-      "version": "1.1.0",
+      "version": "1.1.1",
       "dependencies": {
         "@babel/code-frame": "^8.0.0",
         "@koishi-ce/loader": "workspace:*",
@@ -436,7 +436,7 @@
     },
     "plugins/webui/analytics": {
       "name": "@koishi-ce/plugin-analytics",
-      "version": "1.1.0",
+      "version": "1.1.1",
       "dependencies": {
         "@koishi-ce/console": "workspace:*",
       },
@@ -516,7 +516,7 @@
     },
     "plugins/webui/console": {
       "name": "@koishi-ce/plugin-console",
-      "version": "1.1.0",
+      "version": "1.2.0",
       "dependencies": {
         "@koishi-ce/console": "workspace:*",
         "open": "^11.0.1",
@@ -597,7 +597,7 @@
     },
     "plugins/webui/locales": {
       "name": "@koishi-ce/plugin-locales",
-      "version": "1.0.2",
+      "version": "1.0.3",
       "dependencies": {
         "@koishi-ce/console": "workspace:*",
       },
@@ -684,7 +684,7 @@
     },
     "plugins/webui/sandbox": {
       "name": "@koishi-ce/plugin-sandbox",
-      "version": "1.0.2",
+      "version": "1.0.3",
       "dependencies": {
         "@koishi-ce/console": "workspace:*",
       },

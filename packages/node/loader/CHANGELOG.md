@@ -1,5 +1,18 @@
 # @koishi-ce/loader
 
+## 1.0.7
+
+### Patch Changes
+
+- f429185: 修复启动消息被消费后未同步回父进程，进程崩溃自动重启时重复播报「机器人已重新启动」的问题（upstream: koishijs/koishi#1465）
+- 361be0b: 修复拖拽移动插件（teleport）后再重载该插件时会话过滤器闭包自递归、首个会话触发即爆栈的问题（upstream: koishijs/koishi#1286）
+- 7eb0706: reload 的更新路径与创建路径对称地做配置插值，修复控制台重载配置后 ${{ env.* }} 失效（upstream: koishijs/koishi#1328、koishijs/koishi#1519）；根组重载始终取原始配置树，修复入口文件热更新后运行期配置回写不再落盘（upstream: koishijs/koishi#998）
+- Updated dependencies [0a72b50]
+- Updated dependencies [c822bfe]
+- Updated dependencies [cabaa4d]
+- Updated dependencies [3df874b]
+  - @koishi-ce/core@1.1.2
+
 ## 1.0.6
 
 ### Patch Changes

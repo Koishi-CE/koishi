@@ -1,5 +1,14 @@
 # @koishi-ce/plugin-locales
 
+## 1.0.3
+
+### Patch Changes
+
+- 469ce9b: i18n 编辑的服务端全量回推防抖从 0 提到 1000ms（与客户端发送侧一致），修复编辑中值回跳把光标甩到末尾、编辑器难以使用的问题（upstream: koishijs/koishi#1462）
+- Updated dependencies [03b38d0]
+  - @koishi-ce/plugin-console@1.2.0
+  - @koishi-ce/koishi@1.0.11
+
 ## 1.0.2
 
 ### Patch Changes

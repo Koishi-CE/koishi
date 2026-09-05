@@ -1,5 +1,17 @@
 # @koishi-ce/core
 
+## 1.1.2
+
+### Patch Changes
+
+- 0a72b50: 指令的权限判定优先于解析错误的反馈：无权限用户输入带解析错误的指令时提示权限不足，不再向其暴露参数类型等解析细节（upstream: koishijs/koishi#1414）
+- c822bfe: session.prompt 回调重载的返回类型补上 undefined（超时 resolve(undefined) 而非抛异常，与无参重载一致；upstream: koishijs/koishi#1516）
+- cabaa4d: 消息以元素开头（如表情/图片）时不再触发指令纠错建议，避免元素序列化首段（如 `<face`）与相近指令名误匹配（upstream: koishijs/koishi#1533）
+- 3df874b: 修复消息元素位于指令插值内部或之后时被二次解析破坏的问题（元素内容失真或被拆成多个 token，upstream: koishijs/koishi#1541）
+- Updated dependencies [f5c05de]
+  - @koishi-ce/i18n-utils@1.0.1
+  - @koishi-ce/utils@1.0.0
+
 ## 1.1.1
 
 ### Patch Changes

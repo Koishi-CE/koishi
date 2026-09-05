@@ -1,5 +1,14 @@
 # @koishi-ce/plugin-sandbox
 
+## 1.0.3
+
+### Patch Changes
+
+- e7bc8dc: 沙盒添加/删除用户触发的 guild-member-added / guild-member-removed 事件改经 bot.dispatch 派发，使会话过滤器正常生效（upstream: koishijs/koishi#1470）
+- Updated dependencies [03b38d0]
+  - @koishi-ce/plugin-console@1.2.0
+  - @koishi-ce/koishi@1.0.11
+
 ## 1.0.2
 
 ### Patch Changes
