@@ -3,13 +3,12 @@
 <!-- Copyright (c) 2026-present Koishi-CE contributors. -->
 
 <!--
-  欢迎卡片：CE 横幅动画 + 文档 / 社区论坛等入口链接。
+  欢迎卡片：文档 / 社区论坛等入口链接。
   文案走宿主全局词典（client/locales/，7 语种），
   其余扩展可通过 "welcome-choice" 插槽追加自定义入口。
 -->
 <template>
   <div class="k-card welcome">
-    <logo-splash class="welcome-splash" />
     <h1>{{ t('welcome.title') }}</h1>
     <p>{{ t('welcome.description') }}</p>
     <div class="choices">
@@ -33,7 +32,6 @@
 
 <script lang="ts" setup>
 import { useI18n } from "vue-i18n";
-import LogoSplash from "./logo-splash.vue";
 
 // 全局 composer：词典由宿主 $i18n 服务在挂载前注入
 const { t } = useI18n();
@@ -48,11 +46,6 @@ const { t } = useI18n();
   --welcome-gap: 2rem;
 
   padding: var(--welcome-padding);
-
-  .welcome-splash {
-    width: min(520px, 100%);
-    margin: 0 auto;
-  }
 
   h1 {
     font-size: var(--welcome-title);
