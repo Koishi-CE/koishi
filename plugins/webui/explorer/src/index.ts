@@ -22,11 +22,7 @@ import {
 } from "node:fs/promises";
 import { join, relative, resolve } from "node:path";
 import { DataService } from "@koishi-ce/console";
-import {
-	type Context,
-	type Dict,
-	Schema,
-} from "@koishi-ce/koishi";
+import { type Context, Schema } from "@koishi-ce/koishi";
 import type { Tester } from "anymatch";
 import * as anymatchModule from "anymatch";
 
@@ -36,7 +32,6 @@ const anymatch =
 	anymatchModule.default as unknown as typeof anymatchModule.default.default;
 
 import { detect } from "chardet";
-import type { FSWatcher } from "chokidar";
 import { fileTypeFromBuffer } from "file-type";
 import deDE from "../locales/de-DE.yml";
 import enUS from "../locales/en-US.yml";
@@ -130,8 +125,6 @@ class Explorer extends DataService<Entry[]> {
 	});
 
 	task!: Promise<Entry[]>;
-	/** 已创建的文件监视器集合（键为路径），stop() 时统一关闭 */
-	watchers: Dict<FSWatcher> = Object.create(null);
 	/** 由 ignored 配置编译出的 anymatch 过滤器 */
 	globFilter: Tester;
 	/** 文件树的根目录（ctx.baseDir + 配置的 root 解析出的绝对路径） */
@@ -241,13 +234,6 @@ class Explorer extends DataService<Entry[]> {
 			},
 			{ authority: 4 },
 		);
-	}
-
-	override stop() {
-		// 插件停用：关闭所有已创建的文件监视器
-		for (const watcher of Object.values(this.watchers)) {
-			watcher.close();
-		}
 	}
 
 	/**

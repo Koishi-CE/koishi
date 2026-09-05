@@ -148,7 +148,7 @@ expect(app.database.getUser("mock", "A")).resolves.toHaveShape({ authority: 1 })
 12. **上游 port 须补 `.ts` 扩展名**：上游源码是无后缀的 bundler 风格相对导入，本仓 nodenext 类型检查要求相对导入带扩展名；port 流程见 [../process/upstream.md](../process/upstream.md)。
 13. **Biome 的 JSON 行尾不可见字符**：已知、正常、无害，看到即跳过，不调查、不修复、不报告。
 14. **`apps/koishi-create`（目录）≠ `create-koishi-ce`（包名）**：历史遗留的命名不一致，引用一律以 `apps/koishi-create` 为准。
-15. **hmr 文件监听 = @parcel/watcher 原生绑定**：Bun 1.4.0（win32 实证）未暴露任何文件监听 API（无全局 `watch` / `Bun.FileSystemWatcher` / `Bun.file().watch`），chokidar 5 在 win32 又有 glob ignored 失效问题（曾经的段剪枝补丁已随换库删除）。@parcel/watcher 的 `ignore` 在原生层剪枝（node_modules 内写入不产生事件）；事件为批量回调（create/update/delete，hmr 只取 update，与 chokidar 时代只听 change 对齐）；`subscribe` 只接受单个目录，文件型 root 经「订阅所在目录 + 路径过滤」实现。其 install 脚本仅 `npm_config_build_from_source=true` 时源码编译兜底，Bun 拦截该 postinstall 属预期、平台预编译包（`@parcel/watcher-<platform>-<arch>`）就位即可用。explorer 仍用 chokidar（运行时按路径建 FSWatcher）。
+15. **hmr 文件监听 = @parcel/watcher 原生绑定**：Bun 1.4.0（win32 实证）未暴露任何文件监听 API（无全局 `watch` / `Bun.FileSystemWatcher` / `Bun.file().watch`），chokidar 5 在 win32 又有 glob ignored 失效问题（曾经的段剪枝补丁已随换库删除）。@parcel/watcher 的 `ignore` 在原生层剪枝（node_modules 内写入不产生事件）；事件为批量回调（create/update/delete，hmr 只取 update，与 chokidar 时代只听 change 对齐）；`subscribe` 只接受单个目录，文件型 root 经「订阅所在目录 + 路径过滤」实现。其 install 脚本仅 `npm_config_build_from_source=true` 时源码编译兜底，Bun 拦截该 postinstall 属预期、平台预编译包（`@parcel/watcher-<platform>-<arch>`）就位即可用。explorer 的 chokidar 为上游逐字继承的死依赖（`watchers` 集合声明后从未填充，上游 webui 同样如此），已连同字段与 `stop()` override 整体移除——workspace 包的直接依赖至此无 chokidar（devDep 树仍经 unocss / sass / vue-router 传递保留，属构建工具内部依赖；sass 的 optional 依赖恰为 @parcel/watcher）。
 
 ## 8. 版本与发布
 
