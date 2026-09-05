@@ -6,20 +6,26 @@
  * rate-limit 插件测试：以 mock 双客户端验证调用次数上限（maxUsage）、
  * 最小调用间隔（minInterval）与权限豁免（bypassAuthority）三条路径，
  * 覆盖 help 扩展输出、运行时拦截与 usage / timer 管理指令。
- * 时间相关用例借 fake-timers 把时钟固定在同一基准上再推进。
+ * 时间相关用例借 bun:test 的 jest 兼容 mock timers 把时钟固定在同一基准上再推进。
  */
 import {
 	afterAll,
 	beforeAll,
 	describe,
 	it,
+	jest,
 } from "bun:test";
 import { App, type Argv, Time } from "@koishi-ce/koishi";
 import memory from "@koishi-ce/plugin-database-memory";
 import * as help from "@koishi-ce/plugin-help";
 import mock from "@koishi-ce/plugin-mock";
-import { install } from "@sinonjs/fake-timers";
 import * as rate from "./index.ts";
+
+// 依赖纪律：时间模拟统一走 bun:test mock timers，勿为此回加 @sinonjs/fake-timers
+const installClock = (now: number) => {
+	jest.useFakeTimers();
+	jest.setSystemTime(now);
+};
 
 const app = new App();
 let now = Date.now();
@@ -141,7 +147,7 @@ describe("@koishi-ce/plugin-rate-limit", () => {
 			.action(() => "test");
 
 		it("Extended Help", async () => {
-			const clock = install({ now });
+			installClock(now);
 			try {
 				await client1.shouldReply(
 					"help bar",
@@ -152,12 +158,12 @@ describe("@koishi-ce/plugin-rate-limit", () => {
 					"指令：bar\n指令2\n距离下次调用还需：0/180 秒。",
 				);
 			} finally {
-				clock.uninstall();
+				jest.useRealTimers();
 			}
 		});
 
 		it("Runtime Check", async () => {
-			const clock = install({ now });
+			installClock(now);
 			try {
 				cmd.config.showWarning = true;
 				await client1.shouldReply(
@@ -165,19 +171,19 @@ describe("@koishi-ce/plugin-rate-limit", () => {
 					"调用过于频繁，请稍后再试。",
 				);
 				await client2.shouldReply("bar", "test");
-				clock.tick(Time.minute + 1);
-				now = clock.now;
+				jest.advanceTimersByTime(Time.minute + 1);
+				now = Date.now();
 				await client1.shouldReply("bar", "test");
 				await client1.shouldReply("bar --opt1", "test");
 				cmd.config.showWarning = false;
 				await client2.shouldNotReply("bar");
 			} finally {
-				clock.uninstall();
+				jest.useRealTimers();
 			}
 		});
 
 		it("Modify Timers", async () => {
-			const clock = install({ now });
+			installClock(now);
 			try {
 				await client1.shouldReply(
 					"timer",
@@ -217,7 +223,7 @@ describe("@koishi-ce/plugin-rate-limit", () => {
 					"当前没有生效的定时器。",
 				);
 			} finally {
-				clock.uninstall();
+				jest.useRealTimers();
 			}
 		});
 	});
