@@ -218,7 +218,7 @@ const banner = [
  */
 function printBanner() {
 	if (!process.stdout.isTTY) return;
-	console.log(pc.cyan(banner));
+	console.log(pc.white(banner));
 }
 
 /** 应用启动主流程 */
