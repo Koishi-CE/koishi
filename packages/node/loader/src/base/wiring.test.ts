@@ -42,6 +42,8 @@ afterAll(() => {
 class TestLoader extends Loader {
 	/** fullReload 收到的调用记录 */
 	reloads: number[] = [];
+	/** syncEnvData 收到的调用记录 */
+	syncs = 0;
 
 	override async import() {
 		return undefined;
@@ -49,6 +51,10 @@ class TestLoader extends Loader {
 
 	override fullReload(code?: number) {
 		this.reloads.push(code ?? -1);
+	}
+
+	override syncEnvData() {
+		this.syncs++;
 	}
 
 	protected override locateConfig(): Promise<ResolvedConfigFile> {
@@ -118,6 +124,8 @@ describe("handleStartMessage", () => {
 		handleStartMessage(loader, app);
 		// 消息取出后立即清空，避免重启后重复发送
 		expect(loader.envData.message).toBeNull();
+		// 消费后同步回父进程（崩溃重启不重放），upstream: koishijs/koishi#1465
+		expect(loader.syncs).toBe(1);
 
 		// 机器人未上线（status 不匹配）或 sid 不匹配时不发送
 		app.emit(

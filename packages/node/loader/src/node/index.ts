@@ -173,4 +173,16 @@ export default class NodeLoader extends Loader {
 			process.exit(code);
 		});
 	}
+
+	/**
+	 * 崩溃重启场景下父进程仍持有旧 envData 快照（仅在 fullReload 时同步），
+	 * 已消费的启动消息需即时回传，否则新进程会重放导致重复播报。
+	 * upstream: koishijs/koishi#1465
+	 */
+	override syncEnvData() {
+		process.send?.({
+			type: "shared",
+			body: JSON.stringify(this.envData),
+		});
+	}
 }

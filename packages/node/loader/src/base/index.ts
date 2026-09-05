@@ -111,6 +111,14 @@ export abstract class Loader {
 	abstract fullReload(code?: number): void;
 
 	/**
+	 * 把 envData 的变更同步回父进程（默认无操作，node 层覆写为 IPC 消息）。
+	 * 供同包 wiring 的启动消息消费链路调用。
+	 * upstream: koishijs/koishi#1465（崩溃重启后父进程仍持有旧快照，
+	 * 已消费的启动消息会被重放导致重复播报）
+	 */
+	syncEnvData(): void {}
+
+	/**
 	 * 定位配置文件并探测可写性（平台相关的文件系统能力，子类实现）。
 	 *
 	 * @param baseDir 起始查找目录（进程工作目录）

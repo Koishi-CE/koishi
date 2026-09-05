@@ -123,6 +123,9 @@ export function handleStartMessage(
 	const { sid, channelId, guildId, content } =
 		loader.envData.message;
 	loader.envData.message = null;
+	// 同步回父进程，避免崩溃自动重启后旧快照重放本条消息
+	// upstream: koishijs/koishi#1465
+	loader.syncEnvData();
 	const dispose = app.on("bot-status-updated", (bot) => {
 		if (
 			bot.sid !== sid ||
