@@ -22,8 +22,8 @@ export function isInteger(source: unknown) {
  *
  * @param ms 等待时长（毫秒）
  */
-export async function sleep(ms: number): Promise<void> {
-	return new Promise((resolve) => setTimeout(resolve, ms));
+export function sleep(ms: number): Promise<void> {
+	return Bun.sleep(ms);
 }
 
 /**

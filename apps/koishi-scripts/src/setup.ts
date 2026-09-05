@@ -26,7 +26,6 @@
  * （默认值从兄弟项目的 repository 字段众数探测）。生成后 git init，
  * 不自动 commit、不自动 install——结束时打印后续步骤（包管理器一律 Bun）。
  */
-import { spawnSync } from "node:child_process";
 import {
 	existsSync,
 	mkdirSync,
@@ -262,10 +261,13 @@ function detectOwner(): string {
 
 /** 读 git 全局配置单项（读不到 → 空串）。 */
 function gitConfig(key: string): string {
-	const res = spawnSync("git", ["config", "--get", key], {
-		encoding: "utf8",
-	});
-	return res.status === 0 ? (res.stdout?.trim() ?? "") : "";
+	const res = Bun.spawnSync([
+		"git",
+		"config",
+		"--get",
+		key,
+	]);
+	return res.success ? res.stdout.toString().trim() : "";
 }
 
 /**
@@ -807,11 +809,14 @@ export default async function runSetup(
 		);
 	}
 
-	const gitInit = spawnSync("git", ["init", "-b", branch], {
+	const gitInit = Bun.spawnSync({
+		cmd: ["git", "init", "-b", branch],
 		cwd: projectDir,
+		stdout: "ignore",
+		stderr: "ignore",
 	});
 	console.log(
-		gitInit.status === 0
+		gitInit.success
 			? `[setup] ✅ 已初始化 git 仓库（分支 ${branch}）`
 			: "[setup] ⚠️ git init 失败（不影响脚手架文件）",
 	);

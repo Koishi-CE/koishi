@@ -19,7 +19,6 @@ import { createReadStream, type Stats } from "node:fs";
 import {
 	cp,
 	mkdir,
-	open,
 	readdir,
 	rm,
 	stat,
@@ -142,25 +141,17 @@ class LocalAssets extends Assets<LocalAssets.Config> {
 				}
 				const filename = resolve(this.root, basename(name));
 				// file-type v22 移除了流式探测导出：改为读取文件头部字节按魔数判定
-				// MIME 后再以流式响应返回文件本体。4100 为 file-type 探测所需的最小
-				// 样本字节数，判型语义与上游一致（不信任扩展名）。
-				const head = Buffer.alloc(4100);
-				const handle = await open(filename, "r");
-				try {
-					const { bytesRead } = await handle.read(
-						head,
-						0,
-						head.byteLength,
-						0,
-					);
-					const fileType = await fileTypeFromBuffer(
-						head.subarray(0, bytesRead),
-					);
-					if (fileType?.mime) {
-						koa.type = fileType.mime;
-					}
-				} finally {
-					await handle.close();
+				// MIME 后再以流式响应返回文件本体。Bun.file().slice() 为惰性范围
+				// 引用，arrayBuffer() 只读前 4100 字节（file-type 探测所需的最小
+				// 样本数），判型语义与上游一致（不信任扩展名）。
+				const head = Buffer.from(
+					await Bun.file(filename)
+						.slice(0, 4100)
+						.arrayBuffer(),
+				);
+				const fileType = await fileTypeFromBuffer(head);
+				if (fileType?.mime) {
+					koa.type = fileType.mime;
 				}
 				koa.body = createReadStream(filename);
 			},

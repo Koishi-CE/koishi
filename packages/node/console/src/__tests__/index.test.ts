@@ -177,7 +177,7 @@ function readSent(socket: FakeSocket): SentMessage[] {
 
 /** 等待一小段时间，让异步分发（RPC 回调 / 首屏同步）完成 */
 function tick(ms = 20) {
-	return new Promise((resolve) => setTimeout(resolve, ms));
+	return Bun.sleep(ms);
 }
 
 /** Console 抽象基类的最小实现：入口文件解析为固定前缀 URL */

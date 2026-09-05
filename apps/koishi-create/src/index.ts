@@ -22,7 +22,6 @@
  * - remote.ts     --template 远程模板的下载-解包-改写全流程
  * - template.ts   内置 @koishi-ce 模板（静态文件与 baseManifest）
  */
-import { spawnSync } from "node:child_process";
 import {
 	existsSync,
 	mkdirSync,
@@ -216,8 +215,10 @@ async function scaffold() {
 async function initGit() {
 	if (!argv.git || !supports(["git", "--version"])) return;
 	const branch = gitConfig("init.defaultBranch") || "main";
-	spawnSync("git", ["init", "-b", branch], {
-		stdio: "ignore",
+	Bun.spawnSync({
+		cmd: ["git", "init", "-b", branch],
+		stdout: "ignore",
+		stderr: "ignore",
 		cwd: rootDir,
 	});
 	console.log(
@@ -238,18 +239,22 @@ async function install() {
 		agent === "yarn" ? ["start"] : ["run", "start"];
 	const yes = await confirm("现在安装依赖并启动吗？");
 	if (yes) {
-		const installed = spawnSync(agent, ["install"], {
-			stdio: "inherit",
+		const installed = Bun.spawnSync({
+			cmd: [agent, "install"],
+			stdout: "inherit",
+			stderr: "inherit",
 			cwd: rootDir,
 		});
-		if (installed.status !== 0) {
+		if (!installed.success) {
 			console.log(
 				pc.red("  依赖安装失败，请检查上方日志。"),
 			);
 			return;
 		}
-		spawnSync(agent, startArgs, {
-			stdio: "inherit",
+		Bun.spawnSync({
+			cmd: [agent, ...startArgs],
+			stdout: "inherit",
+			stderr: "inherit",
 			cwd: rootDir,
 		});
 	} else {

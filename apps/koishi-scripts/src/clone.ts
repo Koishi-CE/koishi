@@ -7,7 +7,6 @@
  * 旧版的 yakumo prepare 环节已随 yakumo 范式一并移除——Bun 运行时原生
  * 执行 TS，克隆下来的源码型插件可直接被宿主加载调试。
  */
-import { spawnSync } from "node:child_process";
 import { join } from "node:path";
 import { createInterface } from "node:readline/promises";
 import { cwd } from "./index.ts";
@@ -66,31 +65,31 @@ export default async function runClone(
 		name = await ask("📁 目标目录名：");
 	}
 
-	const clone = spawnSync(
-		"git",
-		["clone", repo, join("external", name)],
-		{
-			stdio: "inherit",
-		},
-	);
-	if (clone.status !== 0) {
+	const clone = Bun.spawnSync({
+		cmd: ["git", "clone", repo, join("external", name)],
+		stdout: "inherit",
+		stderr: "inherit",
+	});
+	if (!clone.success) {
 		console.log(
-			`[clone] ❌ git clone 失败（退出码 ${clone.status ?? 1}）`,
+			`[clone] ❌ git clone 失败（退出码 ${clone.exitCode || 1}）`,
 		);
-		return clone.status ?? 1;
+		return clone.exitCode || 1;
 	}
 	console.log(
 		`[clone] ✅ 已克隆到 external/${name}，安装依赖（bun install）…`,
 	);
-	const install = spawnSync("bun", ["install"], {
+	const install = Bun.spawnSync({
+		cmd: ["bun", "install"],
 		cwd,
-		stdio: "inherit",
+		stdout: "inherit",
+		stderr: "inherit",
 	});
-	if (install.status !== 0) {
+	if (!install.success) {
 		console.log(
-			`[clone] ❌ bun install 失败（退出码 ${install.status ?? 1}）`,
+			`[clone] ❌ bun install 失败（退出码 ${install.exitCode || 1}）`,
 		);
-		return install.status ?? 1;
+		return install.exitCode || 1;
 	}
 	console.log(
 		`[clone] 🎉 完成：external/${name} 已就绪，可在宿主 koishi.yml 中启用调试`,

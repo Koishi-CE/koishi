@@ -8,7 +8,6 @@
  * prepare 步骤调用，也是除 manifest.ts / registry.ts 之外可脱离交互
  * 直接单测的函数集合。
  */
-import { spawnSync } from "node:child_process";
 import { readdirSync, rmSync } from "node:fs";
 import { join } from "node:path";
 
@@ -26,19 +25,22 @@ export function detectAgent(): string {
 
 /** 静默执行命令探测其是否可用（如 git --version），失败即视为不可用 */
 export function supports(command: readonly string[]) {
-	return (
-		spawnSync(command[0] ?? "", command.slice(1), {
-			stdio: "ignore",
-		}).status === 0
-	);
+	return Bun.spawnSync({
+		cmd: [...command],
+		stdout: "ignore",
+		stderr: "ignore",
+	}).success;
 }
 
 /** 读 git 全局配置单项（读不到 → 空串） */
 export function gitConfig(key: string): string {
-	const res = spawnSync("git", ["config", "--get", key], {
-		encoding: "utf8",
-	});
-	return res.status === 0 ? (res.stdout?.trim() ?? "") : "";
+	const res = Bun.spawnSync([
+		"git",
+		"config",
+		"--get",
+		key,
+	]);
+	return res.success ? res.stdout.toString().trim() : "";
 }
 
 /** 递归清空目录内容（目录本身保留）。 */
