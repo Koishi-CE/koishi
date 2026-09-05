@@ -150,10 +150,13 @@ describe("analytics 统计服务", () => {
 		app.emit("send", { platform: "sandbox:web" } as never);
 		await service().upload(true);
 		const today = Time.getDateNumber();
-		const rows = await app.database.get("analytics.message", {
-			date: today,
-			platform: "sandbox:web",
-		});
+		const rows = await app.database.get(
+			"analytics.message",
+			{
+				date: today,
+				platform: "sandbox:web",
+			},
+		);
 		// upsert 回调形式在同键行上不合并（既有行为，SUM 语义不受
 		// 影响），断言存在空串键的行即可
 		expect(
