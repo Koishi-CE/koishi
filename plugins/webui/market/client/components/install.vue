@@ -321,7 +321,9 @@ const warning = computed(() => {
 const result = computed(() => {
 	if (!version.value) return;
 	// version 可能来自 override 暂存或只剥了 ^/~ 的依赖 range，未必是
-	// analyzeVersions 以精确版本号为键的合法键，查不到时按未定级处理
+	// analyzeVersions 以精确版本号为键的合法键，查不到时按未定级处理；
+	// file: 本地依赖的 request（如 file:./xxx）也走此兜底，
+	// 上游缺陷追踪：https://github.com/koishijs/koishi/issues/1550
 	const entry = data.value?.[version.value];
 	if (!entry) return;
 	if (entry.result === "danger" || danger.value)
