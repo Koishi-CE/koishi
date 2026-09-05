@@ -45,7 +45,7 @@ export function getLocalRegistry(
 	userHome: string = homedir(),
 ): string | undefined {
 	const candidates = [
-		process.env["npm_config_registry"],
+		Bun.env["npm_config_registry"],
 		readNpmrcRegistry(join(cwd, ".npmrc")),
 		readNpmrcRegistry(join(userHome, ".npmrc")),
 	];

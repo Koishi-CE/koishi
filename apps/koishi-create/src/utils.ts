@@ -18,7 +18,7 @@ import { join } from "node:path";
  * 本 CLI 自身以 bun 为运行时（bin shebang），能执行即已具备 bun 环境。
  */
 export function detectAgent(): string {
-	const ua = process.env["npm_config_user_agent"] ?? "";
+	const ua = Bun.env["npm_config_user_agent"] ?? "";
 	if (ua.startsWith("yarn")) return "yarn";
 	if (ua.startsWith("pnpm")) return "pnpm";
 	return "bun";

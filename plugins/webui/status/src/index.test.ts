@@ -97,12 +97,12 @@ describe("status 插件", () => {
 	});
 
 	it("envinfo 上报 KOISHI_AGENT 宿主代理信息", async () => {
-		process.env["KOISHI_AGENT"] = "test-agent/1.2.3";
+		Bun.env["KOISHI_AGENT"] = "test-agent/1.2.3";
 		try {
 			const data = await envinfo()["_get"]();
 			expect(data["koishi"]?.["test-agent"]).toBe("1.2.3");
 		} finally {
-			delete process.env["KOISHI_AGENT"];
+			delete Bun.env["KOISHI_AGENT"];
 		}
 	});
 

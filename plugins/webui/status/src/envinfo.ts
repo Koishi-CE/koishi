@@ -62,9 +62,9 @@ class EnvInfoProvider extends DataService<
 			Console: meta.version,
 		};
 		// 宿主代理（如 koishi-plugin-browser）可通过该环境变量上报自身名称与版本
-		if (process.env["KOISHI_AGENT"]) {
+		if (Bun.env["KOISHI_AGENT"]) {
 			const [name, agentVersion] =
-				process.env["KOISHI_AGENT"].split("/");
+				Bun.env["KOISHI_AGENT"].split("/");
 			if (name && agentVersion) {
 				koishi[name] = agentVersion;
 			}

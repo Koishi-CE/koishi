@@ -45,22 +45,22 @@ test("getLocalRegistry：环境变量优先且校验协议，非法值跳过", (
 	const isolated = mkdtempSync(
 		join(tmpdir(), "ckc-npmrc-"),
 	);
-	process.env[key] = "https://registry.example.com/";
+	Bun.env[key] = "https://registry.example.com/";
 	expect(getLocalRegistry(isolated, isolated)).toBe(
 		"https://registry.example.com/",
 	);
 	// 非 http(s) 的值视为未配置，继续走后续候选
-	process.env[key] = "ftp://not-a-registry/";
+	Bun.env[key] = "ftp://not-a-registry/";
 	expect(
 		getLocalRegistry(isolated, isolated),
 	).toBeUndefined();
-	delete process.env[key];
+	delete Bun.env[key];
 	rmSync(isolated, { recursive: true, force: true });
 });
 
 test("getLocalRegistry：项目 .npmrc 优先于用户级 .npmrc，均无配置时返回 undefined", () => {
 	const key = "npm_config_registry";
-	delete process.env[key];
+	delete Bun.env[key];
 	const dir = mkdtempSync(join(tmpdir(), "ckc-npmrc-"));
 	const emptyHome = mkdtempSync(
 		join(tmpdir(), "ckc-home-"),

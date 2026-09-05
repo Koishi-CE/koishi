@@ -217,7 +217,7 @@ class NodeConsole extends Console {
 		const global = {} as ClientConfig;
 		// 解构默认值与 Config Schema 的 default 保持一致（正常路径下 Schema 已填充，此处仅为类型兜底）
 		const {
-			devMode = process.env["NODE_ENV"] === "development",
+			devMode = Bun.env["NODE_ENV"] === "development",
 			uiPath = "",
 			apiPath = "/status",
 			selfUrl = "",
@@ -249,7 +249,7 @@ class NodeConsole extends Console {
 			if (
 				this.config.open &&
 				!this.ctx.get("loader")?.envData.clientCount &&
-				!process.env["KOISHI_AGENT"]
+				!Bun.env["KOISHI_AGENT"]
 			) {
 				// 打开浏览器失败无需处理，显式忽略返回的 Promise
 				void open(target);
@@ -589,9 +589,7 @@ class NodeConsole extends Console {
 					timeout: Schema.number().default(Time.minute),
 				}),
 				devMode: Schema.boolean()
-					.default(
-						process.env["NODE_ENV"] === "development",
-					)
+					.default(Bun.env["NODE_ENV"] === "development")
 					.hidden(),
 				cacheDir: Schema.string()
 					.default("cache/vite")

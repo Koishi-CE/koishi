@@ -46,13 +46,13 @@ test("renderManifest prod 模式：删除 workspaces 与 devDependencies", () =>
 
 test("detectAgent：yarn / pnpm 跟随探测，其余一律 bun", () => {
 	const key = "npm_config_user_agent";
-	process.env[key] =
+	Bun.env[key] =
 		"npm/10.9.2 node/v22.14.0 x64 workspaces/false";
 	expect(detectAgent()).toBe("bun");
-	process.env[key] = "yarn/1.22.22 npm/? node/v22.14.0 x64";
+	Bun.env[key] = "yarn/1.22.22 npm/? node/v22.14.0 x64";
 	expect(detectAgent()).toBe("yarn");
-	process.env[key] = "pnpm/10.12.1 npm/? node/v22.14.0 x64";
+	Bun.env[key] = "pnpm/10.12.1 npm/? node/v22.14.0 x64";
 	expect(detectAgent()).toBe("pnpm");
-	delete process.env[key];
+	delete Bun.env[key];
 	expect(detectAgent()).toBe("bun");
 });

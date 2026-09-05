@@ -39,9 +39,9 @@ const previousArgv = process.argv.slice();
 const previousExit = process.exit;
 // 保持无 user-agent 的探测环境（detectAgent 走 bun 分支）
 const userAgentKey = "npm_config_user_agent";
-const hadUserAgent = userAgentKey in process.env;
-const previousUserAgent = process.env[userAgentKey];
-delete process.env[userAgentKey];
+const hadUserAgent = userAgentKey in Bun.env;
+const previousUserAgent = Bun.env[userAgentKey];
+delete Bun.env[userAgentKey];
 
 /** @clack/prompts 的可编程答案队列（按 prompt 类型分发） */
 const nameAnswers: string[] = [];
@@ -156,9 +156,9 @@ afterAll(() => {
 	process.exit = previousExit;
 	process.argv = previousArgv;
 	if (hadUserAgent) {
-		process.env[userAgentKey] = previousUserAgent;
+		Bun.env[userAgentKey] = previousUserAgent;
 	} else {
-		delete process.env[userAgentKey];
+		delete Bun.env[userAgentKey];
 	}
 	rmSync(workspaceRoot, { recursive: true, force: true });
 });
