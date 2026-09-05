@@ -14,7 +14,7 @@
 /// <reference types="@types/node" />
 
 import { existsSync, realpathSync } from "node:fs";
-import { readdir, readFile } from "node:fs/promises";
+import { readdir } from "node:fs/promises";
 import {
 	dirname,
 	isAbsolute,
@@ -232,7 +232,7 @@ export class LocalScanner {
 		// 默认的 cwd 在宿主以非 cwd 启动时会与扫描起点脱节，扫到却解析不到
 		const filename = resolvePackageJson(name, this.baseDir);
 		const meta: PackageJson = JSON.parse(
-			await readFile(filename, "utf8"),
+			await Bun.file(filename).text(),
 		);
 		return [
 			meta,
@@ -277,7 +277,7 @@ export class LocalScanner {
 		this.cache[dir] ||= (async () => {
 			try {
 				const data: PackageJson = JSON.parse(
-					await readFile(`${dir}/package.json`, "utf8"),
+					await Bun.file(`${dir}/package.json`).text(),
 				);
 				return this.toSearchObject(data, true);
 			} catch (error) {

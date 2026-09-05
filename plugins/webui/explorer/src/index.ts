@@ -14,11 +14,9 @@
 import {
 	mkdir,
 	readdir,
-	readFile,
 	readlink,
 	rename,
 	rm,
-	writeFile,
 } from "node:fs/promises";
 import { join, relative, resolve } from "node:path";
 import { DataService } from "@koishi-ce/console";
@@ -164,7 +162,9 @@ class Explorer extends DataService<Entry[]> {
 			"explorer/read",
 			async (filename) => {
 				filename = join(this.root, filename);
-				const buffer = await readFile(filename);
+				const buffer = Buffer.from(
+					await Bun.file(filename).arrayBuffer(),
+				);
 				const result = await fileTypeFromBuffer(buffer);
 				const encoding = detect(buffer);
 				// exactOptionalPropertyTypes:探测失败时不上键,与原先携带 undefined
@@ -187,9 +187,9 @@ class Explorer extends DataService<Entry[]> {
 				filename = join(this.root, filename);
 				if (binary) {
 					const buffer = Buffer.from(content, "base64");
-					await writeFile(filename, buffer);
+					await Bun.write(filename, buffer);
 				} else {
-					await writeFile(filename, content, "utf8");
+					await Bun.write(filename, content);
 				}
 				this.refresh();
 			},

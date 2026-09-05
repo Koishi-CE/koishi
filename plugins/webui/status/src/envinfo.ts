@@ -10,7 +10,6 @@
  * 环境信息在进程生命周期内不会变化，因此采集结果以 Promise 形式永久缓存。
  */
 
-import { readFile } from "node:fs/promises";
 import { arch, cpus, platform, release } from "node:os";
 import { DataService } from "@koishi-ce/console";
 import {
@@ -55,9 +54,9 @@ class EnvInfoProvider extends DataService<
 		const metapath = require.resolve(
 			"@koishi-ce/console/package.json",
 		);
-		const meta = await readFile(metapath, "utf8").then(
-			JSON.parse,
-		);
+		const meta = await Bun.file(metapath)
+			.text()
+			.then(JSON.parse);
 		const koishi: Dict<string> = {
 			Core: version,
 			Console: meta.version,
