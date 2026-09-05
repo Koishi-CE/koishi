@@ -26,3 +26,5 @@ heartbeat:
   timeout: 心跳逾時時間 (單位毫秒)。
 devMode: 啟用除錯模式 (僅供開發者使用)。
 cacheDir: 除錯伺服器快取目錄。
+dev:
+  allowedHosts: 允許存取開發伺服器的額外網域名稱，留空維持 Vite 預設（僅放行 localhost 與 IP 直連）。

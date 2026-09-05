@@ -26,3 +26,5 @@ heartbeat:
   timeout: Délai d'expiration des pulsations (en millisecondes).
 devMode: Activer le mode débogage (réservé aux développeurs).
 cacheDir: Répertoire de cache du serveur de débogage.
+dev:
+  allowedHosts: Domaines supplémentaires autorisés à accéder au serveur de développement. Laisser vide pour conserver le comportement par défaut de Vite (localhost et adresses IP uniquement).

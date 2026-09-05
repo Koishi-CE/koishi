@@ -47,22 +47,33 @@ mock.module("open", () => ({
 	},
 }));
 // devMode 分支的 Vite 服务器以最小桩替代（真实 Vite 不在测试范围），
-// 桩记录 close 调用并由 /vite 桥接中间件直接应答
+// 桩记录 close 调用与 createServer 传参，并由 /vite 桥接中间件直接应答
 let viteClosed = false;
+const viteConfigs: {
+	server?: { allowedHosts?: string[] };
+}[] = [];
 mock.module("@koishi-ce/client/lib", () => ({
-	createServer: async () => ({
-		middlewares: (
-			_req: unknown,
-			res: { end(body: string): void },
-			next: () => void,
-		) => {
-			res.end("vite-ok");
-			next();
-		},
-		close: () => {
-			viteClosed = true;
-		},
-	}),
+	createServer: async (
+		_baseDir: string,
+		config: unknown,
+	) => {
+		viteConfigs.push(
+			config as { server?: { allowedHosts?: string[] } },
+		);
+		return {
+			middlewares: (
+				_req: unknown,
+				res: { end(body: string): void },
+				next: () => void,
+			) => {
+				res.end("vite-ok");
+				next();
+			},
+			close: () => {
+				viteClosed = true;
+			},
+		};
+	},
 }));
 // mock 就位后再加载被测插件（静态导入会抢在 mock 之前绑定真实模块）
 const { default: NodeConsole } = await import(
@@ -575,7 +586,10 @@ describe("@koishi-ce/plugin-console（NodeConsole）", () => {
 				NodeConsole as unknown as Plugin.Constructor<App>,
 				{
 					devMode: true,
-					dev: { fs: { strict: true } },
+					dev: {
+						fs: { strict: true },
+						allowedHosts: ["example.com"],
+					},
 					cacheDir: "cache/vite-test",
 				},
 			);
@@ -595,6 +609,13 @@ describe("@koishi-ce/plugin-console（NodeConsole）", () => {
 				`${devBase}/vite/anything`,
 			);
 			expect(await response.text()).toBe("vite-ok");
+		});
+
+		it("dev.allowedHosts 透传到 Vite 的 server 配置", () => {
+			const config = viteConfigs.at(-1);
+			expect(config?.server?.allowedHosts).toEqual([
+				"example.com",
+			]);
 		});
 
 		it("停机时关闭 Vite 服务器并释放端口", async () => {

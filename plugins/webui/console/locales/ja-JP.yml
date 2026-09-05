@@ -26,3 +26,5 @@ heartbeat:
   timeout: ハートビートのタイムアウト時間 (ミリ秒)。
 devMode: デバッグモードを有効にする (開発者専用)。
 cacheDir: デバッグサーバーのキャッシュディレクトリ。
+dev:
+  allowedHosts: 開発サーバーへのアクセスを許可する追加ドメイン。空欄の場合は Vite のデフォルト（localhost と IP 直接入力のみ）が適用されます。

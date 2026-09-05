@@ -26,3 +26,5 @@ heartbeat:
   timeout: Heartbeat timeout (in milliseconds).
 devMode: Enable debug mode (for developers only).
 cacheDir: Cache directory of the debug server.
+dev:
+  allowedHosts: Extra domains allowed to access the dev server. Leave empty to keep the Vite default (localhost and IP addresses only).

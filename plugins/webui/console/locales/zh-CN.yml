@@ -26,3 +26,5 @@ heartbeat:
   timeout: 心跳超时时间 (单位毫秒)。
 devMode: 启用调试模式 (仅供开发者使用)。
 cacheDir: 调试服务器缓存目录。
+dev:
+  allowedHosts: 允许访问开发服务器的额外域名，留空维持 Vite 默认（仅放行 localhost 与 IP 直连）。

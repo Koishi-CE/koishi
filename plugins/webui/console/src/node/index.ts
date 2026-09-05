@@ -38,6 +38,7 @@ import type {} from "@koishijs/plugin-server-proxy";
 import open from "open";
 import type {
 	FileSystemServeOptions,
+	ServerOptions,
 	ViteDevServer,
 } from "vite";
 import deDE from "../../locales/de-DE.yml";
@@ -487,9 +488,17 @@ class NodeConsole extends Console {
 			"@koishi-ce/client/lib"
 		);
 
+		// Vite 6.0.9 起 host 校验默认仅放行 localhost 与 IP 直连，域名访问
+		// dev 控制台会被 403 拦截；dev.allowedHosts 透传 server.allowedHosts
+		// 供显式放行。上游缺陷报告：
+		// https://github.com/koishijs/koishi/issues/1492
+		const server: ServerOptions = dev ? { fs: dev.fs } : {};
+		if (dev?.allowedHosts)
+			server.allowedHosts = dev.allowedHosts;
+
 		this.vite = await createServer(this.ctx.baseDir, {
 			cacheDir: resolve(this.ctx.baseDir, cacheDir),
-			...(dev ? { server: { fs: dev.fs } } : {}),
+			...(Object.keys(server).length ? { server } : {}),
 		});
 
 		this.ctx.server.all(
@@ -518,6 +527,11 @@ class NodeConsole extends Console {
 			allow: Schema.array(String).default(null as never),
 			deny: Schema.array(String).default(null as never),
 		}).hidden(),
+		allowedHosts: Schema.array(Schema.string())
+			.default(null as never)
+			.description(
+				"允许访问开发服务器的额外域名，留空维持 Vite 默认（仅放行 localhost 与 IP 直连）。",
+			),
 	});
 
 	static Head: Schema<NodeConsole.Head> = Schema.intersect([
@@ -598,9 +612,10 @@ class NodeConsole extends Console {
 }
 
 namespace NodeConsole {
-	/** Vite 开发服务器的文件访问控制（fs.strict / allow / deny）。 */
+	/** Vite 开发服务器的文件访问控制（fs.strict / allow / deny）与域名放行（allowedHosts）。 */
 	export interface Dev {
 		fs: FileSystemServeOptions;
+		allowedHosts?: string[];
 	}
 
 	/** 注入 index.html 的自定义 head 标签（tag + attrs + content）。 */
