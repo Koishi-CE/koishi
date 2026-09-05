@@ -15,7 +15,6 @@
 
 import { createReadStream } from "node:fs";
 import { extname, resolve } from "node:path";
-import { fileURLToPath } from "node:url";
 import {
 	type Client,
 	DataService,
@@ -344,7 +343,7 @@ export function apply(ctx: Context, config: Config) {
 				// 路由参数 :url(file:.+) 必然存在，此守卫仅为收窄类型
 				if (!url) return;
 				koa.type = extname(url);
-				koa.body = createReadStream(fileURLToPath(url));
+				koa.body = createReadStream(Bun.fileURLToPath(url));
 			},
 		);
 	}

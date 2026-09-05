@@ -14,7 +14,6 @@
 import { existsSync } from "node:fs";
 import { mkdir, rm } from "node:fs/promises";
 import { resolve } from "node:path";
-import { pathToFileURL } from "node:url";
 import vue from "@vitejs/plugin-vue";
 import * as vite from "vite";
 import { yaml } from "./yaml.ts";
@@ -110,7 +109,7 @@ export async function build(
 	const overridePath = `${root}/build/client.ts`;
 	if (existsSync(overridePath)) {
 		const mod = await import(
-			pathToFileURL(overridePath).href
+			Bun.pathToFileURL(overridePath).href
 		);
 		config = vite.mergeConfig(config, mod.default ?? mod);
 	}

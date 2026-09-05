@@ -11,7 +11,6 @@ import { describe, expect, it } from "bun:test";
 import { promises as fs } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { pathToFileURL } from "node:url";
 import {
 	type Manifest,
 	nodeRequireEntry,
@@ -185,7 +184,7 @@ describe("seedCjsInterop", () => {
 			seedCjsInterop(entry);
 			// 以 ESM import 加载被 seed 的入口文件：仍按 ESM 求值
 			const esm = (await import(
-				pathToFileURL(
+				Bun.pathToFileURL(
 					join(
 						dir,
 						"node_modules",

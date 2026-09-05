@@ -18,7 +18,6 @@ import { createReadStream } from "node:fs";
 import { mkdir, rm, writeFile } from "node:fs/promises";
 import { Readable } from "node:stream";
 import { ReadableStream } from "node:stream/web";
-import { fileURLToPath } from "node:url";
 import {
 	type Context,
 	type Dict,
@@ -140,7 +139,7 @@ class TempServer extends Service {
 		let path: string;
 		if (typeof data === "string") {
 			if (new URL(data).protocol === "file:") {
-				path = fileURLToPath(data);
+				path = Bun.fileURLToPath(data);
 			} else {
 				const stream = await this.ctx.http.get(data, {
 					responseType: "stream",

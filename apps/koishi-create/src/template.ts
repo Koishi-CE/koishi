@@ -39,8 +39,7 @@ import {
 	readdirSync,
 	readFileSync,
 } from "node:fs";
-import { dirname, join } from "node:path";
-import { fileURLToPath } from "node:url";
+import { join } from "node:path";
 import type { Manifest } from "./manifest.ts";
 
 /**
@@ -49,7 +48,7 @@ import type { Manifest } from "./manifest.ts";
  * 恒存在）。
  */
 function locateTemplateDir(): string {
-	const base = dirname(fileURLToPath(import.meta.url));
+	const base = import.meta.dir;
 	for (const dir of [
 		join(base, "template"),
 		join(base, "../src/template"),

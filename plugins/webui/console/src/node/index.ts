@@ -21,7 +21,6 @@ import {
 } from "node:fs";
 import { createRequire } from "node:module";
 import { extname, resolve, sep } from "node:path";
-import { fileURLToPath, pathToFileURL } from "node:url";
 import { Console, type Entry } from "@koishi-ce/console";
 import {
 	type Context,
@@ -188,14 +187,14 @@ class NodeConsole extends Console {
 		});
 
 		const base =
-			import.meta.url || pathToFileURL(__filename).href;
+			import.meta.url || Bun.pathToFileURL(__filename).href;
 		const require = createRequire(base);
 		this.root = config.devMode
 			? resolve(
 					require.resolve("@koishi-ce/client/package.json"),
 					"../app",
 				)
-			: fileURLToPath(new URL("../../dist", base));
+			: Bun.fileURLToPath(new URL("../../dist", base));
 	}
 
 	// 基类（cordis Service）将 config 声明为数据属性，而这里需要存取器间接持有
@@ -329,8 +328,8 @@ class NodeConsole extends Console {
 				const sendAsset = async (filename: string) => {
 					const type = extname(filename);
 					if (type === ".js" || type === ".mjs") {
-						const source = await fs
-							.readFile(filename, "utf8")
+						const source = await Bun.file(filename)
+							.text()
 							.catch(() => null);
 						if (source === null) return (ctx.status = 404);
 						ctx.type = type;
@@ -423,10 +422,9 @@ class NodeConsole extends Console {
 				// HTML 当 JS / Worker 解析，报出更费解的语法错误
 				if (extname(name)) return (ctx.status = 404);
 
-				const template = await fs.readFile(
+				const template = await Bun.file(
 					resolve(this.root, "index.html"),
-					"utf8",
-				);
+				).text();
 				ctx.type = "html";
 				ctx.body = await this.transformHtml(template);
 			},

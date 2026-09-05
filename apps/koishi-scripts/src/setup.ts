@@ -36,7 +36,6 @@ import {
 } from "node:fs";
 import { dirname, join } from "node:path";
 import { createInterface } from "node:readline/promises";
-import { fileURLToPath } from "node:url";
 import { cwd, loadHostManifest } from "./index.ts";
 
 /** koishi 生态依赖版本兜底（宿主清单缺失时使用；一律上游名，维持生态兼容） */
@@ -89,7 +88,7 @@ interface Answers {
  * 恒存在）。
  */
 function locateTemplateDir(): string {
-	const base = dirname(fileURLToPath(import.meta.url));
+	const base = import.meta.dir;
 	for (const dir of [
 		join(base, "template"),
 		join(base, "../src/template"),
