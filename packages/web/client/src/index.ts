@@ -82,14 +82,34 @@ async function collectWorkspaceAliases(): Promise<
 const workspaceAliases = await collectWorkspaceAliases();
 
 // 虚拟子路径 "schemastery-vue/client" 的运行时载体（补齐真实包缺失的
-// SchemaBase 具名导出）绝对路径，从 components 包的工作区别名推导；
-// 类型面由根 tsconfig.client.json 的 paths 解析到 schemastery-vue-client.ts
-const runtimeShimPath = (
-	workspaceAliases["@koishi-ce/components"] ?? ""
-).replace(
-	/client\/index\.ts$/,
-	"client/schemastery-vue-runtime.ts",
-);
+// SchemaBase 具名导出）绝对路径；类型面由根 tsconfig.client.json 的
+// paths 解析到 schemastery-vue-client.ts。
+// 优先从 components 包的工作区别名推导；下游（npm 安装）形态下工作区
+// 别名表为空，从本包根向父级逐级 node_modules 纯 fs 探测 components 包
+// （不走解析 API：Bun 会把失败的解析按父目录快照缓存，刚装好的包可能
+// 探不到）。两者都失败时返回空串，别名表须省略该键——空串值的 alias
+// 会让 vite/rolldown 以空 specifier 解析直接报错。
+function locateRuntimeShim(): string {
+	const fromAlias = (
+		workspaceAliases["@koishi-ce/components"] ?? ""
+	).replace(
+		/client\/index\.ts$/,
+		"client/schemastery-vue-runtime.ts",
+	);
+	if (fromAlias) return fromAlias;
+	// 源码形态（src/）与产物形态（lib/）都在包根下一级，先回到包根
+	let dir = resolve(import.meta.dir, "..");
+	while (true) {
+		const candidate = `${dir}/node_modules/@koishi-ce/components/client/schemastery-vue-runtime.ts`;
+		if (existsSync(candidate))
+			return candidate.replace(/\\/g, "/");
+		const parent = resolve(dir, "..");
+		if (parent === dir) return "";
+		dir = parent;
+	}
+}
+
+const runtimeShimPath = locateRuntimeShim();
 
 /**
  * 构建单个 webui 插件的前端产物。
@@ -208,8 +228,13 @@ export async function build(
 							workspaceAliases["@koishi-ce/components"],
 						// 虚拟子路径的运行时载体（补齐真实包缺失的 SchemaBase
 						// 具名导出）；类型面由 tsconfig.client.json 的 paths
-						// 解析到 schemastery-vue-client.ts
-						"schemastery-vue/client": runtimeShimPath,
+						// 解析到 schemastery-vue-client.ts。下游探测失败时
+						// 省略该键（空串值会炸 resolve）
+						...(runtimeShimPath
+							? {
+									"schemastery-vue/client": runtimeShimPath,
+								}
+							: {}),
 					},
 				},
 				define: {
@@ -314,8 +339,13 @@ export async function createServer(
 						"../vue.js": "vue",
 						"../vue-router.js": "vue-router",
 						"../vueuse.js": "@vueuse/core",
-						// 虚拟子路径的运行时载体（同 build 的别名说明）
-						"schemastery-vue/client": runtimeShimPath,
+						// 虚拟子路径的运行时载体（同 build 的别名说明）；
+						// 下游探测失败时省略该键（空串值会炸 resolve）
+						...(runtimeShimPath
+							? {
+									"schemastery-vue/client": runtimeShimPath,
+								}
+							: {}),
 					},
 				},
 				optimizeDeps: {
@@ -327,6 +357,16 @@ export async function createServer(
 						"@popperjs/core",
 						"marked",
 						"xss",
+					],
+					// 宿主与组件库以 TS 源码 + .yml 词典的形态发布，必须走
+					// dev transform 管道逐文件服务（yaml 插件在此生效）；
+					// 一旦落入依赖预打包，rolldown 会把 .yml 当 JS 解析，
+					// 直接报 PARSE_ERROR。工作区内两者经工作区别名映射为
+					// 绝对路径、天然不进 optimizer；下游 npm 安装形态下别名
+					// 表为空、以裸包名参与解析，须在此显式排除
+					exclude: [
+						"@koishi-ce/client",
+						"@koishi-ce/components",
 					],
 				},
 				build: {

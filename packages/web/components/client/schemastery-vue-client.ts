@@ -19,6 +19,10 @@
  * 其源码无法通过本仓库的超严格编译配置（verbatimModuleSyntax /
  * noUncheckedIndexedAccess 等），不能作为 .ts 依赖进入类型程序。
  *
+ * 下游（npm 安装）形态下没有仓库级 tsconfig，本文件经包内随包发布的
+ * tsconfig.json 的 paths 提供同一映射——compiler-sfc 解析 import source
+ * 时以发起文件为起点向上找 tsconfig.json，会命中包内这份。
+ *
  * Schema 类型取自 "@koishi-ce/koishi"（其 lib 声明再导出 schemastery 的
  * Schema，与该包运行时导出的是同一实现）。
  */

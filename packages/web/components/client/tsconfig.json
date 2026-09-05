@@ -11,6 +11,12 @@
 		"noFallthroughCasesInSwitch": true,
 		"noImplicitOverride": true,
 		"allowUnreachableCode": false,
-		"allowUnusedLabels": false
+		"allowUnusedLabels": false,
+		"baseUrl": ".",
+		"paths": {
+			"schemastery-vue/client": [
+				"./schemastery-vue-client.ts"
+			]
+		}
 	}
 }
