@@ -1,6 +1,6 @@
-<!-- SPDX-License-Identifier: AGPL-3.0-only -->
-<!-- Copyright (c) 2019-present Shigma and Koishijs contributors. -->
-<!-- Copyright (c) 2026-present Koishi-CE contributors. -->
+<!-- SPDX-License-Identifier: MIT -->
+<!-- Copyright (c) 2024 Il Harper (ilharp). -->
+<!-- Modifications Copyright (c) 2026-present Koishi-CE contributors. -->
 
 <!--
   欢迎卡片：文档 / 社区论坛等入口链接，背景为开屏描线动画（splash.vue，

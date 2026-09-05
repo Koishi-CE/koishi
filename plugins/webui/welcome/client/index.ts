@@ -1,6 +1,6 @@
-// SPDX-License-Identifier: AGPL-3.0-only
-// Copyright (c) 2019-present Shigma and Koishijs contributors.
-// Copyright (c) 2026-present Koishi-CE contributors.
+// SPDX-License-Identifier: MIT
+// Copyright (c) 2024 Il Harper (ilharp).
+// Modifications Copyright (c) 2026-present Koishi-CE contributors.
 
 /**
  * welcome 插件（浏览器侧）入口。
