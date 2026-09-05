@@ -20,10 +20,14 @@ export function isInteger(source: unknown) {
 /**
  * 等待指定毫秒数后 resolve 的 Promise，用于测试与流程延时。
  *
+ * 注意不能转发 Bun.sleep：其调度优先级与 setTimeout 队列不同
+ * （sleep(0) 会让 session.prompt 的 setTimeout(0) 超时晚于等待方
+ * 恢复，时序用例反转），此处必须维持 setTimeout 的 FIFO 语义。
+ *
  * @param ms 等待时长（毫秒）
  */
-export function sleep(ms: number): Promise<void> {
-	return Bun.sleep(ms);
+export async function sleep(ms: number): Promise<void> {
+	return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
 /**
