@@ -102,4 +102,32 @@ describe("Tokenizer Interpolation", () => {
 			{ source: "hello b", initiator: "%" },
 		]);
 	});
+
+	// upstream: koishijs/koishi#1541——插值递归会对已预处理的文本再次
+	// h.parse/escape/unescape，元素在插值内部或之后均被破坏
+	describe("插值与消息元素", () => {
+		const IMG = '<img src="https://koishi.js.org/x.gif"/>';
+
+		it("插值内部的元素内容不失真", () => {
+			const argv = Argv.parse(`echo $(echo ${IMG})`);
+			const inter = argv.tokens![1]?.inters[0];
+			expect(inter?.tokens).toHaveShape([
+				{ content: "echo" },
+				{ content: IMG },
+			]);
+		});
+
+		it("插值之后的元素保持单一 token", () => {
+			const argv = Argv.parse(`echo foo $(bar) ${IMG}`);
+			const tokens = argv.tokens!;
+			// 第三个 token 是插值段：content 为空，子 argv 在 inters
+			expect(tokens[2]).toHaveShape({ content: "" });
+			expect(tokens[2]?.inters[0]).toHaveShape({
+				source: "bar",
+				initiator: "$(",
+			});
+			// 插值之后紧跟的元素不被插值子层的解析拆碎
+			expect(tokens[3]).toHaveShape({ content: IMG });
+		});
+	});
 });
