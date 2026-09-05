@@ -1,3 +1,4 @@
+---
 "@koishi-ce/koishi": patch
 
 ---
