@@ -130,6 +130,13 @@ export function setupCommander(
 		const content = session.stripped.content.slice(
 			(prefix ?? "").length,
 		);
+		// 消息以元素（而非文本）开头时没有可纠错的命令名，相似度
+		// 比对反而可能拿元素序列化的首段误命中（如 <face 与 qface）
+		// upstream: koishijs/koishi#1533
+		// 消息以元素（而非文本）开头时没有可纠错的命令名，相似度
+		// 比对反而可能拿元素序列化的首段误命中（如 <face 与 qface）
+		// upstream: koishijs/koishi#1533
+		if (/^\s*</.test(content)) return next();
 		const actual = (
 			content.split(/\s/, 1)[0] ?? ""
 		).toLowerCase();

@@ -35,6 +35,9 @@ describe("Command Suggestion", () => {
 		.option("text", "-t <bar>")
 		.action(({ options }) => `fooo${options?.text}`);
 
+	// 与 <face 的元素序列化首段达到相似度阈值的指令名
+	app.command("qface").action(() => "q");
+
 	beforeAll(() => app.start());
 	afterAll(() => app.stop());
 
@@ -98,6 +101,12 @@ describe("Command Suggestion", () => {
 			"您要找的是不是“foo”或“fooo”或“bool”？",
 		);
 		await client1.shouldNotReply(".");
+	});
+
+	it("元素开头的消息不触发指令建议", async () => {
+		// upstream: koishijs/koishi#1533——元素序列化首段（<face）与
+		// 指令名（qface）相似度可达 0.8，纯元素消息不应出指令建议
+		await client1.shouldNotReply('/<face id="1"/> hello');
 	});
 });
 
