@@ -58,7 +58,7 @@
     },
     "packages/node/cli": {
       "name": "@koishi-ce/koishi",
-      "version": "1.0.9",
+      "version": "1.0.10",
       "bin": "lib/cli/index.mjs",
       "dependencies": {
         "@koishi-ce/core": "workspace:*",
@@ -324,7 +324,7 @@
     },
     "plugins/infra/memory": {
       "name": "@koishi-ce/plugin-database-memory",
-      "version": "1.0.0",
+      "version": "1.1.0",
       "dependencies": {
         "cosmokit": "^1.8.1",
         "minato": "^3.7.0",
