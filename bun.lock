@@ -92,8 +92,8 @@
       },
       "devDependencies": {
         "@koishi-ce/koishi": "workspace:*",
+        "@koishi-ce/plugin-database-memory": "workspace:*",
         "@koishi-ce/plugin-mock": "workspace:*",
-        "@koishijs/plugin-database-memory": "^3.7.0",
       },
     },
     "packages/node/i18n-utils": {
@@ -215,8 +215,8 @@
       "version": "1.1.0",
       "devDependencies": {
         "@koishi-ce/koishi": "workspace:*",
+        "@koishi-ce/plugin-database-memory": "workspace:*",
         "@koishi-ce/plugin-mock": "workspace:*",
-        "@koishijs/plugin-database-memory": "^3.7.0",
       },
       "peerDependencies": {
         "@koishi-ce/koishi": "^1.0.0",
@@ -227,8 +227,8 @@
       "version": "1.1.0",
       "devDependencies": {
         "@koishi-ce/koishi": "workspace:*",
+        "@koishi-ce/plugin-database-memory": "workspace:*",
         "@koishi-ce/plugin-mock": "workspace:*",
-        "@koishijs/plugin-database-memory": "^3.7.0",
       },
       "peerDependencies": {
         "@koishi-ce/koishi": "^1.0.0",
@@ -239,6 +239,7 @@
       "version": "1.1.0",
       "devDependencies": {
         "@koishi-ce/koishi": "workspace:*",
+        "@koishi-ce/plugin-database-memory": "workspace:*",
         "@koishi-ce/plugin-mock": "workspace:*",
       },
       "peerDependencies": {
@@ -261,8 +262,8 @@
       "version": "1.1.0",
       "devDependencies": {
         "@koishi-ce/koishi": "workspace:*",
+        "@koishi-ce/plugin-database-memory": "workspace:*",
         "@koishi-ce/plugin-mock": "workspace:*",
-        "@koishijs/plugin-database-memory": "^3.7.0",
       },
       "peerDependencies": {
         "@koishi-ce/koishi": "^1.0.0",
@@ -284,9 +285,9 @@
       "version": "1.0.1",
       "devDependencies": {
         "@koishi-ce/koishi": "workspace:*",
+        "@koishi-ce/plugin-database-memory": "workspace:*",
         "@koishi-ce/plugin-help": "workspace:*",
         "@koishi-ce/plugin-mock": "workspace:*",
-        "@koishijs/plugin-database-memory": "^3.7.0",
       },
       "peerDependencies": {
         "@koishi-ce/koishi": "^1.0.0",
@@ -321,11 +322,26 @@
         "@koishi-ce/koishi": "^1.0.0",
       },
     },
+    "plugins/infra/memory": {
+      "name": "@koishi-ce/plugin-database-memory",
+      "version": "1.0.0",
+      "dependencies": {
+        "cosmokit": "^1.8.1",
+        "minato": "^3.7.0",
+      },
+      "devDependencies": {
+        "@koishi-ce/koishi": "workspace:*",
+      },
+      "peerDependencies": {
+        "@koishi-ce/koishi": "^1.0.0",
+      },
+    },
     "plugins/infra/mock": {
       "name": "@koishi-ce/plugin-mock",
       "version": "1.0.0",
       "devDependencies": {
         "@koishi-ce/koishi": "workspace:*",
+        "@koishi-ce/plugin-database-memory": "workspace:*",
         "@koishi-ce/plugin-server": "workspace:*",
       },
       "peerDependencies": {
@@ -382,6 +398,7 @@
       },
       "devDependencies": {
         "@koishi-ce/koishi": "workspace:*",
+        "@koishi-ce/plugin-database-memory": "workspace:*",
       },
       "peerDependencies": {
         "@koishi-ce/koishi": "^1.0.0",
@@ -405,9 +422,9 @@
         "@koishi-ce/client": "workspace:*",
         "@koishi-ce/console": "workspace:*",
         "@koishi-ce/plugin-console": "workspace:*",
+        "@koishi-ce/plugin-database-memory": "workspace:*",
         "@koishi-ce/plugin-locales": "workspace:*",
         "@koishi-ce/plugin-mock": "workspace:*",
-        "@koishijs/plugin-database-memory": "^3.7.0",
       },
       "peerDependencies": {
         "@koishi-ce/koishi": "^1.0.0",
@@ -426,6 +443,7 @@
       "devDependencies": {
         "@koishi-ce/client": "workspace:*",
         "@koishi-ce/koishi": "workspace:*",
+        "@koishi-ce/plugin-database-memory": "workspace:*",
         "echarts": "^6.1.0",
         "vite": "^8.2.2",
         "vue-echarts": "^8.1.0",
@@ -443,6 +461,7 @@
       },
       "devDependencies": {
         "@koishi-ce/client": "workspace:*",
+        "@koishi-ce/plugin-database-memory": "workspace:*",
         "vue": "^3.5.12",
         "vue-router": "^5.2.0",
       },
@@ -628,6 +647,7 @@
         "@koishi-ce/client": "workspace:*",
         "@koishi-ce/loader": "workspace:*",
         "@koishi-ce/plugin-config": "workspace:*",
+        "@koishi-ce/plugin-database-memory": "workspace:*",
         "@koishijs/market": "^4.2.10",
         "@types/semver": "^7.5.8",
         "@vueuse/core": "^14.4.0",
@@ -671,6 +691,7 @@
       "devDependencies": {
         "@koishi-ce/client": "workspace:*",
         "@koishi-ce/plugin-console": "workspace:*",
+        "@koishi-ce/plugin-database-memory": "workspace:*",
         "@koishi-ce/plugin-server": "workspace:*",
         "@satorijs/components-vue": "^0.7.8",
         "@satorijs/element": "^3.2.0",
@@ -690,6 +711,7 @@
         "@koishi-ce/client": "workspace:*",
         "@koishi-ce/koishi": "workspace:*",
         "@koishi-ce/plugin-analytics": "workspace:*",
+        "@koishi-ce/plugin-database-memory": "workspace:*",
       },
       "peerDependencies": {
         "@koishi-ce/koishi": "^1.0.0",
@@ -904,6 +926,8 @@
 
     "@koishi-ce/plugin-console": ["@koishi-ce/plugin-console@workspace:plugins/webui/console"],
 
+    "@koishi-ce/plugin-database-memory": ["@koishi-ce/plugin-database-memory@workspace:plugins/infra/memory"],
+
     "@koishi-ce/plugin-database-sqlite": ["@koishi-ce/plugin-database-sqlite@workspace:plugins/infra/sqlite"],
 
     "@koishi-ce/plugin-dataview": ["@koishi-ce/plugin-dataview@workspace:plugins/webui/dataview"],
@@ -964,8 +988,6 @@
 
     "@koishijs/market": ["@koishijs/market@4.2.10", "", { "dependencies": { "@koishijs/components": "^1.5.22", "cosmokit": "^1.8.1", "spark-md5": "^3.0.2" }, "peerDependencies": { "vue": "^3", "vue-i18n": "^9" } }, "sha512-I65mSdeLaB18JmdLrKxUvzIIyyNgeUD/Rz94xhh5DN0CHq3dqZUAwAjhPiBtYn5gyqgfINbZDFteoLt1otmucA=="],
 
-    "@koishijs/plugin-database-memory": ["@koishijs/plugin-database-memory@3.7.0", "", { "dependencies": { "@minatojs/driver-memory": "^3.7.0" }, "peerDependencies": { "koishi": "^4.18.10" } }, "sha512-Yt7c95nFt/1UtgK7NrXZpCDGybVhPA+wVbThIW2EGckGZcmosefyekhfxr5minpTr0kcW1X6lfk93dZkPNbXtg=="],
-
     "@koishijs/plugin-http": ["@koishijs/plugin-http@0.6.3", "", { "dependencies": { "@cordisjs/plugin-http": "^0.6.3" }, "peerDependencies": { "koishi": "^4.18.0" } }, "sha512-alw51yjc6bykgZD2EsbTn03Yjwp9Mkidb1BsQn25SDwaBQqla0bZAVivFxNW1J60lneP9uymu3EUnPspvBuxog=="],
 
     "@koishijs/plugin-proxy-agent": ["@koishijs/plugin-proxy-agent@0.3.3", "", { "dependencies": { "@cordisjs/plugin-proxy-agent": "^0.3.3" }, "peerDependencies": { "koishi": "^4.17.9" } }, "sha512-pOpsHNVn3RVpPwdQjHNBRFsuq02sAS5NRVSuWWSHBPwIQ+QWu5232Au9RVH/DHBvx6XLWOm+WePMo4gRaxsVgg=="],
@@ -981,8 +1003,6 @@
     "@manypkg/get-packages": ["@manypkg/get-packages@3.1.0", "", { "dependencies": { "@manypkg/find-root": "^3.1.0", "@manypkg/tools": "^2.1.0" } }, "sha512-0TbBVyvPrP7xGYBI/cP8UP+yl/z+HtbTttAD7FMAJgn/kXOTwh5/60TsqP9ZYY710forNfyV0N8P/IE/ujGZJg=="],
 
     "@manypkg/tools": ["@manypkg/tools@2.1.2", "", { "dependencies": { "jju": "^1.4.0", "tinyglobby": "^0.2.13", "yaml": "^2.9.0" } }, "sha512-6QEf6yqFbETdwGITKq57aYoPfX/3K8XFNwsAlx0C1M7o8cb79sv1M3w+tWuWvIcSbNqrLF7OD7YpZMVVz335hQ=="],
-
-    "@minatojs/driver-memory": ["@minatojs/driver-memory@3.7.0", "", { "dependencies": { "cosmokit": "^1.6.3" }, "peerDependencies": { "minato": "^3.7.0" } }, "sha512-IOiLWm4KVxUS5cvL9YWn827tbnEeHku6CIMHLtO+smPFUInRnczJZ6kikpCzx2ynqMV/nPKu8kIAGrYKJhR5/Q=="],
 
     "@minatojs/sql-utils": ["@minatojs/sql-utils@5.6.0", "", { "dependencies": { "cosmokit": "^1.6.3" }, "peerDependencies": { "minato": "^3.7.0" } }, "sha512-FD1HeSEqQnhXm/nG+LXZb8G8WelTB7tGR+zFaTZN0TmjMSyoJpKqOxeiZve464YgaAd3IxZMcfFE28nPXBWx/w=="],
 

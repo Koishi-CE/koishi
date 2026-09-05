@@ -53,7 +53,7 @@
 	"devDependencies": {
 		"@koishi-ce/koishi": "workspace:*",
 		"@koishi-ce/plugin-mock": "workspace:*",
-		"@koishijs/plugin-database-memory": "^3.7.0"
+		"@koishi-ce/plugin-database-memory": "workspace:*"
 	},
 	"exports": {
 		".": {

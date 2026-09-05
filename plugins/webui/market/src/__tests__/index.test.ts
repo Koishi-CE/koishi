@@ -18,7 +18,7 @@ import {
 } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import memory from "@koishijs/plugin-database-memory";
+import memory from "@koishi-ce/plugin-database-memory";
 
 /**
  * market 插件测试：
@@ -297,8 +297,7 @@ type TestApp = InstanceType<typeof App>;
 
 const app = new App();
 
-// 同 admin：CJS 实现配 ESM 声明，nodenext 互操作视图多包一层 default，类型层穿透取真实类
-app.plugin(memory as unknown as typeof memory.default);
+app.plugin(memory);
 app.plugin(http);
 // Console 基类的 static inject 是 cordis 3 旧形态，与 Plugin.Constructor 期待类型不兼容，仅做类型层转型
 app.plugin(
@@ -1014,9 +1013,7 @@ describe("镜像索引瞬态重试", () => {
 		timeout?: number;
 	}) {
 		const mirror = new App();
-		mirror.plugin(
-			memory as unknown as typeof memory.default,
-		);
+		mirror.plugin(memory);
 		mirror.plugin(http);
 		mirror.plugin(
 			FakeConsole as unknown as Plugin.Constructor<TestApp>,

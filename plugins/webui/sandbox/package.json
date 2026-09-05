@@ -58,6 +58,7 @@
 		"@koishi-ce/koishi": "^1.0.0"
 	},
 	"devDependencies": {
+		"@koishi-ce/plugin-database-memory": "workspace:*",
 		"@koishi-ce/client": "workspace:*",
 		"@koishi-ce/plugin-console": "workspace:*",
 		"@koishi-ce/plugin-server": "workspace:*",

@@ -21,7 +21,7 @@ import { rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { App } from "@koishi-ce/koishi";
-import * as memoryModule from "@koishijs/plugin-database-memory";
+import memory from "@koishi-ce/plugin-database-memory";
 import { SQLiteDriver } from "./index.ts";
 
 // 临时测试表注册进全局 Tables（动态表名的强类型通道）
@@ -54,10 +54,6 @@ declare module "@koishi-ce/koishi" {
 		};
 	}
 }
-
-// CJS 实现配 ESM 声明，Bun 互操作视图多包一层 default，穿透取真实驱动
-const memory =
-	memoryModule.default as unknown as typeof memoryModule.default.default;
 
 const app = new App();
 app.plugin(SQLiteDriver, { path: ":memory:" });

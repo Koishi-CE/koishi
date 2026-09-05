@@ -10,11 +10,8 @@ import {
 } from "bun:test";
 import { App, h } from "@koishi-ce/koishi";
 // 同 admin 既有测试：CJS 实现配 ESM 声明，nodenext 互操作视图多包一层 default，转型取真实插件对象
-import * as memoryModule from "@koishijs/plugin-database-memory";
+import memory from "@koishi-ce/plugin-database-memory";
 import mock from "./index.ts";
-
-const memory =
-	memoryModule.default as unknown as typeof memoryModule.default.default;
 
 /**
  * 消息客户端与编码器（client.ts）的边角测试：

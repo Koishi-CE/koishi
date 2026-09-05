@@ -17,10 +17,10 @@
 ## 硬性约束（违反 = 错误）
 
 1. **peerDependencies 一律指向 CE 包名**：`@koishi-ce/koishi ^1.0.0`、`@koishi-ce/plugin-console ^1.0.0`、`@koishi-ce/loader ^1.0.0` 等（peer 声明用于下游 `bun add` 解析与防 Bun 自动装官方包），**不要写回上游名**（`koishi` / `@koishijs/*`）。
-2. **代码内导入一律 `@koishi-ce/*`**；仅有的外部上游导入例外是测试用的 `@koishijs/plugin-database-memory` 与 console 的类型引用 `@koishijs/plugin-server-proxy`。
+2. **代码内导入一律 `@koishi-ce/*`**；仅有的外部上游导入例外是 console 的类型引用 `@koishijs/plugin-server-proxy`（测试用 memory 驱动已 CE 化为 `@koishi-ce/plugin-database-memory`，`plugins/infra/memory`）。
 3. **cordis 生态冻结在 3.x 内洽线**：cordis / minato / @cordisjs/* / @satorijs/* 不得跳 4.x / 1.x——Phase 5 已实证被 `@satorijs/core`（内部携带 cordis ^3，无 cordis 4 线）阻塞并整体回退，重启条件见 `docs/decisions/upgrade-plan.md` Phase 5 节。
 4. **vendored 三包不动**：`plugins/infra/{http,proxy,server}` 是预编译产物包（无 `src/`、不走 tsdown、根 tsdown 配置显式 exclude），分别内联再导出 `@cordisjs/plugin-*`（`proxy` 目录系上游 `proxy-agent` 的本地改名，见 docs/process/upstream.md）。
-5. **ESM-only 产物 + Bun 运行时**：全部 46 个 workspace 包均为 `"type": "module"`，根 tsdown 单遍构建只出 ESM（`index.mjs` + `index.d.ts`），各包 exports 以 `default` 条件兜底；Bun 的 `require()` 可直接加载 ESM，loader 的插件加载链据此工作，**不要恢复 CJS 双格式产物**。运行时以 Bun 为准（Node 不作兼容目标）；`.yml` locale 走 copy loader 原样拷入产物，Bun 原生支持 yml 导入。
+5. **ESM-only 产物 + Bun 运行时**：全部 48 个 workspace 包均为 `"type": "module"`，根 tsdown 单遍构建只出 ESM（`index.mjs` + `index.d.ts`），各包 exports 以 `default` 条件兜底；Bun 的 `require()` 可直接加载 ESM，loader 的插件加载链据此工作，**不要恢复 CJS 双格式产物**。运行时以 Bun 为准（Node 不作兼容目标）；`.yml` locale 走 copy loader 原样拷入产物，Bun 原生支持 yml 导入。
 6. **许可证分区**：`packages/web/*` 与 `plugins/webui/*` 全部（含 console 宿主插件）为 AGPL-3.0，其余目录 MIT——以 `NOTICE` 为准；在 AGPL 目录新增文件同样受 AGPL 约束。
 7. **market 插件为上游原版再分发**：`plugins/webui/market/`（`@koishi-ce/plugin-market`）对齐自上游 webui `plugins/market`（原版 v2.11.11），社区版 `plugin-marketn` 已被其取代并移除。client 侧依赖 npm 包 `@koishijs/market`，其中的 npm 名 `@koishijs/components` 由单插件构建的 alias 重定向到本仓 workspace 版，避免双实例。
 8. **packages/shim 两包不动**：`@koishi-ce/koishi-shim`（4.18.11）与 `@koishi-ce/console-shim`（5.30.11）是下游 npm alias 的占名目标——纯 JS 预编译、版本冻结跟随上游线、changesets ignore（**勿写 changeset、勿 bump、勿改回 1.x 基线**）。下游项目以四行 alias 钉名（`"koishi": "npm:@koishi-ce/koishi-shim@^4.18.11"` 等），机理与维护纪律详见 `packages/shim/README.md`。
@@ -36,7 +36,7 @@ bun run lint                    # biome check .（格式 + lint 唯一权威）
 bun run lint:client             # eslint 仅查 *.vue（biome 只解析 .vue 的 script，模板语义归 eslint）
 bun run typecheck               # TS7 类型检查 = 两条 bunx tsc（node 侧 + client 侧大一统串行）
 bun run build                   # 根 tsdown：全部 node 侧包 → lib/（ESM-only）
-bun test                        # 全量自有用例（97 个测试文件 / 约 800 用例，覆盖全部 node 侧包）
+bun test                        # 全量自有用例（102 个测试文件 / 约 860 用例，覆盖全部 node 侧包）
 bun test --coverage             # 覆盖率（src 源码口径，总体约 99.8% 行覆盖）
 bun packages/web/client/src/bin.ts build            # 宿主控制台前端 → plugins/webui/console/dist
 bun packages/web/client/src/bin.ts build <插件目录>  # 单个 webui 插件的前端

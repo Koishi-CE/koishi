@@ -25,6 +25,7 @@
 		// plugins/infra
 		"hmr": "plugin",
 		"http": "connection",
+		"memory": "database",
 		"server-temp": "server",
 		"sqlite": "database",
 		"operations": "functions",

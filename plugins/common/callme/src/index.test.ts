@@ -14,13 +14,10 @@ import {
 	Logger,
 	RuntimeError,
 } from "@koishi-ce/koishi";
-import mock from "@koishi-ce/plugin-mock";
 // 同 admin 既有测试：CJS 实现配 ESM 声明，nodenext 互操作视图多包一层 default，转型取真实插件对象
-import * as memoryModule from "@koishijs/plugin-database-memory";
+import memory from "@koishi-ce/plugin-database-memory";
+import mock from "@koishi-ce/plugin-mock";
 import * as callme from "./index.ts";
-
-const memory =
-	memoryModule.default as unknown as typeof memoryModule.default.default;
 
 const app = new App();
 

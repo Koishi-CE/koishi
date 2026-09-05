@@ -21,13 +21,9 @@ import {
 	it,
 } from "bun:test";
 import { App, type Session } from "@koishi-ce/koishi";
+import memory from "@koishi-ce/plugin-database-memory";
 import mock from "@koishi-ce/plugin-mock";
-import * as memoryModule from "@koishijs/plugin-database-memory";
 import "../../__tests__/shape.ts";
-
-// CJS 实现配 ESM 声明，Bun 互操作视图多包一层 default，穿透取真实驱动
-const memory =
-	memoryModule.default as unknown as typeof memoryModule.default.default;
 
 const app = new App();
 app.plugin(mock);

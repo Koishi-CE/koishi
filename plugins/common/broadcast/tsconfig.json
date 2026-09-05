@@ -47,6 +47,9 @@
 			"@koishi-ce/plugin-hmr": [
 				"../../infra/hmr/src/index.ts"
 			],
+			"@koishi-ce/plugin-database-memory": [
+				"../../infra/memory/src/index.ts"
+			],
 			"@koishi-ce/plugin-mock": [
 				"../../infra/mock/src/index.ts"
 			],

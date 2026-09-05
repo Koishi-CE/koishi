@@ -12,7 +12,7 @@
 
 ## 2. 目录结构与包清单
 
-共 47 个 workspace 包，全部 `"type": "module"`。
+共 48 个 workspace 包，全部 `"type": "module"`。
 
 ```
 koishi/（Bun workspaces：packages/node/* · packages/shim/* · packages/web/* · plugins/{common,infra,webui}/* · apps/* · tooling/*）
@@ -41,7 +41,7 @@ koishi/（Bun workspaces：packages/node/* · packages/shim/* · packages/web/* 
 
 ### packages/shim/*（占位 shim，纯 JS 预编译、不走 tsdown、版本冻结、changesets ignore）
 
-CE 包 peer 一律指 CE 名，但外部真包依赖（测试用的 `@koishijs/plugin-database-memory`、analytics 的 `@koishijs/assets`、console 类型引用的 `@koishijs/plugin-server-proxy`）与**下游项目的社区插件生态**仍消费上游名。shim 以 npm alias 的形式占用上游包名、把解析指回本仓对应包，阻止包管理器自动安装 npm 官方全家桶形成双实例。详见 `packages/shim/README.md`。
+CE 包 peer 一律指 CE 名，但外部真包依赖（analytics 的 `@koishijs/assets`、console 类型引用的 `@koishijs/plugin-server-proxy`；测试用的 memory 驱动已 CE 化为 `@koishi-ce/plugin-database-memory`）与**下游项目的社区插件生态**仍消费上游名。shim 以 npm alias 的形式占用上游包名、把解析指回本仓对应包，阻止包管理器自动安装 npm 官方全家桶形成双实例。详见 `packages/shim/README.md`。
 
 | 目录 | 包名 | 版本冻结 | 形态 |
 |---|---|---|---|
@@ -61,11 +61,12 @@ CE 包 peer 一律指 CE 名，但外部真包依赖（测试用的 `@koishijs/p
 
 `bind`（跨平台账户绑定，需 database）、`broadcast`（广播，需 database）、`callme`（昵称）、`echo`（回声，`koishi.browser: true`）、`help`（指令帮助，多语言 locale）、`inspect`（用户/频道/消息诊断）来自上游 koishi `plugins/common/*`；`assets-local`（本地资源落盘，来自 [koishijs/assets](https://github.com/koishijs/assets) `packages/local`）与 `rate-limit`（指令限流，来自 [koishijs/common](https://github.com/koishijs/common) `packages/rate-limit`）为后续再分发。均带 `koishi` 元数据，locale 放 `src/locales/*.yml`。
 
-### plugins/infra/*（基础设施 ×7）
+### plugins/infra/*（基础设施 ×8）
 
 | 目录 | 包名 | 说明 |
 |---|---|---|
 | `hmr` | `@koishi-ce/plugin-hmr` | 热重载（TS 编译走 Bun 原生，文件监听 @parcel/watcher 原生绑定；错误帧 @babel/code-frame） |
+| `memory` | `@koishi-ce/plugin-database-memory` | 内存数据库驱动（两源合并：minato `@minatojs/driver-memory` 3.7.0 + koishi 包装层；纯内存无持久化，测试替身与 SQLite 对拍基准） |
 | `mock` | `@koishi-ce/plugin-mock` | 测试 mock（多数测试依赖它） |
 | `sqlite` | `@koishi-ce/plugin-database-sqlite` | SQLite 数据库驱动（三源合并：cordis 3 线 `@minatojs/driver-sqlite` 4.7.0 骨架 + cordis 4 线 5.1.1 的 `node:sqlite` 引擎层；依赖官方 npm 的 `minato ^3.7` / `@minatojs/sql-utils ^5.6`） |
 | `http` | `@koishi-ce/plugin-http` | **vendored 预编译产物**（无 src，内联再导出 `@cordisjs/plugin-http`） |
@@ -100,7 +101,7 @@ node 侧在 `src/`、Vue 侧在 `client/`（上游约定），`koishi.public: ["
 
 ### 硬性规则
 
-- `peerDependencies` **一律指向 CE 包名**（`@koishi-ce/* ^1.0.0`），不要写回上游名；代码内导入同样一律 `@koishi-ce/*`（例外仅 `@koishijs/plugin-database-memory` 与 `@koishijs/plugin-server-proxy` 两处外部包）。
+- `peerDependencies` **一律指向 CE 包名**（`@koishi-ce/* ^1.0.0`），不要写回上游名；代码内导入同样一律 `@koishi-ce/*`（例外仅 `@koishijs/plugin-server-proxy` 一处外部包，console 的类型引用）。
 - vendored 三包（http / proxy / server）不动。
 - 依赖方向：`plugins/webui/* → @koishi-ce/console → @koishi-ce/core`；`plugins/common/* → @koishi-ce/core`；`packages/web/*`（浏览器侧）不依赖 node 侧运行时。
 

@@ -10,13 +10,9 @@ import {
 	it,
 } from "bun:test";
 import { App } from "@koishi-ce/koishi";
+import memory from "@koishi-ce/plugin-database-memory";
 import mock from "@koishi-ce/plugin-mock";
-import * as memoryModule from "@koishijs/plugin-database-memory";
 import admin from "../index.ts";
-
-// 同 index.test.ts：CJS 实现配 ESM 声明，nodenext 互操作视图多包一层 default
-const memory =
-	memoryModule.default as unknown as typeof memoryModule.default.default;
 
 /**
  * 聊天指令（command.ts）的补充测试：locale 子指令族（user/channel 的

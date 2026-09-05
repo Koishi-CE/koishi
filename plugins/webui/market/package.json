@@ -60,6 +60,7 @@
         }
     },
     "devDependencies": {
+		"@koishi-ce/plugin-database-memory": "workspace:*",
         "@koishi-ce/client": "workspace:*",
         "@koishi-ce/loader": "workspace:*",
         "@koishi-ce/plugin-config": "workspace:*",

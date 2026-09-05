@@ -53,6 +53,9 @@
 				"../../common/inspect/src/index.ts"
 			],
 			"@koishi-ce/plugin-hmr": ["../hmr/src/index.ts"],
+			"@koishi-ce/plugin-database-memory": [
+				"../memory/src/index.ts"
+			],
 			"@koishi-ce/plugin-mock": ["./src/index.ts"],
 			"@koishi-ce/plugin-actions": [
 				"../../webui/actions/src/index.ts"

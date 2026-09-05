@@ -11,8 +11,8 @@ import {
 } from "bun:test";
 import { Console, type Entry } from "@koishi-ce/console";
 import { App, type Plugin } from "@koishi-ce/koishi";
+import memory from "@koishi-ce/plugin-database-memory";
 import mock from "@koishi-ce/plugin-mock";
-import memory from "@koishijs/plugin-database-memory";
 import * as status from "./index.ts";
 import {
 	EnvInfoProvider,
@@ -32,8 +32,7 @@ class FakeConsole extends Console {
 
 const app = new App();
 
-// 同 admin：CJS 实现配 ESM 声明，nodenext 互操作视图多包一层 default，类型层穿透取真实类
-app.plugin(memory as unknown as typeof memory.default);
+app.plugin(memory);
 // Console 基类的 static inject 是 cordis 3 旧形态（{ optional: [...] }），
 // 与 Plugin.Constructor 期待的 Dict<Meta> 索引签名不兼容，仅做类型层转型
 app.plugin(

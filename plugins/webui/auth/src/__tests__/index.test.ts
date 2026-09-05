@@ -40,8 +40,8 @@ import auth, {
 	type Auth,
 	randomId,
 } from "@koishi-ce/plugin-auth";
+import memory from "@koishi-ce/plugin-database-memory";
 import mockClient from "@koishi-ce/plugin-mock";
-import memory from "@koishijs/plugin-database-memory";
 
 // 声明测试专用事件（带权限门槛），驱动 console/intercept 鉴权链路
 declare module "@koishi-ce/console" {
@@ -214,7 +214,7 @@ class TestClient {
 
 const app = new App();
 // 同 admin：CJS 实现配 ESM 声明，nodenext 互操作视图多包一层 default，类型层穿透取真实类
-app.plugin(memory as unknown as typeof memory.default);
+app.plugin(memory);
 app.plugin(mockClient);
 // Console 基类的 static inject 是 cordis 3 旧形态，与 Plugin.Constructor 期待类型不兼容，仅做类型层转型
 app.plugin(

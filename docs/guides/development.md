@@ -68,7 +68,7 @@ bun tooling/check-docs-links.ts          # 文档相对链接与锚点存活检�
 | 各 webui 插件前端 | 各插件 `dist/`（`koishi.public` 声明） | `packages/web/client/src/index.ts` 的 `build(root)` API |
 | `apps/koishi-create` | `lib/` | 根 tsdown（包级 tsdown.config.ts 补 bin 入口） |
 
-- **ESM-only + Bun 运行时**：全部 47 个 workspace 包均为 `"type": "module"`，根 tsdown 只出 ESM（exports 以 `default` 条件兜底）。loader 用 `require()` 加载插件，Bun 的 `require()` 可直接加载 ESM，插件加载链据此工作；不要恢复 CJS 双格式产物。
+- **ESM-only + Bun 运行时**：全部 48 个 workspace 包均为 `"type": "module"`，根 tsdown 只出 ESM（exports 以 `default` 条件兜底）。loader 用 `require()` 加载插件，Bun 的 `require()` 可直接加载 ESM，插件加载链据此工作；不要恢复 CJS 双格式产物。
 - `**/lib/`、`**/dist/` 均被 .gitignore 忽略，不入库。例外：vendored 三包（`plugins/infra/{http,proxy,server}`）的 `index.cjs/index.mjs/index.d.ts` 是提交进仓库的预编译产物（再导出 `@cordisjs/plugin-*`），不走 tsdown。
 - 前端构建发布前现构建（dist 不入 git），由 `bun run release build` 编排。
 

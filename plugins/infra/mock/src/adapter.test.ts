@@ -12,11 +12,8 @@ import { App } from "@koishi-ce/koishi";
 // memory 数据库经 admin 的 node_modules 深链导入源码形态（本包未声明该 devDep，
 // 且禁改 package.json；与 admin 既有测试同版本同实现）；
 // CJS 实现配 ESM 声明，nodenext 互操作视图多包一层 default，转型取真实插件对象
-import * as memoryModule from "@koishijs/plugin-database-memory";
+import memory from "@koishi-ce/plugin-database-memory";
 import mock, { MockAdapter, MockBot } from "./index.ts";
-
-const memory =
-	memoryModule.default as unknown as typeof memoryModule.default.default;
 
 /**
  * mock 适配器与模拟 Bot（adapter.ts）的边角测试：

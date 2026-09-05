@@ -11,8 +11,8 @@ import {
 } from "bun:test";
 import { Console, type Entry } from "@koishi-ce/console";
 import { App, type Plugin, Time } from "@koishi-ce/koishi";
+import memory from "@koishi-ce/plugin-database-memory";
 import mock from "@koishi-ce/plugin-mock";
-import memory from "@koishijs/plugin-database-memory";
 import analytics from "./index.ts";
 
 // Analytics 类仅默认导出，实例类型经构造器派生（namespace 侧的 Payload 等随实例可用）
@@ -31,7 +31,7 @@ class FakeConsole extends Console {
 const app = new App();
 
 // 同 admin：CJS 实现配 ESM 声明，nodenext 互操作视图多包一层 default，类型层穿透取真实类
-app.plugin(memory as unknown as typeof memory.default);
+app.plugin(memory);
 // Console 基类的 static inject 是 cordis 3 旧形态，与 Plugin.Constructor 期待类型不兼容，仅做类型层转型
 app.plugin(
 	FakeConsole as unknown as Plugin.Constructor<App>,

@@ -11,13 +11,9 @@ import {
 } from "bun:test";
 import { Console, type Entry } from "@koishi-ce/console";
 import { App, type Plugin } from "@koishi-ce/koishi";
+import memory from "@koishi-ce/plugin-database-memory";
 import mock from "@koishi-ce/plugin-mock";
-import * as memoryModule from "@koishijs/plugin-database-memory";
 import admin from "../index.ts";
-
-// 同既有 index.test.ts：CJS 实现配 ESM 声明，nodenext 互操作视图多包一层 default
-const memory =
-	memoryModule.default as unknown as typeof memoryModule.default.default;
 
 /**
  * Admin 服务 console 分支与 CRUD 全量测试。

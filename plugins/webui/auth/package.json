@@ -54,6 +54,7 @@
 		"@koishi-ce/koishi": "^1.0.0"
 	},
 	"devDependencies": {
+		"@koishi-ce/plugin-database-memory": "workspace:*",
 		"@koishi-ce/client": "workspace:*",
 		"vue": "^3.5.12",
 		"vue-router": "^5.2.0"

@@ -24,14 +24,10 @@ import {
 	sleep,
 	User,
 } from "@koishi-ce/koishi";
+import memory from "@koishi-ce/plugin-database-memory";
 import mock, {
 	DEFAULT_SELF_ID,
 } from "@koishi-ce/plugin-mock";
-import * as memoryModule from "@koishijs/plugin-database-memory";
-
-// CJS 实现配 ESM 声明，Bun 互操作视图多包一层 default，穿透取真实驱动
-const memory =
-	memoryModule.default as unknown as typeof memoryModule.default.default;
 
 const app = new App();
 

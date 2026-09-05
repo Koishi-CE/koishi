@@ -1,14 +1,13 @@
 {
-	"name": "@koishi-ce/plugin-broadcast",
-	"description": "Broadcast messages in Koishi",
-	"version": "1.1.0",
+	"name": "@koishi-ce/plugin-database-memory",
+	"description": "In-memory Database Support for Koishi",
+	"version": "1.0.0",
 	"type": "module",
 	"main": "lib/index.mjs",
 	"typings": "lib/index.d.ts",
 	"files": [
 		"lib",
-		"src",
-		"locales"
+		"src"
 	],
 	"contributors": [
 		"Shigma <shigma10826@gmail.com>",
@@ -18,41 +17,44 @@
 	"repository": {
 		"type": "git",
 		"url": "git+https://github.com/Koishi-CE/koishi.git",
-		"directory": "plugins/common/broadcast"
+		"directory": "plugins/infra/memory"
 	},
 	"bugs": {
 		"url": "https://github.com/Koishi-CE/koishi/issues"
 	},
-	"homepage": "https://koishi.chat/plugins/common/broadcast.html",
+	"homepage": "https://koishi.chat/plugins/database/memory.html",
 	"keywords": [
 		"bot",
 		"chatbot",
 		"koishi",
 		"plugin",
-		"broadcast"
+		"database",
+		"memory",
+		"test",
+		"utilities"
 	],
 	"koishi": {
-		"category": "tool",
+		"hidden": true,
+		"category": "storage",
 		"description": {
-			"en": "Broadcast messages",
-			"zh": "发送广播消息"
+			"en": "In-memory database support (mainly for testing)",
+			"zh": "基于内存的数据库支持 (主要用于本地测试)"
 		},
 		"service": {
-			"required": [
+			"implements": [
 				"database"
 			]
-		},
-		"locales": [
-			"zh"
-		]
+		}
 	},
 	"peerDependencies": {
 		"@koishi-ce/koishi": "^1.0.0"
 	},
 	"devDependencies": {
-		"@koishi-ce/koishi": "workspace:*",
-		"@koishi-ce/plugin-mock": "workspace:*",
-		"@koishi-ce/plugin-database-memory": "workspace:*"
+		"@koishi-ce/koishi": "workspace:*"
+	},
+	"dependencies": {
+		"cosmokit": "^1.8.1",
+		"minato": "^3.7.0"
 	},
 	"exports": {
 		".": {

@@ -5,12 +5,8 @@
 import { beforeAll, describe, expect, it } from "bun:test";
 import { App } from "@koishi-ce/koishi";
 import admin from "@koishi-ce/plugin-admin";
+import memory from "@koishi-ce/plugin-database-memory";
 import mock from "@koishi-ce/plugin-mock";
-import * as memoryModule from "@koishijs/plugin-database-memory";
-
-// 同 anymatch：CJS 实现配 ESM 声明，nodenext 互操作视图多包一层 default，断言穿透取真实类
-const memory =
-	memoryModule.default as unknown as typeof memoryModule.default.default;
 
 /**
  * @koishi-ce/plugin-admin 聊天指令的行为测试：

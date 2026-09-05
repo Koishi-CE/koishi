@@ -26,9 +26,9 @@ import {
 	Logger,
 	type Plugin,
 } from "@koishi-ce/koishi";
+import memory from "@koishi-ce/plugin-database-memory";
 import mock from "@koishi-ce/plugin-mock";
 import server from "@koishi-ce/plugin-server";
-import memory from "@koishijs/plugin-database-memory";
 import { SandboxBot } from "./bot.ts";
 import type { Config } from "./index.ts";
 import * as sandbox from "./index.ts";
@@ -80,8 +80,7 @@ const serverPort = await getFreePort();
 
 const app = new App();
 
-// 同 admin：CJS 实现配 ESM 声明，nodenext 互操作视图多包一层 default，类型层穿透取真实类
-app.plugin(memory as unknown as typeof memory.default);
+app.plugin(memory);
 app.plugin(server, { host: "127.0.0.1", port: serverPort });
 // Console 基类的 static inject 是 cordis 3 旧形态，与 Plugin.Constructor 期待类型不兼容，仅做类型层转型
 app.plugin(
