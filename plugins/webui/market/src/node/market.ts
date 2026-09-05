@@ -21,8 +21,9 @@ import { MarketProvider as BaseMarketProvider } from "../shared/index.ts";
 const logger = new Logger("market");
 
 // registry 接口对无认证请求有速率限制：搜索接口（/-/v1/search）超频时
-// 返回 429，collect 首页搜索一旦失败会中断整个市场数据刷新（prepare
-// 置 _error，页面清空）。对限流与 5xx 瞬态错误做指数退避重试。
+// 返回 429，collect 一旦失败会中断整个市场数据刷新（prepare 置 _error，
+// 页面清空）。对限流、请求超时与 5xx 瞬态错误做指数退避重试；镜像索引
+// 的 404（部署窗口内版本化文件尚未就绪）同样按瞬态处理。
 /** 首次请求失败后的最大重试次数 */
 const maxRetries = 2;
 /** 重试的基础退避时长，按尝试次数指数放大 */
@@ -63,13 +64,23 @@ class MarketProvider extends BaseMarketProvider {
 		super.start();
 	}
 
-	/** 限流（429）与请求超时、服务端瞬态错误（408 / 5xx）可安全重试 */
-	private isRetryable(error: unknown): error is HTTP.Error {
+	/**
+	 * 限流（429）、请求超时（abort 后无 response，code 为 ETIMEDOUT）、
+	 * 服务端瞬态错误（408 / 5xx）可安全重试；allowNotFound 时把 404
+	 * 也视为瞬态——镜像索引以「302 指向版本化文件」方式发布，切换文件
+	 * 的部署窗口会出现短时 404。
+	 */
+	private isRetryable(
+		error: unknown,
+		allowNotFound = false,
+	): error is HTTP.Error {
 		if (!this.ctx.http.isError(error)) return false;
-		const { status } = error.response ?? {};
+		if (!error.response) return error.code === "ETIMEDOUT";
+		const { status } = error.response;
 		return (
 			status === 429 ||
 			status === 408 ||
+			(allowNotFound && status === 404) ||
 			(status !== undefined && status >= 500)
 		);
 	}
@@ -82,6 +93,7 @@ class MarketProvider extends BaseMarketProvider {
 		http: HTTP,
 		url: string,
 		config?: RequestConfig,
+		allowNotFound = false,
 	): Promise<T> {
 		for (let attempt = 0; ; attempt++) {
 			try {
@@ -91,7 +103,7 @@ class MarketProvider extends BaseMarketProvider {
 			} catch (error) {
 				if (
 					attempt >= maxRetries ||
-					!this.isRetryable(error)
+					!this.isRetryable(error, allowNotFound)
 				)
 					throw error;
 				const retryAfter = Number(
@@ -126,6 +138,8 @@ class MarketProvider extends BaseMarketProvider {
 			const result = await this.request<SearchResult>(
 				this.http,
 				"",
+				undefined,
+				true,
 			);
 			this.scanner.objects = result.objects.filter(
 				(object) => !object.ignored,

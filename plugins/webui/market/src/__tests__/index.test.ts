@@ -139,6 +139,12 @@ let searchResponse: {
 	total: 0,
 };
 
+/** flaky-index 镜像索引桩：已发生的请求计数与计划内的 404 次数。 */
+let flakyIndexHits = 0;
+let flakyIndexMisses = 0;
+/** slow-index 慢响应桩：已发生的请求计数。 */
+let slowIndexHits = 0;
+
 /** 声明预期触发 market 域告警（404 / 限流等桩失败路径）的用例：执行期间静默该域。 */
 const itQuiet = (
 	name: string,
@@ -172,6 +178,33 @@ const registryServer = Bun.serve({
 				return new Response("not found", { status: 404 });
 			}
 			return Response.json(searchResponse);
+		}
+		// 模拟镜像索引的部署窗口：前 flakyIndexMisses 次 404，随后返回完整索引
+		if (url.pathname === "/flaky-index") {
+			if (flakyIndexHits++ < flakyIndexMisses) {
+				return new Response("not found", { status: 404 });
+			}
+			return Response.json({
+				version: "4",
+				objects: [
+					{
+						package: {
+							name: "koishi-plugin-demo",
+							version: "2.0.0",
+							date: "2024-06-01T00:00:00Z",
+							keywords: ["koishi", "plugin"],
+						},
+					},
+				],
+			});
+		}
+		// 模拟镜像索引挂起：延迟超过用例配置的 timeout，驱动超时重试路径
+		if (url.pathname === "/slow-index") {
+			slowIndexHits++;
+			await new Promise((resolve) =>
+				setTimeout(resolve, 300),
+			);
+			return Response.json({ version: "4", objects: [] });
 		}
 		// 模拟 registry 限流：恒定 429 + 极短的 Retry-After，驱动重试后失败
 		if (
@@ -971,5 +1004,72 @@ describe("market 进阶链路", () => {
 			);
 		},
 		20000,
+	);
+});
+
+describe("镜像索引瞬态重试", () => {
+	/** 搭建配了 search.endpoint 的独立宿主（镜像索引经本测试桩提供）。 */
+	async function createMirrorApp(search: {
+		endpoint: string;
+		timeout?: number;
+	}) {
+		const mirror = new App();
+		mirror.plugin(
+			memory as unknown as typeof memory.default,
+		);
+		mirror.plugin(http);
+		mirror.plugin(
+			FakeConsole as unknown as Plugin.Constructor<TestApp>,
+		);
+		mirror.plugin(FakeLoader);
+		mirror.plugin(market, {
+			registry: {
+				endpoint: `http://127.0.0.1:${registryServer.port}/`,
+			},
+			search,
+		});
+		await mirror.start();
+		return mirror;
+	}
+
+	it("镜像索引部署窗口 404 经退避重试后恢复", async () => {
+		flakyIndexHits = 0;
+		flakyIndexMisses = 2;
+		const mirror = await createMirrorApp({
+			endpoint: `http://127.0.0.1:${registryServer.port}/flaky-index`,
+		});
+		const svc = mirror.get("console.services.market");
+		// start(true) 内部 await prepare：前两次 404，退避重试后第三次成功
+		await svc?.start(true);
+		expect(flakyIndexHits).toBeGreaterThanOrEqual(3);
+		const payload = await svc?.get();
+		expect(Object.keys(payload?.data ?? {})).toEqual([
+			"koishi-plugin-demo",
+		]);
+		expect(payload?.total).toBe(1);
+		await mirror.stop();
+	}, 10000);
+
+	itQuiet(
+		"镜像索引持续超时经重试后优雅失败",
+		async () => {
+			slowIndexHits = 0;
+			const mirror = await createMirrorApp({
+				endpoint: `http://127.0.0.1:${registryServer.port}/slow-index`,
+				timeout: 50,
+			});
+			const svc = mirror.get("console.services.market");
+			// 每次尝试 50ms 即超时，退避 1s + 2s 后仍失败；重试确实发生
+			await svc?.start(true);
+			expect(slowIndexHits).toBeGreaterThanOrEqual(3);
+			// start 末尾的 refresh 会再触发一轮 collect，等待其失败落地
+			await new Promise((resolve) =>
+				setTimeout(resolve, 3600),
+			);
+			const error = svc?.["_error" as keyof typeof svc];
+			expect(error).toBeDefined();
+			await mirror.stop();
+		},
+		15000,
 	);
 });
