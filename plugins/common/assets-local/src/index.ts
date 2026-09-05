@@ -11,8 +11,9 @@
  * - GET  <path>/:name：按文件头魔数（而非扩展名）判定 MIME 后流式返回文件；
  * - POST <path>：经 HMAC 校验后上传资源，返回可访问 URL。
  *
- * 缺省 selfUrl（插件与全局均未配置）时回退为 file: 协议地址（无服务器场景）；
- * 启动时自动把旧版 public/ 目录迁移到数据目录。
+ * 缺省 selfUrl（插件与全局均未配置）时静默回退为 file: 协议地址
+ * （无服务器场景，不打印提示日志）；启动时自动把旧版 public/ 目录
+ * 迁移到数据目录。
  */
 import { createHmac } from "node:crypto";
 import { createReadStream, type Stats } from "node:fs";
@@ -91,9 +92,8 @@ class LocalAssets extends Assets<LocalAssets.Config> {
 			this.baseUrl = trimSlash(selfUrl) + this.path;
 			this.initServer();
 		} else {
-			this.ctx.logger.info(
-				'missing config "selfUrl", fallback to "file:" scheme',
-			);
+			// 社区版差异：默认静默回退 file:（本地单机场景不打扰日志），
+			// 需经网络访问资源的用户自行配置 selfUrl
 			this.baseUrl = "file:";
 			this.noServer = true;
 		}
