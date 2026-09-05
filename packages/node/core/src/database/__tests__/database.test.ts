@@ -21,7 +21,7 @@ import mock, {
 	DEFAULT_SELF_ID,
 } from "@koishi-ce/plugin-mock";
 import * as memoryModule from "@koishijs/plugin-database-memory";
-import "./shape.ts";
+import "../../__tests__/shape.ts";
 
 // CJS 实现配 ESM 声明，Bun 互操作视图多包一层 default，穿透取真实驱动
 const memory =

@@ -14,7 +14,7 @@ import { join } from "node:path";
 import type { Entry } from "@koishi-ce/console";
 import NodeConsole, {
 	rewriteSharedImports,
-} from "../src/node/index.ts";
+} from "../node/index.ts";
 
 describe("rewriteSharedImports", () => {
 	test("压缩形态的静态导入被改写", () => {
@@ -79,7 +79,7 @@ describe("rewriteSharedImports", () => {
 /** resolveEntry 依赖实例的 config 与 getFiles，测试中以最小宿主对象模拟 */
 interface FakeHost {
 	config: { devMode: boolean; uiPath: string };
-	getFiles(files: Entry.Files): string[];
+	getFiles(files: Entry.Files): string | string[];
 }
 
 const resolveEntry = (

@@ -19,7 +19,7 @@ import {
 } from "bun:test";
 import { App, Command } from "@koishi-ce/koishi";
 import mock from "@koishi-ce/plugin-mock";
-import "../../../tests/shape.ts";
+import "../../../__tests__/shape.ts";
 
 const app = new App();
 app.plugin(mock);

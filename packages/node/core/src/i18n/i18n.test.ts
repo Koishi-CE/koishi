@@ -12,7 +12,7 @@
 import { describe, expect, it } from "bun:test";
 import { App, createMatch } from "@koishi-ce/koishi";
 import mock from "@koishi-ce/plugin-mock";
-import "./shape.ts";
+import "../__tests__/shape.ts";
 
 const app = new App({ minSimilarity: 0.5 });
 app.plugin(mock);

@@ -11,9 +11,9 @@
  *   （实例注册仅对本实例可见，不影响全局默认 tokenizer）。
  */
 import { describe, expect, it } from "bun:test";
-import "../../../tests/shape.ts";
-import { Argv } from "./argv.ts";
-import { bracs, Tokenizer } from "./tokenizer.ts";
+import "../../../__tests__/shape.ts";
+import { Argv } from "../argv.ts";
+import { bracs, Tokenizer } from "../tokenizer.ts";
 
 describe("Tokenizer Interpolation", () => {
 	it("单引号内的插值不求值，revert 恢复原文", () => {

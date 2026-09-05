@@ -26,7 +26,7 @@ import {
 	Next,
 } from "@koishi-ce/koishi";
 import mock from "@koishi-ce/plugin-mock";
-import "../../../tests/shape.ts";
+import "../../../__tests__/shape.ts";
 
 // 捕获 logger 输出，用于断言错误日志是否被打印
 const print = jest.fn();

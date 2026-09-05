@@ -1,6 +1,6 @@
 {
 	"extends": "../../../tsconfig.base",
-	"include": ["src", "tests"],
+	"include": ["src"],
 	"compilerOptions": {
 		// Bun 测试运行时只认本文件直接声明的 paths（不跟随 extends），须手工维护；源为 tsconfig.base.json 的 paths
 		"paths": {

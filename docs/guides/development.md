@@ -126,10 +126,10 @@ import { App } from "@koishi-ce/koishi";
 expect(app.database.getUser("mock", "A")).resolves.toHaveShape({ authority: 1 });
 ```
 
-- **shape 断言**（`toHaveShape`）由 `packages/node/core/tests/shape.ts` 注册（`expect.extend` 自定义 matcher，import 该文件一次即注册；语义：期望为实际的递归子集）。
+- **shape 断言**（`toHaveShape`）由 `packages/node/core/src/__tests__/shape.ts` 注册（`expect.extend` 自定义 matcher，import 该文件一次即注册；语义：期望为实际的递归子集）。
 - 上游 port 进来的用例若带 chai 风格，迁移对照：`await expect(p).eventually.to.eql(x)` → `await expect(p).resolves.toEqual(x)`；`.to.be.rejected` → `.rejects.toThrow()`。
 - 数据库用例用 `@koishijs/plugin-database-memory`（上游包，声明于 `packages/node/core` 的 devDependencies）；时间模拟用 `bun:test` 的 mock timers（`jest.useFakeTimers()` 等；默认不冻结微任务链路，但会冻结 `Date.now()`）。
-- 测试文件分布在各包 `src/**/__tests__/`、`packages/node/core/tests/`、多数插件的 `src/` 直下（`*.test.ts`，全仓无 `.spec.ts`）以及 apps 两包；总数以 `bun test` 实跑输出为准。
+- 测试文件与被测模块同目录放置：同模块用例较多时收进该模块的 `__tests__/`（如 `core/src/session/__tests__/`），较少时直下同名放置（如 `core/src/command/declaration.test.ts`）；文件型模块（无独立目录）的用例组收进包级 `src/__tests__/`（core 的 shape 断言基建同在此）。全仓 `*.test.ts`、无 `.spec.ts`；总数以 `bun test` 实跑输出为准。
 - `.yml` locale 在测试中可直接 import（Bun 原生支持）。
 
 ## 7. 已知坑（历史经验，别再踩）

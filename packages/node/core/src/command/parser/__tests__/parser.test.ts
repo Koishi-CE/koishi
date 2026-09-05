@@ -10,7 +10,7 @@
 
 import { describe, expect, it } from "bun:test";
 import { type Command, Context } from "@koishi-ce/koishi";
-import "../../../tests/shape.ts";
+import "../../../__tests__/shape.ts";
 
 const app = new Context();
 

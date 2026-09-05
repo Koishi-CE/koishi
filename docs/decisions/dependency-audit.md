@@ -196,7 +196,7 @@ koishi-bun/
 
 **总账**：外部依赖（含 peerDependencies、去重、排除 `workspace:*`）由快照的 **99 个降至约 60 个**（-40%）；package.json 由 42 个变为 48 个（47 个 workspace 包 + 根）。
 
-- **测试栈整体退役**：mocha / @types/mocha / @sinonjs/fake-timers / chai / chai-as-promised / chai-shape 及相关 @types 全部移除，断言迁移至 `bun:test` 原生 `expect`（2026-08-27 起分批，2026-09-02 f63650b 完成；shape 断言内联为 `packages/node/core/tests/shape.ts`）。
+- **测试栈整体退役**：mocha / @types/mocha / @sinonjs/fake-timers / chai / chai-as-promised / chai-shape 及相关 @types 全部移除，断言迁移至 `bun:test` 原生 `expect`（2026-08-27 起分批，2026-09-02 f63650b 完成；shape 断言内联为 `packages/node/core/src/__tests__/shape.ts`）。
 - **原生化删除**：ws / uuid / @types/uuid（Phase 0，90ee3e2）；axios 改原生 fetch（随 create ESM-only 化，ac7e8a9）；js-yaml 全链与 @maikolib/vite-plugin-yaml（fe89812）；ns-require / dotenv（d6b4093）；fs-extra / globby（koishi-scripts 外部依赖清零，048e3ba）；execa / p-map（d236e27）；envinfo / which-pm-runs（4b07454）；get-registry（改原生 npmrc 读取）。
 - **替换**：create-koishi-ce 的 prompts → @clack/prompts、kleur → picocolors、自研 tar 远程解包 → giget（2026-09-02）；cli 的 kleur → picocolors（kleur 全仓清零）。
 - **升级**：file-type ^16 → ^22（随 assets / assets-local 移植，d1329eb）；cac 升 ^7 并保留。

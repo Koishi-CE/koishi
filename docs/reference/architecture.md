@@ -128,7 +128,7 @@ node 侧在 `src/`、Vue 侧在 `client/`（上游约定），`koishi.public: ["
 
 ## 5. 测试体系
 
-- 运行器 `bun test`（裸跑即全量：97 个测试文件 / 约 800 用例，覆盖全部 node 侧包）；断言标准为 `bun:test` 的 `expect`，存量 chai 用例逐步迁移；shape 断言用 `packages/node/core/tests/shape.ts` 注册的 `toHaveShape`。写法与坑见 [../guides/development.md](../guides/development.md) §6。
+- 运行器 `bun test`（裸跑即全量：97 个测试文件 / 约 800 用例，覆盖全部 node 侧包）；断言标准为 `bun:test` 的 `expect`，存量 chai 用例逐步迁移；shape 断言用 `packages/node/core/src/__tests__/shape.ts` 注册的 `toHaveShape`。写法与坑见 [../guides/development.md](../guides/development.md) §6。
 
 ## 6. 许可证分区（权威：`NOTICE`）
 

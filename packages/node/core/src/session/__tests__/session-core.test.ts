@@ -23,7 +23,7 @@ import {
 	type SessionCore,
 } from "@koishi-ce/koishi";
 import mock from "@koishi-ce/plugin-mock";
-import "./shape.ts";
+import "../../__tests__/shape.ts";
 
 const app = new App();
 app.plugin(mock);
