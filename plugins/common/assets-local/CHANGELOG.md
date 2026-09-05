@@ -1,5 +1,13 @@
 # @koishi-ce/plugin-assets-local
 
+## 1.0.2
+
+### Patch Changes
+
+- 4264ff2: assets-local：移除缺省 selfUrl 时的提示日志，默认静默回退 file: 协议（本地单机场景）；需经网络访问资源的用户自行配置 selfUrl。
+- @koishi-ce/assets@1.0.2
+  - @koishi-ce/koishi@1.0.8
+
 ## 1.0.1
 
 ### Patch Changes

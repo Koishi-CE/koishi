@@ -1,5 +1,21 @@
 # @koishi-ce/plugin-hmr
 
+## 1.1.0
+
+### Minor Changes
+
+- dc83249: 文件监听从 chokidar 换为 @parcel/watcher 原生绑定：ignored 规则（`**/node_modules/**` 等 glob）在原生层剪枝生效，被忽略目录内的写入不再产生任何事件，同时删除了为 chokidar 5 win32 glob 失效而设的段剪枝补丁（compileGlobToPrune）。监听行为保持对齐：仅文件内容变更（update 事件）触发重载流程，事件路径为绝对路径；root 支持目录与文件条目（文件经「订阅所在目录 + 路径过滤」实现）。配置透传面由 chokidar 选项变为 @parcel/watcher 选项（如 `backend`）。原生绑定经 Bun 运行时 win32 实证可用，并新增冒烟测试钉死该前提；explorer 插件不受影响（仍用 chokidar）。
+- f66c005: i18n: 清剿存量假翻译并新增词典检查工具
+  
+  - broadcast / callme / echo / help / hmr / admin / logger / status 及 core 的 prompt-argument、commands.$ 等非中文语种中的上游中文占位全部替换为真翻译（含 ja-JP 残留）
+  - 新增 `bun tooling/check-locales.ts`：以 zh-CN 为基准检查全仓词典的键对齐、语种齐全与假翻译（market 等上游再分发目录按约定跳过/豁免），当前零报警
+
+### Patch Changes
+
+- fe5f425: 热重载编译失败的错误帧适配 Bun 真实错误形态：上游遗留的 esbuild `BuildFailure` 识别（按 `.text` 字段判定）在 Bun 运行时下永不命中，坏 TS 源码的编译错误此前只输出无位置的聚合消息；现按 Bun 抛出的 `AggregateError`（errors 为 BuildMessage，位置在 `position.{file,line,column}`）识别并渲染 `@babel/code-frame` 代码帧，日志直接定位出错行列。同时移除死依赖：esbuild（仅剩的 `import type { BuildFailure }` 引用一并清除）与 `@types/babel__code-frame`（v7 线存根，`@babel/code-frame@8` 自带类型从未生效）。
+- @koishi-ce/koishi@1.0.8
+  - @koishi-ce/loader@1.0.6
+
 ## 1.0.5
 
 ### Patch Changes

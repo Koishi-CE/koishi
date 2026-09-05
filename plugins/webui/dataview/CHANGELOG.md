@@ -1,5 +1,22 @@
 # @koishi-ce/plugin-dataview
 
+## 1.1.0
+
+### Minor Changes
+
+- 98c86df: i18n: 五个 webui 插件前端文案接入全局词典
+  
+  - explorer / config / dataview / insight / analytics 的 client 侧新增 7 语种词典，经 `ctx.$i18n.extend()` 注入宿主全局实例，页名、菜单、按钮、确认框、toast 等文案随设置页语言切换实时生效
+  - explorer 的 node 侧 schema 词典补齐 7 语种；analytics 的两处 schema 描述由中文直写改为 `.i18n()`
+  - 宿主侧配套：`$i18n.t` 支持插值参数、`createChart` 的标题支持 getter（详见 @koishi-ce/client 的 changeset）
+
+### Patch Changes
+
+- ad309a8: 修正包元数据：plugin-http 与 plugin-proxy-agent 的 repository / bugs / homepage 原误指向上游 cordiverse/http 仓库，改指本仓对应目录；plugin-dataview 的 contributors 补齐双人署名；keywords 去重与补全。仅元数据字段，无代码行为变更。
+- Updated dependencies [bac9f1d]
+  - @koishi-ce/plugin-console@1.1.0
+  - @koishi-ce/koishi@1.0.8
+
 ## 1.0.1
 
 ### Patch Changes

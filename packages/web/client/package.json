@@ -1,7 +1,7 @@
 {
 	"name": "@koishi-ce/client",
 	"description": "Koishi Console Client",
-	"version": "1.0.4",
+	"version": "1.1.0",
 	"type": "module",
 	"main": "client/index.ts",
 	"exports": {
