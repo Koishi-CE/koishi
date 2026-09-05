@@ -252,7 +252,8 @@ describe("@koishi-ce/plugin-locales", () => {
 	it("l10n 变化经防抖刷新 entry（entry-data 推送）", async () => {
 		socket.sent.length = 0;
 		app.i18n.define("$xx-XX", { a: "b" });
-		await tick(50);
+		// upstream: koishijs/koishi#1462——回推防抖对齐客户端的 1 秒
+		await tick(1100);
 		const messages = socket.sent
 			.map((line) => JSON.parse(line) as SentMessage)
 			.filter((msg) => msg.type === "entry-data");

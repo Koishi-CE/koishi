@@ -132,8 +132,11 @@ export async function apply(ctx: Context, config: Config) {
 			{ authority: 4 },
 		);
 
-		// i18n 任意变化(含本插件的 define)都在下一拍刷新 entry,推送最新翻译
-		const update = ctx.debounce(() => entry.refresh(), 0);
-		ctx.on("internal/i18n", update);
+	// i18n 任意变化(含本插件的 define)都延迟刷新 entry。与客户端发送侧
+	// 的 1s 防抖对齐:debounce 0 会在编辑中每拍全量回推,受控 textarea 的
+	// 值回跳会把光标甩到末尾,编辑器几乎不可用
+	// upstream: koishijs/koishi#1462
+	const update = ctx.debounce(() => entry.refresh(), 1000);
+	ctx.on("internal/i18n", update);
 	});
 }
