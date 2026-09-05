@@ -25,6 +25,7 @@ import {
 	Logger,
 	Next,
 } from "@koishi-ce/koishi";
+import memory from "@koishi-ce/plugin-database-memory";
 import mock from "@koishi-ce/plugin-mock";
 import "../../../__tests__/shape.ts";
 
@@ -414,6 +415,40 @@ describe("Command API", () => {
 
 			await app.start();
 			await client.shouldNotReply("test2");
+		});
+	});
+
+	// upstream: koishijs/koishi#1414——解析错误的反馈不应优先于权限判定：
+	// 无权限用户不应看到指令的解析细节（参数类型提示等）
+	describe("Authority Precedes Parse Feedback", () => {
+		const app = new App({ prefix: "." });
+		app.plugin(memory);
+		app.plugin(mock);
+		const client = app.mock.client("123");
+
+		app
+			.command("probe <n:number>")
+			.action(() => "ok");
+
+		beforeAll(async () => {
+			await app.start();
+			await app.database.createUser("mock", "123", {
+				authority: 0,
+			});
+		});
+		afterAll(() => app.stop());
+
+		it("权限不足时解析错误不回显解析细节", async () => {
+			// 参数传非数字触发解析错误；用户 authority 0 无权执行
+			// （指令默认 authority 1），应提示权限不足而非参数无效
+			await client.shouldReply(".probe abc", "权限不足。");
+		});
+
+		it("有权限时解析错误仍正常反馈", async () => {
+			await app.database.setUser("mock", "123", {
+				authority: 1,
+			});
+			await client.shouldReply(".probe abc", /^参数 n 输入无效/);
 		});
 	});
 });

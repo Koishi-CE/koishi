@@ -119,8 +119,9 @@ export class Command<
 		const args = (argv.args ??= [] as unknown as A);
 		const options = (argv.options ??= {} as O);
 		const { error } = argv;
-		// 解析阶段已产生错误（如类型转换失败）：直接把错误文案作为回复
-		if (error) return error;
+		// 解析阶段已产生错误（如类型转换失败）：不在此直接返回，先过
+		// 校验链——权限判定应优先于解析反馈，无权限用户不应看到指令的
+		// 解析细节（upstream: koishijs/koishi#1414）
 		if (logger.level >= 3)
 			logger.debug(
 				(argv.source ||= this.stringify(args, options)),
@@ -136,6 +137,9 @@ export class Command<
 			] as never);
 			if (!isNullable(result)) return result as Fragment;
 		}
+
+		// 校验链（含权限）未拦截时才把解析错误反馈给用户
+		if (error) return error;
 
 		// FIXME: 空 action 列表会导致无限循环，此处提前返回规避
 		if (!this._actions.length) return "";

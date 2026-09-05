@@ -111,6 +111,10 @@ export default function validate(ctx: Context) {
 				session,
 			} = argv;
 			if (!command || !session) return undefined;
+			// 解析阶段已产生错误时不做数量/未知选项检查（error 文案本身
+			// 就是反馈），更不能触发交互式追问
+			// upstream: koishijs/koishi#1414
+			if (argv.error) return undefined;
 			const sendHint = (
 				message: string,
 				...param: unknown[]
