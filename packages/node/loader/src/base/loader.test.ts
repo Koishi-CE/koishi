@@ -415,6 +415,26 @@ describe("Loader.reload", () => {
 		const written = last?.plugins?.[key as string];
 		expect(written).toMatchObject({ authority: 2 });
 	});
+
+	it("fork.parent 与挂载上下文合一时 filter 复合不自递归", async () => {
+		// upstream: koishijs/koishi#1286——webui 拖拽移动插件（teleport）
+		// 会把 fork.parent 强设为目标组 ctx，此后对该插件 reload 时
+		// 末尾的 filter 复合把 parent.filter 替换成调用自身的闭包，
+		// 首个会话过滤即 RangeError 爆栈
+		const loader = setupLoader({ plugins: {} });
+		const app = await loader.createApp();
+		await loader.reload(app, "probe", {});
+		// 模拟 teleport 后的形态：fork.parent 与 reload 的 parent 同一
+		const forkRecord = (
+			app.scope as typeof app.scope & {
+				[kRecordProp]?: Dict<unknown>;
+			}
+		)[kRecordProp] as Dict<{ parent: unknown }>;
+		(forkRecord["probe"] as { parent: unknown }).parent = app;
+		await loader.reload(app, "probe", { $filter: null });
+		// 修复前：app.filter 已是自递归闭包，调用即 Maximum call stack
+		expect(() => app.filter({} as never)).not.toThrow();
+	});
 });
 
 describe("Loader.paths", () => {

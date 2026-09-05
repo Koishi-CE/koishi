@@ -431,13 +431,20 @@ export abstract class Loader {
 			record[key] = fork;
 		}
 		const filter = this.interpolate(meta["$filter"]);
-		// 将 $filter 与父级过滤器复合为本 fork 的会话过滤器
-		fork.parent.filter = (session) => {
-			return !!(
-				parent.filter(session) &&
-				(isNullable(filter) || session.resolve(filter))
-			);
-		};
+		// 将 $filter 与父级过滤器复合为本 fork 的会话过滤器。
+		// 以赋值前的快照为基底而非动态引用 parent.filter：teleport
+		// 移动插件后 fork.parent 可能与 parent 同一，动态引用会把
+		// parent.filter 替换成调用自身的闭包，首个会话即爆栈
+		// upstream: koishijs/koishi#1286
+		const base = parent.filter;
+		if (base) {
+			fork.parent.filter = (session) => {
+				return !!(
+					base(session) &&
+					(isNullable(filter) || session.resolve(filter))
+				);
+			};
+		}
 		return fork;
 	}
 
