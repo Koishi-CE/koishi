@@ -1,40 +1,40 @@
 {
-	// TSGo
-	"js/ts.experimental.useTsgo": true,
-	// Editor
-	"editor.defaultFormatter": "biomejs.biome",
-	"editor.formatOnSave": true,
-	"editor.codeActionsOnSave": {
-		"source.fixAll.biome": "explicit",
-		"source.organizeImports.biome": "explicit"
-	},
-	// Material Icon Theme
-	"material-icon-theme.folders.associations": {
-		"webui": "client",
-		// apps
-		"koishi-create": "generator",
-		"koishi-scripts": "scripts",
-		// packages/node
-		"i18n-utils": "i18n",
-		// packages/shim
-		"shim": "middleware",
-		"console-shim": "console",
-		"koishi-shim": "core",
-		// plugins/common
-		"assets-local": "resource",
-		// plugins/infra
-		"hmr": "plugin",
-		"http": "connection",
-		"memory": "database",
-		"server-temp": "server",
-		"sqlite": "database",
-		"operations": "functions",
-		"setup": "config"
-	},
-	"material-icon-theme.files.associations": {
-		"NOTICE": "certificate",
-		// templates
-		"env": "tune",
-		"gitignore": "git"
-	}
+    // TSGo
+    "js/ts.experimental.useTsgo": true,
+    // Editor
+    "editor.defaultFormatter": "biomejs.biome",
+    "editor.formatOnSave": true,
+    "editor.codeActionsOnSave": {
+        "source.fixAll.biome": "explicit",
+        "source.organizeImports.biome": "explicit"
+    },
+    // Material Icon Theme
+    "material-icon-theme.folders.associations": {
+        "webui": "client",
+        // apps
+        "koishi-create": "generator",
+        "koishi-scripts": "scripts",
+        // packages/node
+        "i18n-utils": "i18n",
+        // packages/shim
+        "shim": "middleware",
+        "console-shim": "console",
+        "koishi-shim": "core",
+        // plugins/common
+        "assets-local": "resource",
+        // plugins/infra
+        "hmr": "plugin",
+        "http": "connection",
+        "memory": "temp",
+        "server-temp": "server",
+        "sqlite": "database",
+        "operations": "functions",
+        "setup": "config"
+    },
+    "material-icon-theme.files.associations": {
+        "NOTICE": "certificate",
+        // templates
+        "env": "tune",
+        "gitignore": "git"
+    }
 }
