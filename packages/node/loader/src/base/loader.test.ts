@@ -26,6 +26,7 @@ import {
 } from "@koishi-ce/koishi";
 import type { ResolvedConfigFile } from "./config-file.ts";
 import { Loader } from "./index.ts";
+import { kRecord as kRecordProp } from "./types.ts";
 
 beforeAll(() => {
 	// createApp 期间 loader 的 apply/unload 与启动横幅均为生命周期 info；组配置
@@ -337,6 +338,82 @@ describe("Loader 插件反查（resolve / keyFor / replace）", () => {
 		// unloadPlugin → unload（卸载后引用记录被清除）
 		loader.unloadPlugin(app, "group:alias");
 		expect(loader.getRefName(fork!)).toBeUndefined();
+	});
+});
+
+describe("Loader.reload", () => {
+	it("更新路径与创建路径同样做配置插值", async () => {
+		// upstream: koishijs/koishi#1328 / koishijs/koishi#1519——
+		// reload 的 update 分支不做 interpolate，webui 重载配置后
+		// 插件运行时拿到 ${{ env.* }} 字面量
+		const seen: unknown[] = [];
+		const loader = setupLoader({ plugins: {} });
+		loader.data["probe"] = {
+			name: "probe",
+			apply: (_ctx: Context, config: unknown) => {
+				seen.push(config);
+			},
+		};
+		const app = await loader.createApp();
+		process.env["LDR_UPD_VAR"] = "1";
+		try {
+			await loader.reload(app, "probe", {
+				value: "${{ env.LDR_UPD_VAR }}",
+			});
+			await loader.reload(app, "probe", {
+				value: "v${{ env.LDR_UPD_VAR }}",
+			});
+			// 创建与更新两轮收到的都应是插值结果
+			expect(seen.at(-1)).toEqual({ value: "v1" });
+		} finally {
+			delete process.env["LDR_UPD_VAR"];
+		}
+	});
+
+	it("入口文件热更新后运行期回写仍能落盘", async () => {
+		// upstream: koishijs/koishi#998——hmr 把 readConfig 的插值副本
+		// update 进根上下文，group fork 的 config 从此与 loader.config
+		// 脱钩，internal/before-update 的回写落在脱钩副本上、文件不更新
+		const loader = setupLoader({
+			plugins: { "a:fixed": {} },
+		});
+		const app = await loader.createApp();
+
+		// 模拟 hmr 入口文件变动：readConfig 产出插值副本并 update 根
+		const fresh = await loader.readConfig();
+		app.scope.update(fresh as never);
+		await sleep(10);
+
+		// 模拟插件运行期持久化配置（如 plugin-commands 的权限回写）：
+		// 对根组内插件 fork 直接 update，经 internal/before-update 回写
+		const entryRecord = (
+			app.scope as typeof app.scope & {
+				[kRecordProp]?: Dict<unknown>;
+			}
+		)[kRecordProp] as Dict<{
+			ctx: Context & {
+				scope: typeof app.scope & {
+					[kRecordProp]?: Dict<unknown>;
+				};
+			};
+		}>;
+		const entry = entryRecord["group:entry"];
+		const groupRecord = entry?.ctx.scope[
+			kRecordProp
+		] as Dict<{
+			update: (c: unknown) => void;
+		}>;
+		expect(groupRecord["a:fixed"]).toBeDefined();
+		const key = "a:fixed";
+		groupRecord[key!]!.update({ authority: 2 });
+		await sleep(10);
+
+		// 回写应落到 loader.config 并随 writeConfig 落盘
+		const last = loader.writes.at(-1)?.config as {
+			plugins: Dict<Dict<unknown>>;
+		};
+		const written = last?.plugins?.[key as string];
+		expect(written).toMatchObject({ authority: 2 });
 	});
 });
 

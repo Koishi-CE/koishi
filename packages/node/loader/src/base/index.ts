@@ -402,8 +402,18 @@ export abstract class Loader {
 			}
 			// 标记本次更新来自 loader，避免 internal/before-update 回环写盘
 			(fork as LoaderScope)[kUpdate] = true;
+			// 普通插件与创建路径（forkPlugin）对称地做插值：webui 重载配置
+			// 回传的未编辑字段仍是 ${{ env.* }} 原文，不插值的话插件运行时
+			// 拿到的就是字面量（upstream: koishijs/koishi#1328 / #1519）。
+			// group 保持原始引用：interpolate 是深拷贝，替换组 fork 的
+			// config 会令其与 loader.config 脱钩、运行期回写全部丢失
+			// （upstream: koishijs/koishi#998）
+			const resolved =
+				name === "group"
+					? config
+					: this.interpolate(config);
 			fork.update(
-				config as Parameters<typeof fork.update>[0],
+				resolved as Parameters<typeof fork.update>[0],
 			);
 		} else {
 			if (!this.isTruthyLike(meta["$if"])) return;

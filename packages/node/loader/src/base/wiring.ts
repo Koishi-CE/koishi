@@ -41,12 +41,18 @@ export function wireAppEvents(
 	// 配置文件中的 plugins 表变化时，重新装载根组
 	app.accept(
 		["plugins"],
-		(config) => {
-			// 语义为 fire-and-forget：重载结果由 internal/* 事件链路自行回写
+		() => {
+			// 语义为 fire-and-forget：重载结果由 internal/* 事件链路自行回写。
+			// 始终取 loader.config.plugins（原始树）而非事件携带的插值副本：
+			// hmr 入口文件变动会以 readConfig 的插值副本 update 根上下文，
+			// 若把副本传给 group fork，其 scope.config 将与 loader.config
+			// 脱钩，此后 internal/before-update 的运行期回写全落在副本上、
+			// 配置文件不再更新
+			// upstream: koishijs/koishi#998
 			void loader.reload(
 				app,
 				"group:entry",
-				config.plugins,
+				loader.config.plugins,
 			);
 		},
 		{ passive: true },
