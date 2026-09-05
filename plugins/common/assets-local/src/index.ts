@@ -15,7 +15,6 @@
  * （无服务器场景，不打印提示日志）；启动时自动把旧版 public/ 目录
  * 迁移到数据目录。
  */
-import { createHmac } from "node:crypto";
 import { createReadStream, type Stats } from "node:fs";
 import {
 	cp,
@@ -24,10 +23,8 @@ import {
 	readdir,
 	rm,
 	stat,
-	writeFile,
 } from "node:fs/promises";
 import { basename, resolve } from "node:path";
-import { pathToFileURL } from "node:url";
 import Assets from "@koishi-ce/assets";
 import { type Context, Schema } from "@koishi-ce/koishi";
 // 仅为引入 plugin-server 的模块增强，使下方 ctx.server 的类型可用
@@ -190,7 +187,10 @@ class LocalAssets extends Assets<LocalAssets.Config> {
 					koa.status = 400;
 					return;
 				}
-				const hash = createHmac("sha1", this.config.secret)
+				const hash = new Bun.CryptoHasher(
+					"sha1",
+					this.config.secret,
+				)
 					.update(filename + salt)
 					.digest("hex");
 				if (hash !== sign) {
@@ -204,7 +204,7 @@ class LocalAssets extends Assets<LocalAssets.Config> {
 
 	/** 落盘并累计存量统计 */
 	private async write(buffer: Buffer, filename: string) {
-		await writeFile(filename, buffer);
+		await Bun.write(filename, buffer);
 		this._stats.assetCount =
 			(this._stats.assetCount ?? 0) + 1;
 		this._stats.assetSize =
@@ -221,7 +221,7 @@ class LocalAssets extends Assets<LocalAssets.Config> {
 		const savePath = resolve(this.root, filename);
 		await this.write(buffer, savePath);
 		if (this.noServer) {
-			return pathToFileURL(savePath).href;
+			return Bun.pathToFileURL(savePath).href;
 		}
 		return `${this.baseUrl}/${filename}`;
 	}

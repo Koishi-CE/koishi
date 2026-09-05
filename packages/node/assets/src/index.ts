@@ -14,7 +14,6 @@
  * 派生类需实现 upload()（上传并返回可访问 URL）与 stats()（存量统计），
  * 如 plugins/common/assets-local。
  */
-import { createHash } from "node:crypto";
 import { basename } from "node:path";
 import {
 	type Context,
@@ -117,7 +116,7 @@ export abstract class Assets<
 	): Promise<Assets.FileInfo> {
 		const file = await this.ctx.http.file(url);
 		const buffer = Buffer.from(file.data);
-		const hash = createHash("sha1")
+		const hash = new Bun.CryptoHasher("sha1")
 			.update(buffer)
 			.digest("hex");
 		let suffix: string;

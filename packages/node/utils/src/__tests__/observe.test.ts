@@ -2,8 +2,7 @@
 // Copyright (c) 2019-present Shigma and Koishijs contributors.
 // Copyright (c) 2026-present Koishi-CE contributors.
 
-import { describe, expect, it } from "bun:test";
-import { mock as jest } from "node:test";
+import { describe, expect, it, mock } from "bun:test";
 import {
 	type Dict,
 	noop,
@@ -200,7 +199,7 @@ describe("Observer API", () => {
 
 	// 验证 $update 按批消费变更：无 diff 不回调、消费后 diff 清空
 	it("flush changes", () => {
-		const flush = jest.fn();
+		const flush = mock();
 		const object = observe({ a: 1, b: [2] }, flush);
 		expect(object.$diff).toEqual({});
 
@@ -216,9 +215,7 @@ describe("Observer API", () => {
 
 		object.$update();
 		expect(flush.mock.calls).toHaveLength(1);
-		expect(flush.mock.calls[0]?.arguments).toEqual([
-			{ b: [] },
-		]);
+		expect(flush.mock.calls[0]).toEqual([{ b: [] }]);
 		expect(object).toEqual<{ a: number; b: number[] }>({
 			a: 1,
 			b: [],
@@ -234,9 +231,7 @@ describe("Observer API", () => {
 
 		object.$update();
 		expect(flush.mock.calls).toHaveLength(2);
-		expect(flush.mock.calls[1]?.arguments).toEqual([
-			{ a: 3 },
-		]);
+		expect(flush.mock.calls[1]).toEqual([{ a: 3 }]);
 		expect(object).toEqual<{ a: number; b: number[] }>({
 			a: 3,
 			b: [],

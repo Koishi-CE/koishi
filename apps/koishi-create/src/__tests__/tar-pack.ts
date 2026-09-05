@@ -11,8 +11,6 @@
  * 端到端链路间接验证。
  */
 
-import { gzipSync } from "node:zlib";
-
 const BLOCK = 512;
 const encoder = new TextEncoder();
 
@@ -207,5 +205,5 @@ export async function tarPack(
 	}
 
 	// gzip 压缩为 .tgz（与 npm registry 的 tarball 同构）
-	return gzipSync(raw);
+	return Bun.gzipSync(raw);
 }
