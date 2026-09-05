@@ -64,6 +64,7 @@ bun packages/web/client/src/bin.ts build <插件目录>  # 单个 webui 插件�
 - **前端构建无 vite 配置文件**（全部编程式 `vite.build()`）；`collectWorkspaceAliases()` 是跨包解析的关键，动 client 构建须复核。
 - **特殊构建 hack**：插件可自带 `build/client.ts` 导出 vite 配置覆盖（`@koishi-ce/client` 的 `build()` 显式加载合并，vite 不会自动发现该文件名），analytics 的 "fuck-echarts" 即经此接入；另有 client 构建的 vue-i18n esm-browser.prod 别名。
 - **Bun 下 require 坏 TS 抛 `AggregateError`**（errors 为 BuildMessage：`message` + `position.{file,line,column}`，非 esbuild 的 `{ text, location }` 形态），hmr 的错误帧据此识别（`src/error.ts`）；TS 即时编译由 Bun 原生完成，esbuild 已从 hmr 移除。
+- **hmr 文件监听用 @parcel/watcher 原生绑定**（Bun 1.4.0 win32 无任何原生监听 API）；`bun install` 提示 Blocked postinstall（@parcel/watcher）属预期——install 脚本仅 build-from-source 兜底，平台预编译包就位即可用，勿加 trustedDependencies、勿调查。explorer 仍用 chokidar。
 - **测试断言新标准是 `bun:test` 的 `expect`**：不要新增 chai 断言（存量逐步迁移）。
 - **目录名 `apps/koishi-create` 与包名 `create-koishi-ce` 不一致**：引用一律以 `apps/koishi-create` 为准。
 

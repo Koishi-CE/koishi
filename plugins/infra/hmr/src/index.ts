@@ -5,7 +5,8 @@
 /**
  * 插件热重载插件（hmr，以 watcher 服务挂载到 ctx.watcher）。
  *
- * 基于 chokidar 监听工作区文件变动，对插件做模块级热替换（HMR）：
+ * 基于 @parcel/watcher 原生递归监听工作区文件变动（ignored 规则在
+ * 原生层生效，node_modules 等目录不产生事件），对插件做模块级热替换：
  * 1. 入口文件（配置文件 / 环境文件）变动 → 热更新应用配置或整体重启；
  * 2. 框架自身依赖变动（不属于任何插件的模块）→ 只能整体重启；
  * 3. 插件源码变动 → 分析 require 依赖图，仅清理受影响插件的
@@ -13,8 +14,9 @@
  * 重载失败时回滚 require.cache 与插件状态，保证进程存活。
  */
 
+import { statSync } from "node:fs";
 import { createRequire } from "node:module";
-import { relative, resolve } from "node:path";
+import { dirname, relative, resolve } from "node:path";
 import {
 	type Context,
 	coerce,
@@ -31,11 +33,7 @@ import {
 	type LoaderScope,
 	unwrapExports,
 } from "@koishi-ce/loader";
-import {
-	type ChokidarOptions,
-	type FSWatcher,
-	watch,
-} from "chokidar";
+import ParcelWatcher from "@parcel/watcher";
 import zhCN from "../locales/zh-CN.yml";
 import { handleError } from "./error.ts";
 
@@ -81,32 +79,6 @@ function loadDependencies(
 	return dependencies;
 }
 
-/**
- * 将「双星通配包裹单个目录名」的忽略规则（即默认 ignored 中的
- * node_modules、.git、logs 三类条目的通配写法）编译为目录段剪枝函数
- *
- * chokidar 5 在 win32 下以待测的反斜杠原生路径调用匹配器且不做
- * 规范化，glob 形式的 ignored 完全失效；且这种通配语义本身只丢弃
- * 已枚举的条目、不阻止深入遍历目录本身——巨型 node_modules 仍会被
- * 完整扫描，事件循环被 IO 回调风暴挤压，server 的请求长时间无响应。
- * 段剪枝函数对目录本身返回 true，chokidar 便不再深入其下。其余
- * 形式的忽略规则原样透传（类 unix 平台下 glob 依然生效）。
- */
-function compileGlobToPrune(
-	pattern: string,
-): ((path: string) => boolean) | undefined {
-	const match = /^\*\*\/([^/*]+)\/\*\*$/.exec(pattern);
-	if (!match) return;
-	const name = match[1];
-	if (!name) return;
-	const escaped = name.replace(
-		/[.*+?^${}()|[\]\\]/g,
-		"\\$&",
-	);
-	const regex = new RegExp(`[/\\\\]${escaped}([/\\\\]|$)`);
-	return (path: string) => regex.test(path);
-}
-
 /** 单个待重载插件的记录：入口文件名 + 各 fork 状态到引用名的映射 */
 interface Reload {
 	filename: string;
@@ -143,7 +115,9 @@ class Watcher {
 	});
 
 	private base: string;
-	private watcher!: FSWatcher;
+	private subscriptions: ParcelWatcher.AsyncSubscription[] =
+		[];
+	private debouncedReload?: () => void;
 	private require = createRequire(
 		require.resolve("@koishi-ce/loader/package.json"),
 	);
@@ -195,64 +169,113 @@ class Watcher {
 		return relative(this.base, filename);
 	}
 
-	/** 启动 chokidar 监听（root 列表相对 base 目录解析）并注册变动处理 */
-	start() {
+	/** 启动文件监听（root 列表相对 base 目录解析，逐条目建立原生订阅） */
+	async start() {
 		const { loader } = this.ctx;
-		const { root, ignored } = this.config;
-		this.watcher = watch(root ?? ["."], {
-			...this.config,
-			cwd: this.base,
-			ignored: makeArray(ignored).map(
-				(pattern) => compileGlobToPrune(pattern) ?? pattern,
-			),
-		});
 
 		// 框架自身（koishi 入口）的依赖集合：这些文件不属于任何插件，变动时只能整体重启
 		this.externals = loadDependencies(
 			require.resolve("@koishi-ce/koishi"),
 			new Set(Object.values(loader.cache)),
 		);
-		const triggerLocalReload = this.ctx.debounce(
+		this.debouncedReload = this.ctx.debounce(
 			() => this.triggerLocalReload(),
 			this.config.debounce ?? 0,
 		);
-
-		this.watcher.on("change", async (path) => {
-			const filename = resolve(this.base, path);
-			const isEntry =
-				filename === loader.filename ||
-				loader.envFiles.includes(filename);
-			// loader 写回配置文件时置 suspend，跳过这一次自身触发的变动
-			if (loader.suspend && isEntry) {
-				loader.suspend = false;
-				return;
-			}
-
-			this.logger.debug("change detected:", path);
-
-			if (isEntry) {
-				// 入口文件变动：配置模块已加载过只能整体重启；否则热更新应用配置
-				if (require.cache[filename]) {
-					this.ctx.loader.fullReload();
-				} else {
-					const config = await loader.readConfig();
-					this.ctx.root.state.update(config);
-					this.ctx.emit("config");
-				}
-			} else {
-				// 普通文件变动：外部依赖只能整体重启，其余暂存后走防抖的局部重载
-				if (this.externals.has(filename)) {
-					this.ctx.loader.fullReload();
-				} else if (require.cache[filename]) {
-					this.stashed.add(filename);
-					triggerLocalReload();
-				}
-			}
-		});
+		this.subscriptions = (
+			await Promise.all(
+				makeArray(this.config.root ?? ["."]).map((entry) =>
+					this.subscribe(resolve(this.base, entry)),
+				),
+			)
+		).filter(
+			(sub): sub is ParcelWatcher.AsyncSubscription =>
+				sub !== null,
+		);
 	}
 
-	stop() {
-		return this.watcher.close();
+	/**
+	 * 订阅单个监听根：目录直接订阅；文件条目订阅其所在目录并过滤到该文件
+	 * @param subject 监听根的绝对路径
+	 * @returns 原生订阅句柄；条目不存在时为 null（不视为错误）
+	 */
+	private async subscribe(subject: string) {
+		let target = subject;
+		let filter: ((path: string) => boolean) | undefined;
+		try {
+			if (statSync(subject).isFile()) {
+				target = dirname(subject);
+				filter = (path) => path === subject;
+			}
+		} catch {
+			this.logger.debug(
+				"watch subject not found:",
+				subject,
+			);
+			return null;
+		}
+		return ParcelWatcher.subscribe(
+			target,
+			(err, events) => {
+				if (err) {
+					this.logger.warn(err);
+					return;
+				}
+				// 仅内容变更进入重载流程（新建/删除文件不触发），
+				// 与 chokidar 时代只监听 change 事件的行为对齐
+				for (const { type, path } of events) {
+					if (type !== "update") continue;
+					if (filter && !filter(path)) continue;
+					this.handleChange(path);
+				}
+			},
+			{
+				...this.config,
+				ignore: makeArray(this.config.ignored),
+			},
+		);
+	}
+
+	/** 处理单条文件变动：入口文件 / 外部依赖 / 插件源码三类分派 */
+	private async handleChange(path: string) {
+		const { loader } = this.ctx;
+		const filename = resolve(this.base, path);
+		const isEntry =
+			filename === loader.filename ||
+			loader.envFiles.includes(filename);
+		// loader 写回配置文件时置 suspend，跳过这一次自身触发的变动
+		if (loader.suspend && isEntry) {
+			loader.suspend = false;
+			return;
+		}
+
+		this.logger.debug("change detected:", path);
+
+		if (isEntry) {
+			// 入口文件变动：配置模块已加载过只能整体重启；否则热更新应用配置
+			if (require.cache[filename]) {
+				this.ctx.loader.fullReload();
+			} else {
+				const config = await loader.readConfig();
+				this.ctx.root.state.update(config);
+				this.ctx.emit("config");
+			}
+		} else {
+			// 普通文件变动：外部依赖只能整体重启，其余暂存后走防抖的局部重载
+			if (this.externals.has(filename)) {
+				this.ctx.loader.fullReload();
+			} else if (require.cache[filename]) {
+				this.stashed.add(filename);
+				this.debouncedReload?.();
+			}
+		}
+	}
+
+	async stop() {
+		await Promise.all(
+			this.subscriptions.map((sub) => sub.unsubscribe()),
+		);
+		this.subscriptions = [];
 	}
 
 	/** 沿 require 依赖图自底向上传播：任一子模块 accepted 则本模块 accepted，全部 declined 才 declined */
@@ -541,7 +564,7 @@ class Watcher {
 
 // erasableSyntaxOnly:纯类型 namespace(运行时值 Config 由类静态属性承载)
 namespace Watcher {
-	export interface Config extends ChokidarOptions {
+	export interface Config extends ParcelWatcher.Options {
 		base?: string;
 		root?: string[];
 		debounce?: number;

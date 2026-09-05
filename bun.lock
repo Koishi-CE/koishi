@@ -298,7 +298,7 @@
       "dependencies": {
         "@babel/code-frame": "^8.0.0",
         "@koishi-ce/loader": "workspace:*",
-        "chokidar": "^5.0.0",
+        "@parcel/watcher": "^2.6.0",
       },
       "devDependencies": {
         "@koishi-ce/koishi": "workspace:*",

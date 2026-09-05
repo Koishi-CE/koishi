@@ -65,7 +65,7 @@ CE 包 peer 一律指 CE 名，但外部真包依赖（测试用的 `@koishijs/p
 
 | 目录 | 包名 | 说明 |
 |---|---|---|
-| `hmr` | `@koishi-ce/plugin-hmr` | 热重载（TS 编译走 Bun 原生，文件监听 chokidar；错误帧 @babel/code-frame） |
+| `hmr` | `@koishi-ce/plugin-hmr` | 热重载（TS 编译走 Bun 原生，文件监听 @parcel/watcher 原生绑定；错误帧 @babel/code-frame） |
 | `mock` | `@koishi-ce/plugin-mock` | 测试 mock（多数测试依赖它） |
 | `sqlite` | `@koishi-ce/plugin-database-sqlite` | SQLite 数据库驱动（三源合并：cordis 3 线 `@minatojs/driver-sqlite` 4.7.0 骨架 + cordis 4 线 5.1.1 的 `node:sqlite` 引擎层；依赖官方 npm 的 `minato ^3.7` / `@minatojs/sql-utils ^5.6`） |
 | `http` | `@koishi-ce/plugin-http` | **vendored 预编译产物**（无 src，内联再导出 `@cordisjs/plugin-http`） |

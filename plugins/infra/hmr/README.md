@@ -21,7 +21,7 @@ Koishi 的插件热重载（Hot Module Replacement）插件，移植自上游 [k
 | `debounce` | number | 100 | 延迟触发更新的等待时间（毫秒） |
 | `base` | string | 当前工作路径 | 用户显示路径的根目录 |
 
-另继承 chokidar 的监听选项（Config 接口）。
+另继承 @parcel/watcher 的监听选项（如 `backend`）；`ignored` 规则在原生层生效，`node_modules` 等被忽略目录不会产生监听事件。
 
 ## 用法
 
@@ -65,7 +65,7 @@ A `hmr/reload` event fires before each reload; TypeScript compile errors (Bun bu
 | `debounce` | number | 100 | Debounce wait in milliseconds |
 | `base` | string | current working path | Root directory for user-facing paths |
 
-Chokidar watch options are also accepted.
+@parcel/watcher options (e.g. `backend`) are also accepted; `ignored` rules apply at the native level, so ignored directories like `node_modules` never emit events.
 
 ## Usage
 
