@@ -56,6 +56,8 @@ test("内置模板提供插件开发全链脚本入口（koishi-scripts 子命�
 	// new 用主命令名 setup（new/create/init 是 koishi-scripts 的别名）
 	expect(scripts["new"]).toBe("koishi-scripts setup");
 	expect(scripts["clone"]).toBe("koishi-scripts clone");
+	// update 是白名单安全更新（只碰 @koishi-ce/*，替代裸 bun update）
+	expect(scripts["update"]).toBe("koishi-scripts update");
 	expect(scripts["build"]).toBe("koishi-scripts build");
 	expect(scripts["release:version"]).toBe(
 		"koishi-scripts version",

@@ -101,10 +101,13 @@ export function baseManifest(): Manifest {
 			// 本工作区 plugins/ 与 external/；纯运行 bot 的项目用不到这些入口，
 			// prod 模式删 devDependencies 后它们自然失效）：
 			// new 生成插件骨架到 external/，clone 克隆已有插件仓库本地联动，
+			// update 白名单更新本项目的 @koishi-ce/* 依赖（裸 bun update 是
+			// 全树更新语义，会拉动第三方插件与全部传递依赖，勿用），
 			// build / release* 构建并发布 external/ 下的插件（version → build
 			// → publish 三环，dry-run 为演练形态）
 			new: "koishi-scripts setup",
 			clone: "koishi-scripts clone",
+			update: "koishi-scripts update",
 			build: "koishi-scripts build",
 			"release:version": "koishi-scripts version",
 			"release:dryrun":

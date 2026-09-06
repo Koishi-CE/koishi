@@ -6,9 +6,10 @@
  * koishi-scripts CLI 入口（包名 @koishi-ce/scripts）。
  *
  * 手写极简 CLI（不引 CLI 框架，先例 packages/web/client/src/bin.ts），
- * 注册五个子命令：
+ * 注册六个子命令：
  * - setup：按本仓库范式初始化插件项目（别名 create / init / new）；
  * - clone：把已有插件仓库克隆到宿主工作区 external/ 并安装依赖；
+ * - update：安全更新宿主项目的 @koishi-ce/* 依赖（白名单语义）；
  * - version / build / publish：发布链三环（跨仓库 changeset version、
  *   全工作区串行构建、registry 比对后逐包 npm publish）。
  */
@@ -21,6 +22,7 @@ import runBuild from "./release/build.ts";
 import runPublish from "./release/publish.ts";
 import runVersion from "./release/version.ts";
 import runSetup from "./setup.ts";
+import runUpdate from "./update.ts";
 
 const HELP = `koishi-scripts v${version} —— Koishi 插件脚手架与发布链
 
@@ -32,6 +34,8 @@ const HELP = `koishi-scripts v${version} —— Koishi 插件脚手架与发布�
                       --console, -c       附带控制台前端扩展（client/ 目录）
                       --name= --desc= --owner=   非交互模式
   clone [repo] [name] 克隆插件仓库到 external/ 并 bun install
+  update              安全更新宿主项目的 @koishi-ce/* 依赖
+                      （alias 冻结线与市场安装的第三方插件不受影响）
   version             对 external/ 下有 pending changeset 的项目执行 changeset version
   build               串行构建 external/ 下全部可构建项目（失败即中断）
   publish [--dry-run] 发布链末环：registry 比对 → 所有权预检 → 拓扑序逐包 npm publish
@@ -50,6 +54,7 @@ const commands: Record<string, Run> = {
 	init: runSetup,
 	new: runSetup,
 	clone: runClone,
+	update: () => runUpdate(),
 	version: () => runVersion(),
 	build: () => runBuild(),
 	publish: runPublish,

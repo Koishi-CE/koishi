@@ -28,6 +28,14 @@ bun run dev          # 启动（开发模式，启用 HMR 热更新）
 
 根依赖中的四行 npm alias——`"koishi": "npm:@koishi-ce/koishi-shim@^4.18.11"`、`"@koishijs/plugin-console": "npm:@koishi-ce/console-shim@^5.30.11"`、`"@koishijs/core": "npm:@koishi-ce/koishi-shim@4.18.11"`、`"@koishijs/loader": "npm:@koishi-ce/koishi-shim@^4.18.11"`——已把上游生态的 peer 依赖全部钉回 @koishi-ce 框架（前两行与后两行分别只涉及 koishi-shim / console-shim 两个包；**请勿删除或改写这四行**），不会形成第二份框架 / console / loader 副本。
 
+## 更新依赖
+
+```bash
+bun run update        # 安全更新：只更新 @koishi-ce/* 生态位依赖
+```
+
+**请勿裸跑 `bun update`**：那是全树更新语义，会连带给市场安装的第三方插件与全部传递依赖重新求解，任一上游漂移都可能破坏运行时。`bun run update` 只显式更新 `@koishi-ce/*` 依赖（alias 冻结线不受影响）；第三方插件的版本请经控制台「插件市场」操作。
+
 ## 自定义插件
 
 手动在 `plugins/` 目录下创建插件包，或经脚手架进入 `external/` 工作区：

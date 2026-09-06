@@ -2,7 +2,7 @@
 
 **简体中文** | [English](#english)
 
-Koishi CE 宿主工作区的插件开发与发布 CLI，提供 `koishi-scripts` 命令。面向「宿主项目 external/ 目录下的第三方插件项目」的日常开发：创建、克隆、构建与发布，均在宿主工作区内完成。
+Koishi CE 宿主工作区的插件开发与发布 CLI，提供 `koishi-scripts` 命令。面向「宿主项目 external/ 目录下的第三方插件项目」的日常开发：创建、克隆、构建与发布，均在宿主工作区内完成；另含宿主依赖的白名单安全更新。
 
 ## 子命令
 
@@ -10,6 +10,7 @@ Koishi CE 宿主工作区的插件开发与发布 CLI，提供 `koishi-scripts` 
 | --- | --- |
 | `setup [name]`（别名 create / init / new） | 在 external/ 下初始化插件项目 |
 | `clone [repo] [name]` | 克隆插件仓库到 external/ 并安装依赖 |
+| `update` | 安全更新宿主项目的 @koishi-ce/* 依赖（alias 冻结线与市场安装的第三方插件不受影响；裸 `bun update` 是全树更新语义，勿用） |
 | `version` | 对 external/ 下有未消费 changeset 的项目执行 changeset version |
 | `build` | 串行构建 external/ 下全部可构建项目，失败即中断 |
 | `publish [--dry-run]` | 校验 registry 与 npm 所有权后，按拓扑序逐包 npm publish，发布时把 workspace 协议改写为真实版本区间 |
@@ -29,7 +30,7 @@ Koishi CE 宿主工作区的插件开发与发布 CLI，提供 `koishi-scripts` 
 
 ## English
 
-The plugin development and publishing CLI for Koishi CE host workspaces, providing the `koishi-scripts` command. It covers the daily workflow of third-party plugin projects living under the `external/` directory of a host project: create, clone, build and publish — all inside the host workspace.
+The plugin development and publishing CLI for Koishi CE host workspaces, providing the `koishi-scripts` command. It covers the daily workflow of third-party plugin projects living under the `external/` directory of a host project: create, clone, build and publish — all inside the host workspace; plus a whitelisted safe update for host dependencies.
 
 ## Subcommands
 
@@ -37,6 +38,7 @@ The plugin development and publishing CLI for Koishi CE host workspaces, providi
 | --- | --- |
 | `setup [name]` (aliases create / init / new) | Scaffold a plugin project under external/ |
 | `clone [repo] [name]` | Clone a plugin repository into external/ and install dependencies |
+| `update` | Safely update @koishi-ce/* dependencies of the host project (alias freeze lines and market-installed third-party plugins untouched; bare `bun update` is a whole-tree update, avoid it) |
 | `version` | Run changeset version for external/ projects with pending changesets |
 | `build` | Build all buildable external/ projects serially, aborting on failure |
 | `publish [--dry-run]` | Verify registry state and npm ownership, then publish packages in topological order, rewriting workspace protocols to real version ranges at publish time |
