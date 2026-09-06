@@ -50,7 +50,10 @@ mock.module("open", () => ({
 // 桩记录 close 调用与 createServer 传参，并由 /vite 桥接中间件直接应答
 let viteClosed = false;
 const viteConfigs: {
-	server?: { allowedHosts?: string[] };
+	server?: {
+		allowedHosts?: string[];
+		ws?: { port?: number };
+	};
 }[] = [];
 mock.module("@koishi-ce/client/lib", () => ({
 	createServer: async (
@@ -58,7 +61,12 @@ mock.module("@koishi-ce/client/lib", () => ({
 		config: unknown,
 	) => {
 		viteConfigs.push(
-			config as { server?: { allowedHosts?: string[] } },
+			config as {
+				server?: {
+					allowedHosts?: string[];
+					ws?: { port?: number };
+				};
+			},
 		);
 		return {
 			middlewares: (
@@ -616,6 +624,55 @@ describe("@koishi-ce/plugin-console（NodeConsole）", () => {
 			expect(config?.server?.allowedHosts).toEqual([
 				"example.com",
 			]);
+		});
+
+		it("HMR ws 端口被占用时自动顺延", async () => {
+			// 真实占住缺省端口（若外部进程已占用同样达成目的），
+			// 新宿主的 ws 端口应顺延到 24679
+			const blocker = net.createServer();
+			await new Promise<void>((resolve) => {
+				blocker.once("error", resolve);
+				blocker.listen(24678, "127.0.0.1", resolve);
+			});
+			const port = await freePort();
+			const busyApp = new App();
+			busyApp.plugin(Server, {
+				host: "127.0.0.1",
+				port,
+				maxPort: port + 100,
+			});
+			busyApp.plugin(
+				NodeConsole as unknown as Plugin.Constructor<App>,
+				{ devMode: true },
+			);
+			await busyApp.start();
+			expect(viteConfigs.at(-1)?.server?.ws?.port).toBe(
+				24679,
+			);
+			await busyApp.stop();
+			if (blocker.listening)
+				await new Promise<void>((resolve) =>
+					blocker.close(() => resolve()),
+				);
+		});
+
+		it("显式 dev.wsPort 原样透传，不做占用试探", async () => {
+			const port = await freePort();
+			const fixedApp = new App();
+			fixedApp.plugin(Server, {
+				host: "127.0.0.1",
+				port,
+				maxPort: port + 100,
+			});
+			fixedApp.plugin(
+				NodeConsole as unknown as Plugin.Constructor<App>,
+				{ devMode: true, dev: { wsPort: 39999 } },
+			);
+			await fixedApp.start();
+			expect(viteConfigs.at(-1)?.server?.ws?.port).toBe(
+				39999,
+			);
+			await fixedApp.stop();
 		});
 
 		it("停机时关闭 Vite 服务器并释放端口", async () => {

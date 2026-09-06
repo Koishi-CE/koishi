@@ -20,6 +20,7 @@ import {
 	type Stats,
 } from "node:fs";
 import { createRequire } from "node:module";
+import net from "node:net";
 import { extname, resolve, sep } from "node:path";
 import { Console, type Entry } from "@koishi-ce/console";
 import {
@@ -140,6 +141,29 @@ export function rewriteSharedImports(source: string) {
 interface HeartbeatConfig {
 	interval?: number;
 	timeout?: number;
+}
+
+/** Vite HMR WebSocket 的缺省端口（Vite 内置值，middlewareMode 下独立监听）。 */
+const defaultWsPort = 24678;
+
+/**
+ * 自 start 起找到首个空闲端口：以一次性探测 server 逐个试听，占用
+ * （EADDRINUSE）则递增重试，试探上限耗尽时直接返回起点交由 Vite 报错。
+ */
+function nextFreePort(
+	start: number,
+	attempts = 100,
+): Promise<number> {
+	if (!attempts) return Promise.resolve(start);
+	return new Promise((resolve) => {
+		const probe = net.createServer();
+		probe.once("error", () =>
+			resolve(nextFreePort(start + 1, attempts - 1)),
+		);
+		probe.listen(start, "127.0.0.1", () => {
+			probe.close(() => resolve(start));
+		});
+	});
 }
 
 /**
@@ -493,10 +517,24 @@ class NodeConsole extends Console {
 		const server: ServerOptions = dev ? { fs: dev.fs } : {};
 		if (dev?.allowedHosts)
 			server.allowedHosts = dev.allowedHosts;
+		// Vite 8 起 middlewareMode 下 HMR WebSocket 不再借宿主 HTTP 服务，
+		// 而是独立监听 server.ws.port（缺省 24678）；并行第二个 dev 实例会
+		// EADDRINUSE 且 HMR 失效（Bun 的此类错误缺 port 字段，Vite 打印成
+		// 「Port undefined is already in use」）。显式配置优先，否则沿用
+		// 宿主 server 的占用顺延策略
+		const wsPort =
+			dev?.wsPort ?? (await nextFreePort(defaultWsPort));
+		if (wsPort !== defaultWsPort)
+			this.ctx.logger.info(
+				"HMR WebSocket 端口 %d 被占用，dev 控制台热更新改用 %d",
+				defaultWsPort,
+				wsPort,
+			);
+		server.ws = { port: wsPort };
 
 		this.vite = await createServer(this.ctx.baseDir, {
 			cacheDir: resolve(this.ctx.baseDir, cacheDir),
-			...(Object.keys(server).length ? { server } : {}),
+			server,
 		});
 
 		this.ctx.server.all(
@@ -530,6 +568,9 @@ class NodeConsole extends Console {
 			.description(
 				"允许访问开发服务器的额外域名，留空维持 Vite 默认（仅放行 localhost 与 IP 直连）。",
 			),
+		wsPort: Schema.number().description(
+			"Vite 热更新 WebSocket 端口，留空用默认 24678（被占用时自动顺延），并行第二个开发实例时可显式指定。",
+		),
 	});
 
 	static Head: Schema<NodeConsole.Head> = Schema.intersect([
@@ -608,10 +649,11 @@ class NodeConsole extends Console {
 }
 
 namespace NodeConsole {
-	/** Vite 开发服务器的文件访问控制（fs.strict / allow / deny）与域名放行（allowedHosts）。 */
+	/** Vite 开发服务器的文件访问控制（fs.strict / allow / deny）、域名放行（allowedHosts）与热更新 WebSocket 端口（wsPort）。 */
 	export interface Dev {
 		fs: FileSystemServeOptions;
 		allowedHosts?: string[];
+		wsPort?: number;
 	}
 
 	/** 注入 index.html 的自定义 head 标签（tag + attrs + content）。 */
