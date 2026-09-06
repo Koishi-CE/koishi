@@ -25,7 +25,7 @@
     },
     "apps/koishi-create": {
       "name": "create-koishi-ce",
-      "version": "1.6.2",
+      "version": "1.6.3",
       "bin": {
         "create-koishi-ce": "./lib/bin.mjs",
       },
@@ -496,7 +496,7 @@
     },
     "plugins/webui/config": {
       "name": "@koishi-ce/plugin-config",
-      "version": "1.1.1",
+      "version": "1.1.2",
       "dependencies": {
         "@koishi-ce/console": "workspace:*",
         "@koishi-ce/loader": "workspace:*",
