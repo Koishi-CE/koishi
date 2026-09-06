@@ -19,6 +19,12 @@
 - **状态**：跟随上游——无法自主升级（上游冻结），其余依赖不受影响。
 - **依据**：[decisions/dependency-audit.md](decisions/dependency-audit.md) §2A；AGENTS.md 硬性约束 2（导入例外清单）。
 
+### 1.3 服务归属反查的上游根治（待 cordis 4 stable）
+
+- **目标**：`ctx.provide()` 注册的服务（loader、hmr 的 watcher 等）在 cordis 中不记录提供者（store 侧 `source: null`），从服务实例 descriptor 反查归属从来读不到（已对照 cordis 3.13 / 3.18 实证，非 3.18 regression）；上游 webui 的 `services.ts` 同款缺陷，官方用户同样看到「必需服务未加载」。待 cordis 4 stable 后：复核其归属标记形态（tracker / origin 可能再变），必要时适配本仓 `getServiceContext()`；若上游仍未修，向 koishijs/webui 提行级修复 PR（descriptor 查询补属性访问）。
+- **状态**：阻塞，等 cordis 4 stable（或 1.1 的重启条件任一满足）。CE 侧已由 `getServiceContext()` 统一根治（5f4dcd2，config 服务上报与 insight 依赖图三处消费），本条目只余 4.x 复核与上游回馈。
+- **依据**：`packages/node/core/src/context/index.ts` 的 `getServiceContext()`（JSDoc 记有语义边界与实证）；提交 5f4dcd2。
+
 ## 2. 进行中
 
 ### 2.1 依赖面原生化精简
