@@ -42,7 +42,9 @@ async function collectWorkspaceAliases(): Promise<
 	).replace(/\\/g, "/");
 	let manifest: { workspaces?: string[] };
 	try {
-		manifest = await Bun.file(`${repoRoot}/package.json`).json();
+		manifest = await Bun.file(
+			`${repoRoot}/package.json`,
+		).json();
 	} catch {
 		// 下游 npm 安装形态（.bun 嵌套布局或根提升布局）四级上跳不落在
 		// 任何仓库根：读不到清单即没有 workspace 源码可映射，空表即正确
