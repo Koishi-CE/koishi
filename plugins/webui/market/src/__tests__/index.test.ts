@@ -16,6 +16,7 @@ import {
 	rmSync,
 	writeFileSync,
 } from "node:fs";
+import net from "node:net";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import memory from "@koishi-ce/plugin-database-memory";
@@ -1069,4 +1070,71 @@ describe("镜像索引瞬态重试", () => {
 		},
 		15000,
 	);
+
+	// 裸 TCP 桩：前 planned 次请求收到请求头后直接销毁连接（复现
+	// 证书验证失败 / 连接重置等 fetch 网络层瞬态错误），随后回正常索引
+	function startFlakyTcpServer(planned: number) {
+		let hits = 0;
+		const server = net.createServer((socket) => {
+			socket.on("data", () => {
+				hits++;
+				if (hits <= planned) {
+					socket.destroy();
+					return;
+				}
+				const body = JSON.stringify({
+					version: "4",
+					objects: [
+						{
+							package: {
+								name: "koishi-plugin-demo",
+								version: "2.0.0",
+								date: "2024-06-01T00:00:00Z",
+								keywords: ["koishi", "plugin"],
+							},
+						},
+					],
+				});
+				socket.end(
+					`HTTP/1.1 200 OK\r\nContent-Type: application/json\r\nContent-Length: ${body.length}\r\nConnection: close\r\n\r\n${body}`,
+				);
+			});
+		});
+		return new Promise<{
+			port: number;
+			hits: () => number;
+			close: () => void;
+		}>((resolve) => {
+			server.listen(0, "127.0.0.1", () => {
+				const { port } =
+					server.address() as net.AddressInfo;
+				resolve({
+					port,
+					hits: () => hits,
+					close: () => {
+						server.close();
+					},
+				});
+			});
+		});
+	}
+
+	it("网络层瞬态错误（连接重置）经退避重试后恢复", async () => {
+		const stub = await startFlakyTcpServer(2);
+		const mirror = await createMirrorApp({
+			endpoint: `http://127.0.0.1:${stub.port}/`,
+		});
+		const svc = mirror.get("console.services.market");
+		// 前两次连接被重置（fetch 抛 TypeError，plugin-http 包装为无 code
+		// 无 response 的 HTTP.Error），退避重试后第三次成功
+		await svc?.start(true);
+		expect(stub.hits()).toBeGreaterThanOrEqual(3);
+		const payload = await svc?.get();
+		expect(Object.keys(payload?.data ?? {})).toEqual([
+			"koishi-plugin-demo",
+		]);
+		expect(payload?.total).toBe(1);
+		await mirror.stop();
+		stub.close();
+	}, 10000);
 });

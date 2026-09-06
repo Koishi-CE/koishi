@@ -22,8 +22,8 @@ const logger = new Logger("market");
 
 // registry 接口对无认证请求有速率限制：搜索接口（/-/v1/search）超频时
 // 返回 429，collect 一旦失败会中断整个市场数据刷新（prepare 置 _error，
-// 页面清空）。对限流、请求超时与 5xx 瞬态错误做指数退避重试；镜像索引
-// 的 404（部署窗口内版本化文件尚未就绪）同样按瞬态处理。
+// 页面清空）。对限流、请求超时、fetch 网络层瞬态错误与 5xx 做指数退避
+// 重试；镜像索引的 404（部署窗口内版本化文件尚未就绪）同样按瞬态处理。
 /** 首次请求失败后的最大重试次数 */
 const maxRetries = 2;
 /** 重试的基础退避时长，按尝试次数指数放大 */
@@ -69,13 +69,21 @@ class MarketProvider extends BaseMarketProvider {
 	 * 服务端瞬态错误（408 / 5xx）可安全重试；allowNotFound 时把 404
 	 * 也视为瞬态——镜像索引以「302 指向版本化文件」方式发布，切换文件
 	 * 的部署窗口会出现短时 404。
+	 *
+	 * 无 code 且无 response 的 HTTP.Error 是 plugin-http 对 fetch 网络层
+	 * 异常（证书验证失败、连接重置、DNS 等）的统一包装——代理节点切换
+	 * 等瞬态网络抖动即此形态，重试可自愈。
 	 */
 	private isRetryable(
 		error: unknown,
 		allowNotFound = false,
 	): error is HTTP.Error {
 		if (!this.ctx.http.isError(error)) return false;
-		if (!error.response) return error.code === "ETIMEDOUT";
+		if (!error.response)
+			return (
+				error.code === undefined ||
+				error.code === "ETIMEDOUT"
+			);
 		const { status } = error.response;
 		return (
 			status === 429 ||
