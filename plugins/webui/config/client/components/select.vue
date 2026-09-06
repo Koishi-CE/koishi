@@ -92,10 +92,17 @@ function configure(shortname: string) {
 	const ident = Math.random().toString(36).slice(2, 8);
 	dialogSelect.value = null;
 	keyword.value = "";
+	// workspace 源码包可能未被 Bun 链入 node_modules（只按需链接被依赖
+	// 的包），短名解析会失败——带 paths 标注的包以相对路径键启用，
+	// 与 loader 的相对路径解析对齐
+	const data = Object.values(store.packages ?? {}).find(
+		(data) => data.shortname === shortname,
+	);
+	const prefix = data?.paths?.[0] ?? shortname;
 	void send(
 		"manager/unload",
 		path,
-		`${shortname}:${ident}`,
+		`${prefix}:${ident}`,
 		{},
 	);
 	router.push(`/plugins/${ident}`);

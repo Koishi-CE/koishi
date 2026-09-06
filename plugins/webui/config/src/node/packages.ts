@@ -12,7 +12,9 @@
  * 会漏掉大部分源码包——因此 collect 时额外按配置键逐个加载
  * workspace 包，并写入 paths（配置键 → 包名映射，供前端解析插件名）。
  */
-import { resolve } from "node:path";
+import { existsSync, readFileSync } from "node:fs";
+import { readdir } from "node:fs/promises";
+import { join, resolve } from "node:path";
 import { Logger } from "@koishi-ce/koishi";
 import {
 	getPluginShortname,
@@ -81,10 +83,8 @@ export class PackageProvider extends shared.PackageProvider {
 	}
 
 	/**
-	 * 递归遍历 loader 配置的插件表（分组键的值内嵌套插件表），收集
-	 * 其中以相对路径键引用的 workspace 源码包：按目录读取 package.json
-	 * 生成数据条目，已存在于 node_modules 扫描结果中的包则就地合并
-	 * paths 字段，避免同名条目重复。
+	 * 收集全部 workspace 源码包：koishi.yml 已有相对路径键引用的（已启用）
+	 * 加上 external/ 约定目录下的（可能尚未启用）。
 	 */
 	private async collectWorkspacePackages(): Promise<
 		shared.PackageProvider.Data[]
@@ -100,6 +100,34 @@ export class PackageProvider extends shared.PackageProvider {
 				paths: [],
 			});
 		}
+		/**
+		 * 收录一个相对路径引用的 workspace 包：合并 paths、登记
+		 * 「包名 → 配置键」反查；warm 控制是否预热运行时缓存。
+		 */
+		const addPath = async (path: string, warm: boolean) => {
+			const object = await this.scanner.loadPath(
+				resolve(this.scanner.baseDir, path),
+			);
+			if (!object) return;
+			const name = object.package.name;
+			const entry = index.get(name) ?? {
+				...object,
+				paths: [],
+			};
+			entry.paths ||= [];
+			if (!entry.paths.includes(path))
+				entry.paths.push(path);
+			index.set(name, entry);
+			// 登记「包名 → 配置键」反查，供 request-runtime 按路径解析
+			this.pathKeys[name] ||= path;
+			// 顺带解析运行时信息（loader.resolve 对路径键原生支持）。
+			// 已启用插件的模块本来就在 require.cache，预热无副作用；
+			// 未启用的 external 包不做预热——require 会提前求值模块，
+			// 其 peer 缺失时产生告警噪音，运行时信息留待前端选中时
+			// 经 request-runtime 按需解析
+			if (warm)
+				this.cache[path] ||= await this.parseExports(path);
+		};
 		try {
 			await walkPlugins(
 				this.ctx.loader?.config?.plugins as
@@ -109,30 +137,52 @@ export class PackageProvider extends shared.PackageProvider {
 					// 配置键形如 ./plugins/webui/config:uid，取 : 前的路径部分
 					const path = key.split(":", 1)[0];
 					if (!path?.startsWith("./")) return;
-					const object = await this.scanner.loadPath(
-						resolve(this.scanner.baseDir, path),
-					);
-					if (!object) return;
-					const name = object.package.name;
-					const entry = index.get(name) ?? {
-						...object,
-						paths: [],
-					};
-					entry.paths ||= [];
-					if (!entry.paths.includes(path))
-						entry.paths.push(path);
-					index.set(name, entry);
-					// 登记「包名 → 配置键」反查，供 request-runtime 按路径解析
-					this.pathKeys[name] ||= path;
-					// 顺带解析运行时信息（loader.resolve 对路径键原生支持）
-					this.cache[path] ||=
-						await this.parseExports(path);
+					await addPath(path, true);
 				},
 			);
+			await this.collectExternalPackages(addPath);
 		} catch (error) {
 			logger.warn(error);
 		}
 		return [...index.values()];
+	}
+
+	/**
+	 * 扫描 external/ 约定目录（官方 koishi-scripts 的插件开发目录），
+	 * 收录其中尚未启用的 workspace 插件包。
+	 *
+	 * Bun 只把被依赖引用的 workspace 包链入 node_modules，未启用的
+	 * external 插件因此不在本机扫描的视野内（yarn 全量链接生态下的
+	 * 自动发现语义失效）——这里显式遍历目录补齐。收录条目带
+	 * ./external/<name> 路径键，前端启用时以该键写入配置（loader 的
+	 * 相对路径解析原生支持；短名不经 node_modules 会解析失败）。
+	 */
+	private async collectExternalPackages(
+		addPath: (path: string, warm: boolean) => Promise<void>,
+	) {
+		const base = resolve(this.scanner.baseDir, "external");
+		const entries = await readdir(base).catch(() => []);
+		for (const entry of entries) {
+			const dir = join(base, entry);
+			if (!existsSync(join(dir, "package.json"))) continue;
+			try {
+				const manifest = JSON.parse(
+					readFileSync(join(dir, "package.json"), "utf8"),
+				) as { name?: unknown };
+				// 与 LocalScanner 的本机收录口径一致：只认三种插件
+				// 命名前缀，external 下的普通库与杂项目录不进列表
+				if (
+					typeof manifest.name !== "string" ||
+					!/^(koishi-plugin-|@koishi(?:-ce)?\/plugin-)/.test(
+						manifest.name,
+					)
+				)
+					continue;
+				await addPath(`./external/${entry}`, false);
+			} catch (error) {
+				logger.warn(error);
+			}
+		}
 	}
 }
 

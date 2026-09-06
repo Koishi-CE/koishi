@@ -41,12 +41,19 @@ export class ServiceProvider extends DataService<
 				if (type !== "service") continue;
 				const instance = this.ctx.get(key);
 				if (!(instance instanceof Object)) continue;
-				// Context.current 是个访问器属性，其值即服务实例所属的上下文
-				const ctx: Context =
-					Reflect.getOwnPropertyDescriptor(
-						instance,
-						Context.current,
-					)?.value;
+				// Context.current 是个访问器属性，其值即服务实例所属的上下文。
+				// cordis 3.18 起 ctx.provide() 注册的服务（loader / hmr 的
+				// watcher 等）不再有自有 "ctx" 属性（只定义 tracker 符号，
+				// 其 traceable 代理在 "ctx" 键上返回上下文），descriptor
+				// 查询会落空——补一层属性访问，否则此类服务在配置页
+				// 恒显示「未加载」（上游 plugin-config 同样命中此缺陷）
+				const ctx = (Reflect.getOwnPropertyDescriptor(
+					instance,
+					Context.current,
+				)?.value ??
+					Reflect.get(instance, Context.current)) as
+					| Context
+					| undefined;
 				if (!ctx) continue;
 				// 服务内部名形如 __foo__，对外展示时去掉首尾下划线
 				const name = key

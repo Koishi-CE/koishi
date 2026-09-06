@@ -265,6 +265,31 @@ writeFileSync(
 		version: "1.0.0",
 	}),
 );
+// external/ 约定目录下的未启用插件（含一个非插件包与一个无清单目录，
+// 均不应进列表）；有清单但包名不合插件命名的 lib-tool 也不收录
+mkdirSync(join(fixtureRoot, "external/war-game"), {
+	recursive: true,
+});
+writeFileSync(
+	join(fixtureRoot, "external/war-game/package.json"),
+	JSON.stringify({
+		name: "koishi-plugin-war-game",
+		version: "0.1.0",
+	}),
+);
+mkdirSync(join(fixtureRoot, "external/plain-lib"), {
+	recursive: true,
+});
+writeFileSync(
+	join(fixtureRoot, "external/plain-lib/package.json"),
+	JSON.stringify({
+		name: "plain-lib",
+		version: "1.0.0",
+	}),
+);
+mkdirSync(join(fixtureRoot, "external/no-manifest"), {
+	recursive: true,
+});
 loader.baseDir = fixtureRoot;
 
 loader.config = {
@@ -408,6 +433,35 @@ describe("@koishi-ce/plugin-config", () => {
 			).toBeTruthy();
 		});
 
+		it("扫描 external/ 约定目录收录未启用的 workspace 插件", async () => {
+			const provider = app.get(
+				"console.services.packages",
+			) as unknown as {
+				get(): Promise<Dict<Record<string, unknown>>>;
+				pathKeys: Dict<string>;
+				cache: Dict<Record<string, unknown>>;
+			};
+			const data = await provider.get();
+			// 命名合规的插件包：收录并标注相对路径键
+			const war = data["koishi-plugin-war-game"];
+			expect(war?.["workspace"]).toBe(true);
+			expect(war?.["paths"]).toEqual([
+				"./external/war-game",
+			]);
+			// 未启用包不预热运行时缓存（require 会提前求值模块）
+			expect(war?.["runtime"]).toBeUndefined();
+			// 「包名 → 配置键」反查已登记，request-runtime 按需解析可用
+			expect(
+				provider.pathKeys["koishi-plugin-war-game"],
+			).toBe("./external/war-game");
+			expect(
+				provider.cache["./external/war-game"],
+			).toBeUndefined();
+			// 非插件命名与无清单目录不进列表
+			expect(data["plain-lib"]).toBeUndefined();
+			expect(data["no-manifest"]).toBeUndefined();
+		});
+
 		itQuiet(
 			["config"],
 			"request-runtime 按路径键 / 短名解析并刷新，失败结果同样缓存",
@@ -509,6 +563,21 @@ describe("@koishi-ce/plugin-config", () => {
 					msg.body.key === "services",
 			);
 			expect(messages.length).toBeGreaterThan(0);
+		});
+
+		it("provide() 注册的服务同样上报（loader / watcher 形态）", async () => {
+			const provider = app.get(
+				"console.services.services",
+			) as unknown as {
+				get(): Promise<Dict<number>>;
+			};
+			// cordis 3.18 的 ctx.provide() 不给值定义自有 "ctx" 属性
+			// （只有 tracker 符号，经 traceable 代理的属性访问可达），
+			// descriptor 查询落空时须以属性访问兜底，否则配置页
+			// 恒显示「必需服务未加载」
+			app.provide("probe.plain", { marker: 1 });
+			const data = await provider.get();
+			expect(data["probe.plain"]).toBeGreaterThanOrEqual(0);
 		});
 	});
 
