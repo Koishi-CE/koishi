@@ -153,7 +153,7 @@
     },
     "packages/web/client": {
       "name": "@koishi-ce/client",
-      "version": "1.2.1",
+      "version": "1.2.2",
       "bin": {
         "koishi-console": "./lib/bin.mjs",
       },
@@ -181,7 +181,7 @@
     },
     "packages/web/components": {
       "name": "@koishi-ce/components",
-      "version": "1.0.3",
+      "version": "1.0.4",
       "dependencies": {
         "@satorijs/element": "^3.2.0",
         "cosmokit": "^1.8.1",
