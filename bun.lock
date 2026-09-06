@@ -58,7 +58,7 @@
     },
     "packages/node/cli": {
       "name": "@koishi-ce/koishi",
-      "version": "1.0.11",
+      "version": "1.0.12",
       "bin": "lib/cli/index.mjs",
       "dependencies": {
         "@koishi-ce/core": "workspace:*",
@@ -496,7 +496,7 @@
     },
     "plugins/webui/config": {
       "name": "@koishi-ce/plugin-config",
-      "version": "1.1.0",
+      "version": "1.1.1",
       "dependencies": {
         "@koishi-ce/console": "workspace:*",
         "@koishi-ce/loader": "workspace:*",
@@ -577,7 +577,7 @@
     },
     "plugins/webui/insight": {
       "name": "@koishi-ce/plugin-insight",
-      "version": "1.1.0",
+      "version": "1.1.1",
       "dependencies": {
         "@koishi-ce/console": "workspace:*",
       },
