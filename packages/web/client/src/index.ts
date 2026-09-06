@@ -357,6 +357,10 @@ export async function createServer(
 						"@popperjs/core",
 						"marked",
 						"xss",
+						// logger 的前端值导入 reggol，其 browser 入口 external 了
+						// CJS 依赖 object-inspect；不经预打包裸 ESM 导入 CJS 会
+						// 报「does not provide an export named 'default'」
+						"reggol",
 					],
 					// 宿主与组件库以 TS 源码 + .yml 词典的形态发布，必须走
 					// dev transform 管道逐文件服务（yaml 插件在此生效）；
