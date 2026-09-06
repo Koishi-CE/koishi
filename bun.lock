@@ -58,7 +58,7 @@
     },
     "packages/node/cli": {
       "name": "@koishi-ce/koishi",
-      "version": "1.0.13",
+      "version": "1.0.14",
       "bin": "lib/cli/index.mjs",
       "dependencies": {
         "@koishi-ce/core": "workspace:*",
@@ -105,7 +105,7 @@
     },
     "packages/node/loader": {
       "name": "@koishi-ce/loader",
-      "version": "1.0.7",
+      "version": "1.0.8",
       "devDependencies": {
         "@koishi-ce/core": "workspace:*",
         "@koishi-ce/koishi": "workspace:*",
@@ -153,7 +153,7 @@
     },
     "packages/web/client": {
       "name": "@koishi-ce/client",
-      "version": "1.2.2",
+      "version": "1.2.3",
       "bin": {
         "koishi-console": "./lib/bin.mjs",
       },
