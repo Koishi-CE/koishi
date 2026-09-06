@@ -224,6 +224,14 @@ test("renderManifest 渲染内置模板：常规改写生效，prod 模式保留
 	expect(output.dependencies.koishi).toBe(
 		"npm:@koishi-ce/koishi-shim@^4.18.11",
 	);
+	// workspaces 是 globstar + 负向排除形态：external 任意深度（含克隆的
+	// monorepo 子包）都是成员，node_modules 排除搬迁残留——配置页的
+	// 「添加插件」列表按同一份声明展开收录，写法回退即嵌套不可见
+	expect(output.workspaces).toEqual([
+		"plugins/*",
+		"external/**",
+		"!external/**/node_modules/**",
+	]);
 
 	const prod = JSON.parse(
 		renderManifest(baseManifest(), "my-app", true),

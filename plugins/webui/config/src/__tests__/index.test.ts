@@ -290,6 +290,67 @@ writeFileSync(
 mkdirSync(join(fixtureRoot, "external/no-manifest"), {
 	recursive: true,
 });
+// 嵌套 monorepo（新模板 workspaces 声明形态）：子包在二级深度可收录，
+// monorepo 根（@scope/monorepo 命名）不进列表，node_modules 残留探针
+// 被负向通配排除；plugins/ 一级的未启用包（盲区修复）同样可收录
+writeFileSync(
+	join(fixtureRoot, "package.json"),
+	JSON.stringify({
+		name: "fixture-host",
+		private: true,
+		workspaces: [
+			"plugins/*",
+			"external/**",
+			"!external/**/node_modules/**",
+		],
+	}),
+);
+mkdirSync(
+	join(fixtureRoot, "external/infra/packages/war-lib"),
+	{ recursive: true },
+);
+writeFileSync(
+	join(
+		fixtureRoot,
+		"external/infra/packages/war-lib/package.json",
+	),
+	JSON.stringify({
+		name: "koishi-plugin-war-lib",
+		version: "0.2.0",
+	}),
+);
+writeFileSync(
+	join(fixtureRoot, "external/infra/package.json"),
+	JSON.stringify({
+		name: "@infra/monorepo",
+		version: "1.0.0",
+		private: true,
+	}),
+);
+mkdirSync(
+	join(fixtureRoot, "external/infra/node_modules/zzz"),
+	{ recursive: true },
+);
+writeFileSync(
+	join(
+		fixtureRoot,
+		"external/infra/node_modules/zzz/package.json",
+	),
+	JSON.stringify({
+		name: "koishi-plugin-zzz-pollution",
+		version: "1.0.0",
+	}),
+);
+mkdirSync(join(fixtureRoot, "plugins/local-tool"), {
+	recursive: true,
+});
+writeFileSync(
+	join(fixtureRoot, "plugins/local-tool/package.json"),
+	JSON.stringify({
+		name: "koishi-plugin-local-tool",
+		version: "0.3.0",
+	}),
+);
 loader.baseDir = fixtureRoot;
 
 loader.config = {
@@ -460,6 +521,83 @@ describe("@koishi-ce/plugin-config", () => {
 			// 非插件命名与无清单目录不进列表
 			expect(data["plain-lib"]).toBeUndefined();
 			expect(data["no-manifest"]).toBeUndefined();
+		});
+
+		it("workspaces 声明驱动收录嵌套 monorepo 子包与 plugins/ 未启用包", async () => {
+			const provider = app.get(
+				"console.services.packages",
+			) as unknown as {
+				get(): Promise<Dict<Record<string, unknown>>>;
+			};
+			const data = await provider.get();
+			// 嵌套子包（external/** 任意深度）：收录并以深路径为键
+			const lib = data["koishi-plugin-war-lib"];
+			expect(lib?.["workspace"]).toBe(true);
+			expect(lib?.["paths"]).toEqual([
+				"./external/infra/packages/war-lib",
+			]);
+			expect(lib?.["runtime"]).toBeUndefined();
+			// plugins/ 一级的未启用包同样可收录（此前的可见性盲区）
+			expect(
+				data["koishi-plugin-local-tool"]?.["paths"],
+			).toEqual(["./plugins/local-tool"]);
+			// monorepo 根（@scope/monorepo 命名）不进列表
+			expect(data["@infra/monorepo"]).toBeUndefined();
+			// node_modules 残留探针被负向通配排除（即使命名合规）
+			expect(
+				data["koishi-plugin-zzz-pollution"],
+			).toBeUndefined();
+		});
+
+		it("readWorkspacePatterns：无清单 / 非数组 / 空数组时回退约定", async () => {
+			const { readWorkspacePatterns } = await import(
+				"../node/packages.ts"
+			);
+			const empty = mkdtempSync(
+				join(tmpdir(), "koishi-config-ws-"),
+			);
+			try {
+				// 无 package.json → 兜底约定
+				expect(readWorkspacePatterns(empty)).toEqual([
+					"plugins/*",
+					"external/*",
+				]);
+				// 非数组（yarn no-hoist 对象形态）与空数组同理
+				writeFileSync(
+					join(empty, "package.json"),
+					JSON.stringify({
+						workspaces: { packages: ["external/*"] },
+					}),
+				);
+				expect(readWorkspacePatterns(empty)).toEqual([
+					"plugins/*",
+					"external/*",
+				]);
+				writeFileSync(
+					join(empty, "package.json"),
+					JSON.stringify({ workspaces: [] }),
+				);
+				expect(readWorkspacePatterns(empty)).toEqual([
+					"plugins/*",
+					"external/*",
+				]);
+				// 合法声明原样透传（负向模式保留 ! 前缀）
+				writeFileSync(
+					join(empty, "package.json"),
+					JSON.stringify({
+						workspaces: [
+							"external/**",
+							"!external/**/node_modules/**",
+						],
+					}),
+				);
+				expect(readWorkspacePatterns(empty)).toEqual([
+					"external/**",
+					"!external/**/node_modules/**",
+				]);
+			} finally {
+				rmSync(empty, { recursive: true, force: true });
+			}
 		});
 
 		itQuiet(

@@ -231,9 +231,12 @@ function expectTemplateFiles(dir: string): void {
 	) as Record<string, unknown>;
 	expect(manifest["private"]).toBe(true);
 	expect(manifest["version"]).toBe("0.0.0");
+	// globstar + 负向排除形态：external 任意深度（含克隆的 monorepo
+	// 子包）都是成员，node_modules 残留被排除（与 template.test.ts 同步）
 	expect(manifest["workspaces"]).toEqual([
 		"plugins/*",
-		"external/*",
+		"external/**",
+		"!external/**/node_modules/**",
 	]);
 }
 

@@ -10,11 +10,11 @@
  * 本仓库 koishi.yml 的插件键统一是相对路径（./plugins/...），而 Bun
  * 不会把未被依赖的 workspace 包链入 node_modules，仅靠 LocalScanner
  * 会漏掉大部分源码包——因此 collect 时额外按配置键逐个加载
- * workspace 包，并写入 paths（配置键 → 包名映射，供前端解析插件名）。
+ * workspace 包，并写入 paths（配置键 → 包名映射，供前端解析插件名）；
+ * 未启用的包（含嵌套 monorepo 子包）则按 workspaces 声明展开收录。
  */
-import { existsSync, readFileSync } from "node:fs";
-import { readdir } from "node:fs/promises";
-import { join, resolve } from "node:path";
+import { readFileSync } from "node:fs";
+import { dirname, join, resolve } from "node:path";
 import { Logger } from "@koishi-ce/koishi";
 import {
 	getPluginShortname,
@@ -24,6 +24,13 @@ import {
 import * as shared from "../shared/index.ts";
 
 const logger = new Logger("config");
+
+/** 插件包名的收录口径：只认三种插件命名前缀（与 LocalScanner 一致） */
+const PLUGIN_NAME_PATTERN =
+	/^(koishi-plugin-|@koishi(?:-ce)?\/plugin-)/;
+
+/** 宿主未声明 workspaces 时的兜底约定（模板默认布局） */
+const FALLBACK_WORKSPACES = ["plugins/*", "external/*"];
 
 /**
  * 本机插件扫描器：在 LocalScanner 的基础上扩展 parsePackage，
@@ -84,7 +91,7 @@ export class PackageProvider extends shared.PackageProvider {
 
 	/**
 	 * 收集全部 workspace 源码包：koishi.yml 已有相对路径键引用的（已启用）
-	 * 加上 external/ 约定目录下的（可能尚未启用）。
+	 * 加上 workspaces 声明覆盖的（可能尚未启用，含嵌套 monorepo 子包）。
 	 */
 	private async collectWorkspacePackages(): Promise<
 		shared.PackageProvider.Data[]
@@ -140,7 +147,7 @@ export class PackageProvider extends shared.PackageProvider {
 					await addPath(path, true);
 				},
 			);
-			await this.collectExternalPackages(addPath);
+			await this.collectWorkspacePlugins(addPath);
 		} catch (error) {
 			logger.warn(error);
 		}
@@ -148,42 +155,106 @@ export class PackageProvider extends shared.PackageProvider {
 	}
 
 	/**
-	 * 扫描 external/ 约定目录（官方 koishi-scripts 的插件开发目录），
-	 * 收录其中尚未启用的 workspace 插件包。
+	 * 收集 workspaces 声明覆盖的未启用插件包（嵌套 monorepo 兼容）。
 	 *
-	 * Bun 只把被依赖引用的 workspace 包链入 node_modules，未启用的
-	 * external 插件因此不在本机扫描的视野内（yarn 全量链接生态下的
-	 * 自动发现语义失效）——这里显式遍历目录补齐。收录条目带
-	 * ./external/<name> 路径键，前端启用时以该键写入配置（loader 的
-	 * 相对路径解析原生支持；短名不经 node_modules 会解析失败）。
+	 * 以宿主 package.json 的 workspaces 通配为唯一真相源：声明写多深，
+	 * 收录就能看多深——external/ 下克隆的 monorepo 形态插件（packages/
+	 * 子包在二级及更深）无需平铺即可见。Bun 只把被依赖引用的 workspace
+	 * 包链入 node_modules，未启用的插件不在本机扫描视野内（yarn 全量
+	 * 链接生态的自动发现语义失效），这里是唯一补齐入口。
+	 *
+	 * 通配是目录模式，拼上 /package.json 以清单文件为锚点扫描
+	 * （Bun.Glob 的 onlyDirs 语义不可靠，win32 实测返回文件路径且分隔符
+	 * 为反斜杠，归一为 / 后再派生收录键）；负向模式（! 前缀）同样拼
+	 * 锚点后对正向结果做差集——模板对 external 下 node_modules 的负向
+	 * 通配即用于排除搬迁残留的依赖目录（注释里不写通配字面量，
+	 * biome 会把其中的 JSDoc 起始序列误解析成类型）。收录口径与
+	 * LocalScanner 的本机扫描一致：只认三种插件命名前缀，monorepo
+	 * 根（@scope/monorepo 形态）与普通库不进列表；收录键
+	 * ./<相对路径>（loader 的相对路径解析原生支持任意深度）。
 	 */
-	private async collectExternalPackages(
+	private async collectWorkspacePlugins(
 		addPath: (path: string, warm: boolean) => Promise<void>,
 	) {
-		const base = resolve(this.scanner.baseDir, "external");
-		const entries = await readdir(base).catch(() => []);
-		for (const entry of entries) {
-			const dir = join(base, entry);
-			if (!existsSync(join(dir, "package.json"))) continue;
-			try {
-				const manifest = JSON.parse(
-					readFileSync(join(dir, "package.json"), "utf8"),
-				) as { name?: unknown };
-				// 与 LocalScanner 的本机收录口径一致：只认三种插件
-				// 命名前缀，external 下的普通库与杂项目录不进列表
+		const baseDir = this.scanner.baseDir;
+		const patterns = readWorkspacePatterns(baseDir);
+		// 目录通配 → 清单文件锚点（去尾斜杠后拼接；负向模式去掉 ! 前缀）
+		const anchor = (pattern: string) =>
+			`${pattern.replace(/\/+$/, "")}/package.json`;
+		const excluded = new Set<string>();
+		for (const pattern of patterns) {
+			if (!pattern.startsWith("!")) continue;
+			for (const rel of new Bun.Glob(
+				anchor(pattern.slice(1)),
+			).scanSync({ cwd: baseDir })) {
+				excluded.add(normalizeSlashes(rel));
+			}
+		}
+		const seen = new Set<string>();
+		for (const pattern of patterns) {
+			if (pattern.startsWith("!")) continue;
+			for (const rel of new Bun.Glob(
+				anchor(pattern),
+			).scanSync({ cwd: baseDir })) {
+				const manifestPath = normalizeSlashes(rel);
 				if (
-					typeof manifest.name !== "string" ||
-					!/^(koishi-plugin-|@koishi(?:-ce)?\/plugin-)/.test(
-						manifest.name,
-					)
+					excluded.has(manifestPath) ||
+					seen.has(manifestPath)
 				)
 					continue;
-				await addPath(`./external/${entry}`, false);
-			} catch (error) {
-				logger.warn(error);
+				seen.add(manifestPath);
+				try {
+					const manifest = JSON.parse(
+						readFileSync(
+							join(baseDir, manifestPath),
+							"utf8",
+						),
+					) as { name?: unknown };
+					if (
+						typeof manifest.name !== "string" ||
+						!PLUGIN_NAME_PATTERN.test(manifest.name)
+					)
+						continue;
+					await addPath(
+						`./${dirname(manifestPath)}`,
+						false,
+					);
+				} catch (error) {
+					logger.warn(error);
+				}
 			}
 		}
 	}
+}
+
+/**
+ * 读取宿主 package.json 的 workspaces 通配声明；缺失、非数组（如 yarn
+ * no-hoist 的对象形态）或为空时回退模板默认约定——旧项目与 prod 形态
+ * （workspaces 已被脚手架删除）的一级目录可见性不回退。
+ */
+export function readWorkspacePatterns(
+	baseDir: string,
+): string[] {
+	try {
+		const manifest = JSON.parse(
+			readFileSync(join(baseDir, "package.json"), "utf8"),
+		) as { workspaces?: unknown };
+		if (Array.isArray(manifest.workspaces)) {
+			const patterns = manifest.workspaces.filter(
+				(pattern): pattern is string =>
+					typeof pattern === "string",
+			);
+			if (patterns.length) return patterns;
+		}
+	} catch {
+		// 无宿主清单（异常环境）：走兜底约定
+	}
+	return FALLBACK_WORKSPACES;
+}
+
+/** Bun.Glob 的 scan 在 win32 返回反斜杠分隔的相对路径，统一归一为 / */
+function normalizeSlashes(path: string): string {
+	return path.split("\\").join("/");
 }
 
 /**

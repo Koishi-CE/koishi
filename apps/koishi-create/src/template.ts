@@ -92,7 +92,16 @@ export function baseManifest(): Manifest {
 		type: "module",
 		// 本项目只用 Bun：钉住创建时的 Bun 版本（bun run 亦据此选择解释器）
 		packageManager: `bun@${Bun.version}`,
-		workspaces: ["plugins/*", "external/*"],
+		// globstar + 负向排除（Bun workspaces 支持完整 glob 语法）：external
+		// 下任意深度的插件包（含克隆来的 monorepo 形态 packages/ 子包）都是
+		// workspace 成员；node_modules 排除搬迁残留的依赖目录（包管理器
+		// 对其另有管理，混入成员会污染解析）。配置页的「添加插件」列表按
+		// 同一份声明展开收录，声明写多深列表就能看多深
+		workspaces: [
+			"plugins/*",
+			"external/**",
+			"!external/**/node_modules/**",
+		],
 		scripts: {
 			start: "koishi start",
 			// bun run 走 Bun Shell，`NODE_ENV=...` 前缀天然跨平台，无需 cross-env

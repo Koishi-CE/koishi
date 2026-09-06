@@ -43,7 +43,7 @@ bun run update        # 安全更新：只更新 @koishi-ce/* 生态位依赖
 - `bun run new <名称>` —— 生成插件骨架到 `external/`（`--console` 附带控制台前端扩展）
 - `bun run clone <仓库>` —— 克隆已有插件源码到 `external/` 本地联动调试
 
-两种来源的插件都在 `koishi.yml` 中以相对路径引用（如 `./plugins/my-plugin`、`./external/my-plugin`）即可启用；Bun 直接加载 TypeScript 源码，无需预编译。
+两种来源的插件都在 `koishi.yml` 中以相对路径引用（如 `./plugins/my-plugin`、`./external/my-plugin`）即可启用；Bun 直接加载 TypeScript 源码，无需预编译。克隆来的 **monorepo 形态插件仓库**（插件在 `packages/` 等子目录）无需平铺——`workspaces` 声明的 `external/**` 通配任意深度，控制台「添加插件」列表同样按此声明收录，子包直接可见可启用（搬迁自其它包管理器的仓库若带着旧 `node_modules`，负向声明已将其排除，建议顺手删除节省空间）。
 
 ## 插件构建与发布
 
