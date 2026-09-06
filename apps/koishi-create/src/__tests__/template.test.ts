@@ -143,6 +143,7 @@ test("koishi.yml 预写策略：sqlite 默认启用开箱数据库，非必需�
 		"status",
 		"sandbox",
 		"theme-vanilla",
+		"welcome",
 	]) {
 		expect(yml).toContain(name);
 		expect(yml).not.toContain(`~${name}`);
@@ -170,6 +171,43 @@ test("koishi.yml 预写策略：sqlite 默认启用开箱数据库，非必需�
 	expect(JSON.stringify(baseManifest())).not.toContain(
 		"@koishijs/plugin-database-",
 	);
+});
+
+test("koishi.yml 预写条目与模板依赖对账：CE 插件必须在册，官方 adapter 只预写不预装", () => {
+	const yml = templateFiles["koishi.yml"] ?? "";
+	// 配置页导出形态：插件条目在分组内 4 空格缩进，键形如 name:uid:
+	const entries = [
+		...yml.matchAll(
+			/^[ ]{4}(~?)([a-z][a-z0-9-]*):[a-z0-9]{6}:/gm,
+		),
+	].map((match) => ({ name: match[2]! }));
+	expect(entries.length).toBeGreaterThan(40);
+	const manifest = baseManifest();
+	const installed = {
+		...manifest.dependencies,
+		...manifest.devDependencies,
+	};
+	for (const { name } of entries) {
+		const pkg = `@koishi-ce/plugin-${name}`;
+		if (name.startsWith("adapter-")) {
+			// 未再分发的官方 adapter：占位条目而已，预装反成死依赖
+			expect(installed[pkg]).toBeUndefined();
+			continue;
+		}
+		// 启用与否都随模板预装——缺依赖则新项目开箱 failed to resolve
+		//（welcome 独立插件化时曾漏装依赖，此对账即为防再犯）
+		expect(installed[pkg]).toBe("^1.0.0");
+	}
+	// 反向对账：生产依赖里的 CE 插件都必须有 yml 条目，不许装而未预写
+	for (const key of Object.keys(
+		manifest.dependencies ?? {},
+	)) {
+		if (!key.startsWith("@koishi-ce/plugin-")) continue;
+		const name = key.slice("@koishi-ce/plugin-".length);
+		expect(
+			entries.some((entry) => entry.name === name),
+		).toBe(true);
+	}
 });
 
 test("renderManifest 渲染内置模板：常规改写生效，prod 模式保留 koishi alias", () => {

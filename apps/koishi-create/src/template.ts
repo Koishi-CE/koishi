@@ -145,6 +145,7 @@ export function baseManifest(): Manifest {
 			"@koishi-ce/plugin-server-temp": "^1.0.0",
 			"@koishi-ce/plugin-status": "^1.0.0",
 			"@koishi-ce/plugin-theme-vanilla": "^1.0.0",
+			"@koishi-ce/plugin-welcome": "^1.0.0",
 			// 上游裸名占位：npm alias 钉到 @koishi-ce 的 koishi shim（勿删，
 			// 语义见文件头注释）；版本必须保持 4.18.x 冻结线以满足 ^4 peer
 			koishi: "npm:@koishi-ce/koishi-shim@^4.18.11",
