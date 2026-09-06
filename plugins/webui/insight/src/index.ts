@@ -20,6 +20,7 @@ import {
 	capitalize,
 	type EffectScope,
 	type ForkScope,
+	getServiceContext,
 	type Plugin,
 	Schema,
 	type ScopeStatus,
@@ -115,7 +116,7 @@ class Insight extends DataService<Insight.Payload> {
 		const edges: Insight.Link[] = [];
 
 		// 建立"scope uid -> 其上下文中注册的服务名列表"的映射,
-		// 供节点附带 services 字段（服务的提供者通过 Context.current 反查所在 scope）
+		// 供节点附带 services 字段（服务的提供者经 getServiceContext 反查所在 scope）
 		const services = {} as Record<number, string[]>;
 		for (const [key, { type }] of Object.entries(
 			this.ctx.root[Context.internal],
@@ -123,10 +124,9 @@ class Insight extends DataService<Insight.Payload> {
 			if (type !== "service") continue;
 			const instance = this.ctx.get(key);
 			if (!(instance instanceof Object)) continue;
-			const ctx: Context = Reflect.getOwnPropertyDescriptor(
-				instance,
-				Context.current,
-			)?.value;
+			// 归属反查见 getServiceContext（descriptor 对 provide() 形态
+			// 服务落空，loader / watcher 等会漏出图）
+			const ctx = getServiceContext(instance);
 			if (ctx?.scope.uid) {
 				(services[ctx.scope.uid] ||= []).push(key);
 			}
@@ -198,11 +198,7 @@ class Insight extends DataService<Insight.Payload> {
 					if (!meta.required) continue;
 					const instance = this.ctx.get(name);
 					if (!(instance instanceof Object)) continue;
-					const ctx: Context =
-						Reflect.getOwnPropertyDescriptor(
-							instance,
-							Context.current,
-						)?.value;
+					const ctx = getServiceContext(instance);
 					const uid = ctx?.state.uid;
 					if (!uid) continue;
 					addEdge("dashed", uid, state.uid);

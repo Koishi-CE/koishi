@@ -72,6 +72,35 @@ export type {
 } from "cordis";
 export { resolveConfig } from "cordis";
 
+/**
+ * 从服务实例反查其所属上下文（服务归属的唯一正确读法）。
+ *
+ * cordis 3.18 的归属标记是 tracker 符号（属性访问经 traceable 代理在
+ * "ctx" 键上命中），Service 子类另有构造器赋上的真实 ctx 自有属性
+ * （descriptor 可读）；而 ctx.provide() 注册的普通对象服务（loader、
+ * hmr 的 watcher 等）只占前者——descriptor 单独查询会落空，令依赖
+ * 此语义的消费方（config 的服务状态上报、insight 的依赖图）漏报。
+ * 统一先查 descriptor、落空补属性访问，覆盖全部注册形态。
+ *
+ * 语义边界：provide() 形态 cordis 不记录提供者（store 侧 source 为
+ * null），属性访问经 traceable 代理返回的是「访问时的上下文」——
+ * 对 root 级单例服务（loader 等）两者等价；消费方只关心 uid 存在性
+ * 时（服务状态上报、依赖图连线）不受影响。
+ *
+ * @param instance 服务实例（取自 ctx.get(服务名)，traceable 形态）
+ * @returns 提供该服务的上下文；无归属标记时为 undefined
+ */
+export function getServiceContext(
+	instance: object,
+): Context | undefined {
+	return (Reflect.getOwnPropertyDescriptor(
+		instance,
+		Context.current,
+	)?.value ?? Reflect.get(instance, Context.current)) as
+		| Context
+		| undefined;
+}
+
 /** 环境数据占位类型（Koishi 未使用 satori 的 EnvData，保留以兼容）。 */
 export type EnvData = object;
 

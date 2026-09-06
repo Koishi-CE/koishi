@@ -8,11 +8,15 @@
  * 前端据此判断某插件"必需/可选注入的服务"是否已可用。
  *
  * 遍历方式：从根上下文的 internal 对象出发沿原型链逐层收集类型为
- * "service" 的属性，再通过 Context.current 访问器反查服务实例所属的
+ * "service" 的属性，再经 getServiceContext 反查服务实例所属的
  * 上下文，取其作用域 uid。
  */
 import { DataService } from "@koishi-ce/console";
-import { Context, type Dict } from "@koishi-ce/koishi";
+import {
+	Context,
+	type Dict,
+	getServiceContext,
+} from "@koishi-ce/koishi";
 
 export class ServiceProvider extends DataService<
 	Dict<number>
@@ -41,19 +45,10 @@ export class ServiceProvider extends DataService<
 				if (type !== "service") continue;
 				const instance = this.ctx.get(key);
 				if (!(instance instanceof Object)) continue;
-				// Context.current 是个访问器属性，其值即服务实例所属的上下文。
-				// cordis 3.18 起 ctx.provide() 注册的服务（loader / hmr 的
-				// watcher 等）不再有自有 "ctx" 属性（只定义 tracker 符号，
-				// 其 traceable 代理在 "ctx" 键上返回上下文），descriptor
-				// 查询会落空——补一层属性访问，否则此类服务在配置页
-				// 恒显示「未加载」（上游 plugin-config 同样命中此缺陷）
-				const ctx = (Reflect.getOwnPropertyDescriptor(
-					instance,
-					Context.current,
-				)?.value ??
-					Reflect.get(instance, Context.current)) as
-					| Context
-					| undefined;
+				// 归属反查见 getServiceContext：provide() 形态（loader /
+				// hmr 的 watcher）只有 tracker 符号，descriptor 落空须
+				// 属性访问兜底，否则配置页恒显示「未加载」
+				const ctx = getServiceContext(instance);
 				if (!ctx) continue;
 				// 服务内部名形如 __foo__，对外展示时去掉首尾下划线
 				const name = key
