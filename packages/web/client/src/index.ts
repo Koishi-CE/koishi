@@ -363,14 +363,25 @@ export async function createServer(
 						"reggol",
 					],
 					// 宿主与组件库以 TS 源码 + .yml 词典的形态发布，必须走
-					// dev transform 管道逐文件服务（yaml 插件在此生效）；
+					// dev transform 管线逐文件服务（yaml 插件在此生效）；
 					// 一旦落入依赖预打包，rolldown 会把 .yml 当 JS 解析，
 					// 直接报 PARSE_ERROR。工作区内两者经工作区别名映射为
 					// 绝对路径、天然不进 optimizer；下游 npm 安装形态下别名
-					// 表为空、以裸包名参与解析，须在此显式排除
+					// 表为空、以裸包名参与解析，须在此显式排除。
+					// schemastery-vue 同理（裸名与 form 所用的 /client 子路径
+					// 都要排除）：它以 TS 源码 + .vue 发布，optimizer 对其
+					// 预打包会产出指向不存在产物的引用（server 控制台报
+					// does not exist ... deps/schemastery-vue.js），而 /client
+					// 子路径经 alias 预打包成功时又会把整套 cosmokit 以另一
+					// 份实例内联进 deps 产物——组件库入口的 star 导出因此在
+					// 浏览器端被判 conflicting star exports，全部 webui 插件
+					// 前端加载失败（侧栏空白）。排除后统一走源码 transform，
+					// cosmokit 全链单实例单 URL。
 					exclude: [
 						"@koishi-ce/client",
 						"@koishi-ce/components",
+						"schemastery-vue",
+						"schemastery-vue/client",
 					],
 				},
 				build: {

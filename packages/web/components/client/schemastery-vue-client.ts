@@ -30,6 +30,11 @@ import type { Schema } from "@koishi-ce/koishi";
 import type { App, Component } from "vue";
 
 export { Schema } from "@koishi-ce/koishi";
+// 对齐运行时载体（schemastery-vue-runtime.ts → schemastery-vue 源码）的
+// `export * from 'cosmokit'` 透传——本入口经 form/index.ts 的 star 再导出后，
+// 是 cosmokit 名字在 components 入口导出面上的唯一类型来源（入口自身不再
+// 直接 re-export cosmokit，避免 dev transform 管线下的同名 star 冲突）
+export * from "cosmokit";
 
 export namespace SchemaBase {
 	export interface Extension {

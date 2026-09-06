@@ -19,7 +19,12 @@ import virtual from "./virtual";
 // 组件库的全局样式（含 element-plus 覆盖等）
 import "./index.scss";
 
-export * from "cosmokit";
+// cosmokit 的名字刻意不在本入口直接 re-export：./form 透传的 schemastery-vue
+// 源码自身就有 `export * from 'cosmokit'`，dev transform 管线（非打包、
+// 逐文件服务）下两条 star 链会以不同的模块 URL 各自透出同名，被 Vite 判为
+// conflicting star exports，浏览器端控制台整体加载失败（上游有这行是因为
+// 其组件库以打包产物发布，dev 下不经过浏览器原生解析 star 导出）。省略后
+// cosmokit 的导出面仍经 form 链完整透出，包的公共 API 不变。
 export * from "./form";
 export * from "./virtual";
 

@@ -29,6 +29,10 @@ declare module "schemastery-vue/client" {
 	import type { App, Component } from "vue";
 
 	export { Schema } from "@koishi-ce/koishi";
+	// 对齐运行时载体（schemastery-vue-runtime.ts → schemastery-vue 源码）的
+	// `export * from 'cosmokit'` 透传（与 schemastery-vue-client.ts 镜像同步，
+	// 由该文件统一说明缘由）
+	export * from "cosmokit";
 
 	export namespace SchemaBase {
 		export interface Extension {
