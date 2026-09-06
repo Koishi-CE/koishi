@@ -80,6 +80,7 @@ function normalizePath(path: string): string {
 /** 参与遍历与判定的包清单字段（形态宽松，读取失败即放弃分析） */
 export interface Manifest {
 	main?: unknown;
+	type?: unknown;
 	exports?: unknown;
 	dependencies?: Record<string, string>;
 	peerDependencies?: Record<string, string>;
@@ -169,6 +170,23 @@ export function nodeRequireEntry(
 	return join(pkgDir, target);
 }
 
+/**
+ * Node require 语义下该入口是否确定按 CJS 加载：.cjs 后缀恒为 CJS，
+ * .js 后缀仅在包未声明 type:module 时为 CJS；其余（.mjs / .mts / .ts /
+ * type:module 的 .js 等）没有 CJS 基准，不但无 interop 种子可预置，
+ * 真实 require 还会执行入口的顶层副作用——依赖树里携带原生绑定的包
+ * （如 unocss 66.10 链上的 zigpty：入口顶层 dlopen，在 Bun win32 上
+ * 直接段错误且 try/catch 不可捕获）会被无差别引爆，必须整体排除。
+ */
+function isCjsEntry(
+	manifest: Manifest,
+	entry: string,
+): boolean {
+	if (entry.endsWith(".cjs")) return true;
+	if (!entry.endsWith(".js")) return false;
+	return manifest.type !== "module";
+}
+
 /** 沿 node_modules 链向上探测包目录（纯 fs，不触碰解析 API 及其负缓存） */
 function resolvePackageDir(
 	name: string,
@@ -213,6 +231,9 @@ function trySeed(
 	const nodeEntry = nodeRequireEntry(manifest, depDir);
 	// Node 语义入口未知（形态无法识别）或不存在：没有可信基准，不预置
 	if (!nodeEntry || !existsSync(nodeEntry)) return;
+	// 非 CJS 入口不预置（理由见 isCjsEntry：无基准，且 require 会引爆
+	// 依赖树里带原生顶层副作用的包）
+	if (!isCjsEntry(manifest, nodeEntry)) return;
 	let bunEntry: string;
 	try {
 		bunEntry = require.resolve(spec, {
@@ -230,6 +251,13 @@ function trySeed(
 	const key = normalizePath(bunEntry);
 	if (seeded.has(key)) return;
 	if (key === normalizePath(nodeEntry)) return;
+	// 两路径指向同一实体文件（symlink 布局形态差异：Bun 的 resolve 输出
+	// realpath，纯 fs 爬链拿到的是链接路径）时并非真分歧——Bun 运行时
+	// require 会自行加载并缓存，预置只是多余地执行一遍入口副作用
+	try {
+		if (realpathSync(nodeEntry) === realpathSync(bunEntry))
+			return;
+	} catch {}
 	let exports: unknown;
 	try {
 		exports = require(nodeEntry);

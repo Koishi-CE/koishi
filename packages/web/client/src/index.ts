@@ -35,14 +35,20 @@ interface BuildResult {
 async function collectWorkspaceAliases(): Promise<
 	Record<string, string>
 > {
-	// 源码形态(src/)与产物形态(lib/)都在包根下一级,上跳四级到仓库根一致
+	// 源码形态(src/)与产物形态(lib/)都在包根下一级，上跳四级到仓库根一致
 	const repoRoot = resolve(
 		import.meta.dir,
 		"../../../..",
 	).replace(/\\/g, "/");
-	const manifest = await Bun.file(
-		`${repoRoot}/package.json`,
-	).json();
+	let manifest: { workspaces?: string[] };
+	try {
+		manifest = await Bun.file(`${repoRoot}/package.json`).json();
+	} catch {
+		// 下游 npm 安装形态（.bun 嵌套布局或根提升布局）四级上跳不落在
+		// 任何仓库根：读不到清单即没有 workspace 源码可映射，空表即正确
+		// 语义（本函数在模块顶层 await 执行，抛出会拖垮整个 client 加载）
+		return {};
+	}
 	const aliases: Record<string, string> = {};
 	for (const pattern of manifest.workspaces ?? []) {
 		// scanSync 产出的相对路径在 Windows 上是反斜杠,统一归一化为正斜杠

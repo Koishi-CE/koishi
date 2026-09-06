@@ -5,7 +5,8 @@
 /**
  * Bun require 的 ESM 入口分歧种子测试：postgres 形态包的依赖链修复、
  * 无分歧与未知形态包零副作用、peer 链间接消费方、ESM import 侧不受
- * 污染、幂等性，以及 nodeRequireEntry 的 exports 形态矩阵。
+ * 污染、幂等性、ESM 入口与内置同名 polyfill 的排除，以及
+ * nodeRequireEntry 的 exports 形态矩阵。
  */
 import { describe, expect, it } from "bun:test";
 import { promises as fs } from "node:fs";
@@ -61,6 +62,8 @@ async function withFixtures(
 					"broken-pkg": "*",
 					"absent-pkg": "*",
 					buffer: "*",
+					"esm-native-like": "*",
+					"type-module-pkg": "*",
 				},
 				peerDependencies: { "chain-pkg": "*" },
 			},
@@ -74,18 +77,17 @@ async function withFixtures(
 			"pg-like",
 			{
 				name: "pg-like",
-				type: "module",
 				main: "cjs/index.js",
 				exports: {
 					types: "./types/index.d.ts",
-					bun: "./esm/index.js",
+					bun: "./esm/index.mjs",
 					workerd: "./cf/index.js",
-					import: "./esm/index.js",
+					import: "./esm/index.mjs",
 					default: "./cjs/index.js",
 				},
 			},
 			{
-				"esm/index.js":
+				"esm/index.mjs":
 					"export default function pgEsm() { return 'esm' }",
 				"cjs/index.js":
 					"module.exports = function pgCjs() { return 'cjs' }",
@@ -135,6 +137,34 @@ async function withFixtures(
 			{
 				"index.js":
 					"module.exports = { Buffer: { isBuffer: () => false } }",
+			},
+		);
+		// zigpty 形态：无 type 声明、exports "." 为字符串 .mjs 目标，
+		// 入口顶层带副作用（原生加载在真包里于此 dlopen）
+		await writePkg(
+			dir,
+			"esm-native-like",
+			{
+				name: "esm-native-like",
+				exports: { ".": "./dist/index.mjs" },
+			},
+			{
+				"dist/index.mjs":
+					"globalThis.__esmNativeLoaded = (globalThis.__esmNativeLoaded ?? 0) + 1",
+			},
+		);
+		// type:module 的 .js 主入口：按扩展名与 type 双重语义均为 ESM
+		await writePkg(
+			dir,
+			"type-module-pkg",
+			{
+				name: "type-module-pkg",
+				type: "module",
+				main: "index.js",
+			},
+			{
+				"index.js":
+					"globalThis.__typeModuleLoaded = (globalThis.__typeModuleLoaded ?? 0) + 1",
 			},
 		);
 		await fn(dir);
@@ -190,7 +220,7 @@ describe("seedCjsInterop", () => {
 						"node_modules",
 						"pg-like",
 						"esm",
-						"index.js",
+						"index.mjs",
 					),
 				).href
 			)) as { default: () => string };
@@ -228,6 +258,40 @@ describe("seedCjsInterop", () => {
 				join(tmpdir(), "definitely-lonely-xyz.js"),
 			),
 		).not.toThrow();
+	});
+
+	it("ESM 入口不预置不加载：依赖树里的原生顶层副作用不被引爆", async () => {
+		await withFixtures(async (dir) => {
+			// fixture 入口的顶层副作用经全局标记计数（被 require 即累加）
+			const flags = globalThis as typeof globalThis & {
+				__esmNativeLoaded?: number;
+				__typeModuleLoaded?: number;
+			};
+			flags.__esmNativeLoaded = 0;
+			flags.__typeModuleLoaded = 0;
+			const entry = join(
+				dir,
+				"node_modules",
+				"koishi-plugin-fixture",
+				"index.js",
+			);
+			seedCjsInterop(entry);
+			// 两种 ESM 形态的入口均零执行（被 require 即视为引爆）
+			expect(flags.__esmNativeLoaded).toBe(0);
+			expect(flags.__typeModuleLoaded).toBe(0);
+			// 同树的 CJS 分歧修复不受排除逻辑误伤
+			const consumerDir = join(
+				dir,
+				"node_modules",
+				"koishi-plugin-fixture",
+			);
+			const pgKey = require.resolve("pg-like", {
+				paths: [consumerDir],
+			});
+			expect(typeof require.cache[pgKey]?.exports).toBe(
+				"function",
+			);
+		});
 	});
 
 	it("内置模块同名的 polyfill 依赖不预置（防劫持 require('buffer') 等）", async () => {
