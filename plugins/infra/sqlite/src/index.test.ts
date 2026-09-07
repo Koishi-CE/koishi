@@ -40,6 +40,7 @@ declare module "@koishi-ce/koishi" {
 		test_regexp: { id: number; text: string };
 		test_indexes: { id: number; name: string };
 		test_tx: { id: number; v: string };
+		test_batch: { id: string; u: string; v: number };
 		test_alter: { id: number; v: string; extra: number };
 		test_stats: { id: number; v: string };
 		test_parity: {
@@ -384,6 +385,77 @@ describe("SQLite 事务", () => {
 		const rows = await app.database.get("test_tx", {});
 		expect(rows).toHaveLength(1);
 		expect(rows[0]!.v).toBe("kept");
+	});
+});
+
+describe("SQLite 批量写事务化", () => {
+	it("upsert 批内失败整体回滚", async () => {
+		app.model.extend(
+			"test_batch",
+			{ id: "string", u: "string", v: "unsigned" },
+			{ primary: "id", unique: ["u"] },
+		);
+		// 先在事务外触发建表并落地一行，避免 ROLLBACK 连 CREATE 一起回滚
+		await app.database.upsert(
+			"test_batch",
+			[{ id: "seed", u: "seed", v: 0 }],
+			["id"],
+		);
+
+		// 两行撞 u 列 UNIQUE 约束：第二行失败，第一批已插入的行须一并回滚
+		await expect(
+			app.database.upsert(
+				"test_batch",
+				[
+					{ id: "a", u: "x", v: 1 },
+					{ id: "b", u: "x", v: 2 },
+				],
+				["id"],
+			),
+		).rejects.toThrow();
+		await expect(
+			app.database.get("test_batch", {}),
+		).resolves.toHaveLength(1);
+	});
+
+	it("transact 内 upsert 并入外层事务不排队", async () => {
+		// runBatch 嵌套时不得经事务队列排队（会等待自己而死锁），
+		// 域内直接并入外层事务、随外层 COMMIT 一并提交
+		await app.database.transact(async () => {
+			await app.database.upsert(
+				"test_batch",
+				[
+					{ id: "t1", u: "t1", v: 1 },
+					{ id: "t2", u: "t2", v: 2 },
+				],
+				["id"],
+			);
+		});
+		await expect(
+			app.database.get("test_batch", {
+				id: { $in: ["t1", "t2"] },
+			}),
+		).resolves.toHaveLength(2);
+	});
+
+	it("并行 upsert 各自完整落地", async () => {
+		await Promise.all([
+			app.database.upsert(
+				"test_batch",
+				[{ id: "p1", u: "p1", v: 1 }],
+				["id"],
+			),
+			app.database.upsert(
+				"test_batch",
+				[{ id: "p2", u: "p2", v: 2 }],
+				["id"],
+			),
+		]);
+		await expect(
+			app.database.get("test_batch", {
+				id: { $in: ["p1", "p2"] },
+			}),
+		).resolves.toHaveLength(2);
 	});
 });
 

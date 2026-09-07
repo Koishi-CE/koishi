@@ -113,13 +113,16 @@ class DatabaseProvider extends DataService<DatabaseInfo> {
 						row[key] = new table.HookObjectId(row[key]);
 					}
 				}
-				// 各方法形参各异且经反序列化后类型不可知，统一按动态调用处理
-				const method = this.ctx.database[
-					name
-				] as unknown as (
-					...args: unknown[]
-				) => Promise<unknown>;
-				const result = await method(...callargs);
+				// 各方法形参各异且经反序列化后类型不可知，统一按动态调用处理。
+				// 必须经宿主对象成员调用：minato 的方法内部依赖 this（如
+				// get 首行即 this.select），取出引用裸调会丢 this 直接抛
+				// TypeError，前端表现为整表空白
+				const database = this.ctx
+					.database as unknown as Record<
+					Methods,
+					(...args: unknown[]) => Promise<unknown>
+				>;
+				const result = await database[name](...callargs);
 				if (refresh) void this.refresh();
 				return result === undefined
 					? undefined

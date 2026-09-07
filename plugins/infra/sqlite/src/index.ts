@@ -24,6 +24,7 @@
  * 超过 Number.MAX_SAFE_INTEGER 的整数读回会抛 RangeError（写入不受
  * 影响）；自增主键、时间戳等常规业务值远低于该阈值。
  */
+import { AsyncLocalStorage } from "node:async_hooks";
 import { mkdirSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 import type {
@@ -76,6 +77,16 @@ export class SQLiteDriver extends Driver<SQLiteDriver.Config> {
 
 	/** 事务串行化锚点：下一个事务须等上一个落地（无论成败）才开启。 */
 	private _transactionTask?: Promise<void>;
+
+	/**
+	 * 事务域标记：withTransaction 的回调（及其派生的全部异步执行）
+	 * 内为 true。runBatch 据此区分「事务域内的嵌套批量写」（直接并入
+	 * 外层事务）与「域外的顶层批量写」（排队后自成事务）——不能用
+	 * 连接级标志区分这两者：并行批量写与嵌套批量写都会撞上打开中的
+	 * 事务，但前者必须排队、后者并入，否则 SAVEPOINT 会被外层
+	 * COMMIT 摧毁、或经队列等待自己而死锁。
+	 */
+	private _txDomain = new AsyncLocalStorage<boolean>();
 
 	/** 建立连接，并注册自定义 SQL 函数与类型 transformer（见 setup/）。 */
 	async start() {
@@ -179,25 +190,60 @@ export class SQLiteDriver extends Driver<SQLiteDriver.Config> {
 	}
 
 	/**
-	 * 事务排队串行：先等上一个事务落地（失败也放行，.catch 吞掉等待
-	 * 误差），再开启自己的 BEGIN/COMMIT；业务错误先 ROLLBACK 再原样
-	 * 抛出（ROLLBACK 自身失败不遮蔽业务错误）。
+	 * 事务串行化：回调经 _enqueueTransaction 排队执行，整体运行在
+	 * 事务域标记内（域内的批量写会并入本事务而不是另开）。
 	 */
 	async withTransaction(callback: () => Promise<void>) {
-		if (this._transactionTask)
-			await this._transactionTask.catch(() => {});
-		return (this._transactionTask = (async () => {
-			this._run("BEGIN TRANSACTION");
+		return this._enqueueTransaction(callback);
+	}
+
+	/**
+	 * 事务执行的排队原语：同步占据队列尾（gate 占位），等前序事务落地
+	 * 后以 BEGIN/COMMIT 执行 body，业务错误先 ROLLBACK 再原样抛出。
+	 * 占位必须同步完成——若先 await 再读队列，并行调用会在让出期间
+	 * 双双读到旧任务、双双 BEGIN 而相撞（"cannot start a transaction
+	 * within a transaction"）。
+	 */
+	private _enqueueTransaction<T>(
+		body: () => Promise<T>,
+	): Promise<T> {
+		let release!: () => void;
+		const gate = new Promise<void>(
+			(resolve) => (release = resolve),
+		);
+		const prev = this._transactionTask;
+		this._transactionTask = gate;
+		return (async () => {
+			if (prev) await prev.catch(() => {});
 			try {
-				await callback();
+				this._run("BEGIN TRANSACTION");
+				const result = await this._txDomain.run(true, body);
 				this._run("COMMIT");
+				return result;
 			} catch (error) {
 				try {
 					this._run("ROLLBACK");
 				} catch {}
 				throw error;
+			} finally {
+				release();
 			}
-		})());
+		})();
+	}
+
+	/**
+	 * 事务性批量写。逐语句自动提交会让批量写的每一行各付一次磁盘同步
+	 * （实测仅百行每秒量级），因此：顶层批量写经 _enqueueTransaction
+	 * 整批新开一个事务、一次 COMMIT，批内任一行失败整体回滚；事务域
+	 * 内的嵌套批量写（用户 transact 回调里发起）直接并入外层事务——
+	 * 嵌套时排队会等待自己而死锁，并入时不设 SAVEPOINT（并行批量写
+	 * 的交织会让 SAVEPOINT 的释放脱离 LIFO 序而被外层 COMMIT 摧毁）。
+	 */
+	async runBatch<T>(
+		callback: () => Promise<T>,
+	): Promise<T> {
+		if (this._txDomain.getStore()) return callback();
+		return this._enqueueTransaction(callback);
 	}
 
 	// ---- Driver 抽象方法的薄委托（实现体见 operations/ 与 stats.ts）----

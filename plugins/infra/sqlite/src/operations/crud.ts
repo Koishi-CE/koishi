@@ -242,7 +242,8 @@ export async function create(
  * 批量 upsert：按主键分块，每块先一次 $or 查询取回命中行集，再逐项
  * 判定走更新或插入。分块大小 = 960 / 键数，绕开 SQLite 表达式树深度
  * 上限（"Expression tree is too large"）。命中判定对两边先 format，
- * 以容忍存储值与入参值的类型差异（deepEqual 宽松模式）。
+ * 以容忍存储值与入参值的类型差异（deepEqual 宽松模式）。整批经
+ * runBatch 事务化落地（批内任一行失败整体回滚）。
  */
 export async function upsert(
 	driver: SQLiteDriver,
@@ -271,45 +272,47 @@ export async function upsert(
 	if (!updateFields.length)
 		updateFields = [dataFields[0] ?? ""];
 	const step = Math.floor(960 / keys.length);
-	for (let i = 0; i < data.length; i += step) {
-		const chunk = data.slice(i, i + step);
-		const results = (await driver.database.get(
-			table as never,
-			{
-				$or: chunk.map((item) =>
-					Object.fromEntries(
-						keys.map((key) => [key, item[key]]),
+	await driver.runBatch(async () => {
+		for (let i = 0; i < data.length; i += step) {
+			const chunk = data.slice(i, i + step);
+			const results = (await driver.database.get(
+				table as never,
+				{
+					$or: chunk.map((item) =>
+						Object.fromEntries(
+							keys.map((key) => [key, item[key]]),
+						),
 					),
-				),
-			},
-		)) as Dict[];
-		for (const item of chunk) {
-			const row = results.find((row) => {
-				// flatten key to respect model
-				const formatted = model.format(row);
-				return keys.every((key) =>
-					deepEqual(formatted[key], item[key], true),
-				);
-			});
-			if (row) {
-				updateRow(
-					driver,
-					sel,
-					keys,
-					updateFields,
-					item,
-					row,
-				);
-				result.matched++;
-			} else {
-				insert(
-					driver,
-					table,
-					executeUpdate(model.create(), item, ref),
-				);
-				result.inserted++;
+				},
+			)) as Dict[];
+			for (const item of chunk) {
+				const row = results.find((row) => {
+					// flatten key to respect model
+					const formatted = model.format(row);
+					return keys.every((key) =>
+						deepEqual(formatted[key], item[key], true),
+					);
+				});
+				if (row) {
+					updateRow(
+						driver,
+						sel,
+						keys,
+						updateFields,
+						item,
+						row,
+					);
+					result.matched++;
+				} else {
+					insert(
+						driver,
+						table,
+						executeUpdate(model.create(), item, ref),
+					);
+					result.inserted++;
+				}
 			}
 		}
-	}
+	});
 	return result;
 }
