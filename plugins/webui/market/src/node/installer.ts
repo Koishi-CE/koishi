@@ -2,9 +2,13 @@
 // Copyright (c) 2019-present Shigma and Koishijs contributors.
 // Copyright (c) 2026-present Koishi-CE contributors.
 
-import { readFileSync } from "node:fs";
+import {
+	existsSync,
+	readFileSync,
+	realpathSync,
+} from "node:fs";
 import { homedir } from "node:os";
-import { join, resolve } from "node:path";
+import { dirname, join, resolve } from "node:path";
 import type {} from "@koishi-ce/console";
 import {
 	type Context,
@@ -51,6 +55,37 @@ function isGuardedRequest(
 		request?.startsWith("workspace:") === true ||
 		request?.startsWith("npm:@koishi-ce") === true
 	);
+}
+
+/**
+ * 从 fromDir 沿 node_modules 链纯 fs 探测依赖包,命中返回其真实目录。
+ * realpath 化是 isolated 布局的关键:顶层条目是 symlink,包的依赖链接
+ * 挂在 .bun 真实目录的同级 node_modules,从链接路径向上爬会错误地查
+ * 顶层(isolated 不提升传递依赖)。
+ */
+function probePackage(
+	fromDir: string,
+	name: string,
+): string | undefined {
+	let dir = resolve(fromDir);
+	for (;;) {
+		const manifestPath = join(
+			dir,
+			"node_modules",
+			name,
+			"package.json",
+		);
+		if (existsSync(manifestPath)) {
+			try {
+				return dirname(realpathSync(manifestPath));
+			} catch {
+				return undefined;
+			}
+		}
+		const parent = dirname(dir);
+		if (parent === dir) return undefined;
+		dir = parent;
+	}
 }
 
 /** 从单个 .npmrc 文件提取 registry 配置项；文件不存在或读取出错一律视为未配置 */
@@ -404,6 +439,59 @@ class Installer extends Service {
 		return this.exec(args);
 	}
 
+	/**
+	 * 安装完整性校验:从本次安装的包出发递归纯 fs 探测依赖可达性,返回
+	 * 「包: 缺失依赖」描述列表。背景是 Bun isolated 布局的增量安装缺陷
+	 * (2026-09-07 实证):升级插件时包目录 hash 变化,而其依赖的解析
+	 * 结果未变,bun 的增量安装跳过新包目录内的依赖链接建立——插件入口
+	 * (顶层 symlink)可加载,内部依赖的 require 却炸 MODULE_NOT_FOUND;
+	 * 此时补跑一次普通 bun install,bun 按磁盘实际状态检测到包不完整
+	 * 即重建链接(秒级)。全程只走 existsSync / readFileSync /
+	 * realpathSync,不触碰解析 API(防父目录快照缓存,与
+	 * resolvePackageJson 同一纪律)。peer / optional 依赖由宿主或按需
+	 * 提供不入校验;workspace / alias 等非 semver 声明的落盘名与键名无
+	 * 直接映射,同样跳过。
+	 */
+	private _findMissingDeps(
+		deps: Dict<string | null>,
+	): string[] {
+		const problems: string[] = [];
+		const visited = new Set<string>();
+		const walk = (dir: string, label: string) => {
+			if (visited.has(dir)) return;
+			visited.add(dir);
+			let manifest: LocalPackage;
+			try {
+				manifest = JSON.parse(
+					readFileSync(join(dir, "package.json"), "utf8"),
+				) as LocalPackage;
+			} catch {
+				return;
+			}
+			for (const [dep, request] of Object.entries(
+				manifest.dependencies ?? {},
+			)) {
+				if (request.includes(":")) continue;
+				const depDir = probePackage(dir, dep);
+				if (!depDir) {
+					problems.push(`${label} 的依赖 ${dep} 未被链接`);
+					continue;
+				}
+				walk(depDir, `${label} → ${dep}`);
+			}
+		};
+		for (const name in deps) {
+			const request = deps[name];
+			if (!request || request.includes(":")) continue;
+			const dir = probePackage(this.cwd, name);
+			// 顶层包未落盘属于安装失败,由退出码与后续加载告警兜底,
+			// 不属于「包已装但链接缺失」的补装场景
+			if (!dir) continue;
+			walk(dir, name);
+		}
+		return problems;
+	}
+
 	private _getLocalDeps(override: Dict<string | null>) {
 		return valueMap(override, (request, name) => {
 			const dep = { request } as Dependency;
@@ -443,6 +531,22 @@ class Installer extends Service {
 		if (shouldInstall) {
 			const code = await this._install();
 			if (code) return code;
+			// isolated 布局的增量安装可能漏建新包目录的依赖链接(机理
+			// 见 _findMissingDeps 注释):装完即校验,缺失时补跑一次
+			// 安装——bun 按磁盘实际状态重建链接,秒级自愈,无需人工
+			const missing = this._findMissingDeps(deps);
+			if (missing.length) {
+				logger.warn(
+					`检测到增量安装未建立部分依赖链接(isolated 布局已知缺陷),正在补装: ${missing.join("; ")}`,
+				);
+				const retry = await this._install();
+				if (retry) return retry;
+				if (this._findMissingDeps(deps).length) {
+					logger.warn(
+						"自动补装后依赖链接仍不完整,请在项目根目录运行 bun install --force 并重启 koishi",
+					);
+				}
+			}
 		}
 
 		this.refresh();
