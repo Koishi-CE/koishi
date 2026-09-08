@@ -10,13 +10,17 @@
       </el-scrollbar>
     </template>
 
-    <div v-if="!store.market">
+    <div v-if="!store.market" class="market-loading">
       <div class="el-loading-spinner">
         <svg class="circular" viewBox="25 25 50 50">
           <circle class="path" cx="50" cy="50" r="20" fill="none"></circle>
         </svg>
         <p class="el-loading-text">正在加载插件市场……</p>
       </div>
+      <k-comment v-if="slow" type="warning" class="market-slow">
+        <p>市场加载时间过长，这可能是网络波动或 registry 端点响应缓慢导致的。</p>
+        <p>你可以稍等片刻，或检查插件市场设置中的 registry 配置后重试。</p>
+      </k-comment>
     </div>
 
     <el-scrollbar ref="root" v-else-if="store.market.total">
@@ -48,6 +52,7 @@
         <li>无法连接到网络，请检查你的网络连接和代理设置</li>
         <li>您所用的 registry 不支持搜索功能，请考虑进行更换</li>
       </ul>
+      <el-button @click="send('market/refresh')">重新加载</el-button>
     </k-comment>
   </k-layout>
 </template>
@@ -56,11 +61,13 @@
 import {
 	global,
 	router,
+	send,
 	store,
 	useConfig,
 } from "@koishi-ce/client";
 import type { SearchObject } from "@koishi-ce/registry";
 import { getSorted, kConfig } from "@koishijs/market";
+import { useTimeoutFn } from "@vueuse/core";
 import { computed, provide, ref, watch } from "vue";
 import MarketFilter from "../market/filter.vue";
 import MarketList from "../market/list.vue";
@@ -90,6 +97,22 @@ const prompt = computed(() =>
 
 const data = computed(() =>
 	Object.values(store.market?.data || {}),
+);
+
+// 加载超 8 秒仍未就绪时给出慢加载提示，避免无限转圈无反馈
+const slow = ref(false);
+const { start: startSlowTimer, stop: stopSlowTimer } =
+	useTimeoutFn(() => (slow.value = true), 8000, {
+		immediate: false,
+	});
+watch(
+	() => store.market,
+	(value) => {
+		stopSlowTimer();
+		slow.value = false;
+		if (!value) startSlowTimer();
+	},
+	{ immediate: true },
 );
 
 watch(
@@ -182,9 +205,27 @@ function scrollToTop() {
   }
 }
 
+.market-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  flex: 1 0 auto;
+  min-height: 50vh;
+  gap: 2rem;
+
+  .el-loading-spinner {
+    margin-top: 0;
+  }
+}
+
+.market-slow.k-comment {
+  max-width: 640px;
+}
+
 .market-hint {
   width: 100%;
-  margin: 1rem 0 -0.5rem;
+  margin: 1rem 0 0.75rem;
   color: var(--el-text-color-regular);
   font-size: var(--el-font-size-base);
   font-weight: var(--el-font-weight-primary);
@@ -202,6 +243,21 @@ function scrollToTop() {
 .market-error.k-comment {
   margin-left: 2rem;
   margin-right: 2rem;
+}
+
+// 品牌化滚动条：主色调胶囊 thumb（市场页作用域）
+.page-market {
+  .el-scrollbar__thumb {
+    border-radius: 999px;
+    border: 2px solid transparent;
+    background-clip: content-box;
+    background-color: color-mix(in srgb, var(--k-color-primary) 26%, var(--fg3));
+    min-height: 32px;
+
+    &:hover {
+      background-color: color-mix(in srgb, var(--k-color-primary) 44%, var(--fg3));
+    }
+  }
 }
 
 </style>
