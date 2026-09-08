@@ -247,6 +247,16 @@
         "@koishi-ce/koishi": "^1.0.0",
       },
     },
+    "plugins/common/cron": {
+      "name": "@koishi-ce/plugin-cron",
+      "version": "1.0.0",
+      "devDependencies": {
+        "@koishi-ce/koishi": "workspace:*",
+      },
+      "peerDependencies": {
+        "@koishi-ce/koishi": "^1.0.0",
+      },
+    },
     "plugins/common/echo": {
       "name": "@koishi-ce/plugin-echo",
       "version": "1.1.0",
@@ -957,6 +967,8 @@
     "@koishi-ce/plugin-config": ["@koishi-ce/plugin-config@workspace:plugins/webui/config"],
 
     "@koishi-ce/plugin-console": ["@koishi-ce/plugin-console@workspace:plugins/webui/console"],
+
+    "@koishi-ce/plugin-cron": ["@koishi-ce/plugin-cron@workspace:plugins/common/cron"],
 
     "@koishi-ce/plugin-database-memory": ["@koishi-ce/plugin-database-memory@workspace:plugins/infra/memory"],
 

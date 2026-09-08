@@ -56,6 +56,9 @@
 			"@koishi-ce/plugin-callme": [
 				"./plugins/common/callme/src/index.ts"
 			],
+			"@koishi-ce/plugin-cron": [
+				"./plugins/common/cron/src/index.ts"
+			],
 			"@koishi-ce/plugin-echo": [
 				"./plugins/common/echo/src/index.ts"
 			],

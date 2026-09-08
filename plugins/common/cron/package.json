@@ -1,0 +1,63 @@
+{
+	"name": "@koishi-ce/plugin-cron",
+	"description": "Cron job scheduling for Koishi",
+	"version": "1.0.0",
+	"type": "module",
+	"main": "lib/index.mjs",
+	"typings": "lib/index.d.ts",
+	"files": [
+		"lib",
+		"src"
+	],
+	"contributors": [
+		"Shigma <shigma10826@gmail.com>",
+		"Oppenheymu <oppenheymu@gmail.com>"
+	],
+	"license": "MIT",
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/Koishi-CE/koishi.git",
+		"directory": "plugins/common/cron"
+	},
+	"bugs": {
+		"url": "https://github.com/Koishi-CE/koishi/issues"
+	},
+	"homepage": "https://koishi.chat/plugins/common/cron.html",
+	"keywords": [
+		"bot",
+		"chatbot",
+		"koishi",
+		"cron",
+		"schedule",
+		"timer"
+	],
+	"koishi": {
+		"category": "tool",
+		"description": {
+			"en": "Cron job scheduling",
+			"zh": "以 cron 表达式注册计划任务"
+		},
+		"service": {
+			"implements": [
+				"cron"
+			]
+		},
+		"locales": [
+			"zh"
+		]
+	},
+	"peerDependencies": {
+		"@koishi-ce/koishi": "^1.0.0"
+	},
+	"devDependencies": {
+		"@koishi-ce/koishi": "workspace:*"
+	},
+	"exports": {
+		".": {
+			"source": "./src/index.ts",
+			"types": "./lib/index.d.ts",
+			"import": "./lib/index.mjs",
+			"default": "./lib/index.mjs"
+		}
+	}
+}

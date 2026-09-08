@@ -28,6 +28,7 @@
 		"plugins/common/bind/src",
 		"plugins/common/broadcast/src",
 		"plugins/common/callme/src",
+		"plugins/common/cron/src",
 		"plugins/common/echo/src",
 		"plugins/common/help/src",
 		"plugins/common/inspect/src",

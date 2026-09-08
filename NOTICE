@@ -37,6 +37,7 @@ The AGPL-3.0 portions remain under AGPL-3.0 in this repository; the MIT portions
 | `plugins/common/{bind,broadcast,callme,echo,help,inspect}` | [koishijs/koishi](https://github.com/koishijs/koishi) `plugins/common/*` | [MIT](./LICENSE) |
 | `plugins/common/assets-local` | [koishijs/assets](https://github.com/koishijs/assets) `packages/local` | [MIT](./LICENSE) |
 | `plugins/common/rate-limit` | [koishijs/common](https://github.com/koishijs/common) `packages/rate-limit` | [MIT](./LICENSE) |
+| `plugins/common/cron`（以 `Bun.cron` 原生重写，非直接移植） | [koishijs/koishi-plugin-cron](https://github.com/koishijs/koishi-plugin-cron) · [cron-fix](https://github.com/koishi-shangxue-plugins/service-more/tree/main/packages/cron-fix)（修复参考，MIT） | [MIT](./LICENSE) |
 | `packages/web/{client,components}` | [koishijs/webui](https://github.com/koishijs/webui) `packages/*` | [AGPL-3.0](./LICENSES/AGPL-3.0.txt) |
 | `plugins/webui/welcome/client/splash.{json,vue}`（欢迎页开屏动画：数据与加载接线，类名已本地化） | [koishijs/koishi-plugin-telemetry](https://github.com/koishijs/koishi-plugin-telemetry)（唯一开发者 [Il Harper](https://github.com/ilharp)）`clients/oob/client/{splash.json,home.vue}` | [MIT](./LICENSE) \*\* |
 | `plugins/webui/*`（其余 17 个，`welcome` 系上游 client 内建欢迎卡迁出为本仓独立插件） | [koishijs/webui](https://github.com/koishijs/webui) `plugins/*`（含 `market`，对齐原版 v2.11.11） | [AGPL-3.0](./LICENSES/AGPL-3.0.txt) |

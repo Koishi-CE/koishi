@@ -11,7 +11,7 @@ No git history is preserved, so baselines are stated as upstream release lines r
 - koishi — the `koishi@4.18.11` release line (core / cli; `@koishijs/loader` 4.6.x, `@koishijs/utils` 7.2.x, `@koishijs/i18n-utils` 1.0.x)
 - webui — the `@koishijs/plugin-console@5.30.11` release line; `plugins/market` is aligned to upstream market **v2.11.11**
 - assets — the `@koishijs/assets@1.1.2` line (`packages/core` and `packages/local`)
-- others — `plugins/common/rate-limit` from [koishijs/common](https://github.com/koishijs/common), `plugins/infra/memory` (a two-source merge, see the map below), `plugins/infra/server-temp` from [cordiverse/server](https://github.com/cordiverse/server), `plugins/infra/sqlite` (a three-source merge, see the map below), `plugins/webui/{dataview,theme-vanilla}` from their standalone repos; see `NOTICE` for the full provenance table
+- others — `plugins/common/rate-limit` from [koishijs/common](https://github.com/koishijs/common), `plugins/common/cron` from [koishijs/koishi-plugin-cron](https://github.com/koishijs/koishi-plugin-cron) (rewritten on `Bun.cron`, not a direct port), `plugins/infra/memory` (a two-source merge, see the map below), `plugins/infra/server-temp` from [cordiverse/server](https://github.com/cordiverse/server), `plugins/infra/sqlite` (a three-source merge, see the map below), `plugins/webui/{dataview,theme-vanilla}` from their standalone repos; see `NOTICE` for the full provenance table
 
 ## Restructure map
 
@@ -31,6 +31,7 @@ No git history is preserved, so baselines are stated as upstream release lines r
 | `plugins/common/{bind,broadcast,callme,echo,help,inspect}` | koishi `plugins/common/*` |
 | `plugins/common/assets-local` | [koishijs/assets](https://github.com/koishijs/assets) `packages/local` |
 | `plugins/common/rate-limit` | [koishijs/common](https://github.com/koishijs/common) `packages/rate-limit` |
+| `plugins/common/cron`（以 `Bun.cron` 原生重写，非直接移植；溢出缺陷背景见 [koishijs/koishi-plugin-cron#8](https://github.com/koishijs/koishi-plugin-cron/issues/8)） | [koishijs/koishi-plugin-cron](https://github.com/koishijs/koishi-plugin-cron) · [cron-fix](https://github.com/koishi-shangxue-plugins/service-more/tree/main/packages/cron-fix)（修复参考） |
 | the 15 `plugins/webui/*` (`actions` … `status`) and `market` | webui `plugins/*` |
 | `plugins/webui/dataview` | [koishijs/koishi-plugin-dataview](https://github.com/koishijs/koishi-plugin-dataview) |
 | `plugins/webui/theme-vanilla` | [koishijs/theme-vanilla](https://github.com/koishijs/theme-vanilla) |
@@ -52,6 +53,7 @@ Naming rules:
 - webui — <https://github.com/koishijs/webui> (AGPL-3.0, some packages MIT)
 - assets — <https://github.com/koishijs/assets> (MIT)
 - common — <https://github.com/koishijs/common> (MIT)
+- koishi-plugin-cron — <https://github.com/koishijs/koishi-plugin-cron> (MIT)
 - cordiverse/server — <https://github.com/cordiverse/server> (MIT)
 - koishi-plugin-dataview — <https://github.com/koishijs/koishi-plugin-dataview> (AGPL-3.0)
 - theme-vanilla — <https://github.com/koishijs/theme-vanilla> (AGPL-3.0)
