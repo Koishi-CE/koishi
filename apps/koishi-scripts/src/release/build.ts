@@ -4,10 +4,13 @@
 /**
  * `koishi-scripts build`：全工作区构建编排器（发布链第二环）。
  *
- * 宿主工作区是混合形态：单包插件是 yarn workspace 成员（依赖从根提升，
- * yarn build 即可）；pnpm monorepo（有 pnpm-lock.yaml 与 packageManager
- * 字段）构建走 corepack pnpm。本命令按各项目实际情况选择包管理器执行其
- * build 脚本，串行构建、失败即中断（发布链不允许多项目半成品）。
+ * external/ 下的子项目各自携带 node_modules（单包插件或 pnpm monorepo），
+ * build 脚本均为纯净执行器（tsdown / node scripts/…），只需一个 script
+ * 执行器，不需要包管理器的安装能力——统一用 `bun run`。不可借道 yarn
+ * 或 corepack pnpm：宿主工作区根 packageManager 钉 `bun@x`（下游模板
+ * 策略），corepack shim 读到该字段即拒绝执行（Unsupported package
+ * manager specification）；bun 是宿主唯一保证在场的工具链。
+ * 串行构建、失败即中断（发布链不允许多项目半成品）。
  */
 import {
 	existsSync,
@@ -23,11 +26,9 @@ interface Project {
 	dir: string;
 	/** 目录名（展示用）。 */
 	name: string;
-	/** 使用的包管理器：pnpm monorepo 或 yarn workspace 成员。 */
-	pm: "pnpm" | "yarn";
 }
 
-/** 列出 external/ 下有 build 脚本的项目，并探测其包管理器。 */
+/** 列出 external/ 下有 build 脚本的项目。 */
 function listProjects(): Project[] {
 	const externalDir = join(cwd, "external");
 	const dirs = readdirSync(externalDir, {
@@ -53,15 +54,9 @@ function listProjects(): Project[] {
 			);
 			continue;
 		}
-		const pm: Project["pm"] = existsSync(
-			join(dir, "pnpm-lock.yaml"),
-		)
-			? "pnpm"
-			: "yarn";
 		projects.push({
 			dir,
 			name: dir.split(/[\\/]/).pop() ?? dir,
-			pm,
 		});
 	}
 	return projects;
@@ -87,23 +82,18 @@ export default function runBuild(): number {
 	);
 	const startedAt = Date.now();
 	for (const project of projects) {
-		const label = `${project.name}（${project.pm}）`;
-		console.log(`[build] 🔨 ${label}`);
-		const code =
-			project.pm === "pnpm"
-				? runCommand(project.dir, "corepack", [
-						"pnpm",
-						"run",
-						"build",
-					])
-				: runCommand(project.dir, "yarn", ["run", "build"]);
+		console.log(`[build] 🔨 ${project.name}`);
+		const code = runCommand(project.dir, "bun", [
+			"run",
+			"build",
+		]);
 		if (code !== 0) {
 			console.log(
-				`[build] ❌ ${label} 构建失败（退出码 ${code}），已中断`,
+				`[build] ❌ ${project.name} 构建失败（退出码 ${code}），已中断`,
 			);
 			return code;
 		}
-		console.log(`[build] ✅ ${label} 构建完成\n`);
+		console.log(`[build] ✅ ${project.name} 构建完成\n`);
 	}
 	const seconds = ((Date.now() - startedAt) / 1000).toFixed(
 		1,

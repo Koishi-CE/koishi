@@ -24,7 +24,7 @@ import { join } from "node:path";
  *
  * cwd 与 runCommand 均被 mock：前者重定向到临时工作区，
  * 后者记录调用并按用例编程返回退出码，从而验证
- * 「枚举项目 → 探测包管理器 → 串行构建 → 失败即中断」的纯编排逻辑。
+ * 「枚举项目 → 统一 bun run build 串行构建 → 失败即中断」的纯编排逻辑。
  */
 
 const workspaceRoot = mkdtempSync(
@@ -143,9 +143,9 @@ describe("runBuild", () => {
 		);
 	});
 
-	it("按目录序串行构建 yarn 与 pnpm 项目", () => {
+	it("按目录序串行构建，pnpm-lock 不影响 runner 选择", () => {
 		resetWorkspace();
-		seedProject("aaa-yarn", {
+		seedProject("aaa-plain", {
 			name: "x",
 			scripts: { build: "tsc" },
 		});
@@ -155,14 +155,12 @@ describe("runBuild", () => {
 			["pnpm-lock.yaml"],
 		);
 		expect(runBuild()).toBe(0);
-		// yarn 成员走 yarn run build；pnpm monorepo 走 corepack pnpm run build
+		// 宿主根 packageManager 钉 bun 时 corepack 的 yarn/pnpm shim 拒绝执行，
+		// 故两类项目一律 bun run build
 		expect(
 			calls.map((c) => `${c.cmd} ${c.args.join(" ")}`),
-		).toEqual([
-			"yarn run build",
-			"corepack pnpm run build",
-		]);
-		expect(calls[0]?.dir).toContain("aaa-yarn");
+		).toEqual(["bun run build", "bun run build"]);
+		expect(calls[0]?.dir).toContain("aaa-plain");
 		expect(logs.join("\n")).toContain("全部完成：2 个项目");
 	});
 
@@ -176,7 +174,7 @@ describe("runBuild", () => {
 			name: "y",
 			scripts: { build: "tsc" },
 		});
-		exitCodes.set("yarn run build", 2);
+		exitCodes.set("bun run build", 2);
 		expect(runBuild()).toBe(2);
 		// 只调用了失败的那个项目，后续项目不再构建
 		expect(calls).toHaveLength(1);
