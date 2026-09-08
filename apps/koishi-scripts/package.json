@@ -1,7 +1,7 @@
 {
 	"name": "@koishi-ce/scripts",
 	"description": "Scaffolding and release scripts for Koishi plugin development",
-	"version": "1.2.0",
+	"version": "1.2.1",
 	"type": "module",
 	"main": "lib/index.mjs",
 	"module": "lib/index.mjs",
