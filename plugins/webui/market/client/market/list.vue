@@ -23,7 +23,6 @@
       <market-package
         v-for="data in pages[page - 1]"
         :key="data.package.name"
-        class="k-card"
         :data="data"
         :gravatar="gravatar"
         @query="onQuery"
