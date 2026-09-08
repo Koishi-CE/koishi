@@ -119,9 +119,22 @@ const { t } = useMarketI18n();
   display: flex;
   margin: 2rem auto 0;
   width: 100%;
-  max-width: 600px;
-  border-radius: 1.5rem;
+  max-width: 640px;
+  border-radius: 2rem;
+  border: 1.5px solid var(--k-color-border);
+  box-sizing: border-box;
   align-items: center;
+  background-color: var(--k-card-bg);
+  box-shadow: 0 2px 12px rgb(0 0 0 / 6%), 0 1px 3px rgb(0 0 0 / 4%);
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+
+  &:focus-within {
+    border-color: var(--k-color-primary);
+    box-shadow:
+      0 0 0 3px color-mix(in srgb, var(--k-color-primary) 15%, transparent),
+      0 2px 12px rgb(0 0 0 / 6%),
+      0 1px 3px rgb(0 0 0 / 4%);
+  }
 }
 
 .search-container {
@@ -137,7 +150,7 @@ const { t } = useMarketI18n();
     flex: 1 1 auto;
     height: 1.25rem;
     min-width: 10rem;
-    font-size: 0.9em;
+    font-size: 0.925rem;
     padding: 0;
     box-sizing: border-box;
     color: inherit;
@@ -159,7 +172,12 @@ const { t } = useMarketI18n();
 
   .market-icon {
     height: 1rem;
-    opacity: 0.5;
+    opacity: 0.45;
+    transition: opacity 0.2s ease;
+  }
+
+  &:hover .market-icon {
+    opacity: 0.85;
   }
 
   &:hover .market-icon.search {
@@ -171,23 +189,25 @@ const { t } = useMarketI18n();
   }
 }
 
+// 查询词 chip：主色调胶囊
 .search-word {
   flex: 0 0 auto;
   display: inline-block;
-  font-size: 14px;
-  height: 1.25rem;
-  line-height: 1rem;
-  border-radius: 4px;
-  padding: 2px 6px;
+  height: 1.375rem;
+  line-height: calc(1.375rem - 2px);
+  border-radius: 6px;
+  padding: 0 8px;
   box-sizing: border-box;
-  color: white;
+  border: 1px solid color-mix(in srgb, var(--k-color-primary) 25%, transparent);
+  background-color: color-mix(in srgb, var(--k-color-primary) 12%, transparent);
+  color: var(--k-color-primary);
+  font-size: 12px;
   font-weight: 500;
   white-space: nowrap;
   vertical-align: baseline;
-  background-color: var(--k-fill-normal);
   cursor: pointer;
   user-select: none;
-  transition: opacity 0.3s ease, background-color 0.3s ease;
+  transition: opacity 0.3s ease, background-color 0.3s ease, border-color 0.3s ease;
 
   &.invalid {
     opacity: 0.5;
@@ -196,6 +216,12 @@ const { t } = useMarketI18n();
 
   &.invalid:hover {
     opacity: 1;
+  }
+}
+
+@media (max-width: 420px) {
+  .search-box {
+    border-radius: 12px;
   }
 }
 

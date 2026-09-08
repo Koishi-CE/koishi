@@ -177,12 +177,6 @@ function scrollToTop() {
   }
 }
 
-.search-box {
-  background-color: var(--k-card-bg);
-  box-shadow: var(--k-card-shadow);
-  transition: var(--color-transition);
-}
-
 .market-hint {
   width: 100%;
   margin: 1rem 0 -0.5rem;
@@ -190,10 +184,6 @@ function scrollToTop() {
   font-size: var(--el-font-size-base);
   font-weight: var(--el-font-weight-primary);
   transition: color 0.3s ease;
-
-  .el-checkbox {
-    margin-left: 1.5rem;
-  }
 }
 
 .market-container {
