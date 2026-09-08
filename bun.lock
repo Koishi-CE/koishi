@@ -249,7 +249,7 @@
     },
     "plugins/common/cron": {
       "name": "@koishi-ce/plugin-cron",
-      "version": "1.0.0",
+      "version": "1.1.0",
       "devDependencies": {
         "@koishi-ce/koishi": "workspace:*",
       },
