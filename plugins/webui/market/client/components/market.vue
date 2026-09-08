@@ -166,14 +166,19 @@ function scrollToTop() {
 
 .page-market .layout-left {
   .market-filter-group {
-    padding: 0 1.5rem;
-    margin: 2rem 0;
+    padding: 0 1rem;
+    margin: 1.5rem 0;
   }
 
   h2 {
     margin: 0;
-    font-size: 14px;
-    padding: 8px 0;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--k-text-light);
+    opacity: 0.7;
+    padding: 6px 0.5rem;
   }
 }
 

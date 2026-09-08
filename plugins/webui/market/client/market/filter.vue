@@ -175,29 +175,41 @@ function toggleQuery(item: Badge, event: MouseEvent) {
 
 .market-filter-item {
   display: flex;
-  margin: 4px 0;
+  margin: 2px 0;
+  padding: 0 0.5rem;
+  border-radius: 8px;
+  box-sizing: border-box;
   color: var(--k-text-normal);
-  transition: color 0.5s;
+  transition: color 0.2s ease, background-color 0.2s ease;
   align-items: center;
   z-index: 2;
-  height: 24px;
+  height: 28px;
   cursor: pointer;
 
   &:hover {
     color: var(--k-text-dark);
+    background-color: var(--k-hover-bg);
   }
 
   &.active {
-    color: var(--k-text-active);
+    color: var(--k-color-primary);
+    background-color: color-mix(in srgb, var(--k-color-primary) 10%, transparent);
+
+    .text {
+      font-weight: 600;
+    }
 
     &.verified, &.newborn {
       color: var(--k-color-success);
+      background-color: color-mix(in srgb, var(--k-color-success) 10%, transparent);
     }
     &.preview, &.portable {
       color: var(--k-color-warning);
+      background-color: color-mix(in srgb, var(--k-color-warning) 10%, transparent);
     }
     &.insecure {
       color: var(--k-color-danger);
+      background-color: color-mix(in srgb, var(--k-color-danger) 10%, transparent);
     }
   }
 
@@ -238,6 +250,8 @@ function toggleQuery(item: Badge, event: MouseEvent) {
 
   .count {
     margin-right: 4px;
+    font-size: 12px;
+    opacity: 0.7;
   }
 
   .spacer {
