@@ -23,15 +23,6 @@
       <div class="main flex flex-col justify-around overflow-hidden">
         <h2 class="top">
           <span class="title truncate" :title="data.shortname">{{ data.shortname }}</span>
-          <el-tooltip v-if="badge" placement="top" :content="badge.query">
-            <span
-              :class="['badge-pill', badge.type]"
-              @click.stop.prevent="$emit('query', badge.query)"
-            >
-              <market-icon :name="badge.type"></market-icon>
-              <span>{{ t(`badge.${badge.type}`) }}</span>
-            </span>
-          </el-tooltip>
         </h2>
         <div class="bottom">
           <el-tooltip :content="new Date(data.updatedAt).toLocaleString()" placement="right">
@@ -47,6 +38,17 @@
       </div>
     </div>
     <k-markdown inline class="desc" :source="tt(data.manifest?.description) ?? ''"></k-markdown>
+    <div v-if="badge" class="badge-float">
+      <el-tooltip placement="top" :content="badge.query">
+        <span
+          :class="['badge-pill', badge.type]"
+          @click.stop.prevent="$emit('query', badge.query)"
+        >
+          <market-icon :name="badge.type"></market-icon>
+          <span>{{ t(`badge.${badge.type}`) }}</span>
+        </span>
+      </el-tooltip>
+    </div>
     <div class="footer">
       <el-tooltip :content="timeAgo(data.updatedAt)" placement="top">
         <a class="truncate" target="_blank" :href="data.package.links.npm">
@@ -227,6 +229,7 @@ function timeAgo(time: string) {
 .cat-other { --c: #64748b; }
 
 .market-package {
+  position: relative;
   width: 100%;
   max-width: 540px;
   height: calc(12.5rem + 2px);
@@ -291,44 +294,6 @@ function timeAgo(time: string) {
       }
     }
 
-    // 胶囊徽章：语义色 10% 底 / 20% 边
-    .badge-pill {
-      display: inline-flex;
-      align-items: center;
-      gap: 3px;
-      height: 20px;
-      line-height: 20px;
-      margin-left: 0.5rem;
-      padding: 0 6px;
-      border-radius: 10px;
-      box-sizing: border-box;
-      border: 1px solid color-mix(in srgb, var(--k-color-success) 20%, transparent);
-      background-color: color-mix(in srgb, var(--k-color-success) 10%, transparent);
-      color: var(--k-color-success);
-      font-size: 12px;
-      font-weight: 500;
-      cursor: pointer;
-      user-select: none;
-      vertical-align: 2px;
-
-      .market-icon {
-        height: 12px;
-        width: 12px;
-      }
-
-      &.preview {
-        border-color: color-mix(in srgb, var(--k-color-warning) 20%, transparent);
-        background-color: color-mix(in srgb, var(--k-color-warning) 10%, transparent);
-        color: var(--k-color-warning);
-      }
-
-      &.insecure {
-        border-color: color-mix(in srgb, var(--k-color-danger) 20%, transparent);
-        background-color: color-mix(in srgb, var(--k-color-danger) 10%, transparent);
-        color: var(--k-color-danger);
-      }
-    }
-
     // 心跳新鲜度：颜色与不透明度由 --heart-* 变量驱动
     .heartbeat {
       display: inline-flex;
@@ -347,6 +312,49 @@ function timeAgo(time: string) {
         filter: drop-shadow(0 0 calc(var(--heart-glow, 0) * 4px) rgb(235 77 85 / calc(var(--heart-glow, 0) * 0.45)));
         transition: color 0.3s ease, opacity 0.3s ease;
       }
+    }
+  }
+
+  // 认证徽章：悬浮于头像列正上方，不占布局空间，避免与长插件名挤压折行
+  .badge-float {
+    position: absolute;
+    right: 1.25rem;
+    bottom: 2.5rem;
+  }
+
+  // 胶囊徽章：语义色 10% 底 / 20% 边
+  .badge-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+    height: 20px;
+    line-height: 20px;
+    padding: 0 6px;
+    border-radius: 10px;
+    box-sizing: border-box;
+    border: 1px solid color-mix(in srgb, var(--k-color-success) 20%, transparent);
+    background-color: color-mix(in srgb, var(--k-color-success) 10%, transparent);
+    color: var(--k-color-success);
+    font-size: 12px;
+    font-weight: 500;
+    cursor: pointer;
+    user-select: none;
+
+    .market-icon {
+      height: 12px;
+      width: 12px;
+    }
+
+    &.preview {
+      border-color: color-mix(in srgb, var(--k-color-warning) 20%, transparent);
+      background-color: color-mix(in srgb, var(--k-color-warning) 10%, transparent);
+      color: var(--k-color-warning);
+    }
+
+    &.insecure {
+      border-color: color-mix(in srgb, var(--k-color-danger) 20%, transparent);
+      background-color: color-mix(in srgb, var(--k-color-danger) 10%, transparent);
+      color: var(--k-color-danger);
     }
   }
 
@@ -449,6 +457,11 @@ function timeAgo(time: string) {
 
     h2 {
       font-size: 1rem;
+    }
+
+    .badge-float {
+      right: 0.9rem;
+      bottom: 2.3rem;
     }
 
     .footer {
