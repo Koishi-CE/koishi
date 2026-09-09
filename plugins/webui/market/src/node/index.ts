@@ -14,13 +14,13 @@ import type {
 	RemotePackage,
 } from "@koishi-ce/registry";
 import { gt } from "semver";
+import messageZhCN from "../../locales/message.zh-CN.yml";
+import schemaZhCN from "../../locales/schema.zh-CN.yml";
 import {
 	DependencyProvider,
 	RegistryProvider,
 } from "./deps.ts";
 import Installer from "./installer.ts";
-import messageZhCN from "./locales/message.zh-CN.yml";
-import schemaZhCN from "./locales/schema.zh-CN.yml";
 import MarketProvider from "./market.ts";
 
 export * from "../shared/index.ts";

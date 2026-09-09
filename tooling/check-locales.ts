@@ -41,7 +41,10 @@ const LOCALES = [
  *   locales，但词条内容来自用户数据目录，包内无词典文件）。
  */
 const SKIP_DIRS = new Set([
-	"plugins/webui/market/src/node/locales",
+	"plugins/webui/market/locales",
+	// vendor 自上游 @koishijs/market 4.2.10 的客户端搜索词典，仅带
+	// zh-CN 且不随本仓改动（硬约束 7），检查无意义
+	"plugins/webui/market/client/vendor/market/locales",
 	"plugins/webui/locales",
 ]);
 
