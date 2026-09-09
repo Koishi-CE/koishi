@@ -82,14 +82,14 @@ const http = (await import("@koishi-ce/plugin-http"))
 const { isResidentInCache } = await import(
 	"@koishi-ce/registry"
 );
-const market = await import("../node/index.ts");
+const market = await import("./node/index.ts");
 const { default: Installer } = await import(
-	"../node/installer.ts"
+	"./node/installer.ts"
 );
 const mockPlugin = (await import("@koishi-ce/plugin-mock"))
 	.default;
 // 加载包入口占位文件（纯 re-export，无独立逻辑），保证 src 全量被加载
-await import("../index.ts");
+await import("./index.ts");
 
 /** 控制台服务桩：仅实现入口登记所需的最小面。 */
 class FakeConsole extends Console {
