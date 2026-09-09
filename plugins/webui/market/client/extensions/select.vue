@@ -23,13 +23,13 @@
 <script setup lang="ts">
 import { store } from "@koishi-ce/client";
 import type { PackageProvider } from "@koishi-ce/plugin-config";
+import { provide, ref } from "vue";
 import {
 	categories,
 	MarketIcon,
 	resolveCategory,
 	useMarketI18n,
-} from "@koishijs/market";
-import { provide, ref } from "vue";
+} from "../vendor/market";
 
 const extended = ["all", "other", ...categories];
 

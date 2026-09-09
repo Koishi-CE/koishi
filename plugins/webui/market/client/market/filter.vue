@@ -64,6 +64,7 @@
 
 <script lang="ts" setup>
 import type { SearchObject } from "@koishi-ce/registry";
+import { computed, inject, ref, watch } from "vue";
 import {
 	type Badge,
 	badges,
@@ -74,8 +75,7 @@ import {
 	resolveCategory,
 	useMarketI18n,
 	validate,
-} from "@koishijs/market";
-import { computed, inject, ref, watch } from "vue";
+} from "../vendor/market";
 
 const props = defineProps<{
 	modelValue: string[];

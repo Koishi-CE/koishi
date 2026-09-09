@@ -34,13 +34,13 @@
 </template>
 
 <script lang="ts" setup>
+import { useDebounceFn } from "@vueuse/core";
+import { computed, ref, watch } from "vue";
 import {
 	MarketIcon,
 	useMarketI18n,
 	validateWord,
-} from "@koishijs/market";
-import { useDebounceFn } from "@vueuse/core";
-import { computed, ref, watch } from "vue";
+} from "../vendor/market";
 
 const props = defineProps<{
 	modelValue: string[];

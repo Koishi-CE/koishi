@@ -4,7 +4,7 @@
 
 <!--
   市场插件卡片（本地化 fork 自 @koishijs/market 4.2.10 的
-  client/components/package.vue，逻辑 utils 仍从该包导入）。
+  client/components/package.vue，逻辑层来自本仓 client/vendor/market）。
   视觉重设计参考 marketn：类目色渐变图标块、胶囊徽章、
   心跳新鲜度指示（替代评分星）、头像首字母占位。
 -->
@@ -101,8 +101,10 @@
 </template>
 
 <script lang="ts" setup>
+import { useI18nText } from "@koishi-ce/components";
 import type { SearchObject } from "@koishi-ce/registry";
-import { useI18nText } from "@koishijs/components";
+import * as md5 from "spark-md5";
+import { computed, inject, reactive } from "vue";
 import {
 	badges,
 	getUsers,
@@ -111,9 +113,7 @@ import {
 	resolveCategory,
 	useMarketI18n,
 	validate,
-} from "@koishijs/market";
-import * as md5 from "spark-md5";
-import { computed, inject, reactive } from "vue";
+} from "../vendor/market";
 
 defineEmits(["query"]);
 

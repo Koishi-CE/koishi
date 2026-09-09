@@ -49,13 +49,13 @@
 
 <script lang="ts" setup>
 import type { SearchObject } from "@koishi-ce/registry";
+import { computed, inject, ref, watch } from "vue";
 import {
 	getFiltered,
 	getSorted,
 	hasFilter,
 	kConfig,
-} from "@koishijs/market";
-import { computed, inject, ref, watch } from "vue";
+} from "../vendor/market";
 import MarketPackage from "./package.vue";
 
 const props = defineProps<{

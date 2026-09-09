@@ -656,15 +656,15 @@
       },
       "devDependencies": {
         "@koishi-ce/client": "workspace:*",
+        "@koishi-ce/components": "workspace:*",
         "@koishi-ce/loader": "workspace:*",
         "@koishi-ce/plugin-config": "workspace:*",
         "@koishi-ce/plugin-database-memory": "workspace:*",
-        "@koishijs/market": "^4.2.10",
-        "@types/semver": "^7.5.8",
-        "@types/spark-md5": "^3.0.4",
         "@vueuse/core": "^14.4.0",
+        "cosmokit": "^1.8.1",
         "spark-md5": "^3.0.2",
         "vue": "^3.5.12",
+        "vue-i18n": "^11.4.10",
         "vue-router": "^5.2.0",
       },
       "peerDependencies": {
@@ -1026,15 +1026,11 @@
 
     "@koishi-ce/utils": ["@koishi-ce/utils@workspace:packages/node/utils"],
 
-    "@koishijs/components": ["@koishijs/components@1.5.22", "", { "dependencies": { "@satorijs/element": "^3.1.7", "cosmokit": "^1.7.2", "schemastery-vue": "^7.3.15" }, "peerDependencies": { "vue": "^3" } }, "sha512-1K8Qn12x0k2Em8MWRnH2JUq5QE+TRJZ6/kztCy8V56547sLPeuhsczi/16lPhwJ5NvBuUPFuFHfD5Pedtlo8UQ=="],
-
     "@koishijs/core": ["@koishijs/core@4.18.11", "", { "dependencies": { "@koishijs/i18n-utils": "^1.0.1", "@koishijs/utils": "^7.2.1", "@satorijs/core": "^4.6.0", "cordis": "^3.18.1", "cosmokit": "^1.8.1", "fastest-levenshtein": "^1.0.16", "minato": "^3.7.0" } }, "sha512-qzc1A14Y5C04a3/yDyz+xaQ90Uz9TeUUvScQuhOiuJNGKg9HUeFKqoNN/2IX5/vgAHauxJJi6eJcN2ZrLt4HeA=="],
 
     "@koishijs/i18n-utils": ["@koishijs/i18n-utils@1.0.1", "", { "dependencies": { "cosmokit": "^1.5.2" } }, "sha512-N58UAnhMMtqS4+VGW5IwJ6U9xwXZpzrcPaJrdEBzUJ4yBKKrkHfG1ck9tvQ99SnzxhZGGcBa/SKWnHQf/omrvg=="],
 
     "@koishijs/loader": ["@koishijs/loader@4.6.11", "", { "dependencies": { "dotenv": "^16.4.5", "js-yaml": "^4.1.0", "ns-require": "^1.1.4" }, "peerDependencies": { "@koishijs/core": "4.18.11" } }, "sha512-0cJyHwtnFjtOx7jgIXOSuVjDriL12rv8CXsqSw+aqQyt0iuD8ChDqfwhiOFRsuVvq89ZS9PhxmZ0l+YqQ5ZrPg=="],
-
-    "@koishijs/market": ["@koishijs/market@4.2.10", "", { "dependencies": { "@koishijs/components": "^1.5.22", "cosmokit": "^1.8.1", "spark-md5": "^3.0.2" }, "peerDependencies": { "vue": "^3", "vue-i18n": "^9" } }, "sha512-I65mSdeLaB18JmdLrKxUvzIIyyNgeUD/Rz94xhh5DN0CHq3dqZUAwAjhPiBtYn5gyqgfINbZDFteoLt1otmucA=="],
 
     "@koishijs/plugin-http": ["@koishijs/plugin-http@0.6.3", "", { "dependencies": { "@cordisjs/plugin-http": "^0.6.3" }, "peerDependencies": { "koishi": "^4.18.0" } }, "sha512-alw51yjc6bykgZD2EsbTn03Yjwp9Mkidb1BsQn25SDwaBQqla0bZAVivFxNW1J60lneP9uymu3EUnPspvBuxog=="],
 
@@ -1259,8 +1255,6 @@
     "@types/send": ["@types/send@1.2.1", "", { "dependencies": { "@types/node": "*" } }, "sha512-arsCikDvlU99zl1g69TcAB3mzZPpxgw0UQnaHeC1Nwb015xp8bknZv5rIfri9xTOcMuaVgvabfIRA7PSZVuZIQ=="],
 
     "@types/serve-static": ["@types/serve-static@2.2.0", "", { "dependencies": { "@types/http-errors": "*", "@types/node": "*" } }, "sha512-8mam4H1NHLtu7nmtalF7eyBH14QyOASmcxHhSfEoRyr0nP/YdoesEtU+uSRvMe96TW/HPTtkoKqQLl53N7UXMQ=="],
-
-    "@types/spark-md5": ["@types/spark-md5@3.0.5", "", {}, "sha512-lWf05dnD42DLVKQJZrDHtWFidcLrHuip01CtnC2/S6AMhX4t9ZlEUj4iuRlAnts0PQk7KESOqKxeGE/b6sIPGg=="],
 
     "@types/trusted-types": ["@types/trusted-types@2.0.7", "", {}, "sha512-ScaPdn1dQczgbl0QFTeTOmVHFULt394XJgOQNoyVhZ6r2vLnMLJfBPd53SB52T/3G36VI1/g2MZaX0cwDuXsfw=="],
 

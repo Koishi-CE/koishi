@@ -66,13 +66,13 @@ import {
 	useConfig,
 } from "@koishi-ce/client";
 import type { SearchObject } from "@koishi-ce/registry";
-import { getSorted, kConfig } from "@koishijs/market";
 import { useTimeoutFn } from "@vueuse/core";
 import { computed, provide, ref, watch } from "vue";
 import MarketFilter from "../market/filter.vue";
 import MarketList from "../market/list.vue";
 import MarketSearch from "../market/search.vue";
 import { active } from "../utils";
+import { getSorted, kConfig } from "../vendor/market";
 
 function installed(data: SearchObject) {
 	if (store.packages) {

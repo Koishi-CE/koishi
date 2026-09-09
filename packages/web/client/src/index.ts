@@ -228,10 +228,10 @@ export async function build(
 						// 组件库同样经由宿主 client 包提供，避免每个插件
 						// 都把整套组件库重复打进产物
 						"@koishi-ce/components": "@koishi-ce/client",
-						// market 插件的 client 依赖 npm 包 @koishijs/market（上游以
-						// 源码发布的组件库），其内部以 npm 名引用组件库；重定向到
-						// 本仓库同版本（1.5.22）components 源码，避免 npm 版整套
-						// 组件库被打进插件产物
+						// 下游防御：第三方插件若以 npm 名 @koishijs/components
+						// 引用组件库，重定向到本仓 workspace 版 components 源码，
+						// 避免 npm 版整套组件库再打一份造成双实例
+						// （本仓源码已不再引用该 npm 名，market 已 vendor 化）
 						"@koishijs/components":
 							workspaceAliases["@koishi-ce/components"],
 						// 虚拟子路径的运行时载体（补齐真实包缺失的 SchemaBase

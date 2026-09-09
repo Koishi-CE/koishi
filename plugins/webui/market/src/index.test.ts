@@ -64,7 +64,7 @@ const spawnBunMock = (_args: string[], _cwd: string) => {
 	};
 };
 
-mock.module("../node/proc.ts", () => ({
+mock.module("./node/proc.ts", () => ({
 	spawnBun: spawnBunMock,
 }));
 
