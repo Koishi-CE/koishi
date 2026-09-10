@@ -106,7 +106,7 @@ export class Notifier {
 						type === "button" &&
 						typeof attrs["onClick"] === "function"
 					) {
-						const key = Math.random().toString(36).slice(2);
+						const key = crypto.randomUUID();
 						this.ctx.notifier.actions[key] =
 							attrs["onClick"];
 						this.actionKeys.push(key);

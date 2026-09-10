@@ -62,7 +62,7 @@ export class SandboxBot<
 	 * @returns 浏览器侧方法的返回值
 	 */
 	async request<T = unknown>(method: string, data = {}) {
-		const nonce = Math.random().toString(36).slice(2);
+		const nonce = crypto.randomUUID();
 		return new Promise<T>((resolve, reject) => {
 			const dispose1 = this.ctx.on(
 				"sandbox/response",
