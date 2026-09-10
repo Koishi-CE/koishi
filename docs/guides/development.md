@@ -18,10 +18,13 @@
 
 ```bash
 bun install                     # 安装依赖（Bun workspaces，产出 bun.lock）
-bun run check                   # 全量门禁 = lint + lint:client + typecheck（提交前必跑）
+bun run check                   # 全量门禁 = lint + lint:client + typecheck + check:locales + check:docs-links（提交前必跑）
 bun run lint                    # biome check .（格式 + lint 唯一权威）
 bun run lint:client             # eslint 仅查 *.vue 模板语义
 bun run format                  # biome format --write .
+bun run check:locales           # 词典键对齐 / 语种齐全 / 假翻译检查（零依赖，已并入 check）
+bun run check:docs-links        # 文档相对链接与锚点存活检查（零依赖，已并入 check）
+bun run knip                    # 依赖与导出审计（bunx 直跑 knip，不占 devDependencies）
 bun run typecheck               # TS7 类型检查（node 侧 + client 侧两条 bunx tsc 串行）
 bun run build                   # 根 tsdown：全部 node 侧包 → 各包 lib/（ESM-only）
 bun test                        # 全量自有用例（覆盖全部 node 侧包与 tooling 回归，秒级；文件与用例数以实跑输出为准）
@@ -41,18 +44,24 @@ bun packages/web/client/src/bin.ts build plugins/webui/status   # 单个 webui �
 ```bash
 cd apps/koishi-create && bun run build   # create-koishi-ce 脚手架 CLI（包级 tsdown 配置补 bin 入口）
 bun run release status                   # 发布链概览（详见 ../process/release.md）
-bun tooling/check-docs-links.ts          # 文档相对链接与锚点存活检查（docs 全树 + 根部 / .github 文档）
 ```
 
 `apps/koishi-create` 与 `apps/koishi-scripts` 均在根 tsdown workspace 内：包级 `tsdown.config.ts` 只补 bin 入口等差异，平时随根 `bun run build` 一次产出，进目录单独 build 仅在调试该包时需要。
 
 ## 3. 门禁构成与现状
 
-`bun run check` 由三段组成：
+`bun run check` 由五段组成：
 
 1. **lint（biome）**：全仓格式 + lint（`biome check .`）。biome 尊重 `.gitignore`（`vcs.useIgnoreFile`），跳过 lib/dist 等。格式以 biome 为唯一权威——`.editorconfig` 声明的 4 空格缩进与代码现状（tab）不符，勿据此手改，统一 `bun run format`。
 2. **lint:client（eslint）**：只查 `.vue` 文件，与 biome 零重叠；核心规则 `vue/no-undef-components`（忽略 `^K`、`^el-`、`^router-` 全局组件）。不做类型感知。
 3. **typecheck**：两条纯 `bunx tsc` 串行——node 侧大一统 `tsconfig.json`（include 为全部 node 工程 src 的并集）+ client 侧大一统 `tsconfig.web.json`（include 为全部 client 工程并集）。**不要恢复逐 tsconfig 并行 spawn**（旧方案 50 进程并发在 win32 下有 Bun.spawn 竞态且无必要）。两条链已开 `incremental`，buildinfo 分文件存 `node_modules/.cache/tsc/`（node / web 各一份，入口文件集合不同不能共用；删掉即全量重建）。另有调试用的 legacy 通道 `bun run typecheck:legacy`（tsc6，写 `node-legacy.tsbuildinfo`）。新增 client 工程时须同步 `tsconfig.web.json` 的 include/paths。
+4. **check:locales**：`tooling/check-locales.ts`（零依赖，bun 直跑）——词典键对齐 / 语种齐全 / 假翻译三查，发现问题 exit 1；覆盖范围与豁免名单见脚本头部注释。
+5. **check:docs-links**：`tooling/check-docs-links.ts`（零依赖）——docs 全树 + 根部 / `.github` 文档的相对链接与锚点存活检查，问题 exit 1。
+
+**CI（`.github/workflows/ci.yml`）**：PR 与 main push 自动触发（也支持手动 dispatch），三个并行 job：`gate`（build → check → test）、`client`（宿主 + 全部 webui 插件的前端构建，即 `.vue` 的实际类型门禁）、`knip`（`bun run knip` 依赖与导出审计）。两个顺序要点：
+
+- **gate 里 build 前置于 check**：`tsconfig.web.json` 的部分 paths 指向各包 `lib/index.d.ts` 产物，全新环境无 lib 时 web 侧 tsc 直接 TS2307（已实测）；本地因 lib 常在而感知不到该依赖。
+- **Bun 版本不在 workflow 硬编码**：`oven-sh/setup-bun` 自动读根 `packageManager`（bun@1.4.0），升级只改根字段。
 
 **类型检查现状**：全仓在 TS7 下 0 错误（含 `packages/web/*` 与全部 webui 插件）。最低纪律：改哪个包，保证该包所在 project 不新增错误。
 

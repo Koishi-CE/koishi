@@ -38,8 +38,8 @@
 ### 3.1 CI 门禁流水线
 
 - **目标**：`bun run check` / `bun test` / `bun run build` 进 CI，PR 与 main 的门禁自动化。
-- **状态**：候选。仓库当前无 `.github/workflows`，门禁全靠本地自觉；「无 CI」在立项审计时即被记录，至今未补。
-- **依据**：`.github/` 目录实况；[decisions/dependency-audit.md](decisions/dependency-audit.md) §1。
+- **状态**：已落地（2026-09-10）。`.github/workflows/ci.yml` 三并行 job：`gate`（build → check → test；build 前置因 web 侧 tsc 的 paths 解析读 lib 产物）、`client`（宿主 + 全部 webui 插件前端构建）、`knip`（依赖与导出审计）。词典（check:locales）与文档链接（check:docs-links）检查同批接入 `bun run check`；Bun 版本经 setup-bun 读根 `packageManager`，不硬编码。首次在线跑通后如有时长问题再议缓存。
+- **依据**：`.github/workflows/ci.yml`；[guides/development.md](guides/development.md) §3；提交记录（ci 门禁流水线三提交）。
 
 ### 3.2 上游同步常态化
 
