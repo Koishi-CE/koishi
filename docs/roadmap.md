@@ -10,6 +10,7 @@
 
 - **目标**：cordis / minato / @cordisjs/* 整体升入 4.x / 1.x 内洽线，并以 tsdown 从 `@cordisjs/plugin-server` 1.x 重建 vendored `plugins/infra/server`。
 - **状态**：阻塞。2026-08-27 实证：`@satorijs/core@4.6.0` 内部携带 cordis ^3（无 cordis 4 线），同进程双 DI 容器并存、服务注入互相不可见，14/20 测试文件失败，已整体回退至 3.x 内洽线。
+- **补记（2026-09-10 首次上游巡检复核）**：重启条件仍未满足——`@satorijs/core@4.6.0`（npm latest）依赖 cordis ^3.18.1；cordis npm latest 为 `4.0.0-rc.10`（RC 未 stable）；上游 koishi master 无 cordis 4 迁移迹象（基线 4.18.11 后仅 1 个测试提交）。minato 线（仓库已改名 cordiverse/database）3 线止步于 driver-memory 3.7.0 / driver-sqlite 4.7.0，master 全量 4 线。详见 [process/upstream.md](process/upstream.md) 巡检日志。
 - **重启条件（满足其一）**：`@satorijs/core` 发布依赖 cordis 4 的版本（哪怕 next / beta tag）；或上游 koishi 官方启动 cordis 4 迁移；或本仓决定自建 `@satorijs/core` fork（工作量大，需单独立项）。
 - **依据**：[decisions/upgrade-plan.md](decisions/upgrade-plan.md) Phase 5 节；AGENTS.md 硬性约束 3。
 
@@ -43,9 +44,9 @@
 
 ### 3.2 上游同步常态化
 
-- **目标**：对上游 koishi / webui 的 release 线做周期性跟踪与差异审计，port 从「被动响应」转为「主动巡检」。
-- **状态**：候选。现行流程为按映射表手动 diff 移植，无固定节奏。
-- **依据**：[process/upstream.md](process/upstream.md)；AGENTS.md「上游同步」条目。
+- **目标**：对上游 koishi / webui（及再分发插件的上游）release 线做周期性跟踪与差异审计，port 从「被动响应」转为「主动巡检」。
+- **状态**：已落地（2026-09-10）。巡检机制见 [process/upstream.md](process/upstream.md) 的 Routine inspection 节：`bun tooling/upstream-audit.ts` 刷新仓外上游缓存并产出目录对比底稿（含改动量排行与仅一侧存在的文件），triage 分级（安全 / bug / 特性 / 重构 / 与本仓刻意差异冲突 / 已在仓）后按 port 规则逐条推进；节奏为每个发布列车前至少一轮。首次全量巡检结论：上游欠账仅 2 项 B 级（已 port，含溯源），详见该文件 Inspection log 节。
+- **依据**：[process/upstream.md](process/upstream.md)；AGENTS.md「上游同步」条目；tooling/upstream-audit.ts。
 
 ### 3.3 tsc6 legacy 类型检查通道退役评估
 
