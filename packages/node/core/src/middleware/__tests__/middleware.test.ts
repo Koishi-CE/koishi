@@ -52,7 +52,9 @@ beforeAll(() => {
 	});
 });
 
-afterAll(() => {
+// 收尾先停 app 再还原日志（upstream: koishijs/koishi#1549）
+afterAll(async () => {
+	await app.stop();
 	Logger.levels.base = 2;
 	Logger.targets.pop();
 });
