@@ -16,6 +16,7 @@ import {
 	createHash,
 	pbkdf2Sync,
 	randomBytes,
+	randomInt,
 	timingSafeEqual,
 } from "node:crypto";
 import { resolve } from "node:path";
@@ -133,13 +134,18 @@ const letters =
  * @returns 从字符表随机取字符拼接成的字符串
  */
 export function randomId(length = 40) {
-	return Array(length)
-		.fill(0)
-		.map(
-			() =>
-				letters[Math.floor(Math.random() * letters.length)],
-		)
-		.join("");
+	// 登录令牌的安全敏感源：randomBytes（CSPRNG）+ 拒绝采样消除模偏差
+	// （256 % 62 != 0），格式契约（字符表与长度）保持不变
+	let out = "";
+	while (out.length < length) {
+		// 两倍余量覆盖拒绝采样损耗，极端涨落由外层 while 兜底补取
+		for (const byte of randomBytes(length * 2)) {
+			if (out.length >= length) break;
+			if (byte >= 248) continue;
+			out += letters[byte % letters.length] ?? "";
+		}
+	}
+	return out;
 }
 
 /** login/platform 事件的返回值：待登录用户信息 + 一次性验证码及其过期时间。 */
@@ -498,7 +504,11 @@ class AuthService extends Service {
 					throw new Error("你已经绑定了此账户。");
 
 				const key = `${platform}:${userId}`;
-				const token = Math.random().toString().slice(2, 8);
+				// 固定 6 位数字验证码（padStart 补零）；原 Math.random 实现
+				// 在短小数串时不足 6 位，且非 CSPRNG
+				const token = String(
+					randomInt(0, 1_000_000),
+				).padStart(6, "0");
 				const expiredAt =
 					Date.now() + config.loginTokenExpire;
 				states[key] = [token, expiredAt, this];
