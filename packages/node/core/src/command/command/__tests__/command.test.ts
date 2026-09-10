@@ -18,7 +18,6 @@ import {
 	it,
 	jest,
 } from "bun:test";
-import { inspect } from "node:util";
 import {
 	App,
 	type Command,
@@ -64,7 +63,9 @@ describe("Command API", () => {
 		// 自定义 inspect 输出应为 "Command <name>" 而非整个对象
 		it("custom inspect", () => {
 			expect(app.$commander._commandList).toHaveLength(3);
-			expect(inspect(app.command("a"))).toBe("Command <a>");
+			expect(Bun.inspect(app.command("a"))).toBe(
+				"Command <a>",
+			);
 		});
 
 		// 同名重复注册应更新既有命令而非新建，config 以最后一次为准
