@@ -23,7 +23,7 @@ import memory from "@koishi-ce/plugin-database-memory";
 
 /**
  * market 插件测试：
- * - 子进程（bun 安装）经 mock.module 拦截本地 proc.ts（spawnBun 封装），不落盘不联网安装；
+ * - 子进程（bun 安装）经 mock.module 拦截 installer/proc.ts（spawnBun 封装），不落盘不联网安装；
  * - registry 网络请求由进程内 Bun.serve 提供（registry 协议的最小 JSON）；
  * - 宿主环境（loader / cwd）使用 FakeLoader 与临时目录 + chdir，
  *   Installer 的 override 写盘只会作用于临时 package.json。
@@ -64,7 +64,7 @@ const spawnBunMock = (_args: string[], _cwd: string) => {
 	};
 };
 
-mock.module("./node/proc.ts", () => ({
+mock.module("./node/installer/proc.ts", () => ({
 	spawnBun: spawnBunMock,
 }));
 
@@ -84,7 +84,7 @@ const { isResidentInCache } = await import(
 );
 const market = await import("./node/index.ts");
 const { default: Installer } = await import(
-	"./node/installer.ts"
+	"./node/installer/index.ts"
 );
 const mockPlugin = (await import("@koishi-ce/plugin-mock"))
 	.default;

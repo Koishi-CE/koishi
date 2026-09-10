@@ -8,7 +8,7 @@ import type {
 	DependencyMetaKey,
 	RemotePackage,
 } from "@koishi-ce/registry";
-import type { Dependency } from "./installer.ts";
+import type { Dependency } from "./installer/index.ts";
 
 class DependencyProvider extends DataService<
 	Dict<Dependency>

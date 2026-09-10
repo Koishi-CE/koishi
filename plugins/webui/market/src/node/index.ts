@@ -20,7 +20,7 @@ import {
 	DependencyProvider,
 	RegistryProvider,
 } from "./deps.ts";
-import Installer from "./installer.ts";
+import Installer from "./installer/index.ts";
 import MarketProvider from "./market.ts";
 
 export * from "../shared/index.ts";
