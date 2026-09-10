@@ -58,4 +58,4 @@
 体量小、暂不成线的待办，随手机会清掉：
 
 - `packages/node/core/src/command/command/command.ts:140`：FIXME——空 action 列表会无限循环，现以提前返回规避。
-- `plugins/webui/market/src/node/installer.ts:472`：TODO——`Installer.Config` 的 `.hidden()`。
+- `plugins/webui/market/src/node/installer/index.ts:369`：TODO——`Installer.Config` 的 `.hidden()`。
