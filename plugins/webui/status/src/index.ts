@@ -63,8 +63,8 @@ export const Config: Schema<Config> = Schema.intersect([
  */
 export function apply(ctx: Context, config: Config) {
 	ctx.console.addEntry({
-		dev: resolve(__dirname, "../client/index.ts"),
-		prod: resolve(__dirname, "../dist"),
+		dev: resolve(import.meta.dir, "../client/index.ts"),
+		prod: resolve(import.meta.dir, "../dist"),
 	});
 
 	ctx.plugin(EnvInfoProvider, config);

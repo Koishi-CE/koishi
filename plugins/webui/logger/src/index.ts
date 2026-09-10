@@ -66,8 +66,11 @@ class LogProvider extends DataService<Logger.Record[]> {
 							),
 						]
 					: {
-							dev: resolve(__dirname, "../client/index.ts"),
-							prod: resolve(__dirname, "../dist"),
+							dev: resolve(
+								import.meta.dir,
+								"../client/index.ts",
+							),
+							prod: resolve(import.meta.dir, "../dist"),
 						},
 		);
 	}

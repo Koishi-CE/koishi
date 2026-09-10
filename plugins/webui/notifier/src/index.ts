@@ -204,10 +204,10 @@ class NotifierService extends Service {
 							]
 						: {
 								dev: resolve(
-									__dirname,
+									import.meta.dir,
 									"../client/index.ts",
 								),
-								prod: resolve(__dirname, "../dist"),
+								prod: resolve(import.meta.dir, "../dist"),
 							},
 				() => ({
 					notifiers: this.store.map((notifier) =>

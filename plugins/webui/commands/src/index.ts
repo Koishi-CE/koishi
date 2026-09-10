@@ -574,10 +574,10 @@ export class CommandManager {
 							]
 						: {
 								dev: resolve(
-									__dirname,
+									import.meta.dir,
 									"../client/index.ts",
 								),
-								prod: resolve(__dirname, "../dist"),
+								prod: resolve(import.meta.dir, "../dist"),
 							},
 				() => {
 					return (this._cache ||= Object.fromEntries(

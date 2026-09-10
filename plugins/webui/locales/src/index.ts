@@ -102,8 +102,11 @@ export async function apply(ctx: Context, config: Config) {
 							),
 						]
 					: {
-							dev: resolve(__dirname, "../client/index.ts"),
-							prod: resolve(__dirname, "../dist"),
+							dev: resolve(
+								import.meta.dir,
+								"../client/index.ts",
+							),
+							prod: resolve(import.meta.dir, "../dist"),
 						},
 			() => ctx.i18n._data,
 		);
