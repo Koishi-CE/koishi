@@ -49,10 +49,11 @@ class EnvInfoProvider extends DataService<
 			Node: process.versions.node,
 			Bun: Bun.version,
 		};
-		// 不直接 require package.json 是为了避免其被模块缓存固定住，
+		// 不直接 import package.json 是为了避免其被模块缓存固定住，
 		// 热更新后读取到的仍是旧版本号
-		const metapath = require.resolve(
+		const metapath = Bun.resolveSync(
 			"@koishi-ce/console/package.json",
+			import.meta.dir,
 		);
 		const meta = await Bun.file(metapath)
 			.text()

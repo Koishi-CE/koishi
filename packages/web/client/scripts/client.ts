@@ -35,11 +35,14 @@ interface BuildResult {
 /**
  * 定位某个依赖包在 node_modules 中的安装目录。
  *
- * @param id 依赖包名（须能被 require.resolve 解析到）
+ * @param id 依赖包名（须能被 Bun.resolveSync 解析到）
  * @returns 形如 `<前缀>/node_modules/<id>` 的目录路径（统一为正斜杠）
  */
 function findModulePath(id: string) {
-	const path = require.resolve(id).replace(/\\/g, "/");
+	const path = Bun.resolveSync(id, import.meta.dir).replace(
+		/\\/g,
+		"/",
+	);
 	const keyword = `/node_modules/${id}/`;
 	return (
 		path.slice(0, path.indexOf(keyword)) +

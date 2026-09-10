@@ -19,7 +19,6 @@ import {
 	promises as fs,
 	type Stats,
 } from "node:fs";
-import { createRequire } from "node:module";
 import net from "node:net";
 import { extname, resolve, sep } from "node:path";
 import { Console, type Entry } from "@koishi-ce/console";
@@ -210,12 +209,13 @@ class NodeConsole extends Console {
 			loader.envData.clientCount = this.layer.clients.size;
 		});
 
-		const base =
-			import.meta.url || Bun.pathToFileURL(__filename).href;
-		const require = createRequire(base);
+		const base = import.meta.url;
 		this.root = config.devMode
 			? resolve(
-					require.resolve("@koishi-ce/client/package.json"),
+					Bun.resolveSync(
+						"@koishi-ce/client/package.json",
+						import.meta.dir,
+					),
 					"../app",
 				)
 			: Bun.fileURLToPath(new URL("../../dist", base));
