@@ -14,31 +14,21 @@
  * 外链（http:// / https:// / mailto:）不校验；代码围栏与行内代码中的
  * 内容整体跳过，避免示例链接误报。发现任何问题时退出码置 1。
  */
-import {
-	existsSync,
-	readdirSync,
-	readFileSync,
-} from "node:fs";
-import { dirname, join, resolve } from "node:path";
+import { existsSync, readFileSync } from "node:fs";
+import { dirname, join, resolve, sep } from "node:path";
 
 /** 仓库根目录（本脚本位于 tooling/ 下）。 */
 const ROOT = resolve(import.meta.dirname, "..");
 
-/** 递归收集目录下全部 .md 文件（跳过 node_modules）。 */
+/** 收集目录下全部 .md 文件（Bun.Glob 原生遍历，跳过 node_modules）。 */
 function collectMarkdown(dir: string): string[] {
-	const out: string[] = [];
-	for (const entry of readdirSync(dir, {
-		withFileTypes: true,
-	})) {
-		if (entry.name === "node_modules") continue;
-		const full = join(dir, entry.name);
-		if (entry.isDirectory()) {
-			out.push(...collectMarkdown(full));
-		} else if (entry.name.endsWith(".md")) {
-			out.push(full);
-		}
-	}
-	return out;
+	return [
+		...new Bun.Glob("**/*.md").scanSync({
+			cwd: dir,
+			dot: true,
+			absolute: true,
+		}),
+	].filter((file) => !file.includes(`node_modules${sep}`));
 }
 
 /** 待检查文件清单：docs 全树 + 根部门面文件 + .github 文档。 */
