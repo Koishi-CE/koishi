@@ -32,7 +32,7 @@ export namespace Entry {
 /** 前端入口实例 */
 export class Entry<T = unknown> {
 	/** 入口随机标识，用于前端与广播消息的关联 */
-	public id = Math.random().toString(36).slice(2);
+	public id = crypto.randomUUID();
 	/** 注销本入口的清理函数 */
 	public dispose: () => void;
 

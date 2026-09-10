@@ -204,7 +204,7 @@ export abstract class Loader {
 			let ident = key.slice(prefix.length + 1);
 			// 标识缺失或冲突时生成随机标识，保证引用唯一
 			if (!ident || this.names.has(ident)) {
-				ident = Math.random().toString(36).slice(2, 8);
+				ident = crypto.randomUUID();
 				key = `${prefix}:${ident}`;
 			}
 			this.names.add(ident);

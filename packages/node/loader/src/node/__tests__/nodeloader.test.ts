@@ -188,7 +188,7 @@ describe("NodeLoader.migrateEntry", () => {
 		const keys = Object.keys(result ?? {});
 		expect(keys[0]).toBe("$if");
 		expect(keys[1]).toBe("a:x");
-		expect(keys[2]).toMatch(/^b:[0-9a-z]{6}$/);
+		expect(keys[2]).toMatch(/^b:[0-9a-f-]{36}$/);
 	});
 });
 

@@ -311,7 +311,7 @@ export class CommandDefinition<
 				pattern = `commands.${this.name}.shortcuts.${pattern}`;
 			} else {
 				config.i18n = true;
-				const key = `commands.${this.name}.shortcuts._${Math.random().toString(36).slice(2)}`;
+				const key = `commands.${this.name}.shortcuts._${crypto.randomUUID()}`;
 				this.ctx.i18n.define("", key, pattern);
 				pattern = key;
 			}

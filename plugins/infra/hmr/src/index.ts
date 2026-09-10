@@ -129,7 +129,10 @@ class Watcher {
 		[];
 	private debouncedReload?: () => void;
 	private require = createRequire(
-		require.resolve("@koishi-ce/loader/package.json"),
+		Bun.resolveSync(
+			"@koishi-ce/loader/package.json",
+			import.meta.dir,
+		),
 	);
 
 	/**
@@ -185,7 +188,7 @@ class Watcher {
 
 		// 框架自身（koishi 入口）的依赖集合：这些文件不属于任何插件，变动时只能整体重启
 		this.externals = loadDependencies(
-			require.resolve("@koishi-ce/koishi"),
+			Bun.resolveSync("@koishi-ce/koishi", import.meta.dir),
 			new Set(Object.values(loader.cache)),
 		);
 		this.debouncedReload = this.ctx.debounce(

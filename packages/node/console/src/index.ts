@@ -115,7 +115,7 @@ export abstract class Console extends Service {
 	static inject = { optional: ["console"] };
 
 	/** 本服务实例的随机标识，随入口数据下发，用于前端识别服务重启 */
-	private id = Math.random().toString(36).slice(2);
+	private id = crypto.randomUUID();
 
 	/** 已注册的前端入口表，键为入口随机 id */
 	readonly entries: Dict<Entry> = Object.create(null);

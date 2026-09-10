@@ -131,9 +131,9 @@ describe("Loader.migrateEntry", () => {
 		expect(keys[0]).toBe("$if");
 		expect(keys[1]).toBe("a:x");
 		// 无标识键（含 ~ 前缀形态）规范化为 name:ident，值保持原配置
-		expect(keys[2]).toMatch(/^b:[0-9a-z]{6}$/);
+		expect(keys[2]).toMatch(/^b:[0-9a-f-]{36}$/);
 		expect(result?.[keys[2] as string]).toEqual({ v: 2 });
-		expect(keys[3]).toMatch(/^~c:[0-9a-z]{6}$/);
+		expect(keys[3]).toMatch(/^~c:[0-9a-f-]{36}$/);
 		expect(result?.[keys[3] as string]).toEqual({ v: 3 });
 	});
 	it("标识冲突时生成新的随机标识保证唯一", () => {
@@ -145,7 +145,7 @@ describe("Loader.migrateEntry", () => {
 		const keys = Object.keys(result ?? {});
 		expect(keys[0]).toBe("a:x");
 		expect(keys[1]).not.toBe("b:x");
-		expect(keys[1]).toMatch(/^b:[0-9a-z]{6}$/);
+		expect(keys[1]).toMatch(/^b:[0-9a-f-]{36}$/);
 	});
 
 	it("嵌套 group 递归重建", () => {
@@ -156,7 +156,7 @@ describe("Loader.migrateEntry", () => {
 		const outer = (result?.["group:outer"] ??
 			{}) as Dict<unknown>;
 		expect(Object.keys(outer)[0]).toMatch(
-			/^inner:[0-9a-z]{6}$/,
+			/^inner:[0-9a-f-]{36}$/,
 		);
 	});
 });
@@ -180,7 +180,7 @@ describe("Loader.readConfig", () => {
 			);
 			expect(
 				Object.keys(written["plugins"] as Dict<unknown>)[0],
-			).toMatch(/^plain:[0-9a-z]{6}$/);
+			).toMatch(/^plain:[0-9a-f-]{36}$/);
 		} finally {
 			delete process.env["LDR_BASE_VAR"];
 		}
