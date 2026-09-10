@@ -5,7 +5,7 @@
 import type { Dict } from "cosmokit";
 
 /** 自增主键计数元数据（挂在 _store._fields，与表数据同住）。 */
-export interface AutoIncMeta {
+interface AutoIncMeta {
 	table: string;
 	field: string;
 	autoInc: number;

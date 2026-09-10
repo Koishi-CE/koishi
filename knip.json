@@ -1,8 +1,17 @@
 {
 	"$schema": "https://unpkg.com/knip@6.34.0/schema.json",
 	"exclude": ["duplicates"],
-	"ignoreDependencies": ["@satorijs/element"],
+	"ignoreDependencies": ["@satorijs/element", "vue-i18n"],
 	"workspaces": {
+		".": {
+			"ignoreDependencies": [
+				"@koishi-ce/plugin-proxy-agent",
+				"@koishi-ce/plugin-server"
+			]
+		},
+		"packages/node/loader": {
+			"ignoreDependencies": ["pg-like"]
+		},
 		"apps/koishi-scripts": {
 			"ignore": ["src/template/**"]
 		},
@@ -41,10 +50,12 @@
 			]
 		},
 		"plugins/webui/analytics": {
-			"entry": ["client/**/*.ts", "build/**/*.ts"]
+			"entry": ["client/**/*.ts", "build/**/*.ts"],
+			"ignoreDependencies": ["@koishi-ce/plugin-mock"]
 		},
 		"plugins/webui/auth": {
-			"entry": ["client/**/*.ts"]
+			"entry": ["client/**/*.ts"],
+			"ignoreDependencies": ["@koishi-ce/plugin-mock"]
 		},
 		"plugins/webui/commands": {
 			"entry": ["client/**/*.ts"],
@@ -74,21 +85,27 @@
 			"ignoreDependencies": ["ansi_up"]
 		},
 		"plugins/webui/market": {
-			"entry": ["client/**/*.ts", "src/browser/**/*.ts"]
+			"entry": ["client/**/*.ts", "src/browser/**/*.ts"],
+			"ignoreDependencies": ["@koishi-ce/plugin-mock"]
 		},
 		"plugins/webui/notifier": {
-			"entry": ["client/**/*.ts"]
+			"entry": ["client/**/*.ts"],
+			"ignoreDependencies": ["@koishi-ce/console"]
 		},
 		"plugins/webui/sandbox": {
 			"entry": ["client/**/*.ts"],
 			"ignoreDependencies": [
 				"@koishi-ce/plugin-console",
+				"@koishi-ce/plugin-mock",
 				"@satorijs/components-vue"
 			]
 		},
 		"plugins/webui/status": {
 			"entry": ["client/**/*.ts"],
-			"ignoreDependencies": ["@koishi-ce/plugin-analytics"]
+			"ignoreDependencies": [
+				"@koishi-ce/plugin-analytics",
+				"@koishi-ce/plugin-mock"
+			]
 		},
 		"plugins/webui/theme-vanilla": {
 			"entry": ["client/**/*.ts"]
