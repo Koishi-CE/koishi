@@ -178,11 +178,11 @@ function formatValue(value: number) {
 
 function formatSize(value: number) {
 	if (value >= (1 << 20) * 1000) {
-		return formatValue(value / (1 << 30)) + " GB";
+		return `${formatValue(value / (1 << 30))} GB`;
 	} else if (value >= (1 << 10) * 1000) {
-		return formatValue(value / (1 << 20)) + " MB";
+		return `${formatValue(value / (1 << 20))} MB`;
 	} else {
-		return formatValue(value / (1 << 10)) + " KB";
+		return `${formatValue(value / (1 << 10))} KB`;
 	}
 }
 

@@ -130,10 +130,10 @@ function toggleSort(word: string, event: MouseEvent) {
 		}
 	} else if (
 		words.value[index] === word ||
-		words.value[index] === word + "-desc"
+		words.value[index] === `${word}-desc`
 	) {
-		words.value[index] = word + "-asc";
-	} else if (words.value[index] === word + "-asc") {
+		words.value[index] = `${word}-asc`;
+	} else if (words.value[index] === `${word}-asc`) {
 		words.value[index] = word;
 	} else {
 		words.value[index] = word;

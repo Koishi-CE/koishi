@@ -83,7 +83,7 @@ const packages = computed(() =>
 const limit = computed(() => {
 	for (const word of props.modelValue) {
 		if (word.startsWith("limit:")) {
-			const size = parseInt(word.slice(6));
+			const size = parseInt(word.slice(6), 10);
 			if (size) return size;
 		}
 	}
