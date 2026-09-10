@@ -15,9 +15,8 @@
  */
 
 import { createReadStream } from "node:fs";
-import { mkdir, rm, writeFile } from "node:fs/promises";
-import { Readable } from "node:stream";
-import { ReadableStream } from "node:stream/web";
+import { mkdir, rm } from "node:fs/promises";
+import type { ReadableStream } from "node:stream/web";
 import {
 	type Context,
 	type Dict,
@@ -117,7 +116,7 @@ class TempServer extends Service {
 	}
 
 	override async start() {
-		this.baseDir = `${this.ctx.baseDir}/temp/${Math.random().toString(36).slice(2)}/`;
+		this.baseDir = `${this.ctx.baseDir}/temp/${crypto.randomUUID()}/`;
 		await mkdir(this.baseDir, { recursive: true });
 	}
 
@@ -134,7 +133,7 @@ class TempServer extends Service {
 	async create(
 		data: string | Buffer | ReadableStream,
 	): Promise<Entry> {
-		const name = Math.random().toString(36).slice(2);
+		const name = crypto.randomUUID();
 		const url = `${this.selfUrl}${this.path}/${name}`;
 		let path: string;
 		if (typeof data === "string") {
@@ -145,16 +144,12 @@ class TempServer extends Service {
 					responseType: "stream",
 				});
 				path = this.baseDir + name;
-				await writeFile(path, Readable.fromWeb(stream));
+				// Bun.write 直收 Web ReadableStream，无需 Readable.fromWeb 中转
+				await Bun.write(path, stream);
 			}
 		} else {
 			path = this.baseDir + name;
-			await writeFile(
-				path,
-				data instanceof ReadableStream
-					? Readable.fromWeb(data)
-					: data,
-			);
+			await Bun.write(path, data);
 		}
 		// 条目由 ctx.effect 托管：上下文销毁时随 dispose 清理；
 		// dispose 先于 timer 声明，setTimeout 回调异步触发，无 TDZ 风险
