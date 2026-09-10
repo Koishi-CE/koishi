@@ -62,6 +62,8 @@ app.plugin(SQLiteDriver, { path: ":memory:" });
 /** 测试内窥驱动实例的手法（minato Database 的 drivers 不在公开类型上） */
 type TestDriver = {
 	_get(sql: string, params?: unknown[]): unknown;
+	_all(sql: string, params?: unknown[]): unknown[];
+	_run(sql: string, params?: unknown[]): unknown;
 	getIndexes(table: string): Promise<
 		{
 			name: string;
@@ -607,5 +609,27 @@ describe("与 memory 驱动行为对拍", () => {
 			m2.map((r) => r.pid),
 		);
 		expect(s2).toHaveLength(1);
+	});
+});
+
+describe("SQLite dropAll / stats 以物理表为准", () => {
+	// upstream: cordiverse/database#132——多驱动并存时全局注册面含其他
+	// 驱动独占的表，按注册面清库/统计会对不存在的表执行 SQL 报错。
+	// 本处以单驱动等效复现：物理表缺失时旧实现（按注册面）即炸。
+	it("stats 跳过注册面中无物理表的表", async () => {
+		getDriver()._run("DROP TABLE test_stats");
+		const stats = await getDriver().stats();
+		expect(stats.tables["test_stats"]).toBeUndefined();
+	});
+
+	it("dropAll 清空全部物理表（含未注册的孤儿表）", async () => {
+		getDriver()._run(
+			"CREATE TABLE orphan_leftover (id integer PRIMARY KEY)",
+		);
+		await app.database.dropAll();
+		const left = getDriver()._all(
+			"SELECT name FROM sqlite_master WHERE type = 'table' AND name NOT LIKE 'sqlite_%'",
+		);
+		expect(left).toEqual([]);
 	});
 });

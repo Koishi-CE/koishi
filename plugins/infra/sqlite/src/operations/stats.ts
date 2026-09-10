@@ -6,15 +6,17 @@
 import { escapeId } from "@minatojs/sql-utils";
 import type { Driver } from "minato";
 import type { SQLiteDriver } from "../index.ts";
+import { listTables } from "./schema.ts";
 
 /**
  * 库大小 = page_count × page_size；逐表占用查 dbstat 虚表（官方构建
- * 默认开启的编译特性），行数逐表 COUNT。表在 dbstat 无记录时占位为 0。
+ * 默认开启的编译特性），行数逐表 COUNT。表以 `sqlite_master` 物理面
+ * 枚举（见 schema.ts 的 listTables），注册面中无物理表的条目不统计。
  */
 export async function collectStats(
 	driver: SQLiteDriver,
 ): Promise<Driver.Stats> {
-	const tables = Object.keys(driver.database.tables);
+	const tables = listTables(driver);
 	const pageCount = driver._get(`PRAGMA page_count`) as {
 		page_count?: number | bigint;
 	};

@@ -210,7 +210,22 @@ export async function prepare(
 	});
 }
 
-/** 删表；dropAll 以 driver.database.tables 注册面为准清空全部表。 */
+/**
+ * 枚举本库文件中真实存在的用户表（`sqlite_master` 物理面，排除
+ * `sqlite_` 前缀的内部表）。dropAll 与 stats 以物理面为准而不随
+ * 全局模型注册面走：多驱动并存时注册面会含其他驱动独占的表，
+ * 按注册面清库/统计会对不存在的表执行 SQL 而报错
+ * （upstream: cordiverse/database#132，4 线以 core 维护的驱动
+ * 表集合实现，本仓 3 线以物理枚举等效）。
+ */
+export function listTables(driver: SQLiteDriver): string[] {
+	const rows = driver._all(
+		"SELECT name FROM sqlite_master WHERE type = 'table' AND name NOT LIKE 'sqlite_%'",
+	) as { name: string }[];
+	return rows.map(({ name }) => name);
+}
+
+/** 删表。 */
 export async function drop(
 	driver: SQLiteDriver,
 	table: string,
@@ -218,9 +233,9 @@ export async function drop(
 	driver._run(`DROP TABLE ${escapeId(table)}`);
 }
 
+/** 清空全部物理表（以 `sqlite_master` 枚举为准，见 {@link listTables}）。 */
 export async function dropAll(driver: SQLiteDriver) {
-	const tables = Object.keys(driver.database.tables);
-	for (const table of tables) {
+	for (const table of listTables(driver)) {
 		driver._run(`DROP TABLE ${escapeId(table)}`);
 	}
 }
