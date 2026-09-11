@@ -30,7 +30,8 @@ import {
 import type { Config } from "..";
 import type { Context } from "../context";
 import { insert, type Ordered, Service } from "../utils";
-import { pickMessages } from "./i18n";
+// pickMessages 取自词典工具模块（而非 i18n 服务），断开 i18n ↔ setting 环
+import { pickMessages } from "./messages";
 
 declare module "../context" {
 	interface Context {

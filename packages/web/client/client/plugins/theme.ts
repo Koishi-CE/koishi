@@ -21,7 +21,7 @@ import {
 import { Schema } from "../../../components/client/index.ts";
 import type { Context } from "../context";
 import { Service } from "../utils";
-import { pickMessages } from "./i18n";
+import { pickMessages } from "./messages";
 import { useConfig } from "./setting";
 
 declare module "../context" {
