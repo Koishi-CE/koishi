@@ -15,17 +15,22 @@ import type { Context } from "./index.ts";
  * 解析重载参数：若首参是对象或函数则视为 thisArg 并从参数列表中移除，
  * 剩余首参即事件名（两个 Impl 共用的约定，见 Context.waterfall / chain 重载）。
  */
-/** @deprecated 已废弃：请改用 `ctx.serial` / `ctx.bail`。 */
-export async function waterfallImpl(
-	ctx: Context,
-	args: [unknown, ...unknown[]],
-): Promise<unknown> {
+function resolveArgs(args: [unknown, ...unknown[]]) {
 	const first = args[0];
 	const thisArg =
 		typeof first === "object" || typeof first === "function"
 			? (args.shift() as object)
 			: null;
 	const name = args.shift() as string;
+	return { thisArg, name };
+}
+
+/** @deprecated 已废弃：请改用 `ctx.serial` / `ctx.bail`。 */
+export async function waterfallImpl(
+	ctx: Context,
+	args: [unknown, ...unknown[]],
+): Promise<unknown> {
+	const { thisArg, name } = resolveArgs(args);
 	for (const hook of ctx.lifecycle.filterHooks(
 		ctx.lifecycle._hooks[name] || [],
 		// 无 thisArg 时为 null（与 cordis dispatch 的取参逻辑一致，其内部以 ?. 兼容）
@@ -43,12 +48,7 @@ export function chainImpl(
 	ctx: Context,
 	args: [unknown, ...unknown[]],
 ): unknown {
-	const first = args[0];
-	const thisArg =
-		typeof first === "object" || typeof first === "function"
-			? (args.shift() as object)
-			: null;
-	const name = args.shift() as string;
+	const { thisArg, name } = resolveArgs(args);
 	for (const hook of ctx.lifecycle.filterHooks(
 		ctx.lifecycle._hooks[name] || [],
 		// 无 thisArg 时为 null（与 cordis dispatch 的取参逻辑一致，其内部以 ?. 兼容）
