@@ -29,10 +29,48 @@ async function ask(message: string): Promise<string> {
 	}
 }
 
+/** 克隆目标：规范化后的仓库地址与目标目录名（可能仍待补全） */
+export interface CloneTarget {
+	/** .git 结尾的 HTTPS 地址；不匹配白名单写法时原样保留 */
+	repo: string;
+	/** 目标目录名；无法从地址推导且未显式给出时为空串 */
+	name: string;
+}
+
 /**
- * clone 主流程：规范化仓库地址（owner/repo → https://github.com/owner/repo.git，
- * 目标目录名默认取 repo 名去掉 koishi-plugin- 前缀）→ git clone 到 external/ →
- * bun install。返回退出码（0 成功）。
+ * 规范化克隆目标：匹配 owner/repo 或 GitHub HTTPS 地址写法时，统一
+ * 补全为 .git 结尾的 HTTPS 地址，目录名默认取 repo 名去掉
+ * koishi-plugin- 前缀（显式给出的名字优先）；不匹配（如 SSH 形态）
+ * 时地址原样保留、目录名留空，由调用方交互补全。
+ */
+export function resolveTarget(
+	repo: string,
+	name = "",
+): CloneTarget {
+	const cap =
+		/^(?:https:\/\/github\.com\/)?([\w-]+)\/([\w-]+)(?:\.git)?$/.exec(
+			repo,
+		);
+	const [, owner, repoName] = cap ?? [];
+	// 正则两个捕获组在命中时恒有值，判空仅为通过严格空检查
+	if (owner === undefined || repoName === undefined) {
+		return { repo, name };
+	}
+	if (!repo.startsWith("https:")) {
+		repo = `https://github.com/${repo}`;
+	}
+	if (!repo.endsWith(".git")) {
+		repo = `${repo}.git`;
+	}
+	return {
+		repo,
+		name: name || repoName.replace("koishi-plugin-", ""),
+	};
+}
+
+/**
+ * clone 主流程：规范化仓库地址（不可推导时交互补全）→ git clone 到
+ * external/ → bun install。返回退出码（0 成功）。
  */
 export default async function runClone(
 	args: readonly string[],
@@ -40,26 +78,15 @@ export default async function runClone(
 	const positional = args.filter(
 		(arg) => !arg.startsWith("-"),
 	);
-	let repo = positional[0] ?? "";
-	let name = positional[1] ?? "";
+	let { repo, name } = resolveTarget(
+		positional[0] ?? "",
+		positional[1] ?? "",
+	);
 	if (repo === "") {
 		repo = await ask(
 			"📦 仓库地址（owner/repo 或完整 URL）：",
 		);
-	}
-	// 匹配 owner/repo、完整 URL 等写法，统一补全为 .git 结尾的 HTTPS 地址
-	const cap =
-		/^(?:https:\/\/github\.com\/)?([\w-]+)\/([\w-]+)(?:\.git)?$/.exec(
-			repo,
-		);
-	if (cap?.[1] !== undefined && cap[2] !== undefined) {
-		name ||= cap[2].replace("koishi-plugin-", "");
-		if (!repo.startsWith("https:")) {
-			repo = `https://github.com/${repo}`;
-		}
-		if (!repo.endsWith(".git")) {
-			repo = `${repo}.git`;
-		}
+		({ repo, name } = resolveTarget(repo, name));
 	}
 	if (name === "") {
 		name = await ask("📁 目标目录名：");
