@@ -28,6 +28,7 @@ bun run knip                    # 依赖与导出审计（bunx 直跑 knip，不
 bun run typecheck               # TS7 类型检查（node 侧 + client 侧两条 bunx tsc 串行）
 bun run build                   # 根 tsdown：全部 node 侧包 → 各包 lib/（ESM-only）
 bun test                        # 全量自有用例（覆盖全部 node 侧包与 tooling 回归，秒级；文件与用例数以实跑输出为准）
+bun run test                    # 同上的脚本形态：带 --isolate（每文件独立 global），CI 与提交前一律走这个
 bun test packages/node/core     # 定向跑某包测试
 bun test --coverage             # 覆盖率（src 源码口径）
 ```

@@ -1,10 +1,13 @@
 # CI 门禁流水线
 #
 # 三个并行 job：
-# - gate   主门禁：bun run build → bun run check → bun test
+# - gate   主门禁：bun run build → 宿主前端构建 → bun run check → bun run test
 #          （build 必须前置于 check：tsconfig.web.json 的部分 paths 指向各包
 #            lib/index.d.ts 产物，全新环境无 lib 时 web 侧 tsc 直接 TS2307，
 #            已实测；本地因 lib 常在而感知不到该顺序依赖）
+#          （test 必须走 bun run test 而非裸 bun test：前者经 package.json
+#            脚本带上 --isolate，否则跨文件 mock.module 互相串扰；前端构建
+#            前置于 test：console 的静态资源用例读 dist 真实产物）
 # - client 前端构建：宿主控制台 + 全部 webui 插件（vite 编程式构建，无配置
 #          文件）。前端构建是 .vue 的实际类型门禁（compiler-sfc 含
 #          defineProps 类型解析），tsc 侧 .vue 只是不透明 Component。
@@ -48,7 +51,7 @@ jobs:
       - name: 宿主控制台前端（console 静态资源测试的依赖）
         run: bun packages/web/client/src/bin.ts build
       - run: bun run check
-      - run: bun test
+      - run: bun run test
 
   client:
     name: client (webui bundle build)
