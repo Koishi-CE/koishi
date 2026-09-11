@@ -1,5 +1,14 @@
 # @koishi-ce/plugin-insight
 
+## 1.1.2
+
+### Patch Changes
+
+- Updated dependencies [412c225]
+  - @koishi-ce/console@1.0.1
+  - @koishi-ce/plugin-console@1.3.3
+  - @koishi-ce/koishi@1.0.15
+
 ## 1.1.1
 
 ### Patch Changes

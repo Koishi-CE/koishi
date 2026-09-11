@@ -1,5 +1,15 @@
 # @koishi-ce/plugin-auth
 
+## 1.1.1
+
+### Patch Changes
+
+- 8c5ad86: 登录令牌与平台验证码改用 CSPRNG 生成：randomId 以 randomBytes 拒绝采样替代 Math.random（40 位格式契约不变，熵从约 66 位提升到约 238 位）；6 位登录验证码改 randomInt 固定 6 位数字（原实现在小数串过短时不足 6 位且非 CSPRNG）。
+- Updated dependencies [412c225]
+  - @koishi-ce/console@1.0.1
+  - @koishi-ce/plugin-console@1.3.3
+  - @koishi-ce/koishi@1.0.15
+
 ## 1.1.0
 
 ### Minor Changes

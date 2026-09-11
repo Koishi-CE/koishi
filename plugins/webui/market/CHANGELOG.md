@@ -1,5 +1,17 @@
 # @koishi-ce/plugin-market
 
+## 1.1.1
+
+### Patch Changes
+
+- cbd375a: 节点侧 installer 服务按职责拆分为 `src/node/installer/` 子目录，入口只保留服务本体（缓存、依赖汇总、安装编排与重载判定）：`manifest.ts`（项目根 package.json 读写与护栏判定）、`versions.ts`（远端版本探测与兼容性过滤）、`exec.ts`（bun 安装子进程驱动与输出转发）、`integrity.ts`（安装完整性校验）、`registry-config.ts`（本机 npm registry 配置探测）、`proc.ts`（子进程创建封装）。原 `src/node/installer.ts` 迁移为 `src/node/installer/index.ts`。纯内部结构调整：installer 服务的对外方法与缓存字段（`install` / `override` / `exec` / `getDeps` / `resolveName` / `findVersion` / `fullCache` 等）形状不变，运行时产物行为零变化。
+- 5415555: market 节点侧词典目录自 `src/node/locales` 移至包根 `locales`，对齐全仓其余 28 个词典目录的惯例；运行时产物零变化（lib/assets 哈希文件名与内容均不变），npm 包内不再随 src 重复携带词典。顺带修复 check-locales 对 d8ce130 引入的 client/vendor/market/locales（上游 vendor、仅 zh-CN）的存量误报。
+- d8ce130: market 前端解除对 npm 包 @koishijs/market 的依赖：逻辑层（过滤/排序/搜索语法校验）与图标自上游 4.2.10 vendor 进 client/vendor/market/，行为零变化；package 卡片的 useI18nText 改从 @koishi-ce/components 导入（构建期仍经宿主 client 包单实例提供）。插件卡片视图的视觉与交互无任何变化。
+- Updated dependencies [412c225]
+  - @koishi-ce/console@1.0.1
+  - @koishi-ce/plugin-console@1.3.3
+  - @koishi-ce/koishi@1.0.15
+
 ## 1.1.0
 
 ### Minor Changes

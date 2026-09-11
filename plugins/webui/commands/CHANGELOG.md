@@ -1,5 +1,14 @@
 # @koishi-ce/plugin-commands
 
+## 1.0.3
+
+### Patch Changes
+
+- Updated dependencies [412c225]
+  - @koishi-ce/console@1.0.1
+  - @koishi-ce/plugin-console@1.3.3
+  - @koishi-ce/koishi@1.0.15
+
 ## 1.0.2
 
 ### Patch Changes
