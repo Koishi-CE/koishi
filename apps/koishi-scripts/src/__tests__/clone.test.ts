@@ -7,28 +7,21 @@ import {
 	describe,
 	expect,
 	it,
-	mock,
 } from "bun:test";
-import { mkdtempSync, rmSync } from "node:fs";
-import { tmpdir } from "node:os";
 import { join } from "node:path";
 import runClone, { resolveTarget } from "../clone.ts";
+import { cwd } from "../index.ts";
 
 /**
  * `koishi-scripts clone`（clone.ts）的行为测试。
  *
- * 通过 mock "../index.ts" 把宿主 cwd 重定向到临时目录，
- * Bun.spawnSync 以可写属性劫持为记录桩（不产生真实子进程），
+ * Bun.spawnSync 以可写属性劫持为记录桩（不产生真实子进程、不落盘），
  * 覆盖：仓库地址规范化、目录名推导、退出码传播与非交互报错。
+ *
+ * 不对 "../index.ts" 注册 mock.module：本文件字典序先于 index.test.ts，
+ * 非隔离模式（裸 bun test）下模块注册表污染会破坏其真实 cwd 断言
+ * （该文件名排序约定见其文件头注释）；cwd 直接以值导入对照。
  */
-
-const workspaceRoot = mkdtempSync(
-	join(tmpdir(), "koishi-clone-run-"),
-);
-
-mock.module("../index.ts", () => ({
-	cwd: workspaceRoot,
-}));
 
 /** spawnSync 桩回执形态（对应 clone → install 两步按次出队） */
 interface SpawnResult {
@@ -72,7 +65,6 @@ beforeAll(() => {
 afterAll(() => {
 	Bun.spawnSync = originalSpawnSync;
 	console.log = originalLog;
-	rmSync(workspaceRoot, { recursive: true, force: true });
 });
 
 /** 单用例封装：重置桩状态（回执按需注入）后驱动 runClone */
@@ -207,9 +199,7 @@ describe("clone：安装与退出码", () => {
 		const code = await run(["foo/bar"]);
 		expect(code).toBe(0);
 		expect(spawnCalls[1]?.cmd).toEqual(["bun", "install"]);
-		expect(spawnCalls[1]?.options["cwd"]).toBe(
-			workspaceRoot,
-		);
+		expect(spawnCalls[1]?.options["cwd"]).toBe(cwd);
 		expect(logs.join("\n")).toContain("🎉 完成");
 	});
 
