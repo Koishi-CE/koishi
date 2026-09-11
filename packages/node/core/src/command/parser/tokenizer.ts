@@ -17,7 +17,7 @@
 import { escapeRegExp } from "@koishi-ce/utils";
 import { h } from "@satorijs/core";
 import type { Dict } from "cosmokit";
-import { Argv, type Token } from "./argv.ts";
+import type { Argv, Token } from "./argv.ts";
 
 /** 左引号字符表（直引号 + 中文弯引号），与 rightQuotes 按下标配对 */
 const leftQuotes = `"'“‘`;
@@ -26,6 +26,25 @@ const rightQuotes = `"'”’`;
 
 /** 全局插值语法注册表（键为起始符，如 "$("） */
 export const bracs: Dict<Argv.Interpolation> = {};
+
+/**
+ * 还原 token 中的插值段：把 inters 里记录的子 argv 按 pos 塞回 content，
+ * 重建 "起始符 + 源码 + 终结符" 的原文形式。
+ * 单引号 token 不做插值求值，靠此方法恢复原文。
+ */
+export function revert(token: Token) {
+	while (token.inters.length) {
+		const inter = token.inters.pop();
+		if (!inter) break;
+		const { pos, source, initiator } = inter;
+		token.content =
+			token.content.slice(0, pos) +
+			(initiator ?? "") +
+			(source ?? "") +
+			(bracs[initiator ?? ""]?.terminator ?? "") +
+			token.content.slice(pos);
+	}
+}
 
 /** 注册一种插值语法：起始符 + 终结符 + 可选的自定义解析器 */
 export function interpolate(
@@ -92,7 +111,7 @@ export class Tokenizer {
 	 * 遇到引号开头时改为「匹配右引号且后随停止条件」，
 	 * 保证 `"a b"` 不在内部空白处断开。
 	 * 遇到插值起始符则递归解析子 argv 记入 inters，并从其后继续；
-	 * 单引号 token 不求值插值，返回前用 Argv.revert 恢复原文。
+	 * 单引号 token 不求值插值，返回前用 revert 恢复原文。
 	 */
 	parseToken(source: string, stopReg = "$"): Token {
 		const parent: Token = {
@@ -164,7 +183,7 @@ export class Tokenizer {
 				}
 				parent.content = content;
 				// 单引号内的插值不求值，恢复为原文
-				if (quote === "'") Argv.revert(parent);
+				if (quote === "'") revert(parent);
 				return parent;
 			}
 		}

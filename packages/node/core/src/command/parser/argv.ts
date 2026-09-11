@@ -24,8 +24,8 @@ import type { Permissions } from "../../permission.ts";
 import type { Session } from "../../session/index.ts";
 import type { Command } from "../command/command.ts";
 import {
-	bracs,
 	interpolate,
+	revert,
 	Tokenizer,
 	whitespace,
 } from "./tokenizer.ts";
@@ -297,6 +297,7 @@ export const Argv = {
 	interpolate,
 	whitespace,
 	Tokenizer,
+	revert,
 
 	/** 用默认 tokenizer 把消息原文解析为 Argv（词法分析入口） */
 	parse(source: string, terminator = "") {
@@ -306,25 +307,6 @@ export const Argv = {
 	/** 把 tokens / rest 还原回字符串（供贪婪参数取值与日志输出） */
 	stringify(argv: Argv) {
 		return defaultTokenizer.stringify(argv);
-	},
-
-	/**
-	 * 还原 token 中的插值段：把 inters 里记录的子 argv 按 pos 塞回 content，
-	 * 重建 "$(...)": 源码 " + 终结符的原文形式。
-	 * 单引号 token 不做插值求值，靠此方法恢复原文。
-	 */
-	revert(token: Token) {
-		while (token.inters.length) {
-			const inter = token.inters.pop();
-			if (!inter) break;
-			const { pos, source, initiator } = inter;
-			token.content =
-				token.content.slice(0, pos) +
-				(initiator ?? "") +
-				(source ?? "") +
-				(bracs[initiator ?? ""]?.terminator ?? "") +
-				token.content.slice(pos);
-		}
 	},
 };
 

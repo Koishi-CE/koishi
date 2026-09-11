@@ -11,8 +11,10 @@
  * 继承链：CommandBase → CommandCore → CommandDefinition → Command。
  */
 
+// 值侧（current 静态符）走 cordis 原始类，切断对 context/index.ts 的值依赖（成环）
+import { Context as CordisContext } from "cordis";
 import { type Dict, remove } from "cosmokit";
-import { Context } from "../../context/index.ts";
+import type { Context } from "../../context/index.ts";
 import { normalizeCommand } from "../normalize.ts";
 import { CommandBase } from "../parser/index.ts";
 import type { Command } from "./command.ts";
@@ -52,7 +54,7 @@ export class CommandCore extends CommandBase<Command.Config> {
 
 	/** 当前调用方上下文：优先取触发本命令的动态作用域，否则回退注册时上下文 */
 	get caller(): Context {
-		return this[Context.current] || this.ctx;
+		return this[CordisContext.current] || this.ctx;
 	}
 
 	/** 展示名：别名表中的第一个名字（即最先注册的别名） */
