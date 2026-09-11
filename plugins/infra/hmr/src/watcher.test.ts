@@ -59,6 +59,28 @@ async function waitFor(cond: () => boolean, ms = 3000) {
 	return cond();
 }
 
+/**
+ * 反复写入 target 直到监听回调收到该路径的事件。
+ *
+ * Linux 的 inotify 按目录建 watch（win32 的递归订阅无此语义）：mkdir
+ * 后立刻写入可能落在 watch 建立之前而丢事件，一次性写入在 CI 上偶发
+ * 失败，重复写入（内容变化即 update 事件）可跨过这段就绪窗口。
+ */
+async function waitForWrite(
+	target: string,
+	seen: { type: string; path: string }[],
+	ms = 5000,
+): Promise<boolean> {
+	const deadline = Date.now() + ms;
+	while (Date.now() < deadline) {
+		writeFileSync(target, `${Date.now()}`);
+		await new Promise((r) => setTimeout(r, 100));
+		if (seen.some((e) => resolve(e.path) === target))
+			return true;
+	}
+	return false;
+}
+
 describe("@parcel/watcher 原生绑定", () => {
 	it("递归监听产生事件且 ignored 在原生层生效", async () => {
 		const seen: { type: string; path: string }[] = [];
@@ -70,6 +92,10 @@ describe("@parcel/watcher 原生绑定", () => {
 			},
 			{ ignore: ["**/node_modules/**"] },
 		);
+
+		// 原生订阅建立需要一小段时间，立刻写入可能丢失首个事件，
+		// 先让 watch 就绪再触发（Linux inotify 路径上尤为明显）
+		await new Promise((r) => setTimeout(r, 300));
 
 		// 已监听目录内的文件写入产生 create/update 事件（绝对路径）
 		writeFileSync(probe, "v1");
@@ -93,15 +119,11 @@ describe("@parcel/watcher 原生绑定", () => {
 			),
 		).toBe(true);
 
-		// 子目录内的写入递归可见
+		// 子目录内的写入递归可见（inotify 需为新目录补建 watch，
+		// 一次性写入可能丢事件，交给重复写入的等待）
 		mkdirSync(join(dir, "src"), { recursive: true });
 		const nested = join(dir, "src/a.ts");
-		writeFileSync(nested, "1");
-		expect(
-			await waitFor(() =>
-				seen.some((e) => resolve(e.path) === nested),
-			),
-		).toBe(true);
+		expect(await waitForWrite(nested, seen)).toBe(true);
 
 		// 被忽略目录（node_modules）内的写入不产生任何事件
 		mkdirSync(join(dir, "node_modules/pkg"), {
@@ -114,5 +136,5 @@ describe("@parcel/watcher 原生绑定", () => {
 		).toBe(false);
 
 		await sub.unsubscribe();
-	}, 10000);
+	}, 20000);
 });
