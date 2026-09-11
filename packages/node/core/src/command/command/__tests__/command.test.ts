@@ -237,6 +237,16 @@ describe("Command API", () => {
 			expect(next.mock.calls).toHaveLength(0);
 		});
 
+		// 空 action 列表：execute 提前返回空串、完全不触发队列调度。
+		// 若无该规避，默认 fallback（Next.compose）会成为队列首元素，
+		// 与 argv.next 互相自指增殖直至 MAX_DEPTH 异常（见 execute 内注释）
+		it("basic 0 (no actions registered)", async () => {
+			await expect(
+				command.execute({ session }, next),
+			).resolves.toBe("");
+			expect(next.mock.calls).toHaveLength(0);
+		});
+
 		// action 返回字符串时作为回复输出
 		it("basic 2 (return string)", async () => {
 			command.action(() => "result");
