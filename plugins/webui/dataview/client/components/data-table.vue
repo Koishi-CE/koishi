@@ -149,19 +149,24 @@ import {
 	watchEffect,
 } from "vue";
 import { useI18n } from "vue-i18n";
-import { schema } from "../index.ts";
+import { schema } from "../config.ts";
 import {
-	dateStr,
 	formatSize,
 	handleError,
 	sendQuery,
-	timeStr,
 } from "../utils.ts";
+import {
+	type CellModel,
+	fromModelValue,
+	renderCellValue,
+	toModelValue,
+} from "./cell.ts";
+import {
+	type ColumnInput,
+	createColumnInputs,
+} from "./column-inputs.ts";
 
 const { t } = useI18n();
-
-/** 单元格输入模型（el-input 的字符串/数字输入，或日期选择器的 Date） */
-type CellModel = string | number | Date;
 
 export interface TableStatus {
 	loading: boolean;
@@ -251,19 +256,7 @@ async function updateData() {
 		sort: querySort,
 	};
 	try {
-		const row = props.filter
-			? Object.keys(state.newRow).reduce<
-					Record<string, unknown>
-				>((o, field) => {
-					if (state.newRow[field]) {
-						o[field] = fromModelValue(
-							field,
-							state.newRow[field],
-						);
-					}
-					return o;
-				}, {})
-			: {};
+		const row = props.filter ? getNewRowValues() : {};
 		tableData.value = await sendQuery(
 			"get",
 			props.name as never,
@@ -277,6 +270,23 @@ async function updateData() {
 	state.loading = false;
 }
 watchEffect(updateData);
+
+/** 新行输入中已填写且通过校验的字段值（过滤查询与插入行共用） */
+function getNewRowValues(): Dict<unknown> {
+	return Object.keys(state.newRow).reduce<Dict<unknown>>(
+		(o, field) => {
+			if (state.newRow[field]) {
+				o[field] = fromModelValue(
+					table.value?.fields,
+					field,
+					state.newRow[field],
+				);
+			}
+			return o;
+		},
+		{},
+	);
+}
 
 const rawConfig = useConfig();
 const config = computed(() => schema(rawConfig.value));
@@ -317,104 +327,8 @@ const currPage = computed({
 	set: (p) => (state.offset = (p - 1) * state.pageSize),
 });
 
-/** 每个字段对应的输入组件与属性（列头新行输入、单元格编辑共用） */
-interface ColumnInput {
-	is: "el-input" | "el-date-picker" | "el-time-picker";
-	attrs?: {
-		type?: string;
-		validate?: (val: CellModel) => boolean;
-		step?: number;
-		clearable?: boolean;
-	};
-}
-
 const columnInputAttr: ComputedRef<Dict<ColumnInput>> =
-	computed(() =>
-		Object.keys(table.value?.fields ?? {}).reduce<
-			Dict<ColumnInput>
-		>((o, fName) => {
-			const fieldConfig = table.value?.fields[fName];
-			if (!fieldConfig) return o;
-			const dateAttrs = { clearable: false };
-
-			let type = "text";
-			let step: number | undefined;
-			switch (fieldConfig.deftype) {
-				case "time":
-					o[fName] = {
-						is: "el-time-picker",
-						attrs: dateAttrs,
-					};
-					return o;
-				case "date":
-					o[fName] = {
-						is: "el-date-picker",
-						attrs: { ...dateAttrs, type: "date" },
-					};
-					return o;
-				case "timestamp":
-					o[fName] = {
-						is: "el-date-picker",
-						attrs: { ...dateAttrs, type: "datetime" },
-					};
-					return o;
-
-				case "integer":
-				case "unsigned":
-					step = 1;
-					type = "number";
-					break;
-
-				case "float":
-				case "double":
-				case "decimal":
-					type = "number";
-					break;
-
-				default:
-					type = "text";
-					break;
-			}
-
-			const validate = (val: CellModel) => {
-				const text = String(val ?? "");
-				if (fieldConfig.nullable === false && !text.length)
-					return false;
-				let value: number | string = text;
-				// 上游此处误写为 type.value（恒假）；按其意图对数字输入先转数值再校验
-				if (type === "number")
-					value = Number.parseFloat(text);
-				switch (fieldConfig.deftype) {
-					// biome-ignore lint/suspicious/noFallthroughSwitchClause: 负数已提前返回,落入整数检查是上游既定语义
-					case "unsigned":
-						if (typeof value === "number" && value < 0)
-							return false;
-					case "integer":
-						if (
-							typeof value === "number" &&
-							value % 1 !== 0
-						)
-							return false;
-						break;
-					case "json":
-						if (text === "") return true;
-						if (
-							!text.startsWith("{") ||
-							!text.endsWith("}")
-						)
-							return false;
-						break;
-				}
-				return true;
-			};
-
-			o[fName] = {
-				is: "el-input",
-				attrs: { type, validate, step },
-			};
-			return o;
-		}, {}),
-	);
+	computed(() => createColumnInputs(table.value?.fields));
 
 /** 仅保留通过输入校验的修改 */
 const validChanges: ComputedRef<ChangesState> = computed(
@@ -474,66 +388,11 @@ function renderCell(
 	field: string,
 	scope: { row: Record<string, unknown> },
 ) {
-	const fType = table.value?.fields[field]?.deftype;
-	const data = scope.row[field];
-	switch (fType) {
-		case "json":
-			return JSON.stringify(data);
-		case "date":
-			if (data instanceof Date) return dateStr(data);
-			break;
-		case "time":
-			if (data instanceof Date) return timeStr(data);
-			break;
-		case "timestamp":
-			if (data instanceof Date)
-				return `${dateStr(data)} ${timeStr(data)}`;
-			break;
-		case "binary":
-			return `<Binary len=${data}>`;
-	}
-	return data;
-}
-
-/** 把单元格数据转换为输入模型 */
-function toModelValue(
-	field: string,
-	data: unknown,
-): CellModel {
-	const fType = table.value?.fields[field]?.deftype;
-	if (fType === "list" || fType === "json")
-		return JSON.stringify(data);
-	if (fType === "time" && typeof data === "string") {
-		const [h, m, s] = data.split(":");
-		const time = new Date();
-		time.setHours(
-			Number.parseInt(h ?? "0", 10),
-			Number.parseInt(m ?? "0", 10),
-			Number.parseInt(s ?? "0", 10),
-		);
-		return time;
-	}
-	return data as CellModel;
-}
-
-/** 把输入模型转换回单元格数据 */
-function fromModelValue(
-	field: string,
-	data: CellModel,
-): unknown {
-	const fType = table.value?.fields[field]?.deftype;
-	switch (fType) {
-		case "unsigned":
-		case "integer":
-		case "float":
-		case "double":
-			return +data;
-		case "boolean":
-		case "list":
-		case "json":
-			return JSON.parse(String(data));
-	}
-	return data;
+	return renderCellValue(
+		table.value?.fields,
+		field,
+		scope.row[field],
+	);
 }
 
 /** 判断某单元格是否有待提交的修改 */
@@ -581,7 +440,11 @@ function onCellDblClick(scope: {
 		return;
 	const record = (state.changes[$index] ??= {});
 	record[column.label] = reactive({
-		model: toModelValue(column.label, row[column.label]),
+		model: toModelValue(
+			table.value?.fields,
+			column.label,
+			row[column.label],
+		),
 	});
 }
 
@@ -615,6 +478,7 @@ async function onSubmitChanges() {
 			const data: Dict<unknown> = {};
 			for (const field in validChanges.value[idx]) {
 				data[field] = fromModelValue(
+					table.value?.fields,
 					field,
 					validChanges.value[idx][field]?.model ?? "",
 				);
@@ -675,17 +539,7 @@ async function onDeleteRow(scope: {
 async function onInsertRow() {
 	state.loading = true;
 	try {
-		const row = Object.keys(state.newRow).reduce<
-			Dict<unknown>
-		>((o, field) => {
-			if (state.newRow[field]) {
-				o[field] = fromModelValue(
-					field,
-					state.newRow[field],
-				);
-			}
-			return o;
-		}, {});
+		const row = getNewRowValues();
 		await sendQuery(
 			"create",
 			props.name as never,
