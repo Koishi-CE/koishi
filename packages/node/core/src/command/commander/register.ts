@@ -11,7 +11,8 @@
  * （作用域销毁时命令随之销毁）。
  */
 
-import { Context } from "../../context/index.ts";
+// 值侧（current 静态符）走 cordis 原始类，切断对 context/index.ts 的值依赖（成环）
+import { Context as CordisContext } from "cordis";
 import { Command } from "../command/command.ts";
 import { normalizeCommand } from "../normalize.ts";
 import { CommanderResolve } from "./resolve.ts";
@@ -108,7 +109,7 @@ export class CommanderRegister extends CommanderResolve {
 		created.forEach((command) =>
 			this.ctx.emit("command-added", command),
 		);
-		parent[Context.current] = this.ctx;
+		parent[CordisContext.current] = this.ctx;
 		if (root) {
 			const created = root;
 			this.ctx.collect(`command <${created.name}>`, () =>

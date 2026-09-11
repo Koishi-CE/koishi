@@ -15,6 +15,9 @@
  * 全服广播入口 broadcast（委托 broadcast.ts）与数据模型注册（models.ts）。
  */
 import type { Fragment } from "@satorijs/core";
+// Database 符号本体由 minato 定义并增强在 cordis 的 Context namespace 上，
+// 经原始类取值以避免值依赖 context/index.ts（成环）
+import { Context as CordisContext } from "cordis";
 import type { Dict, MaybeArray } from "cosmokit";
 import type {
 	Driver,
@@ -23,7 +26,7 @@ import type {
 	Update,
 } from "minato";
 import * as minato from "minato";
-import { Context } from "../context/index.ts";
+import type { Context } from "../context/index.ts";
 import { broadcastDatabase } from "./broadcast.ts";
 import { registerModels } from "./models.ts";
 import type {
@@ -43,7 +46,7 @@ declare module "@koishi-ce/core" {
 		/** 向 minato 注册的表结构定义 */
 		[minato.Tables]: Tables;
 		/** 数据库服务（minato Database + 本模块扩展的快捷方法） */
-		[Context.Database]: Context.Database<this>;
+		[CordisContext.Database]: Context.Database<this>;
 		/**
 		 * 向所有受理频道广播消息（不指定频道列表时广播全部）。
 		 *

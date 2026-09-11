@@ -37,6 +37,7 @@ import type { Session } from "../session/index.ts";
 import { defineContextConfig } from "./config.ts";
 import { chainImpl, waterfallImpl } from "./legacy.ts";
 import Koishi from "./runtime.ts";
+import { sessionShadow } from "./symbols.ts";
 
 /** cordis 副作用作用域（本框架 Context 特化） */
 export type EffectScope = cordis.EffectScope<Context>;
@@ -144,8 +145,9 @@ export class Context extends satori.Context {
 	/**
 	 * shadow 会话标记：以其它会话为模板派生的"影子会话"会带上该符号属性，
 	 * 权限校验等场景据此还原出原始会话（见 permission.ts 的 test）。
+	 * 符号本体定义在叶子模块 symbols.ts（见该文件注释）。
 	 */
-	static shadow = Symbol.for("session.shadow");
+	static shadow = sessionShadow;
 
 	// 值侧由类静态承载,类型侧见下方 namespace(erasableSyntaxOnly 不允许 namespace 内运行时值)
 	static Config = Schema.intersect([

@@ -10,7 +10,10 @@
  * 在此被丢弃）。这是消息进入指令系统的前置关卡。
  */
 import type { Context } from "../context/index.ts";
-import { Channel, User } from "../database/index.ts";
+// 从 tables.ts（叶子模块）而非 database/index.ts 导入：后者回导 context
+// 构成循环依赖（context -> middleware -> attach -> database -> context），
+// Channel/User 的值侧（Flag 常量）本就定义在 tables.ts
+import { Channel, User } from "../database/tables.ts";
 import type { Session } from "../session/index.ts";
 import type { Next } from "./next.ts";
 

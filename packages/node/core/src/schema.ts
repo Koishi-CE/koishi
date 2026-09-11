@@ -17,12 +17,14 @@
  *    供多个插件向同一份配置（如 intercept.http 网络拦截配置）追加字段。
  */
 import { Schema } from "@satorijs/core";
+// 值侧（current 静态符）走 cordis 原始类，切断对 context/index.ts 的值依赖（成环）
+import { Context as CordisContext } from "cordis";
 import {
 	type Dict,
 	defineProperty,
 	remove,
 } from "cosmokit";
-import { Context } from "./context/index.ts";
+import type { Context } from "./context/index.ts";
 import type { Computed } from "./filter.ts";
 
 declare global {
@@ -169,7 +171,7 @@ export class SchemaService {
 	 *   永远排在末尾，保证兼容）
 	 */
 	extend(name: string, schema: Schema, order = 0) {
-		const caller = this[Context.current];
+		const caller = this[CordisContext.current];
 		const target = this.get(name);
 		const list = (target.list ??= []);
 		const index = list.findIndex(
@@ -201,7 +203,7 @@ export class SchemaService {
 
 	/** 整体覆写名为 name 的 Schema（随调用方上下文销毁自动删除）。 */
 	set(name: string, schema: Schema) {
-		const caller = this[Context.current];
+		const caller = this[CordisContext.current];
 		this._data[name] = schema;
 		this.ctx.emit("internal/schema", name);
 		caller?.on("dispose", () => {

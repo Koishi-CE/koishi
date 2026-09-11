@@ -15,12 +15,15 @@
  */
 import { coerce } from "@koishi-ce/utils";
 import type { EventOptions, Hook } from "@satorijs/core";
+// Context.current 等静态符经 cordis 原始类取值（同一继承链）：
+// 服务层若值依赖 context/index.ts，会与后者装配服务的值导入互成循环
+import { Context as CordisContext } from "cordis";
 import {
 	type Awaitable,
 	type Dict,
 	defineProperty,
 } from "cosmokit";
-import { Context } from "../context/index.ts";
+import type { Context } from "../context/index.ts";
 import type { Channel, User } from "../database/index.ts";
 import type { Session } from "../session/index.ts";
 import { attachSession } from "./attach.ts";
@@ -105,7 +108,7 @@ export class Processor {
 	constructor(ctx: Context) {
 		this.ctx = ctx;
 		// 标记当前活跃上下文，供 cordis 依赖注入系统识别服务归属
-		defineProperty(this, Context.current, ctx);
+		defineProperty(this, CordisContext.current, ctx);
 
 		// 绑定内置事件监听
 		this.middleware(

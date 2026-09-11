@@ -15,8 +15,10 @@
  */
 
 import type { Universal } from "@satorijs/core";
+// 值侧（current 静态符）走 cordis 原始类，切断对 context/index.ts 的值依赖（成环）
+import { Context as CordisContext } from "cordis";
 import { defineProperty } from "cosmokit";
-import { Context } from "../../context/index.ts";
+import type { Context } from "../../context/index.ts";
 import { Command } from "../command/command.ts";
 import {
 	commandOptionSchema,
@@ -31,7 +33,7 @@ export function setupCommander(
 	cmdr: Commander,
 	ctx: Context,
 ) {
-	defineProperty(cmdr, Context.current, ctx);
+	defineProperty(cmdr, CordisContext.current, ctx);
 	ctx.plugin(validate);
 
 	ctx.before("parse", (content, session) => {

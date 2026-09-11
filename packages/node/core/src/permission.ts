@@ -18,12 +18,15 @@
  * 判定（分别委托给适配器的 checkPermission 与本地会话/用户/频道授权列表）。
  */
 import { Logger } from "@satorijs/core";
+// 值侧（current 静态符）走 cordis 原始类，切断对 context/index.ts 的值依赖（成环）
+import { Context as CordisContext } from "cordis";
 import {
 	type Awaitable,
 	defineProperty,
 	remove,
 } from "cosmokit";
-import { Context } from "./context/index.ts";
+import type { Context } from "./context/index.ts";
+import { sessionShadow } from "./context/symbols.ts";
 import type { Channel, User } from "./database/index.ts";
 import {
 	createMatch,
@@ -98,7 +101,7 @@ export class Permissions {
 	constructor(ctx: Context) {
 		this.ctx = ctx;
 		// 标记当前活跃上下文，供 cordis 依赖注入系统识别服务归属
-		defineProperty(this, Context.current, ctx);
+		defineProperty(this, CordisContext.current, ctx);
 		// perms 是 permissions 的别名服务名
 		ctx.alias("permissions", ["perms"]);
 
@@ -280,11 +283,11 @@ export class Permissions {
 		session: Partial<Session> = {},
 		cache: Map<string, Promise<boolean>> = new Map(),
 	) {
-		// 若传入的是 shadow 会话（see session.ts 的 Context.shadow），
+		// 若传入的是 shadow 会话（symbols.ts 的 sessionShadow），
 		// 还原为原始会话再校验，避免代理层干扰
 		session =
 			((session as unknown as Record<symbol, unknown>)[
-				Context.shadow
+				sessionShadow
 			] as Partial<Session>) || session;
 		if (typeof names === "string") names = [names];
 		for (const name of this.subgraph("depends", names)) {
