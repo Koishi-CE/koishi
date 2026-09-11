@@ -53,6 +53,13 @@ import zhTW from "../../locales/zh-TW.yml";
 // 且 loader 的 envData 实际类型为推断的 any，故该增强在本仓无落点，不再声明。
 
 export * from "@koishi-ce/console";
+// 裸导入改写工具（原文件内实现，独立成纯函数模块；此处转出保持公开面）
+export {
+	rewriteSharedImports,
+	SHARED_IMPORT_MAP,
+} from "./rewrite.ts";
+
+import { rewriteSharedImports } from "./rewrite.ts";
 
 /** 浏览器端全局配置 KOISHI_CONFIG 的形状（createGlobal 生成后注入 index.html）。 */
 export interface ClientConfig {
@@ -62,78 +69,6 @@ export interface ClientConfig {
 	static?: boolean;
 	heartbeat?: HeartbeatConfig;
 	proxyBase?: string;
-}
-
-/**
- * 插件产物 JS 中的裸包名到宿主控制台共享模块的改写映射。
- * `@koishijs/client` 与 `@koishi-ce/client` 同源，供市场安装的上游官方
- * webui 插件（其产物裸导入上游包名）复用同一份共享 chunk。
- */
-export const SHARED_IMPORT_MAP: Record<string, string> = {
-	vue: "../vue.js",
-	"vue-router": "../vue-router.js",
-	"@vueuse/core": "../vueuse.js",
-	"@koishi-ce/client": "../client.js",
-	"@koishijs/client": "../client.js",
-};
-
-/**
- * 把插件产物 JS 中的裸导入改写为宿主共享模块的相对路径。
- * 产物由 vite/rolldown 压缩生成，导入语句的形态不止 `import … from`
- * 一种，以下形态都必须覆盖，否则浏览器端会以裸名直接加载而失败：
- * - `import { x } from "vue"` / `import x from "vue"`（含压缩后无空格形态）
- * - `import "vue"`（无绑定名的副作用导入，如插件只注册路由）
- * - `export { x } from "vue"` / `export * from "vue"`（再导出）
- * - `import("vue")`（动态导入）
- * 映射之外的说明符（相对路径、其他依赖）原样保留。
- */
-export function rewriteSharedImports(source: string) {
-	// 前导边界：import/export 关键字前必须是语句边界字符（行首、;、}、
-	// 空白、括号等），不能紧跟引号或标识符字符——否则字符串字面量里
-	// 恰好出现的 "import … from 'vue'" 文案也会被误改写
-	const boundary = String.raw`(?:^|[^\w.'"])`;
-	const rewrite = (
-		stmt: string,
-		left: string,
-		quote: string,
-		spec: string,
-		right = "",
-	) => {
-		const target = SHARED_IMPORT_MAP[spec];
-		return target === undefined
-			? stmt
-			: left + quote + target + quote + right;
-	};
-	return source
-		.replace(
-			new RegExp(
-				`(${boundary}(?:\\bimport|\\bexport)\\b[^;'"]*?\\bfrom\\s*)(["'])([^"']+)\\2`,
-				"g",
-			),
-			(stmt, left: string, quote: string, spec: string) =>
-				rewrite(stmt, left, quote, spec),
-		)
-		.replace(
-			new RegExp(
-				`(${boundary}\\bimport\\s*)(["'])([^"']+)\\2(?=\\s*[;\\n])`,
-				"g",
-			),
-			(stmt, left: string, quote: string, spec: string) =>
-				rewrite(stmt, left, quote, spec),
-		)
-		.replace(
-			new RegExp(
-				`(${boundary}\\bimport\\(\\s*)(["'])([^"']+)\\2(\\s*\\))`,
-				"g",
-			),
-			(
-				stmt,
-				left: string,
-				quote: string,
-				spec: string,
-				right: string,
-			) => rewrite(stmt, left, quote, spec, right),
-		);
 }
 
 /** WebSocket 心跳配置（间隔与超时时间）。 */
