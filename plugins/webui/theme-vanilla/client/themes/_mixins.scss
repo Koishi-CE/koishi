@@ -1,0 +1,19 @@
+// SPDX-License-Identifier: AGPL-3.0-only
+// Copyright (c) 2019-present Shigma and Koishijs contributors.
+// Copyright (c) 2026-present Koishi-CE contributors.
+
+// 各主题共享的派生色阶 mixin（经 @use as * 引入）。
+
+@use 'sass:color';
+
+/**
+ * 由主色生成 shade / tint / fade 三个衍生 CSS 变量。
+ * 深浅两系主题仅 mix 比例不同（深色 shade 80% / tint 90%，浅色相反），
+ * 经 $shade / $tint 参数化共用一份实现。
+ */
+@mixin apply-color($name, $base, $shade: 80%, $tint: 90%) {
+  --k-color-#{$name}: #{$base};
+  --k-color-#{$name}-shade: #{color.mix($base, #000, $shade)};
+  --k-color-#{$name}-tint: #{color.mix($base, #fff, $tint)};
+  --k-color-#{$name}-fade: #{color.adjust($base, $alpha: -0.9)};
+}
