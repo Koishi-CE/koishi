@@ -35,21 +35,11 @@
 
 <script lang="ts" setup>
 import { computed, ref, watch } from "vue";
-
-/** 单条表达式的操作数：[{ $: 实体名 }, 比较值] */
-type Operand = [{ $: string }, unknown];
-
-/** minato 过滤表达式：单条 { [运算符]: 操作数 }，或 $and / $or 逻辑组合 */
-interface FilterExpr {
-	$and?: FilterExpr[];
-	$or?: FilterExpr[];
-	[operator: string]: FilterExpr[] | Operand | undefined;
-}
-
-/** 过滤器宿主选项：userFields 声明可选的自定义用户字段（user.* 实体开关） */
-interface FilterOptions {
-	userFields?: string[];
-}
+import type {
+	FilterExpr,
+	FilterOptions,
+	Operand,
+} from "./k-filter-types";
 
 const props = defineProps<{
 	modelValue: FilterExpr | null;
