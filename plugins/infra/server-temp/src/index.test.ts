@@ -11,6 +11,7 @@ import {
 import { existsSync, mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+import { pathToFileURL } from "node:url";
 import { App, Logger } from "@koishi-ce/koishi";
 import http from "@koishi-ce/plugin-http";
 import server from "@koishi-ce/plugin-server";
@@ -83,7 +84,7 @@ describe("server-temp 插件", () => {
 		expect(await response.text()).toBe("buffer-body");
 	});
 
-	it("create(ReadableStream) 经 Bun.write 直收落盘", async () => {
+	it("create(ReadableStream) 流式落盘并经路由读回", async () => {
 		const chunks = ["stream-", "part-a", "-part-b"];
 		const stream = new ReadableStream({
 			start(controller) {
@@ -101,8 +102,10 @@ describe("server-temp 插件", () => {
 	});
 
 	it("create(file: URL) 直接复用原路径不复制", async () => {
+		// pathToFileURL 而非手拼 file://：win32 的 C:\ 与 POSIX 的 / 前缀
+		// 拼接后斜杠数不同，手拼在 POSIX 下会得到 file:////tmp/... 形态
 		const entry = await temp().create(
-			`file:///${join(baseDir, "x").replaceAll("\\", "/")}`,
+			pathToFileURL(join(baseDir, "x")).href,
 		);
 		// 该路径不存在文件，但条目 path 即 file: 转换结果本身
 		expect(entry.path).toBe(join(baseDir, "x"));

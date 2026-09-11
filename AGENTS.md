@@ -36,7 +36,8 @@ bun run lint                    # biome check .（格式 + lint 唯一权威）
 bun run lint:client             # eslint 仅查 *.vue（biome 只解析 .vue 的 script，模板语义归 eslint）
 bun run typecheck               # TS7 类型检查 = 两条 bunx tsc（node 侧 + client 侧大一统串行）
 bun run build                   # 根 tsdown：全部 node 侧包 → lib/（ESM-only）
-bun test                        # 全量自有用例（102 个测试文件 / 约 860 用例，覆盖全部 node 侧包）
+bun test                        # 全量自有用例（108 个测试文件 / 约 913 用例，覆盖全部 node 侧包）
+bun run test                    # 同上的脚本形态：bun test --isolate（每文件独立 global，隔离跨文件 mock.module）
 bun test --coverage             # 覆盖率（src 源码口径，总体约 99.8% 行覆盖）
 bun packages/web/client/src/bin.ts build            # 宿主控制台前端 → plugins/webui/console/dist
 bun packages/web/client/src/bin.ts build <插件目录>  # 单个 webui 插件的前端

@@ -8,7 +8,7 @@
 
 | 工具 | 版本 | 用途 |
 |---|---|---|
-| [Bun](https://bun.sh) | ≥ 1.4（`packageManager` 钉 `bun@1.4.0`） | 唯一包管理器（workspaces + `bun.lock`）、测试运行器、主要运行时（`require(esm)`、原生 yml 导入） |
+| [Bun](https://bun.sh) | ≥ 1.4（`packageManager` 钉 `bun@1.4.2`） | 唯一包管理器（workspaces + `bun.lock`）、测试运行器、主要运行时（`require(esm)`、原生 yml 导入） |
 | Node | ≥ 22.12（不作兼容目标） | 辅助场景；类型检查走 `bunx tsc`（`@typescript/native` 的 node 启动器） |
 
 - 不要引入 pnpm / yarn / npm 的锁文件；无全局安装要求，所有工具都在 workspace devDependencies。
@@ -58,10 +58,11 @@ bun run release status                   # 发布链概览（详见 ../process/r
 4. **check:locales**：`tooling/check-locales.ts`（零依赖，bun 直跑）——词典键对齐 / 语种齐全 / 假翻译三查，发现问题 exit 1；覆盖范围与豁免名单见脚本头部注释。
 5. **check:docs-links**：`tooling/check-docs-links.ts`（零依赖）——docs 全树 + 根部 / `.github` 文档的相对链接与锚点存活检查，问题 exit 1。
 
-**CI（`.github/workflows/ci.yml`）**：PR 与 main push 自动触发（也支持手动 dispatch），三个并行 job：`gate`（build → check → test）、`client`（宿主 + 全部 webui 插件的前端构建，即 `.vue` 的实际类型门禁）、`knip`（`bun run knip` 依赖与导出审计）。两个顺序要点：
+**CI（`.github/workflows/ci.yml`）**：PR 与 main push 自动触发（也支持手动 dispatch），三个并行 job：`gate`（build → 宿主前端构建 → check → test）、`client`（宿主 + 全部 webui 插件的前端构建，即 `.vue` 的实际类型门禁）、`knip`（`bun run knip` 依赖与导出审计）。三个顺序要点：
 
 - **gate 里 build 前置于 check**：`tsconfig.web.json` 的部分 paths 指向各包 `lib/index.d.ts` 产物，全新环境无 lib 时 web 侧 tsc 直接 TS2307（已实测）；本地因 lib 常在而感知不到该依赖。
-- **Bun 版本不在 workflow 硬编码**：`oven-sh/setup-bun` 自动读根 `packageManager`（bun@1.4.0），升级只改根字段。
+- **gate 里前端构建前置于 test**：console 插件的「静态资源托管」用例读 `plugins/webui/console/dist` 真实产物（index.html / logo.png），干净环境不构建前端则整套用例必失败（首次上 CI 实证）；本地因 dist 常在而感知不到。
+- **Bun 版本不在 workflow 硬编码**：`oven-sh/setup-bun` 自动读根 `packageManager`（bun@1.4.2），升级只改根字段。
 
 **类型检查现状**：全仓在 TS7 下 0 错误（含 `packages/web/*` 与全部 webui 插件）。最低纪律：改哪个包，保证该包所在 project 不新增错误。
 

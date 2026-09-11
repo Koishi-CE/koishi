@@ -3,7 +3,7 @@
     "version": "1.0.0",
     "type": "module",
     "private": true,
-    "packageManager": "bun@1.4.0",
+    "packageManager": "bun@1.4.2",
     "workspaces": [
         "packages/node/*",
         "packages/shim/*",
@@ -26,7 +26,7 @@
         "typecheck:legacy": "tsc6 --noEmit -p tsconfig.json --tsBuildInfoFile ./node_modules/.cache/tsc/node-legacy.tsbuildinfo",
         "ts7": "node node_modules/@typescript/native/bin/tsc",
         "build": "tsdown",
-        "test": "bun test",
+        "test": "bun test --isolate",
         "changeset": "changeset",
         "release": "bun tooling/release/index.ts"
     },

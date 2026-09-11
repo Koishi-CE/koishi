@@ -41,6 +41,24 @@ declare module "@koishi-ce/koishi" {
 	}
 }
 
+/**
+ * 把 Web ReadableStream 落盘。
+ *
+ * 不经 Bun.write 的流分支：其对 Web ReadableStream 的支持随运行时版本
+ * 而异（旧版会退化为 toString，把 "[object ReadableStream]" 写进文件），
+ * 显式经 FileSink 逐块写入在版本间行为一致。
+ */
+async function writeStream(
+	path: string,
+	stream: ReadableStream,
+): Promise<void> {
+	const writer = Bun.file(path).writer();
+	for await (const chunk of stream) {
+		writer.write(chunk);
+	}
+	await writer.end();
+}
+
 /** 临时文件条目：磁盘路径、公网 URL 与清理回调。 */
 export interface Entry {
 	path: string;
@@ -144,12 +162,14 @@ class TempServer extends Service {
 					responseType: "stream",
 				});
 				path = this.baseDir + name;
-				// Bun.write 直收 Web ReadableStream，无需 Readable.fromWeb 中转
-				await Bun.write(path, stream);
+				await writeStream(path, stream);
 			}
-		} else {
+		} else if (data instanceof Uint8Array) {
 			path = this.baseDir + name;
 			await Bun.write(path, data);
+		} else {
+			path = this.baseDir + name;
+			await writeStream(path, data);
 		}
 		// 条目由 ctx.effect 托管：上下文销毁时随 dispose 清理；
 		// dispose 先于 timer 声明，setTimeout 回调异步触发，无 TDZ 风险

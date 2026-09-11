@@ -12,7 +12,7 @@
 #          bun run knip）。
 #
 # Bun 版本不在此处硬编码：oven-sh/setup-bun 自动读根 package.json 的
-# packageManager（bun@1.4.0），升级只改根字段即可。
+# packageManager（bun@1.4.2），升级只改根字段即可。
 
 name: CI
 
@@ -42,6 +42,11 @@ jobs:
       # postinstall 拦截提示属预期（平台预编译包就位即可用）
       - run: bun install
       - run: bun run build
+      # console 插件的「静态资源托管」用例读真实 dist 产物（index.html /
+      # logo.png），不构建前端则整套用例在干净环境下必失败；本地因 dist
+      # 常在而感知不到，此处必须先出宿主控制台前端
+      - name: 宿主控制台前端（console 静态资源测试的依赖）
+        run: bun packages/web/client/src/bin.ts build
       - run: bun run check
       - run: bun test
 

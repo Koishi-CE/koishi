@@ -18,7 +18,7 @@ import {
 	rmSync,
 	writeFileSync,
 } from "node:fs";
-import { tmpdir } from "node:os";
+import { homedir, tmpdir } from "node:os";
 import { join } from "node:path";
 import { tarPack } from "./tar-pack.ts";
 
@@ -203,13 +203,19 @@ function reset(sc: typeof scenario): void {
 		recursive: true,
 		force: true,
 	});
-	// giget 把 tarball 缓存到系统临时目录（win32 为 tmpdir()/giget，不受
-	// XDG_CACHE_HOME 影响）；逐用例清理，避免上一场景的缓存（tarball-404
-	// 的缺失或 corrupt 的损坏归档）被 giget 的「下载失败回退缓存」吞掉
-	rmSync(join(tmpdir(), "giget"), {
-		recursive: true,
-		force: true,
-	});
+	// giget 缓存位置随平台而异（win32 为 tmpdir()/giget，POSIX 跟随
+	// XDG_CACHE_HOME——默认 ~/.cache）；逐用例清理，避免上一场景的缓存
+	// （tarball-404 的缺失或 corrupt 的损坏归档）被 giget 的
+	// 「下载失败回退缓存」吞掉
+	const cacheRoot =
+		process.env["XDG_CACHE_HOME"] ??
+		join(homedir(), ".cache");
+	for (const dir of [
+		join(tmpdir(), "giget"),
+		join(cacheRoot, "giget"),
+	]) {
+		rmSync(dir, { recursive: true, force: true });
+	}
 }
 
 describe("create-koishi-ce 远程模板", () => {
