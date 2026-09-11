@@ -4,6 +4,7 @@
 	"ignoreDependencies": ["@satorijs/element", "vue-i18n"],
 	"workspaces": {
 		".": {
+			"entry": ["tooling/upstream-audit.ts"],
 			"ignoreDependencies": [
 				"@koishi-ce/plugin-proxy-agent",
 				"@koishi-ce/plugin-server"
