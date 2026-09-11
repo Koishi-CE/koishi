@@ -41,6 +41,37 @@ function parseOptionSyntax(content: string) {
 	};
 }
 
+/** 判定选项是否无需额外取值（value 变体固定取值或 boolean 型）。 */
+function isValuedOption(
+	names: string | string[],
+	option: Argv.OptionDeclaration | undefined,
+) {
+	return (
+		(names[names.length - 1] ?? "") in
+			(option?.values || {}) || option?.type === "boolean"
+	);
+}
+
+/** 从下一个 token 消费选项值（不满足取值条件时返回空值、不动 tokens；
+ *  仅在 token 消费落空的防御分支返回 null，调用方据此跳过整个赋值）。 */
+function shiftOptionValue(
+	argv: Argv,
+	type: Argv.OptionDeclaration["type"],
+): { param: string; quoted: boolean } | null {
+	const tokens = argv.tokens;
+	if (!tokens?.length) return { param: "", quoted: false };
+	// 是值类型（type 已声明），或下一个 token 不是新的 "-" 开头写法，才消费它
+	if (!(type || tokens[0]?.content !== "-")) {
+		return { param: "", quoted: false };
+	}
+	const nextToken = tokens.shift();
+	if (!nextToken) return null;
+	return {
+		param: nextToken.content,
+		quoted: nextToken.quoted,
+	};
+}
+
 /**
  * 选项取值：本 token 未带 "=" 赋值时按声明类型决定取值方式——
  * 贪婪选项吞掉剩余全部原文；固定取值 / boolean 型无需额外值；
@@ -52,30 +83,18 @@ function resolveOptionValue(
 	names: string | string[],
 	option: Argv.OptionDeclaration | undefined,
 ): { param: string; quoted: boolean } | null {
-	const type = option?.type;
-	const values = option?.values;
-	if (cmd.ctx.$commander.resolveDomain(type).greedy) {
-		// 贪婪选项（-- <rest:text>）：剩余全部原文作为值，且视为已引用
+	if (
+		cmd.ctx.$commander.resolveDomain(option?.type).greedy
+	) {
+		// 贪婪选项（-- <rest:text>）：剩余全部原文作为值，且视为已引用。
+		// 先 stringify 再清空 tokens（stringify 读取的就是 tokens）
 		const param = Argv.stringify(argv);
 		argv.tokens = [];
 		return { param, quoted: true };
 	}
-	const isValued =
-		(names[names.length - 1] ?? "") in (values || {}) ||
-		type === "boolean";
-	if (
-		!isValued &&
-		argv.tokens.length &&
-		(type || argv.tokens[0]?.content !== "-")
-	) {
-		const nextToken = argv.tokens.shift();
-		if (!nextToken) return null;
-		return {
-			param: nextToken.content,
-			quoted: nextToken.quoted,
-		};
-	}
-	return { param: "", quoted: false };
+	if (isValuedOption(names, option))
+		return { param: "", quoted: false };
+	return shiftOptionValue(argv, option?.type);
 }
 
 /**
