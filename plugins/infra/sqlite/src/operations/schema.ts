@@ -12,7 +12,7 @@
 import { escapeId } from "@minatojs/sql-utils";
 import type { Dict } from "cosmokit";
 import { isNullable, makeArray } from "cosmokit";
-import { Field } from "minato";
+import { Field, type Model } from "minato";
 import type { SQLiteDriver } from "../index.ts";
 import { joinKeys } from "../sql/utils.ts";
 
@@ -55,34 +55,40 @@ interface SQLiteFieldInfo {
 	pk: boolean;
 }
 
-/**
- * 表结构同步：对比 `PRAGMA table_info` 与 model 定义，按差异走三路之一——
- * 1. 库中无表 → 直接 CREATE TABLE；
- * 2. 列名/类型漂移（含 legacy 归并、dropKeys 剔除）→ 建临时表搬数据重建；
- * 3. 仅新增列 → 逐条 ALTER TABLE ADD。
- * 尾段再走基类 migrate（字段级数据迁移钩子），迁移产物由 finalize
- * 递归调 prepare 收编进表结构。
- */
-export async function prepare(
-	driver: SQLiteDriver,
-	table: string,
-	dropKeys?: string[],
-) {
-	const columns = driver._all(
-		`PRAGMA table_info(${escapeId(table)})`,
-	) as SQLiteFieldInfo[];
-	const model = driver.model(table);
-	const columnDefs: string[] = [];
-	const indexDefs: string[] = [];
-	const alter: string[] = [];
-	const mapping: Dict<string> = {};
-	let shouldMigrate = false;
+/** prepare 的列差异分析结果（见 {@link buildColumnDefs}） */
+interface ColumnPlan {
+	/** 全部声明列的建表列定义 */
+	columnDefs: string[];
+	/** 仅新增列的 ALTER TABLE ADD 片段 */
+	alter: string[];
+	/** 旧列名 → 新列名（legacy 归并后的搬运映射） */
+	mapping: Dict<string>;
+	/** 列名/类型出现漂移，需要重建式迁移 */
+	shouldMigrate: boolean;
+}
 
-	// field definitions：legacy 声明允许新列名归并旧列（改名迁移的依据）
+/**
+ * 由 model 声明与库中现列（`PRAGMA table_info`）做列级差异分析：
+ * legacy 声明允许新列名归并旧列（改名迁移的依据），initial 缺省值
+ * 经 sql.dump 序列化进列定义。
+ */
+function buildColumnDefs(
+	driver: SQLiteDriver,
+	model: Model,
+	columns: SQLiteFieldInfo[],
+	dropKeys?: string[],
+): ColumnPlan {
+	const plan: ColumnPlan = {
+		columnDefs: [],
+		alter: [],
+		mapping: {},
+		shouldMigrate: false,
+	};
 	for (const key in model.fields) {
 		const field = model.fields[key];
 		if (!field || !Field.available(field)) {
-			if (dropKeys?.includes(key)) shouldMigrate = true;
+			if (dropKeys?.includes(key))
+				plan.shouldMigrate = true;
 			continue;
 		}
 
@@ -105,17 +111,26 @@ export async function prepare(
 					);
 			}
 		}
-		columnDefs.push(def);
+		plan.columnDefs.push(def);
 		if (!column) {
-			alter.push(`ADD ${def}`);
+			plan.alter.push(`ADD ${def}`);
 		} else {
-			mapping[column.name] = key;
-			shouldMigrate ||=
+			plan.mapping[column.name] = key;
+			plan.shouldMigrate ||=
 				column.name !== key || column.type !== typedef;
 		}
 	}
+	return plan;
+}
 
-	// index definitions：表级约束随建表 DDL 一起声明（SQLite 无独立语法）
+/**
+ * 表级约束（主键 / 唯一 / 外键）随建表 DDL 一起声明
+ * （SQLite 无独立的表级约束语法）。
+ */
+function buildIndexDefs(
+	model: Model,
+): string[] {
+	const indexDefs: string[] = [];
 	if (model.primary && !model.autoInc) {
 		indexDefs.push(
 			`PRIMARY KEY (${joinKeys(makeArray(model.primary))})`,
@@ -138,56 +153,104 @@ export async function prepare(
 			),
 		);
 	}
+	return indexDefs;
+}
+
+/**
+ * 重建式迁移：把 model 未声明的旧列原样保留进临时表（不丢数据），
+ * 搬运失败时删掉临时表保住原表，成功则以 RENAME 原子换名。
+ * 会向 plan.columnDefs / plan.mapping 追加保留列的定义与恒等映射。
+ */
+function rebuildTable(
+	driver: SQLiteDriver,
+	table: string,
+	columns: SQLiteFieldInfo[],
+	plan: ColumnPlan,
+	indexDefs: string[],
+	dropKeys?: string[],
+) {
+	for (const {
+		name,
+		type,
+		notnull,
+		pk,
+		dflt_value: value,
+	} of columns) {
+		if (plan.mapping[name] || dropKeys?.includes(name))
+			continue;
+		let def = `${escapeId(name)} ${type}`;
+		def += `${notnull ? " NOT " : " "}NULL`;
+		if (pk) def += " PRIMARY KEY";
+		if (value !== null)
+			def += ` DEFAULT ${driver.sql.escape(value)}`;
+		plan.columnDefs.push(def);
+		plan.mapping[name] = name;
+	}
+
+	const temp = `${table}_temp`;
+	const fields = Object.keys(plan.mapping)
+		.map(escapeId)
+		.join(", ");
+	driver.logger.info("auto migrating table %c", table);
+	driver._run(
+		`CREATE TABLE ${escapeId(temp)} (${[...plan.columnDefs, ...indexDefs].join(", ")})`,
+	);
+	try {
+		driver._run(
+			`INSERT INTO ${escapeId(temp)} SELECT ${fields} FROM ${escapeId(table)}`,
+		);
+		driver._run(`DROP TABLE ${escapeId(table)}`);
+	} catch (error) {
+		driver._run(`DROP TABLE ${escapeId(temp)}`);
+		throw error;
+	}
+	driver._run(
+		`ALTER TABLE ${escapeId(temp)} RENAME TO ${escapeId(table)}`,
+	);
+}
+
+/**
+ * 表结构同步：对比 `PRAGMA table_info` 与 model 定义，按差异走三路之一——
+ * 1. 库中无表 → 直接 CREATE TABLE；
+ * 2. 列名/类型漂移（含 legacy 归并、dropKeys 剔除）→ 建临时表搬数据重建；
+ * 3. 仅新增列 → 逐条 ALTER TABLE ADD。
+ * 尾段再走基类 migrate（字段级数据迁移钩子），迁移产物由 finalize
+ * 递归调 prepare 收编进表结构。
+ */
+export async function prepare(
+	driver: SQLiteDriver,
+	table: string,
+	dropKeys?: string[],
+) {
+	const columns = driver._all(
+		`PRAGMA table_info(${escapeId(table)})`,
+	) as SQLiteFieldInfo[];
+	const model = driver.model(table);
+	const plan = buildColumnDefs(
+		driver,
+		model,
+		columns,
+		dropKeys,
+	);
+	const indexDefs = buildIndexDefs(model);
 
 	if (!columns.length) {
 		driver.logger.info("auto creating table %c", table);
 		driver._run(
-			`CREATE TABLE ${escapeId(table)} (${[...columnDefs, ...indexDefs].join(", ")})`,
+			`CREATE TABLE ${escapeId(table)} (${[...plan.columnDefs, ...indexDefs].join(", ")})`,
 		);
-	} else if (shouldMigrate) {
-		// 重建式迁移：旧列原样保留（model 未声明的列也不丢数据），
-		// 搬运失败时删掉临时表保住原表
-		for (const {
-			name,
-			type,
-			notnull,
-			pk,
-			dflt_value: value,
-		} of columns) {
-			if (mapping[name] || dropKeys?.includes(name))
-				continue;
-			let def = `${escapeId(name)} ${type}`;
-			def += `${notnull ? " NOT " : " "}NULL`;
-			if (pk) def += " PRIMARY KEY";
-			if (value !== null)
-				def += ` DEFAULT ${driver.sql.escape(value)}`;
-			columnDefs.push(def);
-			mapping[name] = name;
-		}
-
-		const temp = `${table}_temp`;
-		const fields = Object.keys(mapping)
-			.map(escapeId)
-			.join(", ");
-		driver.logger.info("auto migrating table %c", table);
-		driver._run(
-			`CREATE TABLE ${escapeId(temp)} (${[...columnDefs, ...indexDefs].join(", ")})`,
+	} else if (plan.shouldMigrate) {
+		rebuildTable(
+			driver,
+			table,
+			columns,
+			plan,
+			indexDefs,
+			dropKeys,
 		);
-		try {
-			driver._run(
-				`INSERT INTO ${escapeId(temp)} SELECT ${fields} FROM ${escapeId(table)}`,
-			);
-			driver._run(`DROP TABLE ${escapeId(table)}`);
-		} catch (error) {
-			driver._run(`DROP TABLE ${escapeId(temp)}`);
-			throw error;
-		}
-		driver._run(
-			`ALTER TABLE ${escapeId(temp)} RENAME TO ${escapeId(table)}`,
-		);
-	} else if (alter.length) {
+	} else if (plan.alter.length) {
 		driver.logger.info("auto updating table %c", table);
-		for (const def of alter) {
+		for (const def of plan.alter) {
 			driver._run(`ALTER TABLE ${escapeId(table)} ${def}`);
 		}
 	}
