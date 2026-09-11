@@ -93,18 +93,7 @@ function moveToCenter(el: HTMLImageElement) {
 
 <style lang="scss">
 
-@use "sass:math";
-
-$buttonSize: 3rem;
-$buttonBg: #303133;
-
-.overlay-enter-from, .overlay-leave-to {
-  opacity: 0;
-}
-
-.overlay-enter, .overlay-leave {
-  opacity: 1;
-}
+@use './viewer-toolbar.scss' as *;
 
 .image-viewer {
   position: absolute;
@@ -113,58 +102,7 @@ $buttonBg: #303133;
   right: 0;
   bottom: 0;
 
-  .button {
-    position: absolute;
-    border-radius: $buttonSize;
-    cursor: pointer;
-    user-select: none;
-    opacity: 0.5;
-    font-size: math.div($buttonSize, 2);
-    height: $buttonSize;
-    background-color: $buttonBg;
-    display: flex;
-    align-items: center;
-    justify-content: space-evenly;
-    transition: 0.4s ease;
-
-    .k-icon {
-      transition: 0.4s ease;
-      height: 1.25rem;
-    }
-
-    &:not(.disabled):hover {
-      opacity: 0.8;
-    }
-
-    &:not(.disabled) .k-icon:hover {
-      color: rgba(244, 244, 245, .8);
-    }
-
-    @each $tag in left, right {
-      &.#{$tag} {
-        top: 50%;
-        z-index: 2000;
-        transform: translateY(-50%);
-        width: $buttonSize;
-        #{$tag}: $buttonSize;
-        .k-icon {
-          margin-#{$tag}: -3px;
-        }
-      }
-    }
-
-    &.bottom {
-      z-index: 2000;
-      bottom: $buttonSize;
-      width: $buttonSize * 6;
-      left: 50%;
-      transform: translateX(-50%);
-    }
-
-    &.disabled {
-      cursor: not-allowed;
-    }
-  }
+  @include viewer-toolbar;
 
   img {
     position: absolute;
