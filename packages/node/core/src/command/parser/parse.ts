@@ -16,6 +16,115 @@ import type { Command } from "../command/command.ts";
 import { Argv } from "./argv.ts";
 import type { CommandBase } from "./base.ts";
 
+/**
+ * 解析选项写法：统计前导连字符个数、定位 "=" 分隔的显式赋值、
+ * 按短/长选项拆出名字序列。
+ */
+function parseOptionSyntax(content: string) {
+	// 1 个连字符为短选项（可连写），>=2 为长选项
+	let i = 0;
+	for (; i < content.length; ++i) {
+		if (content.charCodeAt(i) !== 45) break;
+	}
+	// 定位 "=" 分隔的显式赋值（如 --key=value、-k=v）
+	let j = i + 1;
+	for (; j < content.length; j++) {
+		if (content.charCodeAt(j) === 61) break;
+	}
+	const name = content.slice(i, j);
+	return {
+		dashes: i,
+		name,
+		// 短选项按字符拆分以支持连写（-ab → a、b）；长选项整体一个名字
+		names: i > 1 ? [name] : name,
+		param: content.slice(j + 1),
+	};
+}
+
+/**
+ * 选项取值：本 token 未带 "=" 赋值时按声明类型决定取值方式——
+ * 贪婪选项吞掉剩余全部原文；固定取值 / boolean 型无需额外值；
+ * 其余情况只要还有 token（且不是新的 "-" 开头写法）就消费它作为值。
+ */
+function resolveOptionValue(
+	cmd: CommandBase,
+	argv: Argv,
+	names: string | string[],
+	option: Argv.OptionDeclaration | undefined,
+): { param: string; quoted: boolean } | null {
+	const type = option?.type;
+	const values = option?.values;
+	if (cmd.ctx.$commander.resolveDomain(type).greedy) {
+		// 贪婪选项（-- <rest:text>）：剩余全部原文作为值，且视为已引用
+		const param = Argv.stringify(argv);
+		argv.tokens = [];
+		return { param, quoted: true };
+	}
+	const isValued =
+		(names[names.length - 1] ?? "") in (values || {}) ||
+		type === "boolean";
+	if (
+		!isValued &&
+		argv.tokens.length &&
+		(type || argv.tokens[0]?.content !== "-")
+	) {
+		const nextToken = argv.tokens.shift();
+		if (!nextToken) return null;
+		return {
+			param: nextToken.content,
+			quoted: nextToken.quoted,
+		};
+	}
+	return { param: "", quoted: false };
+}
+
+/**
+ * 逐个处理连写名：最后一个名字拿到值，前面的名字取空串（boolean 化）。
+ */
+function assignOptions(
+	cmd: CommandBase,
+	argv: Argv,
+	names: string | string[],
+	param: string,
+	options: Dict<unknown>,
+) {
+	for (let j = 0; j < names.length; j++) {
+		const name = names[j];
+		if (!name) continue;
+		const optDecl = cmd._namedOptions[name];
+		const key = optDecl
+			? (optDecl.name ?? "")
+			: camelCase(name);
+		if (optDecl && name in optDecl.values) {
+			options[key] = optDecl.values[name];
+		} else {
+			const source = j + 1 < names.length ? "" : param;
+			options[key] = cmd.ctx.$commander.parseValue(
+				source,
+				"option",
+				argv,
+				optDecl,
+			);
+		}
+		if (argv.error) break;
+	}
+}
+
+/** 填充 fallback：未显式传入且声明了默认值的选项在此补齐 */
+function applyFallback(
+	cmd: CommandBase,
+	options: Dict<unknown>,
+) {
+	for (const { name, fallback } of Object.values(
+		cmd._options,
+	)) {
+		if (!name) continue;
+		if (fallback !== undefined && !(name in options)) {
+			options[name] = fallback;
+		}
+	}
+}
+
 /** CommandBase.parse 的算法实现（纯函数化，便于与选项注册逻辑分离） */
 export function parseCommand(
 	cmd: CommandBase,
@@ -100,25 +209,14 @@ export function parseCommand(
 				continue;
 			}
 
-			// 统计前导连字符个数：1 个为短选项（可连写），>=2 为长选项
-			let i = 0;
-			for (; i < content.length; ++i) {
-				if (content.charCodeAt(i) !== 45) break;
-			}
-
-			// 定位 "=" 分隔的显式赋值（如 --key=value、-k=v）
-			let j = i + 1;
-			for (; j < content.length; j++) {
-				if (content.charCodeAt(j) === 61) break;
-			}
-			const name = content.slice(i, j);
-			// 短选项（单个 "-"）按字符拆分以支持连写（-ab → a、b）；长选项整体一个名字
-			names = i > 1 ? [name] : name;
+			// 解析选项写法（连字符个数、= 赋值、连写拆名）
+			const syntax = parseOptionSyntax(content);
+			names = syntax.names;
 			// 严格选项模式：未注册的写法不当作选项，
 			// 而是回退为普通参数（贪婪类型则整体吞掉剩余输入）
 			if (
 				cmd.config.strictOptions &&
-				!cmd._namedOptions[names[0] ?? ""]
+				!cmd._namedOptions[syntax.names[0] ?? ""]
 			) {
 				if (
 					cmd.ctx.$commander.resolveDomain(argDecl.type)
@@ -147,14 +245,14 @@ export function parseCommand(
 			}
 			// "--no-xxx" 且 xxx 未注册：直接置 options.xxx = false（隐式取反）
 			if (
-				i > 1 &&
-				name.startsWith("no-") &&
-				!cmd._namedOptions[name]
+				syntax.dashes > 1 &&
+				syntax.name.startsWith("no-") &&
+				!cmd._namedOptions[syntax.name]
 			) {
-				options[camelCase(name.slice(3))] = false;
+				options[camelCase(syntax.name.slice(3))] = false;
 				continue;
 			}
-			param = content.slice(++j);
+			param = syntax.param;
 			option =
 				cmd._namedOptions[names[names.length - 1] ?? ""];
 		}
@@ -162,64 +260,20 @@ export function parseCommand(
 		// 选项取值：本 token 未带 "=" 赋值时尝试从下一个 token 取值
 		quoted = false;
 		if (!param) {
-			const type = option?.type;
-			const values = option?.values;
-			if (cmd.ctx.$commander.resolveDomain(type).greedy) {
-				// 贪婪选项（-- <rest:text>）：剩余全部原文作为值，且视为已引用
-				param = Argv.stringify(argv);
-				quoted = true;
-				argv.tokens = [];
-			} else {
-				// 有固定取值（value 变体）或 boolean 型选项不需要额外值；
-				// 其余情况只要还有 token（且不是新的 "-" 开头写法）就消费它作为值
-				const isValued =
-					(names[names.length - 1] ?? "") in
-						(values || {}) || type === "boolean";
-				if (
-					!isValued &&
-					argv.tokens.length &&
-					(type || argv.tokens[0]?.content !== "-")
-				) {
-					const nextToken = argv.tokens.shift();
-					if (!nextToken) continue;
-					param = nextToken.content;
-					quoted = nextToken.quoted;
-				}
-			}
+			const resolved = resolveOptionValue(
+				cmd,
+				argv,
+				names,
+				option,
+			);
+			if (!resolved) continue;
+			({ param, quoted } = resolved);
 		}
 
-		// 逐个处理连写名：最后一个名字拿到值，前面的名字取空串（boolean 化）
-		for (let j = 0; j < names.length; j++) {
-			const name = names[j];
-			if (!name) continue;
-			const optDecl = cmd._namedOptions[name];
-			const key = optDecl
-				? (optDecl.name ?? "")
-				: camelCase(name);
-			if (optDecl && name in optDecl.values) {
-				options[key] = optDecl.values[name];
-			} else {
-				const source = j + 1 < names.length ? "" : param;
-				options[key] = cmd.ctx.$commander.parseValue(
-					source,
-					"option",
-					argv,
-					optDecl,
-				);
-			}
-			if (argv.error) break;
-		}
+		assignOptions(cmd, argv, names, param, options);
 	}
 
-	// 填充 fallback：未显式传入且声明了默认值的选项在此补齐
-	for (const { name, fallback } of Object.values(
-		cmd._options,
-	)) {
-		if (!name) continue;
-		if (fallback !== undefined && !(name in options)) {
-			options[name] = fallback;
-		}
-	}
+	applyFallback(cmd, options);
 
 	delete argv.tokens;
 	return {
