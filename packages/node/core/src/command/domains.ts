@@ -37,6 +37,33 @@ function defineElementDomain(
 	});
 }
 
+/**
+ * 注册一种「目标标识」domain（user / channel）：支持 "前缀id" 简写与
+ * at / sharp 元素三种写法，归一为 "platform:id" 形式的全局标识。
+ * @param name 注册的 domain 名（同时用作报错文案键）
+ * @param prefix 简写前缀（user 为 "@"，channel 为 "#"）
+ * @param type 对应的消息元素类型（at / sharp）
+ */
+function defineTargetDomain(
+	cmdr: Commander,
+	name: "user" | "channel",
+	prefix: string,
+	type: "at" | "sharp",
+) {
+	cmdr.domain(name, (source, session) => {
+		if (source.startsWith(prefix)) {
+			source = source.slice(prefix.length);
+			if (source.includes(":")) return source;
+			return `${session.platform}:${source}`;
+		}
+		const code = h.from(source);
+		if (code && code.type === type) {
+			return `${session.platform}:${code.attrs["id"]}`;
+		}
+		throw new Error(`internal.invalid-${name}`);
+	});
+}
+
 /** 注册内置参数类型（domain）表 */
 export function registerBuiltinDomains(cmdr: Commander) {
 	cmdr.domain("el", (source) => h.parse(source), {
@@ -132,31 +159,8 @@ export function registerBuiltinDomains(cmdr: Commander) {
 
 	// user / channel：支持 "@id"、"#id" 简写与 at / sharp 元素三种写法，
 	// 归一为 "platform:id" 形式的全局标识
-	cmdr.domain("user", (source, session) => {
-		if (source.startsWith("@")) {
-			source = source.slice(1);
-			if (source.includes(":")) return source;
-			return `${session.platform}:${source}`;
-		}
-		const code = h.from(source);
-		if (code && code.type === "at") {
-			return `${session.platform}:${code.attrs["id"]}`;
-		}
-		throw new Error("internal.invalid-user");
-	});
-
-	cmdr.domain("channel", (source, session) => {
-		if (source.startsWith("#")) {
-			source = source.slice(1);
-			if (source.includes(":")) return source;
-			return `${session.platform}:${source}`;
-		}
-		const code = h.from(source);
-		if (code && code.type === "sharp") {
-			return `${session.platform}:${code.attrs["id"]}`;
-		}
-		throw new Error("internal.invalid-channel");
-	});
+	defineTargetDomain(cmdr, "user", "@", "at");
+	defineTargetDomain(cmdr, "channel", "#", "sharp");
 
 	defineElementDomain(cmdr, "image", "image", "img");
 	defineElementDomain(cmdr, "img", "image", "img");

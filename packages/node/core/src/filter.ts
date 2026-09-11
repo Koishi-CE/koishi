@@ -2,6 +2,8 @@
 // Copyright (c) 2019-present Shigma and Koishijs contributors.
 // Copyright (c) 2026-present Koishi-CE contributors.
 
+// 值侧（current 静态符）走 cordis 原始类，切断对 context/index.ts 的值依赖（成环）
+import { Context as CordisContext } from "cordis";
 /**
  * 会话过滤服务（ctx.filter / ctx.$filter）。
  *
@@ -15,7 +17,7 @@
  */
 import { defineProperty } from "cosmokit";
 import type { Eval } from "minato";
-import { Context } from "./context/index.ts";
+import type { Context } from "./context/index.ts";
 import type { Channel, User } from "./database/index.ts";
 import type { Session } from "./session/index.ts";
 
@@ -107,7 +109,7 @@ export class FilterService {
 	constructor(ctx: Context) {
 		this.ctx = ctx;
 		// 标记当前活跃上下文，供 cordis 依赖注入系统识别服务归属
-		defineProperty(this, Context.current, ctx);
+		defineProperty(this, CordisContext.current, ctx);
 
 		// 根上下文默认放行所有会话
 		ctx.filter = () => true;
@@ -135,33 +137,40 @@ export class FilterService {
 	}
 
 	/** 与传入过滤器（或另一上下文的过滤器）取并集，返回新上下文。 */
-	union(arg: Filter | Context) {
+	/** 组合辅助：解析传入的过滤器，以 combine 归并当前过滤器后派生新上下文 */
+	private combine(
+		arg: Filter | Context,
+		combine: (self: boolean, other: boolean) => boolean,
+	) {
 		const filter =
 			typeof arg === "function" ? arg : arg.filter;
 		return this.ctx.extend({
 			filter: (s: Session) =>
-				this.ctx.filter(s) || filter(s),
+				combine(this.ctx.filter(s), filter(s)),
 		});
+	}
+
+	union(arg: Filter | Context) {
+		return this.combine(
+			arg,
+			(self, other) => self || other,
+		);
 	}
 
 	/** 与传入过滤器取交集，返回新上下文。 */
 	intersect(arg: Filter | Context) {
-		const filter =
-			typeof arg === "function" ? arg : arg.filter;
-		return this.ctx.extend({
-			filter: (s: Session) =>
-				this.ctx.filter(s) && filter(s),
-		});
+		return this.combine(
+			arg,
+			(self, other) => self && other,
+		);
 	}
 
 	/** 从当前过滤器中排除传入过滤器命中的会话，返回新上下文。 */
 	exclude(arg: Filter | Context) {
-		const filter =
-			typeof arg === "function" ? arg : arg.filter;
-		return this.ctx.extend({
-			filter: (s: Session) =>
-				this.ctx.filter(s) && !filter(s),
-		});
+		return this.combine(
+			arg,
+			(self, other) => self && !other,
+		);
 	}
 
 	/** 只保留指定用户的会话；不传参数则要求会话带有 userId。 */
