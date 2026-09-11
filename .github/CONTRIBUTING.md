@@ -17,7 +17,7 @@ bun test         # 全量测试
 
 涉及构建改动时加跑 `bun run build`。
 
-以上检查由 CI 自动执行（[workflows/ci.yml](.github/workflows/ci.yml)）：PR 与 main push 触发三个并行 job——`gate`（build / check / test）、`client`（前端构建）、`knip`（依赖与导出审计）。本地全绿而 CI 红，优先排查顺序依赖（CI 里 build 前置于 check，因 web 侧类型检查读取 lib 产物）。
+以上检查由 CI 自动执行（[workflows/ci.yml](.github/workflows/ci.yml)）：PR 与 main push 触发三个并行 job——`gate`（build / check / test）、`client`（前端构建）、`fallow`（死代码与依赖审计，配置见根目录 `.fallowrc.jsonc`）。本地全绿而 CI 红，优先排查顺序依赖（CI 里 build 前置于 check，因 web 侧类型检查读取 lib 产物）。
 
 ## 提交约定
 

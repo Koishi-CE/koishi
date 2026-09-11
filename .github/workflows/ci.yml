@@ -11,8 +11,11 @@
 # - client 前端构建：宿主控制台 + 全部 webui 插件（vite 编程式构建，无配置
 #          文件）。前端构建是 .vue 的实际类型门禁（compiler-sfc 含
 #          defineProps 类型解析），tsc 侧 .vue 只是不透明 Component。
-# - knip   依赖与导出审计（bunx 直跑，不进 devDependencies；本地手动入口
-#          bun run knip）。
+# - fallow  死代码与依赖审计（bunx 直跑，不进 devDependencies；本地手动入口
+#          bun run fallow）。豁免与规则见根目录 .fallowrc.jsonc：
+#          循环依赖仅告警（core 的 command ↔ context 已知架构债），
+#          反射式 API（unused-class-members / component props）与 duplicate-exports
+#          与 knip 时代口径一致地关闭。
 #
 # Bun 版本不在此处硬编码：oven-sh/setup-bun 自动读根 package.json 的
 # packageManager（bun@1.4.2），升级只改根字段即可。
@@ -71,12 +74,12 @@ jobs:
             bun packages/web/client/src/bin.ts build "$(dirname "$dir")"
           done
 
-  knip:
-    name: knip (deps & exports audit)
+  fallow:
+    name: fallow (dead code & deps audit)
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@v5
       - uses: oven-sh/setup-bun@v2
       - run: bun install
-      - run: bun run knip
+      - run: bun run fallow

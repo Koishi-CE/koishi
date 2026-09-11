@@ -1,0 +1,96 @@
+{
+	// 代码库审计配置（替代原 knip.json）
+	//
+	// 与 knip 的差异：fallow 自动按 package.json 发现 workspace 包，但不支持按包覆写
+	// 配置，因此 knip 时代散落在各包的 entry / ignoreDependencies 统一收敛到这里。
+	// ignoreDependencies 只能写包名（全局生效，同时豁免 unused 与 unlisted 两类），
+	// 无法精确到单个包，所以每条都配注释说明豁免理由。
+	//
+	// 运行入口：
+	//   bun run fallow              仅 dead-code（CI 门禁口径，等价 bunx fallow@3 dead-code）
+	//   bunx fallow@3               全量（dead-code + dupes + health）
+	//   bunx fallow@3 dead-code --trace <file>:<export>   判断某个导出能否删除
+	"$schema": "https://raw.githubusercontent.com/fallow-rs/fallow/main/schema.json",
+
+	// 静态不可达但确实是入口的文件：tsdown 配置里显式声明的构建入口、CLI 入口、
+	// 构建脚本、发布工具，以及库对外暴露的适配层/barrel（下游深导入的载体）
+	"entry": [
+		"**/tsdown.config.ts",
+		"apps/koishi-create/src/bin.ts",
+		"apps/koishi-scripts/src/bin.ts",
+		"packages/node/cli/src/cli/index.ts",
+		"packages/node/cli/src/worker/*.ts",
+		"packages/node/core/src/context/index.ts",
+		"packages/node/loader/src/node/index.ts",
+		"packages/web/client/scripts/client.ts",
+		"packages/web/client/src/bin.ts",
+		"tooling/upstream-audit.ts"
+	],
+
+	// 运行时动态加载的代码：前端由 vite 编程式构建、插件前端由 console 宿主按名 import()
+	// 载入，静态图里没有引用边。对应 knip 时代各 webui 包的 entry: ["client/**/*.ts"]。
+	"dynamicallyLoaded": [
+		"packages/web/*/client/**",
+		"packages/web/client/app/**",
+		"plugins/webui/*/build/**",
+		"plugins/webui/*/client/**",
+		"plugins/webui/*/src/browser/**"
+	],
+
+	"ignorePatterns": [
+		// 脚手架模板：不参与本仓构建，只在生成新项目后被消费
+		"apps/koishi-scripts/src/template/**",
+		// 无 package.json，仅存放发布脚本（fallow 会为 workspace glob 报诊断）
+		"tooling/release/**"
+	],
+
+	// 插件前端用 .vue 里的 `import type X from "@koishi-ce/plugin-*/src"` 取插件
+	// 主类的类型；这条路径由宿主构建的 vite 别名解析，Node 解析器看不到
+	"ignoreUnresolvedImports": ["@koishi-ce/plugin-*/src"],
+
+	// 包名级豁免：这些依赖要么由运行时/宿主提供，要么由构建期编程式加载
+	"ignoreDependencies": [
+		// 根 package.json 声明的 vendored 三包：插件加载链按包名运行时解析，无静态 import
+		"@koishi-ce/plugin-http",
+		"@koishi-ce/plugin-proxy-agent",
+		"@koishi-ce/plugin-server",
+		// packages/shim 两包是预编译产物，依赖仅用于下游 npm alias 解析
+		"@koishi-ce/koishi",
+		"@koishi-ce/plugin-console",
+		// 各 webui 插件的 devDependencies：测试期/构建期按包名加载，无静态 import
+		"@koishi-ce/loader",
+		"@koishi-ce/plugin-analytics",
+		"@koishi-ce/plugin-config",
+		"@koishi-ce/plugin-hmr",
+		"@koishi-ce/plugin-locales",
+		"@koishijs/plugin-server-proxy",
+		// 插件前端由宿主 console 构建，vue 系依赖由宿主/工作区根提供，
+		// 各插件包自身不声明（vite 经 collectWorkspaceAliases 解析）
+		"@koishijs/client",
+		"@vueuse/core",
+		"element-plus",
+		"vue",
+		"vue-router",
+		// 构建期由 client 构建脚本按路径加载（sass 预处理器），非 import 语句
+		"sass-embedded",
+		// 类型检查器：经 node_modules/@typescript/native/bin/tsc 以路径方式调用
+		"@typescript/native",
+		// 上游遗留的豁免（沿自 knip.json）
+		"@satorijs/element",
+		"pg-like",
+		"vue-i18n"
+	],
+
+	"rules": {
+		// 反射式/声明式公共 API：cordis Service 方法、Schema 声明、Vue 组件 props 由
+		// 下游以字符串或运行时方式消费，无内部引用不等于死代码（knip 亦未启用该类检查）
+		"unused-class-members": "off",
+		"unused-component-props": "off",
+		"unused-component-emits": "off",
+		// knip 时代即 exclude: ["duplicates"]；同名导出在多包入口属正常约定
+		"duplicate-exports": "off",
+		// 保持可见但不阻塞：core 里 command/context 的双向引用属已知架构债，见 docs/roadmap.md
+		"circular-dependencies": "warn",
+		"re-export-cycle": "warn"
+	}
+}
