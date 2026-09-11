@@ -3,79 +3,27 @@
 // Copyright (c) 2026-present Koishi-CE contributors.
 
 /**
- * dataview 客户端工具：RPC 报文的序列化编解码、查询封装与展示辅助。
+ * dataview 客户端工具：RPC 报文的查询封装与展示辅助。
  *
- * serialize / deserialize 与 node 侧 src/utils.ts 的编码协议保持一致
- * （s / n / b / d 类型前缀字符串），差异仅在 binary 分支：客户端把
- * `"b<len>"` 还原为字节数数值（node 侧丢弃为 undefined）。
+ * serialize / deserialize 的编解码协议与 node 侧共享（../src/codec.ts
+ * 纯协议模块，相对路径引入以保证两侧实现同源），差异仅在 binary 分支：
+ * 客户端把 `"b<len>"` 还原为字节数数值（node 侧丢弃为 undefined）。
  */
 
 import { message, send } from "@koishi-ce/client";
 import type { Database } from "@koishi-ce/koishi";
 import type { Methods } from "@koishi-ce/plugin-dataview";
+import {
+	deserialize as deserializeBase,
+	serialize,
+} from "../src/codec.ts";
 
-/**
- * cosmokit `Binary.is` 的等价内联实现（跨 realm 的 toStringTag 判定，
- * 覆盖其 instanceof 分支）：浏览器端工程不直接依赖 cosmokit 运行时。
- */
-function isBinary(
-	value: unknown,
-): value is ArrayBufferLike {
-	const tag = Object.prototype.toString
-		.call(value)
-		.slice(8, -1);
-	return (
-		tag === "ArrayBuffer" || tag === "SharedArrayBuffer"
-	);
-}
-
-export function serialize(obj: unknown): string {
-	if (isBinary(obj)) return `"b${obj.byteLength}"`;
-	if (obj instanceof Date) return `"d${obj.toJSON()}"`;
-	return JSON.stringify(obj, (_, value) => {
-		if (isBinary(value)) return `b${value.byteLength}`;
-		if (typeof value === "string") return `s${value}`;
-		if (typeof value === "bigint") return `n${value}`;
-		if (typeof value === "object") {
-			if (value instanceof Date)
-				return `d${new Date(value).toJSON()}`;
-			if (value === null) return null;
-			const source = value as Record<string, unknown>;
-			// 数组副本也断言为 Record：序列化层按索引写入，运行时两态皆可
-			const copy = (
-				Array.isArray(value) ? [] : {}
-			) as Record<string, unknown>;
-			for (const key in source) {
-				const item = source[key];
-				if (item instanceof Date) {
-					const date = new Date(item) as unknown as {
-						toJSON?: string | undefined;
-					};
-					// 置空 toJSON，使递归序列化时该值不再被压缩为 ISO 字符串
-					date.toJSON = undefined;
-					copy[key] = date;
-				} else {
-					copy[key] = item;
-				}
-			}
-			return copy;
-		}
-		return value;
-	});
-}
+export { serialize };
 
 export function deserialize(
 	str: string | undefined,
 ): unknown {
-	if (str === undefined) return undefined;
-	return JSON.parse(str, (_, value) => {
-		if (typeof value !== "string") return value;
-		const prefix = value[0];
-		if (prefix === "s") return value.slice(1);
-		if (prefix === "b") return +value.slice(1);
-		if (prefix === "n") return BigInt(value.slice(1));
-		return new Date(value.slice(1));
-	});
+	return deserializeBase(str, (length) => length);
 }
 
 /** 经 `database/*` RPC 事件调用服务端数据库方法（参数与返回值自动编解码） */
