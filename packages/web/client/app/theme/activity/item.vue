@@ -47,6 +47,12 @@ import type { Placement } from "element-plus";
 import { computed, ref, watch } from "vue";
 import { useRoute } from "vue-router";
 import ActivityButton from "./button.vue";
+import {
+	createOverrideAccessor,
+	parseActivityDrag,
+	UNSAFE_KEYS,
+	useDragOver,
+} from "./utils";
 
 const route = useRoute();
 
@@ -62,7 +68,8 @@ const isActive = computed(() => {
 	);
 });
 
-const hasDragOver = ref(false);
+const { hasDragOver, handleDragEnter, handleDragLeave } =
+	useDragOver();
 
 const trigger = useMenu("theme.activity");
 
@@ -76,46 +83,14 @@ watch(
 	},
 );
 
-function handleDragEnter(event: DragEvent) {
-	hasDragOver.value = true;
-}
-
-function handleDragLeave(event: DragEvent) {
-	hasDragOver.value = false;
-}
-
 const config = useConfig();
-
-// 原型链保留键：这类键在普通对象上会触发原型链存取器，禁止作为配置键读写
-// （id 来自拖拽事件的 dataTransfer 文本，属外部输入）
-const UNSAFE_KEYS = new Set([
-	"__proto__",
-	"constructor",
-	"prototype",
-]);
-
-/** 取某活动的覆盖配置（不存在则创建）；保留键返回一次性空对象，防原型污染。
- * 守卫须用显式字符串比较（Set.has 形式 CodeQL 无法识别为阻断） */
-function ensureOverride(
-	id: string,
-): Record<string, unknown> {
-	const activities = (config.value.activities ??= {});
-	if (
-		id === "__proto__" ||
-		id === "constructor" ||
-		id === "prototype"
-	) {
-		return {};
-	}
-	return (activities[id] ??= {});
-}
+const ensureOverride = createOverrideAccessor(config);
 
 function handleDrop(event: DragEvent) {
 	hasDragOver.value = false;
-	const text = event.dataTransfer.getData("text/plain");
 	// 只响应活动栏自身的拖拽协议，忽略外部拖入内容
-	if (!text.startsWith("activity:")) return;
-	const id = text.slice(9);
+	const id = parseActivityDrag(event);
+	if (id === undefined) return;
 	const target = props.children[0].id;
 	// 拖到自身所在组上无需处理
 	if (target === id) return;
