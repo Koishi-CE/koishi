@@ -127,9 +127,7 @@ function buildColumnDefs(
  * 表级约束（主键 / 唯一 / 外键）随建表 DDL 一起声明
  * （SQLite 无独立的表级约束语法）。
  */
-function buildIndexDefs(
-	model: Model,
-): string[] {
+function buildIndexDefs(model: Model): string[] {
 	const indexDefs: string[] = [];
 	if (model.primary && !model.autoInc) {
 		indexDefs.push(

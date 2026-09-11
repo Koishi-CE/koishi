@@ -96,6 +96,28 @@ interface Reload {
 }
 
 /**
+ * 用给定插件对象按快照逐一重建 fork：沿用原 fork 的 loader key 与
+ * record 注册名。重载成功路径（传新插件对象）与失败回滚路径（传旧
+ * 插件对象）共用此循环，两处的行为必须严格一致。
+ */
+function refork(
+	children: Reload["children"],
+	plugin: Plugin,
+) {
+	for (const [state, name] of children) {
+		const fork = state.parent.plugin(plugin, state.config);
+		const key = (state as LoaderScope).key;
+		if (key !== undefined) (fork as LoaderScope).key = key;
+		if (name) {
+			const record = ((state.parent.scope as LoaderScope)[
+				Loader.kRecord
+			] ??= Object.create(null));
+			record[name] = fork;
+		}
+	}
+}
+
+/**
  * 文件监听器：实现插件级 HMR。
  *
  * 依赖 loader 服务，并以 `watcher` 服务名挂载到 ctx（ctx.watcher），
@@ -513,21 +535,7 @@ class Watcher {
 				);
 
 				try {
-					for (const [state, name] of children) {
-						const fork = state.parent.plugin(
-							attempts[filename] as Plugin,
-							state.config,
-						);
-						const key = (state as LoaderScope).key;
-						if (key !== undefined)
-							(fork as LoaderScope).key = key;
-						if (name) {
-							const record = ((
-								state.parent.scope as LoaderScope
-							)[Loader.kRecord] ??= Object.create(null));
-							record[name] = fork;
-						}
-					}
+					refork(children, attempts[filename] as Plugin);
 					this.logger.info("reload plugin at %c", path);
 				} catch (err) {
 					this.logger.warn(
@@ -548,21 +556,7 @@ class Watcher {
 					this.ctx.registry.delete(
 						attempts[filename] as Plugin,
 					);
-					for (const [state, name] of children) {
-						const fork = state.parent.plugin(
-							plugin,
-							state.config,
-						);
-						const key = (state as LoaderScope).key;
-						if (key !== undefined)
-							(fork as LoaderScope).key = key;
-						if (name) {
-							const record = ((
-								state.parent.scope as LoaderScope
-							)[Loader.kRecord] ??= Object.create(null));
-							record[name] = fork;
-						}
-					}
+					refork(children, plugin);
 				} catch (err) {
 					this.logger.warn(err);
 				}
