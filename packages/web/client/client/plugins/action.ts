@@ -24,8 +24,10 @@ import {
 	toValue,
 } from "vue";
 import type { ActionContext } from "..";
-import { type Context, useContext } from "../context";
-import { insert, Service } from "../utils";
+// Context 仅作类型依赖；useContext 运行时值取自 utils 叶子模块，
+// 避免与 context.ts（安装 ActionService）构成循环依赖
+import type { Context } from "../context";
+import { insert, Service, useContext } from "../utils";
 
 declare module "../context" {
 	interface Context {

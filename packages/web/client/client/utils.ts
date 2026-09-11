@@ -3,7 +3,12 @@
 // Copyright (c) 2026-present Koishi-CE contributors.
 
 import * as cordis from "cordis";
-import { markRaw } from "vue";
+import {
+	inject,
+	markRaw,
+	onBeforeUnmount,
+	type Ref,
+} from "vue";
 import type { Context } from "./context";
 
 /**
@@ -14,6 +19,29 @@ export abstract class Service<
 	T = unknown,
 	C extends Context = Context,
 > extends cordis.Service<T, C> {}
+
+/**
+ * 在组件 setup 中获取与当前组件生命周期绑定的 Context。
+ *
+ * 实现：从父级注入根 Context，创建一个空的插件 fork，使得返回的
+ * 子上下文在组件卸载时（onBeforeUnmount）自动 dispose，从而组件内
+ * 通过它注册的副作用（effect / 事件监听等）会随组件销毁被清理。
+ */
+export function useContext() {
+	const parent = inject("cordis") as Context;
+	const fork = parent.plugin(() => {});
+	onBeforeUnmount(() => fork.dispose());
+	return fork.ctx;
+}
+
+/**
+ * 获取当前扩展（extension）通过 RPC 携带的只读数据。
+ * 仅在由 loader 动态加载的扩展组件内可用。
+ */
+export function useRpc<T>(): Ref<T> {
+	const parent = inject("cordis") as Context;
+	return parent.extension?.data as Ref<T>;
+}
 
 /** 可排序项：实现本接口的条目可被 insert() 按 order 插入有序列表 */
 export interface Ordered {

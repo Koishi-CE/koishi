@@ -9,11 +9,8 @@ import {
 	createApp,
 	defineComponent,
 	h,
-	inject,
 	markRaw,
-	onBeforeUnmount,
 	provide,
-	type Ref,
 	resolveComponent,
 } from "vue";
 import ActionService from "./plugins/action";
@@ -40,26 +37,11 @@ export interface Context {
 
 /**
  * 在组件 setup 中获取与当前组件生命周期绑定的 Context。
- *
- * 实现：从父级注入根 Context，创建一个空的插件 fork，使得返回的
- * 子上下文在组件卸载时（onBeforeUnmount）自动 dispose，从而组件内
- * 通过它注册的副作用（effect / 事件监听等）会随组件销毁被清理。
+ * 获取 RPC 数据的 useRpc 与之同住 utils（见下再导出）——
+ * 这两个注入工具下沉到叶子模块，服务插件（如 action）方可
+ * 只以类型形式依赖本模块，避免 context ↔ 插件的循环依赖。
  */
-export function useContext() {
-	const parent = inject("cordis") as Context;
-	const fork = parent.plugin(() => {});
-	onBeforeUnmount(() => fork.dispose());
-	return fork.ctx;
-}
-
-/**
- * 获取当前扩展（extension）通过 RPC 携带的只读数据。
- * 仅在由 loader 动态加载的扩展组件内可用。
- */
-export function useRpc<T>(): Ref<T> {
-	const parent = inject("cordis") as Context;
-	return parent.extension?.data as Ref<T>;
-}
+export { useContext, useRpc } from "./utils";
 
 // 各服务通过 `declare module "../context"` 对 Internal 做接口合并,
 // 因此这里必须是 interface 而非类型别名(空 interface 不能被 biome 自动

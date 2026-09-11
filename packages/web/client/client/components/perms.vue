@@ -31,13 +31,15 @@
 // SchemaBase 经由 components 包的再导出获取:本包的 node_modules 没有
 // schemastery-vue 链接(它是 components 的依赖,Bun 隔离布局下不跨包可见)
 
-import { store } from "@koishi-ce/client";
+// store 直接引自数据层模块：本文件位于包内部，引自家 barrel
+// （@koishi-ce/client → components/index.ts → 本文件）会成环
 import {
 	type Schema,
 	SchemaBase,
 } from "@koishi-ce/components";
 import type { CascaderOption } from "element-plus";
 import { computed, type PropType } from "vue";
+import { store } from "../data";
 
 defineProps({
 	schema: {} as PropType<Schema>,
