@@ -98,7 +98,11 @@ class DatabaseProvider extends DataService<DatabaseInfo> {
 		this.ctx.console.addListener(
 			`database/${name}`,
 			async (...args: string[]) => {
-				const callargs = args.map(deserialize);
+				// map 回调会透传 index，收敛为单参调用（deserialize 的
+				// 第二参数是 binary 复活器，透传会被误当索引）
+				const callargs = args.map((str) =>
+					deserialize(str),
+				);
 				if (name === "set" || name === "remove") {
 					// Mongo 等驱动的主键是包装类型，查询条件须先经其构造器包装
 					const table = (await this.get()).tables[
