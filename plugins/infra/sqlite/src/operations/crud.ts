@@ -25,6 +25,27 @@ import type { SQLiteDriver } from "../index.ts";
 import { SQLiteBuilder } from "../sql/builder.ts";
 import { joinKeys } from "../sql/utils.ts";
 
+/**
+ * 把（可能带点分嵌套键的）键集合按可用字段归并到所属的顶层字段名并
+ * 去重：set 的 update 字段与 upsert 的数据字段解析共用。
+ */
+function resolveFields<T extends object>(
+	fields: T,
+	keys: string[],
+): string[] {
+	return [
+		...new Set(
+			keys.flatMap((key) => {
+				const field = Object.keys(fields).find(
+					(field) =>
+						field === key || key.startsWith(`${field}.`),
+				);
+				return field ? [field] : [];
+			}),
+		),
+	];
+}
+
 /** 删除：永假查询（"0"）直接短路不落引擎；changes() 取实际删除行数。 */
 export async function remove(
 	driver: SQLiteDriver,
@@ -127,17 +148,10 @@ export async function set(
 	const { model, table, query } = sel;
 	const { primary } = model,
 		fields = model.availableFields();
-	const updateFields = [
-		...new Set(
-			Object.keys(update).flatMap((key) => {
-				const field = Object.keys(fields).find(
-					(field) =>
-						field === key || key.startsWith(`${field}.`),
-				);
-				return field ? [field] : [];
-			}),
-		),
-	];
+	const updateFields = resolveFields(
+		fields,
+		Object.keys(update),
+	);
 	const primaryFields = makeArray(primary);
 	if (
 		query.$expr ||
@@ -255,19 +269,10 @@ export async function upsert(
 	const { model, table, ref } = sel;
 	const fields = model.availableFields();
 	const result = { inserted: 0, matched: 0, modified: 0 };
-	const dataFields = [
-		...new Set(
-			Object.keys(Object.assign({}, ...data)).flatMap(
-				(key) => {
-					const field = Object.keys(fields).find(
-						(field) =>
-							field === key || key.startsWith(`${field}.`),
-					);
-					return field ? [field] : [];
-				},
-			),
-		),
-	];
+	const dataFields = resolveFields(
+		fields,
+		Object.keys(Object.assign({}, ...data)),
+	);
 	let updateFields = difference(dataFields, keys);
 	if (!updateFields.length)
 		updateFields = [dataFields[0] ?? ""];
