@@ -22,7 +22,7 @@
 		"global.d.ts"
 	],
 	"bin": {
-		"koishi-console": "./lib/bin.mjs"
+		"koishi-console": "lib/bin.mjs"
 	},
 	"contributors": [
 		"Shigma <shigma10826@gmail.com>",

@@ -7,7 +7,7 @@
 	"module": "lib/index.mjs",
 	"types": "lib/index.d.ts",
 	"bin": {
-		"koishi-scripts": "./lib/bin.mjs"
+		"koishi-scripts": "lib/bin.mjs"
 	},
 	"files": [
 		"lib",

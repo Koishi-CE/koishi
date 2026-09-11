@@ -2,7 +2,7 @@
 
 > 本仓全部可发布包的版本与发布管理：changesets 管版本，`bun run release` 发布链（`tooling/release/`）管执行。**铁律：一切发布走发布链，禁止手动 `npm publish`。** 实现代码见 `tooling/release/index.ts`（该目录与 `apps/koishi-scripts` 的 release 链互不相干——后者面向宿主工作区的插件项目）。
 > **先读**：开发与门禁见 [../guides/development.md](../guides/development.md)；版本基线与 shim 例外见 [../reference/architecture.md](../reference/architecture.md)。
-> **本文结构**：1 命令 · 2 发布链环节 · 3 changesets 约定 · 4 发布顺序与补发 · 5 事故记录。
+> **本文结构**：1 命令 · 2 发布链环节 · 3 changesets 约定 · 4 发布顺序与补发 · 5 暂存区（staged publish）与 409 · 6 事故记录。
 
 ## 1. 命令
 
@@ -16,7 +16,9 @@ bun run release pipeline                  # 一条龙：preflight → version �
 
 旗标：`--dry-run`（只打印计划不落盘）、`--only <包名,逗号分隔>`（仅 publish 环生效，只发布名单内的包）、`--skip-build` / `--skip-test` / `--push`（仅 pipeline 环生效）、`--allow-dirty`（跳过工作区洁净检查）；另有 `--help` 与环境变量 `RELEASE_REGISTRY`（切换 registry 查询源，默认 registry.npmjs.org）。
 
-行为约定：任何一步失败立即中断并保留现场；重跑幂等（已发布版本经 registry 比对自动跳过）。webui 插件 dist 不入 git，发布前必须现构建——build 环的前端 targets 为 `plugins/webui` 下 files 含 `dist` 且带 `client/` 的插件（宿主 console 除外，由总装覆盖），遗漏任一插件都会导致发布缺前端。
+行为约定：任何一步失败立即中断并保留现场；重跑幂等（已发布版本经 registry 比对自动跳过）——例外是 npm 暂存区中的版本不计入比对，此时重跑不幂等（见 §5）。webui 插件 dist 不入 git，发布前必须现构建——build 环的前端 targets 为 `plugins/webui` 下 files 含 `dist` 且带 `client/` 的插件（宿主 console 除外，由总装覆盖），遗漏任一插件都会导致发布缺前端。
+
+发布包的 `bin` 声明一律用对象形式：键名为命令名（不带作用域）、值不带 `./` 前缀（如 `"koishi": "lib/cli/index.mjs"`）。字符串形式 + scoped 包名会被 npm 自动改写并打出 `renamed` / `script name ... was invalid and removed` 的**误导性警告**（实际值仍正确，属 npm 归一化分支的误报）；带 `./` 前缀同样会触发后者。
 
 ## 2. 发布链环节（pipeline）
 
@@ -41,6 +43,19 @@ bun run release pipeline                  # 一条龙：preflight → version �
 - **补发 / 重发坏版本**：先手动 bump 该包版本，再 `bun run release publish --only <包名,逗号分隔>`——同样走协议改写与终局断言。
 - `@koishijs/client` 之类的 optional peer 无需处理：Bun 不自动安装 optional peer。
 
-## 5. 事故记录（为什么禁止手动 publish）
+## 5. 暂存区（staged publish）与 409
+
+npm 的暂存发布（staged publishing）会在版本公开前插入人工批准环节：提交先进入 registry 的**暂存区**，须由有权限者带 2FA 批准后才正式上线；浏览器认证（web auth）的发布也会被 registry 转入暂存区。
+
+- **症状**：`npm error code E409` + `Cannot publish over previously staged version "<version>"`，发布链在该包中断（后续包均未发布）。
+- **为何重跑也是错**：暂存版本**不出现在 registry 的 versions 列表**里，`release publish` / `release status` 的比对（`fetchPublishedVersions`）看不到它，于是每次重跑都重新尝试同一版本，每次都 409——这种情形下重跑**不幂等**。
+- **处置（三选一）**：
+  1. npmjs.com → **Staged Packages** 标签页 → 对目标版本 **Approve**（转为正式发布）或 **Reject**（丢弃后重发）；
+  2. npm CLI ≥ 11.15：`npm stage list` / `npm stage view <stage-id>` / `npm stage approve <stage-id>` / `npm stage reject <stage-id>`（npm 11.13 及更早无此子命令）；
+  3. 不处理暂存版本，直接 bump 一个补丁版本重发（旧的暂存版本勿再尝试同版本发布）。
+- **同批其余包**：发布链逐包串行，中断点之后的包尚未发布——先在网页 / CLI 处理掉阻断版本（或让它变为已发布），再用 `bun run release publish --only <包名,逗号分隔>` 补发。发布链在失败时会打印这套指引。
+- **排查提示**：`bun run release status` 的比对同样看不见暂存版本，不要据它判断「该版本已发布」；版本是否真的上线以 `npm view <包名> versions --json` 与 npmjs.com 页面为准。
+
+## 6. 事故记录（为什么禁止手动 publish）
 
 2026-08-31：绕链手动 `npm publish` 把 `workspace:*` 原样带上 npm（config@1.0.5 / market@1.0.6 / hmr@1.0.3 污染，koishi@1.0.3 漏发），下游 `bun install` 全部解析失败。处置：发布链补齐 workspace 协议改写的终局断言，坏版本用补发流程覆盖。**workspace 协议的消费从不靠 changesets，只靠发布链**——这也是禁止手动 publish 的根本原因。

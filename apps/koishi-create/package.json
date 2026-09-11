@@ -7,7 +7,7 @@
     "module": "./lib/index.mjs",
     "types": "./lib/index.d.ts",
     "bin": {
-        "create-koishi-ce": "./lib/bin.mjs"
+        "create-koishi-ce": "lib/bin.mjs"
     },
     "files": [
         "lib",

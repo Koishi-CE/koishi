@@ -6,7 +6,9 @@
     "main": "lib/index.mjs",
     "module": "lib/index.mjs",
     "types": "lib/index.d.ts",
-    "bin": "lib/cli/index.mjs",
+    "bin": {
+        "koishi": "lib/cli/index.mjs"
+    },
     "exports": {
         ".": {
             "source": "./src/index.ts",

@@ -513,6 +513,32 @@ async function runTestStep(): Promise<number> {
 	);
 }
 
+/**
+ * 发布失败后的排查提示。
+ *
+ * 高频且易被误判为「网络 / 权限问题」的是 E409：`Cannot publish
+ * over previously staged version "<version>"`——该版本已进入 npm
+ * 暂存区（staged publish）等待人工批准；暂存版本不在 registry 的
+ * versions 列表里，发布链的比对无从感知，重跑只会再次撞 409。
+ * 处置：npmjs.com 的 Staged Packages 标签页 Approve（转为正式
+ * 发布）或 Reject（丢弃后重发），或用 npm ≥ 11.15 的
+ * `npm stage list` / `npm stage approve|reject`。
+ */
+function printPublishFailureHints(pkg: PkgInfo): void {
+	console.log(
+		"[publish] 💡 若上方报错为 E409「Cannot publish over previously staged version」：",
+	);
+	console.log(
+		"[publish]    该版本已进入 npm 暂存区（staged publish）等待批准；暂存版本不在 registry 的 versions 列表内，比对无法感知，重跑必然再次 409。",
+	);
+	console.log(
+		`[publish]    处置：到 npmjs.com 的 Staged Packages 标签页对 ${pkg.name}@${pkg.version} 执行 Approve（转为正式发布）或 Reject（丢弃后重发）；npm ≥ 11.15 可用 npm stage list / npm stage approve|reject。`,
+	);
+	console.log(
+		"[publish]    同批其余未发布包可先用 --only <包名> 单独补发。",
+	);
+}
+
 /** publish 环：registry 比对 → 所有权预检 → 拓扑序逐包发布。 */
 async function runPublishSteps(
 	options: Options,
@@ -658,6 +684,7 @@ async function runPublishSteps(
 				console.log(
 					`[publish] ❌ 发布失败 ${pkg.name}@${pkg.version}（退出码 ${code}），已中断`,
 				);
+				printPublishFailureHints(pkg);
 				return code;
 			}
 			console.log(
