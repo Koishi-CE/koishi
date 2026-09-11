@@ -111,9 +111,12 @@ import {
 	valueMap,
 } from "@koishi-ce/client";
 import type { Argv, Command } from "@koishi-ce/koishi";
+import type {
+	CommandData,
+	CommandState,
+} from "@koishi-ce/plugin-commands/src";
 import { watchDebounced } from "@vueuse/core";
 import { computed, nextTick, ref, watch } from "vue";
-import type { CommandData, CommandState } from "../lib";
 import { createSchema } from "./utils";
 
 const ctx = useContext();

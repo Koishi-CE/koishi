@@ -19,9 +19,9 @@
  * 每项链接到指令管理页的对应配置面板。
  */
 import { type Dict, useRpc } from "@koishi-ce/client";
+import type { CommandData } from "@koishi-ce/plugin-commands/src";
 import type { Ref } from "vue";
 import { computed, inject } from "vue";
-import type { CommandData } from "../lib";
 
 // 由配置管理面板注入的「当前插件」信息（此处仅需 path 字段）
 const current = inject<Ref<{ path: string }>>(

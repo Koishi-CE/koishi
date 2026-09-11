@@ -11,7 +11,6 @@
 	//   bunx fallow@3               全量（dead-code + dupes + health）
 	//   bunx fallow@3 dead-code --trace <file>:<export>   判断某个导出能否删除
 	"$schema": "https://raw.githubusercontent.com/fallow-rs/fallow/main/schema.json",
-
 	// 静态不可达但确实是入口的文件：tsdown 配置里显式声明的构建入口、CLI 入口、
 	// 构建脚本、发布工具，以及库对外暴露的适配层/barrel（下游深导入的载体）
 	"entry": [
@@ -26,7 +25,6 @@
 		"packages/web/client/src/bin.ts",
 		"tooling/upstream-audit.ts"
 	],
-
 	// 运行时动态加载的代码：前端由 vite 编程式构建、插件前端由 console 宿主按名 import()
 	// 载入，静态图里没有引用边。对应 knip 时代各 webui 包的 entry: ["client/**/*.ts"]。
 	"dynamicallyLoaded": [
@@ -36,18 +34,19 @@
 		"plugins/webui/*/client/**",
 		"plugins/webui/*/src/browser/**"
 	],
-
 	"ignorePatterns": [
 		// 脚手架模板：不参与本仓构建，只在生成新项目后被消费
 		"apps/koishi-scripts/src/template/**",
 		// 无 package.json，仅存放发布脚本（fallow 会为 workspace glob 报诊断）
 		"tooling/release/**"
 	],
-
 	// 插件前端用 .vue 里的 `import type X from "@koishi-ce/plugin-*/src"` 取插件
 	// 主类的类型；这条路径由宿主构建的 vite 别名解析，Node 解析器看不到
+	//
+	// 注意：源码里不要 import 各包的构建产物（如 `../lib`）。CI 的 fallow job
+	// 不跑 bun run build，干净检出下这类路径解析不到，会报 unresolved imports
+	// 并以退出码 1 挂掉门禁（本地因 lib/ 常在而感知不到）
 	"ignoreUnresolvedImports": ["@koishi-ce/plugin-*/src"],
-
 	// 包名级豁免：这些依赖要么由运行时/宿主提供，要么由构建期编程式加载
 	"ignoreDependencies": [
 		// 根 package.json 声明的 vendored 三包：插件加载链按包名运行时解析，无静态 import
@@ -80,7 +79,6 @@
 		"pg-like",
 		"vue-i18n"
 	],
-
 	"rules": {
 		// 反射式/声明式公共 API：cordis Service 方法、Schema 声明、Vue 组件 props 由
 		// 下游以字符串或运行时方式消费，无内部引用不等于死代码（knip 亦未启用该类检查）
