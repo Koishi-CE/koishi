@@ -141,7 +141,10 @@ export class Command<
 		// 校验链（含权限）未拦截时才把解析错误反馈给用户
 		if (error) return error;
 
-		// FIXME: 空 action 列表会导致无限循环，此处提前返回规避
+		// 空 action 列表：直接返回空串，不进入下方队列调度。
+		// 队列元素按 (next) => ... 约定调用，若让默认 fallback（Next.compose）
+		// 成为首元素，它会拿到 argv.next 作为 callback 又调回 argv.next，
+		// 队列自我增殖直至 MAX_DEPTH 异常（回归测试：command.test 的 basic 0）
 		if (!this._actions.length) return "";
 
 		let index = 0;
