@@ -2,7 +2,7 @@
 // Copyright (c) 2019-present Shigma and Koishijs contributors.
 // Copyright (c) 2026-present Koishi-CE contributors.
 
-import { type Dict } from "cosmokit";
+import type { Dict } from "cosmokit";
 import { watchEffect } from "vue";
 import { createI18n } from "vue-i18n";
 import type { Context } from "../context";
