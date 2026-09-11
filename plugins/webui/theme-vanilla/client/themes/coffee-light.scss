@@ -2,7 +2,7 @@
 // Copyright (c) 2019-present Shigma and Koishijs contributors.
 // Copyright (c) 2026-present Koishi-CE contributors.
 
-@use 'sass:color';
+@use './mixins.scss' as *;
 
 :root, .theme-root {
   &[theme=coffee-light] {
@@ -18,13 +18,6 @@
 
     --k-color-divider: #CABCB4;
 
-    @mixin apply-color($name, $base) {
-      --k-color-#{$name}: #{$base};
-      --k-color-#{$name}-shade: #{color.mix($base, #000, 90%)};
-      --k-color-#{$name}-tint: #{color.mix($base, #fff, 80%)};
-      --k-color-#{$name}-fade: #{color.adjust($base, $alpha: -0.9)};
-    }
-
-    @include apply-color(primary, #D26A4C);
+    @include apply-color(primary, #D26A4C, $shade: 90%, $tint: 80%);
   }
 }
