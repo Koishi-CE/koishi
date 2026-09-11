@@ -175,10 +175,7 @@ function onKeyDown(ev: KeyboardEvent) {
 
 <style lang="scss">
 
-@use "sass:math";
-
-$buttonSize: 3rem;
-$buttonBg: #303133;
+@use '../../../../components/client/viewer-toolbar.scss' as *;
 
 .overlay-enter-from, .overlay-leave-to {
   opacity: 0;
@@ -199,58 +196,7 @@ $buttonBg: #303133;
   user-select: none;
   background-color: #0006;
 
-  .button {
-    position: absolute;
-    border-radius: $buttonSize;
-    cursor: pointer;
-    user-select: none;
-    opacity: 0.5;
-    font-size: math.div($buttonSize, 2);
-    height: $buttonSize;
-    background-color: $buttonBg;
-    display: flex;
-    align-items: center;
-    justify-content: space-evenly;
-    transition: 0.4s ease;
-
-    .k-icon {
-      transition: 0.4s ease;
-      height: 1.25rem;
-    }
-
-    &:not(.disabled):hover {
-      opacity: 0.8;
-    }
-
-    &:not(.disabled) .k-icon:hover {
-      color: rgba(244, 244, 245, .8);
-    }
-
-    @each $tag in left, right {
-      &.#{$tag} {
-        top: 50%;
-        z-index: 2000;
-        transform: translateY(-50%);
-        width: $buttonSize;
-        #{$tag}: $buttonSize;
-        .k-icon {
-          margin-#{$tag}: -3px;
-        }
-      }
-    }
-
-    &.bottom {
-      z-index: 2000;
-      bottom: $buttonSize;
-      width: $buttonSize * 6;
-      left: 50%;
-      transform: translateX(-50%);
-    }
-
-    &.disabled {
-      cursor: not-allowed;
-    }
-  }
+  @include viewer-toolbar;
 
   img {
     position: absolute;
