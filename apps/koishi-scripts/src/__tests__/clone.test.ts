@@ -12,7 +12,7 @@ import {
 import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import runClone from "../clone.ts";
+import runClone, { resolveTarget } from "../clone.ts";
 
 /**
  * `koishi-scripts clone`（clone.ts）的行为测试。
@@ -51,9 +51,11 @@ const originalSpawnSync = Bun.spawnSync;
 const originalLog = console.log;
 
 beforeAll(() => {
-	Bun.spawnSync = ((options: {
-		cmd: string[];
-	} & Record<string, unknown>) => {
+	Bun.spawnSync = ((
+		options: {
+			cmd: string[];
+		} & Record<string, unknown>,
+	) => {
 		spawnCalls.push({
 			cmd: options.cmd,
 			options,
@@ -94,6 +96,59 @@ function expectCloneCmd(repo: string, name: string) {
 		join("external", name),
 	]);
 }
+
+describe("clone：resolveTarget 纯函数", () => {
+	it.each([
+		// [输入, 期望规范化结果]
+		["foo/bar", "https://github.com/foo/bar.git"],
+		["foo/bar.git", "https://github.com/foo/bar.git"],
+		[
+			"https://github.com/foo/bar",
+			"https://github.com/foo/bar.git",
+		],
+		[
+			"https://github.com/foo/bar.git",
+			"https://github.com/foo/bar.git",
+		],
+		[
+			"foo/koishi-plugin-demo",
+			"https://github.com/foo/koishi-plugin-demo.git",
+		],
+	] as const)("规范化 %s → %s", (input, expected) => {
+		expect(resolveTarget(input).repo).toBe(expected);
+	});
+
+	it("目录名推导与显式名优先", () => {
+		expect(
+			resolveTarget("foo/koishi-plugin-demo").name,
+		).toBe("demo");
+		expect(resolveTarget("foo/bar", "custom").name).toBe(
+			"custom",
+		);
+		// 前缀仅在开头出现时整体去除（replace 首次匹配语义）
+		expect(
+			resolveTarget("foo/koishi-plugin-x-koishi-plugin-y")
+				.name,
+		).toBe("x-koishi-plugin-y");
+	});
+
+	it("不匹配白名单的地址原样保留、目录名留空", () => {
+		const ssh = "git@github.com:foo/bar.git";
+		expect(resolveTarget(ssh)).toEqual({
+			repo: ssh,
+			name: "",
+		});
+		// http（非 https）与带端口的地址不在白名单内
+		expect(
+			resolveTarget("http://github.com/foo/bar").repo,
+		).toBe("http://github.com/foo/bar");
+		// 空串同样原样保留（由调用方交互补全）
+		expect(resolveTarget("")).toEqual({
+			repo: "",
+			name: "",
+		});
+	});
+});
 
 describe("clone：仓库地址规范化", () => {
 	it("owner/repo 补全为 https 地址并追加 .git", async () => {
@@ -152,23 +207,27 @@ describe("clone：安装与退出码", () => {
 		const code = await run(["foo/bar"]);
 		expect(code).toBe(0);
 		expect(spawnCalls[1]?.cmd).toEqual(["bun", "install"]);
-		expect(spawnCalls[1]?.options["cwd"]).toBe(workspaceRoot);
+		expect(spawnCalls[1]?.options["cwd"]).toBe(
+			workspaceRoot,
+		);
 		expect(logs.join("\n")).toContain("🎉 完成");
 	});
 
 	it("git clone 失败：返回其退出码且不执行安装", async () => {
-		const code = await run(["foo/bar"], [
-			{ success: false, exitCode: 128 },
-		]);
+		const code = await run(
+			["foo/bar"],
+			[{ success: false, exitCode: 128 }],
+		);
 		expect(code).toBe(128);
 		expect(spawnCalls).toHaveLength(1);
 		expect(logs.join("\n")).toContain("退出码 128");
 	});
 
 	it("git clone 失败且退出码为 null 时按 1 返回", async () => {
-		const code = await run(["foo/bar"], [
-			{ success: false, exitCode: null },
-		]);
+		const code = await run(
+			["foo/bar"],
+			[{ success: false, exitCode: null }],
+		);
 		expect(code).toBe(1);
 	});
 
