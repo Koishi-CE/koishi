@@ -32,12 +32,32 @@ import "./editor.scss";
 
 // 浏览器端 tsconfig 无 paths,@koishi-ce/plugin-console 解析不到真实模块,
 // Console.Services 来自 packages/web/client/client/shims.d.ts 的手写环境声明;
-// 这里按同名环境声明合并为其补充 explorer 键,使 ctx.page 的 fields 通过检查
+// 这里按同名环境声明合并为其补充 explorer 键与 Events（严格镜像
+// src/index.ts 对 "@koishi-ce/console" 的声明,两处须保持同步）
 declare module "@koishi-ce/plugin-console" {
 	namespace Console {
 		export interface Services {
 			explorer: DataService<Entry[]>;
 		}
+	}
+
+	interface Events {
+		"explorer/read"(
+			filename: string,
+			binary?: boolean,
+		): Promise<import("@koishi-ce/plugin-explorer").File>;
+		"explorer/write"(
+			filename: string,
+			content: string,
+			binary?: boolean,
+		): Promise<void>;
+		"explorer/mkdir"(filename: string): Promise<void>;
+		"explorer/remove"(filename: string): Promise<void>;
+		"explorer/rename"(
+			oldValue: string,
+			newValue: string,
+		): Promise<void>;
+		"explorer/refresh"(): void;
 	}
 }
 

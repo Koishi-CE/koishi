@@ -117,6 +117,7 @@ import {
 import { useI18n } from "vue-i18n";
 import { useRoute, useRouter } from "vue-router";
 import { model } from "./editor";
+import { useRename } from "./rename";
 import {
 	files,
 	type TreeEntry,
@@ -132,11 +133,30 @@ const keyword = ref(""); // 文件树过滤关键字
 const tree = ref(null); // el-tree 实例（调用 filter() 做关键字过滤）
 const root = ref<{ $el: HTMLElement }>(null); // 左侧滚动容器（滚动定位用）
 const editor = ref(null); // monaco 编辑器的挂载容器
-const renaming = ref<string>(null); // 正在重命名条目的路径，null 表示不在重命名态
 const data = ref<TreeEntry[]>([]); // 本地文件树（含展开态，由服务端数据合并而来）
 const removing = ref<string>(null); // 待删除条目的路径（结尾 / 表示目录），非空弹出确认框
 
 const trigger = useMenu("explorer.tree");
+
+// 当前激活文件：取路由 /files/ 之后的路径段；不在 files 索引中则回退空串
+const active = computed<string>({
+	get() {
+		const name = route.path.slice(6);
+		return name in files ? name : "";
+	},
+	set(name) {
+		if (!(name in files)) name = "";
+		router.replace(`/files${name}`);
+	},
+});
+
+// 就地重命名 / 新建流程（renaming 状态与 confirmRename 等实现见 rename.ts）
+const {
+	renaming,
+	createEntry,
+	confirmRename,
+	cancelRename,
+} = useRename({ data, active });
 
 // 保存(ctrl+s)：写回当前文件并消除 M 标记；
 // disabled 保证无未保存修改或不在 files 页时不可触发
@@ -294,18 +314,6 @@ watch(mode, () => {
 	monaco.editor.setTheme(`vs-${mode.value}`);
 });
 
-// 当前激活文件：取路由 /files/ 之后的路径段；不在 files 索引中则回退空串
-const active = computed<string>({
-	get() {
-		const name = route.path.slice(6);
-		return name in files ? name : "";
-	},
-	set(name) {
-		if (!(name in files)) name = "";
-		router.replace(`/files${name}`);
-	},
-});
-
 /** 节点样式回调：给当前激活文件对应的树节点加 is-active 类。 */
 function getClass(data: TreeEntry) {
 	const words: string[] = [];
@@ -318,90 +326,6 @@ function filterNode(value: string, data: TreeEntry) {
 	return data.name
 		.toLowerCase()
 		.includes(keyword.value.toLowerCase());
-}
-
-/**
- * 新建条目：在目标目录下插入一个待命名的占位条目并展开父目录，
- * 名字在 confirmRename 时才真正确认（与重命名共用同一流程）。
- */
-function createEntry(
-	entry: TreeEntry,
-	type: "file" | "symlink" | "directory",
-) {
-	cancelRename();
-	renaming.value = `${entry.filename}/`;
-	files[renaming.value] = {
-		type,
-		name: "",
-		filename: renaming.value,
-		oldValue: "",
-		newValue: "",
-	};
-	entry.expanded = true;
-	entry.children.push(files[renaming.value]);
-}
-
-/**
- * 确认重命名 / 新建（输入框回车触发），分三种情形：
- * 1. 目标路径已存在或名字为空 → 视为取消：有原名则还原，无原名
- *    （新建的占位条目）则从父级 children 中移除；
- * 2. 路径发生变化 → 更新 files 索引并按情况下发 rename（原有名）、
- *    write 空内容（新建文件）或 mkdir（新建目录）；
- * 3. 无变化 → 仅结束编辑态。
- */
-function confirmRename(entry: TreeEntry) {
-	const segments = entry.filename.split(/\//g);
-	const name = segments.pop();
-	segments.push(entry.name);
-	const filename = segments.join("/");
-	if (filename in files || !entry.name) {
-		if (name) {
-			entry.name = name;
-		} else {
-			delete files[entry.filename];
-			const parent =
-				files[segments.slice(0, -1).join("/")]?.children ||
-				data.value;
-			parent.splice(parent.indexOf(entry), 1);
-		}
-	} else if (entry.filename !== filename) {
-		files[filename] = entry;
-		delete files[entry.filename];
-		if (name) {
-			void send(
-				"explorer/rename",
-				entry.filename,
-				filename,
-			);
-			active.value = filename;
-		} else if (entry.type === "file") {
-			void send("explorer/write", filename, "");
-			active.value = filename;
-		} else {
-			void send("explorer/mkdir", filename);
-		}
-		entry.filename = filename;
-	}
-	renaming.value = null;
-}
-
-/** 取消重命名：还原原名；新建的占位条目则直接从树中移除。 */
-function cancelRename() {
-	if (!renaming.value) return;
-	const entry = files[renaming.value];
-	const segments = entry.filename.split(/\//g);
-	const name = segments.pop();
-	segments.push(entry.name);
-	if (name) {
-		entry.name = name;
-	} else {
-		delete files[entry.filename];
-		const parent =
-			files[segments.slice(0, -1).join("/")]?.children ||
-			data.value;
-		parent.splice(parent.indexOf(entry), 1);
-	}
-	renaming.value = null;
 }
 
 /** el-tree 内部节点结构（仅声明用到的字段）。 */
