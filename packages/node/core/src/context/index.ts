@@ -35,6 +35,7 @@ import { Permissions } from "../permission.ts";
 import { SchemaService } from "../schema.ts";
 import type { Session } from "../session/index.ts";
 import { defineContextConfig } from "./config.ts";
+import { contextFactory } from "./factory.ts";
 import { chainImpl, waterfallImpl } from "./legacy.ts";
 import Koishi from "./runtime.ts";
 import { sessionShadow } from "./symbols.ts";
@@ -323,6 +324,10 @@ export namespace Context {
 }
 
 defineContextConfig(Context.Config);
+
+// 注册 Context 工厂（见 factory.ts）：runtime.ts 的 Service.setup 经此创建
+// root Context，避免两文件互相值导入成环。模块加载完成即注册，恒早于首次调用。
+contextFactory.create = () => new Context();
 
 // 会话过滤挂载：cordis 事件分发时以 session[Context.filter](hookCtx) 判定
 // 监听器所在上下文是否放行本会话，缺失会导致 $filter / ctx.user 等选择器全部失效
