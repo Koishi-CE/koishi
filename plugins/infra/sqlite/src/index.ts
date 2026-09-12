@@ -147,17 +147,44 @@ export class SQLiteDriver extends Driver<SQLiteDriver.Config> {
 		}
 	}
 
+	/** 语句读取执行器：`all` 为 true 取多行，否则取单行；useBigInt 语义同上。 */
+	private _read(
+		sql: string,
+		params: unknown[],
+		config: { useBigInt: boolean } | undefined,
+		all: true,
+	): unknown[];
+	private _read(
+		sql: string,
+		params: unknown[],
+		config: { useBigInt: boolean } | undefined,
+		all?: false,
+	): unknown;
+	private _read(
+		sql: string,
+		params: unknown[],
+		config: { useBigInt: boolean } | undefined,
+		all = false,
+	) {
+		return this._exec(sql, params, (stmt) => {
+			stmt.setReadBigInts(config?.useBigInt || false);
+			return all
+				? (stmt.all(
+						...(params as Parameters<typeof stmt.all>),
+					) as unknown[])
+				: stmt.get(
+						...(params as Parameters<typeof stmt.get>),
+					);
+		});
+	}
+
 	/** 多行读取；`useBigInt` 时 INTEGER 列以 bigint 读回防精度丢失。 */
 	_all(
 		sql: string,
 		params: unknown[] = [],
 		config?: { useBigInt: boolean },
 	): unknown[] {
-		return this._exec(sql, params, (stmt) => {
-			stmt.setReadBigInts(config?.useBigInt || false);
-			const args = params as Parameters<typeof stmt.all>;
-			return stmt.all(...args) as unknown[];
-		});
+		return this._read(sql, params, config, true);
 	}
 
 	/** 单行读取，参数语义同 _all。 */
@@ -166,11 +193,7 @@ export class SQLiteDriver extends Driver<SQLiteDriver.Config> {
 		params: unknown[] = [],
 		config?: { useBigInt: boolean },
 	): unknown {
-		return this._exec(sql, params, (stmt) => {
-			stmt.setReadBigInts(config?.useBigInt || false);
-			const args = params as Parameters<typeof stmt.get>;
-			return stmt.get(...args);
-		});
+		return this._read(sql, params, config);
 	}
 
 	/**

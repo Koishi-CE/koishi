@@ -257,11 +257,14 @@ async function removePermission(index: number) {
 	);
 }
 
-// 按平台 + 账号把用户加入当前用户组（服务端报错时弹失败提示）
-async function addUser() {
+// 加入 / 移出用户组的公共实现：调用对应 RPC 并统一成功 / 失败提示，
+// 结束后关闭用户对话框
+async function toggleUser(
+	event: "admin/add-user" | "admin/remove-user",
+) {
 	try {
 		await send(
-			"admin/add-user",
+			event,
 			+activeGroup.value,
 			platform.value,
 			account.value,
@@ -274,22 +277,11 @@ async function addUser() {
 	showUserDialog.value = false;
 }
 
+// 按平台 + 账号把用户加入当前用户组（服务端报错时弹失败提示）
+const addUser = () => toggleUser("admin/add-user");
+
 // 按平台 + 账号把用户移出当前用户组
-async function removeUser() {
-	try {
-		await send(
-			"admin/remove-user",
-			+activeGroup.value,
-			platform.value,
-			account.value,
-		);
-		message.success("操作成功");
-	} catch (err) {
-		console.error(err);
-		message.error("操作失败");
-	}
-	showUserDialog.value = false;
-}
+const removeUser = () => toggleUser("admin/remove-user");
 
 // 权限条目的跳转链接：group/track 指回本页面，command 跳到指令管理页
 function getLink(name: string) {

@@ -161,31 +161,26 @@ function checkFile(file: string): LinkIssue[] {
 		if (inFence) return;
 		// 剔除行内代码段，避免示例文本中的方括号被当作链接。
 		const line = rawLine.replace(/`[^`]*`/g, "");
-		// 行内链接与图片：[text](target)，target 不含空白与括号。
-		for (const match of line.matchAll(
-			/!?\[[^\]]*\]\(([^)\s]+)\)/g,
-		)) {
-			const target = match[1] ?? "";
-			const problem = checkTarget(target, file);
+		const check = (target: string | undefined) => {
+			const problem = checkTarget(target ?? "", file);
 			if (problem)
 				issues.push({
 					file: relFile,
 					line: lineNo,
 					message: problem,
 				});
+		};
+		// 行内链接与图片：[text](target)，target 不含空白与括号。
+		for (const match of line.matchAll(
+			/!?\[[^\]]*\]\(([^)\s]+)\)/g,
+		)) {
+			check(match[1]);
 		}
 		// 引用式链接定义：[label]: target（target 取首个空白前的片段）。
 		for (const match of line.matchAll(
 			/^\s{0,3}\[[^\]]+\]:\s*(\S+)/g,
 		)) {
-			const target = match[1] ?? "";
-			const problem = checkTarget(target, file);
-			if (problem)
-				issues.push({
-					file: relFile,
-					line: lineNo,
-					message: problem,
-				});
+			check(match[1]);
 		}
 	});
 	return issues;
