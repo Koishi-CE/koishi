@@ -757,6 +757,7 @@
         "@koishi-ce/client": "workspace:*",
         "@koishi-ce/koishi": "workspace:*",
         "lottie-web": "^5.13.0",
+        "vite": "^8.2.2",
       },
       "peerDependencies": {
         "@koishi-ce/console": "^1.0.0",

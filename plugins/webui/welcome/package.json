@@ -55,7 +55,8 @@
     "devDependencies": {
         "@koishi-ce/client": "workspace:*",
         "@koishi-ce/koishi": "workspace:*",
-        "lottie-web": "^5.13.0"
+        "lottie-web": "^5.13.0",
+        "vite": "^8.2.2"
     },
     "exports": {
         ".": {
