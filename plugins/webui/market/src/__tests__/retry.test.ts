@@ -40,7 +40,10 @@ describe("镜像索引瞬态重试", () => {
 		timeout?: number;
 	}) {
 		const mirror = new App();
-		mirror.plugin(memory);
+		// 类型层转型缘由见 helpers 的 app.plugin(memory) 注释
+		mirror.plugin(
+			memory as unknown as Plugin.Object<TestApp>,
+		);
 		mirror.plugin(http);
 		mirror.plugin(
 			FakeConsole as unknown as Plugin.Constructor<TestApp>,

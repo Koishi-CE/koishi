@@ -188,62 +188,6 @@ export const itQuiet = (
 		timeout,
 	);
 
-export const registryServer = Bun.serve({
-	port: 0,
-	hostname: "127.0.0.1",
-	async fetch(request) {
-		const url = new URL(request.url);
-		if (url.pathname.startsWith("/-/v1/search")) {
-			if (!searchResponse) {
-				return new Response("not found", { status: 404 });
-			}
-			return Response.json(searchResponse);
-		}
-		// 模拟镜像索引的部署窗口：前 flakyIndexMisses 次 404，随后返回完整索引
-		if (url.pathname === "/flaky-index") {
-			if (flakyIndexHits++ < flakyIndexMisses) {
-				return new Response("not found", { status: 404 });
-			}
-			return Response.json({
-				version: "4",
-				objects: [
-					{
-						package: {
-							name: "koishi-plugin-demo",
-							version: "2.0.0",
-							date: "2024-06-01T00:00:00Z",
-							keywords: ["koishi", "plugin"],
-						},
-					},
-				],
-			});
-		}
-		// 模拟镜像索引挂起：延迟超过用例配置的 timeout，驱动超时重试路径
-		if (url.pathname === "/slow-index") {
-			slowIndexHits++;
-			await new Promise((resolve) =>
-				setTimeout(resolve, 300),
-			);
-			return Response.json({ version: "4", objects: [] });
-		}
-		// 模拟 registry 限流：恒定 429 + 极短的 Retry-After，驱动重试后失败
-		if (
-			url.pathname.includes("koishi-plugin-ratelimited")
-		) {
-			return new Response("rate limited", {
-				status: 429,
-				headers: { "Retry-After": "0.01" },
-			});
-		}
-		const name = decodeURIComponent(url.pathname.slice(1));
-		const data = registryData[name];
-		if (!data) {
-			return new Response("not found", { status: 404 });
-		}
-		return Response.json(data);
-	},
-});
-
 // 预置一个兼容插件包：最新版 2.0.0，旧版 1.0.0 均声明 koishi ^4 peer
 registryData["koishi-plugin-demo"] = {
 	versions: {
@@ -286,7 +230,7 @@ registryData["bad-range"] = {
 	time: { "1.0.0": "2024-01-01T00:00:00Z" },
 };
 
-/** 临时宿主目录（Installer 的 cwd 与 override 写盘目标）。 */
+/** 临时宿主目录的初始依赖清单（每次重建时原样写入 package.json）。 */
 const initialDependencies = {
 	// 护栏：workspace 声明不可被覆盖或删除
 	koishi: "workspace:*",
@@ -297,54 +241,138 @@ const initialDependencies = {
 	// 非法 semver 区间：应标记 invalid
 	"bad-range": "not-a-version",
 };
-export const tmp = mkdtempSync(
-	join(tmpdir(), "market-test-"),
-);
+
+/** 模块加载时的原始 cwd，stopApp 还原用。 */
 const originalCwd = process.cwd();
-writeFileSync(
-	join(tmp, "package.json"),
-	JSON.stringify(
-		{
-			name: "market-host",
-			dependencies: initialDependencies,
-		},
-		null,
-		"\t",
-	),
-);
-process.chdir(tmp);
 
 // App 经动态 import 取值为 const，实例类型由构造器派生供 Plugin.Constructor 泛型使用
 export type TestApp = InstanceType<typeof App>;
 
-export const app = new App();
+/** 临时宿主目录（Installer 的 cwd 与 override 写盘目标）。 */
+export let tmp: string;
+export let registryServer: Bun.Server<undefined>;
+export let app: TestApp;
+export let client: ReturnType<TestApp["mock"]["client"]>;
 
-app.plugin(memory);
-app.plugin(http);
-// Console 基类的 static inject 是 cordis 3 旧形态，与 Plugin.Constructor 期待类型不兼容，仅做类型层转型
-app.plugin(
-	FakeConsole as unknown as Plugin.Constructor<TestApp>,
-);
-app.plugin(FakeLoader);
-app.plugin(market, {
-	registry: {
-		endpoint: `http://127.0.0.1:${registryServer.port}/`,
-	},
-});
-app.plugin(mockPlugin);
-
-export const client = app.mock.client("123");
+/**
+ * 全量重建临时宿主与配套桩（fetch 闭包仍读上方模块级 let 桩状态）。
+ * 裸跑（bun test 无 --isolate）时多测试文件共享本模块单例，stopApp
+ * 清理后由下一次 startApp 全量重建，避免对已停机实例二次 start。
+ */
+function rebuild() {
+	tmp = mkdtempSync(join(tmpdir(), "market-test-"));
+	writeFileSync(
+		join(tmp, "package.json"),
+		JSON.stringify(
+			{
+				name: "market-host",
+				dependencies: initialDependencies,
+			},
+			null,
+			"\t",
+		),
+	);
+	process.chdir(tmp);
+	// registry 协议最小 JSON 服务（Bun.serve，随机端口）
+	registryServer = Bun.serve({
+		port: 0,
+		hostname: "127.0.0.1",
+		async fetch(request) {
+			const url = new URL(request.url);
+			if (url.pathname.startsWith("/-/v1/search")) {
+				if (!searchResponse) {
+					return new Response("not found", {
+						status: 404,
+					});
+				}
+				return Response.json(searchResponse);
+			}
+			// 模拟镜像索引的部署窗口：前 flakyIndexMisses 次 404，随后返回完整索引
+			if (url.pathname === "/flaky-index") {
+				if (flakyIndexHits++ < flakyIndexMisses) {
+					return new Response("not found", {
+						status: 404,
+					});
+				}
+				return Response.json({
+					version: "4",
+					objects: [
+						{
+							package: {
+								name: "koishi-plugin-demo",
+								version: "2.0.0",
+								date: "2024-06-01T00:00:00Z",
+								keywords: ["koishi", "plugin"],
+							},
+						},
+					],
+				});
+			}
+			// 模拟镜像索引挂起：延迟超过用例配置的 timeout，驱动超时重试路径
+			if (url.pathname === "/slow-index") {
+				slowIndexHits++;
+				await new Promise((resolve) =>
+					setTimeout(resolve, 300),
+				);
+				return Response.json({ version: "4", objects: [] });
+			}
+			// 模拟 registry 限流：恒定 429 + 极短的 Retry-After，驱动重试后失败
+			if (
+				url.pathname.includes("koishi-plugin-ratelimited")
+			) {
+				return new Response("rate limited", {
+					status: 429,
+					headers: { "Retry-After": "0.01" },
+				});
+			}
+			const name = decodeURIComponent(
+				url.pathname.slice(1),
+			);
+			const data = registryData[name];
+			if (!data) {
+				return new Response("not found", { status: 404 });
+			}
+			return Response.json(data);
+		},
+	});
+	app = new App();
+	// MemoryDriver 的 Schema Config 推导在 TS7 增量编译下重载解析失败
+	// （全量编译不报，删 buildinfo 后消失），参照 FakeConsole 先例做
+	// 类型层转型绕开推导；Plugin.Object<App> 形态见 actions 测试先例
+	app.plugin(memory as unknown as Plugin.Object<TestApp>);
+	app.plugin(http);
+	// Console 基类的 static inject 是 cordis 3 旧形态，与 Plugin.Constructor 期待类型不兼容，仅做类型层转型
+	app.plugin(
+		FakeConsole as unknown as Plugin.Constructor<TestApp>,
+	);
+	app.plugin(FakeLoader);
+	app.plugin(market, {
+		registry: {
+			endpoint: `http://127.0.0.1:${registryServer.port}/`,
+		},
+	});
+	app.plugin(mockPlugin);
+	client = app.mock.client("123");
+}
 
 /** 各主题测试文件的 beforeAll 钩子体：启动宿主并触发延迟服务实例化。 */
 export async function startApp() {
+	rebuild();
 	await app.start();
 	await app.mock.initUser("123", 4);
 	// 触发 installer 等延迟服务的实例化
 	expect(app.installer).toBeDefined();
 }
 
-/** 各主题测试文件的 afterAll 钩子体：停机、还原 cwd、清理临时目录与 registry 桩。 */
+/**
+ * 各主题测试文件的 afterAll 钩子体：停机、还原 cwd、清理临时目录与
+ * registry 桩。停机前先冲刷 MarketProvider 的节流广播（窗口 500ms）：
+ * 悬挂的 flushData 若在 console 服务析构后才触发，裸跑（无 --isolate）
+ * 多文件形态下会在下一文件的执行窗口炸出 ctx.console undefined 的
+ * unhandled error（isolate 形态每文件独立进程环境则不可见）。
+ */
 export async function stopApp() {
+	await Bun.sleep(600);
 	await app.stop();
 	process.chdir(originalCwd);
 	rmSync(tmp, { recursive: true, force: true });
