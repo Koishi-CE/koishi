@@ -3,27 +3,28 @@
 # Copyright (c) 2026-present Koishi-CE contributors.
 
 commands.plugin:
-  description: 插件管理
+  description: プラグイン管理
+
 commands.plugin.install:
-  description: 安装插件
+  description: プラグインのインストール
   messages:
-    expect-name: 请输入插件名。
-    already-installed: 该插件已安装。
-    not-found: 未找到该插件。
-    success: 安装成功！
+    expect-name: プラグイン名を入力してください。
+    already-installed: このプラグインはすでにインストールされています。
+    not-found: プラグインが見つかりませんでした。
+    success: インストールしました！
 commands.plugin.uninstall:
-  description: 卸载插件
+  description: プラグインのアンインストール
   messages:
-    expect-name: 请输入插件名。
-    not-installed: 该插件未安装。
-    success: 卸载成功！
+    expect-name: プラグイン名を入力してください。
+    not-installed: このプラグインはインストールされていません。
+    success: アンインストールしました！
 commands.plugin.upgrade:
-  description: 升级插件
+  description: プラグインのアップグレード
   options:
-    self: 升级 Koishi 本体
+    self: Koishi 本体をアップグレード
   messages:
-    all-updated: 所有插件已是最新版本。
-    available: 有可用的依赖更新：
-    prompt: 输入「Y」升级全部依赖，输入「N」取消操作。
-    cancelled: 已取消操作。
-    success: 升级成功！
+    all-updated: すべてのプラグインは最新バージョンです。
+    available: 更新可能な依存関係があります：
+    prompt: 「Y」を入力するとすべての依存関係をアップグレードし、「N」を入力すると取り消します。
+    cancelled: 操作を取り消しました。
+    success: アップグレードしました！

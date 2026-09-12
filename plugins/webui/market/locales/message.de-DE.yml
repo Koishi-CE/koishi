@@ -3,27 +3,28 @@
 # Copyright (c) 2026-present Koishi-CE contributors.
 
 commands.plugin:
-  description: 插件管理
+  description: Plugin-Verwaltung
+
 commands.plugin.install:
-  description: 安装插件
+  description: Plugins installieren
   messages:
-    expect-name: 请输入插件名。
-    already-installed: 该插件已安装。
-    not-found: 未找到该插件。
-    success: 安装成功！
+    expect-name: Bitte geben Sie einen Plugin-Namen an.
+    already-installed: Dieses Plugin ist bereits installiert.
+    not-found: Plugin nicht gefunden.
+    success: Installation erfolgreich!
 commands.plugin.uninstall:
-  description: 卸载插件
+  description: Plugin deinstallieren
   messages:
-    expect-name: 请输入插件名。
-    not-installed: 该插件未安装。
-    success: 卸载成功！
+    expect-name: Bitte geben Sie einen Plugin-Namen an.
+    not-installed: Dieses Plugin ist nicht installiert.
+    success: Deinstallation erfolgreich!
 commands.plugin.upgrade:
-  description: 升级插件
+  description: Plugin aktualisieren
   options:
-    self: 升级 Koishi 本体
+    self: Koishi selbst aktualisieren
   messages:
-    all-updated: 所有插件已是最新版本。
-    available: 有可用的依赖更新：
-    prompt: 输入「Y」升级全部依赖，输入「N」取消操作。
-    cancelled: 已取消操作。
-    success: 升级成功！
+    all-updated: Alle Plugins sind bereits auf dem neuesten Stand.
+    available: Verfügbare Abhängigkeits-Updates:
+    prompt: Geben Sie "Y" ein, um alle Abhängigkeiten zu aktualisieren, oder "N", um abzubrechen.
+    cancelled: Vorgang abgebrochen.
+    success: Aktualisierung erfolgreich!

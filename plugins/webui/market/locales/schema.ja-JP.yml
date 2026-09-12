@@ -3,11 +3,12 @@
 # Copyright (c) 2026-present Koishi-CE contributors.
 
 registry:
-  $description: 插件源设置
-  endpoint: 插件的下载源。默认跟随当前项目的 npm config。
-  timeout: 获取插件数据的超时时间。
+  $description: プラグインソースの設定
+  endpoint: プラグインのダウンロードソース。デフォルトは現在のプロジェクトの npm config に従います。
+  timeout: プラグインデータを取得する際のタイムアウト時間。
+
 search:
-  $description: 搜索设置
-  endpoint: 用于搜索插件市场的网址。默认跟随插件源设置。
-  timeout: 搜索插件市场的超时时间。
-  proxyAgent: 用于搜索插件市场的代理。
+  $description: 検索設定
+  endpoint: プラグインマーケットを検索する URL。デフォルトはプラグインソースの設定に従います。
+  timeout: プラグインマーケットを検索する際のタイムアウト時間。
+  proxyAgent: プラグインマーケットの検索に使用するプロキシ。

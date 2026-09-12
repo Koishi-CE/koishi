@@ -3,11 +3,12 @@
 # Copyright (c) 2026-present Koishi-CE contributors.
 
 registry:
-  $description: 外掛程式源設定
-  endpoint: 外掛程式的下載源。默認跟隨當前項目的 npm config。
-  timeout: 獲取外掛程式數據的超時時間。
+  $description: 外掛程式來源設定
+  endpoint: 外掛程式的下載來源。預設跟隨當前專案的 npm config。
+  timeout: 取得外掛程式資料的逾時時間。
+
 search:
   $description: 搜尋設定
-  endpoint: 用於搜尋外掛程式市場的網址。默認跟隨外掛程式源設置。
-  timeout: 搜尋外掛程式市場的超時時間。
+  endpoint: 用於搜尋外掛程式市場的網址。預設跟隨外掛程式來源設定。
+  timeout: 搜尋外掛程式市場的逾時時間。
   proxyAgent: 用於搜尋外掛程式市場的代理。
