@@ -14,9 +14,9 @@ import {
 	type Dict,
 	type Plugin,
 } from "@koishi-ce/koishi";
+import * as configPlugin from "@koishi-ce/plugin-config";
 import {
 	app,
-	configPlugin,
 	itQuiet,
 	readSent,
 	socket,

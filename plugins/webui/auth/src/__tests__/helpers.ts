@@ -96,7 +96,7 @@ function fakeRequest(headers: Record<string, string> = {}) {
 	} as unknown as IncomingMessage;
 }
 
-function tick(ms = 30) {
+export function tick(ms = 30) {
 	return new Promise((resolve) => setTimeout(resolve, ms));
 }
 

@@ -95,7 +95,7 @@ function fakeRequest() {
 	} as unknown as IncomingMessage;
 }
 
-function tick(ms = 20) {
+export function tick(ms = 20) {
 	return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
