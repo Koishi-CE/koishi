@@ -20,7 +20,13 @@ import {
 	type Stats,
 } from "node:fs";
 import net from "node:net";
-import { extname, resolve, sep } from "node:path";
+import {
+	dirname,
+	extname,
+	join,
+	resolve,
+	sep,
+} from "node:path";
 import { Console, type Entry } from "@koishi-ce/console";
 import {
 	type Context,
@@ -60,6 +66,23 @@ export {
 } from "./rewrite.ts";
 
 import { rewriteSharedImports } from "./rewrite.ts";
+
+/**
+ * 定位前端产物目录（包根下的 dist）：从模块所在目录向上找到首个含
+ * package.json 的目录。不能用固定的相对层数——产物中本模块会被 rolldown
+ * 拆至 lib/ 一层（lib/node/index.mjs 仅为壳），相对 import.meta.url 的层级
+ * 随 chunk 落点漂移，曾致 root 指向包外而 index.html 404。
+ */
+function findDistRoot(from: string): string {
+	let dir = from;
+	while (dir !== dirname(dir)) {
+		if (existsSync(join(dir, "package.json"))) {
+			return join(dir, "dist");
+		}
+		dir = dirname(dir);
+	}
+	return join(from, "../dist");
+}
 
 /** 浏览器端全局配置 KOISHI_CONFIG 的形状（createGlobal 生成后注入 index.html）。 */
 export interface ClientConfig {
@@ -144,7 +167,6 @@ class NodeConsole extends Console {
 			loader.envData.clientCount = this.layer.clients.size;
 		});
 
-		const base = import.meta.url;
 		this.root = config.devMode
 			? resolve(
 					Bun.resolveSync(
@@ -153,7 +175,7 @@ class NodeConsole extends Console {
 					),
 					"../app",
 				)
-			: Bun.fileURLToPath(new URL("../../dist", base));
+			: findDistRoot(import.meta.dir);
 	}
 
 	// 基类（cordis Service）将 config 声明为数据属性，而这里需要存取器间接持有
