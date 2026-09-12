@@ -10,24 +10,20 @@
  *   插槽，order 1000（原宿主内建卡同位；analytics 统计面板 order 0
  *   沉于其下）。
  */
-import type { Context } from "@koishi-ce/client";
-import deDE from "./locales/de-DE.yml";
-import enUS from "./locales/en-US.yml";
-import frFR from "./locales/fr-FR.yml";
-import jaJP from "./locales/ja-JP.yml";
-import ruRU from "./locales/ru-RU.yml";
-import zhCN from "./locales/zh-CN.yml";
-import zhTW from "./locales/zh-TW.yml";
+import {
+	type Context,
+	extendLocales,
+} from "@koishi-ce/client";
+
+const locales = import.meta.glob("./locales/*.yml", {
+	eager: true,
+	import: "default",
+});
+
 import Welcome from "./welcome.vue";
 
 export default (ctx: Context) => {
-	ctx.$i18n.extend("de-DE", deDE);
-	ctx.$i18n.extend("en-US", enUS);
-	ctx.$i18n.extend("fr-FR", frFR);
-	ctx.$i18n.extend("ja-JP", jaJP);
-	ctx.$i18n.extend("ru-RU", ruRU);
-	ctx.$i18n.extend("zh-CN", zhCN);
-	ctx.$i18n.extend("zh-TW", zhTW);
+	extendLocales(ctx, locales);
 
 	ctx.slot({
 		type: "home",
