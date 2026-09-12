@@ -35,7 +35,14 @@ import {
 } from "@koishi-ce/loader";
 import ParcelWatcher from "@parcel/watcher";
 import zhCN from "../locales/zh-CN.yml";
+import {
+	analyzeChanges as analyzeGraph,
+	loadDependencies,
+} from "./analyze.ts";
 import { handleError } from "./error.ts";
+
+// 保住包公共导出面与既有测试导入路径（watcher.test.ts 自 ./index.ts 导入）
+export { isInNodeModules } from "./analyze.ts";
 
 declare module "@koishi-ce/koishi" {
 	interface Context {
@@ -51,42 +58,6 @@ declare module "@koishi-ce/koishi" {
 	interface Events {
 		"hmr/reload"(reloads: Map<Plugin, Reload>): void;
 	}
-}
-
-/**
- * 判断模块路径是否位于 node_modules 内。
- * win32 下 Bun 的 require.cache 键是反斜杠路径，字面量 includes
- * 从不命中，node_modules 模块会全量混入依赖图引发误重载
- * upstream: koishijs/koishi#1232
- */
-export function isInNodeModules(filename: string): boolean {
-	return filename.split(/[\\/]/).includes("node_modules");
-}
-
-/**
- * 收集某模块及其全部子依赖的文件路径
- * @param filename 入口模块的绝对路径
- * @param ignored 需要排除的文件路径集合
- * @returns 依赖文件路径集合（不含 node_modules 与 ignored 中的文件）
- */
-function loadDependencies(
-	filename: string,
-	ignored: Set<string>,
-) {
-	const dependencies = new Set<string>();
-	function traverse({ filename, children }: NodeJS.Module) {
-		if (
-			ignored.has(filename) ||
-			dependencies.has(filename) ||
-			isInNodeModules(filename)
-		)
-			return;
-		dependencies.add(filename);
-		children.forEach(traverse);
-	}
-	const module = require.cache[filename];
-	if (module) traverse(module);
-	return dependencies;
 }
 
 /** 单个待重载插件的记录：入口文件名 + 各 fork 状态到引用名的映射 */
@@ -315,85 +286,12 @@ class Watcher {
 
 	/** 沿 require 依赖图自底向上传播：任一子模块 accepted 则本模块 accepted，全部 declined 才 declined */
 	private analyzeChanges() {
-		/** 尚未定论的待分类文件 */
-		const pending: string[] = [];
-
-		this.accepted = new Set(this.stashed);
-		this.declined = new Set(this.externals);
-
-		this.stashed.forEach((filename) => {
-			const module = require.cache[filename];
-			if (!module) return;
-			const { children } = module;
-			for (const { filename } of children) {
-				if (
-					this.accepted.has(filename) ||
-					this.declined.has(filename) ||
-					isInNodeModules(filename)
-				)
-					continue;
-				pending.push(filename);
-			}
-		});
-
-		while (pending.length) {
-			let index = 0,
-				hasUpdate = false;
-			while (index < pending.length) {
-				const filename = pending[index];
-				if (filename === undefined) {
-					index++;
-					continue;
-				}
-				const module = require.cache[filename];
-				if (!module) {
-					index++;
-					continue;
-				}
-				const { children } = module;
-				let isDeclined = true,
-					isAccepted = false;
-				for (const { filename } of children) {
-					// 忽略已判定为 declined 的子模块
-					if (
-						this.declined.has(filename) ||
-						isInNodeModules(filename)
-					)
-						continue;
-					if (this.accepted.has(filename)) {
-						// 任一子模块 accepted，则本模块也 accepted
-						isAccepted = true;
-						break;
-					} else {
-						// 子模块既非 accepted 也非 declined，需要继续向下分析
-						isDeclined = false;
-						if (!pending.includes(filename)) {
-							hasUpdate = true;
-							pending.push(filename);
-						}
-					}
-				}
-				if (isAccepted || isDeclined) {
-					hasUpdate = true;
-					pending.splice(index, 1);
-					if (isAccepted) {
-						this.accepted.add(filename);
-					} else {
-						// 全部子模块 declined，则本模块也 declined
-						this.declined.add(filename);
-					}
-				} else {
-					index++;
-				}
-			}
-			// 一轮下来毫无进展则退出，避免死循环
-			if (!hasUpdate) break;
-		}
-
-		// 循环结束后仍未定论的文件（如循环依赖）一律视为 declined
-		for (const filename of pending) {
-			this.declined.add(filename);
-		}
+		const { accepted, declined } = analyzeGraph(
+			this.stashed,
+			this.externals,
+		);
+		this.accepted = accepted;
+		this.declined = declined;
 	}
 
 	/** 执行局部重载：分析依赖、锁定受影响插件、重建模块缓存并重载插件 */
