@@ -18,7 +18,6 @@
  * 排行。语义判断（是不是该 port、是否本仓刻意分叉）仍由人工完成，
  * 流程与判定标准见 docs/process/upstream.md 的 Routine inspection 节。
  */
-import { existsSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { compareMapping, expandGlob } from "./compare.ts";
 import type { Mapping, Upstream } from "./config.ts";
@@ -29,6 +28,7 @@ import type {
 	UpstreamSection,
 } from "./report.ts";
 import { renderReport } from "./report.ts";
+import { dirExists } from "./scan.ts";
 
 interface Options {
 	noRefresh: boolean;
@@ -49,7 +49,7 @@ function parseArgs(argv: string[]): Options {
 
 /** 刷新（或补克隆）单个上游缓存，返回底稿状态行。 */
 function refreshCache(dir: string, url: string): string {
-	if (!existsSync(dir)) {
+	if (!dirExists(dir)) {
 		const { code } = run("git", [
 			"clone",
 			"--quiet",
@@ -85,7 +85,7 @@ function buildEntry(
 	if (mapping.skipDiff) return { kind: "skip", ...meta };
 	if (mapping.glob) {
 		const base = mapping.up.replace(/\/\*$/, "");
-		if (!existsSync(join(dir, base))) {
+		if (!dirExists(join(dir, base))) {
 			return {
 				kind: "glob",
 				...meta,
@@ -112,9 +112,9 @@ function buildEntry(
 	}
 	const upstreamDir =
 		mapping.up === "." ? dir : join(dir, mapping.up);
-	if (!existsSync(upstreamDir))
+	if (!dirExists(upstreamDir))
 		return { kind: "missingUp", ...meta };
-	if (!existsSync(join(ROOT, mapping.ours)))
+	if (!dirExists(join(ROOT, mapping.ours)))
 		return { kind: "missingOurs", ...meta };
 	return {
 		kind: "stats",
@@ -138,7 +138,7 @@ function buildSection(
 	};
 	if (!options.noRefresh)
 		section.cacheStatus = refreshCache(dir, upstream.url);
-	if (!existsSync(dir)) {
+	if (!dirExists(dir)) {
 		section.cacheMissing = true;
 		return section;
 	}
@@ -155,7 +155,7 @@ function buildSection(
 
 // ---------------------------------------------------------------- 主流程
 
-const options = parseArgs(process.argv.slice(2));
+const options = parseArgs(Bun.argv.slice(2));
 const sections = UPSTREAMS.filter(
 	(u) => !options.only || u.name.includes(options.only),
 ).map((u) => buildSection(u, options));
@@ -165,5 +165,6 @@ const report = renderReport(
 	new Date().toISOString().slice(0, 10),
 ).join("\n");
 
-if (options.out) writeFileSync(options.out, `${report}\n`);
+if (options.out)
+	await Bun.write(options.out, `${report}\n`);
 else console.log(report);

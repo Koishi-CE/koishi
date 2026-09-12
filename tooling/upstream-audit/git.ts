@@ -4,7 +4,6 @@
 /**
  * 子进程封装：git 命令与目录级批量 numstat。
  */
-import { spawnSync } from "node:child_process";
 
 /** 跑一条子进程命令，返回 stdout（git diff --no-index 的退出码 1 表示有差异，不是错误）。 */
 export function run(
@@ -12,15 +11,20 @@ export function run(
 	args: string[],
 	cwd?: string,
 ): { out: string; code: number } {
-	const result = spawnSync(cmd, args, {
-		cwd,
-		encoding: "utf8",
-		maxBuffer: 64 * 1024 * 1024,
-	});
-	return {
-		out: (result.stdout ?? "") + (result.stderr ?? ""),
-		code: result.status ?? -1,
-	};
+	try {
+		const proc = Bun.spawnSync([cmd, ...args], {
+			cwd,
+			stdout: "pipe",
+			stderr: "pipe",
+		});
+		return {
+			out: proc.stdout.toString() + proc.stderr.toString(),
+			code: proc.exitCode ?? -1,
+		};
+	} catch {
+		// 命令无法启动（如 git 不在 PATH）：对齐 node 版 status null 的口径
+		return { out: "", code: -1 };
+	}
 }
 
 /**

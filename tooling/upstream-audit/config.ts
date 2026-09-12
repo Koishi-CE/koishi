@@ -8,7 +8,6 @@
  * docs/process/upstream.md 的 Restructure map 一一对应。
  * URL 一律写当前有效地址（仓库改名后旧地址虽会重定向，落盘以新名为准）。
  */
-import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 
 /** 仓库根目录（本工具位于 tooling/upstream-audit/ 下）。 */
@@ -16,7 +15,7 @@ export const ROOT = resolve(import.meta.dirname, "../..");
 
 /** 上游缓存目录：默认开发目录下的 cache/upstream（仓库同级），绝不落在仓库内部。 */
 export const CACHE =
-	process.env["KOISHI_CE_UPSTREAM_CACHE"] ??
+	Bun.env["KOISHI_CE_UPSTREAM_CACHE"] ??
 	resolve(ROOT, "..", "cache", "upstream");
 
 /** 单条目录映射：上游子路径 → 本仓目录。up 为 "." 表示仓库根。 */
@@ -38,11 +37,8 @@ export interface Upstream {
 	mappings: Mapping[];
 }
 
-const DATA: unknown = JSON.parse(
-	readFileSync(
-		resolve(import.meta.dirname, "upstreams.json"),
-		"utf8",
-	),
-);
+const DATA: unknown = await Bun.file(
+	resolve(import.meta.dirname, "upstreams.json"),
+).json();
 
 export const UPSTREAMS = DATA as Upstream[];

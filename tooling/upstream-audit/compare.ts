@@ -4,11 +4,10 @@
 /**
  * 目录对比逻辑：产出结构化结果，markdown 渲染交给 report.ts。
  */
-import { existsSync, readdirSync } from "node:fs";
 import { join } from "node:path";
 import type { Mapping } from "./config.ts";
 import { numstatChurn } from "./git.ts";
-import { collectFiles } from "./scan.ts";
+import { collectFiles, dirExists } from "./scan.ts";
 
 /** 一对目录的内容对比结果。 */
 export interface CompareStats {
@@ -69,10 +68,13 @@ export function expandGlob(
 	unmatched: string[];
 } {
 	const base = mapping.up.replace(/\/\*$/, "");
-	const entries = readdirSync(join(repoRoot, base), {
-		withFileTypes: true,
-	})
-		.map((entry) => entry.name)
+	// 单层 Glob 等价 readdirSync 口径：文件与目录都列，仅排除点开头条目
+	const entries = [
+		...new Bun.Glob("*").scanSync({
+			cwd: join(repoRoot, base),
+			onlyFiles: false,
+		}),
+	]
 		.filter((name) => !name.startsWith("."))
 		.sort();
 	const matched: { up: string; ours: string }[] = [];
@@ -80,7 +82,7 @@ export function expandGlob(
 	for (const name of entries) {
 		const up = `${base}/${name}`;
 		const ours = mapping.ours.replace(/\*$/, name);
-		if (existsSync(join(oursRoot, ours)))
+		if (dirExists(join(oursRoot, ours)))
 			matched.push({ up, ours });
 		else unmatched.push(up);
 	}

@@ -55,3 +55,22 @@ export function collectFiles(dir: string): string[] {
 		.filter((file) => !isIgnored(file))
 		.sort();
 }
+
+/**
+ * 目录存在性检查：Bun 没有同步 stat 类 API（BunFile.exists 对目录恒 false），
+ * 借 Glob 扫描实现——目录缺失时 scanSync 抛 ENOENT，其余（含空目录）视为存在；
+ * 权限不足等异常与 node existsSync 口径一致地折算为 false。
+ */
+export function dirExists(dir: string): boolean {
+	try {
+		[
+			...new Bun.Glob("*").scanSync({
+				cwd: dir,
+				onlyFiles: false,
+			}),
+		];
+		return true;
+	} catch {
+		return false;
+	}
+}
