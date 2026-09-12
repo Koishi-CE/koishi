@@ -31,6 +31,7 @@ bun test                        # 全量自有用例（覆盖全部 node 侧包�
 bun run test                    # 同上的脚本形态：带 --isolate（每文件独立 global），CI 与提交前一律走这个
 bun test packages/node/core     # 定向跑某包测试
 bun test --coverage             # 覆盖率（src 源码口径）
+bun run sandbox [目录]          # 外部沙盒实例：链接模式（详见第 9 节；--pack 为打包模式）
 ```
 
 前端产物（vite，编程式构建，无配置文件）：
@@ -178,3 +179,20 @@ expect(app.database.getUser("mock", "A")).resolves.toHaveShape({ authority: 1 })
 - 版本由 changesets 递进管理（1.0.0 起步基线、不镜像上游版本号，随发布自然漂移，当前版本以各包 package.json 与 `bun run release status` 为准），shim 两包例外（版本冻结跟随上游线，见 [../reference/architecture.md](../reference/architecture.md)）。
 - 版本与发布由 changesets + `bun run release` 发布链管理，禁止手动 `npm publish`——流程、命令与事故教训见 [../process/release.md](../process/release.md)。
 - 面向发布的包改动随提交写 `.changeset/` 条目（见 [../process/release.md](../process/release.md) 第 3 节）。
+
+## 9. 外部沙盒实例（tooling/sandbox.ts）
+
+在工作区之外生成由本仓 workspace 包组成的 koishi-ce 运行实例，用于「先测试再发包」：数据写回、市场装插件等运行时副作用全部落在沙盒目录（loader 的 baseDir 取自进程 cwd 与配置文件位置），工作区零污染。
+
+```bash
+bun run sandbox [目录]           # 链接模式（默认落点 ../koishi-ce-sandbox）
+bun run sandbox [目录] --pack    # 打包模式：逐包 pack → 真实 bun install
+bun run sandbox -- --force       # 清空重建（仅限本工具生成的目录）
+```
+
+- **链接模式**：沙盒 node_modules 里为全部 CE 作用域 workspace 包建 Windows junction（不需要特权）；外部 npm 依赖不安装——Bun 按包真实路径向上爬链，落到工作区根 node_modules。改 src → `bun run build` 后实例即刻生效，零重装。koishi.yml / .env 复用脚手架内置模板（`apps/koishi-create/src/template/`），插件键为 npm 短名，与真实下游同形态。
+- **打包模式**：逐包 `bun pm pack`（tgz 内 workspace:* 自动重写为版本号）落到沙盒 `vendor/` 后真实 install——装的就是发布物，用于发版前预演 files 白名单 / exports 映射等发布面问题。外部依赖从 npm 拉取，耗时分钟级。
+- 沙盒内启动：`cd <沙盒> && bun start`。scripts.start 直指 cli 产物 `node_modules/@koishi-ce/koishi/lib/cli/index.mjs`——链接模式的 .bin 非 bun install 产物（win32 需 .exe stub，手工伪造不可靠，`bun koishi` / `bunx koishi` 均不认手工放置的脚本，后者还会自动从 npm 拉官方 koishi 包），两模式统一直指文件路径。
+- 沙盒内经市场装插件会触发 bun install 重建 node_modules，可能清掉手工 junction——重跑 `bun run sandbox` 秒级补链（幂等：已有且指向一致的链接全部复用）。
+- 沙盒 package.json 预声明 plugin-http / plugin-proxy-agent / plugin-server 三个默认插件依赖：loader 启动时的 manifest 迁移（migrateManifest，按进程 cwd 读 package.json）发现宿主未声明会自动补挂插件键并改写 koishi.yml，与模板 yml 的同名键撞 duplicate plugin 警告。
+- 已知问题：生产模式启动在 server 组后有约 50 秒间隙（依赖 http 服务的插件 start 等待服务就绪，机理未定位；console 宿主 index.html 可达、全部插件加载正常，不影响正确性）。
