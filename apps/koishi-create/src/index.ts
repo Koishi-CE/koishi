@@ -115,7 +115,10 @@ async function getName(): Promise<string> {
 		validate: (value) =>
 			value?.trim() ? undefined : "项目名不能为空",
 	});
-	if (p.isCancel(answer)) process.exit(0);
+	// @clack/core 1.5 的 isCancel 只收窄 unique symbol，而 text() 返回泛型
+	// symbol，需叠加 typeof 才能把类型收窄到 string
+	if (p.isCancel(answer) || typeof answer !== "string")
+		process.exit(0);
 	const trimmed = answer.trim();
 	if (!trimmed) process.exit(0);
 	return trimmed;
