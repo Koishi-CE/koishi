@@ -13,7 +13,7 @@ export function run(
 ): { out: string; code: number } {
 	try {
 		const proc = Bun.spawnSync([cmd, ...args], {
-			cwd,
+			...(cwd && { cwd }),
 			stdout: "pipe",
 			stderr: "pipe",
 		});

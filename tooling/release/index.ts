@@ -33,15 +33,15 @@ import {
 	resolve,
 } from "node:path";
 import { fileURLToPath } from "node:url";
-import { capture, run, runNpm } from "./proc";
+import { capture, run, runNpm } from "./proc.ts";
 import {
 	fetchPublishedVersions,
 	npmOwners,
 	npmWhoami,
 	probeRegistry,
 	REGISTRY,
-} from "./registry";
-import type { PkgInfo } from "./workspace";
+} from "./registry.ts";
+import type { PkgInfo } from "./workspace.ts";
 import {
 	countPendingChangesets,
 	discoverPackages,
@@ -49,7 +49,7 @@ import {
 	planPublish,
 	rewriteWorkspaceProtocol,
 	topoSort,
-} from "./workspace";
+} from "./workspace.ts";
 
 const ROOT = resolve(
 	dirname(fileURLToPath(import.meta.url)),

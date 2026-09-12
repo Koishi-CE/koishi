@@ -8,7 +8,7 @@
  * 首次发布（空集）。RELEASE_REGISTRY 环境变量可切换查询源；tarball 发布
  * 始终走 npm CLI 当前配置，与本查询源解耦。
  */
-import { captureNpm } from "./proc";
+import { captureNpm } from "./proc.ts";
 
 /** registry 查询源（可用 RELEASE_REGISTRY 环境变量覆盖）。 */
 export const REGISTRY =

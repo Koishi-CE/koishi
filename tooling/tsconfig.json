@@ -1,0 +1,7 @@
+// tooling 独立薄工程：仅供编辑器语言服务命中（tooling 不在任何门禁
+// typecheck 的 include 内，脚本均为 bun 直跑）。沿用 base 的 types
+// （node + bun-types），打开文件即可直接以正确配置出诊断，不再闪默认配置的报错。
+{
+	"extends": "../tsconfig.base",
+	"include": ["**/*.ts"]
+}

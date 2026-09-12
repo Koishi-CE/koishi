@@ -103,7 +103,7 @@ function cmdLink(target: string, force: boolean) {
 
 	console.log(green(`沙盒实例已就绪：${target}`));
 	console.log(
-		`  链接包：${plan.length} 个（新建 ${counts.create} / 重建 ${counts.rebuild} / 复用 ${counts.keep}）`,
+		`  链接包：${plan.length} 个（新建 ${counts["create"]} / 重建 ${counts["rebuild"]} / 复用 ${counts["keep"]}）`,
 	);
 	if (skipped.length > 0) {
 		console.log(

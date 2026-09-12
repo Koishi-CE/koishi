@@ -44,7 +44,7 @@ export function buildSandboxPackageJson(
 			dependencies[entry.name] =
 				`file:./vendor/${entry.file}`;
 		}
-		manifest.dependencies = dependencies;
+		manifest["dependencies"] = dependencies;
 	}
 	return manifest;
 }

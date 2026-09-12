@@ -40,8 +40,8 @@ afterAll(() => {
 
 describe("parseArgv", () => {
 	test("空参数：默认链接模式", () => {
+		// toEqual 忽略 undefined 属性，故无需显式断言 target 缺省
 		expect(parseArgv([])).toEqual({
-			target: undefined,
 			pack: false,
 			force: false,
 		});
@@ -62,7 +62,6 @@ describe("parseArgv", () => {
 		});
 		// bun run 可能插入的 -- 透传分隔符应被忽略
 		expect(parseArgv(["--", "--pack"])).toEqual({
-			target: undefined,
 			pack: true,
 			force: false,
 		});
