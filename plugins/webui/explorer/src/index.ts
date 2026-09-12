@@ -19,7 +19,10 @@ import {
 	rm,
 } from "node:fs/promises";
 import { join, relative, resolve } from "node:path";
-import { DataService } from "@koishi-ce/console";
+import {
+	clientEntry,
+	DataService,
+} from "@koishi-ce/console";
 import { type Context, Schema } from "@koishi-ce/koishi";
 import type { Tester } from "anymatch";
 import * as anymatchModule from "anymatch";
@@ -131,27 +134,7 @@ class Explorer extends DataService<Entry[]> {
 	constructor(ctx: Context, config: Explorer.Config) {
 		super(ctx, "explorer", { authority: 4 });
 
-		ctx.console.addEntry(
-			process.env["KOISHI_BASE"]
-				? [
-						`${process.env["KOISHI_BASE"]}/dist/index.js`,
-						`${process.env["KOISHI_BASE"]}/dist/style.css`,
-					]
-				: process.env["KOISHI_ENV"] === "browser"
-					? [
-							import.meta.url.replace(
-								/\/src\/[^/]+$/,
-								"/client/index.ts",
-							),
-						]
-					: {
-							dev: resolve(
-								import.meta.dir,
-								"../client/index.ts",
-							),
-							prod: resolve(import.meta.dir, "../dist"),
-						},
-		);
+		ctx.console.addEntry(clientEntry(import.meta.url));
 
 		this.globFilter = anymatch(config.ignored ?? []);
 		this.root = resolve(ctx.baseDir, config.root ?? "");

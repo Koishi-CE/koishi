@@ -10,7 +10,7 @@
  * 浏览器侧入口资源，不承载任何其它逻辑。
  */
 
-import { resolve } from "node:path";
+import { clientEntry } from "@koishi-ce/console";
 import { type Context, Schema } from "@koishi-ce/koishi";
 import type {} from "@koishi-ce/plugin-console";
 
@@ -25,25 +25,5 @@ export const Config: Schema<Config> = Schema.object({});
 
 /** 插件入口：向 console 注册浏览器侧主题入口资源。 */
 export function apply(ctx: Context) {
-	ctx.console.addEntry(
-		process.env["KOISHI_BASE"]
-			? [
-					`${process.env["KOISHI_BASE"]}/dist/index.js`,
-					`${process.env["KOISHI_BASE"]}/dist/style.css`,
-				]
-			: process.env["KOISHI_ENV"] === "browser"
-				? [
-						import.meta.url.replace(
-							/\/src\/[^/]+$/,
-							"/client/index.ts",
-						),
-					]
-				: {
-						dev: resolve(
-							import.meta.dir,
-							"../client/index.ts",
-						),
-						prod: resolve(import.meta.dir, "../dist"),
-					},
-	);
+	ctx.console.addEntry(clientEntry(import.meta.url));
 }

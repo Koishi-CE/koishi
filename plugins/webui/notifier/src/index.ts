@@ -15,7 +15,7 @@
  * 浏览器点击时经 notifier/button 事件回调。
  */
 
-import { resolve } from "node:path";
+import { clientEntry } from "@koishi-ce/console";
 import {
 	type Context,
 	type Dict,
@@ -190,25 +190,7 @@ class NotifierService extends Service {
 			ctx.on("dispose", () => (this.entry = undefined));
 
 			this.entry = ctx.console.addEntry(
-				process.env["KOISHI_BASE"]
-					? [
-							`${process.env["KOISHI_BASE"]}/dist/index.js`,
-							`${process.env["KOISHI_BASE"]}/dist/style.css`,
-						]
-					: process.env["KOISHI_ENV"] === "browser"
-						? [
-								import.meta.url.replace(
-									/\/src\/[^/]+$/,
-									"/client/index.ts",
-								),
-							]
-						: {
-								dev: resolve(
-									import.meta.dir,
-									"../client/index.ts",
-								),
-								prod: resolve(import.meta.dir, "../dist"),
-							},
+				clientEntry(import.meta.url),
 				() => ({
 					notifiers: this.store.map((notifier) =>
 						notifier.toJSON(),

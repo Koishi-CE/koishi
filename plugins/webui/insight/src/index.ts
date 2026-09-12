@@ -12,8 +12,10 @@
  * 等内部事件，并在下一拍防抖触发整体刷新。
  */
 
-import { resolve } from "node:path";
-import { DataService } from "@koishi-ce/console";
+import {
+	clientEntry,
+	DataService,
+} from "@koishi-ce/console";
 import {
 	Context,
 	camelize,
@@ -76,27 +78,7 @@ class Insight extends DataService<Insight.Payload> {
 	constructor(ctx: Context) {
 		super(ctx, "insight");
 
-		ctx.console.addEntry(
-			process.env["KOISHI_BASE"]
-				? [
-						`${process.env["KOISHI_BASE"]}/dist/index.js`,
-						`${process.env["KOISHI_BASE"]}/dist/style.css`,
-					]
-				: process.env["KOISHI_ENV"] === "browser"
-					? [
-							import.meta.url.replace(
-								/\/src\/[^/]+$/,
-								"/client/index.ts",
-							),
-						]
-					: {
-							dev: resolve(
-								import.meta.dir,
-								"../client/index.ts",
-							),
-							prod: resolve(import.meta.dir, "../dist"),
-						},
-		);
+		ctx.console.addEntry(clientEntry(import.meta.url));
 
 		const update = ctx.debounce(() => this.refresh(), 0);
 		ctx.on("internal/fork", update);
