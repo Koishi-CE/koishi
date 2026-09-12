@@ -12,8 +12,10 @@
  * 含 drop，但未注册监听、不向前端开放）。
  */
 
-import { resolve } from "node:path";
-import { DataService } from "@koishi-ce/console";
+import {
+	clientEntry,
+	DataService,
+} from "@koishi-ce/console";
 import {
 	type Context,
 	clone,
@@ -139,27 +141,7 @@ class DatabaseProvider extends DataService<DatabaseInfo> {
 	constructor(ctx: Context) {
 		super(ctx, "database", { authority: 4 });
 
-		ctx.console.addEntry(
-			process.env["KOISHI_BASE"]
-				? [
-						`${process.env["KOISHI_BASE"]}/dist/index.js`,
-						`${process.env["KOISHI_BASE"]}/dist/style.css`,
-					]
-				: process.env["KOISHI_ENV"] === "browser"
-					? [
-							import.meta.url.replace(
-								/\/src\/[^/]+$/,
-								"/client/index.ts",
-							),
-						]
-					: {
-							dev: resolve(
-								import.meta.dir,
-								"../client/index.ts",
-							),
-							prod: resolve(import.meta.dir, "../dist"),
-						},
-		);
+		ctx.console.addEntry(clientEntry(import.meta.url));
 
 		this.addListener("create", true);
 		this.addListener("eval", true);

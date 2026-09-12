@@ -14,9 +14,10 @@
  */
 
 import { createReadStream } from "node:fs";
-import { extname, resolve } from "node:path";
+import { extname } from "node:path";
 import {
 	type Client,
+	clientEntry,
 	DataService,
 } from "@koishi-ce/console";
 import {
@@ -140,27 +141,7 @@ class SandboxService extends DataService<Dict<number>> {
 export function apply(ctx: Context, config: Config) {
 	ctx.plugin(SandboxService);
 
-	ctx.console.addEntry(
-		process.env["KOISHI_BASE"]
-			? [
-					`${process.env["KOISHI_BASE"]}/dist/index.js`,
-					`${process.env["KOISHI_BASE"]}/dist/style.css`,
-				]
-			: process.env["KOISHI_ENV"] === "browser"
-				? [
-						import.meta.url.replace(
-							/\/src\/[^/]+$/,
-							"/client/index.ts",
-						),
-					]
-				: {
-						dev: resolve(
-							import.meta.dir,
-							"../client/index.ts",
-						),
-						prod: resolve(import.meta.dir, "../dist"),
-					},
-	);
+	ctx.console.addEntry(clientEntry(import.meta.url));
 
 	const bots: Dict<SandboxBot> = {};
 

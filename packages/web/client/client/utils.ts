@@ -6,6 +6,7 @@ import * as cordis from "cordis";
 import {
 	inject,
 	markRaw,
+	nextTick,
 	onBeforeUnmount,
 	type Ref,
 } from "vue";
@@ -70,4 +71,29 @@ export function insert<T extends Ordered>(
 	} else {
 		list.push(item);
 	}
+}
+
+/**
+ * keep-alive 页面重新激活时，把 el-tree 当前激活节点滚动到可视区域中央。
+ *
+ * @param root 包裹 el-tree 的组件 ref（激活时其 $el 已挂载）
+ */
+export async function scrollActiveTree(
+	root: Ref<null | { $el: HTMLElement }>,
+) {
+	const container = root.value?.$el;
+	if (!container) return;
+	await nextTick();
+	const element = container.querySelector(
+		".el-tree-node.is-active",
+	) as HTMLElement | null;
+	if (!element) return;
+	// el-tree 实例暴露 setScrollTop，但组件 ref 的类型只声明了 $el
+	const tree = root.value as typeof root.value & {
+		setScrollTop: (top: number) => void;
+	};
+	tree.setScrollTop(
+		element.offsetTop -
+			(container.offsetHeight - element.offsetHeight) / 2,
+	);
 }

@@ -26,6 +26,7 @@
 		"packages/node/loader/src/node/index.ts",
 		"packages/web/client/scripts/client.ts",
 		"packages/web/client/src/bin.ts",
+		"plugins/webui/config/src/shared/console-events.ts",
 		"tooling/upstream-audit.ts"
 	],
 	// 运行时动态加载的代码：前端由 vite 编程式构建、插件前端由 console 宿主按名 import()

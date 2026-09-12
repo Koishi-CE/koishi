@@ -40,7 +40,10 @@ import {
 	loadManifest,
 	writeManifest,
 } from "./manifest.ts";
-import { getLocalRegistry } from "./registry-config.ts";
+import {
+	getLocalRegistry,
+	NPM_OFFICIAL_REGISTRY,
+} from "./registry-config.ts";
 import {
 	fetchVersions,
 	getVersions,
@@ -99,7 +102,10 @@ class Installer extends Service {
 
 	override async start() {
 		const { endpoint, timeout } = this.config;
-		this.endpoint = endpoint ?? getLocalRegistry(this.cwd);
+		this.endpoint =
+			endpoint ??
+			getLocalRegistry(this.cwd) ??
+			NPM_OFFICIAL_REGISTRY;
 		const options: HTTP.Config = {};
 		if (this.endpoint) options.endpoint = this.endpoint;
 		if (timeout !== undefined) options.timeout = timeout;

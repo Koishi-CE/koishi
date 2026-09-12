@@ -79,6 +79,26 @@ export default class I18nService extends Service {
 	}
 }
 
+/**
+ * 批量注入扩展语言包（供插件 client 入口使用）。
+ *
+ * locales 传 vite 的 `import.meta.glob("./locales/*.yml", { eager: true, import: "default" })`
+ * 产物：键为相对路径，locale 名取自文件名（`de-DE.yml` → `de-DE`），值为
+ * 词典本身（yml 模块的 default 导出）。原先各入口"7 行 import + 7 行
+ * extend"的样板经此收敛为一行。
+ */
+export function extendLocales(
+	ctx: Context,
+	locales: Record<string, unknown>,
+) {
+	for (const [path, messages] of Object.entries(locales)) {
+		const locale = path
+			.replace(/^.*\//, "")
+			.replace(/\.yml$/, "");
+		ctx.$i18n.extend(locale, messages as Dict);
+	}
+}
+
 // 服务实例的模块级引用：仅用于开发期 HMR 回调中定位热替换目标
 let instance: I18nService | undefined;
 

@@ -2,8 +2,8 @@
 // Copyright (c) 2019-present Shigma and Koishijs contributors.
 // Copyright (c) 2026-present Koishi-CE contributors.
 
-import { resolve } from "node:path";
 import type { Entry } from "@koishi-ce/console";
+import { clientEntry } from "@koishi-ce/console";
 import {
 	$,
 	type Context,
@@ -165,25 +165,7 @@ export class Admin extends Service {
 			ctx.on("dispose", () => (this.entry = undefined));
 
 			this.entry = ctx.console.addEntry(
-				process.env["KOISHI_BASE"]
-					? [
-							`${process.env["KOISHI_BASE"]}/dist/index.js`,
-							`${process.env["KOISHI_BASE"]}/dist/style.css`,
-						]
-					: process.env["KOISHI_ENV"] === "browser"
-						? [
-								import.meta.url.replace(
-									/\/src\/[^/]+$/,
-									"/client/index.ts",
-								),
-							]
-						: {
-								dev: resolve(
-									import.meta.dir,
-									"../client/index.ts",
-								),
-								prod: resolve(import.meta.dir, "../dist"),
-							},
+				clientEntry(import.meta.url),
 				() => ({
 					group: Object.fromEntries(
 						this.groups.map((group) => [group.id, group]),
@@ -434,24 +416,7 @@ export class Admin extends Service {
 	 * @param aid 平台内的用户号
 	 */
 	async addUser(id: number, platform: string, aid: string) {
-		const item = this.groups.find(
-			(group) => group.id === id,
-		);
-		if (!item) throw new Error("group not found");
-		const data = await this.ctx.database.getUser(
-			platform,
-			aid,
-			["id", "permissions"],
-		);
-		if (!data) throw new Error("user not found");
-		if (!data.permissions.includes(`group:${item.id}`)) {
-			data.permissions.push(`group:${item.id}`);
-			item.count = (item.count ?? 0) + 1;
-			await this.ctx.database.set("user", data.id, {
-				permissions: data.permissions,
-			});
-			this.entry?.refresh();
-		}
+		await this.toggleUser(id, platform, aid, "add");
 	}
 
 	/**
@@ -463,6 +428,20 @@ export class Admin extends Service {
 		platform: string,
 		aid: string,
 	) {
+		await this.toggleUser(id, platform, aid, "remove");
+	}
+
+	/**
+	 * 加入 / 移出用户组的公共实现：定位组与用户后按方向调整其
+	 * permissions 中的 `group:<gid>` 成员关系并回写，方向不适用时
+	 * （已在组内加入 / 不在组内移出）不做任何写入。
+	 */
+	private async toggleUser(
+		id: number,
+		platform: string,
+		aid: string,
+		mode: "add" | "remove",
+	) {
 		const item = this.groups.find(
 			(group) => group.id === id,
 		);
@@ -473,8 +452,17 @@ export class Admin extends Service {
 			["id", "permissions"],
 		);
 		if (!data) throw new Error("user not found");
-		if (remove(data.permissions, `group:${item.id}`)) {
-			item.count = (item.count ?? 0) - 1;
+		const member = data.permissions.includes(
+			`group:${item.id}`,
+		);
+		if (mode === "add" ? !member : member) {
+			if (mode === "add") {
+				data.permissions.push(`group:${item.id}`);
+			} else {
+				remove(data.permissions, `group:${item.id}`);
+			}
+			item.count =
+				(item.count ?? 0) + (mode === "add" ? 1 : -1);
 			await this.ctx.database.set("user", data.id, {
 				permissions: data.permissions,
 			});

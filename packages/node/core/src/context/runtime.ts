@@ -15,7 +15,8 @@ import * as cordis from "cordis";
 import BotMixin from "../bot.ts";
 import DatabaseMixin from "../database/index.ts";
 import SessionMixin from "../session/index.ts";
-import { Context } from "./index.ts";
+import { contextFactory } from "./factory.ts";
+import type { Context } from "./index.ts";
 
 /**
  * Koishi 应用服务：持有根配置与三大 Mixin 实例。
@@ -51,7 +52,7 @@ export abstract class Service<
 	C extends Context = Context,
 > extends satori.Service<T, C> {
 	override [satori.Service.setup]() {
-		this.ctx = new Context() as C;
+		this.ctx = contextFactory.create() as C;
 	}
 }
 

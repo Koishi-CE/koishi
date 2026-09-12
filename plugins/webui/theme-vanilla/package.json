@@ -47,6 +47,7 @@
 		}
 	},
 	"peerDependencies": {
+		"@koishi-ce/console": "^1.0.0",
 		"@koishi-ce/plugin-console": "^1.0.0",
 		"@koishi-ce/koishi": "^1.0.0"
 	},

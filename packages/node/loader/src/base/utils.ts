@@ -53,7 +53,7 @@ export function separate(
  * 将 temp 中的键插入到 object 的指定位置（rest 各键之前），
  * 用于在重命名插件时保持键的相对顺序。
  */
-function insertKey(
+export function insertKey(
 	object: Dict<unknown>,
 	temp: Dict<unknown>,
 	rest: string[],

@@ -11,20 +11,15 @@
  * 分组设置面板：分组节点（group:xxx）的配置编辑区。
  * 分组本身只有过滤器设置（$filter），复用 modifier 组件。
  */
-import { computed } from "vue";
 import KModifier from "./modifier.vue";
 import type { Tree } from "./utils";
 
-const props = defineProps<{
+defineProps<{
 	current: Tree;
-	modelValue: Record<string, unknown>;
 }>();
 
-const emit = defineEmits(["update:modelValue"]);
-
-const config = computed({
-	get: () => props.modelValue,
-	set: (value) => emit("update:modelValue", value),
+const config = defineModel<Record<string, unknown>>({
+	required: true,
 });
 </script>
 

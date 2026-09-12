@@ -11,17 +11,19 @@
  * - explorer / explorer.tree 两组菜单项，供页面动作与文件树右键菜单挂载
  */
 
-import type { Context } from "@koishi-ce/client";
+import {
+	type Context,
+	extendLocales,
+} from "@koishi-ce/client";
 import type { Entry } from "@koishi-ce/plugin-explorer";
 import FilePicker from "./file-picker.vue";
 import Layout from "./index.vue";
-import deDE from "./locales/de-DE.yml";
-import enUS from "./locales/en-US.yml";
-import frFR from "./locales/fr-FR.yml";
-import jaJP from "./locales/ja-JP.yml";
-import ruRU from "./locales/ru-RU.yml";
-import zhCN from "./locales/zh-CN.yml";
-import zhTW from "./locales/zh-TW.yml";
+
+const locales = import.meta.glob("./locales/*.yml", {
+	eager: true,
+	import: "default",
+});
+
 import Status from "./status.vue";
 import Upload from "./upload.vue";
 import "./icons";
@@ -63,13 +65,7 @@ declare module "@koishi-ce/plugin-console" {
 
 export default (ctx: Context) => {
 	// 注入本扩展的 UI 语言包（各语种键均收纳在 explorer.* 命名空间下）
-	ctx.$i18n.extend("de-DE", deDE);
-	ctx.$i18n.extend("en-US", enUS);
-	ctx.$i18n.extend("fr-FR", frFR);
-	ctx.$i18n.extend("ja-JP", jaJP);
-	ctx.$i18n.extend("ru-RU", ruRU);
-	ctx.$i18n.extend("zh-CN", zhCN);
-	ctx.$i18n.extend("zh-TW", zhTW);
+	extendLocales(ctx, locales);
 
 	// 注册 path 角色的 string 控件:配置表单中的路径字段
 	// 会渲染为 FilePicker 弹窗选择器

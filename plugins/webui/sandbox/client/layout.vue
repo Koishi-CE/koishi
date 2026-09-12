@@ -160,30 +160,26 @@ const quote = ref<Message>();
  */
 function onKeydown(event: KeyboardEvent) {
 	if (event.key === "ArrowUp") {
-		const list = config.value.messages[
-			channel.value
-		].filter((item) => item.user === config.value.user);
-		let index = list.length - offset.value;
-		if (list[index - 1]) {
-			offset.value++;
-			input.value = segment.unescape(
-				list[index - 1].content,
-			);
-		}
+		stepHistory(-1);
 	} else if (event.key === "ArrowDown") {
-		const list = config.value.messages[
-			channel.value
-		].filter((item) => item.user === config.value.user);
-		let index = list.length - offset.value;
-		if (list[index + 1]) {
-			offset.value--;
-			input.value = segment.unescape(
-				list[index + 1].content,
-			);
-		} else if (offset.value) {
-			offset.value = 0;
-			input.value = "";
-		}
+		stepHistory(1);
+	}
+}
+
+/** 沿 step（-1 向上 / 1 向下）在历史列表中移动一格。 */
+function stepHistory(step: -1 | 1) {
+	const list = config.value.messages[channel.value].filter(
+		(item) => item.user === config.value.user,
+	);
+	const index = list.length - offset.value;
+	const target = list[index + step];
+	if (target) {
+		offset.value -= step;
+		input.value = segment.unescape(target.content);
+	} else if (step === 1 && offset.value) {
+		// 向下越出最新一条：回到空输入
+		offset.value = 0;
+		input.value = "";
 	}
 }
 

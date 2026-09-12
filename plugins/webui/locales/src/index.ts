@@ -15,6 +15,7 @@
 import { mkdir, readdir } from "node:fs/promises";
 import { resolve } from "node:path";
 import type { DataService } from "@koishi-ce/console";
+import { clientEntry } from "@koishi-ce/console";
 import {
 	type Context,
 	type Dict,
@@ -83,25 +84,7 @@ export async function apply(ctx: Context, config: Config) {
 
 	ctx.inject(["console"], (ctx) => {
 		const entry = ctx.console.addEntry(
-			process.env["KOISHI_BASE"]
-				? [
-						`${process.env["KOISHI_BASE"]}/dist/index.js`,
-						`${process.env["KOISHI_BASE"]}/dist/style.css`,
-					]
-				: process.env["KOISHI_ENV"] === "browser"
-					? [
-							import.meta.url.replace(
-								/\/src\/[^/]+$/,
-								"/client/index.ts",
-							),
-						]
-					: {
-							dev: resolve(
-								import.meta.dir,
-								"../client/index.ts",
-							),
-							prod: resolve(import.meta.dir, "../dist"),
-						},
+			clientEntry(import.meta.url),
 			() => ctx.i18n._data,
 		);
 

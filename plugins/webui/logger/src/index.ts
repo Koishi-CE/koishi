@@ -4,6 +4,7 @@
 
 import { mkdir, readdir, rm } from "node:fs/promises";
 import { resolve } from "node:path";
+import { clientEntry } from "@koishi-ce/console";
 import {
 	Context,
 	type Dict,
@@ -52,27 +53,7 @@ class LogProvider extends DataService<Logger.Record[]> {
 		super(ctx, "logs", { authority: 4 });
 		this.getWriter = getWriter;
 
-		ctx.console.addEntry(
-			process.env["KOISHI_BASE"]
-				? [
-						`${process.env["KOISHI_BASE"]}/dist/index.js`,
-						`${process.env["KOISHI_BASE"]}/dist/style.css`,
-					]
-				: process.env["KOISHI_ENV"] === "browser"
-					? [
-							import.meta.url.replace(
-								/\/src\/[^/]+$/,
-								"/client/index.ts",
-							),
-						]
-					: {
-							dev: resolve(
-								import.meta.dir,
-								"../client/index.ts",
-							),
-							prod: resolve(import.meta.dir, "../dist"),
-						},
-		);
+		ctx.console.addEntry(clientEntry(import.meta.url));
 	}
 
 	override async get() {

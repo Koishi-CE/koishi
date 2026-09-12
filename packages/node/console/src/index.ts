@@ -303,3 +303,4 @@ export namespace Console {
 }
 
 export default Console;
+export { clientEntry } from "./client-entry.ts";
