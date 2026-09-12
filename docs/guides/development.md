@@ -180,7 +180,7 @@ expect(app.database.getUser("mock", "A")).resolves.toHaveShape({ authority: 1 })
 - 版本与发布由 changesets + `bun run release` 发布链管理，禁止手动 `npm publish`——流程、命令与事故教训见 [../process/release.md](../process/release.md)。
 - 面向发布的包改动随提交写 `.changeset/` 条目（见 [../process/release.md](../process/release.md) 第 3 节）。
 
-## 9. 外部沙盒实例（tooling/sandbox.ts）
+## 9. 外部沙盒实例（tooling/sandbox/）
 
 在工作区之外生成由本仓 workspace 包组成的 koishi-ce 运行实例，用于「先测试再发包」：数据写回、市场装插件等运行时副作用全部落在沙盒目录（loader 的 baseDir 取自进程 cwd 与配置文件位置），工作区零污染。
 

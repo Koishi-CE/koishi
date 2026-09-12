@@ -18,13 +18,10 @@ import {
 } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import {
-	applyLinks,
-	buildSandboxPackageJson,
-	parseArgv,
-	planLinks,
-	resolveWorkspacePackages,
-} from "./sandbox.ts";
+import { parseArgv } from "./args.ts";
+import { applyLinks, planLinks } from "./links.ts";
+import { buildSandboxPackageJson } from "./manifest.ts";
+import { resolveWorkspacePackages } from "./workspace.ts";
 
 let root: string;
 
