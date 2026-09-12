@@ -688,7 +688,7 @@
         "@satorijs/element": "^3.2.0",
       },
       "peerDependencies": {
-        "@koishi-ce/console": "workspace:*",
+        "@koishi-ce/console": "^1.0.0",
         "@koishi-ce/koishi": "^1.0.0",
         "@koishi-ce/plugin-console": "^1.0.0",
       },

@@ -75,7 +75,7 @@
     },
     "dependencies": {
         "@koishi-ce/console": "workspace:*",
-		"@koishi-ce/utils": "workspace:*",
+        "@koishi-ce/utils": "workspace:*",
         "@koishi-ce/registry": "workspace:*",
         "semver": "^7.6.3"
     },
