@@ -19,7 +19,11 @@ export type {
 	SharedData,
 	StartMessage,
 } from "./base/types.ts";
-export { unwrapExports } from "./base/utils.ts";
+export {
+	insertKey,
+	rename,
+	unwrapExports,
+} from "./base/utils.ts";
 export { default, Loader } from "./node/index.ts";
 export {
 	pluginCandidates,

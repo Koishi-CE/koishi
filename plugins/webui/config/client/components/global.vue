@@ -13,18 +13,13 @@
  * 运行时信息渲染 k-form。
  */
 import { store } from "@koishi-ce/client";
-import { computed } from "vue";
 import type { Tree } from "./utils";
 
-const props = defineProps<{
+defineProps<{
 	current: Tree;
-	modelValue: Record<string, unknown>;
 }>();
 
-const emit = defineEmits(["update:modelValue"]);
-
-const config = computed({
-	get: () => props.modelValue,
-	set: (value) => emit("update:modelValue", value),
+const config = defineModel<Record<string, unknown>>({
+	required: true,
 });
 </script>

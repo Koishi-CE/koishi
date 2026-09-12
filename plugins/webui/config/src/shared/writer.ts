@@ -21,85 +21,16 @@ import {
 	remove,
 } from "@koishi-ce/koishi";
 import {
+	insertKey,
 	Loader,
 	type LoaderScope,
+	rename,
 } from "@koishi-ce/loader";
 
-// 声明合并：浏览器端通过 WebSocket 发送的 manager/* 事件及其载荷类型。
-// 服务端在构造函数中为每个事件注册监听器，见下方 ConfigWriter 构造函数。
-declare module "@koishi-ce/console" {
-	interface Events {
-		"manager/app-reload"(config: unknown): void;
-		"manager/teleport"(
-			source: string,
-			key: string,
-			target: string,
-			index: number,
-		): void;
-		"manager/reload"(
-			parent: string,
-			key: string,
-			config: unknown,
-		): void;
-		"manager/unload"(
-			parent: string,
-			key: string,
-			config: unknown,
-			index?: number,
-		): void;
-		"manager/remove"(parent: string, key: string): void;
-		"manager/meta"(ident: string, config: unknown): void;
-	}
-}
+// manager/* 事件的签名合并见同目录 console-events.ts（唯一权威定义）
+import type {} from "./console-events.ts";
 
 const logger = new Logger("loader");
-
-/**
- * 把 temp 中的键插入到 object 的开头（原有 rest 键依次后移），用于在
- * 不破坏其它键相对顺序的前提下完成"插入到指定位置"的配置操作。
- *
- * 实现方式是先把 rest 中的键全部搬到 temp 里，再用 Object.assign 合并回来。
- *
- * @param object 目标配置对象（会被原地修改）
- * @param temp 待插入的键值对
- * @param rest 需要让位的既有键名列表
- */
-function insertKey(
-	object: Record<string, unknown>,
-	temp: Record<string, unknown>,
-	rest: string[],
-) {
-	for (const key of rest) {
-		temp[key] = object[key];
-		delete object[key];
-	}
-	Object.assign(object, temp);
-}
-
-/**
- * 在对象中把键 old 重命名为 neo（并可顺带替换其值），且保持键原有的位置。
- *
- * @param object 目标配置对象
- * @param old 旧键名（可为 `"~" + name` 形式的停用态键）
- * @param neo 新键名
- * @param value 新键对应的值
- */
-function rename(
-	object: Record<string, unknown>,
-	old: string,
-	neo: string,
-	value: unknown,
-) {
-	const keys = Object.keys(object);
-	const index = keys.findIndex(
-		(key) => key === old || key === `~${old}`,
-	);
-	const rest = index < 0 ? [] : keys.slice(index + 1);
-	const temp = { [neo]: value };
-	delete object[old];
-	delete object[`~${old}`];
-	insertKey(object, temp, rest);
-}
 
 /**
  * 从 plugins 配置中摘除指定的键（兼容 `~` 前缀的停用态键），返回以该键

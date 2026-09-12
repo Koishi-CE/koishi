@@ -18,32 +18,13 @@ export * from "./tree.ts";
 
 // 浏览器端 tsconfig 无 paths,@koishi-ce/plugin-console 解析不到真实模块,
 // store 的键与 send 的事件类型均来自 packages/web/client/client/shims.d.ts 的
-// 手写环境声明;这里按同名环境声明合并补齐本插件的服务与事件,与服务端
-// src/shared/index.ts、src/shared/writer.ts 对 "@koishi-ce/console" 的声明一一对应
-declare module "@koishi-ce/plugin-console" {
-	interface Events {
-		"manager/app-reload"(config: unknown): void;
-		"manager/teleport"(
-			source: string,
-			key: string,
-			target: string,
-			index: number,
-		): void;
-		"manager/reload"(
-			parent: string,
-			key: string,
-			config: unknown,
-		): void;
-		"manager/unload"(
-			parent: string,
-			key: string,
-			config: unknown,
-			index?: number,
-		): void;
-		"manager/remove"(parent: string, key: string): void;
-		"manager/meta"(ident: string, config: unknown): void;
-	}
+// 手写环境声明;这里按同名环境声明合并补齐本插件的服务,与服务端
+// src/shared/index.ts 对 "@koishi-ce/console" 的声明一一对应。
+// manager/* 事件签名以 src/shared/console-events.ts 为唯一权威定义,
+// 经下方 type-only import 拉入本端类型程序完成声明合并
+import type {} from "../../src/shared/console-events.ts";
 
+declare module "@koishi-ce/plugin-console" {
 	namespace Console {
 		export interface Services {
 			packages: DataService<Dict<PackageProvider.Data>>;
