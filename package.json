@@ -21,6 +21,7 @@
         "check:locales": "bun tooling/check-locales.ts",
         "check:docs-links": "bun tooling/check-docs-links.ts",
         "sandbox": "bun tooling/sandbox/index.ts",
+        "upstream:audit": "bun tooling/upstream-audit/index.ts",
         "fallow": "bunx fallow@3.25.0 dead-code",
         "fallow:full": "bunx fallow@3.25.0",
         "format": "biome format --write .",
