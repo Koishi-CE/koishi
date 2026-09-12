@@ -98,6 +98,7 @@
  */
 import {
 	Binary,
+	scrollActiveTree,
 	send,
 	store,
 	useColorMode,
@@ -107,13 +108,7 @@ import {
 import type { Entry } from "@koishi-ce/plugin-explorer";
 import { useElementSize } from "@vueuse/core";
 import * as monaco from "monaco-editor";
-import {
-	computed,
-	nextTick,
-	onActivated,
-	ref,
-	watch,
-} from "vue";
+import { computed, onActivated, ref, watch } from "vue";
 import { useI18n } from "vue-i18n";
 import { useRoute, useRouter } from "vue-router";
 import { model } from "./editor";
@@ -439,19 +434,8 @@ function initRemove(entry: TreeEntry) {
 		(entry.type === "directory" ? "/" : "");
 }
 
-// keep-alive 页面重新激活时，把当前选中节点滚动到可视区中央
-onActivated(async () => {
-	const container = root.value.$el;
-	await nextTick();
-	const element = container.querySelector(
-		".el-tree-node.is-active",
-	) as HTMLElement;
-	if (!element) return;
-	root.value["setScrollTop"](
-		element.offsetTop -
-			(container.offsetHeight - element.offsetHeight) / 2,
-	);
-});
+// 页面重新激活时把当前选中的树节点滚动到可视区域中央
+onActivated(() => scrollActiveTree(root));
 
 /** 读取文件内容并触发浏览器下载（Blob + 临时 a 标签）。 */
 async function downloadFile(filename: string) {

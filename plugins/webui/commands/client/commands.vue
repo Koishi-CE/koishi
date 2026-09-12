@@ -55,6 +55,7 @@
 <script lang="ts" setup>
 import {
 	type Dict,
+	scrollActiveTree,
 	send,
 	useContext,
 	useRpc,
@@ -198,18 +199,7 @@ async function onEnter() {
 }
 
 // 页面重新激活时把当前选中的树节点滚动到可视区域中央
-onActivated(async () => {
-	const container = root.value.$el;
-	await nextTick();
-	const element = container.querySelector(
-		".el-tree-node.is-active",
-	) as HTMLElement;
-	if (!element) return;
-	root.value["setScrollTop"](
-		element.offsetTop -
-			(container.offsetHeight - element.offsetHeight) / 2,
-	);
-});
+onActivated(() => scrollActiveTree(root));
 
 // 顶部菜单：创建指令（弹出对话框）
 ctx.action("command.create", {
