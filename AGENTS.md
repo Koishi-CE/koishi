@@ -35,7 +35,7 @@ bun run check                   # 全量门禁 = lint + lint:client + typecheck
 bun run lint                    # biome check .（格式 + lint 唯一权威）
 bun run lint:client             # eslint 仅查 *.vue（biome 只解析 .vue 的 script，模板语义归 eslint）
 bun run typecheck               # TS7 类型检查 = 两条 bunx tsc（node 侧 + client 侧大一统串行）
-bun run fallow                  # 死代码与依赖审计（bunx 直跑 fallow；豁免与规则见 .fallowrc.jsonc）
+bun run fallow                  # 死代码与依赖审计（bunx 直跑 fallow：不占 devDependencies、脚本内 pin 精确版；豁免与规则见 .fallowrc.jsonc）
 bun run build                   # 根 tsdown：全部 node 侧包 → lib/（ESM-only）
 bun test                        # 全量自有用例（108 个测试文件 / 约 913 用例，覆盖全部 node 侧包）
 bun run test                    # 同上的脚本形态：bun test --isolate（每文件独立 global，隔离跨文件 mock.module）

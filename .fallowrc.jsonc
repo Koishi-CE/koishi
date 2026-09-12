@@ -6,10 +6,13 @@
 	// ignoreDependencies 只能写包名（全局生效，同时豁免 unused 与 unlisted 两类），
 	// 无法精确到单个包，所以每条都配注释说明豁免理由。
 	//
-	// 运行入口：
-	//   bun run fallow              仅 dead-code（CI 门禁口径，等价 bunx fallow@3 dead-code）
-	//   bunx fallow@3               全量（dead-code + dupes + health）
-	//   bunx fallow@3 dead-code --trace <file>:<export>   判断某个导出能否删除
+	// 运行入口（版本在 package.json 的 fallow / fallow:full 脚本内 pin 到精确版，
+	// 不用浮动 range——fallow 迭代极快，一个月内可有十余个 minor，浮动会让
+	// dead-code 门禁的判定口径在无代码改动时漂移，审计基线数字随之不可复现，
+	// 故升级须显式改脚本内版本号并复核基线）：
+	//   bun run fallow              仅 dead-code（CI 门禁口径）
+	//   bun run fallow:full         全量（dead-code + dupes + health）
+	//   bun run fallow:full -- dead-code --trace <file>:<export>   判断某个导出能否删除
 	"$schema": "https://raw.githubusercontent.com/fallow-rs/fallow/main/schema.json",
 	// 静态不可达但确实是入口的文件：tsdown 配置里显式声明的构建入口、CLI 入口、
 	// 构建脚本、发布工具，以及库对外暴露的适配层/barrel（下游深导入的载体）

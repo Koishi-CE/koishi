@@ -11,8 +11,10 @@
 # - client 前端构建：宿主控制台 + 全部 webui 插件（vite 编程式构建，无配置
 #          文件）。前端构建是 .vue 的实际类型门禁（compiler-sfc 含
 #          defineProps 类型解析），tsc 侧 .vue 只是不透明 Component。
-# - fallow  死代码与依赖审计（bunx 直跑，不进 devDependencies；本地手动入口
-#          bun run fallow）。豁免与规则见根目录 .fallowrc.jsonc：
+# - fallow  死代码与依赖审计（bunx 直跑，不进 devDependencies；版本在根
+#          package.json 的 fallow 脚本内 pin 精确版，避免门禁口径随上游
+#          发布漂移；本地手动入口 bun run fallow）。豁免与规则见根目录
+#          .fallowrc.jsonc：
 #          循环依赖仅告警（core 的 command ↔ context 已知架构债），
 #          反射式 API（unused-class-members / component props）与 duplicate-exports
 #          与 knip 时代口径一致地关闭。

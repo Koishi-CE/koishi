@@ -24,7 +24,7 @@ bun run lint:client             # eslint 仅查 *.vue 模板语义
 bun run format                  # biome format --write .
 bun run check:locales           # 词典键对齐 / 语种齐全 / 假翻译检查（零依赖，已并入 check）
 bun run check:docs-links        # 文档相对链接与锚点存活检查（零依赖，已并入 check）
-bun run fallow                  # 死代码与依赖审计（bunx 直跑 fallow，不占 devDependencies；配置见根 .fallowrc.jsonc）
+bun run fallow                  # 死代码与依赖审计（bunx 直跑 fallow：不占 devDependencies、脚本内 pin 精确版；配置见根 .fallowrc.jsonc）
 bun run typecheck               # TS7 类型检查（node 侧 + client 侧两条 bunx tsc 串行）
 bun run build                   # 根 tsdown：全部 node 侧包 → 各包 lib/（ESM-only）
 bun test                        # 全量自有用例（覆盖全部 node 侧包与 tooling 回归，秒级；文件与用例数以实跑输出为准）
@@ -65,13 +65,13 @@ bun run release status                   # 发布链概览（详见 ../process/r
 - **gate 里前端构建前置于 test**：console 插件的「静态资源托管」用例读 `plugins/webui/console/dist` 真实产物（index.html / logo.png），干净环境不构建前端则整套用例必失败（首次上 CI 实证）；本地因 dist 常在而感知不到。
 - **Bun 版本不在 workflow 硬编码**：`oven-sh/setup-bun` 自动读根 `packageManager`（bun@1.4.2），升级只改根字段。
 
-**依赖与死代码审计（fallow）**：`bun run fallow` = `bunx fallow@3 dead-code`，即 CI 的 `fallow` job 口径；工具不进 devDependencies（bunx 直跑，与既有策略一致）。全部豁免与规则开关集中在根 `.fallowrc.jsonc`，三条要点：
+**依赖与死代码审计（fallow）**：`bun run fallow` = `bunx fallow@<pin> dead-code`，即 CI 的 `fallow` job 口径；工具不进 devDependencies（bunx 直跑，与 knip 时代的既有策略一致），但版本在 `package.json` 脚本内 **pin 到精确版**——浮动的 `fallow@3` 会让门禁口径随上游发布漂移（fallow 迭代极快，2026-08 单月发布 11 个 minor），而 dead-code 退出码直接决定 CI 红绿、审计基线数字又常被 PR 引用，必须可复现；升级即改脚本内版本号（单点）并复核审计基线。全部豁免与规则开关集中在根 `.fallowrc.jsonc`，三条要点：
 
 - **入口补声明**：tsdown 配置里显式声明的构建入口（如 cli 的 worker）、前端构建脚本（`packages/web/client/{src/bin,scripts/client}.ts`）以及库对外暴露的适配层/barrel 静态不可达，靠 `entry` / `dynamicallyLoaded` 补齐（`dynamicallyLoaded` 即 knip 时代各 webui 包的 `entry: ["client/**/*.ts"]`）。
 - **依赖豁免是包名级全局的**：fallow 不支持按 workspace 覆写 `ignoreDependencies`，knip 时代散落各包的豁免清单因此收敛为一份带理由注释的长列表。
 - **规则开关**：`unused-class-members` / `unused-component-props` / `unused-component-emits` / `duplicate-exports` 关闭（反射式公共 API 与多包同名导出约定，与 knip 口径一致）；`circular-dependencies` 与 `re-export-cycle` 仅 `warn`——core 的 `command` ↔ `context` 双向引用属已知架构债（见 [roadmap](../roadmap.md)），可见但不阻塞。
 
-fallow 另外还带重复代码、复杂度健康度、边界违规与 PR 变更集审计（`bunx fallow@3` 全量、`bunx fallow@3 audit --base main`），暂未纳入门禁，按需手动跑。
+fallow 另外还带重复代码、复杂度健康度、边界违规与 PR 变更集审计（`bun run fallow:full` 全量、`bun run fallow:full -- audit --base main` 变更集审计），暂未纳入门禁，按需手动跑。
 
 **类型检查现状**：全仓在 TS7 下 0 错误（含 `packages/web/*` 与全部 webui 插件）。最低纪律：改哪个包，保证该包所在 project 不新增错误。
 
