@@ -1,8 +1,8 @@
-# @koishi-ce/plugin-welcome
+# @koishi-ce/utils
 
-## 1.0.2
+## 1.1.0
 
-### Patch Changes
+### Minor Changes
 
 - e537fa2: fallow 审计收敛：断掉 core 最后一处循环依赖并收敛重复代码样板（1024 → 357 行）。
   
@@ -13,16 +13,3 @@
   - utils：新增 npm-registry 模块（`getLocalRegistry` / `readNpmrcRegistry` / `NPM_OFFICIAL_REGISTRY`），create-koishi-ce 与 market 的本机 registry 探测共享同一实现。
   - config：manager/* 事件签名收敛到 `src/shared/console-events.ts` 唯一定义（node 与浏览器两端声明合并经 extends 引用）；global/group 设置面板的 modelValue 代理改用 `defineModel`。
   - admin/sandbox/sqlite/check-docs-links：对称逻辑（用户组加入与移出、方向键历史回溯、`_all`/`_get` 读取原语、链接检查循环）就近抽取共享实现。
-- Updated dependencies [e537fa2]
-  - @koishi-ce/console@1.1.0
-  - @koishi-ce/plugin-console@1.3.4
-  - @koishi-ce/koishi@1.0.16
-
-## 1.0.1
-
-### Patch Changes
-
-- f90fa0a: 新插件 @koishi-ce/plugin-welcome：控制台首页欢迎卡（文档 / 论坛入口 + 7 语种词典）由 client 宿主内建卡迁出为独立插件，背景为 Lottie 开屏描线动画（移植自 Il Harper 的 MIT 插件 koishi-plugin-telemetry，数据与加载接线，描线经 CSS 类映射主题变量适配明暗，prefers-reduced-motion 下不挂动画回落紧凑形态）。
-- Updated dependencies [08733b3]
-- Updated dependencies [f90fa0a]
-  - @koishi-ce/plugin-console@1.3.0
