@@ -73,7 +73,7 @@ flowchart LR
 2. **页面模板**：`# 标题` → 引用块（定位 + 「本文结构」）→ 编号章节。长文档可在开头加节内目录。
 3. **章节编号**：中文手册 `## N. 标题` 二级、`### 小节` 三级；引用章节写作「见 §N」或锚点 `目标.md#n-标题`。
 4. **交叉引用**：一律相对路径、不带 `./` 前缀（同目录 `release.md`、跨目录 `../guides/development.md`、指仓库根 `../../AGENTS.md`）；`.github/` 顶层社区健康文件（CONTRIBUTING 等）按 GitHub 规则从仓库根解析，须带 `./` 前缀。docs 根下不新增散落 md，新手册按性质入层。
-5. **链接存活**：改动文档后跑 `bun tooling/check-docs-links.ts` 校验全部相对链接与锚点（覆盖 docs 全树与根部 / `.github/` 文档），应当保持通过。
+5. **链接存活**：改动文档后跑 `bun tooling/checks/docs-links.ts` 校验全部相对链接与锚点（覆盖 docs 全树与根部 / `.github/` 文档），应当保持通过。
 6. **与 AGENTS.md 不重复**：AGENTS 放铁律（精简），docs 放方法与理由；需要时用链接而非抄写。
 7. **不写死漂移数据**：版本号、文件数、用例数等以 package.json / 命令输出为准，不在文档中写死；确需记录时注明日期。
 8. **语言**：简体中文、不用 emoji；`process/upstream.md` 为面向公开受众的英文例外。

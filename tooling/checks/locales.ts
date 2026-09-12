@@ -4,7 +4,7 @@
 /**
  * 全仓词典键对齐检查（零依赖，bun 直跑）。
  *
- * 用法：bun tooling/check-locales.ts
+ * 用法：bun tooling/checks/locales.ts
  *
  * 以每个词典目录的 zh-CN.yml 为基准，检查三件事：
  *   1. 键对齐：目录内其他语种文件的键路径集合与基准一致
@@ -19,8 +19,8 @@
 import { readdirSync, readFileSync } from "node:fs";
 import { join, relative, resolve } from "node:path";
 
-/** 仓库根目录（本脚本位于 tooling/ 下）。 */
-const ROOT = resolve(import.meta.dirname, "..");
+/** 仓库根目录（本脚本位于 tooling/checks/ 下）。 */
+const ROOT = resolve(import.meta.dirname, "../..");
 
 /** 全仓标准的 7 个语种（zh-CN 为基准语种）。 */
 const LOCALES = [

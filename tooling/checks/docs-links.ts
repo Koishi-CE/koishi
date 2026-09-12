@@ -4,7 +4,7 @@
 /**
  * 文档相对链接存活检查（零依赖，bun 直跑）。
  *
- * 用法：bun tooling/check-docs-links.ts
+ * 用法：bun tooling/checks/docs-links.ts
  *
  * 扫描 docs/ 全部 markdown，以及根部 README.md / NOTICE / AGENTS.md 与
  * .github/ 下的 markdown，校验两件事：
@@ -17,8 +17,8 @@
 import { existsSync, readFileSync } from "node:fs";
 import { dirname, join, resolve, sep } from "node:path";
 
-/** 仓库根目录（本脚本位于 tooling/ 下）。 */
-const ROOT = resolve(import.meta.dirname, "..");
+/** 仓库根目录（本脚本位于 tooling/checks/ 下）。 */
+const ROOT = resolve(import.meta.dirname, "../..");
 
 /** 收集目录下全部 .md 文件（Bun.Glob 原生遍历，跳过 node_modules）。 */
 function collectMarkdown(dir: string): string[] {

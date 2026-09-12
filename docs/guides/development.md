@@ -57,8 +57,8 @@ bun run release status                   # 发布链概览（详见 ../process/r
 1. **lint（biome）**：全仓格式 + lint（`biome check .`）。biome 尊重 `.gitignore`（`vcs.useIgnoreFile`），跳过 lib/dist 等。格式以 biome 为唯一权威——`.editorconfig` 声明的 4 空格缩进与代码现状（tab）不符，勿据此手改，统一 `bun run format`。
 2. **lint:client（eslint）**：只查 `.vue` 文件，与 biome 零重叠；核心规则 `vue/no-undef-components`（忽略 `^K`、`^el-`、`^router-` 全局组件）。不做类型感知。
 3. **typecheck**：两条纯 `bunx tsc` 串行——node 侧大一统 `tsconfig.json`（include 为全部 node 工程 src 的并集）+ client 侧大一统 `tsconfig.web.json`（include 为全部 client 工程并集）。**不要恢复逐 tsconfig 并行 spawn**（旧方案 50 进程并发在 win32 下有 Bun.spawn 竞态且无必要）。两条链已开 `incremental`，buildinfo 分文件存 `node_modules/.cache/tsc/`（node / web 各一份，入口文件集合不同不能共用；删掉即全量重建）。另有调试用的 legacy 通道 `bun run typecheck:legacy`（tsc6，写 `node-legacy.tsbuildinfo`）。新增 client 工程时须同步 `tsconfig.web.json` 的 include/paths。
-4. **check:locales**：`tooling/check-locales.ts`（零依赖，bun 直跑）——词典键对齐 / 语种齐全 / 假翻译三查，发现问题 exit 1；覆盖范围与豁免名单见脚本头部注释。
-5. **check:docs-links**：`tooling/check-docs-links.ts`（零依赖）——docs 全树 + 根部 / `.github` 文档的相对链接与锚点存活检查，问题 exit 1。
+4. **check:locales**：`tooling/checks/locales.ts`（零依赖，bun 直跑）——词典键对齐 / 语种齐全 / 假翻译三查，发现问题 exit 1；覆盖范围与豁免名单见脚本头部注释。
+5. **check:docs-links**：`tooling/checks/docs-links.ts`（零依赖）——docs 全树 + 根部 / `.github` 文档的相对链接与锚点存活检查，问题 exit 1。
 
 **CI（`.github/workflows/ci.yml`）**：PR 与 main push 自动触发（也支持手动 dispatch），三个并行 job：`gate`（build → 宿主前端构建 → check → test）、`client`（宿主 + 全部 webui 插件的前端构建，即 `.vue` 的实际类型门禁）、`fallow`（`bun run fallow` 死代码与依赖审计）。三个顺序要点：
 
@@ -131,7 +131,7 @@ fallow 另外还带重复代码、复杂度健康度、边界违规与 PR 变更
 词典纪律：
 
 - **语种集合**：7 语种（zh-CN / zh-TW / en-US / ja-JP / fr-FR / de-DE / ru-RU），以 zh-CN 为基准；例外见下。
-- **检查工具**：`bun tooling/check-locales.ts` 检查键对齐、语种齐全与假翻译（拉丁/西里尔语种值含汉字即报；ja-JP 因汉字与中文同源无法自动检测，改动后需人工核对），改词典后必须跑。market（上游原版再分发）与 `plugins/webui/locales`（词条来自用户数据的独立插件包）完全跳过；sandbox / commands / rate-limit / sqlite 维持上游语种集合，豁免齐全检查。
+- **检查工具**：`bun tooling/checks/locales.ts` 检查键对齐、语种齐全与假翻译（拉丁/西里尔语种值含汉字即报；ja-JP 因汉字与中文同源无法自动检测，改动后需人工核对），改词典后必须跑。market（上游原版再分发）与 `plugins/webui/locales`（词条来自用户数据的独立插件包）完全跳过；sandbox / commands / rate-limit / sqlite 维持上游语种集合，豁免齐全检查。
 - **YAML 陷阱**：值内含半角「冒号+空格」（法语高频）必须加引号；值以 `{` 开头（插值在句首）也必须加引号；块标量（`|-`）内无此限制。
 - **中文拼接拆字**（如「文件{{夹}}」）应拆为独立的参数化键，禁止在模板里做语序相关的字符串拼接。
 
