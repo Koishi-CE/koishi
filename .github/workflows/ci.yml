@@ -2,6 +2,9 @@
 #
 # 三个并行 job：
 # - gate   主门禁：bun run build → 宿主前端构建 → bun run check → bun run test
+#          （test 附带 lcov 覆盖率产出，随后经 codecov-action 上传，驱动
+#            Codecov 在 PR 上的覆盖率评论与 status check；未配 CODECOV_TOKEN
+#            secret 时公开仓自动降级 tokenless 上传，fork PR 出不了评论属预期）
 #          （build 必须前置于 check：tsconfig.web.json 的部分 paths 指向各包
 #            lib/index.d.ts 产物，全新环境无 lib 时 web 侧 tsc 直接 TS2307，
 #            已实测；本地因 lib 常在而感知不到该顺序依赖）
@@ -56,7 +59,13 @@ jobs:
       - name: 宿主控制台前端（console 静态资源测试的依赖）
         run: bun packages/web/client/src/bin.ts build
       - run: bun run check
-      - run: bun run test
+      - name: test（含 lcov 覆盖率产出）
+        run: bun run test --coverage --coverage-reporter=text --coverage-reporter=lcov --coverage-dir=coverage
+      - name: 上传覆盖率到 Codecov
+        uses: codecov/codecov-action@v7
+        with:
+          files: coverage/lcov.info
+          token: ${{ secrets.CODECOV_TOKEN }}
 
   client:
     name: client (webui bundle build)
