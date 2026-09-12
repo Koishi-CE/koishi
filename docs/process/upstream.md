@@ -62,7 +62,7 @@ Naming rules:
 
 ## Syncing upstream changes
 
-1. Clone or fetch the upstream repo at the release line you track — or just run `bun tooling/upstream-audit.ts`, which refreshes a shallow-clone cache under `../upstream-cache` (outside this repository; override with `KOISHI_CE_UPSTREAM_CACHE`) and prints a per-directory diff draft.
+1. Clone or fetch the upstream repo at the release line you track — or just run `bun tooling/upstream-audit/index.ts`, which refreshes a shallow-clone cache under `../upstream-cache` (outside this repository; override with `KOISHI_CE_UPSTREAM_CACHE`) and prints a per-directory diff draft.
 2. Diff the relevant upstream `packages/*` / `plugins/*` directory against the mapped directory here (see the table above). Suppress whitespace noise with `git diff --no-index -w` (upstream indents with spaces, this repo with tabs).
 3. Port changes by hand. Upstream sources use extension-less bundler-style relative imports; this repo type-checks under NodeNext, so **relative imports must carry the `.ts` extension** when ported. Every port must be traceable to an upstream commit / PR / issue — leave a `// upstream: <repo>#<ref>` comment at the ported site (no git history exists here, so the comment is the provenance record).
 4. Verify with `bun run build` + `bun test` (and `bun run check` when in doubt). Front-end changes additionally need `bun packages/web/client/src/bin.ts build <plugin-dir>`.
@@ -71,7 +71,7 @@ Naming rules:
 
 Porting is demand-driven; inspection makes it proactive. The loop:
 
-1. **Run the audit script** — `bun tooling/upstream-audit.ts` (add `--only <name>` for one upstream, `--no-refresh` offline). It clones/pulls all upstreams into the cache dir, then prints a markdown draft: per-mapping files that exist on only one side, and common files ranked by `-w` churn.
+1. **Run the audit script** — `bun tooling/upstream-audit/index.ts` (add `--only <name>` for one upstream, `--no-refresh` offline). It clones/pulls all upstreams into the cache dir, then prints a markdown draft: per-mapping files that exist on only one side, and common files ranked by `-w` churn.
 2. **Check upstream movement** — the draft lists each repo HEAD. For any upstream that moved, list commits since our baseline (GitHub `compare` view) and read the ones touching mapped directories.
 3. **Triage every finding** into exactly one class:
    - **A — security fix**: port first, verify against local protection (this repo may already be immune via a stronger local fix).

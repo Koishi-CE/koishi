@@ -45,8 +45,8 @@
 ### 3.2 上游同步常态化
 
 - **目标**：对上游 koishi / webui（及再分发插件的上游）release 线做周期性跟踪与差异审计，port 从「被动响应」转为「主动巡检」。
-- **状态**：已落地（2026-09-10）。巡检机制见 [process/upstream.md](process/upstream.md) 的 Routine inspection 节：`bun tooling/upstream-audit.ts` 刷新仓外上游缓存并产出目录对比底稿（含改动量排行与仅一侧存在的文件），triage 分级（安全 / bug / 特性 / 重构 / 与本仓刻意差异冲突 / 已在仓）后按 port 规则逐条推进；节奏为每个发布列车前至少一轮。首次全量巡检结论：上游欠账仅 2 项 B 级（已 port，含溯源），详见该文件 Inspection log 节。
-- **依据**：[process/upstream.md](process/upstream.md)；AGENTS.md「上游同步」条目；tooling/upstream-audit.ts。
+- **状态**：已落地（2026-09-10）。巡检机制见 [process/upstream.md](process/upstream.md) 的 Routine inspection 节：`bun tooling/upstream-audit/index.ts` 刷新仓外上游缓存并产出目录对比底稿（含改动量排行与仅一侧存在的文件），triage 分级（安全 / bug / 特性 / 重构 / 与本仓刻意差异冲突 / 已在仓）后按 port 规则逐条推进；节奏为每个发布列车前至少一轮。首次全量巡检结论：上游欠账仅 2 项 B 级（已 port，含溯源），详见该文件 Inspection log 节。
+- **依据**：[process/upstream.md](process/upstream.md)；AGENTS.md「上游同步」条目；tooling/upstream-audit/index.ts。
 
 ### 3.3 tsc6 legacy 类型检查通道退役评估
 
