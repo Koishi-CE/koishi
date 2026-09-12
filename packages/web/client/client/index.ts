@@ -48,7 +48,7 @@ export * from "./plugins/loader";
 export * from "./plugins/router";
 export * from "./plugins/setting";
 export * from "./plugins/theme";
-export { Service } from "./utils";
+export { Service, scrollActiveTree } from "./utils";
 
 /** 组件库安装函数（在 Vue app 上注册全部内置组件） */
 export default install;
