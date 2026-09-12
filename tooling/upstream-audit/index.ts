@@ -10,7 +10,7 @@
  *   bun tooling/upstream-audit/index.ts --only webui  只处理名称匹配（子串）的上游
  *   bun tooling/upstream-audit/index.ts --out <file>  底稿写入文件而不打印 stdout
  *
- * 上游源码一律克隆到仓库之外的缓存目录（默认本仓 ../upstream-cache，
+ * 上游源码一律克隆到仓库之外的缓存目录（默认本仓 ../cache/upstream，
  * 可用环境变量 KOISHI_CE_UPSTREAM_CACHE 改写），避免污染工作区。
  *
  * 产出是一份 markdown「底稿」：每个映射目录给出仅一侧存在的文件、
