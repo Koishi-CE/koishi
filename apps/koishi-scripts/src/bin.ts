@@ -21,7 +21,7 @@ import runClone from "./clone.ts";
 import runBuild from "./release/build.ts";
 import runPublish from "./release/publish.ts";
 import runVersion from "./release/version.ts";
-import runSetup from "./setup.ts";
+import runSetup from "./setup/index.ts";
 import runUpdate from "./update.ts";
 
 const HELP = `koishi-scripts v${version} —— Koishi 插件脚手架与发布链

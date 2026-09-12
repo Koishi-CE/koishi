@@ -44,7 +44,9 @@ mock.module("../index.ts", () => ({
 	loadHostManifest: async () => hostManifest,
 }));
 
-const { default: runSetup } = await import("../setup.ts");
+const { default: runSetup } = await import(
+	"../setup/index.ts"
+);
 
 /** 收集 console.log 输出，避免脚手架横幅刷屏并可供断言 */
 const logs: string[] = [];

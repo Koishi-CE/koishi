@@ -6,8 +6,8 @@ import {
 	deriveDirname,
 	normalizeName,
 	parseFlags,
-	renderPackageJson,
-} from "../setup.ts";
+} from "../setup/answers.ts";
+import { renderPackageJson } from "../setup/manifests.ts";
 
 const VERSIONS = {
 	koishi: "^4.18.11",
