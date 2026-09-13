@@ -18,7 +18,7 @@ export interface HelpOptions {
 }
 
 /** 深度优先遍历指令树，产出当前会话可见（未被 hidden 过滤）的指令 */
-export function* getCommands(
+function* getCommands(
 	session: Session<"authority">,
 	commands: Command[],
 	showHidden = false,
@@ -102,7 +102,7 @@ export async function formatCommands(
 }
 
 /** 判断选项对当前会话是否可见（权限不足或被 hidden 标记隐藏时不可见） */
-export function getOptionVisibility(
+function getOptionVisibility(
 	option: Argv.OptionConfig,
 	session: Session<"authority">,
 ) {
@@ -116,7 +116,7 @@ export function getOptionVisibility(
 }
 
 /** 生成指令的选项帮助段落（考虑 hideOptions、权限与 hidden 过滤） */
-export function getOptions(
+function getOptions(
 	command: Command,
 	session: Session<"authority">,
 	config: HelpOptions,
