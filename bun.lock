@@ -338,7 +338,7 @@
     },
     "plugins/infra/memory": {
       "name": "@koishi-ce/plugin-database-memory",
-      "version": "1.1.0",
+      "version": "1.1.1",
       "dependencies": {
         "cosmokit": "^1.8.1",
         "minato": "^3.7.0",
@@ -469,7 +469,7 @@
     },
     "plugins/webui/auth": {
       "name": "@koishi-ce/plugin-auth",
-      "version": "1.1.2",
+      "version": "1.1.3",
       "dependencies": {
         "@koishi-ce/console": "workspace:*",
       },
