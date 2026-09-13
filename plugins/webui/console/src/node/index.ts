@@ -11,31 +11,21 @@
  * - 托管控制台前端静态资源（plugins/webui/console/dist），按 entry 配置
  *   提供 @plugin-* 插件产物，生产模式下重写裸导入并注入 KOISHI_CONFIG；
  * - devMode 下另起 Vite 开发服务器（/vite 路径）实现插件前端热更新。
+ *
+ * 大块实现已拆至同层模块（类内保留薄委托，行为不变）：
+ * - schema.ts：Dev / Head / Config 三个 Schema 常量；
+ * - vite.ts：Vite 开发服务器创建与 HMR 端口探测；
+ * - assets.ts：静态资源路由、index.html 处理与 entry 文件解析。
  */
 
-import {
-	createReadStream,
-	existsSync,
-	promises as fs,
-	type Stats,
-} from "node:fs";
-import net from "node:net";
-import {
-	dirname,
-	extname,
-	join,
-	resolve,
-	sep,
-} from "node:path";
+import { existsSync } from "node:fs";
+import { dirname, extname, join, resolve } from "node:path";
 import { Console, type Entry } from "@koishi-ce/console";
 import {
 	type Context,
 	type Dict,
-	h,
 	makeArray,
-	noop,
-	Schema,
-	Time,
+	type Schema,
 	type Universal,
 } from "@koishi-ce/koishi";
 import type { WebSocketLayer } from "@koishi-ce/plugin-server";
@@ -43,16 +33,16 @@ import type {} from "@koishijs/plugin-server-proxy";
 import open from "open";
 import type {
 	FileSystemServeOptions,
-	ServerOptions,
 	ViteDevServer,
 } from "vite";
-import deDE from "../../locales/de-DE.yml";
-import enUS from "../../locales/en-US.yml";
-import frFR from "../../locales/fr-FR.yml";
-import jaJP from "../../locales/ja-JP.yml";
-import ruRU from "../../locales/ru-RU.yml";
-import zhCN from "../../locales/zh-CN.yml";
-import zhTW from "../../locales/zh-TW.yml";
+import { getFiles, registerAssets } from "./assets.ts";
+import { rewriteSharedImports } from "./rewrite.ts";
+import {
+	ConfigSchema,
+	DevSchema,
+	HeadSchema,
+} from "./schema.ts";
+import { createDevServer } from "./vite.ts";
 
 // 上游此处以 `declare module "koishi"` 给 EnvData 增加 clientCount 字段；
 // 本仓 @koishi-ce/core 将 EnvData 定义为 type alias（无法做 interface 合并），
@@ -64,8 +54,6 @@ export {
 	rewriteSharedImports,
 	SHARED_IMPORT_MAP,
 } from "./rewrite.ts";
-
-import { rewriteSharedImports } from "./rewrite.ts";
 
 /**
  * 定位前端产物目录（包根下的 dist）：从模块所在目录向上找到首个含
@@ -98,29 +86,6 @@ export interface ClientConfig {
 interface HeartbeatConfig {
 	interval?: number;
 	timeout?: number;
-}
-
-/** Vite HMR WebSocket 的缺省端口（Vite 内置值，middlewareMode 下独立监听）。 */
-const defaultWsPort = 24678;
-
-/**
- * 自 start 起找到首个空闲端口：以一次性探测 server 逐个试听，占用
- * （EADDRINUSE）则递增重试，试探上限耗尽时直接返回起点交由 Vite 报错。
- */
-function nextFreePort(
-	start: number,
-	attempts = 100,
-): Promise<number> {
-	if (!attempts) return Promise.resolve(start);
-	return new Promise((resolve) => {
-		const probe = net.createServer();
-		probe.once("error", () =>
-			resolve(nextFreePort(start + 1, attempts - 1)),
-		);
-		probe.listen(start, "127.0.0.1", () => {
-			probe.close(() => resolve(start));
-		});
-	});
 }
 
 /**
@@ -242,15 +207,6 @@ class NodeConsole extends Console {
 		});
 	}
 
-	/** 取 entry 在当前模式下实际使用的文件列表：按 devMode 与 dev 路径是否存在回退。 */
-	private getFiles(files: Entry.Files) {
-		if (typeof files === "string" || Array.isArray(files))
-			return files;
-		if (!this.config.devMode) return files.prod;
-		if (!existsSync(files.dev)) return files.prod;
-		return files.dev;
-	}
-
 	/**
 	 * 把 entry 的本地文件列表解析为浏览器可请求的 URL 列表：
 	 * devMode 走 Vite 的 /vite/@fs/ 绝对路径，生产模式走
@@ -259,7 +215,9 @@ class NodeConsole extends Console {
 	resolveEntry(files: Entry.Files, key: string) {
 		const { devMode, uiPath } = this.config;
 		const filenames: string[] = [];
-		for (const local of makeArray(this.getFiles(files))) {
+		for (const local of makeArray(
+			getFiles(files, devMode),
+		)) {
 			const filename = devMode
 				? `/vite/@fs/${local}`
 				: `${uiPath}/@plugin-${key}`;
@@ -280,135 +238,12 @@ class NodeConsole extends Console {
 	}
 
 	/**
-	 * 注册控制台前端的静态资源路由（挂在 uiPath 下）：
-	 * - `@plugin-<key>/...`：各 webui 插件的产物文件；
-	 * - 其余路径：控制台主体资源，未命中文件时回退 index.html（SPA 路由）；
-	 * 插件产物的回读限制在其 entry 声明的产物路径内、主体资源限制在 root
-	 * 内，以防路径穿越。
+	 * 注册控制台前端的静态资源路由（实现在 assets.ts 的 registerAssets）。
+	 * transformImport 为类私有方法，经闭包显式传入。
 	 */
 	private serveAssets() {
-		const { uiPath = "" } = this.config;
-
-		this.ctx.server.get(
-			`${uiPath}(.*)`,
-			async (ctx, next) => {
-				await next();
-				if (ctx.body || ctx.response.body) return;
-
-				// 访问 uiPath 本身时补上末尾斜杠并重定向（保证相对路径资源正确解析）
-				if (ctx.path === uiPath && !uiPath.endsWith("/")) {
-					return ctx.redirect(`${ctx.path}/`);
-				}
-
-				const name = ctx.path
-					.slice(uiPath.length)
-					.replace(/^\/+/, "");
-				// 发送产物文件：JS 统一过裸导入改写（devMode 下 npm 安装的插件同样
-				// 会回退到产物 URL，不能按 devMode 短路直出），其余类型直出；
-				// 文件缺失时如实 404，避免流错误或回退 HTML 干扰排查
-				const sendAsset = async (filename: string) => {
-					const type = extname(filename);
-					if (type === ".js" || type === ".mjs") {
-						const source = await Bun.file(filename)
-							.text()
-							.catch(() => null);
-						if (source === null) return (ctx.status = 404);
-						ctx.type = type;
-						return (ctx.body =
-							await this.transformImport(source));
-					}
-					const stats = await fs
-						.stat(filename)
-						.catch<Stats>(noop);
-					if (!stats?.isFile()) return (ctx.status = 404);
-					ctx.type = type;
-					return (ctx.body = createReadStream(filename));
-				};
-
-				if (name.startsWith("@plugin-")) {
-					const [key] = name.slice(8).split("/", 1);
-					if (key !== undefined && this.entries[key]) {
-						const files = makeArray(
-							this.getFiles(this.entries[key].files),
-						);
-						const file = files[0];
-						if (file === undefined)
-							return (ctx.status = 404);
-						// 防路径穿越：产物只允许位于该 entry 自身声明的文件（或目录）之内。
-						// 上游以 console root / node_modules 为白名单基准，前提是插件装在
-						// node_modules 下；本仓库插件为 workspace 目录布局（plugins/**），
-						// 须以各 entry 的产物路径为基准，否则一律 403。
-						const base = resolve(file);
-						const filename = resolve(
-							file + name.slice(8 + key.length),
-						);
-						if (
-							filename !== base &&
-							!filename.startsWith(base + sep)
-						) {
-							return (ctx.status = 403);
-						}
-						// devMode 下 entry 的源码形态由 Vite 经 /vite/@fs 编译服务，
-						// @plugin 通道只服务构建产物；误达的源码请求直接 404
-						if (
-							this.config.devMode &&
-							/\.(ts|tsx|vue)$/.test(filename)
-						) {
-							return (ctx.status = 404);
-						}
-						return sendAsset(filename);
-					} else {
-						return (ctx.status = 404);
-					}
-				}
-
-				const filename = resolve(this.root, name);
-				if (
-					filename !== this.root &&
-					!filename.startsWith(this.root + sep) &&
-					!filename.includes("node_modules")
-				) {
-					return (ctx.status = 403);
-				}
-
-				const stats = await fs
-					.stat(filename)
-					.catch<Stats>(noop);
-				if (stats?.isFile()) return sendAsset(filename);
-
-				// 控制台主体未命中时，再到各插件产物目录按文件名兜底：插件产物里的
-				// worker / 分包可能以根绝对路径引用（如 monaco 的 /editor.worker-*.js），
-				// 这类请求不带 @plugin- 前缀，会落到主体分支；产物文件名通常带内容
-				// 哈希，按 basename 在各 entry 目录内探测不会产生跨插件混淆
-				const base = name.split("/").pop() ?? "";
-				if (base) {
-					for (const entry of Object.values(this.entries)) {
-						for (const dir of makeArray(
-							this.getFiles(entry.files),
-						)) {
-							if (extname(dir)) continue; // 数组形态声明的是具体文件而非目录
-							const root = resolve(String(dir));
-							const candidate = resolve(root, base);
-							if (
-								candidate.startsWith(root + sep) &&
-								existsSync(candidate)
-							) {
-								return sendAsset(candidate);
-							}
-						}
-					}
-				}
-
-				// 带扩展名的资源请求未命中时如实 404：回退 index.html 会让浏览器把
-				// HTML 当 JS / Worker 解析，报出更费解的语法错误
-				if (extname(name)) return (ctx.status = 404);
-
-				const template = await Bun.file(
-					resolve(this.root, "index.html"),
-				).text();
-				ctx.type = "html";
-				ctx.body = await this.transformHtml(template);
-			},
+		registerAssets(this, (source) =>
+			this.transformImport(source),
 		);
 	}
 
@@ -422,87 +257,14 @@ class NodeConsole extends Console {
 	}
 
 	/**
-	 * 处理 index.html 模板：devMode 交给 Vite 注入开发脚本，生产模式把
-	 * 根路径的 href/src 重写为 uiPath 前缀；随后在 <title> 前注入
-	 * KOISHI_CONFIG 全局配置与配置项 head 中的自定义标签。
-	 */
-	private async transformHtml(template: string) {
-		const { uiPath = "", head = [] } = this.config;
-		if (this.vite) {
-			template = await this.vite.transformIndexHtml(
-				uiPath,
-				template,
-			);
-		} else {
-			template = template.replace(
-				/(href|src)="(?=\/)/g,
-				(_, $1) => `${$1}="${uiPath}`,
-			);
-		}
-		let headInjection = `<script>KOISHI_CONFIG = ${JSON.stringify(this.createGlobal())}</script>`;
-		for (const { tag, attrs = {}, content } of head) {
-			const attrString = Object.entries(attrs)
-				.map(
-					([key, value]) =>
-						` ${key}="${h.escape(value ?? "", true)}"`,
-				)
-				.join("");
-			headInjection += `<${tag}${attrString}>${content ?? ""}</${tag}>`;
-		}
-		return template.replace(
-			"<title>",
-			`${headInjection}<title>`,
-		);
-	}
-
-	/**
-	 * 创建 Vite 开发服务器并桥接到 server：
-	 * /vite 前缀的请求转交 Vite 中间件处理（含 /vite/@fs/ 的按需编译），
-	 * 插件卸载时关闭服务器。
+	 * 创建 Vite 开发服务器并桥接到 server
+	 * （实现在 vite.ts 的 createDevServer），插件卸载时关闭服务器。
 	 */
 	private async createVite() {
-		const { cacheDir = "cache/vite", dev } = this.config;
-		// 惰性动态加载：避免生产环境（非 devMode）加载 vite 依赖
-		const { createServer } = await import(
-			"@koishi-ce/client/lib"
+		this.vite = await createDevServer(
+			this.ctx,
+			this.config,
 		);
-
-		// Vite 6.0.9 起 host 校验默认仅放行 localhost 与 IP 直连，域名访问
-		// dev 控制台会被 403 拦截；dev.allowedHosts 透传 server.allowedHosts
-		// 供显式放行。上游缺陷报告：
-		// https://github.com/koishijs/koishi/issues/1492
-		const server: ServerOptions = dev ? { fs: dev.fs } : {};
-		if (dev?.allowedHosts)
-			server.allowedHosts = dev.allowedHosts;
-		// Vite 8 起 middlewareMode 下 HMR WebSocket 不再借宿主 HTTP 服务，
-		// 而是独立监听 server.ws.port（缺省 24678）；并行第二个 dev 实例会
-		// EADDRINUSE 且 HMR 失效（Bun 的此类错误缺 port 字段，Vite 打印成
-		// 「Port undefined is already in use」）。显式配置优先，否则沿用
-		// 宿主 server 的占用顺延策略
-		const wsPort =
-			dev?.wsPort ?? (await nextFreePort(defaultWsPort));
-		if (wsPort !== defaultWsPort)
-			this.ctx.logger.info(
-				"HMR WebSocket 端口 %d 被占用，dev 控制台热更新改用 %d",
-				defaultWsPort,
-				wsPort,
-			);
-		server.ws = { port: wsPort };
-
-		this.vite = await createServer(this.ctx.baseDir, {
-			cacheDir: resolve(this.ctx.baseDir, cacheDir),
-			server,
-		});
-
-		this.ctx.server.all(
-			"/vite(.*)",
-			(ctx) =>
-				new Promise((resolve) => {
-					this.vite.middlewares(ctx.req, ctx.res, resolve);
-				}),
-		);
-
-		this.ctx.on("dispose", () => this.vite.close());
 	}
 
 	/** 停止服务：关闭 WebSocket 层。 */
@@ -510,99 +272,13 @@ class NodeConsole extends Console {
 		this.layer.close();
 	}
 
-	// erasableSyntaxOnly 禁止含运行时值的 namespace：以下三个 Schema 常量改挂为类的静态属性
-	// （NodeConsole.Dev / NodeConsole.Head / NodeConsole.Config 的取值不变），
-	// 类型声明保留在文末仅含类型的 namespace 中，以维持 `NodeConsole.Config` 等的类型访问
-	static Dev: Schema<NodeConsole.Dev> = Schema.object({
-		fs: Schema.object({
-			strict: Schema.boolean().default(true),
-			// .default(null) 的空值占位超出 schemastery 类型定义，用精确断言放宽
-			allow: Schema.array(String).default(null as never),
-			deny: Schema.array(String).default(null as never),
-		}).hidden(),
-		allowedHosts: Schema.array(Schema.string())
-			.default(null as never)
-			.description(
-				"允许访问开发服务器的额外域名，留空维持 Vite 默认（仅放行 localhost 与 IP 直连）。",
-			),
-		wsPort: Schema.number().description(
-			"Vite 热更新 WebSocket 端口，留空用默认 24678（被占用时自动顺延），并行第二个开发实例时可显式指定。",
-		),
-	});
-
-	static Head: Schema<NodeConsole.Head> = Schema.intersect([
-		Schema.object({
-			tag: Schema.union([
-				"title",
-				"link",
-				"meta",
-				"script",
-				"style",
-				Schema.string(),
-			]).required(),
-		}),
-		Schema.union([
-			Schema.object({
-				tag: Schema.const("title").required(),
-				content: Schema.string().role("textarea"),
-			}),
-			Schema.object({
-				tag: Schema.const("link").required(),
-				attrs: Schema.dict(Schema.string()).role("table"),
-			}),
-			Schema.object({
-				tag: Schema.const("meta").required(),
-				attrs: Schema.dict(Schema.string()).role("table"),
-			}),
-			Schema.object({
-				tag: Schema.const("script").required(),
-				attrs: Schema.dict(Schema.string()).role("table"),
-				content: Schema.string().role("textarea"),
-			}),
-			Schema.object({
-				tag: Schema.const("style").required(),
-				attrs: Schema.dict(Schema.string()).role("table"),
-				content: Schema.string().role("textarea"),
-			}),
-			Schema.object({
-				tag: Schema.string().required(),
-				attrs: Schema.dict(Schema.string()).role("table"),
-				content: Schema.string().role("textarea"),
-			}),
-		]),
-	]);
-
-	static Config: Schema<NodeConsole.Config> =
-		Schema.intersect([
-			Schema.object({
-				uiPath: Schema.string().default(""),
-				apiPath: Schema.string().default("/status"),
-				selfUrl: Schema.string().role("link").default(""),
-				open: Schema.boolean(),
-				head: Schema.array(NodeConsole.Head),
-				heartbeat: Schema.object({
-					interval: Schema.number().default(
-						Time.second * 30,
-					),
-					timeout: Schema.number().default(Time.minute),
-				}),
-				devMode: Schema.boolean()
-					.default(Bun.env["NODE_ENV"] === "development")
-					.hidden(),
-				cacheDir: Schema.string()
-					.default("cache/vite")
-					.hidden(),
-				dev: NodeConsole.Dev,
-			}),
-		]).i18n({
-			"de-DE": deDE,
-			"en-US": enUS,
-			"fr-FR": frFR,
-			"ja-JP": jaJP,
-			"ru-RU": ruRU,
-			"zh-CN": zhCN,
-			"zh-TW": zhTW,
-		});
+	// erasableSyntaxOnly 禁止含运行时值的 namespace：以下三个 Schema 常量（定义
+	// 在 schema.ts）改挂为类的静态属性（NodeConsole.Dev / NodeConsole.Head /
+	// NodeConsole.Config 的取值不变），类型声明保留在文末仅含类型的 namespace
+	// 中，以维持 `NodeConsole.Config` 等的类型访问
+	static Dev: Schema<NodeConsole.Dev> = DevSchema;
+	static Head: Schema<NodeConsole.Head> = HeadSchema;
+	static Config: Schema<NodeConsole.Config> = ConfigSchema;
 }
 
 namespace NodeConsole {
