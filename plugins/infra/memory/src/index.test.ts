@@ -292,6 +292,31 @@ describe("索引记账与生命周期", () => {
 		expect(names).toEqual(["named"]);
 	});
 
+	it("恶意 __proto__ 键不污染 Object.prototype", async () => {
+		const driver = getDriver();
+		// 表名位与索引名位各注入一遍（覆盖显式名与合成名两条路径）
+		await driver.createIndex("__proto__", {
+			keys: { v: "asc" },
+		});
+		await driver.createIndex("test_auto", {
+			name: "__proto__",
+			keys: { v: "desc" },
+		});
+		await driver.dropIndex("__proto__", "index:v_asc");
+		// 原型无对象承载下注入键按普通数据往返
+		expect(await driver.getIndexes("__proto__")).toEqual(
+			[],
+		);
+		// 新建空对象的原型链无任何注入痕迹（中招则合成名会显形）
+		const probe: Record<string, unknown> = {};
+		expect(probe["index:v_asc"]).toBeUndefined();
+		expect(probe["index:v_desc"]).toBeUndefined();
+		expect(Object.getPrototypeOf(probe)).toBe(
+			Object.prototype,
+		);
+		expect(probe.constructor).toBe(Object);
+	});
+
 	it("drop / dropAll / stats", async () => {
 		await app.database.remove("test_auto", {});
 		await app.database.remove("test_key", {});
