@@ -24,8 +24,7 @@ export function initLogin(auth: AuthService) {
 	const states: Record<string, [string, number, Client]> =
 		{};
 
-	// 用户密码登录：校验通过后签发新令牌；
-	// 命中旧的无盐 SHA-256 存储时透明升级为 PBKDF2
+	// 用户密码登录：校验通过后签发新令牌
 	ctx.console.addListener(
 		"login/password",
 		async function (name, password) {
@@ -39,11 +38,6 @@ export function initLogin(auth: AuthService) {
 				!verifyPassword(password, user.password)
 			)
 				throw new Error("用户名或密码错误。");
-			if (!user.password.startsWith("pbkdf2$")) {
-				await ctx.database.set("user", user.id, {
-					password: toHash(password),
-				});
-			}
 			await self.createToken(
 				this,
 				"password",

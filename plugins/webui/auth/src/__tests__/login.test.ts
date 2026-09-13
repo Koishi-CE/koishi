@@ -73,7 +73,9 @@ describe("@koishi-ce/plugin-auth", () => {
 			client.close();
 		});
 
-		it("旧版无盐 SHA-256 哈希校验通过后透明升级", async () => {
+		it("旧版无盐 SHA-256 哈希不再兼容，直接拒绝", async () => {
+			// 上游遗留的旧格式兼容已移除（CE 全新安装不存在旧格式），
+			// 存量旧哈希的账户须重置密码
 			const legacy = createHash("sha256")
 				.update("legacy-pass")
 				.digest("hex");
@@ -86,16 +88,28 @@ describe("@koishi-ce/plugin-auth", () => {
 				"root",
 				"legacy-pass",
 			]);
-			expect(response.error).toBeUndefined();
+			expect(response.error).toContain("用户名或密码错误");
+			// 库中存储不被改写
 			const [row] = await app.database.get(
 				"user",
 				{ id: 0 },
 				["password"],
 			);
-			expect(row?.password?.startsWith("pbkdf2$")).toBe(
-				true,
-			);
+			expect(row?.password).toBe(legacy);
 			client.close();
+
+			// 还原为合法管理员密码（与插件同格式的 PBKDF2 哈希）供后续用例使用
+			const salt = randomBytes(16);
+			const dk = pbkdf2Sync(
+				"admin-pass",
+				salt,
+				600_000,
+				32,
+				"sha256",
+			);
+			await app.database.set("user", 0, {
+				password: `pbkdf2$600000$${salt.toString("hex")}$${dk.toString("hex")}`,
+			});
 		});
 
 		it("畸形哈希与空密码一律拒绝", async () => {
