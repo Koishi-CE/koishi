@@ -3,7 +3,6 @@
 // Copyright (c) 2026-present Koishi-CE contributors.
 
 import type { Entry } from "@koishi-ce/console";
-import { clientEntry } from "@koishi-ce/console";
 import {
 	type Argv,
 	type Command,
@@ -17,6 +16,14 @@ import {
 	Schema,
 } from "@koishi-ce/koishi";
 import CommandExtension from "./command.ts";
+import type {
+	CommandData,
+	CommandState,
+	Override,
+	Snapshot,
+} from "./schema.ts";
+import { Config } from "./schema.ts";
+import { installWebUI } from "./webui.ts";
 
 /**
  * @koishi-ce/plugin-commands 的 node 侧入口。
@@ -44,91 +51,6 @@ declare module "@koishi-ce/console" {
 	}
 }
 
-interface Override extends Partial<CommandState> {
-	name?: string;
-	create?: boolean;
-}
-
-/**
- * 单条指令的覆盖项 Schema：只保留与初始状态不同的部分（别名 / 选项 / 配置）。
- * `name` 形如 "parent/child"，用于声明指令在指令树中的归属；
- * `aliases` 兼容「字典」与「字符串数组」两种写法（后者等价于值全为空对象的字典）。
- */
-const Override: Schema<Override> = Schema.object({
-	name: Schema.string(),
-	create: Schema.boolean(),
-	aliases: Schema.union([
-		Schema.dict(
-			Schema.union([
-				Schema.object({
-					// 内层 Schema.from(null) 运行时等价于 Schema.any()，显式写出以获得正确类型；
-					// .default(null) 的空值占位超出 schemastery 类型定义，用精确断言放宽
-					args: Schema.array(Schema.any()).default(
-						null as never,
-					),
-					options: Schema.dict(Schema.any()).default(
-						null as never,
-					),
-					filter: Schema.any(),
-				}),
-				Schema.transform(false, () => ({ filter: false })),
-			]).default({} as never),
-		),
-		Schema.transform(Schema.array(String), (aliases) => {
-			return Object.fromEntries(
-				aliases.map((name) => [name, {}]),
-			);
-		}),
-	]),
-	options: Schema.dict(Schema.any()).default(null as never),
-	config: Schema.any(),
-});
-
-/** 指令的一份完整状态：别名表、配置与选项声明。 */
-export interface CommandState {
-	aliases: Dict<Command.Alias>;
-	config: Command.Config;
-	options: Dict<Argv.OptionDeclaration>;
-}
-
-/**
- * 指令快照：记录插件加载时的初始状态与用户覆盖状态。
- * `initial` 用于插件卸载时恢复原状；`override` 是当前生效的用户改动；
- * `pending` 在目标父指令尚未注册时暂存其名称，等 command-added 事件再补挂。
- */
-export interface Snapshot {
-	create?: boolean;
-	pending?: string | null;
-	command: Command;
-	parent: Command | null;
-	initial: CommandState;
-	override: CommandState;
-}
-
-interface Config extends Override {}
-
-/** 插件配置 Schema：值为覆盖字典，也允许直接写字符串简写（仅声明归属）。 */
-const Config: Schema<string | Config, Config> =
-	Schema.union([
-		Override,
-		Schema.transform(String, (name) => ({
-			name,
-			aliases: {},
-			config: {},
-			options: {},
-		})),
-	]);
-
-/** 下发给前端的一份指令数据：快照两态 + 树结构（children / paths）。 */
-export interface CommandData {
-	create: boolean;
-	name: string;
-	paths: string[];
-	children: string[];
-	initial: CommandState;
-	override: CommandState;
-}
-
 /**
  * 指令管理器：本插件的主体服务。
  *
@@ -149,12 +71,13 @@ export class CommandManager {
 	> = Schema.dict(Config).hidden();
 
 	private _tasks: Dict<() => void> = Object.create(null);
-	private _cache: Dict<CommandData> | null = null;
-	private entry: Entry<Dict<CommandData>> | undefined;
-	private refresh: () => void;
+	// installWebUI 已抽至 webui.ts（类外函数），以下四个成员经 manager 参数被其直接访问，故公开
+	_cache: Dict<CommandData> | null = null;
+	entry: Entry<Dict<CommandData>> | undefined;
+	refresh: () => void;
 
 	// erasableSyntaxOnly 禁用参数属性，改为显式字段并在构造器赋值
-	private ctx: Context;
+	ctx: Context;
 	private config: Dict<Config>;
 
 	public snapshots: Dict<Snapshot> = Object.create(null);
@@ -236,7 +159,7 @@ export class CommandManager {
 
 		ctx.plugin(CommandExtension, this);
 
-		this.installWebUI();
+		installWebUI(this);
 	}
 
 	/**
@@ -549,115 +472,12 @@ export class CommandManager {
 		}
 		this.ctx.scope.update(this.config, false);
 	}
-
-	/**
-	 * 注册 console 前端入口并监听管理面板的 RPC 事件。
-	 * 数据侧按需生成全量指令快照（带缓存，失效由 refresh 驱动）；
-	 * 事件侧均要求 authority 4（管理员）。
-	 */
-	installWebUI() {
-		this.ctx.inject(["console"], (ctx) => {
-			ctx.on("dispose", () => (this.entry = undefined));
-
-			this.entry = ctx.console.addEntry(
-				clientEntry(import.meta.url),
-				() => {
-					return (this._cache ||= Object.fromEntries(
-						ctx.$commander._commandList.map<
-							[string, CommandData]
-						>((command) => [
-							command.name,
-							{
-								name: command.name,
-								children: command.children.map(
-									(child) => child.name,
-								),
-								create:
-									this.snapshots[command.name]?.create ??
-									false,
-								initial: this.snapshots[command.name]
-									?.initial || {
-									aliases: command._aliases,
-									config: command.config,
-									options: command._options,
-								},
-								override: this.snapshots[command.name]
-									?.override || {
-									aliases: command._aliases,
-									// 无覆盖配置时以 null 占位（客户端按可空读取）
-									config: null as never,
-									options: {},
-								},
-								paths:
-									this.ctx
-										.get("loader")
-										?.paths(command.ctx.scope) || [],
-							},
-						]),
-					));
-				},
-			);
-
-			ctx.console.addListener(
-				"command/update",
-				(name, config) => {
-					const { command } = this.ensure(name);
-					this.update(command, config, true);
-					this.refresh();
-				},
-				{ authority: 4 },
-			);
-
-			ctx.console.addListener(
-				"command/teleport",
-				(name, parent) => {
-					const { command } = this.ensure(name);
-					this.teleport(command, parent, true);
-					this.refresh();
-				},
-				{ authority: 4 },
-			);
-
-			ctx.console.addListener(
-				"command/aliases",
-				(name, aliases) => {
-					const { command } = this.ensure(name);
-					this.alias(command, aliases, true);
-					this.refresh();
-				},
-				{ authority: 4 },
-			);
-
-			ctx.console.addListener(
-				"command/create",
-				(name) => {
-					this.create(name);
-					this.refresh();
-				},
-				{ authority: 4 },
-			);
-
-			ctx.console.addListener(
-				"command/remove",
-				(name) => {
-					this.remove(name);
-					this.refresh();
-				},
-				{ authority: 4 },
-			);
-
-			ctx.console.addListener(
-				"command/parse",
-				(name, source) => {
-					// 客户端仅对已存在的指令发起解析请求
-					const command = this.ctx.$commander.get(name);
-					if (!command)
-						throw new Error(`command not found: ${name}`);
-					return command.parse(source);
-				},
-			);
-		});
-	}
 }
 
 export default CommandManager;
+
+export type {
+	CommandData,
+	CommandState,
+	Snapshot,
+} from "./schema.ts";
