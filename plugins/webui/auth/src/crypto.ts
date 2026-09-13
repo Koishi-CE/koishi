@@ -2,10 +2,10 @@
 // Copyright (c) 2019-present Shigma and Koishijs contributors.
 // Copyright (c) 2026-present Koishi-CE contributors.
 
-// upstream: koishijs/webui plugins/auth/src/index.ts L66-L70（randomId）、L79-L81（toHash）；PBKDF2_ROUNDS 与 verifyPassword 为本仓新增（上游无对应段）；上游为单文件，同步时以其整体 diff 对照本目录
+// upstream: koishijs/webui plugins/auth/src/index.ts L66-L70（randomId）、L79-L81（toHash）；PBKDF2_ROUNDS 与 verifyPassword 为本仓新增（上游无对应段）；上游为单文件，同步时以其整体 diff 对照本目录。
+// 本仓分歧（E 类，勿回移）：上游监听器内联保留的旧版无盐 SHA-256 密码兼容校验已在本仓移除——CE 全新安装一律 pbkdf2$ 格式，旧格式不可达（2026-09-13 用户拍板）。
 
 import {
-	createHash,
 	pbkdf2Sync,
 	randomBytes,
 	timingSafeEqual,
@@ -54,39 +54,24 @@ export function toHash(password: string) {
 /**
  * 校验明文密码与库中存储是否匹配。
  *
- * 兼容两种存储格式：
- * - `pbkdf2$...` 新格式：按存储的盐与迭代次数重派生，恒定时间比较；
- * - 64 位十六进制旧格式：历史上无盐 SHA-256，仅用于校验（命中后由调用方
- *   透明升级为 PBKDF2），同样以恒定时间比较。
+ * 仅接受 `pbkdf2$...` 格式：按存储的盐与迭代次数重派生，恒定时间比较；
+ * 其余形态（含历史上游遗留的无盐 SHA-256 十六进制）一律不匹配。
  */
 export function verifyPassword(
 	password: string,
 	stored: string,
 ): boolean {
-	if (stored.startsWith("pbkdf2$")) {
-		const [, rounds, saltHex, dkHex] = stored.split("$");
-		if (!rounds || !saltHex || !dkHex) return false;
-		const expected = Buffer.from(dkHex, "hex");
-		const actual = pbkdf2Sync(
-			password,
-			Buffer.from(saltHex, "hex"),
-			Number(rounds),
-			expected.length,
-			"sha256",
-		);
-		// 长度已按 expected.length 派生，恒定时间比较不会抛错
-		return timingSafeEqual(actual, expected);
-	}
-	// 旧格式：裸 SHA-256 十六进制。
-	// 无盐 SHA-256 只用于存量密码的**校验**（不可删，删了旧用户无法登录），
-	// 命中后由调用方透明升级为 PBKDF2；新建密码一律走 toHash（pbkdf2$ 格式），
-	// 故此处非弱哈希存储，属误报（Default setup 不支持注释抑制，须在平台 dismiss）。
-	if (!/^[0-9a-f]{64}$/i.test(stored)) return false;
-	const actual = createHash("sha256")
-		.update(password)
-		.digest();
-	return timingSafeEqual(
-		actual,
-		Buffer.from(stored, "hex"),
+	if (!stored.startsWith("pbkdf2$")) return false;
+	const [, rounds, saltHex, dkHex] = stored.split("$");
+	if (!rounds || !saltHex || !dkHex) return false;
+	const expected = Buffer.from(dkHex, "hex");
+	const actual = pbkdf2Sync(
+		password,
+		Buffer.from(saltHex, "hex"),
+		Number(rounds),
+		expected.length,
+		"sha256",
 	);
+	// 长度已按 expected.length 派生，恒定时间比较不会抛错
+	return timingSafeEqual(actual, expected);
 }

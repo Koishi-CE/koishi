@@ -10,7 +10,7 @@
 - **平台验证码**：`login/platform`，网页生成 6 位验证码，用户把验证码发给任意机器人完成登录（同时可绑定平台账号，支持私聊一步、群聊两步）；
 - **令牌续期**：`login/token`，已保存的登录令牌静默续期，页面刷新自动执行。
 
-密码哈希采用 PBKDF2-HMAC-SHA256（600k 轮，OWASP 2023 建议）；历史无盐 SHA-256 哈希在命中后透明升级。
+密码哈希采用 PBKDF2-HMAC-SHA256（600k 轮，OWASP 2023 建议）；仅接受该格式，历史无盐 SHA-256 哈希不再兼容（存量旧哈希账户须重置密码）。
 
 ## 配置项
 
@@ -64,7 +64,7 @@ Console user authentication for Koishi, ported from `plugins/auth` of the upstre
 - **Platform verification code** (`login/platform`) — the web page shows a 6-digit code; the user sends it to any bot to log in (optionally binding the platform account; one step in private chat, two steps in groups).
 - **Token renewal** (`login/token`) — saved tokens renew silently; page refreshes do this automatically.
 
-Password hashing uses PBKDF2-HMAC-SHA256 (600k iterations, OWASP 2023); legacy unsalted SHA-256 hashes are transparently upgraded on first match.
+Password hashing uses PBKDF2-HMAC-SHA256 (600k iterations, OWASP 2023); only that format is accepted — legacy unsalted SHA-256 hashes are no longer compatible (affected accounts must reset their password).
 
 ## Configuration
 
