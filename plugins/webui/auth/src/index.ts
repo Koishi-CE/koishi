@@ -12,13 +12,6 @@
  * 配置同步对话框）。
  */
 
-import {
-	createHash,
-	pbkdf2Sync,
-	randomBytes,
-	randomInt,
-	timingSafeEqual,
-} from "node:crypto";
 import { resolve } from "node:path";
 import type {
 	Client,
@@ -27,13 +20,22 @@ import type {
 import {
 	type Binding,
 	type Context,
-	omit,
 	Schema,
 	Service,
 	Time,
 	type User,
 } from "@koishi-ce/koishi";
 import zhCN from "../locales/zh-CN.yml";
+import { randomId, toHash } from "./crypto.ts";
+import { initLogin } from "./login.ts";
+import type {
+	Auth,
+	AuthData,
+	LoginToken,
+	LoginType,
+	UserLogin,
+	UserUpdate,
+} from "./types.ts";
 
 declare module "@koishi-ce/koishi" {
 	interface Context {
@@ -89,131 +91,6 @@ declare module "@koishi-ce/console" {
 		"user/update"(this: Client, data: UserUpdate): void;
 		"user/logout"(this: Client): void;
 	}
-}
-
-/** token 表记录：一次登录会话的令牌及其来源信息。 */
-export interface LoginToken {
-	/** 自增主键（删除指定会话用） */
-	inc: number;
-	/** 所属用户 id */
-	id: number;
-	/** 登录方式 */
-	type: LoginType;
-	/** 随机令牌（唯一索引） */
-	token: string;
-	/** 过期时间戳（毫秒） */
-	expiredAt: number;
-	createdAt: Date;
-	lastUsedAt: Date;
-	/** 登录时的 User-Agent */
-	userAgent: string;
-	/** 登录时的来源 IP */
-	address: string;
-}
-
-/** 下发到客户端的登录态（user 数据服务的单条形态，不含 tokens/bindings 明细）。 */
-export type Auth = Pick<LoginToken, "token" | "expiredAt"> &
-	Pick<User, "id" | "name" | "authority" | "config">;
-
-/** user 数据服务下发给客户端的完整鉴权数据：登录态 + 会话列表 + 绑定列表。 */
-interface AuthData extends Auth {
-	tokens: Omit<LoginToken, "token" | "id">[];
-	bindings: Omit<Binding, "aid">[];
-}
-
-/** 登录方式：平台验证码 / 用户密码 / 已存令牌续期。 */
-type LoginType = "platform" | "password" | "token";
-
-// 随机令牌的字符表（数字 + 大小写字母）
-const letters =
-	"0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
-
-/**
- * 生成指定长度的随机令牌字符串。
- * @param length 令牌长度，默认 40
- * @returns 从字符表随机取字符拼接成的字符串
- */
-export function randomId(length = 40) {
-	// 登录令牌的安全敏感源：randomBytes（CSPRNG）+ 拒绝采样消除模偏差
-	// （256 % 62 != 0），格式契约（字符表与长度）保持不变
-	let out = "";
-	while (out.length < length) {
-		// 两倍余量覆盖拒绝采样损耗，极端涨落由外层 while 兜底补取
-		for (const byte of randomBytes(length * 2)) {
-			if (out.length >= length) break;
-			if (byte >= 248) continue;
-			out += letters[byte % letters.length] ?? "";
-		}
-	}
-	return out;
-}
-
-/** login/platform 事件的返回值：待登录用户信息 + 一次性验证码及其过期时间。 */
-export interface UserLogin
-	extends Pick<User, "id" | "name"> {
-	token: string;
-	expiredAt: number;
-}
-
-/** user/update 事件允许修改的用户字段。 */
-export type UserUpdate = Partial<
-	Pick<User, "name" | "password" | "config">
->;
-
-/** PBKDF2-HMAC-SHA256 迭代次数（OWASP 2023 建议 600k；登录低频，开销可接受） */
-const PBKDF2_ROUNDS = 600_000;
-
-/** 新格式密码哈希：`pbkdf2$<rounds>$<salt-hex>$<dk-hex>`（加盐 + 慢哈希）。 */
-function toHash(password: string) {
-	const salt = randomBytes(16);
-	const dk = pbkdf2Sync(
-		password,
-		salt,
-		PBKDF2_ROUNDS,
-		32,
-		"sha256",
-	);
-	return `pbkdf2$${PBKDF2_ROUNDS}$${salt.toString("hex")}$${dk.toString("hex")}`;
-}
-
-/**
- * 校验明文密码与库中存储是否匹配。
- *
- * 兼容两种存储格式：
- * - `pbkdf2$...` 新格式：按存储的盐与迭代次数重派生，恒定时间比较；
- * - 64 位十六进制旧格式：历史上无盐 SHA-256，仅用于校验（命中后由调用方
- *   透明升级为 PBKDF2），同样以恒定时间比较。
- */
-function verifyPassword(
-	password: string,
-	stored: string,
-): boolean {
-	if (stored.startsWith("pbkdf2$")) {
-		const [, rounds, saltHex, dkHex] = stored.split("$");
-		if (!rounds || !saltHex || !dkHex) return false;
-		const expected = Buffer.from(dkHex, "hex");
-		const actual = pbkdf2Sync(
-			password,
-			Buffer.from(saltHex, "hex"),
-			Number(rounds),
-			expected.length,
-			"sha256",
-		);
-		// 长度已按 expected.length 派生，恒定时间比较不会抛错
-		return timingSafeEqual(actual, expected);
-	}
-	// 旧格式：裸 SHA-256 十六进制。
-	// 无盐 SHA-256 只用于存量密码的**校验**（不可删，删了旧用户无法登录），
-	// 命中后由调用方透明升级为 PBKDF2；新建密码一律走 toHash（pbkdf2$ 格式），
-	// 故此处非弱哈希存储，属误报（Default setup 不支持注释抑制，须在平台 dismiss）。
-	if (!/^[0-9a-f]{64}$/i.test(stored)) return false;
-	const actual = createHash("sha256")
-		.update(password)
-		.digest();
-	return timingSafeEqual(
-		actual,
-		Buffer.from(stored, "hex"),
-	);
 }
 
 /**
@@ -307,7 +184,7 @@ class AuthService extends Service {
 			prod: resolve(import.meta.dir, "../dist"),
 		});
 
-		this.initLogin();
+		initLogin(this);
 	}
 
 	/** 启动时按配置确保管理员账户（id = 0）存在。 */
@@ -419,246 +296,6 @@ class AuthService extends Service {
 			token,
 		});
 	}
-
-	/** 注册全部登录 / 用户管理事件与权限拦截逻辑（构造时调用）。 */
-	initLogin() {
-		const self = this;
-		const { ctx, config } = this;
-		// 平台验证码登录的进行中状态：键为 `${platform}:${userId}`，
-		// 值为 [验证码, 过期时间, 发起登录的客户端]
-		const states: Record<string, [string, number, Client]> =
-			{};
-
-		// 用户密码登录：校验通过后签发新令牌；
-		// 命中旧的无盐 SHA-256 存储时透明升级为 PBKDF2
-		ctx.console.addListener(
-			"login/password",
-			async function (name, password) {
-				const [user] = await ctx.database.get(
-					"user",
-					{ name },
-					["password", "name", "id", "authority", "config"],
-				);
-				if (
-					!user?.password ||
-					!verifyPassword(password, user.password)
-				)
-					throw new Error("用户名或密码错误。");
-				if (!user.password.startsWith("pbkdf2$")) {
-					await ctx.database.set("user", user.id, {
-						password: toHash(password),
-					});
-				}
-				await self.createToken(
-					this,
-					"password",
-					omit(user, ["password"]),
-				);
-			},
-		);
-
-		// 已存令牌续期登录：本地记录的令牌未过期即恢复登录态，
-		// 同时刷新该令牌的最后访问时间
-		ctx.console.addListener(
-			"login/token",
-			async function (aid, token) {
-				const [data] = await ctx.database.get(
-					"token",
-					{ id: aid, token },
-					["expiredAt"],
-				);
-				if (!data || data.expiredAt <= Date.now())
-					throw new Error("令牌已失效。");
-				const [user] = await ctx.database.get(
-					"user",
-					{ id: aid },
-					["id", "name", "authority", "config"],
-				);
-				if (!user) throw new Error("用户不存在。");
-				await ctx.database.set(
-					"token",
-					{ token },
-					{ lastUsedAt: new Date() },
-				);
-				await self.setAuth(this, {
-					...user,
-					...data,
-					token,
-				});
-			},
-		);
-
-		// 平台账户登录（第一步）：校验平台账号存在后生成一次性验证码，
-		// 用户把验证码发给任意机器人即可完成登录/绑定（见下方中间件）。
-		// 状态在验证码过期或客户端断开时清理
-		ctx.console.addListener(
-			"login/platform",
-			async function (platform, userId) {
-				const user = await ctx.database.getUser(
-					platform,
-					userId,
-					["id", "name"],
-				);
-				if (!user) throw new Error("找不到此账户。");
-				if (this.auth?.id === user.id)
-					throw new Error("你已经绑定了此账户。");
-
-				const key = `${platform}:${userId}`;
-				// 固定 6 位数字验证码（padStart 补零）；原 Math.random 实现
-				// 在短小数串时不足 6 位，且非 CSPRNG
-				const token = String(
-					randomInt(0, 1_000_000),
-				).padStart(6, "0");
-				const expiredAt =
-					Date.now() + config.loginTokenExpire;
-				states[key] = [token, expiredAt, this];
-
-				// 客户端断开或验证码超时即作废本次登录状态
-				const listener = () => {
-					delete states[key];
-					dispose();
-					this.socket.removeEventListener("close", dispose);
-				};
-				const dispose = ctx.setTimeout(() => {
-					const state = states[key];
-					if (state && state[1] >= Date.now()) listener();
-				}, config.loginTokenExpire);
-				this.socket.addEventListener("close", listener);
-
-				return {
-					id: user.id,
-					name: user.name,
-					token,
-					expiredAt,
-				};
-			},
-		);
-
-		// 平台账户登录（第二步）：前置中间件捕获用户发给机器人的验证码——
-		// 客户端已登录则把该平台账号绑定到当前用户，否则为平台对应用户签发令牌
-		ctx.middleware(async (session, next) => {
-			const state = states[session.uid];
-			if (!state || state[0] !== session.stripped.content) {
-				return next();
-			}
-
-			const { platform, userId: pid } = session;
-			// states 的键由 `${platform}:${userId}` 构成,能命中即说明 userId 存在
-			if (!pid) return next();
-			if (state[2].auth) {
-				await ctx.database.set(
-					"binding",
-					{ platform, pid },
-					{ aid: state[2].auth.id },
-				);
-				return self.setAuth(state[2], state[2].auth);
-			} else {
-				const user = await session.observeUser([
-					"id",
-					"name",
-					"authority",
-					"config",
-				]);
-				return self.createToken(state[2], "platform", user);
-			}
-		}, true);
-
-		// 拦截带 authority 要求的 console 事件：未登录、令牌过期或
-		// 权限不足时拒绝（返回 true 表示拦截）
-		ctx.on(
-			"console/intercept",
-			async (client, listener) => {
-				if (!listener.authority) return false;
-				if (!client.auth) return true;
-				if (client.auth.expiredAt <= Date.now())
-					return true;
-				if (client.auth.authority < listener.authority)
-					return true;
-				return false;
-			},
-		);
-
-		// 删除指定登录会话（登出其它设备）
-		ctx.console.addListener(
-			"user/delete-token",
-			async function (inc) {
-				if (!this.auth) throw new Error("请先登录。");
-				const [data] = await ctx.database.get("token", {
-					id: this.auth.id,
-					inc,
-				});
-				if (!data) throw new Error("令牌不存在。");
-				await ctx.database.remove("token", { inc });
-				await self.setAuth(this);
-			},
-		);
-
-		// 退出登录：删除当前令牌并清除登录态
-		ctx.console.addListener(
-			"user/logout",
-			async function () {
-				if (this.auth) {
-					await ctx.database.remove("token", {
-						token: this.auth.token,
-					});
-				}
-				await self.setAuth(this, undefined);
-			},
-		);
-
-		// 修改用户资料（用户名 / 密码 / 配置），密码先哈希再落库
-		ctx.console.addListener(
-			"user/update",
-			async function (data) {
-				if (!this.auth) throw new Error("请先登录。");
-				if (data.password)
-					data.password = toHash(data.password);
-				await ctx.database.set(
-					"user",
-					{ id: this.auth.id },
-					data,
-				);
-				Object.assign(this.auth, data);
-				await self.setAuth(this, undefined, true);
-			},
-		);
-
-		// 解绑平台账号：绑到别的用户时改指回其主账号；是自身主账号且
-		// 仅剩一个自绑定时拒绝解绑（避免用户失去登录途径），否则删除记录
-		ctx.console.addListener(
-			"user/unbind",
-			async function (platform, pid) {
-				if (!this.auth) throw new Error("请先登录。");
-				const bindings = await ctx.database.get("binding", {
-					aid: this.auth.id,
-				});
-				// 客户端仅对已列出的绑定发起解绑,查找必命中,未命中视为异常状态
-				const binding = bindings.find(
-					(item) =>
-						item.platform === platform && item.pid === pid,
-				);
-				if (!binding) throw new Error("绑定不存在。");
-				if (binding.aid !== binding.bid) {
-					await ctx.database.set(
-						"binding",
-						{ platform, pid },
-						{ aid: binding.bid },
-					);
-				} else if (
-					bindings.filter((item) => item.aid === item.bid)
-						.length === 1
-				) {
-					throw new Error("无法解除绑定。");
-				} else {
-					await ctx.database.remove("binding", {
-						platform,
-						pid,
-					});
-				}
-				await self.setAuth(this);
-			},
-		);
-	}
 }
 
 // 纯类型 namespace(仅含接口,erasableSyntaxOnly 允许),与上面的 class 合并声明
@@ -676,5 +313,13 @@ namespace AuthService {
 		loginTokenExpire: number;
 	}
 }
+
+export { randomId } from "./crypto.ts";
+export type {
+	Auth,
+	LoginToken,
+	UserLogin,
+	UserUpdate,
+} from "./types.ts";
 
 export default AuthService;
