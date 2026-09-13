@@ -25,9 +25,9 @@ import type { Dict } from "cosmokit";
  * 与上游的刻意差异仅四类：模块拆分（上游为单文件）；导入指向
  * 冻结生态（cosmokit / minato）；本仓代码风格（tab / 双引号 /
  * 行类型 Dict / 无非空断言——上游的 `!` 断言改写为 `as` 转型，
- * 语义等价）；安全加固（索引表 _indexes 与各表索引记录用
- * Object.create(null) 原型无对象承载，防 __proto__ 等公开入参
- * 键污染原型，见 operations/indexes.ts 头注）。逻辑逐行对齐，
+ * 语义等价）；安全加固（索引表 _indexes 用 Map 承载，防
+ * __proto__ 等公开入参键污染原型，见 operations/indexes.ts
+ * 头注）。逻辑逐行对齐，
  * 含 `catesian` 一名系上游既有拼写（笛卡尔积），保留以求移植
  * 对照时 diff 最小。
  */
@@ -54,8 +54,8 @@ export class MemoryDriver extends Driver<MemoryDriver.Config> {
 
 	_store: MemoryStore = { _fields: [] };
 
-	_indexes: Record<string, Record<string, Driver.Index>> =
-		Object.create(null);
+	_indexes: Map<string, Map<string, Driver.Index>> =
+		new Map();
 
 	// ---- 生命周期：内存库无 IO，均为空操作（$save 为上游保留挂点） ----
 

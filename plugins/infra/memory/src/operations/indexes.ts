@@ -6,10 +6,10 @@
  * 索引记账：不真正加速查询，仅维护元数据供 getIndexes 等读取
  * （内存全表扫描本无索引可言）。
  *
- * 与上游的刻意差异：索引记录用 Object.create(null) 原型无对象
- * 承载（上游为裸对象字面量）——表名与索引名系库的公开入参，
- * 直接作记录键，须防 __proto__ 等键污染 Object.prototype
- * （CodeQL js/prototype-polluting-assignment）。
+ * 与上游的刻意差异：索引记账用 Map 承载（上游为裸对象记录）
+ * ——表名与索引名系库的公开入参、直接作记录键，裸对象挡不住
+ * __proto__ 等键的污染路径（CodeQL js/prototype-polluting-
+ * assignment），Map 系该规则的官方首选建议。
  */
 import type { Driver } from "minato";
 import type { MemoryDriver } from "../index.ts";
@@ -18,7 +18,7 @@ export async function getIndexes(
 	driver: MemoryDriver,
 	table: string,
 ) {
-	return Object.values(driver._indexes[table] ?? {});
+	return [...(driver._indexes.get(table)?.values() ?? [])];
 }
 
 export async function createIndex(
@@ -32,9 +32,9 @@ export async function createIndex(
 			Object.entries(index.keys)
 				.map(([key, direction]) => `${key}_${direction}`)
 				.join("+");
-	const indexes = (driver._indexes[table] ??=
-		Object.create(null));
-	indexes[name] = { name, unique: false, ...index };
+	const indexes = driver._indexes.get(table) ?? new Map();
+	driver._indexes.set(table, indexes);
+	indexes.set(name, { name, unique: false, ...index });
 }
 
 export async function dropIndex(
@@ -42,7 +42,5 @@ export async function dropIndex(
 	table: string,
 	name: string,
 ) {
-	const indexes = (driver._indexes[table] ??=
-		Object.create(null));
-	delete indexes[name];
+	driver._indexes.get(table)?.delete(name);
 }
