@@ -75,3 +75,12 @@ export declare const IconReset: Component;
 export declare const IconSquareCheck: Component;
 export declare const IconSquareEmpty: Component;
 export declare const IconUndo: Component;
+
+/**
+ * 多语言文案取值钩子（schemastery-vue 源码 utils.ts 的同名导出）：
+ * 返回的函数把 string | Dict<string> 形态的文案按当前语言链解析为纯文本。
+ * 运行时载体经 `export * from "schemastery-vue"` 透传，此处补齐类型镜像。
+ */
+export declare function useI18nText(): (
+	message?: string | { [key: string]: string },
+) => string | undefined;
