@@ -18,12 +18,13 @@
 
 ```bash
 bun install                     # 安装依赖（Bun workspaces，产出 bun.lock）
-bun run check                   # 全量门禁 = lint + lint:client + typecheck + check:locales + check:docs-links（提交前必跑）
+bun run check                   # 全量门禁 = lint + lint:client + typecheck + check:locales + check:docs-links + check:vue-types（提交前必跑）
 bun run lint                    # biome check .（格式 + lint 唯一权威）
 bun run lint:client             # eslint 仅查 *.vue 模板语义
 bun run format                  # biome format --write .
 bun run check:locales           # 词典键对齐 / 语种齐全 / 假翻译检查（零依赖，已并入 check）
 bun run check:docs-links        # 文档相对链接与锚点存活检查（零依赖，已并入 check）
+bun run check:vue-types         # vue-tsc 影子基线闸门（.vue 全量类型错误只拦新增，已并入 check）
 bun run fallow                  # 死代码与依赖审计（bunx 直跑 fallow：不占 devDependencies、脚本内 pin 精确版；配置见根 .fallowrc.jsonc）
 bun run typecheck               # TS7 类型检查（node 侧 + client 侧两条 bunx tsc 串行）
 bun run build                   # 根 tsdown：全部 node 侧包 → 各包 lib/（ESM-only）
@@ -52,13 +53,14 @@ bun run release status                   # 发布链概览（详见 ../process/r
 
 ## 3. 门禁构成与现状
 
-`bun run check` 由五段组成：
+`bun run check` 由六段组成：
 
 1. **lint（biome）**：全仓格式 + lint（`biome check .`）。biome 尊重 `.gitignore`（`vcs.useIgnoreFile`），跳过 lib/dist 等。格式以 biome 为唯一权威——`.editorconfig` 声明的 4 空格缩进与代码现状（tab）不符，勿据此手改，统一 `bun run format`。
 2. **lint:client（eslint）**：只查 `.vue` 文件，与 biome 零重叠；核心规则 `vue/no-undef-components`（忽略 `^K`、`^el-`、`^router-` 全局组件）。不做类型感知。
 3. **typecheck**：两条纯 `bunx tsc` 串行——node 侧大一统 `tsconfig.json`（include 为全部 node 工程 src 的并集）+ client 侧大一统 `tsconfig.web.json`（include 为全部 client 工程并集）。**不要恢复逐 tsconfig 并行 spawn**（旧方案 50 进程并发在 win32 下有 Bun.spawn 竞态且无必要）。两条链已开 `incremental`，buildinfo 分文件存 `node_modules/.cache/tsc/`（node / web 各一份，入口文件集合不同不能共用；删掉即全量重建）。另有调试用的 legacy 通道 `bun run typecheck:legacy`（tsc6，写 `node-legacy.tsbuildinfo`）。新增 client 工程时须同步 `tsconfig.web.json` 的 include/paths。
 4. **check:locales**：`tooling/checks/locales.ts`（零依赖，bun 直跑）——词典键对齐 / 语种齐全 / 假翻译三查，发现问题 exit 1；覆盖范围与豁免名单见脚本头部注释。
 5. **check:docs-links**：`tooling/checks/docs-links.ts`（零依赖）——docs 全树 + 根部 / `.github` 文档的相对链接与锚点存活检查，问题 exit 1。
+6. **check:vue-types**：`tooling/checks/vue-types.ts`——vue-tsc 影子基线闸门：用隔离安装的 vue-tsc（经典 TS 5.9 运行时，版本钉死于脚本常量，首次运行自动自举到 `node_modules/.cache/vue-tsc-shadow/`）对 `tsconfig.web.json` 全量检查（含 `.vue` 的模板与 script），错误快照与入库基线（`tooling/checks/vue-types-baseline.json`）对比，**只拦新增错误键、容忍存量**——归一化键为「文件 + 错误码 + 消息」（不含行列号），`node_modules/` 内第三方 `.vue` 的条目不计。修复存量无需动基线（消失的键自动不计）；新增错误若确认可接受，用 `bun run check:vue-types -- --update` 重拍基线一并提交。存量随修复自然消化，待 Volar 工具链支持 TS7 后影子基线即可转正退役。
 
 **CI（`.github/workflows/ci.yml`）**：PR 与 main push 自动触发（也支持手动 dispatch），三个并行 job：`gate`（build → 宿主前端构建 → check → test）、`client`（宿主 + 全部 webui 插件的前端构建，即 `.vue` 的实际类型门禁）、`fallow`（`bun run fallow` 死代码与依赖审计）。三个顺序要点：
 
@@ -76,7 +78,7 @@ fallow 另外还带重复代码、复杂度健康度、边界违规与 PR 变更
 
 **类型检查现状**：全仓在 TS7 下 0 错误（含 `packages/web/*` 与全部 webui 插件）。最低纪律：改哪个包，保证该包所在 project 不新增错误。
 
-**`.vue` 的类型检查**：tsc 侧经 `packages/web/client/global.d.ts` 把 `*.vue` 声明为不透明 `Component`，SFC 的 script / template 不进入 tsc 程序——错误实际由构建期 vite（compiler-sfc，含 defineProps 类型解析）暴露，前端构建是 `.vue` 的实际类型门禁。vue-tsc 需要经典 TS 运行时、与本仓 TS7-native 策略冲突，不引入；待 Volar 工具链支持 TS7 后再评估。
+**`.vue` 的类型检查**：tsc 侧经 `packages/web/client/global.d.ts` 把 `*.vue` 声明为不透明 `Component`，SFC 的 script / template 不进入 tsc 程序——错误实际由构建期 vite（compiler-sfc，含 defineProps 类型解析）暴露，前端构建是 `.vue` 的实际类型门禁。vue-tsc 需要经典 TS 运行时、与本仓 TS7-native 策略冲突，故不走 tsc 主链，而是经 check:vue-types 以影子基线旁路拦截新增（见上文第 6 段）；待 Volar 工具链支持 TS7 后再评估转正。
 
 ## 4. 构建产物布局
 
@@ -173,6 +175,7 @@ expect(app.database.getUser("mock", "A")).resolves.toHaveShape({ authority: 1 })
 17. **`Bun.sleep` 与 setTimeout 调度顺序不等价**：`Bun.sleep(0)` 的恢复可先于同批 `setTimeout(0)` 回调（win32 1.4.0 实证），依赖「等待方排在超时回调之后」的时序会静默反转（session.prompt 超时用例实证）。`@koishi-ce/utils` 的 `sleep` 因此维持 `new Promise(resolve => setTimeout(resolve, ms))` 实现并附不可换注释；时长足够长的纯延时（如测试 tick(20)）可安全用 `Bun.sleep`。同族差异：`Bun.write` 在 1.4.0 无 append 模式（`mode` 仅收权限数字）、`bun:test` 的 `mock.calls[i]` 直接是参数数组（无 node:test 的 `.arguments` 包层）、`Bun.parseArgs` 与 `mock.spyOn` 不存在（`spyOn` 为独立导出）。
 18. **bun-types 类型面超前于运行时，新 API 用前必须 `bun -e` 起全新进程实测**（1.4.2 三例实证）：`Bun.generateUUID` / `Bun.UUID` 有类型、运行时 undefined——生成 UUID 用全局 `crypto.randomUUID()`；`Bun.Glob.scanSync` 类型标注返回 `Array<string>`、实际返回可迭代对象（无 `.filter` / `.slice` 等 Array 方法，须 `[...]` 或 `Array.from` 展开），且 `GlobScanOptions` 无 `ignore` 选项——跳过 node_modules 只能对结果后滤，全仓级扫描会完整下钻 node_modules（性能不可接受，check-locales 的手搓剪枝递归因此保留）；`Bun.write` 直收 `ReadableStream` / `Response` / `Blob`（server-temp 落盘已据此去掉 `Readable.fromWeb` 中转）。
 19. **仓库遗留远古 stash，勿裸跑 `git stash pop`**：stash 栈上存在基于历史提交的遗留条目（非当前会话产物）；工作树干净时 `git stash` 空转不报错，随后的 `git stash pop` 会弹出别人的遗留改动并在工作区炸出冲突。恢复用 `git reset --hard HEAD`（stash 本体在 pop 失败时自动保留）。另：shell 里 `bun run check | tail` 的退出码是 tail 的——门禁与 git 提交务必拆成两条命令，勿以 `&&` 串联。
+20. **vue-tsc 必须隔离目录安装且用 node 跑，bunx / bun 直跑崩或静默失效**：仓库根 `typescript` 是 `@typescript/typescript6` 别名包，vue-tsc 对 `typescript/lib/tsc` 的深路径引用被其 exports 挡住（`bunx vue-tsc` 直接 ERR_PACKAGE_PATH_NOT_EXPORTED），bun 直跑则静默失效。影子环境（`node_modules/.cache/vue-tsc-shadow/`）自举时须先预写独立 package.json，否则 `bun add` 会被根 workspace 吸附、把依赖装进根 node_modules 并改写根 package.json / bun.lock（2026-09-14 实证）；spawn 裸名 `node` 在 win32 多重 node 共存（mise shim 等）下不可靠，须经 `Bun.which("node")` 解析绝对路径。另 vue-tsc 有诊断时退出码在 1 与 2 间漂移，崩溃识别以「非零退出且 stdout 无诊断行」为准（check:vue-types 已按此实现）。
 
 ## 8. 版本与发布
 

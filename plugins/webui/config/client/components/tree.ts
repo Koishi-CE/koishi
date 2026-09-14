@@ -69,6 +69,7 @@ export function hasCoreDeps(tree: Tree) {
 	)
 		return true;
 	if (tree.children) return tree.children.some(hasCoreDeps);
+	return false;
 }
 
 /**
@@ -126,6 +127,8 @@ export const type = computed(() => {
 			if (env.using[name]?.required) return "warning";
 		}
 	}
+	// 无警示时返回 undefined（无类型标记）
+	return;
 });
 
 /**
@@ -160,7 +163,7 @@ function getTree(
 		node.name = key.split(":", 1)[0] ?? "";
 		node.id = key;
 		node.path = key.slice(node.name.length + 1);
-		const label = config?.$label as string | undefined;
+		const label = config?.["$label"] as string | undefined;
 		if (label !== undefined) node.label = label;
 		if (key.startsWith("group:")) {
 			node.children = getTree(node, config);
@@ -203,7 +206,7 @@ export const plugins = computed(() => {
 	function traverse(tree: Tree) {
 		const collapsed = (
 			tree.config as Record<string, unknown> | undefined
-		)?.$collapsed;
+		)?.["$collapsed"];
 		if (!collapsed && tree.children) {
 			expanded.push(tree.path);
 		}

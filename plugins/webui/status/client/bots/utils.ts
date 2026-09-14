@@ -40,4 +40,6 @@ export function getStatus(status: Universal.Status) {
 		case botStatus.RECONNECT:
 			return "reconnect";
 	}
+	// 枚举之外的未知值无对应样式类（调用方按 class 消费，undefined 安全）
+	return undefined;
 }

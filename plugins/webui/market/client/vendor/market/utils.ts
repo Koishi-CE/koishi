@@ -223,7 +223,9 @@ export function getSorted(
 				if (comparator)
 					return comparator.compare(a, b, words) * order;
 			}
-			return comparators.default?.compare(a, b, words) ?? 0;
+			return (
+				comparators["default"]?.compare(a, b, words) ?? 0
+			);
 		});
 }
 

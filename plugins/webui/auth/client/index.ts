@@ -30,7 +30,6 @@ import type {
 	UserLogin,
 	UserUpdate,
 } from "@koishi-ce/plugin-auth";
-import type { DataService } from "@koishi-ce/plugin-console";
 import {
 	defineComponent,
 	h,
@@ -141,6 +140,8 @@ export default (ctx: Context) => {
 				message.error("权限不足。");
 				return false;
 			}
+			// 无需拦截：返回 undefined 即放行（vue-router 守卫语义）
+			return;
 		}),
 	);
 
@@ -261,6 +262,8 @@ export default (ctx: Context) => {
 				} else {
 					router.push("/profile");
 				}
+				// watch 回调无返回值语义，显式返回以通过 noImplicitReturns
+				return;
 			},
 		),
 	);

@@ -86,11 +86,16 @@ export function createColumnInputs(
 			if (type === "number")
 				value = Number.parseFloat(text);
 			switch (fieldConfig.deftype) {
-				// biome-ignore lint/suspicious/noFallthroughSwitchClause: 负数已提前返回,落入整数检查是上游既定语义
+				// 上游语义：unsigned 在整数检查之上叠加负数检查
+				// （原贯穿写法展开为显式判别，行为不变）
 				case "unsigned":
-					if (typeof value === "number" && value < 0)
-						return false;
 				case "integer":
+					if (
+						fieldConfig.deftype === "unsigned" &&
+						typeof value === "number" &&
+						value < 0
+					)
+						return false;
 					if (typeof value === "number" && value % 1 !== 0)
 						return false;
 					break;
