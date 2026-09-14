@@ -28,7 +28,7 @@
       该依赖的安装发生了错误，你可以尝试修复或移除它。
     </p>
 
-    <el-scrollbar v-if="version && data?.[version] && Object.keys(data[version].peers).length">
+    <el-scrollbar v-if="version && data?.[version] && Object.keys(data[version]?.peers ?? {}).length">
       <table>
         <thead>
           <tr>
@@ -39,7 +39,7 @@
           </tr>
         </thead>
         <tbody>
-          <tr v-for="(peer, name) in data[version].peers" :key="name">
+          <tr v-for="(peer, name) in data[version]?.peers" :key="name">
             <td class="text-left">{{ name }}</td>
             <td>{{ peer.request }}</td>
             <td>
@@ -387,8 +387,13 @@ watch(
 		}
 		for (const name in peers) {
 			if (!registry[name]) continue;
-			const { result } = peers[name];
-			if (result !== "warning" && result !== "danger")
+			// noUncheckedIndexedAccess：逐项判空后取判级结果
+			const peer = peers[name];
+			if (!peer) continue;
+			if (
+				peer.result !== "warning" &&
+				peer.result !== "danger"
+			)
 				continue;
 			// 取该依赖最新版本号作为待装版本；取不到则跳过
 			const latest = Object.keys(registry[name])[0];

@@ -22,18 +22,17 @@
 
 <script lang="ts" setup>
 import { store, useConfig } from "@koishi-ce/client";
-import type {
-	Registry,
-	SearchObject,
-} from "@koishi-ce/registry";
+import type { Registry } from "@koishi-ce/registry";
 import { useDebounceFn } from "@vueuse/core";
 import { computed, ref, watch } from "vue";
 import { addManual, showManual } from "./utils";
 
 // npm registry 的 /<pkg> 端点响应实际携带 dist-tags（最新版本指针），
-// Registry 类型未建模此字段，这里借 SearchObject 上的既有声明补齐
-type RegistryDoc = Registry &
-	Pick<SearchObject, "dist-tags">;
+// Registry 类型（lib d.ts）未声明此字段（上游把它声明在 SearchPackage 上），
+// 这里本地补齐所需的最小形状，不依赖上游键布局
+interface RegistryDoc extends Registry {
+	"dist-tags"?: { latest?: string };
+}
 
 const config = useConfig();
 const invalid = computed(() => false);

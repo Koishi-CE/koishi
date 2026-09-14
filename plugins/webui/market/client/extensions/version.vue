@@ -30,7 +30,7 @@
 
   <!-- deprecated -->
   <k-comment v-if="dep?.resolved && versions?.[dep.resolved]?.deprecated" type="danger">
-    <p>此版本已废弃，请尽快迁移：{{ versions[dep.resolved].deprecated }}</p>
+    <p>此版本已废弃，请尽快迁移：{{ versions[dep.resolved]?.deprecated }}</p>
   </k-comment>
 
   <!-- external -->
@@ -54,7 +54,7 @@ const name =
 
 const local = computed(() => store.packages?.[name.value]);
 const object = computed(
-	() => store.market.data?.[name.value],
+	() => store.market?.data?.[name.value],
 );
 const dep = computed(
 	() => store.dependencies?.[name.value],

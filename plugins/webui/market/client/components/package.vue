@@ -81,7 +81,8 @@ const version = computed({
 			(!value && !dep.value)
 		) {
 			delete config.value.market.override[props.name];
-		} else {
+		} else if (value !== undefined) {
+			// el-select 只会回传字符串；undefined（显示占位态）不写入暂存区
 			config.value.market.override[props.name] = value;
 		}
 	},

@@ -50,7 +50,7 @@ const getAvailable = (name: string) =>
 
 const available = computed(() => {
 	const available: Dict<string[]> = {};
-	for (const name in env.value?.using) {
+	for (const name in env?.value?.using) {
 		available[name] = getAvailable(name);
 	}
 	return available;
