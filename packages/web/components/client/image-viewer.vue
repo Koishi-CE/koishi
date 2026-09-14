@@ -43,8 +43,8 @@ const props = defineProps<{
 // 用户缩放 / 旋转量（transform 叠加在居中定位之上）
 const scale = ref(1);
 const rotate = ref(0);
-const img = ref<HTMLImageElement>(null);
-const container = ref<HTMLDivElement>(null);
+const img = ref<HTMLImageElement | null>(null);
+const container = ref<HTMLDivElement | null>(null);
 
 const transform = computed(() => {
 	return `scale(${scale.value}) rotate(${rotate.value}deg)`;
@@ -72,8 +72,8 @@ useResizeObserver(container, () => {
  * 直接写 style 的 width / height / left / top（不使用 transform，
  * 避免与用户缩放 / 旋转的 transform 相互干扰）。
  */
-function moveToCenter(el: HTMLImageElement) {
-	if (!el) return;
+function moveToCenter(el: HTMLImageElement | null) {
+	if (!el || !container.value) return;
 	const { naturalHeight, naturalWidth } = el;
 	const maxHeight = container.value.clientHeight;
 	const maxWidth = container.value.clientWidth;

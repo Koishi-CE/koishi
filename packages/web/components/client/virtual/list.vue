@@ -10,7 +10,7 @@
   阈值）、滚动定位到指定 key（activeKey）与 keep-alive 激活时恢复位置。
 -->
 <template>
-  <el-scrollbar ref="root" @scroll="onScroll" :max-height="maxHeight">
+  <el-scrollbar ref="root" @scroll="onScroll" v-bind="maxHeight ? { maxHeight } : {}">
     <virtual-item v-if="$slots.header" @resize="virtual.saveSize('header', $event)">
       <div><slot name="header"></slot></div>
     </virtual-item>
@@ -51,7 +51,11 @@ const emit = defineEmits([
 
 const props = defineProps({
 	keyName: { type: String, default: "id" },
-	data: { type: Array, required: true },
+	// 数据项为带 key 字段的对象：类型收紧以支撑模板 v-bind 展开
+	data: {
+		type: Array as PropType<Record<string, unknown>[]>,
+		required: true,
+	},
 	count: { default: 50 },
 	estimated: { default: 50 },
 	tag: { default: "div" },
@@ -123,10 +127,22 @@ function getUids() {
 	return props.data.map(getKey);
 }
 
+/** 收窄辅助：值是否为普通对象 */
+function isRecord(
+	value: unknown,
+): value is Record<string, unknown> {
+	return typeof value === "object" && value !== null;
+}
+
 /** 取单项的 key：keyName 支持点路径（如 "user.id"）逐层取值 */
-function getKey(item: string) {
+function getKey(item: unknown): string {
 	const keys = props.keyName.split(".");
-	return keys.reduce((obj, key) => obj[key], item);
+	const value = keys.reduce<unknown>(
+		(obj, key) => (isRecord(obj) ? obj[key] : undefined),
+		item,
+	);
+	// 数据项的 key 字段约定为字符串 uid：仅做类型层收口，保持原值返回
+	return value as string;
 }
 
 // 初始定位：指定了 activeKey 则定位到该项，否则滚到底部
@@ -192,7 +208,13 @@ onActivated(() => {
 	}
 });
 
-function onScroll(ev: MouseEvent) {
+/** el-scrollbar 的 scroll 事件参数形态（偏移量对象，非原生事件） */
+interface ScrollOffset {
+	scrollTop: number;
+	scrollLeft: number;
+}
+
+function onScroll(ev: ScrollOffset) {
 	const offset = Math.ceil(
 		(scrollTop = root.value.wrapRef.scrollTop),
 	);
@@ -221,7 +243,7 @@ function emitEvent(
 	offset: number,
 	clientLength: number,
 	scrollLength: number,
-	ev: MouseEvent,
+	ev: ScrollOffset,
 ) {
 	emit("scroll", ev, virtual.range);
 	if (

@@ -14,7 +14,7 @@
     <div v-for="(layer, outer) in extract(modelValue, '$or')" :key="outer">
       <div class="k-filter-item" v-for="(expr, inner) in extract(layer, '$and')" :key="inner">
         <el-button :disabled="disabled" @click="remove(inner, outer)"><k-icon name="delete"></k-icon></el-button>
-        <k-filter-expr :disabled="disabled" :options="options" :modelValue="expr" @update:modelValue="update($event, inner, outer)"></k-filter-expr>
+        <k-filter-expr :disabled="disabled" :options="options" :modelValue="toExpr(expr)" @update:modelValue="update($event, inner, outer)"></k-filter-expr>
       </div>
       <div>
         <el-button @click="update({}, extract(layer, '$and').length, outer)">添加「与」条件</el-button>
@@ -31,18 +31,10 @@
 <script lang="ts" setup>
 import { computed } from "vue";
 import KFilterExpr from "./k-filter-expr.vue";
-
-/** minato 过滤表达式：单条 { [运算符]: [{ $: 实体 }, 值] }，或 $and / $or 组合 */
-interface FilterExpr {
-	$and?: FilterExpr[];
-	$or?: FilterExpr[];
-	[operator: string]: unknown;
-}
-
-/** 过滤器宿主选项：userFields 声明可选的自定义用户字段（user.* 实体开关） */
-interface FilterOptions {
-	userFields?: string[];
-}
+import type {
+	FilterExpr,
+	FilterOptions,
+} from "./k-filter-types";
 
 /** 收窄辅助：判断值是否为普通对象（过滤表达式的载体） */
 function isRecord(
@@ -51,10 +43,21 @@ function isRecord(
 	return typeof value === "object" && value !== null;
 }
 
+/** 收窄辅助：对象值即按过滤表达式对待（k-filter-expr 的产出恒为对象形态） */
+function isFilterExpr(value: unknown): value is FilterExpr {
+	return typeof value === "object" && value !== null;
+}
+
+/** v-for 元素收窄为单条表达式：非对象值按 null 交给内层从头编辑 */
+function toExpr(value: unknown): FilterExpr | null {
+	return isFilterExpr(value) ? value : null;
+}
+
 const props = defineProps<{
 	modelValue: FilterExpr | null;
-	disabled?: boolean;
-	options?: FilterOptions;
+	// 显式含 undefined：exactOptionalPropertyTypes 下放行下游显式传空
+	disabled?: boolean | undefined;
+	options?: FilterOptions | undefined;
 }>();
 
 const emit = defineEmits(["update:modelValue"]);
@@ -104,8 +107,8 @@ function format(values: unknown[], type: string) {
 /** 替换指定位置（外层 outerKey / 内层 innerKey）的表达式并整体重排 emit */
 function update(
 	expr: unknown,
-	innerKey: string | number,
-	outerKey: string | number,
+	innerKey: number,
+	outerKey: number,
 ) {
 	const outer = extract(props.modelValue, "$or").slice();
 	const inner = extract(outer[outerKey], "$and").slice();
@@ -115,10 +118,7 @@ function update(
 }
 
 /** 删除指定位置的表达式（置空后交给 format 收敛结构） */
-function remove(
-	innerKey: string | number,
-	outerKey: string | number,
-) {
+function remove(innerKey: number, outerKey: number) {
 	const outer = extract(props.modelValue, "$or").slice();
 	const inner = extract(outer[outerKey], "$and").slice();
 	inner[innerKey] = undefined;

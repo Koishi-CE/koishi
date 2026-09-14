@@ -43,16 +43,17 @@ import type {
 
 const props = defineProps<{
 	modelValue: FilterExpr | null;
-	disabled?: boolean;
-	options?: FilterOptions;
+	// 显式含 undefined：exactOptionalPropertyTypes 下放行下游显式传空
+	disabled?: boolean | undefined;
+	options?: FilterOptions | undefined;
 }>();
 
 const emit = defineEmits(["update:modelValue"]);
 
 const entity = ref<string>();
 const operator = ref<string>();
-// 比较值：文本输入为 string，权限字段为 number，解析外部值时也可能是其余类型
-const value = ref<unknown>();
+// 比较值：文本输入为 string，权限字段为 number（其余外部值收窄为 null）
+const value = ref<string | number | null>(null);
 // isDirect（是否私聊）用的开关量
 const boolean = ref<boolean>(false);
 
@@ -68,6 +69,15 @@ function isValid(key: string) {
 	} else {
 		return true;
 	}
+}
+
+/** 外部原值收窄为输入框可编辑量：非字符串 / 数字按 null（等价空输入）处理 */
+function toInputValue(
+	raw: unknown,
+): string | number | null {
+	return typeof raw === "string" || typeof raw === "number"
+		? raw
+		: null;
 }
 
 // 实体字段的中文文案（与 k-filter-button 共用同一套键名）
@@ -115,7 +125,7 @@ watch(
 			? exprValue[1].join(", ")
 			: entity.value === "user.authority"
 				? Number(exprValue[1])
-				: exprValue[1];
+				: toInputValue(exprValue[1]);
 	},
 	{ immediate: true },
 );
@@ -129,7 +139,7 @@ const type = computed(() => {
 // 切换实体时清空取值，并把运算符重置为新实体可用的第一个
 watch(entity, () => {
 	value.value = null;
-	if (!availableOps.value.includes(operator.value)) {
+	if (!availableOps.value.includes(operator.value ?? "")) {
 		operator.value = availableOps.value[0];
 	}
 });

@@ -123,11 +123,13 @@ export default class Virtual {
 				this.sizes.size <
 				Math.min(this.param.count, this.param.uids.length)
 			) {
-				this.firstRangeTotalSize = [
-					...this.sizes.values(),
-				].reduce((acc, val) => acc + val, 0);
+				const totalSize = [...this.sizes.values()].reduce(
+					(acc, val) => acc + val,
+					0,
+				);
+				this.firstRangeTotalSize = totalSize;
 				this.firstRangeAverageSize = Math.round(
-					this.firstRangeTotalSize / this.sizes.size,
+					totalSize / this.sizes.size,
 				);
 			} else {
 				// 统计完成，此后不再维护
