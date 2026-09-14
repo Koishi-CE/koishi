@@ -21,9 +21,10 @@ import { computed, inject } from "vue";
 const AnalyticNumber = inject("component:analytic-number");
 
 // 当前 QPS：全部机器人最近一分钟接收消息总数 / 60 秒
+// store.status 在服务端数据未推送前为 undefined，按 0 台机器人计（显示 0）
 const current = computed(() => {
 	return (
-		Object.values(store.status.bots).reduce(
+		Object.values(store.status?.bots ?? {}).reduce(
 			(acc, bot) => acc + bot.messageReceived,
 			0,
 		) / 60
@@ -31,9 +32,10 @@ const current = computed(() => {
 });
 
 // 近期 QPS：最近 7 天接收消息总量除以 7 天的总秒数，得到日均每秒均值
+// store.analytics 在 analytics 服务数据未推送前为 undefined，按无近期统计计
 const recent = computed(() => {
 	return (
-		Object.values(store.analytics.messageByDate)
+		Object.values(store.analytics?.messageByDate ?? [])
 			.slice(-7)
 			.reduce((acc, value) => acc + value.receive, 0) /
 		7 /

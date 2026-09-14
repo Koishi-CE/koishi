@@ -6,13 +6,13 @@
      昵称、平台与最近一分钟的收发消息速率。用于状态栏悬停层与插件配置页。 -->
 <template>
   <section class="bot-view">
-    <div class="avatar" :style="{ backgroundImage: `url(${withProxy(data.user.avatar)})` }" @click="$emit('avatar-click')">
+    <div class="avatar" :style="{ backgroundImage: `url(${withProxy(data.user?.avatar ?? '')})` }" @click="$emit('avatar-click')">
       <el-tooltip :content="statusNames[data.status]" placement="right">
         <status-light :class="getStatus(data.status)"></status-light>
       </el-tooltip>
     </div>
     <div class="info">
-      <div class="truncate" :title="data.user.name"><k-icon name="robot"/>{{ data.user.name }}</div>
+      <div class="truncate" :title="data.user?.name"><k-icon name="robot"/>{{ data.user?.name }}</div>
       <div class="truncate" :title="data.platform"><k-icon name="platform"/>{{ data.platform }}</div>
       <div class="truncate cur-frequency">
         <span style="margin-right: 8px">
@@ -29,18 +29,22 @@
 </template>
 
 <script lang="ts" setup>
-import { Universal, withProxy } from "@koishi-ce/client";
+import type { Universal } from "@koishi-ce/client";
+import { withProxy } from "@koishi-ce/client";
 import type { ProfileProvider } from "@koishi-ce/plugin-status";
 import StatusLight from "./light.vue";
 import { getStatus } from "./utils";
 
-// 状态枚举值到悬停提示文案的映射
+// Universal.Status 是 @satorijs/protocol 声明的 ambient const enum，
+// verbatimModuleSyntax 下无法以值形式访问其成员（TS2748），
+// 这里按 utils.ts 的镜像值（OFFLINE=0 … RECONNECT=4）直接以数字
+// 字面量作键，键集合与枚举成员一一对应以防遗漏
 const statusNames: Record<Universal.Status, string> = {
-	[Universal.Status.ONLINE]: "运行中",
-	[Universal.Status.OFFLINE]: "离线",
-	[Universal.Status.CONNECT]: "正在连接",
-	[Universal.Status.RECONNECT]: "正在重连",
-	[Universal.Status.DISCONNECT]: "正在断开",
+	[1]: "运行中",
+	[0]: "离线",
+	[2]: "正在连接",
+	[4]: "正在重连",
+	[3]: "正在断开",
 };
 
 defineProps<{

@@ -13,9 +13,9 @@
         v-for="(type, index) in types"
         :key="type"
         :class="[type, 'bar']"
-        :style="{ width: percentage(distribution[index]) }">
+        :style="{ width: percentage(distribution[index] ?? 0) }">
         <template v-if="index === maxIndex">{{ caption }}</template>
-        <template v-else-if="maxIndex === -1 && distribution[index] >= 0.2">{{ percentage(distribution[index]) }}</template>
+        <template v-else-if="maxIndex === -1 && (distribution[index] ?? 0) >= 0.2">{{ percentage(distribution[index] ?? 0) }}</template>
       </span>
     </span>
   </div>

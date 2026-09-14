@@ -7,7 +7,7 @@
      点击将全部环境信息格式化为多行文本并复制到剪贴板。 -->
 <template>
   <k-status v-if="store.envinfo" class="version" @click="copyInfo">
-    Koishi v{{ store.envinfo.koishi.Core }}
+    Koishi v{{ store.envinfo?.koishi?.Core }}
     <template #tooltip>
       <div class="section" v-for="(data, key) in store.envinfo" :key="key">
         <p class="title">{{ capitalize(key) }}:</p>
@@ -29,7 +29,8 @@ import { copyToClipboard } from "./utils";
 
 // 将 envinfo 的 { 分组: { 条目: 值 } } 结构展开为缩进的多行文本后复制
 async function copyInfo() {
-	const text = Object.entries(store.envinfo)
+	// 触发按钮本身带 v-if="store.envinfo" 守卫，?? {} 仅作类型层兜底
+	const text = Object.entries(store.envinfo ?? {})
 		.map(([key, data]) => {
 			return (
 				`${capitalize(key)}:\n` +
