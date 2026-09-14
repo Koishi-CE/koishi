@@ -34,8 +34,8 @@
       </el-scrollbar>
     </template>
 
-    <k-content class="command-config" v-if="active">
-      <Command :command="data[active]"></Command>
+    <k-content class="command-config" v-if="activeData">
+      <Command :command="activeData"></Command>
     </k-content>
 
     <k-empty v-else>
@@ -81,26 +81,45 @@ const data = useRpc<Dict<CommandData>>();
 
 const inputEl = ref();
 const inputText = ref("");
-const treeEl = ref(null);
+// el-tree 组件实例的最小类型面：本组件只用到 filter 方法（完整实例类型
+// 需引用 element-plus，浏览器端类型程序解析不到该包，故按需手写）
+const treeEl = ref<{
+	filter: (value: string) => void;
+} | null>(null);
 const keyword = ref("");
-const root = ref<{ $el: HTMLElement }>(null);
+const root = ref<{ $el: HTMLElement } | null>(null);
+
+// 树形数据的节点：在指令数据基础上递归展开 children 为子节点。
+// CommandData.children 是「子指令名列表」（string[]），此处被同名字段
+// 覆盖为子节点列表，故 extends 前先 Omit 掉原字段以免类型冲突
+interface TreeCommand
+	extends Omit<CommandData, "children"> {
+	children: TreeCommand[];
+}
 
 // 把服务端下发的扁平指令表组装成 el-tree 需要的树形结构：
 // 先剔除所有「已作为子指令出现」的条目得到顶层集合，再递归展开 children
 const treeData = computed(() => {
 	const topLevel = { ...data.value };
 	for (const name in data.value) {
-		for (const name2 of data.value[name].children) {
+		const command = data.value[name];
+		// 键取自 data.value 自身，此处判空仅为通过索引访问的类型收窄
+		if (!command) continue;
+		for (const name2 of command.children) {
 			delete topLevel[name2];
 		}
 	}
-	function traverse(names: string[]) {
-		return names.sort().map((name) => {
+	function traverse(names: string[]): TreeCommand[] {
+		return names.sort().flatMap((name) => {
 			const command = data.value[name];
-			return {
-				...command,
-				children: traverse(command.children),
-			};
+			// topLevel 的键必有对应指令，缺失时跳过该节点（防御性收窄）
+			if (!command) return [];
+			return [
+				{
+					...command,
+					children: traverse(command.children),
+				},
+			];
 		});
 	}
 	return traverse(Object.keys(topLevel));
@@ -117,7 +136,7 @@ async function handleOpen() {
 
 // 搜索关键字变化时驱动 el-tree 的节点过滤
 watch(keyword, (val) => {
-	treeEl.value.filter(val);
+	treeEl.value?.filter(val);
 });
 
 // 当前选中指令：读自路由（/commands/ 之后的路径，"." 分隔层级），写回路由
@@ -132,17 +151,29 @@ const active = computed<string>({
 	},
 });
 
+// 当前选中指令的数据：active 的 getter 已保证非空名必在 data 中，
+// 此处合并「判空 + 取值」以便模板 v-if 完成收窄（不可达的缺失分支
+// 回退为空态，与未选中时的展示一致）
+const activeData = computed(() => {
+	if (!active.value) return undefined;
+	return data.value[active.value];
+});
+
+// el-tree 内部节点结构的最小子集（供拖拽 / 样式回调收参数用）。
+// 字段形态须与 element-plus 的 Node 保持结构兼容：其 data 是
+// Record<string, any>（无法赋给带必填字段的接口），故 name 声明为可选；
+// 顶层节点的 parent 指向根虚拟节点，类型上并含 null
 interface Node {
 	label: string;
-	data: CommandData;
-	parent: Node;
+	data: { name?: string };
+	parent: Node | null;
 	expanded: boolean;
-	isLeaf: boolean;
+	isLeaf: boolean | undefined;
 	childNodes: Node[];
 }
 
 // 节点样式：选中项高亮
-function getClass(data: CommandData) {
+function getClass(data: { name?: string }) {
 	const words: string[] = [];
 	if (data.name === active.value) words.push("is-active");
 	return words.join(" ");
@@ -157,7 +188,8 @@ function filterNode(value: string, data: CommandData) {
 
 // 仅顶层指令（名字不含 "."）可拖拽
 function allowDrag(node: Node) {
-	return !node.data.name.includes(".");
+	// name 运行时必有值；?. 与 === false 使缺失时保守地不可拖拽
+	return node.data.name?.includes(".") === false;
 }
 
 // 拖到自身父级（inner 时是目标本身，否则是目标的父级）上没有意义，禁止
@@ -185,10 +217,13 @@ function handleDrop(
 ) {
 	const parent =
 		position === "inner" ? target : target.parent;
+	// 拖到顶层旁时 parent 是 el-tree 的根虚拟节点（data 为空对象），其
+	// name 为 undefined，按「移到顶层」语义兜底为空串（服务端对空父名
+	// 的 teleport 即移到顶层）；节点 name 运行时恒有值，兜底不改行为
 	void send(
 		"command/teleport",
-		source.data.name,
-		parent.data.name,
+		source.data.name ?? "",
+		parent?.data.name ?? "",
 	);
 }
 
@@ -209,8 +244,12 @@ ctx.action("command.create", {
 // 顶部菜单：移除指令（仅本插件创建的指令可移除）
 ctx.action("command.remove", {
 	disabled: () => !data.value[active.value]?.create,
-	action: () =>
-		send("command/remove", data.value[active.value].name),
+	action: () => {
+		const command = data.value[active.value];
+		// 菜单可用性已由上面的 disabled 守卫，此处判空仅为类型收窄
+		if (!command) return;
+		return send("command/remove", command.name);
+	},
 });
 </script>
 
