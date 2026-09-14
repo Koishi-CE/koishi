@@ -44,6 +44,7 @@ describe("parseArgv", () => {
 		expect(parseArgv([])).toEqual({
 			pack: false,
 			force: false,
+			start: false,
 		});
 	});
 
@@ -52,6 +53,7 @@ describe("parseArgv", () => {
 			target: "/tmp/box",
 			pack: false,
 			force: false,
+			start: false,
 		});
 		expect(
 			parseArgv(["/tmp/box", "--pack", "--force"]),
@@ -59,11 +61,18 @@ describe("parseArgv", () => {
 			target: "/tmp/box",
 			pack: true,
 			force: true,
+			start: false,
+		});
+		expect(parseArgv(["--start"])).toEqual({
+			pack: false,
+			force: false,
+			start: true,
 		});
 		// bun run 可能插入的 -- 透传分隔符应被忽略
 		expect(parseArgv(["--", "--pack"])).toEqual({
 			pack: true,
 			force: false,
+			start: false,
 		});
 	});
 

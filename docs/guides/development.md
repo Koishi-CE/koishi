@@ -188,11 +188,12 @@ expect(app.database.getUser("mock", "A")).resolves.toHaveShape({ authority: 1 })
 bun run sandbox [目录]           # 链接模式（默认落点 ../koishi-ce-sandbox）
 bun run sandbox [目录] --pack    # 打包模式：逐包 pack → 真实 bun install
 bun run sandbox -- --force       # 清空重建（仅限本工具生成的目录）
+bun run sandbox --start          # 生成完成后立即在本进程前台拉起实例
 ```
 
 - **链接模式**：沙盒 node_modules 里为全部 CE 作用域 workspace 包建 Windows junction（不需要特权）；外部 npm 依赖不安装——Bun 按包真实路径向上爬链，落到工作区根 node_modules。改 src → `bun run build` 后实例即刻生效，零重装。koishi.yml / .env 复用脚手架内置模板（`apps/koishi-create/src/template/`），插件键为 npm 短名，与真实下游同形态。
 - **打包模式**：逐包 `bun pm pack`（tgz 内 workspace:* 自动重写为版本号）落到沙盒 `vendor/` 后真实 install——装的就是发布物，用于发版前预演 files 白名单 / exports 映射等发布面问题。外部依赖从 npm 拉取，耗时分钟级。
-- 沙盒内启动：`cd <沙盒> && bun start`。scripts.start 直指 cli 产物 `node_modules/@koishi-ce/koishi/lib/cli/index.mjs`——链接模式的 .bin 非 bun install 产物（win32 需 .exe stub，手工伪造不可靠，`bun koishi` / `bunx koishi` 均不认手工放置的脚本，后者还会自动从 npm 拉官方 koishi 包），两模式统一直指文件路径。
+- 沙盒内启动：`cd <沙盒>` 后执行 `bun start`（两步分开写——PowerShell 5.x 不支持 `&&` 连写；生成时加 `--start` 可由工具直接拉起，免手动 cd）。scripts.start 直指 cli 产物 `node_modules/@koishi-ce/koishi/lib/cli/index.mjs`——链接模式的 .bin 非 bun install 产物（win32 需 .exe stub，手工伪造不可靠，`bun koishi` / `bunx koishi` 均不认手工放置的脚本，后者还会自动从 npm 拉官方 koishi 包），两模式统一直指文件路径。
 - 沙盒内经市场装插件会触发 bun install 重建 node_modules，可能清掉手工 junction——重跑 `bun run sandbox` 秒级补链（幂等：已有且指向一致的链接全部复用）。
 - 沙盒 package.json 预声明 plugin-http / plugin-proxy-agent / plugin-server 三个默认插件依赖：loader 启动时的 manifest 迁移（migrateManifest，按进程 cwd 读 package.json）发现宿主未声明会自动补挂插件键并改写 koishi.yml，与模板 yml 的同名键撞 duplicate plugin 警告。
 - 已知问题：生产模式启动在 server 组后有约 50 秒间隙（依赖 http 服务的插件 start 等待服务就绪，机理未定位；console 宿主 index.html 可达、全部插件加载正常，不影响正确性）。

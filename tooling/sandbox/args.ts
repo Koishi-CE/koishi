@@ -9,16 +9,19 @@ export interface SandboxOptions {
 	pack: boolean;
 	/** 清空重建已存在的沙盒。 */
 	force: boolean;
+	/** 生成完成后立即在前台启动沙盒实例。 */
+	start: boolean;
 }
 
 /**
  * 解析命令行参数：首个非旗标位置参数为落点目录；`--`（bun run 透传分隔符）
- * 忽略；`--pack` / `--force` 为旗标。其余旗标不识别，报错退出。
+ * 忽略；`--pack` / `--force` / `--start` 为旗标。其余旗标不识别，报错退出。
  */
 export function parseArgv(argv: string[]): SandboxOptions {
 	const options: SandboxOptions = {
 		pack: false,
 		force: false,
+		start: false,
 	};
 	for (const arg of argv) {
 		if (arg === "--") continue;
@@ -26,9 +29,11 @@ export function parseArgv(argv: string[]): SandboxOptions {
 			options.pack = true;
 		} else if (arg === "--force") {
 			options.force = true;
+		} else if (arg === "--start") {
+			options.start = true;
 		} else if (arg.startsWith("--")) {
 			throw new Error(
-				`未知旗标：${arg}（仅支持 --pack / --force）`,
+				`未知旗标：${arg}（仅支持 --pack / --force / --start）`,
 			);
 		} else if (options.target === undefined) {
 			options.target = arg;

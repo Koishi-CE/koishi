@@ -17,6 +17,7 @@
  *                                    版本号），走真实 bun install，供发版前
  *                                    预演发布面（files 白名单 / exports 映射）。
  *   旗标 --force：清空重建已存在的沙盒（仅限本工具生成的目录）。
+ *   旗标 --start：生成完成后立即在本进程前台拉起实例（免手动 cd + bun start）。
  *
  * 依赖解析机理（链接模式）：沙盒 node_modules 只含手工 junction，外部 npm
  * 依赖不安装——Bun 按包真实路径向上爬链，落到工作区根 node_modules。因此
@@ -117,7 +118,6 @@ function cmdLink(target: string, force: boolean) {
 			"  外部依赖：复用工作区根 node_modules（真实路径向上爬链解析）",
 		),
 	);
-	console.log(`启动：cd ${target} && bun start`);
 }
 
 /** 打包模式主流程：逐包 bun pm pack → vendor/ → 真实 bun install。 */
@@ -215,7 +215,28 @@ function cmdPack(target: string, force: boolean) {
 		process.exit(1);
 	}
 	console.log(green(`沙盒实例已就绪：${target}`));
-	console.log(`启动：cd ${target} && bun start`);
+}
+
+/**
+ * 收尾：--start 时在本进程前台直接拉起实例（退出码透传，Ctrl+C 随终端
+ * 一并终止）；否则输出手动启动提示——分两行写，不用 `cd X && bun start`
+ * 连写（Windows PowerShell 5.x 不支持 && 语句分隔符）。
+ */
+function finish(target: string, start: boolean) {
+	if (start) {
+		console.log(dim("正在拉起沙盒实例（Ctrl+C 退出）..."));
+		const child = spawnSync("bun", ["start"], {
+			cwd: target,
+			stdio: "inherit",
+		});
+		process.exit(child.status ?? 1);
+	}
+	console.log("启动（在沙盒目录执行）：");
+	console.log(`  cd ${target}`);
+	console.log("  bun start");
+	console.log(
+		dim("  （或生成时加 --start，完成后自动拉起）"),
+	);
 }
 
 /** 入口：import.meta.main 守卫使本模块可被测试安全导入。 */
@@ -232,4 +253,5 @@ if (import.meta.main) {
 	} else {
 		cmdLink(target, options.force);
 	}
+	finish(target, options.start);
 }
