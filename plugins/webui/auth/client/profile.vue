@@ -11,12 +11,12 @@
         平台绑定
         <el-button solid class="right" @click="showLoginDialog = true">添加</el-button>
       </h2>
-      <div class="k-schema-item" v-for="({ platform, pid, bid }) in store.user.bindings" :key="`${platform}:${pid}`">
+      <div class="k-schema-item" v-for="({ platform, pid, bid }) in store.user?.bindings ?? []" :key="`${platform}:${pid}`">
         <div class="header">
           <div class="left">{{ platform }} ({{ pid }})</div>
           <div class="right">
             <el-button
-              v-if="original.length > 1 || bid !== store.user.id"
+              v-if="original.length > 1 || bid !== store.user?.id"
               @click.stop.prevent="send('user/unbind', platform, pid)"
             >解绑</el-button>
           </div>
@@ -25,7 +25,7 @@
 
       <h2 class="k-schema-header">登录历史</h2>
       <ul>
-        <li v-for="({ inc, type, createdAt, lastUsedAt, address, userAgent }) in store.user.tokens" :key="inc">
+        <li v-for="({ inc, type, createdAt, lastUsedAt, address, userAgent }) in store.user?.tokens ?? []" :key="inc">
           <div>登录类型：{{ types[type] }}</div>
           <div>登录时间：{{ createdAt }}</div>
           <div>最后访问：{{ lastUsedAt }}</div>
@@ -54,10 +54,12 @@ import type { UserUpdate } from "@koishi-ce/plugin-auth";
 import { computed, ref } from "vue";
 import { shared, showLoginDialog } from "./utils";
 
-// 登录类型 id 到显示名的映射
+// 登录类型 id 到显示名的映射（LoginType 三种方式全覆盖，
+// "token" 为已存令牌静默续期产生的会话）
 const types = {
 	platform: "平台账户",
 	password: "用户密码",
+	token: "令牌续期",
 };
 
 // 待提交的资料改动（k-form 按 schema 写入，空对象表示无改动）
@@ -68,18 +70,20 @@ const schema = computed(() => {
 	const result: Schema<UserUpdate> = Schema.object({
 		name: Schema.string()
 			.description("用户名")
-			.default(shared.value.name),
+			.default(shared.value.name ?? ""),
 		password: Schema.string()
 			.role("secret")
 			.description("密码")
-			.default(shared.value.password),
+			.default(shared.value.password ?? ""),
 	}).description("基本资料");
 	return result;
 });
 
 /** 退出登录：清空本地令牌并删除服务端会话。 */
 async function logout() {
-	store.user = null;
+	// store 键在 exactOptionalPropertyTypes 下不可显式赋 undefined,
+	// 以 delete 移除（Vue reactive 的 delete 同样触发响应式更新）
+	delete store.user;
 	delete shared.value.id;
 	delete shared.value.token;
 	delete shared.value.expiredAt;
@@ -92,17 +96,24 @@ async function update() {
 		await send("user/update", diff.value);
 		message.success("修改成功！");
 		Object.assign(shared.value, diff.value);
-		Object.assign(store.user, diff.value);
+		// 本页须登录才可访问,store.user 理应存在,守卫仅作类型收窄
+		if (store.user) Object.assign(store.user, diff.value);
 		diff.value = {};
 	} catch (e) {
-		message.error(e.message);
+		// catch 变量为 unknown,按 Error 收窄取 message,其余形态转字符串
+		message.error(
+			e instanceof Error ? e.message : String(e),
+		);
 	}
 }
 
 // 本账号"自身"的绑定（bid === 自身 id）：仅剩一个自身绑定时禁止解绑
 const original = computed(() => {
-	return store.user?.bindings.filter(
-		(item) => store.user.id === item.bid,
+	// 局部变量收窄 store.user;未登录时按无绑定处理
+	const user = store.user;
+	return (
+		user?.bindings.filter((item) => user.id === item.bid) ??
+		[]
 	);
 });
 

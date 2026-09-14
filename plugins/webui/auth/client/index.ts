@@ -250,7 +250,16 @@ export default (ctx: Context) => {
 				if (oldValue) return;
 				Object.assign(
 					shared.value,
-					pick(value, ["id", "name", "token", "expiredAt"]),
+					pick(
+						value,
+						// 字面量数组缺省推断为 string[],satisfies 将其收窄到键字面量联合
+						[
+							"id",
+							"name",
+							"token",
+							"expiredAt",
+						] satisfies (keyof AuthData)[],
+					),
 				);
 				message.success(
 					`欢迎回来，${value.name || "Koishi 用户"}！`,
