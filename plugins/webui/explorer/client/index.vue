@@ -36,15 +36,15 @@
           #="{ node }">
           <!-- 树节点内容：处于重命名态时渲染行内输入框，右侧 M 标记未保存的修改 -->
           <div class="item">
-            <div class="label" :title="node.data.name">
+            <div class="label" :title="node.data['name']">
               <input
                 v-focus
-                v-if="node.data.filename === renaming"
-                v-model="node.data.name"
+                v-if="node.data['filename'] === renaming"
+                v-model="node.data['name']"
                 @keypress.enter.prevent="confirmRename(node.data)"
                 @keydown.escape.prevent="cancelRename()"
               />
-              <template v-else>{{ node.data.name }}</template>
+              <template v-else>{{ node.data["name"] }}</template>
             </div>
             <div class="right">
               <template v-if="node.data.oldValue !== node.data.newValue">M</template>
@@ -340,13 +340,14 @@ watch(mode, () => {
 /** 节点样式回调：给当前激活文件对应的树节点加 is-active 类。 */
 function getClass(data: TreeNodeData) {
 	const words: string[] = [];
-	if (data.name === active.value) words.push("is-active");
+	if (data["name"] === active.value)
+		words.push("is-active");
 	return words.join(" ");
 }
 
 /** el-tree 过滤回调：节点名包含关键字即保留（大小写不敏感）。 */
 function filterNode(value: string, data: TreeNodeData) {
-	return String(data.name ?? "")
+	return String(data["name"] ?? "")
 		.toLowerCase()
 		.includes(keyword.value.toLowerCase());
 }

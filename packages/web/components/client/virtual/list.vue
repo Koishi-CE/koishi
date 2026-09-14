@@ -62,7 +62,8 @@ const props = defineProps({
 	pinned: Boolean,
 	activeKey: { default: "" },
 	threshold: { default: 0 },
-	maxHeight: String,
+	// 显式含 undefined：exactOptionalPropertyTypes 下允许调用方显式传空
+	maxHeight: String as PropType<string | undefined>,
 	activate: {
 		type: String as PropType<"top" | "bottom" | "current">,
 		default: "bottom",

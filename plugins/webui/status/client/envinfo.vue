@@ -7,7 +7,7 @@
      点击将全部环境信息格式化为多行文本并复制到剪贴板。 -->
 <template>
   <k-status v-if="store.envinfo" class="version" @click="copyInfo">
-    Koishi v{{ store.envinfo?.koishi?.Core }}
+    Koishi v{{ store.envinfo?.["koishi"]?.["Core"] }}
     <template #tooltip>
       <div class="section" v-for="(data, key) in store.envinfo" :key="key">
         <p class="title">{{ capitalize(key) }}:</p>
