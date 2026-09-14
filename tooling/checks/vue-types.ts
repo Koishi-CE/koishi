@@ -209,7 +209,24 @@ function parseEntries(stdout: string): Entry[] {
 				.join("<root>")
 				.split(ROOT.replaceAll("\\", "/"))
 				.join("<root>")
-				.replaceAll("\\", "/"),
+				.replaceAll("\\", "/")
+				// vue-tsc 程序的文件加载顺序在两次运行间不完全一致，
+				// union 成员的打印顺序随之漂移（同一条 TS2322 在两次
+				// 运行里构造器序列不同，会让基线键随机横跳成假新增）。
+				// 对「括号内全为简单标识符、竖线分隔」的 union 段按
+				// 字典序重排保证键跨运行稳定（union 顺序在类型语义上
+				// 无意义；含括号/箭头等复杂成员的段不匹配、原样保留）
+				.replace(
+					/\((\w+(?:\s+\|\s+\w+)+)\)/g,
+					(whole: string, inner: string) => {
+						const parts = inner
+							.split("|")
+							.map((part) => part.trim());
+						if (parts.some((part) => !/^\w+$/.test(part)))
+							return whole;
+						return `(${[...parts].sort().join(" | ")})`;
+					},
+				),
 		});
 	}
 	return entries;
