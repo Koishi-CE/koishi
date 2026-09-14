@@ -12,7 +12,7 @@
   <nav
     class="layout-activity flex flex-col justify-evenly"
     @contextmenu.stop="trigger($event, null)">
-    <template v-for="(data, index) in groups.top" :key="data[0].id">
+    <template v-for="(data, index) in groups.top" :key="data[0]?.id">
       <activity-separator position="top" :index="index" />
       <activity-item placement="right" :children="data"></activity-item>
     </template>
@@ -20,7 +20,7 @@
     <activity-item v-if="groups.hidden" placement="bottom" :children="groups.hidden"></activity-item>
     <div v-else class="spacer"></div>
     <activity-separator position="bottom" :index="groups.top.length" />
-    <template v-for="(data, index) in groups.bottom" :key="data.id">
+    <template v-for="(data, index) in groups.bottom" :key="data[0]?.id">
       <activity-item placement="right" :children="data"></activity-item>
       <activity-separator position="bottom" :index="index" />
     </template>
@@ -46,7 +46,7 @@ const { height, width } = useWindowSize();
 
 // 计算最终的活动栏分组：{ top, bottom, hidden（溢出折叠组，可能为空） }
 const groups = computed(() => {
-	let hidden: Activity[];
+	let hidden: Activity[] | undefined;
 	// 单个活动项占位（与 CSS 中 --activity-width / --activity-padding 对应）
 	const unit = width.value <= 768 ? 52 : 56;
 	// 可用总高度：视口高度减去上下留白（窄屏 4px / 宽屏 8px）
@@ -65,15 +65,22 @@ const groups = computed(() => {
 			delete available[id];
 			continue;
 		}
-		Object.assign(available[id][0], override);
-		const parent = available[override.parent];
+		// id 取自 Object.keys(available)，组必存在；判空仅通过空安全检查
+		const entry = available[id]?.[0];
+		if (!entry) continue;
+		Object.assign(entry, override);
+		const parent =
+			override.parent === undefined
+				? undefined
+				: available[override.parent];
 		if (parent) {
-			parent.push(available[id][0]);
+			parent.push(entry);
 			delete available[id];
 		}
 	}
 	const list = Object.values(available).sort(
-		([a], [b]) => a.order - b.order,
+		// order 在 Activity 构造时已兜底为 0，此处的判空回退仅为通过空安全检查
+		([a], [b]) => (a?.order ?? 0) - (b?.order ?? 0),
 	);
 	// 放不下时：从头部取出溢出项折叠成一个组，top 位优先、同位再按 order 排，
 	// 并以 "..." 图标作为该组的展示入口
@@ -81,9 +88,11 @@ const groups = computed(() => {
 		hidden = list
 			.splice(0, list.length + 1 - Math.floor(total / unit))
 			.sort(([a], [b]) => {
-				const scale = a.position === "top" ? -1 : 1;
-				if (a.position === b.position) {
-					return scale * (a.order - b.order);
+				const scale = a?.position === "top" ? -1 : 1;
+				if (a?.position === b?.position) {
+					return (
+						scale * ((a?.order ?? 0) - (b?.order ?? 0))
+					);
 				}
 				return scale;
 			})
@@ -94,10 +103,10 @@ const groups = computed(() => {
 	}
 	// top 区按 order 逆序输出（order 大者靠上），bottom 区保持正序
 	const top = list
-		.filter(([data]) => data.position !== "bottom")
+		.filter(([data]) => data?.position !== "bottom")
 		.reverse();
 	const bottom = list.filter(
-		([data]) => data.position === "bottom",
+		([data]) => data?.position === "bottom",
 	);
 	return { top, bottom, hidden };
 });

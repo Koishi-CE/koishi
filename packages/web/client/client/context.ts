@@ -23,15 +23,26 @@ import ThemeService from "./plugins/theme";
 // —— 布局相关的 Context 类型扩展 ——
 
 /** 前端侧事件表：在 cordis 事件的基础上扩展本库自定义事件 */
-export interface Events<C extends Context = Context>
+// C 的约束直接对齐 cordis 侧：本程序的 cordis.Context 已被 @koishi-ce/koishi
+// 的类型链增强出 model 等成员，若以本库 Context 作约束，泛型 C 无法被证明
+// 满足增强后的 cordis.Context（Database 泛型不兼容），故反向以 cordis 为准
+export interface Events<C extends cordis.Context = Context>
 	extends cordis.Events<C> {}
 
 /**
  * 前端 Context 接口：各服务插件通过 `declare module "../context"`
  * 向本接口合并自身的方法与属性（如 `$router`、`page()` 等）。
+ *
+ * extends cordis.Context 把「class Context 继承 cordis.Context」的事实
+ * 补写进接口面（class 本就继承之，此处不改变类型形状），使本接口可
+ * 直接满足 cordis 侧 Events / Service 等的泛型约束。
  */
-export interface Context {
-	[Context.events]: Events<this>;
+export interface Context extends cordis.Context {
+	// 以固定的 Context 实例化事件表（而非多态 this）：本程序的 cordis.Context
+	// 已被 minato 增强出 this 型泛型成员（model 等），多态 this 无法被证明满足
+	// cordis 侧约束；固定为 Context 后回调参数类型仍包含全部合并成员，
+	// 仅丢失本仓库未使用的多态子类型特化
+	[Context.events]: Events;
 	internal: Internal;
 }
 

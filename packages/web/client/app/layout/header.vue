@@ -30,7 +30,7 @@
       v-if="menuKey"
       role="button"
       tabindex="1"
-      @click.stop="trigger($event, menuData)"
+      @click.stop="triggerMenu($event)"
     >
       <k-icon name="ellipsis"></k-icon>
     </div>
@@ -56,6 +56,15 @@ const props = defineProps<{
 const trigger = useMenu(
 	props.menuKey as keyof ActionContext,
 );
+
+// menuData 是调用方按菜单键动态提供的附加数据（静态类型无从约束），
+// 与上方 menuKey 同理以断言对齐触发器的载荷签名
+function triggerMenu(event: MouseEvent) {
+	trigger(
+		event,
+		props.menuData as ActionContext[keyof ActionContext],
+	);
+}
 
 defineEmits([
 	"update:isLeftAsideOpen",

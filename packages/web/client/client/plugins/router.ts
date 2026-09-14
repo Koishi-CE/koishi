@@ -77,14 +77,15 @@ export namespace Activity {
 	}
 }
 
-// 实例上的 desc/name/icon 是 getter(toValue 解析后的值),与 Options 中
-// MaybeRefOrGetter 形状不同,故从继承中排除后再声明
+// 实例上的 desc/name/icon 是 getter（toValue 解析后的值），与 Options 中
+// MaybeRefOrGetter 形状不同，故从继承中排除；其类型由下方 class Activity
+// 的同名 getter 提供（interface 与 class 同名声明合并，此处不可重复声明，
+// 否则 TS2300 重复标识符）
 export interface Activity
-	extends Omit<Activity.Options, "desc" | "name" | "icon"> {
-	desc?: string | undefined;
-	name?: string | undefined;
-	icon?: string | undefined;
-}
+	extends Omit<
+		Activity.Options,
+		"desc" | "name" | "icon"
+	> {}
 
 /** 从路由路径提取 activity id（首个非空路径段），如 "/foo/bar" → "foo" */
 function getActivityId(path: string) {
@@ -112,7 +113,19 @@ export class Activity {
 		options.position ??= "top";
 		Object.assign(
 			this,
-			omit(options, ["icon", "name", "desc", "disabled"]),
+			// satisfies 让字面量数组按 keyof Options 的子集收窄，
+			// 否则推断为 string[] 无法满足 omit 的键约束
+			omit(options, [
+				"icon",
+				"name",
+				"desc",
+				"disabled",
+			] satisfies (
+				| "icon"
+				| "name"
+				| "desc"
+				| "disabled"
+			)[]),
 		);
 		const {
 			path,

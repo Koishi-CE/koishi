@@ -15,10 +15,13 @@ import type { Context } from "./context";
 /**
  * 前端服务基类：继承 cordis.Service 并固定为本库的 Context 类型。
  * 各核心服务（action / i18n / loader / router / setting / theme）均由此派生。
+ *
+ * C 的约束直接对齐 cordis 侧（同 context.ts 的 Events：增强后的
+ * cordis.Context 含 model 等成员，本库 Context 作约束时泛型无法被证明满足）。
  */
 export abstract class Service<
 	T = unknown,
-	C extends Context = Context,
+	C extends cordis.Context = Context,
 > extends cordis.Service<T, C> {}
 
 /**

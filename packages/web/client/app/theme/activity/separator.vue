@@ -53,9 +53,10 @@ function handleDrop(event: DragEvent) {
 	hasDragOver.value = false;
 	const id = parseActivityDrag(event);
 	if (id === undefined) return;
-	const list = groups.value[props.position].map(
-		([item]) => item,
-	);
+	// 每组按约定必有首个成员；filter 仅收窄类型（空组在运行时不存在）
+	const list = groups.value[props.position]
+		.map(([item]) => item)
+		.filter((item): item is Activity => item !== undefined);
 	const oldIndex = list.findIndex((item) => item.id === id);
 	// 落点即原位（含紧邻原位的前一格）时无需移动
 	if (
@@ -65,9 +66,12 @@ function handleDrop(event: DragEvent) {
 		return;
 	event.preventDefault();
 
+	// 拖拽协议携带的 id 必为已注册页面；缺页时放弃本次落点处理
+	const item = ctx.$router.pages[id];
+	if (!item) return;
+
 	// 先在副本上完成移动，得到目标排列，再据此反推各项的 order 覆盖值
 	let index = props.index;
-	const item = ctx.$router.pages[id];
 	if (oldIndex < 0) {
 		list.splice(index, 0, item);
 	} else {
@@ -90,10 +94,15 @@ function handleDrop(event: DragEvent) {
 	// 左右最近的"未改序"条目（order 仍等于注册默认值）作为锚点，
 	// 介于两锚点之间的项按线性插值重算 order；
 	// 只有一侧锚点时按步长 100 单向递增 / 递减；两侧都没有则恢复默认
-	const anchorL = list.findLastIndex(
-		(item, i) =>
-			i < index && item.order === item.options.order,
-	);
+	// （lib 目标不含 findLastIndex，此处以反向遍历等价实现）
+	let anchorL = -1;
+	for (let i = index - 1; i >= 0; i--) {
+		const anchor = list[i];
+		if (anchor && anchor.order === anchor.options.order) {
+			anchorL = i;
+			break;
+		}
+	}
 	const anchorR = list.findIndex(
 		(item, i) =>
 			i > index && item.order === item.options.order,
@@ -102,46 +111,63 @@ function handleDrop(event: DragEvent) {
 		if (anchorR === -1) {
 			delete override.order;
 		} else {
-			let order = list[anchorR].options.order;
-			for (let index = anchorR - 1; index >= 0; index--) {
-				const override = ensureOverride(list[index].id);
-				override.order = order += 100;
+			// 锚点由 findIndex 得到，必为有效索引；判空仅通过空安全检查；
+			// order 在 Activity 构造时已兜底为 0，?? 0 与运行时实际值一致
+			const anchorItem = list[anchorR];
+			if (anchorItem) {
+				let order = anchorItem.options.order ?? 0;
+				for (let index = anchorR - 1; index >= 0; index--) {
+					const entry = list[index];
+					if (!entry) continue;
+					ensureOverride(entry.id).order = order += 100;
+				}
 			}
 		}
 	} else {
 		if (anchorR === -1) {
-			let order = list[anchorL].options.order;
-			for (
-				let index = anchorL + 1;
-				index < list.length;
-				index++
-			) {
-				const override = ensureOverride(list[index].id);
-				override.order = order -= 100;
+			const anchorItem = list[anchorL];
+			if (anchorItem) {
+				let order = anchorItem.options.order ?? 0;
+				for (
+					let index = anchorL + 1;
+					index < list.length;
+					index++
+				) {
+					const entry = list[index];
+					if (!entry) continue;
+					ensureOverride(entry.id).order = order -= 100;
+				}
 			}
 		} else {
-			let orderL = list[anchorL].options.order;
-			let orderR = list[anchorR].options.order;
-			for (
-				let index = anchorL + 1;
-				index < anchorR;
-				index++
-			) {
-				const override = ensureOverride(list[index].id);
-				override.order =
-					orderL +
-					((orderR - orderL) * (index - anchorL)) /
-						(anchorR - anchorL);
+			const anchorLeft = list[anchorL];
+			const anchorRight = list[anchorR];
+			if (anchorLeft && anchorRight) {
+				// order 在 Activity 构造时已兜底为 0，?? 0 与运行时实际值一致
+				let orderL = anchorLeft.options.order ?? 0;
+				let orderR = anchorRight.options.order ?? 0;
+				for (
+					let index = anchorL + 1;
+					index < anchorR;
+					index++
+				) {
+					const entry = list[index];
+					if (!entry) continue;
+					ensureOverride(entry.id).order =
+						orderL +
+						((orderR - orderL) * (index - anchorL)) /
+							(anchorR - anchorL);
+				}
 			}
 		}
 	}
 
 	// 覆盖配置为空对象时删除该键，避免残留无意义的配置项
+	// （activities 已由上方 ensureOverride 惰性创建，可选链仅通过空安全检查）
 	if (
 		!Object.keys(override).length &&
 		!UNSAFE_KEYS.has(id)
 	) {
-		delete config.value.activities[id];
+		delete config.value.activities?.[id];
 	}
 }
 </script>

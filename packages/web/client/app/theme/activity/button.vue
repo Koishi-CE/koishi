@@ -32,6 +32,9 @@ const isDragging = ref(false);
 
 function handleDragStart(event: DragEvent) {
 	isDragging.value = true;
+	// 合成事件的 dataTransfer 可能为 null（真实拖拽事件恒有值），
+	// 此时无法写入拖拽协议文本，跳过
+	if (!event.dataTransfer) return;
 	// 约定的拖拽协议：以 "activity:" 前缀 + 活动 id 标识被拖动的活动项
 	event.dataTransfer.setData(
 		"text/plain",

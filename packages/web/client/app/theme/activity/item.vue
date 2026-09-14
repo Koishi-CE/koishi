@@ -9,9 +9,10 @@
 -->
 <template>
   <div
+    v-if="children[0]"
     class="activity-item"
     :class="{ 'active': isActive, 'drag-over': hasDragOver }"
-    @contextmenu.stop="trigger($event, children[0])"
+    @contextmenu.stop="primary && trigger($event, primary)"
     @dragenter="handleDragEnter"
     @dragleave="handleDragLeave"
     @drop="handleDrop"
@@ -19,8 +20,8 @@
     <el-tooltip placement="right" :popper-class="`activity-item-tooltip`">
       <template #content>
         <div class="activity-info">
-          <div class="title">{{ children[hoverIndex].name }}</div>
-          <div class="desc" v-if="children[hoverIndex].desc">{{ children[hoverIndex].desc }}</div>
+          <div class="title">{{ children[hoverIndex]?.name }}</div>
+          <div class="desc" v-if="children[hoverIndex]?.desc">{{ children[hoverIndex]?.desc }}</div>
         </div>
         <div class="activity-group" v-if="children.length > 1">
           <div class="activity-group-item" v-for="(child, index) in children.slice(1)" :key="child.id">
@@ -73,6 +74,9 @@ const { hasDragOver, handleDragEnter, handleDragLeave } =
 
 const trigger = useMenu("theme.activity");
 
+// 组的主图标（每组按约定必有首个成员）；空组时模板 v-if 直接不渲染
+const primary = computed(() => props.children[0]);
+
 // tooltip 中当前悬停的成员下标（0 为主图标，其余对应组内子活动）
 const hoverIndex = ref(0);
 
@@ -91,9 +95,9 @@ function handleDrop(event: DragEvent) {
 	// 只响应活动栏自身的拖拽协议，忽略外部拖入内容
 	const id = parseActivityDrag(event);
 	if (id === undefined) return;
-	const target = props.children[0].id;
-	// 拖到自身所在组上无需处理
-	if (target === id) return;
+	// 组必有其主图标；缺失（理论不可能）时无从归组，放弃本次落点
+	const target = props.children[0]?.id;
+	if (target === undefined || target === id) return;
 	event.preventDefault();
 
 	const override = ensureOverride(id);

@@ -32,7 +32,12 @@ const el = ref<HTMLElement>();
 
 // relative 携带触发点矩形的 left / right / bottom（相对视口），
 // 结合菜单自身渲染后的实际宽高计算定位；尚未挂载时先隐藏避免闪烁
-const getStyle = () => {
+// （返回值须为具体对象类型：visibility 取字面量以匹配 CSS 属性类型）
+const getStyle = ():
+	| { visibility: "hidden" }
+	| Partial<
+			Record<"top" | "right" | "bottom" | "left", string>
+	  > => {
 	if (!el.value) return { visibility: "hidden" };
 	const { height, width } =
 		el.value.getBoundingClientRect();

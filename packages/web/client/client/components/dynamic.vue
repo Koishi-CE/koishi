@@ -10,11 +10,12 @@
   未取到时回退到 schema-base 按本地（不完整）schema 渲染。
 -->
 <template>
+  <!-- schema prop 可选：其 meta 展开为 undefined 时是空操作，与原行为一致 -->
   <k-schema
     v-if="inner"
     :modelValue="modelValue"
     @update:modelValue="$emit('update:modelValue', $event)"
-    :schema="{ ...inner, meta: { ...schema.meta, ...inner.meta } }"
+    :schema="{ ...inner, meta: { ...schema?.meta, ...inner.meta } }"
     :initial="initial"
     :disabled="disabled"
     :prefix="prefix"
