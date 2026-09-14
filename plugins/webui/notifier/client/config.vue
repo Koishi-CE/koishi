@@ -18,7 +18,8 @@
  */
 import { send, useRpc } from "@koishi-ce/client";
 import type NotifierService from "@koishi-ce/plugin-notifier/src";
-import type segment from "@satorijs/element";
+// 模板中调用 segment.parse 需要值导入（type-only 导入不进入模板运行时上下文）
+import segment from "@satorijs/element";
 import {
 	computed,
 	type FunctionalComponent,
@@ -28,21 +29,42 @@ import {
 	resolveComponent,
 } from "vue";
 
+// send() 的事件类型取自 "@koishi-ce/plugin-console" 手写垫片（浏览器端工程
+// 解析不到真实模块），在此按 node 侧 src/index.ts 的 declare module
+// "@koishi-ce/console" 逐事件同签名镜像，两处须保持同步
+// （与 plugin-commands 的 client/utils.ts 为同一模式）。
+declare module "@koishi-ce/plugin-console" {
+	interface Events {
+		"notifier/button"(id: string): void;
+	}
+}
+
 // 由配置管理面板注入的「当前插件」信息（此处仅需 path 字段）
 const current = inject<Ref<{ path: string }>>(
 	"manager.settings.current",
 );
 
+/** notifier RPC 单条数据的本地形状镜像：useRpc 的类型参数所引
+ * @koishi-ce/plugin-notifier/src 在浏览器端工程解析不到（tsconfig paths
+ * 配置债），filter 回调按 node 侧 Notifier.Data 的形状本地注解。 */
+interface NotifierItem {
+	type: "primary" | "success" | "warning" | "danger";
+	content: string;
+	paths?: string[];
+}
+
 const data = useRpc<NotifierService.Data>();
 
 // 仅保留归属当前插件、且内容非空的通知
 const notifiers = computed(() => {
-	return data.value.notifiers.filter((item) => {
-		return (
-			item.paths?.includes(current.value.path) &&
-			item.content
-		);
-	});
+	// 注入缺失（未在配置面板上下文中渲染）时无从判定归属，保守返回空列表
+	const path = current?.value.path;
+	if (!path) return [];
+	return data.value.notifiers.filter(
+		(item: NotifierItem) => {
+			return item.paths?.includes(path) && item.content;
+		},
+	);
 });
 
 // 可直接透传为原生 vnode 的元素标签白名单
