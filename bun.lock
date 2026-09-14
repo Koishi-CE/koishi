@@ -59,7 +59,7 @@
     },
     "packages/node/cli": {
       "name": "@koishi-ce/koishi",
-      "version": "1.0.16",
+      "version": "1.0.17",
       "bin": {
         "koishi": "lib/cli/index.mjs",
       },
@@ -108,7 +108,7 @@
     },
     "packages/node/loader": {
       "name": "@koishi-ce/loader",
-      "version": "1.1.0",
+      "version": "1.1.1",
       "devDependencies": {
         "@koishi-ce/core": "workspace:*",
         "@koishi-ce/koishi": "workspace:*",
