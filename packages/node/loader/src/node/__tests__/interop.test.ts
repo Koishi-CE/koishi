@@ -4,9 +4,9 @@
 
 /**
  * Bun require 的 ESM 入口分歧种子测试：postgres 形态包的依赖链修复、
- * 无分歧与未知形态包零副作用、peer 链间接消费方、ESM import 侧不受
- * 污染、幂等性、ESM 入口与内置同名 polyfill 的排除，以及
- * nodeRequireEntry 的 exports 形态矩阵。
+ * 无分歧与未知形态包零副作用、peer 声明不进遍历、optionalDependencies
+ * 照常覆盖、ESM import 侧不受污染、幂等性、ESM 入口与内置同名
+ * polyfill 的排除，以及 nodeRequireEntry 的 exports 形态矩阵。
  */
 import { describe, expect, it } from "bun:test";
 import { promises as fs } from "node:fs";
@@ -39,9 +39,11 @@ async function writePkg(
 /**
  * 建立临时 fixture 项目：koishi-plugin-fixture 为被加载的插件（CJS），
  * pg-like 建模 postgres（bun/import→ESM、default→CJS），normal-pkg 无
- * 分歧，broken-pkg 的 exports 为数组（形态未知），chain-pkg 经
- * peerDependencies 进入依赖树且自身消费 pg-like，absent-pkg 声明未装，
- * buffer 建模与内置模块同名的 polyfill（readable-stream 依赖形态）。
+ * 分歧，broken-pkg 的 exports 为数组（形态未知），chain-pkg 仅经
+ * peerDependencies 声明、其独有分歧依赖 chain-dep 用作「peer 不进遍
+ * 历」的探针，opt-pg-like 仅经 optionalDependencies 声明（仍在遍历范
+ * 围），absent-pkg 声明未装，buffer 建模与内置模块同名的 polyfill
+ * （readable-stream 依赖形态）。
  */
 async function withFixtures(
 	fn: (dir: string) => Promise<void> | void,
@@ -65,6 +67,7 @@ async function withFixtures(
 					"esm-native-like": "*",
 					"type-module-pkg": "*",
 				},
+				optionalDependencies: { "opt-pg-like": "*" },
 				peerDependencies: { "chain-pkg": "*" },
 			},
 			{
@@ -105,11 +108,53 @@ async function withFixtures(
 			{
 				name: "chain-pkg",
 				main: "index.js",
-				dependencies: { "pg-like": "*" },
+				dependencies: { "chain-dep": "*" },
 			},
 			{
 				"index.js":
-					"module.exports = { pg: require('pg-like') }",
+					"module.exports = { dep: require('chain-dep') }",
+			},
+		);
+		await writePkg(
+			dir,
+			"chain-dep",
+			{
+				name: "chain-dep",
+				main: "cjs/index.js",
+				exports: {
+					types: "./types/index.d.ts",
+					bun: "./esm/index.mjs",
+					workerd: "./cf/index.js",
+					import: "./esm/index.mjs",
+					default: "./cjs/index.js",
+				},
+			},
+			{
+				"esm/index.mjs":
+					"export default function chainEsm() { return 'esm' }",
+				"cjs/index.js":
+					"module.exports = function chainCjs() { return 'cjs' }",
+			},
+		);
+		await writePkg(
+			dir,
+			"opt-pg-like",
+			{
+				name: "opt-pg-like",
+				main: "cjs/index.js",
+				exports: {
+					types: "./types/index.d.ts",
+					bun: "./esm/index.mjs",
+					workerd: "./cf/index.js",
+					import: "./esm/index.mjs",
+					default: "./cjs/index.js",
+				},
+			},
+			{
+				"esm/index.mjs":
+					"export default function optEsm() { return 'esm' }",
+				"cjs/index.js":
+					"module.exports = function optCjs() { return 'cjs' }",
 			},
 		);
 		await writePkg(
@@ -194,12 +239,61 @@ describe("seedCjsInterop", () => {
 			// 无分歧包与未知形态包维持 Bun 原生行为
 			expect(plugin.normal).toEqual({ tag: "normal" });
 			expect(plugin.broken).toEqual({ tag: "broken" });
-			// peer 链上的间接消费方（未被插件直接 require）同样命中种子
-			const chain = require(
-				join(dir, "node_modules", "chain-pkg", "index.js"),
-			) as { pg: () => string };
-			expect(typeof chain.pg).toBe("function");
-			expect(chain.pg()).toBe("cjs");
+		});
+	});
+
+	it("peerDependencies 声明的包不进入遍历：其依赖树的分歧包不预置", async () => {
+		await withFixtures(async (dir) => {
+			const entry = join(
+				dir,
+				"node_modules",
+				"koishi-plugin-fixture",
+				"index.js",
+			);
+			seedCjsInterop(entry);
+			// chain-pkg 仅经 peer 声明，未被遍历，其独有分歧依赖
+			// chain-dep 的 require.cache 未被预置（保持 Bun 原生行为）
+			const chainDepKey = require.resolve("chain-dep", {
+				paths: [join(dir, "node_modules", "chain-pkg")],
+			});
+			expect(require.cache[chainDepKey]).toBeUndefined();
+			// 对照：同树直接依赖的分歧修复不受 peer 排除误伤
+			const pgKey = require.resolve("pg-like", {
+				paths: [
+					join(
+						dir,
+						"node_modules",
+						"koishi-plugin-fixture",
+					),
+				],
+			});
+			expect(typeof require.cache[pgKey]?.exports).toBe(
+				"function",
+			);
+		});
+	});
+
+	it("optionalDependencies 仍在遍历范围：分歧包照常预置", async () => {
+		await withFixtures(async (dir) => {
+			const entry = join(
+				dir,
+				"node_modules",
+				"koishi-plugin-fixture",
+				"index.js",
+			);
+			seedCjsInterop(entry);
+			const optKey = require.resolve("opt-pg-like", {
+				paths: [
+					join(
+						dir,
+						"node_modules",
+						"koishi-plugin-fixture",
+					),
+				],
+			});
+			expect(typeof require.cache[optKey]?.exports).toBe(
+				"function",
+			);
 		});
 	});
 

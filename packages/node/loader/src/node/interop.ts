@@ -16,8 +16,8 @@
  * 非函数，@minatojs/driver-postgres 的 start() 便抛 "is not a function
  * ... is an instance of Module"（同一链路在 Node 下无此问题）。
  *
- * 修复：加载插件前自插件包遍历依赖树（dependencies / peerDependencies /
- * optionalDependencies，进程内按包目录记忆化），对每个「Bun require 实
+ * 修复：加载插件前自插件包遍历依赖树（dependencies / optionalDependencies，
+ * 进程内按包目录记忆化），对每个「Bun require 实
  * 际命中入口 ≠ Node require 语义入口」的包，把 Node 语义入口（CJS 产
  * 物）的 require 结果预置进 require.cache[Bun require 入口键]——消费方
  * require 的解析结果与缓存键即 require.resolve(spec, { paths: [消费方
@@ -49,10 +49,17 @@ import { Logger } from "@koishi-ce/core";
 
 const logger = new Logger("app");
 
-/** 依赖树遍历覆盖的清单字段（devDependencies 不在运行时 require 链上） */
+/**
+ * 依赖树遍历覆盖的清单字段（devDependencies 不在运行时 require 链上）。
+ * 刻意不含 peerDependencies：peer 包的 interop 分歧在其被真正 require
+ * 时才需要预置，而 koishi 生态所有插件都 peer 框架本体，沿 peer 遍历必
+ * 然爬上 cordis / satori / minato 全家撞 maxVisited 上限；且 monorepo +
+ * isolated 布局下逐层爬链定位的 stat 次数随树深爆炸（实测单实例 28 万
+ * 次 existsSync、启动冻结两分余钟）。宁可漏修不可误伤，若下游真出现
+ * peer 包的分歧个案再定向处理。
+ */
 const dependencyFields = [
 	"dependencies",
-	"peerDependencies",
 	"optionalDependencies",
 ] as const;
 
@@ -83,7 +90,6 @@ export interface Manifest {
 	type?: unknown;
 	exports?: unknown;
 	dependencies?: Record<string, string>;
-	peerDependencies?: Record<string, string>;
 	optionalDependencies?: Record<string, string>;
 }
 
@@ -187,20 +193,31 @@ function isCjsEntry(
 	return manifest.type !== "module";
 }
 
+/**
+ * 未命中向上爬链的层数上限：防御「未安装的 spec 一路 existsSync 爬到
+ * 文件系统根」的长尾。真实布局下依赖至多数层内命中（嵌套副本 / 提升均
+ * 在安装树内），远达不到此值；超限即视为未安装，与解析 API 的语义边界
+ * 无关，是刻意的性能护栏。
+ */
+const maxResolveMisses = 16;
+
 /** 沿 node_modules 链向上探测包目录（纯 fs，不触碰解析 API 及其负缓存） */
 function resolvePackageDir(
 	name: string,
 	from: string,
 ): string | undefined {
 	let dir = from;
-	for (;;) {
+	let misses = 0;
+	while (misses < maxResolveMisses) {
 		const candidate = join(dir, "node_modules", name);
 		if (existsSync(join(candidate, "package.json")))
 			return candidate;
 		const parent = dirname(dir);
 		if (parent === dir) return undefined;
 		dir = parent;
+		misses++;
 	}
+	return undefined;
 }
 
 /** 自入口文件向上找最近的 package.json 所在目录（无清单则不处理） */
