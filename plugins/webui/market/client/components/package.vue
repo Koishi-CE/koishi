@@ -47,7 +47,8 @@ import { active, hasUpdate } from "../utils";
 import { analyzeVersions } from "./utils";
 
 const props = defineProps({
-	name: String,
+	// 本行视图以 name 为准，调用方（dependencies.vue）必传
+	name: { type: String, required: true },
 });
 
 const config = useConfig();
@@ -64,7 +65,8 @@ const compare = computed(() => {
 
 const version = computed({
 	get() {
-		const value = config.value.market.override[props.name];
+		const value =
+			config.value.market.override?.[props.name];
 		if (dep.value?.resolved === value) {
 			return;
 		} else {
@@ -72,6 +74,8 @@ const version = computed({
 		}
 	},
 	set(value) {
+		// 写入 override 暂存区，未初始化时先建空对象
+		config.value.market.override ??= {};
 		if (
 			dep.value?.resolved === value ||
 			(!value && !dep.value)
@@ -87,7 +91,7 @@ const data = computed(() => {
 	if (dep.value?.workspace || dep.value?.invalid) return;
 	return analyzeVersions(
 		props.name,
-		(name) => config.value.market.override[name],
+		(name) => config.value.market.override?.[name],
 	);
 });
 </script>

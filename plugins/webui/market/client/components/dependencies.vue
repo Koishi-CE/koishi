@@ -67,8 +67,10 @@ watch(
 		dispose = watch(
 			() => config.value.market.override,
 			(object) => {
+				// override 暂存区可能尚未初始化，无内容可遍历
+				if (!object) return;
 				Object.keys(object).forEach(async (name) => {
-					if (store.dependencies[name]) return;
+					if (store.dependencies?.[name]) return;
 					void addManual(name);
 				});
 			},
@@ -87,10 +89,14 @@ const ctx = useContext();
 ctx.action("dependencies.upgrade", {
 	disabled: () => !updates.value.length,
 	async action() {
+		const override = config.value.market.override;
+		if (!override) return;
 		for (const name of updates.value) {
-			const versions = store.registry[name];
-			config.value.market.override[name] =
-				Object.keys(versions)[0];
+			const versions = store.registry?.[name];
+			if (!versions) continue;
+			const version = Object.keys(versions)[0];
+			if (!version) continue;
+			override[name] = version;
 		}
 	},
 });

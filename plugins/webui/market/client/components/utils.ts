@@ -34,9 +34,11 @@ export interface PeerInfo {
 	result: ResultType;
 }
 
+// getVersion 允许返回 undefined（暂存区未记录该依赖时无版本可查），
+// 调用方内部以 ?? 链兜底；返回 string 的回调依然兼容本签名
 export function analyzeVersions(
 	name: string,
-	getVersion: (name: string) => string,
+	getVersion: (name: string) => string | undefined,
 ): Dict<AnalyzeResult> | undefined {
 	const versions =
 		store.registry?.[name] || manualDeps[name]?.versions;

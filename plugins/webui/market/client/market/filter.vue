@@ -88,7 +88,8 @@ const { t } = useMarketI18n();
 
 const config = inject(kConfig, {});
 
-const words = ref<string[]>();
+// watch immediate 会在 setup 阶段立即以 props.modelValue 覆盖初值
+const words = ref<string[]>([]);
 
 watch(
 	() => props.modelValue,
@@ -98,7 +99,8 @@ watch(
 	{ immediate: true, deep: true },
 );
 
-const activeSort = computed<string[]>(() => {
+// [排序键, 方向] 二元组（方向图标按位取值，索引访问不再是 undefined）
+const activeSort = computed<[string, string]>(() => {
 	let word = words.value.find((w) => w.startsWith("sort:"));
 	if (!word) return ["default", "desc"];
 	word = word.slice(5);

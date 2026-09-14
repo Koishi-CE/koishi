@@ -50,7 +50,8 @@ const props = defineProps<{
 const emit = defineEmits(["update:modelValue"]);
 
 const input = ref<HTMLInputElement>();
-const words = ref<string[]>();
+// watch immediate 会在 setup 阶段立即以 props.modelValue 覆盖初值
+const words = ref<string[]>([]);
 
 watch(
 	() => props.modelValue,
@@ -65,7 +66,8 @@ const update = useDebounceFn(() => {
 }, 100);
 
 const lastWord = computed({
-	get: () => words.value[words.value.length - 1],
+	// 末位词缺省时以空串呈现（输入框语义等同）
+	get: () => words.value[words.value.length - 1] ?? "",
 	set: (value) => {
 		words.value[words.value.length - 1] =
 			value.toLowerCase();

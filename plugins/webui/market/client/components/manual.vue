@@ -22,15 +22,23 @@
 
 <script lang="ts" setup>
 import { store, useConfig } from "@koishi-ce/client";
-import type { Registry } from "@koishi-ce/registry";
+import type {
+	Registry,
+	SearchObject,
+} from "@koishi-ce/registry";
 import { useDebounceFn } from "@vueuse/core";
 import { computed, ref, watch } from "vue";
 import { addManual, showManual } from "./utils";
 
+// npm registry 的 /<pkg> 端点响应实际携带 dist-tags（最新版本指针），
+// Registry 类型未建模此字段，这里借 SearchObject 上的既有声明补齐
+type RegistryDoc = Registry &
+	Pick<SearchObject, "dist-tags">;
+
 const config = useConfig();
 const invalid = computed(() => false);
 const name = ref("");
-const remote = ref<Registry>();
+const remote = ref<RegistryDoc>();
 
 const fetchRemote = useDebounceFn(async (name2: string) => {
 	try {
@@ -40,16 +48,21 @@ const fetchRemote = useDebounceFn(async (name2: string) => {
 }, 500);
 
 watch(name, (name2) => {
-	if (name2 !== remote.value?.name) remote.value = null;
-	if (!name2) return (remote.value = null);
+	if (name2 !== remote.value?.name)
+		remote.value = undefined;
+	if (!name2) return (remote.value = undefined);
 	fetchRemote(name2);
 });
 
 function onEnter() {
 	if (!remote.value) return;
 	const { name } = remote.value;
-	config.value.market.override[name] =
-		remote.value["dist-tags"].latest;
+	// 无最新版本指针时无法确定要写入的版本，保持对话框开启
+	const latest = remote.value["dist-tags"]?.latest;
+	if (!latest) return;
+	const override = config.value.market.override;
+	if (!override) return;
+	override[name] = latest;
 	showManual.value = false;
 }
 </script>

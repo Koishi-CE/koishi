@@ -24,7 +24,7 @@
         v-for="data in pages[page - 1]"
         :key="data.package.name"
         :data="data"
-        :gravatar="gravatar"
+        :gravatar="gravatar ?? ''"
         @query="onQuery"
       >
         <template #action>

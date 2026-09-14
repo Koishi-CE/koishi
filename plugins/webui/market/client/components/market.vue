@@ -27,7 +27,7 @@
       <market-list
         v-model="words"
         :data="data"
-        :gravatar="config.market.gravatar || store.market.gravatar"
+        :gravatar="config.market.gravatar || store.market.gravatar || ''"
         @update:page="scrollToTop">
         <template #header="{ hasFilter, all, packages }">
           <market-search v-model="words"></market-search>
@@ -82,9 +82,8 @@ function installed(data: SearchObject) {
 	}
 }
 
-provide(kConfig, {
-	installed: global.static ? undefined : installed,
-});
+// exactOptionalPropertyTypes：installed 为 undefined 时直接省略该键
+provide(kConfig, global.static ? {} : { installed });
 
 const root = ref();
 const config = useConfig();
@@ -121,8 +120,9 @@ watch(
 		if (value.path !== "/market") return;
 		const { keyword } = value.query;
 		if (keyword === prompt.value) return;
+		// query 中重复的 keyword 参数会是 (string | null)[]，滤掉 null 保留空串
 		words.value = Array.isArray(keyword)
-			? keyword
+			? keyword.filter((w): w is string => w !== null)
 			: (keyword || "").split(" ");
 		words.value = words.value.map((w) => w.toLowerCase());
 		if (words.value[words.value.length - 1])
@@ -150,7 +150,7 @@ watch(
 function getType(data: SearchObject) {
 	if (global.static) return "primary";
 	const version =
-		config.value.market.override[data.package.name];
+		config.value.market.override?.[data.package.name];
 	if (installed(data)) {
 		if (version === "") return "danger";
 		if (version) return "warning";
@@ -163,7 +163,7 @@ function getType(data: SearchObject) {
 function getText(data: SearchObject) {
 	if (global.static) return "配置";
 	const version =
-		config.value.market.override[data.package.name];
+		config.value.market.override?.[data.package.name];
 	if (installed(data)) {
 		if (version === "") return "等待移除";
 		if (version) return "等待更新";
