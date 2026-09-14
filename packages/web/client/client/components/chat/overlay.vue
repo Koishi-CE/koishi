@@ -34,7 +34,7 @@
           <k-icon name="redo" @click="rotate += 90"/>
         </el-tooltip>
       </span>
-      <transition appear :duration="1" @before-appear="moveToOrigin" @after-appear="moveToCenter">
+      <transition appear :duration="1" @before-appear="onBeforeAppear" @after-appear="onAfterAppear">
         <img ref="img" :style="{ transform }" :src="shared.overlayImage.src"/>
       </transition>
     </div>
@@ -57,15 +57,18 @@ const { t } = useI18n();
 // 用户手动调整的缩放与旋转量（复原即回到 1 / 0）
 const scale = ref(1);
 const rotate = ref(0);
-const img = ref<HTMLImageElement>(null);
+const img = ref<HTMLImageElement | null>(null);
 
 const transform = computed(() => {
 	return `scale(${scale.value}) rotate(${rotate.value}deg)`;
 });
 
-// 相邻图片：以文档中 .chat-image（chat/image.vue 渲染）的出现顺序为准
+// 相邻图片：以文档中 .chat-image（chat/image.vue 渲染）的出现顺序为准；
+// 查看器未打开时不存在相邻图，prev / next 均为 undefined
 const siblings = computed(() => {
-	if (!shared.overlayImage) return;
+	if (!shared.overlayImage) {
+		return { prev: undefined, next: undefined };
+	}
 	const elements = Array.from(
 		document.querySelectorAll<HTMLImageElement>(
 			".chat-image",
@@ -80,8 +83,10 @@ const siblings = computed(() => {
 
 // 初始（适配屏幕）缩放比：按视口剩余空间把图片等比缩小，不放大
 const defaultScale = computed(() => {
-	const { naturalHeight, naturalWidth } =
-		shared.overlayImage;
+	const image = shared.overlayImage;
+	// 查看器未打开时无图可适配，保持原始缩放
+	if (!image) return 1;
+	const { naturalHeight, naturalWidth } = image;
 	const maxHeight = innerHeight - paddingVertical * 2;
 	const maxWidth = innerWidth - paddingHorizontal * 2;
 	return Math.min(
@@ -98,7 +103,11 @@ watch(
 	(el, origin) => {
 		scale.value = 1;
 		rotate.value = 0;
-		if (!el) return moveToOrigin(img.value, origin);
+		if (!el) {
+			// 关闭：飞回原图位置（img 尚未挂载时无从摆放，跳过）
+			if (img.value) moveToOrigin(img.value, origin);
+			return;
+		}
 		if (img.value) {
 			img.value.style.transition = "0.3s transform ease";
 			moveToCenter(img.value);
@@ -106,7 +115,9 @@ watch(
 	},
 );
 
-function setImage(el: HTMLImageElement) {
+// setImage 的载荷语义：null 表示关闭查看器；undefined 表示目标方向
+// 无相邻图（按钮禁用态下的防御），不改变当前展示
+function setImage(el: HTMLImageElement | null | undefined) {
 	if (el === undefined) return;
 	shared.overlayImage = el;
 }
@@ -114,8 +125,10 @@ function setImage(el: HTMLImageElement) {
 /** 把大图元素摆到原图片所在的位置与尺寸（关闭时的"飞回"动画终点） */
 function moveToOrigin(
 	el: HTMLImageElement,
-	origin = shared.overlayImage,
+	origin: HTMLImageElement | null = shared.overlayImage,
 ) {
+	// 无原图可归位（从未打开过查看器）时直接跳过
+	if (!origin) return;
 	const { height, width } = origin;
 	const { left, top } = origin.getBoundingClientRect();
 	el.style.width = `${width}px`;
@@ -125,14 +138,26 @@ function moveToOrigin(
 	el.style.transition = "0.3s ease";
 }
 
+// transition 钩子的入参类型是 Element；本组件内 appear 的目标只有
+// <img>，经 instanceof 收窄后转发给定位函数
+function onBeforeAppear(el: Element) {
+	if (el instanceof HTMLImageElement) moveToOrigin(el);
+}
+
+function onAfterAppear(el: Element) {
+	if (el instanceof HTMLImageElement) moveToCenter(el);
+}
+
 // 视口四周预留的边距（当前为 0，即允许图片占满视口）
 const paddingVertical = 0;
 const paddingHorizontal = 0;
 
 /** 把图片按适配缩放比居中摆放到视口中央 */
 function moveToCenter(el: HTMLImageElement) {
-	const { naturalHeight, naturalWidth } =
-		shared.overlayImage;
+	const image = shared.overlayImage;
+	// 查看器未打开时无图可居中，直接跳过
+	if (!image) return;
+	const { naturalHeight, naturalWidth } = image;
 	const scale = defaultScale.value;
 	const width = naturalWidth * scale;
 	const height = naturalHeight * scale;
@@ -165,7 +190,8 @@ function onKeyDown(ev: KeyboardEvent) {
 		setImage(null);
 	} else if (ev.key === "Enter") {
 		// 关闭并把页面滚动到原图所在位置，便于继续浏览消息
-		shared.overlayImage.offsetParent.scrollIntoView({
+		// （原图已脱离文档流时无可定位，跳过滚动）
+		shared.overlayImage.offsetParent?.scrollIntoView({
 			behavior: "smooth",
 		});
 		setImage(null);

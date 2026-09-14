@@ -7,8 +7,8 @@
     <div class="header">
       <span class="table-title">
         {{ name }} {{
-          table.size
-            ? `(${formatSize(table.size)})`
+          table?.size
+            ? `(${formatSize(table?.size ?? 0)})`
             : ''
         }}
       </span>
@@ -35,22 +35,22 @@
       @cell-dblclick="onOuterCellClick"
     >
       <el-table-column
-        v-for="fName in Object.keys(table.fields)"
+        v-for="fName in Object.keys(table?.fields ?? {})"
         :key="fName"
         :sortable="existChanges ? false : 'custom'"
         :prop="fName"
         :label="fName"
-        :fixed="table.primary.includes(fName)"
+        :fixed="table?.primary.includes(fName) ?? false"
         :resizable="true"
       >
         <template #header="{ column }">
           {{ column.label }}
           <div class="insertion" @click.stop>
             <component
-              :is="columnInputAttr[column.label].is"
+              :is="columnInputAttr[column.label]?.is"
               @click.stop
               v-model="state.newRow[column.label]"
-              v-bind="columnInputAttr[column.label].attrs || {}"
+              v-bind="columnInputAttr[column.label]?.attrs || {}"
               size="small"
             ></component>
           </div>
@@ -58,10 +58,11 @@
         <template #default="scope">
           <template v-if="isCellChanged(scope, false)">
             <component
-              :is="columnInputAttr[scope.column.label].is"
+              :is="columnInputAttr[scope.column.label]?.is"
               ref="changedCells"
-              v-model="state.changes[scope.$index][scope.column.label].model"
-              v-bind="columnInputAttr[scope.column.label].attrs || {}"
+              :model-value="state.changes[scope.$index]?.[scope.column.label]?.model"
+              @update:model-value="onCellModelUpdate(scope, $event)"
+              v-bind="columnInputAttr[scope.column.label]?.attrs || {}"
               size="small"
             >
               <template #suffix>
@@ -71,7 +72,7 @@
               </template>
             </component>
           </template>
-          <div v-else-if="['string', 'text', 'json', 'list'].includes(table.fields[fName]?.deftype)" @parent-dblclick="onCellDblClick(scope)" class="inner-cell">
+          <div v-else-if="['string', 'text', 'json', 'list'].includes(table?.fields[fName]?.deftype ?? '')" @parent-dblclick="onCellDblClick(scope)" class="inner-cell">
             <el-tooltip :show-after="300" popper-class="tooltip-popper">
               <template #content>{{ renderCell(fName, scope) }}</template>
             {{
@@ -113,7 +114,7 @@
     <el-pagination
       layout="total, sizes, prev, pager, next, jumper"
       :small="true"
-      :total="table.count"
+      :total="table?.count ?? 0"
       :page-sizes="pageSizes"
       :default-page-size="pageSizes[0]"
       v-model:page-size="state.pageSize"
@@ -141,6 +142,7 @@ import {
 } from "@koishi-ce/client";
 import {
 	type ComputedRef,
+	type CSSProperties,
 	computed,
 	nextTick,
 	reactive,
@@ -182,9 +184,9 @@ export type SortState = {
 	order: "ascending" | "descending";
 };
 
-/** 行号 => 字段名 => 输入模型（暂存未提交的修改） */
+/** 行号 => 字段名 => 输入模型（暂存未提交的修改）；键声明为 string 以容纳 for-in 遍历出的行号键 */
 export type ChangesState = Record<
-	number,
+	string,
 	Record<string, { model: CellModel }>
 >;
 
@@ -244,7 +246,10 @@ const tableData = ref<Record<string, unknown>[]>([]);
 async function updateData() {
 	if (!props.name) return;
 	state.loading = true;
-	const querySort = state.sort && {
+	// 排序形态对齐 minato Cursor.sort（字段名 → 方向的字典）；无排序时为 null
+	const querySort: Partial<
+		Record<string, "asc" | "desc">
+	> | null = state.sort && {
 		[state.sort.field]: {
 			ascending: "asc" as const,
 			descending: "desc" as const,
@@ -260,8 +265,11 @@ async function updateData() {
 		tableData.value = await sendQuery(
 			"get",
 			props.name as never,
-			row,
-			modifier,
+			// 过滤条件形态由服务端解释，与相邻表名同走序列化边界断言
+			row as never,
+			// minato Cursor 在无表结构上下文（S={})的默认实例化下 sort 键
+			// 退化为 never，真实调用经序列化边界送服务端按字符串键解释
+			modifier as never,
 		);
 	} catch {
 		// 忽略非法查询（如过滤条件不合法）
@@ -296,10 +304,15 @@ function getCellStyle({
 }: {
 	column: {
 		label: string;
-		cellStyle?: Record<string, string>;
+		// cellStyle 是挂到列上下文对象上的染色缓存槽（element-plus 列对象无此字段）
+		cellStyle?: CSSProperties | undefined;
 	};
-}) {
-	if (!props.color) return (column.cellStyle = undefined);
+}): CSSProperties {
+	// 未开启染色时清空缓存并返回空样式（与 el-table 的默认样式等效）
+	if (!props.color) {
+		column.cellStyle = undefined;
+		return {};
+	}
 	if (column.cellStyle) return column.cellStyle;
 	for (const pref of config.value.dataview?.colors ?? []) {
 		if (!pref?.types) continue;
@@ -310,7 +323,7 @@ function getCellStyle({
 			)
 		) {
 			return (column.cellStyle = {
-				"background-color": pref.color ?? "",
+				backgroundColor: pref.color ?? "",
 			});
 		}
 	}
@@ -346,7 +359,8 @@ const validChanges: ComputedRef<ChangesState> = computed(
 						continue; // 跳过非法修改
 					}
 				}
-				(result[i] ??= {})[field] = state.changes[i][field];
+				const change = state.changes[i][field];
+				if (change) (result[i] ??= {})[field] = change;
 			}
 		}
 		return result;
@@ -371,10 +385,11 @@ const newRowValid = computed(() => {
 });
 
 function onSort(e: {
-	prop: string;
+	// 签名对齐 el-table 的 sort-change 载荷（prop 与 order 均可为 null）
+	prop: string | null;
 	order: "ascending" | "descending" | null;
 }) {
-	if (e.order === null) {
+	if (e.order === null || e.prop === null) {
 		state.sort = null;
 	} else {
 		state.sort = {
@@ -448,6 +463,19 @@ function onCellDblClick(scope: {
 	});
 }
 
+/** 编辑单元格输入模型的写回（v-model 索引链在 noUncheckedIndexedAccess 下拆写的判空赋值；无修改记录时忽略） */
+function onCellModelUpdate(
+	scope: {
+		column: { label: string };
+		$index: number;
+	},
+	value: CellModel,
+) {
+	const cell =
+		state.changes[scope.$index]?.[scope.column.label];
+	if (cell) cell.model = value;
+}
+
 /** 撤销当前单元格的修改 */
 function onCancelInput(scope: {
 	column: { label: string };
@@ -474,7 +502,8 @@ async function onSubmitChanges() {
 	}[] = [];
 	for (const idx in validChanges.value) {
 		try {
-			const row = tableData.value[idx];
+			// for-in 的键是 string，数组下标显式转 number（JS 隐式转换的显式化）
+			const row = tableData.value[Number(idx)];
 			const data: Dict<unknown> = {};
 			for (const field in validChanges.value[idx]) {
 				data[field] = fromModelValue(

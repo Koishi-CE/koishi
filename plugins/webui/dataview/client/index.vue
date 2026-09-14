@@ -23,7 +23,7 @@
 
     <template #left>
       <el-scrollbar>
-        <k-tab-group :data="store.database.tables" v-model="current"></k-tab-group>
+        <k-tab-group :data="store.database?.tables ?? {}" v-model="current"></k-tab-group>
       </el-scrollbar>
     </template>
 

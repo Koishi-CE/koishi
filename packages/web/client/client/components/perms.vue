@@ -38,20 +38,29 @@ import {
 	SchemaBase,
 } from "@koishi-ce/components";
 import type { CascaderOption } from "element-plus";
-import { computed, type PropType } from "vue";
+import { computed, type PropType, type Ref } from "vue";
 import { store } from "../data";
 
 defineProps({
 	schema: {} as PropType<Schema>,
 	modelValue: {} as PropType<string>,
-	disabled: {} as PropType<boolean>,
+	// Boolean prop 未传时默认 false，与 el-cascader 自身默认一致
+	disabled: Boolean,
 	prefix: {} as PropType<string>,
 	initial: {} as PropType<Record<never, never>>,
 });
 
 defineEmits(["update:modelValue"]);
 
-const config = SchemaBase.useModel();
+// SchemaBase 的运行时载体（schemastery-vue 的 form 对象）挂有 useModel
+// 静态成员，但类型垫片（components/client/shims.d.ts）未声明，此处原地
+// 断言补全；返回 ref 运行时初始为 undefined，类型按 el-cascader 的
+// v-model 载荷形态（string[]，emitPath: false 的多选值）标注
+const { useModel } = SchemaBase as typeof SchemaBase & {
+	useModel: () => Ref<string[]>;
+};
+
+const config = useModel();
 
 /**
  * 递归插入一个权限路径（如 ["channel", "admin", "x"]）：
@@ -64,6 +73,8 @@ function addNode(
 	prefix = "",
 ) {
 	const name = path.shift();
+	// path 由权限名按 ":" 切分而来，恒非空；判空仅通过空安全检查
+	if (name === undefined) return;
 	let node = nodes.find(
 		(node) => node.value === prefix + name,
 	);
@@ -84,9 +95,10 @@ function addNode(
 }
 
 // 由全部权限名构建级联选项树
+// （permissions 数据未就绪时视为空集合，与 validate 的守卫语义一致）
 const options = computed(() => {
 	const result: CascaderOption[] = [];
-	for (const name of store.permissions) {
+	for (const name of store.permissions ?? []) {
 		const path = name.split(":");
 		addNode(result, path);
 	}

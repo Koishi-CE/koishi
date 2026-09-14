@@ -579,6 +579,7 @@
         "@koishi-ce/koishi": "workspace:*",
         "@koishi-ce/plugin-console": "workspace:*",
         "@vueuse/core": "^14.4.0",
+        "element-plus": "^2.14.5",
         "monaco-editor": "~0.56.0",
         "vue": "^3.5.12",
         "vue-router": "^5.2.0",
@@ -619,6 +620,7 @@
         "@koishi-ce/client": "workspace:*",
         "@koishi-ce/koishi": "workspace:*",
         "@koishi-ce/plugin-console": "workspace:*",
+        "element-plus": "^2.14.5",
       },
       "peerDependencies": {
         "@koishi-ce/koishi": "^1.0.0",

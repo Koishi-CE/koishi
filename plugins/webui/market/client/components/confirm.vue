@@ -55,7 +55,10 @@ import { install, showConfirm } from "./utils";
 const ctx = useContext();
 const config = useConfig();
 
-const removeConfig = ref(config.value.market?.removeConfig);
+// removeConfig 配置缺省（"每次询问"）时 checkbox 以未勾选呈现
+const removeConfig = ref(
+	config.value.market?.removeConfig ?? false,
+);
 
 function clear() {
 	showConfirm.value = false;
@@ -63,22 +66,25 @@ function clear() {
 }
 
 const hasRemove = computed(() => {
-	return Object.values(config.value.market.override).some(
-		(version) => !version,
-	);
+	return Object.values(
+		config.value.market.override ?? {},
+	).some((version) => !version);
 });
 
 function confirm() {
 	showConfirm.value = false;
-	return install(config.value.market.override, async () => {
-		for (const [name, value] of Object.entries(
-			config.value.market.override,
-		)) {
-			if (!value || store.dependencies?.[name]?.resolved)
-				continue;
-			ctx.configWriter?.ensure(name, true);
-		}
-	});
+	return install(
+		config.value.market.override ?? {},
+		async () => {
+			for (const [name, value] of Object.entries(
+				config.value.market.override ?? {},
+			)) {
+				if (!value || store.dependencies?.[name]?.resolved)
+					continue;
+				ctx.configWriter?.ensure(name, true);
+			}
+		},
+	);
 }
 </script>
 

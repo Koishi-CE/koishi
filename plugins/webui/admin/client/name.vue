@@ -20,9 +20,11 @@
 import { store, useRpc } from "@koishi-ce/client";
 import type Admin from "@koishi-ce/plugin-admin/src";
 
-defineProps({
-	id: String,
-});
+// id 必传：调用方（权限表行 / 权限下拉选项）均传入非空字符串，
+// 改用类型声明使模板内 id 不再是 string | undefined
+defineProps<{
+	id: string;
+}>();
 
 const data = useRpc<Admin.Data>();
 </script>

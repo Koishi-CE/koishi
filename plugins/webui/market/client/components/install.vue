@@ -28,7 +28,7 @@
       该依赖的安装发生了错误，你可以尝试修复或移除它。
     </p>
 
-    <el-scrollbar v-if="data?.[version] && Object.keys(data[version].peers).length">
+    <el-scrollbar v-if="version && data?.[version] && Object.keys(data[version]?.peers ?? {}).length">
       <table>
         <thead>
           <tr>
@@ -39,7 +39,7 @@
           </tr>
         </thead>
         <tbody>
-          <tr v-for="(peer, name) in data[version].peers" :key="name">
+          <tr v-for="(peer, name) in data[version]?.peers" :key="name">
             <td class="text-left">{{ name }}</td>
             <td>{{ peer.request }}</td>
             <td>
@@ -47,7 +47,7 @@
                 <span class="shadow">{{ getVersion(name) || 'Select' }}</span>
                 <el-select
                   class="frameless"
-                  :model-value="getVersion(name)"
+                  :model-value="getVersion(name) ?? ''"
                   @update:model-value="setVersion(name, $event)"
                 >
                   <el-option value="">移除依赖</el-option>
@@ -73,7 +73,7 @@
 
     <template v-if="active && !global.static" #footer>
       <div class="left">
-        <el-checkbox v-model="config.market.bulkMode">
+        <el-checkbox v-model="bulkMode">
           批量操作模式
           <k-hint>
             批量操作模式下，你可以同时安装、更新或移除多个插件。勾选此选项后，你的所有操作会被暂存，直到你点击右上角的“应用更改”按钮。
@@ -88,7 +88,7 @@
         </template>
         <template v-else-if="data">
           <el-button v-if="showRemoveButton" @click="installDep('', true)" type="danger">卸载</el-button>
-          <el-button :type="result" @click="installDep(version)" :disabled="unchanged">
+          <el-button :type="result ?? ''" @click="installDep(version ?? '')" :disabled="unchanged">
             {{ current ? '更新' : store.dependencies?.[active] ? '修复' : '安装' }}
           </el-button>
         </template>
@@ -140,6 +140,13 @@ const config = useConfig();
 const saveChoice = ref(false);
 const showRemoveDialog = ref(false);
 
+// el-checkbox 的 v-model 目标：收敛为必然的 boolean（配置缺省时视为关闭）
+const bulkMode = computed({
+	get: () => config.value.market.bulkMode ?? false,
+	set: (value: boolean) =>
+		(config.value.market.bulkMode = value),
+});
+
 function installDep(
 	version: string,
 	checkConfig = false,
@@ -150,6 +157,8 @@ function installDep(
 
 	// workspace packages don't need to be installed
 	if (config.value.market.bulkMode && !workspace.value) {
+		// override 暂存区可能尚未初始化，写入前确保存在
+		config.value.market.override ??= {};
 		if (
 			dep.value?.resolved === version ||
 			(!version && !dep.value)
@@ -203,7 +212,14 @@ function installDep(
 
 const version = computed({
 	get: () => versions[active.value],
-	set: (value) => (versions[active.value] = value),
+	set: (value) => {
+		// 设为 undefined 视为清除该包的暂存版本（不留值为 undefined 的脏键）
+		if (value === undefined) {
+			delete versions[active.value];
+		} else {
+			versions[active.value] = value;
+		}
+	},
 });
 
 const selectVersion = computed({
@@ -214,7 +230,7 @@ const selectVersion = computed({
 		) {
 			return `${version.value} (当前)`;
 		} else {
-			return version.value;
+			return version.value ?? "";
 		}
 	},
 	set(value) {
@@ -225,9 +241,10 @@ const selectVersion = computed({
 const versions = reactive<Dict<string>>({});
 
 function getOverride() {
-	return config.value.market.bulkMode
-		? config.value.market.override
-		: versions;
+	if (!config.value.market.bulkMode) return versions;
+	// bulkMode 下写入 override 暂存区，未初始化时先建空对象
+	config.value.market.override ??= {};
+	return config.value.market.override;
 }
 
 function getVersion(name: string) {
@@ -245,6 +262,8 @@ function setVersion(name: string, version: string) {
 }
 
 const unchanged = computed(() => {
+	// 无选中版本时 data 里查不到对应条目，视为无变化（禁用按钮）
+	if (!version.value) return true;
 	return (
 		!data.value?.[version.value] ||
 		(version.value ===
@@ -268,7 +287,7 @@ const showRemoveButton = computed(() => {
 		current.value ||
 		store.dependencies?.[active.value] ||
 		(config.value.market.bulkMode &&
-			config.value.market.override[active.value])
+			config.value.market.override?.[active.value])
 	);
 });
 
@@ -294,9 +313,11 @@ const data = computed(() => {
 
 const danger = computed(() => {
 	if (workspace.value) return;
-	const deprecated =
-		store.registry?.[active.value]?.[version.value]
-			?.deprecated;
+	// 无选中版本时无从查询特定版本的废弃标记
+	const deprecated = version.value
+		? store.registry?.[active.value]?.[version.value]
+				?.deprecated
+		: undefined;
 	if (deprecated) return `此版本已废弃：${deprecated}`;
 	if (store.market?.data[active.value]?.insecure) {
 		return "警告：从此插件的最新版本中检测出安全性问题。安装或升级此插件可能导致严重问题。";
@@ -309,6 +330,8 @@ const warning = computed(() => {
 	try {
 		const source = parse(current.value);
 		const target = parse(version.value);
+		// 非语义化版本（如 file: 依赖）解析为 null，无从比较主次版本号
+		if (!source || !target) return;
 		if (
 			source.major !== target.major ||
 			(!source.major && source.minor !== target.minor)
@@ -340,7 +363,10 @@ function shouldFetchRegistry(name: string) {
 }
 
 watch(
-	() => data.value?.[version.value]?.peers,
+	() =>
+		version.value
+			? data.value?.[version.value]?.peers
+			: undefined,
 	async (peers) => {
 		if (!peers) return;
 		const names = Object.keys(peers).filter(
@@ -361,10 +387,18 @@ watch(
 		}
 		for (const name in peers) {
 			if (!registry[name]) continue;
-			const { result } = peers[name];
-			if (result !== "warning" && result !== "danger")
+			// noUncheckedIndexedAccess：逐项判空后取判级结果
+			const peer = peers[name];
+			if (!peer) continue;
+			if (
+				peer.result !== "warning" &&
+				peer.result !== "danger"
+			)
 				continue;
-			versions[name] = Object.keys(registry[name])[0];
+			// 取该依赖最新版本号作为待装版本；取不到则跳过
+			const latest = Object.keys(registry[name])[0];
+			if (!latest) continue;
+			versions[name] = latest;
 		}
 	},
 );
@@ -375,7 +409,7 @@ watch(
 		if (!name) return;
 
 		version.value =
-			config.value.market.override[active.value] ||
+			config.value.market.override?.[active.value] ||
 			store.dependencies?.[active.value]?.request ||
 			Object.keys(store.registry?.[name] || {})[0];
 
@@ -384,7 +418,7 @@ watch(
 				name,
 			]);
 			version.value = Object.keys(
-				registry[active.value],
+				registry[active.value] ?? {},
 			)[0];
 		}
 	},
@@ -393,7 +427,7 @@ watch(
 
 function configure() {
 	ctx.configWriter?.ensure(active.value);
-	active.value = null;
+	active.value = "";
 }
 
 function getResultIcon(type: ResultType) {

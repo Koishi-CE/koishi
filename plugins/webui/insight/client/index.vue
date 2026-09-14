@@ -74,17 +74,19 @@ const root = ref<HTMLElement>();
 const { width, height } = useElementSize(root);
 
 const tooltip = useTooltip();
-const dragged = ref<Node>(null);
-const fNode = ref<Node>(null);
-const fLink = ref<Link>(null);
+// null 表示当前无拖拽/焦点对象
+const dragged = ref<Node | null>(null);
+const fNode = ref<Node | null>(null);
+const fLink = ref<Link | null>(null);
 
 // 服务端数据为 Insight.Node/Insight.Link 形态;d3 初始化会把节点/连线的
-// 模拟字段与对象引用就地写入同一批对象,故按客户端形态断言使用
+// 模拟字段与对象引用就地写入同一批对象,故按客户端形态断言使用;
+// store.insight 在服务端推送到达前未初始化,先以空数组兜底,数据到达后由下方 watch 合并
 const nodes = reactive<Node[]>(
-	store.insight.nodes as Node[],
+	(store.insight?.nodes ?? []) as Node[],
 );
 const links = computed<Link[]>(
-	() => store.insight.edges as unknown as Link[],
+	() => (store.insight?.edges ?? []) as unknown as Link[],
 );
 
 /**
@@ -98,10 +100,11 @@ const svgAttrs = computed(() => {
 		maxX = -Infinity,
 		maxY = -Infinity;
 	for (const node of nodes) {
-		minX = Math.min(minX, node.x);
-		minY = Math.min(minY, node.y);
-		maxX = Math.max(maxX, node.x);
-		maxY = Math.max(maxY, node.y);
+		// 模拟首次 tick 前坐标尚未初始化(undefined),按 0 参与包围盒,模拟启动后自然恢复
+		minX = Math.min(minX, node.x ?? 0);
+		minY = Math.min(minY, node.y ?? 0);
+		maxX = Math.max(maxX, node.x ?? 0);
+		maxY = Math.max(maxY, node.y ?? 0);
 	}
 	const vpWidth = maxX - minX + 200;
 	const vpHeight = maxY - minY + 200;
@@ -303,8 +306,11 @@ function onDragMove(event: MouseEvent | TouchEvent) {
 	const node = dragged.value;
 	if (!node) return;
 	const point = getEventPoint(event);
-	node.fx += point.clientX - node.lastX;
-	node.fy += point.clientY - node.lastY;
+	// fx/fy 与 lastX/lastY 在 onDragStart 中必已就位,?? 0 仅作类型层兜底
+	node.fx =
+		(node.fx ?? 0) + point.clientX - (node.lastX ?? 0);
+	node.fy =
+		(node.fy ?? 0) + point.clientY - (node.lastY ?? 0);
 	node.lastX = point.clientX;
 	node.lastY = point.clientY;
 }

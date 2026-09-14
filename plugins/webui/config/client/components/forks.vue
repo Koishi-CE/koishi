@@ -5,7 +5,7 @@
 <template>
   <el-dialog
     :model-value="!!dialogFork"
-    @update:model-value="dialogFork = null"
+    @update:model-value="dialogFork = undefined"
     class="dialog-config-fork"
     destroy-on-close>
     <template #header="{ titleId, titleClass }">
@@ -14,7 +14,7 @@
       </span>
     </template>
     <table>
-      <tr v-for="id in plugins.forks[shortname]" :key="id">
+      <tr v-for="id in plugins.forks[shortname] ?? []" :key="id">
         <td class="text-left">
           <span class="status-light" :class="getStatus(plugins.paths[id])"></span>
           <span class="path">{{ getFullPath(plugins.paths[id]) }}</span>
@@ -65,15 +65,16 @@ import {
 
 const { t } = useI18n();
 
-/** 弹窗对应的插件短名。 */
-const shortname = computed(() =>
-	dialogFork.value?.replace(
-		/(koishi-|^@koishijs\/)plugin-/,
-		"",
-	),
+/** 弹窗对应的插件短名（弹窗关闭时回退空串，forks[空串] 恒不存在，列表为空）。 */
+const shortname = computed(
+	() =>
+		dialogFork.value?.replace(
+			/(koishi-|^@koishijs\/)plugin-/,
+			"",
+		) ?? "",
 );
 const local = computed(
-	() => store.packages?.[dialogFork.value],
+	() => store.packages?.[dialogFork.value ?? ""],
 );
 
 /** 单个节点的显示文案：`标签 [路径]`。 */
@@ -82,7 +83,9 @@ function getLabel(tree: Tree) {
 }
 
 /** 从根到该节点的完整层级路径（用 " > " 连接，不含全局设置）。 */
-function getFullPath(tree: Tree) {
+function getFullPath(tree: Tree | undefined) {
+	// 表格行来自 forks 索引，正常恒能命中 paths；此处仅作防御
+	if (!tree) return "";
 	const path = [getLabel(tree)];
 	while (tree.parent) {
 		tree = tree.parent;
@@ -104,7 +107,7 @@ async function configure(key?: string) {
 		void send("manager/unload", "", `${target}:${key}`, {});
 	}
 	await router.push(`/plugins/${key}`);
-	dialogFork.value = null;
+	dialogFork.value = undefined;
 }
 </script>
 

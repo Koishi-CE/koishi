@@ -40,8 +40,9 @@ const active = ref("all");
 provide(
 	"plugin-select-filter",
 	({ name, manifest }: PackageProvider.Data) => {
+		// name 缺省（全局设置条目）时市场数据里查不到对应包，走 manifest 兜底
 		const category =
-			store.market.data[name]?.category ||
+			store.market?.data[name ?? ""]?.category ||
 			manifest?.category;
 		return (
 			active.value === "all" ||

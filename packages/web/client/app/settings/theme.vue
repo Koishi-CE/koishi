@@ -16,14 +16,14 @@
     <template #suffix><slot name="suffix"></slot></template>
     <template #control>
       <el-select popper-class="theme-select" v-model="model">
-        <template v-for="(_, key) in ctx.internal.themes" :key="key">
-          <el-option :value="key" v-if="key.endsWith('-' + schema.meta.extra.mode)">
+        <template v-for="(theme, key) in ctx.internal.themes" :key="key">
+          <el-option :value="key" v-if="schema && key.endsWith('-' + schema.meta.extra.mode)">
             <div class="theme-root" :class="key.endsWith('-dark') ? 'dark' : 'light'" :theme="key">
               <div class="theme-block-1"></div>
               <div class="theme-block-2"></div>
               <div class="theme-block-3"></div>
               <div class="theme-title">
-                {{ tt(ctx.internal.themes[key].name) }}
+                {{ tt(theme.name) }}
               </div>
             </div>
           </el-option>
@@ -39,7 +39,7 @@ import {
 	type Schema,
 	SchemaBase,
 } from "@koishi-ce/components";
-import { computed, type PropType } from "vue";
+import { computed, type PropType, type Ref } from "vue";
 
 defineProps({
 	schema: {} as PropType<Schema>,
@@ -55,13 +55,23 @@ const ctx = useContext();
 
 const tt = useI18nText();
 
-const config = SchemaBase.useModel();
+// SchemaBase 的运行时载体（schemastery-vue 的 form 对象）挂有 useModel
+// 静态成员，但类型垫片未声明，此处原地断言补全（返回 ref 初始为 undefined，
+// 供 themes 字典索引，类型标为 string 以配合 el-select 的 v-model）
+const { useModel } = SchemaBase as typeof SchemaBase & {
+	useModel: () => Ref<string>;
+};
+
+const config = useModel();
 
 // el-select 的双向绑定：get 返回当前主题的显示名（供下拉框回显），
 // set 把选中的主题 id（即 el-option 的 value）透传给父级表单
 const model = computed({
 	get() {
-		return tt(ctx.internal.themes[config.value]?.name);
+		const id = config.value;
+		// 无当前主题时回退空串（el-select 的 v-model 不接受 undefined）
+		if (id === undefined) return "";
+		return tt(ctx.internal.themes[id]?.name) ?? "";
 	},
 	set(value) {
 		emit("update:modelValue", value);

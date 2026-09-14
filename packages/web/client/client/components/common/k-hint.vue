@@ -21,10 +21,17 @@
 </template>
 
 <script lang="ts" setup>
-import { computed } from "vue";
+import type { Placement } from "element-plus";
+import { computed, type PropType } from "vue";
 
 const props = defineProps({
-	placement: String,
+	// 默认值与 el-tooltip 自身的 placement 默认（bottom）保持一致；
+	// type 断言为 Placement 是 Vue 官方的字面量联合 prop 惯用写法，
+	// 运行时校验仍走 String 构造器
+	placement: {
+		type: String as PropType<Placement>,
+		default: "bottom",
+	},
 	modelValue: {},
 	name: { type: String, default: "question-empty" },
 });

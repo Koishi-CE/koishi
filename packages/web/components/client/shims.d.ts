@@ -76,4 +76,13 @@ declare module "schemastery-vue/client" {
 	export const IconSquareCheck: Component;
 	export const IconSquareEmpty: Component;
 	export const IconUndo: Component;
+
+	/**
+	 * 多语言文案取值钩子（schemastery-vue 源码 utils.ts 的同名导出）：
+	 * 返回的函数把 string | Dict<string> 形态的文案按当前语言链解析为纯文本。
+	 * 与 schemastery-vue-client.ts 垫片镜像同步。
+	 */
+	export function useI18nText(): (
+		message?: string | { [key: string]: string },
+	) => string | undefined;
 }

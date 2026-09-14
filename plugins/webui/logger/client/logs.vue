@@ -4,13 +4,14 @@
 
 <template>
   <virtual-list class="log-list k-text-selectable" :data="logs" :count="300" :max-height="maxHeight">
-    <template #="record">
-      <div :class="{ line: true, start: isStart(record) }">
-        <code v-html="renderLine(record)"></code>
+    <!-- 插槽作用域只可靠携带 index（v-bind 展开的项类型在 vue-tsc 下不可见），记录本体按索引从 logs 取回 -->
+    <template #="{ index }">
+      <div :class="{ line: true, start: isStart(index) }">
+        <code v-html="renderLine(index)"></code>
         <router-link
           class="log-link inline-flex items-center justify-center absolute w-20px h-20px bottom-0 right-0"
-          v-if="showLink && store.config && store.packages && record.meta?.paths?.length"
-          :to="'/plugins/' + record.meta.paths[0].replace(/\./, '/')"
+          v-if="showLink && store.config && store.packages && logs[index]?.meta?.paths?.length"
+          :to="'/plugins/' + logs[index]?.meta?.paths?.[0]?.replace(/\./, '/')"
         >
           <k-icon name="arrow-right"/>
         </router-link>
@@ -39,6 +40,12 @@ interface LogRecord extends Message {
 	id: number;
 	timestamp: number;
 	content: string;
+	// 来源信息:node 侧运行时写入 paths(日志来源插件),用于生成跳转链接
+	// (索引签名与 meta 字段须与本插件 client/index.ts 的同名接口保持同步)
+	meta?: { paths?: string[] };
+	// 开放索引签名:virtual-list 的 data prop 为 Record<string, unknown>[],
+	// 接口缺索引签名就无法作为其数据源
+	[key: string]: unknown;
 }
 
 const props = defineProps<{
@@ -65,11 +72,16 @@ const showTime = "yyyy-MM-dd hh:mm:ss";
  * 判断某行是否是本次启动的首条日志：
  * 前一行 id 更大（说明日志序号回绕，即重启）且来源为 app 时成立，
  * 用于在两次启动的日志之间画分隔线。
+ * @param index 该行在 logs 中的全局索引（virtual-list 插槽携带）
  */
-function isStart(record: LogRecord & { index: number }) {
+function isStart(index: number) {
+	const record = props.logs[index];
+	const previous = props.logs[index - 1];
 	return (
-		record.index &&
-		props.logs[record.index - 1].id > record.id &&
+		!!index &&
+		record !== undefined &&
+		previous !== undefined &&
+		previous.id > record.id &&
 		record.name === "app"
 	);
 }
@@ -77,9 +89,13 @@ function isStart(record: LogRecord & { index: number }) {
 /**
  * 拼装单行日志：时间戳 + [级别] + 作用域名（按名称散列取色、对齐补白）+ 正文，
  * 多行正文按首行缩进对齐，最后整体交给 AnsiUp 转成带颜色的 HTML。
+ * @param index 该行在 logs 中的全局索引（virtual-list 插槽携带）
  */
-function renderLine(record: LogRecord) {
-	const prefix = `[${record.type[0].toUpperCase()}]`;
+function renderLine(index: number) {
+	const record = props.logs[index];
+	// 插槽索引必然落在数组范围内，判空仅防御类型层（noUncheckedIndexedAccess）
+	if (!record) return "";
+	const prefix = `[${record.type.charAt(0).toUpperCase()}]`;
 	const space = " ";
 	let indent = 3 + space.length,
 		output = "";
@@ -89,7 +105,9 @@ function renderLine(record: LogRecord) {
 			8,
 			Time.template(showTime, new Date(record.timestamp)),
 		) + space;
-	const code = Logger.code(record.name, { colors: 3 });
+	// 第二参数传颜色支持级别:原 `{ colors: 3 }` 是 reggol v1 的选项形态,v2
+	// 只接受 false | ColorSupportLevel;传 1 与旧代码运行时实际行为一致(16 色表)
+	const code = Logger.code(record.name, 1);
 	const label = renderColor(code, record.name, ";1");
 	const padLength = label.length - record.name.length;
 	output +=

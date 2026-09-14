@@ -51,13 +51,13 @@
     </div>
     <div class="footer">
       <el-tooltip :content="timeAgo(data.updatedAt)" placement="top">
-        <a class="truncate" target="_blank" :href="data.package.links.npm">
+        <a class="truncate" target="_blank" :href="data.package.links?.npm">
           <market-icon name="tag"></market-icon>{{ data.package.version }}
         </a>
       </el-tooltip>
       <template v-if="data.installSize">
         <span class="spacer"></span>
-        <a class="truncate" target="_blank" :href="data.package.links.size">
+        <a class="truncate" target="_blank" :href="data.package.links?.size">
           <market-icon name="file-archive"></market-icon>{{ formatSize(data.installSize) }}
         </a>
       </template>
@@ -77,21 +77,21 @@
       <div class="avatars">
         <el-tooltip
           v-for="({ email, name }) in getUsers(data)"
-          :key="name"
-          :content="name"
+          :key="name ?? email"
+          :content="name ?? email"
           placement="top"
         >
           <span
             class="avatar"
-            :class="{ fallback: failedAvatars.has(name) }"
+            :class="{ fallback: failedAvatars.has(name ?? '') }"
             :data-initial="(name?.[0] ?? '?').toUpperCase()"
             @click.stop.prevent="$emit('query', 'email:' + email)"
           >
             <img
-              v-if="!failedAvatars.has(name)"
+              v-if="!failedAvatars.has(name ?? '')"
               :src="getAvatar(email)"
               alt=""
-              @error="failedAvatars.add(name)"
+              @error="failedAvatars.add(name ?? '')"
             >
           </span>
         </el-tooltip>
@@ -127,7 +127,9 @@ const config = inject(kConfig, {});
 const tt = useI18nText();
 
 const homepage = computed(() => {
-	const { homepage, repository } = props.data.package.links;
+	// npmmirror 的搜索结果可能不带 links 字段
+	const { homepage, repository } =
+		props.data.package.links ?? {};
 	if (homepage) return homepage;
 	if (repository)
 		return repository
@@ -137,9 +139,11 @@ const homepage = computed(() => {
 
 const badge = computed(() => {
 	for (const type in badges) {
-		if (badges[type].hidden?.(config, "card")) continue;
-		if (validate(props.data, badges[type].query))
-			return { type, ...badges[type] };
+		const item = badges[type];
+		if (!item) continue;
+		if (item.hidden?.(config, "card")) continue;
+		if (validate(props.data, item.query))
+			return { type, ...item };
 	}
 });
 

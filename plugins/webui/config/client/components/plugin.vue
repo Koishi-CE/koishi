@@ -28,12 +28,12 @@
           </k-comment>
           <k-comment
             v-for="({ required }, name) in env.using" :key="name"
-            :type="name in store.services ? 'success' : required ? 'warning' : 'primary'">
+            :type="name in (store.services ?? {}) ? 'success' : required ? 'warning' : 'primary'">
             <p>
               {{ t('config.plugin.service', [
                 t(required ? 'config.plugin.serviceRequired' : 'config.plugin.serviceOptional'),
                 name,
-                t(name in store.services ? 'config.plugin.loaded' : 'config.plugin.notLoaded'),
+                t(name in (store.services ?? {}) ? 'config.plugin.loaded' : 'config.plugin.notLoaded'),
               ]) }}
             </p>
           </k-comment>
@@ -43,7 +43,7 @@
       <!-- 实现的服务：本插件将提供哪些服务 -->
       <k-slot-item :order="600">
         <template v-for="name in env.impl" :key="name">
-          <k-comment v-if="name in store.services && current.disabled" type="warning">
+          <k-comment v-if="name in (store.services ?? {}) && current.disabled" type="warning">
             <p>{{ t('config.plugin.serviceConflict', [name]) }}</p>
           </k-comment>
           <k-comment v-else :type="current.disabled ? 'primary' : 'success'">
@@ -57,7 +57,7 @@
         <k-comment v-if="local.runtime.id && !local.runtime.forkable && current.disabled" type="warning">
           <p>{{ t('config.plugin.notReusable') }}</p>
         </k-comment>
-        <k-comment v-if="plugins.forks[current.name]?.length > 1" type="primary">
+        <k-comment v-if="(plugins.forks[current.name]?.length ?? 0) > 1" type="primary">
           <p>{{ t('config.plugin.multiplePrefix') }}<span class="k-link" @click.stop="dialogFork = name">{{ t('config.plugin.multipleAction') }}</span>{{ t('config.plugin.multipleSuffix') }}</p>
         </k-comment>
       </k-slot-item>
@@ -65,7 +65,7 @@
       <!-- 提供的页面：本插件注册的控制台活动页 -->
       <k-slot-item :order="300">
         <template v-for="(activity, key) in ctx.$router.pages" :key="key">
-          <k-comment type="success" v-if="activity.ctx.extension?.paths.includes(current.path) && !activity.disabled()">
+          <k-comment type="success" v-if="activity.ctx.extension?.paths?.includes(current.path) && !activity.disabled()">
             <p>
               <span>{{ t('config.plugin.pages') }}</span>
               <k-activity-link :id="activity.id" />
@@ -116,11 +116,13 @@
  * 插件缺少运行时信息时自动发起 config/request-runtime 请求。
  */
 import { send, store, useContext } from "@koishi-ce/client";
+import type { PackageProvider } from "@koishi-ce/plugin-config";
 import { computed, provide, watch } from "vue";
 import { useI18n } from "vue-i18n";
 import KModifier from "./modifier.vue";
 import {
 	dialogFork,
+	type EnvInfo,
 	envMap,
 	name,
 	plugins,
@@ -143,8 +145,18 @@ const config = computed({
 	set: (value) => emit("update:modelValue", value),
 });
 
-const env = computed(() => envMap.value[name.value]);
-const local = computed(() => store.packages[name.value]);
+// name 非空时 getFullName 必命中 packages 的某个键(envMap 同理),
+// 而模板仅在 name 非空分支读取 env/local,undefined 分支不可达,
+// 故收窄为非空以匹配运行时形态
+const env = computed(
+	() => envMap.value[name.value ?? ""] as EnvInfo,
+);
+const local = computed(
+	() =>
+		store.packages?.[
+			name.value ?? ""
+		] as PackageProvider.Data,
+);
 // 提示语按插件来源区分:工作区插件提示检查源码,市场插件提示联系作者
 const hint = computed(() =>
 	local.value.workspace
@@ -156,7 +168,8 @@ const hint = computed(() =>
 watch(
 	local,
 	(value) => {
-		if (!value || value.runtime) return;
+		// name 为空的条目(全局设置占位)无运行时信息可言,跳过请求
+		if (!value || value.runtime || !value.name) return;
 		void send("config/request-runtime", value.name);
 	},
 	{ immediate: true },

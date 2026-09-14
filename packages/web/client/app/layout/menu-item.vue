@@ -7,7 +7,8 @@
   点击时以 action scope 为参调用对应 action。
 -->
 <template>
-  <el-tooltip v-if="!hidden" :disabled="disabled" :content="toValue(item.label)" placement="bottom">
+  <!-- content 缺省时回退空串（与 el-tooltip 自身的空默认一致） -->
+  <el-tooltip v-if="!hidden" :disabled="disabled" :content="toValue(item.label) ?? ''" placement="bottom">
     <span class="menu-item" :class="[toValue(item.type), { disabled }]" @click="trigger">
       <k-icon class="menu-icon" :name="toValue(item.icon)"></k-icon>
     </span>
@@ -44,10 +45,13 @@ const disabled = computed(() => {
 });
 
 // action scope：以所属菜单 id -> menuData 的映射作为求值上下文
+// （menuKey 缺失时不设置该键，而非以 "undefined" 字符串作键）
 const scope = computed(() =>
-	ctx.$action.createScope({
-		[props.menuKey]: props.menuData,
-	}),
+	ctx.$action.createScope(
+		props.menuKey === undefined
+			? {}
+			: { [props.menuKey]: props.menuData },
+	),
 );
 
 // label / icon 等字段可能是静态值或以 scope 为参的 getter，这里统一解包

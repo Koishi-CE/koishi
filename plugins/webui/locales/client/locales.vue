@@ -58,8 +58,8 @@
               <el-input
                 autosize
                 type="textarea"
-                :modelValue="(store.locales['$' + locale]?.[`${active}.${path}`] as any)"
-                :placeholder="store.locales[locale]?.[`${active}.${path}`] || store.locales[''][`${active}.${path}`] as any"
+                :modelValue="(store.locales?.['$' + locale]?.[`${active}.${path}`] as any)"
+                :placeholder="store.locales?.[locale]?.[`${active}.${path}`] || store.locales?.['']?.[`${active}.${path}`] as any"
                 @update:modelValue="handleUpdate(locale, path, $event)"
               ></el-input>
             </div>
@@ -84,19 +84,24 @@
  */
 import { type Dict, send, store } from "@koishi-ce/client";
 import { useDebounceFn } from "@vueuse/core";
+import type {
+	TreeInstance,
+	TreeNodeData,
+} from "element-plus";
 import { computed, provide, ref, watch } from "vue";
 import { useRoute, useRouter } from "vue-router";
+import type { EditableStore } from "./index.ts";
 
 const route = useRoute();
 const router = useRouter();
 
 const displayLocales = ref(["zh-CN", "en-US"]);
-const tree = ref(null);
+const tree = ref<TreeInstance>();
 const keyword = ref("");
 
-// 搜索关键字变化时过滤左侧分类树
+// 搜索关键字变化时过滤左侧分类树（组件挂载前变化时跳过本次过滤）
 watch(keyword, (val) => {
-	tree.value.filter(val);
+	tree.value?.filter(val);
 });
 
 /** 当前选中的分类（点号分隔的键前缀），与路由路径双向同步。 */
@@ -120,10 +125,11 @@ function filterNode(value: string, data: Tree) {
 		.includes(keyword.value.toLowerCase());
 }
 
-/** 树节点的 class 计算：当前选中项附加 is-active。 */
-function getClass(tree: Tree) {
+/** 树节点的 class 计算：当前选中项附加 is-active（参数签名按 el-tree 的 props.class 约定）。 */
+function getClass(data: TreeNodeData) {
 	const words: string[] = [];
-	if (tree.id === active.value) words.push("is-active");
+	// TreeNodeData 是索引签名类型，方括号取值以满足 noPropertyAccessFromIndexSignature
+	if (data["id"] === active.value) words.push("is-active");
 	return words.join(" ");
 }
 
@@ -183,7 +189,8 @@ const data = computed(() => {
 			}
 		}
 		for (let i = 0; i < depth; i++) {
-			const label = parts[i];
+			// split 产物按序必有值（i < depth ≤ parts.length），兜底空串仅防御索引类型
+			const label = parts[i] ?? "";
 			const id = parts.slice(0, i + 1).join(".");
 			let child = children.find((item) => item.id === id);
 			if (!child) {
@@ -193,8 +200,9 @@ const data = computed(() => {
 			}
 			children = child.children ??= [];
 		}
-		map[parts.slice(0, depth).join(".")].push(
-			parts.slice(depth).join("."),
+		// 该前缀键在上面的循环末轮必然已初始化，?? 兜底仅防御索引类型
+		(map[parts.slice(0, depth).join(".")] ??= []).push(
+			paths.value.slice(depth).join("."),
 		);
 	}
 	sortTree(data);
@@ -203,10 +211,15 @@ const data = computed(() => {
 
 /** 防抖提交：把 `$` 前缀的用户自定义翻译整体打包成 l10n 事件发给 node 侧。 */
 const update = useDebounceFn(() => {
-	const result = {};
-	for (const locale in store.locales) {
+	// TODO: 服务数据未就绪时保守跳过提交（能进入编辑流程通常意味着数据已就绪）
+	const locales = store.locales;
+	if (!locales) return;
+	const result: Dict<EditableStore> = {};
+	for (const locale in locales) {
 		if (!locale.startsWith("$")) continue;
-		result[locale.slice(1)] = store.locales[locale];
+		const dict = locales[locale];
+		if (!dict) continue;
+		result[locale.slice(1)] = dict;
 	}
 	void send("l10n", result);
 }, 1000);
@@ -217,7 +230,10 @@ function handleUpdate(
 	path: string,
 	value: string,
 ) {
-	const root = (store.locales[`$${locale}`] ??= {});
+	// TODO: 服务数据未就绪时保守丢弃编辑（页面能进入编辑通常意味着数据已就绪）
+	const locales = store.locales;
+	if (!locales) return;
+	const root = (locales[`$${locale}`] ??= {});
 	if (value) {
 		root[`${active.value}.${path}`] = value;
 	} else {

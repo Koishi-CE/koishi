@@ -27,10 +27,17 @@ import { useDebounceFn } from "@vueuse/core";
 import { computed, ref, watch } from "vue";
 import { addManual, showManual } from "./utils";
 
+// npm registry 的 /<pkg> 端点响应实际携带 dist-tags（最新版本指针），
+// Registry 类型（lib d.ts）未声明此字段（上游把它声明在 SearchPackage 上），
+// 这里本地补齐所需的最小形状，不依赖上游键布局
+interface RegistryDoc extends Registry {
+	"dist-tags"?: { latest?: string };
+}
+
 const config = useConfig();
 const invalid = computed(() => false);
 const name = ref("");
-const remote = ref<Registry>();
+const remote = ref<RegistryDoc>();
 
 const fetchRemote = useDebounceFn(async (name2: string) => {
 	try {
@@ -40,16 +47,21 @@ const fetchRemote = useDebounceFn(async (name2: string) => {
 }, 500);
 
 watch(name, (name2) => {
-	if (name2 !== remote.value?.name) remote.value = null;
-	if (!name2) return (remote.value = null);
+	if (name2 !== remote.value?.name)
+		remote.value = undefined;
+	if (!name2) return (remote.value = undefined);
 	fetchRemote(name2);
 });
 
 function onEnter() {
 	if (!remote.value) return;
 	const { name } = remote.value;
-	config.value.market.override[name] =
-		remote.value["dist-tags"].latest;
+	// 无最新版本指针时无法确定要写入的版本，保持对话框开启
+	const latest = remote.value["dist-tags"]?.latest;
+	if (!latest) return;
+	const override = config.value.market.override;
+	if (!override) return;
+	override[name] = latest;
 	showManual.value = false;
 }
 </script>

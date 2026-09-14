@@ -14,7 +14,7 @@
         <bot-preview
           :data="bot"
           :class="{ 'has-link': bot.paths?.length }"
-          @click="router.push('/plugins/' + bot.paths[0].replace(/\./, '/'))"
+          @click="bot.paths?.[0] && router.push('/plugins/' + bot.paths[0].replace(/\./, '/'))"
         ></bot-preview>
       </template>
     </template>
@@ -49,10 +49,15 @@ import { getStatus } from "./utils";
 const config = useConfig();
 
 // 按状态聚合的计数表（如 { online: 3, offline: 1 }），键名字典序排列保证灯的顺序稳定
+// store.status 在服务端数据未推送前为 undefined，按无机器人计
 const statusMap = computed(() => {
 	const map: Dict<number> = {};
-	for (const bot of Object.values(store.status.bots)) {
+	for (const bot of Object.values(
+		store.status?.bots ?? {},
+	)) {
 		const key = getStatus(bot.status);
+		// getStatus 对全部 Universal.Status 取值均有映射，此判空仅作类型收窄
+		if (key === undefined) continue;
 		map[key] = (map[key] || 0) + 1;
 	}
 	return Object.fromEntries(
@@ -64,7 +69,7 @@ const statusMap = computed(() => {
 
 // 全部机器人最近一分钟发送消息总量
 const sent = computed(() => {
-	return Object.values(store.status.bots).reduce(
+	return Object.values(store.status?.bots ?? {}).reduce(
 		(acc, bot) => acc + bot.messageSent,
 		0,
 	);
@@ -72,7 +77,7 @@ const sent = computed(() => {
 
 // 全部机器人最近一分钟接收消息总量
 const received = computed(() => {
-	return Object.values(store.status.bots).reduce(
+	return Object.values(store.status?.bots ?? {}).reduce(
 		(acc, bot) => acc + bot.messageReceived,
 		0,
 	);

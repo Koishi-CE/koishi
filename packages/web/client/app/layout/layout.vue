@@ -18,7 +18,7 @@
       <layout-header
         v-model:isLeftAsideOpen="isLeftAsideOpen"
         v-model:isRightAsideOpen="isRightAsideOpen"
-        :menu-key="typeof menu === 'string' ? menu : null"
+        :menu-key="typeof menu === 'string' ? menu : ''"
         :menu-data="menuData">
         <template #left>
           <slot name="header">{{ route.meta.activity?.name }}</slot>

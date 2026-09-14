@@ -42,14 +42,19 @@ async function setMode(value?: "upload" | "download") {
 	showSyncDialog.value = false;
 	if (!value) return;
 	if (value === "download") {
-		// 云端 user.config 服务端透传存储,此处按客户端配置形状收窄使用
+		// 云端 user.config 服务端透传存储,此处按客户端配置形状收窄使用;
+		// 未登录（无云端数据）时无可下载内容,直接返回
+		if (!store.user) return;
 		config.value = store.user.config as Config;
 		return;
 	}
 	try {
 		await send("user/update", { config: config.value });
 	} catch (e) {
-		message.error(e.message);
+		// catch 变量为 unknown,按 Error 收窄取 message,其余形态转字符串
+		message.error(
+			e instanceof Error ? e.message : String(e),
+		);
 	}
 }
 </script>

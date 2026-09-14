@@ -17,8 +17,9 @@ import { computed } from "vue";
 const ctx = useContext();
 
 const isLoading = computed(() => {
-	if (ctx.bail("activity", ctx.$router.pages["market"]))
-		return false;
+	// market 页尚未注册时无从询问 activity 拦截意见，按未拦截处理
+	const market = ctx.$router.pages["market"];
+	if (market && ctx.bail("activity", market)) return false;
 	return (
 		!store.market ||
 		store.market.total > store.market.progress

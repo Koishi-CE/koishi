@@ -27,7 +27,9 @@ const current = inject<Ref<{ path: string }>>(
 );
 
 // 过滤出配置路径里包含当前插件路径的机器人（当前正在查看配置的插件）
+// 注入缺失（组件被挂到 plugin-details 插槽之外的异常场景）时按无匹配计
 const bots = computed(() => {
+	if (!current) return [];
 	return Object.values(store.status?.bots || {}).filter(
 		(bot) => {
 			return bot.paths?.includes(current.value.path);

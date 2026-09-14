@@ -29,22 +29,22 @@
           :allow-drop="allowDrop"
           :default-expanded-keys="expandedKeys"
           @node-click="handleClick"
-          @node-contextmenu="trigger"
+          @node-contextmenu="triggerTreeMenu"
           @node-expand="handleExpand"
           @node-collapse="handleCollapse"
           @node-drop="handleDrop"
           #="{ node }">
           <!-- 树节点内容：处于重命名态时渲染行内输入框，右侧 M 标记未保存的修改 -->
           <div class="item">
-            <div class="label" :title="node.data.name">
+            <div class="label" :title="node.data['name']">
               <input
                 v-focus
-                v-if="node.data.filename === renaming"
-                v-model="node.data.name"
+                v-if="node.data['filename'] === renaming"
+                v-model="node.data['name']"
                 @keypress.enter.prevent="confirmRename(node.data)"
                 @keydown.escape.prevent="cancelRename()"
               />
-              <template v-else>{{ node.data.name }}</template>
+              <template v-else>{{ node.data["name"] }}</template>
             </div>
             <div class="right">
               <template v-if="node.data.oldValue !== node.data.newValue">M</template>
@@ -55,7 +55,7 @@
     </template>
 
     <!-- 主区域四态：未选文件 / 加载中 / 媒体预览（图片、音视频）/ monaco 编辑器 -->
-    <k-empty v-if="!files[active] || files[active].type === 'directory'">{{ t('explorer.view.empty') }}</k-empty>
+    <k-empty v-if="!files[active] || files[active]?.type === 'directory'">{{ t('explorer.view.empty') }}</k-empty>
     <div v-else-if="files[active]?.loading">
       <div class="el-loading-spinner">
         <svg class="circular" viewBox="25 25 50 50">
@@ -65,10 +65,10 @@
       </div>
     </div>
     <template v-else-if="files[active]?.mime">
-      <k-image-viewer v-if="files[active].mime.startsWith('image/')" :src="files[active].newValue" />
-      <audio v-else-if="files[active].mime.startsWith('audio/')" :src="files[active].newValue" controls />
-      <video v-else-if="files[active].mime.startsWith('video/')" :src="files[active].newValue" controls />
-      <div v-else>{{ t('explorer.view.unsupported', [files[active].mime]) }}</div>
+      <k-image-viewer v-if="files[active]?.mime?.startsWith('image/')" :src="files[active]?.newValue" />
+      <audio v-else-if="files[active]?.mime?.startsWith('audio/')" :src="files[active]?.newValue" controls />
+      <video v-else-if="files[active]?.mime?.startsWith('video/')" :src="files[active]?.newValue" controls />
+      <div v-else>{{ t('explorer.view.unsupported', [files[active]?.mime]) }}</div>
     </template>
     <div ref="editor" v-else class="editor"></div>
   </k-layout>
@@ -79,7 +79,7 @@
     <template #footer>
       <span class="dialog-footer">
         <el-button @click="removing = null">{{ t('explorer.view.cancel') }}</el-button>
-        <el-button type="primary" @click="send('explorer/remove', removing), removing = null">
+        <el-button type="primary" @click="send('explorer/remove', removing ?? ''), removing = null">
           {{ t('explorer.view.confirm') }}
         </el-button>
       </span>
@@ -107,6 +107,10 @@ import {
 } from "@koishi-ce/client";
 import type { Entry } from "@koishi-ce/plugin-explorer";
 import { useElementSize } from "@vueuse/core";
+import type {
+	TreeInstance,
+	TreeNodeData,
+} from "element-plus";
 import * as monaco from "monaco-editor";
 import { computed, onActivated, ref, watch } from "vue";
 import { useI18n } from "vue-i18n";
@@ -125,13 +129,20 @@ const ctx = useContext();
 const route = useRoute();
 const router = useRouter();
 const keyword = ref(""); // 文件树过滤关键字
-const tree = ref(null); // el-tree 实例（调用 filter() 做关键字过滤）
-const root = ref<{ $el: HTMLElement }>(null); // 左侧滚动容器（滚动定位用）
+const tree = ref<TreeInstance | null>(null); // el-tree 实例（调用 filter() 做关键字过滤）
+const root = ref<{ $el: HTMLElement } | null>(null); // 左侧滚动容器（滚动定位用）
 const editor = ref(null); // monaco 编辑器的挂载容器
 const data = ref<TreeEntry[]>([]); // 本地文件树（含展开态，由服务端数据合并而来）
-const removing = ref<string>(null); // 待删除条目的路径（结尾 / 表示目录），非空弹出确认框
+const removing = ref<string | null>(null); // 待删除条目的路径（结尾 / 表示目录），非空弹出确认框
 
 const trigger = useMenu("explorer.tree");
+
+/** el-tree 右键事件转发：el-tree 把事件对象声明为 Event，实际由 DOM 的
+ * contextmenu 鼠标事件下发（必为 MouseEvent），故收窄后转发给 trigger */
+function triggerTreeMenu(event: Event, data: TreeEntry) {
+	// 安全断言：contextmenu 事件在浏览器中恒为 MouseEvent
+	trigger(event as MouseEvent, data);
+}
 
 // 当前激活文件：取路由 /files/ 之后的路径段；不在 files 索引中则回退空串
 const active = computed<string>({
@@ -161,12 +172,16 @@ ctx.action("explorer.save", {
 		files[active.value]?.newValue ===
 			files[active.value]?.oldValue ||
 		!["files"].includes(
-			router.currentRoute.value?.meta?.activity.id,
+			router.currentRoute.value?.meta?.activity?.id ?? "",
 		),
 	action: async () => {
-		const content = files[active.value].newValue;
+		const entry = files[active.value];
+		// 条目不存在或内容未就绪时无从保存，直接跳过
+		if (!entry || typeof entry.newValue !== "string")
+			return;
+		const content = entry.newValue;
 		await send("explorer/write", active.value, content);
-		files[active.value].oldValue = content;
+		entry.oldValue = content;
 	},
 });
 
@@ -175,7 +190,7 @@ ctx.action("explorer.refresh", {
 	shortcut: "ctrl+r",
 	disabled: () =>
 		!["files"].includes(
-			router.currentRoute.value?.meta?.activity.id,
+			router.currentRoute.value?.meta?.activity?.id ?? "",
 		),
 	action: () => send("explorer/refresh"),
 });
@@ -209,8 +224,11 @@ ctx.action("explorer.tree.upload", {
 ctx.action("explorer.tree.download", {
 	disabled: ({ explorer }) =>
 		explorer.tree.type === "directory",
-	action: ({ explorer }) =>
-		downloadFile(explorer.tree.filename),
+	action: ({ explorer }) => {
+		// filename 由文件树遍历补全，异常缺失时无从下载，直接跳过
+		if (!explorer.tree.filename) return;
+		downloadFile(explorer.tree.filename);
+	},
 });
 
 // 删除：先取消可能的重命名态，再弹确认框
@@ -224,7 +242,7 @@ ctx.action("explorer.tree.rename", {
 	disabled: ({ explorer }) => !explorer.tree.filename,
 	action: ({ explorer }) => {
 		cancelRename();
-		renaming.value = explorer.tree.filename;
+		renaming.value = explorer.tree.filename ?? null;
 	},
 });
 
@@ -234,9 +252,13 @@ const showRemoving = computed({
 });
 
 /** 深度优先收集所有已展开节点的 filename。 */
-function* getExpanded(tree: TreeEntry[]) {
+function* getExpanded(
+	tree: TreeEntry[],
+): Generator<string, void, undefined> {
 	for (const item of tree) {
-		if (item.expanded) yield item.filename;
+		// filename 由 store.ts 的 traverse 补全；缺失的病态节点不产出 key
+		if (item.expanded && item.filename !== undefined)
+			yield item.filename;
 		if (item.children) yield* getExpanded(item.children);
 	}
 }
@@ -250,19 +272,24 @@ const expandedKeys = computed(() => [
  * 用服务端新树 head 合并本地树 base：
  * 按 type + name 匹配旧节点并保留 expanded 等本地状态（子树递归合并），
  * 服务端新增的节点原样进入，返回合并后的新数组。
+ * head 为 undefined（服务端尚未下发 / 断线清空）时返回 undefined，调用方回退空树。
  */
-function merge(base: TreeEntry[], head: Entry[]) {
+function merge(
+	base: TreeEntry[] | undefined,
+	head: Entry[] | undefined,
+): TreeEntry[] | undefined {
 	return head?.map((entry) => {
-		const old = base.find(
+		const old = base?.find(
 			(old) =>
 				old.type === entry.type && old.name === entry.name,
 		);
 		if (old) {
-			return {
-				...old,
-				...entry,
-				children: merge(old.children, entry.children),
-			};
+			const children = merge(old.children, entry.children);
+			// children 为空时不写该键，保持 children 的可选声明
+			// （exactOptionalPropertyTypes 下不可显式写入 undefined）
+			return children
+				? { ...old, ...entry, children }
+				: { ...old, ...entry };
 		} else {
 			return entry;
 		}
@@ -278,11 +305,12 @@ watch(
 	{ immediate: true },
 );
 
-let instance: monaco.editor.IStandaloneCodeEditor = null;
+let instance: monaco.editor.IStandaloneCodeEditor | null =
+	null;
 
 // 关键字变化即时过滤树节点
 watch(keyword, (val) => {
-	tree.value.filter(val);
+	tree.value?.filter(val);
 });
 
 const mode = useColorMode();
@@ -310,26 +338,28 @@ watch(mode, () => {
 });
 
 /** 节点样式回调：给当前激活文件对应的树节点加 is-active 类。 */
-function getClass(data: TreeEntry) {
+function getClass(data: TreeNodeData) {
 	const words: string[] = [];
-	if (data.name === active.value) words.push("is-active");
+	if (data["name"] === active.value)
+		words.push("is-active");
 	return words.join(" ");
 }
 
 /** el-tree 过滤回调：节点名包含关键字即保留（大小写不敏感）。 */
-function filterNode(value: string, data: TreeEntry) {
-	return data.name
+function filterNode(value: string, data: TreeNodeData) {
+	return String(data["name"] ?? "")
 		.toLowerCase()
 		.includes(keyword.value.toLowerCase());
 }
 
-/** el-tree 内部节点结构（仅声明用到的字段）。 */
+/** el-tree 内部节点结构（仅声明用到的字段，与 element-plus 的 Node 声明
+ * 保持兼容：parent 可为 null（根节点），isLeaf 惰性求值时为 undefined）。 */
 interface Node {
 	label: string;
-	data: TreeEntry;
-	parent: Node;
+	data: TreeNodeData;
+	parent: Node | null;
 	expanded: boolean;
-	isLeaf: boolean;
+	isLeaf: boolean | undefined;
 	childNodes: Node[];
 }
 
@@ -363,13 +393,21 @@ function getLanguage(filename: string) {
 watch(
 	() => files[active.value],
 	async (entry) => {
-		if (!entry || entry.type === "directory") return;
+		// filename 由 store.ts 的 traverse 补全，缺失的病态条目无从读取
+		if (
+			!entry ||
+			entry.type === "directory" ||
+			entry.filename === undefined
+		)
+			return;
 		if (typeof entry.oldValue !== "string") {
 			entry.loading = send("explorer/read", entry.filename);
 			const { base64, mime } = await entry.loading;
-			entry.loading = null;
-			entry.mime = mime;
+			// 读取完成，移除加载标记（loading 声明为可选属性，
+			// exactOptionalPropertyTypes 下只能 delete 而非赋 undefined）
+			delete entry.loading;
 			if (mime) {
+				entry.mime = mime;
 				entry.oldValue =
 					entry.newValue = `data:${mime};base64,${base64}`;
 			} else {
@@ -379,7 +417,7 @@ watch(
 					);
 			}
 		}
-		model.setValue(entry.newValue);
+		model.setValue(entry.newValue ?? "");
 		monaco.editor.setModelLanguage(
 			model,
 			getLanguage(entry.filename),
@@ -398,7 +436,7 @@ model.onDidChangeContent((e) => {
 /** 点击文件节点：设为当前激活文件（目录节点忽略）。 */
 async function handleClick(data: TreeEntry) {
 	if (data.type === "directory") return;
-	active.value = data.filename;
+	active.value = data.filename ?? "";
 }
 
 // 虚拟根节点：包一层空名目录，让左侧空白区域右键也能触发新建/上传菜单

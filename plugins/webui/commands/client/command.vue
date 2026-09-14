@@ -7,7 +7,7 @@
     <router-link
       class="el-button"
       v-if="store.config && store.packages && command.paths.length"
-      :to="'/plugins/' + command.paths[0].replace(/\./, '/')"
+      :to="'/plugins/' + (command.paths[0] ?? '').replace(/\./, '/')"
     >前往插件</router-link>
     <router-link
       class="el-button"
@@ -103,7 +103,7 @@ import {
 	type Dict,
 	deepEqual,
 	pick,
-	type Schema,
+	Schema,
 	send,
 	store,
 	useContext,
@@ -114,7 +114,7 @@ import type { Argv, Command } from "@koishi-ce/koishi";
 import type {
 	CommandData,
 	CommandState,
-} from "@koishi-ce/plugin-commands/src";
+} from "@koishi-ce/plugin-commands";
 import { watchDebounced } from "@vueuse/core";
 import { computed, nextTick, ref, watch } from "vue";
 import { createSchema } from "./utils";
@@ -126,16 +126,25 @@ const props = defineProps<{
 	command: CommandData;
 }>();
 
+// watch immediate 会在 setup 阶段同步覆盖为真实值，空初值仅用于消除
+// 「指令数据未就绪」窗口期的 undefined 分支（各字段均为空语义，渲染等价）
 const schema = ref<{
 	config: Schema;
 	options: Dict<Schema>;
-}>();
+}>({
+	config: new Schema({}),
+	options: {},
+});
 
 const inputEl = ref();
 const inputName = ref("");
 const inputSource = ref("");
-const target = ref<string>(null);
-const current = ref<CommandState>();
+const target = ref<string | null>(null);
+const current = ref<CommandState>({
+	aliases: {},
+	config: {},
+	options: {},
+});
 
 const showAliasDialog = computed({
 	get: () => typeof target.value === "string",
@@ -150,12 +159,14 @@ watch(
 		const { initial, override } = value;
 		schema.value = {
 			config: createSchema("command", initial.config),
-			options: valueMap(initial.options, (_, key) =>
-				createSchema(
+			options: valueMap(initial.options, (_, key) => {
+				// valueMap 遍历到的键必有对应声明；判空兜底与
+				// createSchema 对空值的处理一致，不改变实际行为
+				return createSchema(
 					"command-option",
-					initial.options[key],
-				),
-			),
+					initial.options[key] ?? {},
+				);
+			}),
 		};
 		current.value = clone(override);
 	},
@@ -166,20 +177,31 @@ watch(
 ctx.action("command.update", {
 	disabled: () =>
 		deepEqual(
-			pick(current.value, ["config", "options"]),
-			pick(props.command.override, ["config", "options"]),
+			pick(current.value, ["config", "options"] satisfies (
+				| "config"
+				| "options"
+			)[]),
+			pick(props.command.override, [
+				"config",
+				"options",
+			] satisfies ("config" | "options")[]),
 		),
 	action: () =>
 		send(
 			"command/update",
 			props.command.name,
-			pick(current.value, ["config", "options"]),
+			pick(current.value, ["config", "options"] satisfies (
+				| "config"
+				| "options"
+			)[]),
 		),
 });
 
 // 把某个别名提到字典最前，使其成为显示名称（首项即显示名）
 function setDefault(name: string) {
 	const item = current.value.aliases[name];
+	// 调用方（别名表格行）保证 name 存在于当前别名表，判空仅为类型收窄
+	if (!item) return;
 	current.value.aliases = {
 		[name]: item,
 		...current.value.aliases,
@@ -194,7 +216,9 @@ function setDefault(name: string) {
 // 删除别名：初始就有的别名改为置 filter=false（禁用），后续新增的直接移除
 function deleteAlias(name: string) {
 	if (props.command.initial.aliases[name]) {
-		current.value.aliases[name].filter = false;
+		const alias = current.value.aliases[name];
+		// 禁用仅在别名仍存在于当前表时才有意义，判空仅为类型收窄
+		if (alias) alias.filter = false;
 	} else {
 		delete current.value.aliases[name];
 	}
@@ -207,8 +231,10 @@ function deleteAlias(name: string) {
 
 // 恢复被禁用的初始别名
 function recoverAlias(name: string) {
-	current.value.aliases[name] =
-		props.command.initial.aliases[name];
+	const alias = props.command.initial.aliases[name];
+	// 「恢复」按钮只对初始就有的别名出现，判空仅为类型收窄
+	if (!alias) return;
+	current.value.aliases[name] = alias;
 	void send(
 		"command/aliases",
 		props.command.name,
@@ -246,8 +272,13 @@ const aliases = computed(() => {
 
 // 新别名为空或与现有别名冲突时无效
 const invalidName = computed(() => {
+	// TODO(疑似 bug)：aliases 是「每指令一份的别名字典」拼成的数组，此处以
+	// 字符串直接索引数组恒得 undefined，重名检测实际未生效；按约定不改
+	// 运行时行为，以 Reflect.get 忠实复刻原「字符串索引数组」的语义
+	// （二者完全等价）并通过类型检查，待定夺后在类型与行为上一并修正
 	return (
-		!inputName.value || !!aliases.value[inputName.value]
+		!inputName.value ||
+		!!Reflect.get(aliases.value, inputName.value)
 	);
 });
 
@@ -278,7 +309,10 @@ async function onEnter() {
 			inputSource.value,
 		);
 		if (alias.error) return;
-		current.value.aliases[inputName.value] = alias;
+		// as 理由：服务端 command/parse 的返回（Argv）在此直接作为别名载荷
+		// 存入（消费方只用其 args / options 字段），类型上按 Command.Alias 收纳
+		current.value.aliases[inputName.value] =
+			alias as Command.Alias;
 	} else {
 		current.value.aliases[inputName.value] = {};
 	}

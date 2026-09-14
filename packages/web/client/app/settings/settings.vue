@@ -10,7 +10,7 @@
 <template>
   <k-layout main="page-settings">
     <template #header>
-      {{ toValue(ctx.internal.settings[path][0]?.title) }}
+      {{ toValue(ctx.internal.settings[path]?.[0]?.title) }}
     </template>
 
     <template #left>
@@ -26,7 +26,7 @@
 
     <keep-alive>
       <k-content :key="path">
-        <template v-for="item of ctx.internal.settings[path]">
+        <template v-for="item of ctx.internal.settings[path] ?? []">
           <template v-if="item.disabled?.()"></template>
           <component v-else-if="item.component" :is="item.component" />
           <k-form v-else-if="item.schema" :schema="item.schema" v-model="config" :initial="config" />
@@ -57,9 +57,10 @@ interface Tree {
 
 const data = computed(() =>
 	Object.entries(ctx.internal.settings).map<Tree>(
-		([id, [{ title }]]) => ({
+		([id, list]) => ({
 			id,
-			label: toValue(title),
+			// 分组按约定至少含一个条目；空分组的标题回退为空串
+			label: toValue(list[0]?.title) ?? "",
 		}),
 	),
 );
@@ -74,7 +75,10 @@ function handleClick(tree: Tree) {
 const path = computed({
 	get() {
 		const name = route.params.name?.toString();
-		return name in ctx.internal.settings ? name : "";
+		return name !== undefined &&
+			name in ctx.internal.settings
+			? name
+			: "";
 	},
 	set(value) {
 		if (!(value in ctx.internal.settings)) value = "";

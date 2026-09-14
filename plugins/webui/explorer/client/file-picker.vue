@@ -63,7 +63,12 @@ import {
 } from "@koishi-ce/client";
 import type {} from "@koishi-ce/koishi";
 import type { Entry } from "@koishi-ce/plugin-explorer";
-import { computed, type PropType, ref } from "vue";
+import {
+	computed,
+	type PropType,
+	type Ref,
+	ref,
+} from "vue";
 import { useI18n } from "vue-i18n";
 import { files, uploading, vFocus } from "./store";
 
@@ -77,23 +82,32 @@ const props = defineProps({
 	initial: {} as PropType<unknown>,
 });
 
-const config = SchemaBase.useModel<string>();
+// 运行时的 SchemaBase（即 form）由 schemastery-vue 经 Object.assign 挂上
+// useModel（见其 src/index.ts），浏览器端类型垫片未声明该成员；此处
+// 安全断言补出该成员，签名与上游实现一致（返回 ref<T | undefined>）
+const config = (
+	SchemaBase as typeof SchemaBase & {
+		useModel<T>(): Ref<T | undefined>;
+	}
+).useModel<string>();
 
 defineEmits(["update:modelValue"]);
 
 const options = computed<Schemastery.Path.Options>(() => ({
 	// 合并 schema meta.extra 携带的 path 选项（filters 等），默认只允许选文件
 	filters: ["file"],
-	...props.schema.meta.extra,
+	...props.schema?.meta.extra,
 }));
 
 /** 是否允许选定目录（filters 含 "directory"）。 */
 const allowDir = computed(() =>
-	options.value.filters.includes("directory"),
+	(options.value.filters ?? []).includes("directory"),
 );
 /** 是否允许选定文件（filters 中存在非 "directory" 的过滤项）。 */
 const allowFile = computed(() =>
-	options.value.filters.some((x) => x !== "directory"),
+	(options.value.filters ?? []).some(
+		(x) => x !== "directory",
+	),
 );
 
 /** 按钮文案：根据可选类型给出提示。 */
@@ -116,7 +130,8 @@ const entries = computed(() => {
 		files[current.value.slice(0, -1)]?.children ||
 		store?.explorer ||
 		[];
-	const { filters } = options.value;
+	// filters 为 path 选项的可选项，缺省时视作空过滤表（不匹配任何文件）
+	const { filters = [] } = options.value;
 	return children.filter((entry) => {
 		if (entry.type === "directory") return true;
 		if (entry.type === "file" || entry.type === "symlink") {
@@ -149,18 +164,20 @@ function handleClick(entry: Entry) {
 
 /** 新建文件夹：在当前目录插入一个待命名的空目录条目（回车确认）。 */
 function createFolder() {
-	files[current.value] = {
+	// 先落变量再入索引：push 处仍需引用同一对象（索引读取类型含 undefined）
+	const entry: Entry = {
 		type: "directory",
 		name: "",
 		filename: current.value,
 		oldValue: "",
 		newValue: "",
 	};
+	files[current.value] = entry;
 	const parent =
 		files[current.value.slice(0, -1)]?.children ||
 		store?.explorer ||
 		[];
-	parent.push(files[current.value]);
+	parent.push(entry);
 }
 
 /** 确认新建文件夹名：重名或空名视为取消；否则下发 mkdir 并更新索引。 */

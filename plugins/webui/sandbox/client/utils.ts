@@ -15,7 +15,7 @@ import {
 	send,
 	useStorage,
 } from "@koishi-ce/client";
-import type { Dict } from "@koishi-ce/koishi";
+import type { Dict, User } from "@koishi-ce/koishi";
 import type { Message } from "@koishi-ce/plugin-sandbox";
 import type { RemovableRef } from "@vueuse/core";
 import { computed } from "vue";
@@ -28,10 +28,34 @@ declare module "@koishi-ce/client" {
 
 // 浏览器侧协议事件的类型增强：send() 的类型来自 @koishi-ce/client 内置的
 // "@koishi-ce/plugin-console" 手写垫片（见 packages/web/client/client/shims.d.ts），
-// 与服务端 src/index.ts 对 "@koishi-ce/console" 的增强一一对应
+// 与服务端 src/index.ts 对 "@koishi-ce/console" 的增强一一对应（去 this 参数）。
+// 其中 set-user 的 data 在服务端监听器里 null 表示删除用户、对象表示写入
+// （layout.vue 的 removeUser 即传 null），故比服务端声明多含 null。
 declare module "@koishi-ce/plugin-console" {
 	interface Events {
 		"sandbox/response"(nonce: string, data?: unknown): void;
+		"sandbox/send-message"(
+			platform: string,
+			user: string,
+			channel: string,
+			content: string,
+			quote?: Message,
+		): void;
+		"sandbox/delete-message"(
+			platform: string,
+			user: string,
+			channel: string,
+			messageId: string,
+		): void;
+		"sandbox/get-user"(
+			platform: string,
+			pid: string,
+		): Promise<User | undefined>;
+		"sandbox/set-user"(
+			platform: string,
+			pid: string,
+			data: Partial<User> | null,
+		): Promise<void>;
 	}
 }
 

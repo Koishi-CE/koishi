@@ -42,6 +42,8 @@ provide("component:analytic-number", Numeric);
 
 // 近期 DAU：剔除今天的占位后取历史天数的平均值（天数不足时按实际天数除）
 const recentDau = computed(() => {
+	// 模板 v-if 已确保渲染时数据就位；服务未激活时无 DAU 数据，判空返回 0 仅为类型收窄
+	if (!store.analytics) return 0;
 	const data = store.analytics.dauHistory.slice(1);
 	const historyLength =
 		store.analytics.dauHistory.length - 1;

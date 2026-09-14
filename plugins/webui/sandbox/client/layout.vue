@@ -35,13 +35,13 @@
         <k-form v-if="user" :initial="user" v-model="model" :schema="schema" :show-header="false"></k-form>
       </k-content>
       <template v-else :key="channel">
-        <virtual-list :data="config.messages[channel] || []" #="data" pinned>
-          <chat-message :data="data"></chat-message>
+        <virtual-list :data="asRecordList(config.messages[channel] || [])" #="data" pinned>
+          <chat-message :data="asMessage(data)"></chat-message>
         </virtual-list>
         <div class="card-footer">
           <div class="quote" v-if="quote">
             <span class="left">正在回复 @{{ quote.user }}</span>
-            <k-icon name="times-full" @click="quote = null"></k-icon>
+            <k-icon name="times-full" @click="quote = undefined"></k-icon>
           </div>
           <chat-input v-model="input" @send="sendMessage" @keydown="onKeydown" placeholder="发送消息到沙盒"></chat-input>
         </div>
@@ -114,6 +114,20 @@ const userMap = computed(() => {
 
 const length = 10;
 
+/** virtual-list 的 data prop 声明为 Record<string, unknown>[]。 */
+function asRecordList(
+	list: unknown,
+): Record<string, unknown>[] {
+	// Message 为 interface（无隐式索引签名），与 Record 结构兼容但类型不可直接互赋，经 unknown 断言桥接
+	return list as Record<string, unknown>[];
+}
+
+/** virtual-list 的默认 slot（消息列表数据源，见模板用法）。 */
+function asMessage(item: unknown): Message {
+	// slot 的 v-bind="item" 动态展开不进 vue-tsc 推导，props 类型仅剩 index；运行时实为消息本体，经 unknown 断言还原
+	return item as Message;
+}
+
 /** 创建用户：按 index 轮询取 words 中未占用的昵称，并通知 node 侧入库。 */
 function createUser() {
 	if (users.value.length >= length) {
@@ -121,7 +135,8 @@ function createUser() {
 	}
 	let name: string;
 	do {
-		name = words[config.value.index++];
+		// words 候选表共 27 项，index 恒对 length(10) 取模、索引必命中，?? 兜底仅为收窄 noUncheckedIndexedAccess
+		name = words[config.value.index++] ?? "";
 		config.value.index %= length;
 	} while (users.value.includes(name));
 	config.value.user = name;
@@ -168,9 +183,10 @@ function onKeydown(event: KeyboardEvent) {
 
 /** 沿 step（-1 向上 / 1 向下）在历史列表中移动一格。 */
 function stepHistory(step: -1 | 1) {
-	const list = config.value.messages[channel.value].filter(
-		(item) => item.user === config.value.user,
-	);
+	// 当前频道尚未产生过消息时无对应键，按空列表处理（noUncheckedIndexedAccess 收窄）
+	const list = (
+		config.value.messages[channel.value] ?? []
+	).filter((item) => item.user === config.value.user);
 	const index = list.length - offset.value;
 	const target = list[index + step];
 	if (target) {
@@ -228,7 +244,7 @@ function sendMessage(content: string) {
 		content,
 		quote.value,
 	);
-	quote.value = null;
+	quote.value = undefined;
 }
 
 /** 删除消息：通知 node 侧派发删除事件，并同步移除本地消息列表中的记录。 */

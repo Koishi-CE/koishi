@@ -24,7 +24,7 @@
       :allow-drag="allowDrag"
       :allow-drop="allowDrop"
       @node-click="handleClick"
-      @node-contextmenu="trigger"
+      @node-contextmenu="handleContextmenu"
       @node-drop="handleDrop"
       @node-expand="handleExpand"
       @node-collapse="handleCollapse"
@@ -52,7 +52,15 @@
  * - 右键菜单（useMenu("config.tree")）与状态灯展示。
  */
 import { send, useMenu } from "@koishi-ce/client";
-import type { ElScrollbar, ElTree } from "element-plus";
+import type {
+	ElScrollbar,
+	ElTree,
+	TreeNodeData,
+} from "element-plus";
+import type {
+	ComponentInternalInstance,
+	ComponentPublicInstance,
+} from "vue";
 import { nextTick, onActivated, ref, watch } from "vue";
 import { useI18n } from "vue-i18n";
 import { useRoute } from "vue-router";
@@ -74,13 +82,17 @@ const trigger = useMenu("config.tree");
 
 const emit = defineEmits(["update:modelValue"]);
 
-const root = ref<InstanceType<typeof ElScrollbar>>(null);
-const tree = ref<InstanceType<typeof ElTree>>(null);
+const root = ref<InstanceType<typeof ElScrollbar> | null>(
+	null,
+);
+const tree = ref<InstanceType<typeof ElTree> | null>(null);
 const keyword = ref("");
 
 /** el-tree 的节点过滤回调：按插件短名做大小写不敏感的包含匹配。 */
-function filterNode(value: string, data: Tree) {
-	return data.name
+function filterNode(value: string, data: TreeNodeData) {
+	// el-tree 回传的 data 即本树提供的 Tree 节点数据,此处收窄取字段
+	const tree = data as Tree;
+	return tree.name
 		.toLowerCase()
 		.includes(keyword.value.toLowerCase());
 }
@@ -103,7 +115,7 @@ async function activate() {
 			route.path.slice(9 /* /plugins/ */))
 	)
 		return;
-	root.value["setScrollTop"](
+	root.value?.["setScrollTop"](
 		nodeEl.offsetTop -
 			(rootEl.offsetHeight - nodeEl.offsetHeight) / 2,
 	);
@@ -117,39 +129,46 @@ onActivated(async () => {
 });
 
 /** 节点 DOM 挂载回调：初次激活后新增的节点会触发一次滚动定位。 */
-function handleItemMount(itemEl: HTMLElement) {
+function handleItemMount(
+	itemEl: Element | ComponentPublicInstance | null,
+) {
+	// 函数式 ref 的卸载阶段会传 null,只关心挂载
 	if (!itemEl || isActivating.value) return;
 	void activate();
 }
 
-/** el-tree 的节点对象（utils.Tree 之外还带展开状态、父子关系等）。 */
+/**
+ * el-tree 的节点对象（官方 Node 的结构超集近似：data 按 TreeNodeData
+ * 放宽以兼容官方回调签名,使用处以 as Tree 收窄回本树数据）。
+ */
 interface Node {
-	data: Tree;
+	data: TreeNodeData;
 	label?: string;
-	parent: Node;
+	parent: Node | null;
 	expanded: boolean;
-	isLeaf: boolean;
+	isLeaf: boolean | undefined;
 	childNodes: Node[];
 }
 
 /** 节点显示文案：分组用"分组：xxx"，普通插件用 $label 或短名，待添加节点显示占位符。 */
-function getLabel(node: Node) {
-	if (node.data.name === "group") {
+function getLabel(node: Node): string {
+	// el-tree 回传的 data 即本树提供的 Tree 节点数据,此处收窄取字段
+	const data = node.data as Tree;
+	if (data.name === "group") {
 		return t("config.tree.group", [
-			node.label || node.data.path,
+			node.label || data.path,
 		]);
 	} else {
 		return (
-			node.label ||
-			node.data.name ||
-			t("config.tree.pending")
+			node.label || data.name || t("config.tree.pending")
 		);
 	}
 }
 
 /** 根节点（全局设置）不可拖拽。 */
 function allowDrag(node: Node) {
-	return node.data.path !== "";
+	// el-tree 回传的 data 即本树提供的 Tree 节点数据,此处收窄取字段
+	return (node.data as Tree).path !== "";
 }
 
 /**
@@ -162,17 +181,19 @@ function allowDrop(
 	target: Node,
 	type: "inner" | "prev" | "next",
 ) {
+	// el-tree 回传的 data 即本树提供的 Tree 节点数据,此处收窄取字段
+	const data = target.data as Tree;
 	if (type !== "inner") {
-		return target.data.path !== "" || type === "next";
+		return data.path !== "" || type === "next";
 	}
-	return target.data.id.startsWith("group:");
+	return data.id.startsWith("group:");
 }
 
 /** 节点点击：同步选中路径，并手动向 window 重发事件以关闭右键菜单。 */
 function handleClick(
 	tree: Tree,
-	target: Node,
-	instance: InstanceType<typeof ElTree>,
+	_node: Node,
+	_instance: ComponentInternalInstance | null,
 	event: MouseEvent,
 ) {
 	emit("update:modelValue", tree.path);
@@ -182,8 +203,18 @@ function handleClick(
 	window.dispatchEvent(new MouseEvent(event.type, event));
 }
 
+/** el-tree 节点右键事件：转发给右键菜单触发器（data 即节点数据）。 */
+function handleContextmenu(evt: Event, data: Tree) {
+	// node-contextmenu 派生自鼠标右键,实际恒为 MouseEvent
+	return trigger(evt as MouseEvent, data);
+}
+
 /** 展开分组：把 $collapsed 置为 null（即删除该键）。 */
-function handleExpand(data: Tree, target: Node, instance) {
+function handleExpand(
+	data: Tree,
+	_node: Node,
+	_instance: ComponentInternalInstance | null,
+) {
 	void send("manager/meta", data.path, {
 		$collapsed: null,
 	});
@@ -192,8 +223,8 @@ function handleExpand(data: Tree, target: Node, instance) {
 /** 收起分组：写入 $collapsed: true 并持久化。 */
 function handleCollapse(
 	data: Tree,
-	target: Node,
-	instance,
+	_node: Node,
+	_instance: ComponentInternalInstance | null,
 ) {
 	void send("manager/meta", data.path, {
 		$collapsed: true,
@@ -212,21 +243,27 @@ function handleDrop(
 ) {
 	const parent =
 		position === "inner" ? target : target.parent;
+	// 根层拖放时 parent 取虚拟根节点(el-tree 保证存在);空值仅作防御
+	if (!parent) return;
+	// el-tree 回传的 data 即本树提供的 Tree 节点数据,此处收窄取字段
+	const src = source.data as Tree;
 	let index = parent.childNodes.findIndex(
-		(node) => node.data.path === source.data.path,
+		(node) => (node.data as Tree).path === src.path,
 	);
-	if (!parent.data.path) index -= 1; // 根层级不含全局设置节点,序号减一
+	if (!(parent.data as Tree).path) index -= 1; // 根层级不含全局设置节点,序号减一
 	void send(
 		"manager/teleport",
-		source.data.parent?.path ?? "",
-		source.data.id,
-		parent.data.path,
+		src.parent?.path ?? "",
+		src.id,
+		(parent.data as Tree).path,
 		index,
 	);
 }
 
 /** el-tree 自定义节点 class：分组加粗、未安装插件置灰、当前选中高亮。 */
-function getClass(tree: Tree) {
+function getClass(data: TreeNodeData): string {
+	// el-tree 回传的 data 即本树提供的 Tree 节点数据,此处收窄取字段
+	const tree = data as Tree;
 	const words: string[] = [];
 	if (tree.children) words.push("is-group");
 	if (!tree.children && !getFullName(tree.name))
@@ -238,7 +275,7 @@ function getClass(tree: Tree) {
 
 // 关键词变化时触发 el-tree 的节点过滤
 watch(keyword, (val) => {
-	tree.value.filter(val);
+	tree.value?.filter(val);
 });
 </script>
 

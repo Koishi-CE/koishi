@@ -37,10 +37,13 @@ function handleDataTransfer(
 	transfer: DataTransfer,
 ) {
 	const prefix = uploading.value;
-	for (const item of transfer.items) {
+	// DataTransferItemList 未声明迭代器，经 ArrayLike 形态拷成数组再遍历
+	for (const item of Array.from(transfer.items)) {
 		if (item.kind !== "file") continue;
 		event.preventDefault();
+		// kind 为 file 时 getAsFile 正常返回非空;null 仅作防御跳过
 		const file = item.getAsFile();
+		if (!file) continue;
 		const reader = new FileReader();
 		reader.addEventListener(
 			"load",
@@ -62,13 +65,17 @@ function handleDataTransfer(
 // 拖拽释放：读取拖入的文件
 useEventListener("drop", (event: DragEvent) => {
 	if (!uploading.value) return;
-	handleDataTransfer(event, event.dataTransfer);
+	// dataTransfer 可能为 null（异常拖拽），无载荷时无需处理
+	if (event.dataTransfer)
+		handleDataTransfer(event, event.dataTransfer);
 });
 
 // 粘贴：读取剪贴板中的文件（如截图）
 useEventListener("paste", (event: ClipboardEvent) => {
 	if (!uploading.value) return;
-	handleDataTransfer(event, event.clipboardData);
+	// clipboardData 可能为 null（部分浏览器无剪贴板数据），无载荷时无需处理
+	if (event.clipboardData)
+		handleDataTransfer(event, event.clipboardData);
 });
 
 // 阻止默认行为，否则浏览器会离开当前页面打开被拖入的文件

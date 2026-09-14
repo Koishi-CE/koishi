@@ -11,7 +11,7 @@
       <p class="hint">请用上述账号将下面的验证码发送给任意正在运行的机器人</p>
       <p class="token">{{ user.token }}</p>
       <div class="control">
-        <k-button @click="user.token = null">返回上一步</k-button>
+        <k-button @click="user.token = ''">返回上一步</k-button>
       </div>
     </template>
 
@@ -94,17 +94,23 @@ async function loginWithAccount() {
 			userId,
 		);
 	} catch (e) {
-		error.value = e.message;
+		// catch 变量为 unknown,按 Error 收窄取 message,其余形态转字符串
+		error.value =
+			e instanceof Error ? e.message : String(e);
 	}
 }
 
 /** 用户密码登录：成功后由 store.user 的 watch 接管跳转。 */
 async function loginWithPassword() {
 	const { name, password } = shared.value;
+	// 与 loginWithAccount 一致：必填项为空时不发起请求
+	if (!name || !password) return;
 	try {
 		await send("login/password", name, password);
 	} catch (e) {
-		error.value = e.message;
+		// catch 变量为 unknown,按 Error 收窄取 message,其余形态转字符串
+		error.value =
+			e instanceof Error ? e.message : String(e);
 	}
 }
 

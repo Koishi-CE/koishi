@@ -19,7 +19,8 @@ import { type Ref, ref } from "vue";
 
 declare module "@koishi-ce/client" {
 	interface ActionContext {
-		"theme.activity": Activity;
+		// 右键活动栏空白处（非具体活动项）时载荷为 null，见 index.vue
+		"theme.activity": Activity | null;
 	}
 
 	interface Config {

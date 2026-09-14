@@ -56,8 +56,9 @@
 	},
 	"devDependencies": {
 		"@koishi-ce/client": "workspace:*",
+		"@koishi-ce/koishi": "workspace:*",
 		"@koishi-ce/plugin-console": "workspace:*",
-		"@koishi-ce/koishi": "workspace:*"
+		"element-plus": "^2.14.5"
 	},
 	"dependencies": {
 		"@koishi-ce/console": "workspace:*"

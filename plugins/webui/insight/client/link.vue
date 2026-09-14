@@ -54,13 +54,18 @@ defineEmits(["mouseenter", "mouseleave"]);
  */
 const arrow = computed(() => {
 	const { source, target } = props.link;
-	const dx = target.x - source.x;
-	const dy = target.y - source.y;
+	// 模拟首次 tick 前坐标尚未写入(undefined),按 0 兜底避免算出 NaN
+	const sourceX = source.x ?? 0;
+	const sourceY = source.y ?? 0;
+	const targetX = target.x ?? 0;
+	const targetY = target.y ?? 0;
+	const dx = targetX - sourceX;
+	const dy = targetY - sourceY;
 	const theta = Math.atan2(dy, dx);
 	const x0 =
-		target.x - constants.arrowOffset * Math.cos(theta);
+		targetX - constants.arrowOffset * Math.cos(theta);
 	const y0 =
-		target.y - constants.arrowOffset * Math.sin(theta);
+		targetY - constants.arrowOffset * Math.sin(theta);
 	const x1 =
 		x0 -
 		constants.arrowLength *

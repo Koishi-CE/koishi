@@ -71,7 +71,7 @@
 
       <el-select v-model="permission">
         <el-option
-          v-for="id in [...Object.keys(data.group).map(id => `group:${id}`), ...active.type === 'track' ? [] : store.permissions]"
+          v-for="id in [...Object.keys(data.group).map(id => `group:${id}`), ...(active.type === 'track' ? [] : store.permissions ?? [])]"
           :key="id"
           :value="id">
           <permission-name :id="id" />
@@ -141,7 +141,7 @@ const createType = ref<"group" | "track">("group");
 const createInput = ref("");
 const invalid = computed(() => !createInput.value);
 const permission = ref<string>();
-const root = ref<{ $el: HTMLElement }>(null);
+const root = ref<{ $el: HTMLElement } | null>(null);
 
 interface Active {
 	type?: "group" | "track";
@@ -167,7 +167,8 @@ const active = computed<Active>(() => {
 const activeGroup = computed<string>({
 	get() {
 		if (active.value.type !== "group") return "";
-		return active.value.id;
+		// active.type === "group" 时 id 必有值，空串兜底仅满足 computed<string> 的返回类型
+		return active.value.id ?? "";
 	},
 	set(id) {
 		if (!(id in data.value.group)) id = "";
@@ -178,7 +179,8 @@ const activeGroup = computed<string>({
 const activeTrack = computed<string>({
 	get() {
 		if (active.value.type !== "track") return "";
-		return active.value.id;
+		// active.type === "track" 时 id 必有值，空串兜底仅满足 computed<string> 的返回类型
+		return active.value.id ?? "";
 	},
 	set(id) {
 		if (!(id in data.value.track)) id = "";
@@ -206,9 +208,12 @@ const renameInput = computed<string>({
 			.name;
 	},
 	set(value) {
-		data.value[active.value.type][active.value.id].name =
-			value;
-		renameItem(active.value.type, +active.value.id, value);
+		const { type, id } = active.value;
+		// 表头重命名输入框仅在 active.type 存在时渲染（v-if），空分支不可达；
+		// 保守判空避免向服务端发出 admin/rename-undefined
+		if (!type || !id) return;
+		data.value[type][id].name = value;
+		renameItem(type, +id, value);
 	},
 });
 
@@ -225,36 +230,35 @@ async function createItem() {
 
 // 删除当前选中的用户组 / 路线并回到列表首页
 async function deleteItem() {
-	await send(
-		`admin/delete-${active.value.type}`,
-		+active.value.id,
-	);
+	const { type, id } = active.value;
+	// 未选中条目时菜单项仅有置灰样式（disabled class 不拦截点击），
+	// 保守判空避免向服务端发出 admin/delete-undefined
+	if (!type || !id) return;
+	await send(`admin/delete-${type}`, +id);
 	router.replace("/admin/");
 }
 
 // 追加一个权限并把整份权限列表回写
 async function addPermission() {
-	const { permissions } =
-		data.value[active.value.type][active.value.id];
+	// 添加按钮在 permission 为空时已禁用，此处兜层判空防御
+	if (!permission.value) return;
+	const { type, id } = active.value;
+	// 右侧权限区仅在选中条目时渲染，空分支不可达，保守判空防御
+	if (!type || !id) return;
+	const { permissions } = data.value[type][id];
 	permissions.push(permission.value);
-	permission.value = null;
-	await send(
-		`admin/update-${active.value.type}`,
-		+active.value.id,
-		permissions,
-	);
+	permission.value = undefined;
+	await send(`admin/update-${type}`, +id, permissions);
 }
 
 // 移除一个权限并把整份权限列表回写
 async function removePermission(index: number) {
-	const { permissions } =
-		data.value[active.value.type][active.value.id];
+	const { type, id } = active.value;
+	// 同 addPermission：右侧权限区仅在选中条目时渲染，保守判空防御
+	if (!type || !id) return;
+	const { permissions } = data.value[type][id];
 	permissions.splice(index, 1);
-	await send(
-		`admin/update-${active.value.type}`,
-		+active.value.id,
-		permissions,
-	);
+	await send(`admin/update-${type}`, +id, permissions);
 }
 
 // 加入 / 移出用户组的公共实现：调用对应 RPC 并统一成功 / 失败提示，
