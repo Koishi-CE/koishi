@@ -620,6 +620,7 @@
         "@koishi-ce/client": "workspace:*",
         "@koishi-ce/koishi": "workspace:*",
         "@koishi-ce/plugin-console": "workspace:*",
+        "element-plus": "^2.14.5",
       },
       "peerDependencies": {
         "@koishi-ce/koishi": "^1.0.0",
