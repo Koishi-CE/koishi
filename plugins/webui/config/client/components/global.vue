@@ -3,7 +3,7 @@
 <!-- Copyright (c) 2026-present Koishi-CE contributors. -->
 
 <template>
-  <k-form :schema="store.packages[''].runtime.schema" :initial="current.config" v-model="config"></k-form>
+  <k-form :schema="store.packages?.['']?.runtime?.schema" :initial="current.config" v-model="config"></k-form>
 </template>
 
 <script lang="ts" setup>

@@ -32,4 +32,11 @@ declare module "@koishi-ce/plugin-console" {
 			config: DataService<Context.Config>;
 		}
 	}
+
+	// config/request-runtime 在服务端经 src/shared/packages.ts 声明合并到
+	// "@koishi-ce/console"（该文件含 node 侧导入，不能进浏览器端类型程序），
+	// 在此按同签名镜像补齐浏览器端的 Events 合并
+	interface Events {
+		"config/request-runtime"(name: string): void;
+	}
 }

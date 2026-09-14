@@ -6,7 +6,7 @@
   <el-dialog
     v-if="store.packages"
     :modelValue="!!dialogSelect"
-    @update:modelValue="dialogSelect = null"
+    @update:modelValue="dialogSelect = undefined"
     class="plugin-select"
   >
     <template #header>
@@ -71,12 +71,16 @@ const filter = inject(
 
 /** 可选插件列表：排除全局设置条目，并应用关键词与注入的过滤器。 */
 const packages = computed(() =>
-	Object.values(store.packages).filter(
+	Object.values(store.packages ?? {}).filter(
 		({ name, shortname }) => {
+			const data = name
+				? store.packages?.[name]
+				: undefined;
 			return (
-				name &&
+				!!name &&
 				shortname.includes(keyword.value.toLowerCase()) &&
-				filter(store.packages[name])
+				!!data &&
+				filter(data)
 			);
 		},
 	),
@@ -88,9 +92,12 @@ const packages = computed(() =>
  * @param shortname 插件短名
  */
 function configure(shortname: string) {
-	const path = dialogSelect.value.path;
+	// 列表项只在弹窗打开时可点,target 恒非空;防御空值直接跳过
+	const target = dialogSelect.value;
+	if (!target) return;
+	const path = target.path;
 	const ident = Math.random().toString(36).slice(2, 8);
-	dialogSelect.value = null;
+	dialogSelect.value = undefined;
 	keyword.value = "";
 	// workspace 源码包可能未被 Bun 链入 node_modules（只按需链接被依赖
 	// 的包），短名解析会失败——带 paths 标注的包以相对路径键启用，
@@ -114,7 +121,7 @@ watch(
 	async (value) => {
 		if (!value) return;
 		await nextTick();
-		await input.value.focus();
+		await input.value?.focus();
 	},
 	{ flush: "post" },
 );

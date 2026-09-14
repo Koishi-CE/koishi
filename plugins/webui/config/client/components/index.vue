@@ -33,7 +33,7 @@
       v-model="showRemove"
       :title="t('config.view.removeTitle')"
       destroy-on-close
-      @closed="remove = null"
+      @closed="remove = undefined"
     >
       <template v-if="remove">
         {{ t(remove.children ? 'config.view.removeConfirmGroup' : 'config.view.removeConfirmPlugin', [remove.label || (remove.children ? remove.path : remove.name)]) }}
@@ -49,7 +49,7 @@
       :title="t('config.view.renameTitle')"
       destroy-on-close
       @open="handleOpen"
-      @closed="rename = null"
+      @closed="rename = undefined"
     >
       <template v-if="rename">
         <el-input ref="inputEl" v-model="input" @keydown.enter.stop.prevent="renameItem(rename, input)"/>
@@ -149,7 +149,8 @@ const remove = ref<Tree>();
 const showRemove = ref(false);
 const rename = ref<Tree>();
 const showRename = ref(false);
-const groupCreate = ref<string>(null);
+// 创建分组弹窗的目标分组路径（null 表示弹窗关闭）
+const groupCreate = ref<string | null>(null);
 
 watch(remove, (value) => {
 	if (value) showRemove.value = true;
@@ -163,8 +164,9 @@ watch(rename, (value) => {
 watch(
 	() => plugins.value.paths[path.value],
 	(value) => {
-		current.value = value;
-		config.value = clone(value.config);
+		current.value = value ?? current.value;
+		// path 恒回退根节点,理论上 value 不会为空;保守跳过克隆
+		if (value) config.value = clone(value.config);
 	},
 	{ immediate: true },
 );
@@ -177,7 +179,7 @@ ctx.define("config.tree", current);
 // 添加插件:仅分组节点与根节点可用,打开插件选择弹窗
 ctx.action("config.tree.add-plugin", {
 	hidden: ({ config }) =>
-		config.tree.path && !config.tree.children,
+		!!config.tree.path && !config.tree.children,
 	action: ({ config }) =>
 		(dialogSelect.value = config.tree),
 });
@@ -185,7 +187,7 @@ ctx.action("config.tree.add-plugin", {
 // 添加分组:仅分组节点与根节点可用,打开创建分组弹窗
 ctx.action("config.tree.add-group", {
 	hidden: ({ config }) =>
-		config.tree.path && !config.tree.children,
+		!!config.tree.path && !config.tree.children,
 	action: ({ config }) => {
 		groupCreate.value = config.tree.path;
 	},
@@ -193,13 +195,13 @@ ctx.action("config.tree.add-group", {
 
 /** 在当前分组下创建子分组（随机 ident）并跳转过去。 */
 function createGroup($label: string) {
+	const parent = groupCreate.value;
+	// 确认按钮只在弹窗打开时可见,parent 恒非空;防御空值直接跳过
+	if (parent === null) return;
 	const ident = Math.random().toString(36).slice(2, 8);
-	void send(
-		`manager/reload`,
-		groupCreate.value,
-		`group:${ident}`,
-		{ $label },
-	);
+	void send(`manager/reload`, parent, `group:${ident}`, {
+		$label,
+	});
 	router.replace(`/plugins/${ident}`);
 	groupCreate.value = null;
 }
@@ -209,16 +211,19 @@ ctx.action("config.tree.clone", {
 	hidden: ({ config }) =>
 		!config.tree.path || !!config.tree.children,
 	action: async ({ config }) => {
-		const children = config.tree.parent.path
-			? config.tree.parent.children
+		const parent = config.tree.parent;
+		// 分组父节点的 children 恒存在(clone 仅对插件节点可用);
+		// 根层级走 data.slice(1) 且不含全局设置键
+		const children = parent?.path
+			? parent.children
 			: plugins.value.data.slice(1);
-		const index = children.findIndex(
+		const index = (children ?? []).findIndex(
 			(tree) => tree.path === config.tree.path,
 		);
 		const ident = Math.random().toString(36).slice(2, 8);
 		void send(
 			"manager/unload",
-			config.tree.parent?.path ?? "",
+			parent?.path ?? "",
 			`${config.tree.name}:${ident}`,
 			config.tree.config,
 			index + 1,
@@ -264,7 +269,8 @@ ctx.action("config.tree.remove", {
  */
 function checkConfig(name: string) {
 	let schema =
-		store.packages[getFullName(name)]?.runtime.schema;
+		store.packages?.[getFullName(name) ?? ""]?.runtime
+			?.schema;
 	if (!schema) return true;
 	try {
 		new Schema(schema)(config.value);
@@ -281,7 +287,7 @@ ctx.action("config.tree.save", {
 	disabled: (scope) =>
 		!scope?.config?.tree ||
 		!["config"].includes(
-			router.currentRoute.value?.meta?.activity.id,
+			router.currentRoute.value?.meta?.activity?.id ?? "",
 		),
 	action: async ({ config: { tree } }) => {
 		const { disabled, path } = tree;
@@ -343,7 +349,9 @@ async function execute(
 }
 
 /** 确认重命名：更新本地标签并把 $label 元数据写入配置（空名即删除）。 */
-function renameItem(tree: Tree, name: string) {
+function renameItem(tree: Tree | undefined, name: string) {
+	// 确认按钮只在重命名弹窗打开时可点,tree 恒非空;防御空值直接跳过
+	if (!tree) return;
 	showRename.value = false;
 	tree.label = name;
 	void send("manager/meta", tree.path, {

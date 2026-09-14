@@ -47,14 +47,23 @@ export interface Tree {
 	children?: Tree[];
 }
 
-/** fork 管理弹窗当前展示的插件名（非空即打开弹窗）。 */
+/** fork 管理弹窗当前展示的插件名（关闭弹窗即 undefined）。 */
 export const dialogFork = ref<string>();
 
-/** 插件选择弹窗当前的目标节点（非空即打开弹窗）。 */
+/** 插件选择弹窗当前的目标节点（关闭弹窗即 undefined）。 */
 export const dialogSelect = ref<Tree>();
 
-/** 当前选中的配置树节点（随路由同步）。 */
-export const current = ref<Tree>();
+/**
+ * 当前选中的配置树节点（随路由同步）。
+ * 初值为根节点的空壳（无 config/parent），index.vue 的 watch
+ * （immediate）在 setup 期即以 plugins.paths 中的真实根节点覆盖，
+ * 使 current 在类型与运行时上恒非空。
+ */
+export const current = ref<Tree>({
+	id: "",
+	name: "",
+	path: "",
+});
 
 /**
  * 判断配置树节点（及其后代）中是否包含控制台核心插件。
@@ -62,7 +71,7 @@ export const current = ref<Tree>();
  *
  * @param tree 配置树节点
  */
-export function hasCoreDeps(tree: Tree) {
+export function hasCoreDeps(tree: Tree): boolean {
 	if (
 		tree.name &&
 		coreDeps.includes(getFullName(tree.name) ?? "")
@@ -221,9 +230,11 @@ export const plugins = computed(() => {
  * 读取某个配置节点的运行状态灯样式。
  * 状态来自服务端 runtime.forks[path].status；无记录时视为已停用。
  *
- * @param tree 配置树节点
+ * @param tree 配置树节点（fork 表中的路径尚未建树时可能为空，按停用处理）
  */
-export function getStatus(tree: Tree) {
+export function getStatus(tree: Tree | undefined) {
+	// forks 与 paths 由同一次 traverse 构建，正常恒能命中；此处仅作防御
+	if (!tree) return "disabled";
 	switch (
 		store.packages?.[getFullName(tree.name) ?? ""]?.runtime
 			?.forks?.[tree.path]?.status
@@ -246,9 +257,11 @@ export function getStatus(tree: Tree) {
 /**
  * 移除某个配置节点：发送移除事件后跳回其父分组的配置页。
  *
- * @param tree 待移除的配置树节点
+ * @param tree 待移除的配置树节点（节点尚未建树时可能为空，直接跳过）
  */
-export async function removeItem(tree: Tree) {
+export async function removeItem(tree: Tree | undefined) {
+	// 同 getStatus：正常恒非空，此处仅作防御
+	if (!tree) return;
 	const parent = tree.parent?.path ?? "";
 	void send("manager/remove", parent, tree.id);
 	await router.replace(`/plugins/${parent}`);
