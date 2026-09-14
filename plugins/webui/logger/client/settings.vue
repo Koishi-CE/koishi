@@ -28,7 +28,9 @@ const current = inject<Ref<{ path: string }>>(
 // 倒序扫描日志：遇到 id 回绕（重启边界）即停，
 // 其间只保留 meta.paths 包含当前插件路径的记录，最后恢复正序
 const logs = computed(() => {
-	if (!store.logs) return [];
+	// TODO: 插件路径未注入（非插件详情上下文）或服务数据未就绪时保守返回空
+	const path = current?.value.path;
+	if (!store.logs || !path) return [];
 	const results = [];
 	let last = Infinity;
 	for (
@@ -36,15 +38,12 @@ const logs = computed(() => {
 		index > 0;
 		--index
 	) {
-		if (store.logs[index].id >= last) break;
-		last = store.logs[index].id;
-		if (
-			!store.logs[index].meta?.paths?.includes(
-				current.value.path,
-			)
-		)
-			continue;
-		results.unshift(store.logs[index]);
+		const record = store.logs[index];
+		if (!record) continue;
+		if (record.id >= last) break;
+		last = record.id;
+		if (!record.meta?.paths?.includes(path)) continue;
+		results.unshift(record);
 	}
 	return results;
 });

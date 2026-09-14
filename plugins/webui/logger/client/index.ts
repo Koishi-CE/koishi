@@ -16,6 +16,11 @@ interface LogRecord extends Message {
 	id: number;
 	timestamp: number;
 	content: string;
+	// 来源信息:node 侧运行时写入 paths(日志来源插件),详情页按它过滤日志
+	meta?: { paths?: string[] };
+	// 开放索引签名:virtual-list 的 data prop 为 Record<string, unknown>[],
+	// 接口缺索引签名就无法作为其数据源(与 logs.vue 的同名接口保持同步)
+	[key: string]: unknown;
 }
 
 // 浏览器端 tsconfig 无 paths,@koishi-ce/plugin-console 解析不到真实模块,

@@ -17,6 +17,15 @@ import Locales from "./locales.vue";
 
 import "virtual:uno.css";
 
+/**
+ * 编辑态词典节点：叶子翻译值允许 null（用户清空翻译时置 null 表示删除该键，
+ * node 侧落盘为 YAML null）。node 侧 entry 推送的就是含 null 的实态数据，
+ * 因此比 I18n.Store 更贴近运行时形状（locales.vue 的回写依赖此宽松值域）。
+ */
+export type EditableStore = {
+	[key: string]: I18n.Node | null;
+};
+
 // 浏览器端 tsconfig 无 paths,@koishi-ce/plugin-console 解析不到真实模块,
 // Console.Services 来自 packages/web/client/client/shims.d.ts 的手写环境声明;
 // 这里按同名环境声明合并为其补充 locales 键,使 ctx.page 的 fields 通过检查
@@ -24,8 +33,16 @@ import "virtual:uno.css";
 declare module "@koishi-ce/plugin-console" {
 	namespace Console {
 		export interface Services {
-			locales: DataService<Dict<I18n.Store>>;
+			locales: DataService<Dict<EditableStore>>;
 		}
+	}
+
+	// send() 的 l10n 事件镜像声明:node 侧真实声明位于本包 src/index.ts 的
+	// declare module "@koishi-ce/console"(浏览器端类型程序不可见,见 commands
+	// 插件 client/utils.ts 的同款模式),两处须保持同步;参数按运行时编辑态
+	// (值可为 null)声明,是 node 侧 Dict<I18n.Store> 的宽松超类型
+	interface Events {
+		l10n(data: Dict<EditableStore>): void;
 	}
 }
 
