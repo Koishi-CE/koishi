@@ -199,7 +199,17 @@ function parseEntries(stdout: string): Entry[] {
 			file,
 			line: Number(match[2] ?? 0),
 			code: match[3] ?? "",
-			message: match[4] ?? "",
+			// 消息正文可能嵌入依赖解析出的绝对路径（如 TS7016 报缺失
+			// 声明的模块路径）：checkout 目录名与平台分隔符差异会让同一
+			// 条错误在不同机器上生成不同的键——统一把仓库根（正反斜杠
+			// 两种形态都替换，win32 下 tsc 消息内的路径是正斜杠形态）
+			// 替换为 <root>、残余反斜杠归一为正斜杠，保证键跨机器稳定
+			message: (match[4] ?? "")
+				.split(ROOT)
+				.join("<root>")
+				.split(ROOT.replaceAll("\\", "/"))
+				.join("<root>")
+				.replaceAll("\\", "/"),
 		});
 	}
 	return entries;

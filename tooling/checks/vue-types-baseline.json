@@ -1,6 +1,6 @@
 {
 	"meta": {
-		"generatedAt": "2026-09-14T14:49:54.029Z",
+		"generatedAt": "2026-09-14T15:01:18.980Z",
 		"vueTscVersion": "3.3.11",
 		"typescriptVersion": "5.9.3",
 		"total": 458
@@ -130,7 +130,7 @@
 		"plugins/webui/admin/client/group.vue::TS2461::Type 'string[] | undefined' is not an array type.",
 		"plugins/webui/admin/client/group.vue::TS2769::No overload matches this call.",
 		"plugins/webui/admin/client/group.vue::TS6133::'root' is declared but its value is never read.",
-		"plugins/webui/admin/client/group.vue::TS7016::Could not find a declaration file for module 'throttle-debounce'. 'C:/Dev/Bot-Dev/Koishi-CE/node_modules/.bun/throttle-debounce@5.0.2/node_modules/throttle-debounce/esm/index.js' implicitly has an 'any' type.",
+		"plugins/webui/admin/client/group.vue::TS7016::Could not find a declaration file for module 'throttle-debounce'. '<root>/node_modules/.bun/throttle-debounce@5.0.2/node_modules/throttle-debounce/esm/index.js' implicitly has an 'any' type.",
 		"plugins/webui/admin/client/group.vue::TS7030::Not all code paths return a value.",
 		"plugins/webui/admin/client/name.vue::TS18048::'__VLS_ctx.id' is possibly 'undefined'.",
 		"plugins/webui/admin/client/name.vue::TS2307::Cannot find module '@koishi-ce/plugin-admin/src' or its corresponding type declarations.",
@@ -421,7 +421,7 @@
 		"plugins/webui/market/client/market/package.vue::TS2614::Module '\"@koishi-ce/components\"' has no exported member 'useI18nText'. Did you mean to use 'import useI18nText from \"@koishi-ce/components\"' instead?",
 		"plugins/webui/market/client/market/package.vue::TS4111::Property 'npm' comes from an index signature, so it must be accessed with ['npm'].",
 		"plugins/webui/market/client/market/package.vue::TS4111::Property 'size' comes from an index signature, so it must be accessed with ['size'].",
-		"plugins/webui/market/client/market/package.vue::TS7016::Could not find a declaration file for module 'spark-md5'. 'C:/Dev/Bot-Dev/Koishi-CE/node_modules/.bun/spark-md5@3.0.2/node_modules/spark-md5/spark-md5.js' implicitly has an 'any' type.",
+		"plugins/webui/market/client/market/package.vue::TS7016::Could not find a declaration file for module 'spark-md5'. '<root>/node_modules/.bun/spark-md5@3.0.2/node_modules/spark-md5/spark-md5.js' implicitly has an 'any' type.",
 		"plugins/webui/market/client/market/package.vue::TS7030::Not all code paths return a value.",
 		"plugins/webui/market/client/market/search.vue::TS18048::'value' is possibly 'undefined'.",
 		"plugins/webui/market/client/market/search.vue::TS18048::'words.value' is possibly 'undefined'.",
