@@ -91,7 +91,8 @@ function onEnter() {
 	emit("update:modelValue", words.value);
 }
 
-function onEscape(event: KeyboardEvent) {
+// _event 未在函数体内使用，保留参数以维持模板 $event 的传参位置
+function onEscape(_event: KeyboardEvent) {
 	words.value[words.value.length - 1] = "";
 	emit("update:modelValue", words.value);
 }

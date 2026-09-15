@@ -9,14 +9,14 @@
 -->
 <template>
   <section class="k-card">
-    <header v-if="title || $slots.header">
+    <header v-if="title || $slots['header']">
       <slot name="header">{{ title }}</slot>
     </header>
     <el-scrollbar v-if="scrollbar">
       <div class="k-card-body"><slot/></div>
     </el-scrollbar>
     <div v-else class="k-card-body"><slot/></div>
-    <footer v-if="$slots.footer">
+    <footer v-if="$slots['footer']">
       <slot name="footer"></slot>
     </footer>
   </section>

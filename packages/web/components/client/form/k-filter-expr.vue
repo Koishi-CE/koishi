@@ -16,7 +16,14 @@
     无法解析的此处的表达式。
   </template>
   <div class="k-filter-expr" v-else>
-    <el-select class="entity" :disabled="disabled" v-model="entity">
+    <!-- modelValue 为 undefined 时整体不传（exactOptionalPropertyTypes 约束）：
+         el-select 回退内部默认空值，与原传 undefined 的显示行为一致 -->
+    <el-select
+      class="entity"
+      :disabled="disabled"
+      v-bind="entity !== undefined ? { modelValue: entity } : {}"
+      @update:modelValue="entity = $event"
+    >
       <template v-for="(name, key) in entities" :key="key">
         <el-option v-if="isValid(key)" :label="name" :value="key"></el-option>
       </template>
@@ -25,8 +32,13 @@
       <el-switch v-model="boolean"></el-switch>
     </template>
     <template v-else-if="entity">
-      <el-select class="operator" :disabled="disabled" v-model="operator">
-        <el-option v-for="key in availableOps" :key="key" :label="operators[key]" :value="key"></el-option>
+      <el-select
+        class="operator"
+        :disabled="disabled"
+        v-bind="operator !== undefined ? { modelValue: operator } : {}"
+        @update:modelValue="operator = $event"
+      >
+        <el-option v-for="key in availableOps" :key="key" :label="operators[key] ?? ''" :value="key"></el-option>
       </el-select>
       <el-input :disabled="disabled" :key="type" :type="type" class="value" v-model="value"></el-input>
     </template>

@@ -28,7 +28,8 @@ const { t } = useI18n();
 
 const showUploading = computed({
 	get: () => !!uploading.value,
-	set: (v) => (uploading.value = null),
+	// 关闭弹窗一律终止上传流程，setter 入参无用；为保持签名位置而下划线化
+	set: (_v) => (uploading.value = null),
 });
 
 /** 遍历拖入/粘贴的数据项，把其中的文件读为 ArrayBuffer 后以 base64 写到目标目录。 */

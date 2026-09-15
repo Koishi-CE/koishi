@@ -103,7 +103,8 @@ const render: FunctionalComponent<{
 }> = ({ children }, ctx) => {
 	return children.map(({ type, attrs, children }) => {
 		if (type === "text") {
-			return attrs.content;
+			// attrs 为索引签名类型，方括号取值以满足 noPropertyAccessFromIndexSignature
+			return attrs["content"];
 		} else if (forward.includes(type)) {
 			return h(type, attrs, {
 				default: () => render({ children }, ctx),
@@ -122,7 +123,7 @@ const render: FunctionalComponent<{
 				{
 					...attrs,
 					onClick: () =>
-						send("notifier/button", attrs.onClick),
+						send("notifier/button", attrs["onClick"]),
 				},
 				{
 					default: () => render({ children }, ctx),

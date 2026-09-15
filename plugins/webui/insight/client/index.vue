@@ -259,7 +259,8 @@ function onMouseEnterNode(node: Node, event: MouseEvent) {
 	tooltip.activate(result.join("\n"), event);
 }
 
-function onMouseLeaveNode(node: Node, event: MouseEvent) {
+// 离开节点仅清焦点；事件对象未用，为保持模板事件签名位置而下划线化
+function onMouseLeaveNode(node: Node, _event: MouseEvent) {
 	if (dragged.value === node) return;
 	fNode.value = null;
 	tooltip.deactivate(300);
@@ -282,7 +283,8 @@ function onMouseEnterLink(link: Link, event: MouseEvent) {
 	);
 }
 
-function onMouseLeaveLink(link: Link, event: MouseEvent) {
+// 离开连线仅清焦点；参数均未用，为保持模板事件签名位置而下划线化
+function onMouseLeaveLink(_link: Link, _event: MouseEvent) {
 	fLink.value = null;
 	tooltip.deactivate(300);
 }
@@ -316,7 +318,9 @@ function onDragMove(event: MouseEvent | TouchEvent) {
 }
 
 /** 拖拽结束：解除坐标固定（节点回归力学模拟）并冷却模拟。 */
-function onDragEnd(event: MouseEvent | TouchEvent) {
+// 结束源（鼠标/触摸）不影响收尾逻辑；事件对象为保持
+// useEventListener 回调签名位置而下划线化
+function onDragEnd(_event: MouseEvent | TouchEvent) {
 	simulation.alphaTarget(0);
 	const node = dragged.value;
 	if (!node) return;

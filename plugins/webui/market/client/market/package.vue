@@ -51,13 +51,13 @@
     </div>
     <div class="footer">
       <el-tooltip :content="timeAgo(data.updatedAt)" placement="top">
-        <a class="truncate" target="_blank" :href="data.package.links?.npm">
+        <a class="truncate" target="_blank" :href="data.package.links?.['npm']">
           <market-icon name="tag"></market-icon>{{ data.package.version }}
         </a>
       </el-tooltip>
       <template v-if="data.installSize">
         <span class="spacer"></span>
-        <a class="truncate" target="_blank" :href="data.package.links?.size">
+        <a class="truncate" target="_blank" :href="data.package.links?.['size']">
           <market-icon name="file-archive"></market-icon>{{ formatSize(data.installSize) }}
         </a>
       </template>
@@ -135,6 +135,8 @@ const homepage = computed(() => {
 		return repository
 			.replace(/^git\+/, "")
 			.replace(/\.git$/, "");
+	// 既无主页也无存储库时无链接，显式返回 undefined（卡片不再可点击跳转）
+	return undefined;
 });
 
 const badge = computed(() => {
@@ -145,6 +147,8 @@ const badge = computed(() => {
 		if (validate(props.data, item.query))
 			return { type, ...item };
 	}
+	// 不满足任何徽章条件时无徽章，显式返回 undefined（徽章区块不渲染）
+	return undefined;
 });
 
 // 心跳新鲜度：更新越近心越红越亮，14 天内附加辉光（75 天指数半衰）

@@ -42,7 +42,8 @@ function handleDragStart(event: DragEvent) {
 	);
 }
 
-function handleDragEnd(event: DragEvent) {
+// 参数仅为保持事件回调签名位置，未参与逻辑
+function handleDragEnd(_event: DragEvent) {
 	isDragging.value = false;
 }
 </script>

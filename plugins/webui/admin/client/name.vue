@@ -8,7 +8,7 @@
     指令：{{ id.slice(8) }}
   </template>
   <template v-else-if="id.startsWith('group:')">
-    用户组：{{ store.locales?.[`permission.${id}`] || data.group[id.slice(6)].name || '未命名' }}
+    User group: {{ store.locales?.[`permission.${id}`] || data.group[id.slice(6)]?.name || 'Unnamed' }}
   </template>
   <template v-else>
     {{ store.locales?.[`permission.${id}`] || id }}

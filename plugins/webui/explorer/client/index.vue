@@ -248,7 +248,8 @@ ctx.action("explorer.tree.rename", {
 
 const showRemoving = computed({
 	get: () => !!removing.value,
-	set: (v) => (removing.value = null),
+	// 关闭弹窗一律视为取消删除，setter 入参无用；为保持签名位置而下划线化
+	set: (_v) => (removing.value = null),
 });
 
 /** 深度优先收集所有已展开节点的 filename。 */
@@ -323,6 +324,8 @@ watch(editor, () => {
 		theme: `vs-${mode.value}`,
 		tabSize: 2,
 	});
+	// noImplicitReturns：创建支路同样显式返回（返回值无人消费）
+	return;
 });
 
 const { width, height } = useElementSize(editor);
@@ -346,7 +349,9 @@ function getClass(data: TreeNodeData) {
 }
 
 /** el-tree 过滤回调：节点名包含关键字即保留（大小写不敏感）。 */
-function filterNode(value: string, data: TreeNodeData) {
+// 过滤词经 keyword 闭包读取（watch 触发 filter()）；
+// 回调首参为保持 el-tree 签名位置而下划线化
+function filterNode(_value: string, data: TreeNodeData) {
 	return String(data["name"] ?? "")
 		.toLowerCase()
 		.includes(keyword.value.toLowerCase());
@@ -363,15 +368,16 @@ interface Node {
 	childNodes: Node[];
 }
 
-// 拖拽排序对应"移动文件"语义，暂未实现，故全量禁用（以下两函数恒返 false）
-function allowDrag(node: Node) {
+// 拖拽排序对应"移动文件"语义，暂未实现，故全量禁用（以下两函数恒返 false）；
+// 参数为保持 el-tree 回调签名位置而全部下划线化
+function allowDrag(_node: Node) {
 	return false;
 }
 
 function allowDrop(
-	source: Node,
-	target: Node,
-	type: "inner" | "prev" | "next",
+	_source: Node,
+	_target: Node,
+	_type: "inner" | "prev" | "next",
 ) {
 	return false;
 }
@@ -426,8 +432,9 @@ watch(
 	{ immediate: true },
 );
 
-// 编辑内容实时写回 entry.newValue（与 oldValue 的差异即为"M"未保存标记）
-model.onDidChangeContent((e) => {
+// 编辑内容实时写回 entry.newValue（与 oldValue 的差异即为"M"未保存标记）；
+// 变更事件对象未用，为保持回调签名位置而下划线化
+model.onDidChangeContent((_e) => {
 	const entry = files[active.value];
 	if (!entry) return;
 	entry.newValue = model.getValue();
@@ -456,12 +463,13 @@ function handleCollapse(entry: TreeEntry) {
 	entry.expanded = false;
 }
 
-// 拖拽已被 allowDrag/allowDrop 全量禁用，留空实现仅为满足 el-tree 事件签名
+// 拖拽已被 allowDrag/allowDrop 全量禁用，留空实现仅为满足 el-tree 事件签名；
+// 参数因此全部下划线化
 function handleDrop(
-	source: Node,
-	target: Node,
-	position: "before" | "after" | "inner",
-	event: DragEvent,
+	_source: Node,
+	_target: Node,
+	_position: "before" | "after" | "inner",
+	_event: DragEvent,
 ) {}
 
 /** 发起删除：先退出重命名态，目录路径补结尾 / 以示区分。 */

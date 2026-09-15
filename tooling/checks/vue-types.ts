@@ -226,6 +226,23 @@ function parseEntries(stdout: string): Entry[] {
 							return whole;
 						return `(${[...parts].sort().join(" | ")})`;
 					},
+				)
+				// 同因的另一形态：源签名里的字符串字面量 union（如
+				// type: "inner" | "prev" | "next"）无括号包裹、成员带
+				// 引号，上面的正则覆盖不到，同样按字典序重排（仅处理
+				// 成员全为双引号字面量的段，含其它形态的原样保留）
+				.replace(
+					/("[^"]*"(?:\s+\|\s+"[^"]*")+)/g,
+					(whole: string) => {
+						const parts = whole
+							.split("|")
+							.map((part) => part.trim());
+						if (
+							parts.some((part) => !/^"[^"]*"$/.test(part))
+						)
+							return whole;
+						return [...parts].sort().join(" | ");
+					},
 				),
 		});
 	}

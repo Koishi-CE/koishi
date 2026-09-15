@@ -18,7 +18,13 @@
     </td>
 
     <td>
-      <el-select v-if="data" v-model="version">
+      <!-- version 可能处于 undefined 未选择态（el-select 显示占位），
+           exactOptionalPropertyTypes 下需条件展开传参，未选择时不传 modelValue -->
+      <el-select
+        v-if="data"
+        v-bind="version !== undefined ? { modelValue: version } : {}"
+        @update:model-value="version = $event"
+      >
         <el-option value="">移除依赖</el-option>
         <el-option v-for="({ result }, version) in data" :key="version" :value="version">
           {{ version }}

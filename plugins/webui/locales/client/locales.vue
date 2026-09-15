@@ -118,8 +118,9 @@ const active = computed<string>({
 
 provide("locale:prefix", active);
 
-/** 树节点过滤：label 包含关键字即命中（不区分大小写）。 */
-function filterNode(value: string, data: Tree) {
+/** 树节点过滤：label 包含关键字即命中（不区分大小写）。
+ * 首参对齐 el-tree filter-node-method 签名位置，实值经 keyword 读取，故置下划线。 */
+function filterNode(_value: string, data: Tree) {
 	return data.label
 		.toLowerCase()
 		.includes(keyword.value.toLowerCase());

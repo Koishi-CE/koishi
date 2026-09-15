@@ -50,10 +50,10 @@ const transform = computed(() => {
 	return `scale(${scale.value}) rotate(${rotate.value}deg)`;
 });
 
-// 切换图片源时复位缩放与旋转
+// 切换图片源时复位缩放与旋转（不关心新旧值，仅监听变化）
 watch(
 	() => props.src,
-	(el) => {
+	() => {
 		scale.value = 1;
 		rotate.value = 0;
 	},

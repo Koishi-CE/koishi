@@ -120,7 +120,8 @@ function addWord(word: string) {
 	words.value.push(word, "");
 }
 
-function toggleSort(word: string, event: MouseEvent) {
+// _event 未在函数体内使用，保留参数以维持模板 $event 的传参位置
+function toggleSort(word: string, _event: MouseEvent) {
 	const index = words.value.findIndex((x) =>
 		x.startsWith("sort:"),
 	);
@@ -143,7 +144,8 @@ function toggleSort(word: string, event: MouseEvent) {
 	emit("update:modelValue", words.value);
 }
 
-function toggleCategory(word: string, event: MouseEvent) {
+// _event 未在函数体内使用，保留参数以维持模板 $event 的传参位置
+function toggleCategory(word: string, _event: MouseEvent) {
 	const index = words.value.findIndex((x) =>
 		x.startsWith("category:"),
 	);
@@ -157,7 +159,8 @@ function toggleCategory(word: string, event: MouseEvent) {
 	emit("update:modelValue", words.value);
 }
 
-function toggleQuery(item: Badge, event: MouseEvent) {
+// _event 未在函数体内使用，保留参数以维持模板 $event 的传参位置
+function toggleQuery(item: Badge, _event: MouseEvent) {
 	const { query, negate } = item;
 	const index = words.value.findIndex(
 		(x) => x === query || x === negate,

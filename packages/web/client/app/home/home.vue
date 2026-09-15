@@ -19,7 +19,7 @@
 </template>
 
 <script lang="ts" setup>
-import { global, socket } from "@koishi-ce/client";
+import { socket } from "@koishi-ce/client";
 import { useI18n } from "vue-i18n";
 
 const { t } = useI18n();

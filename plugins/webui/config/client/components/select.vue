@@ -66,7 +66,8 @@ const input = ref();
 // 默认不做额外过滤
 const filter = inject(
 	"plugin-select-filter",
-	(data: PackageProvider.Data) => true,
+	// 参数为保持过滤器签名位置而下划线化（下方 filter(data) 按单参调用）
+	(_data: PackageProvider.Data) => true,
 );
 
 /** 可选插件列表：排除全局设置条目，并应用关键词与注入的过滤器。 */

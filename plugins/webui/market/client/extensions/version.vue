@@ -6,20 +6,20 @@
   <!-- navigation -->
   <div class="navigation flex flex-wrap gap-x-4 gap-y-2 my-8" v-if="object">
     <a class="el-button" target="_blank"
-      v-if="object.package.links?.homepage"
-      :href="object.package.links.homepage"
+      v-if="object.package.links?.['homepage']"
+      :href="object.package.links['homepage']"
     >插件主页</a>
     <a class="el-button" target="_blank"
-      v-if="object.package.links?.npm && local?.package.version"
-      :href="object.package.links.npm + '/v/' + local.package.version"
+      v-if="object.package.links?.['npm'] && local?.package.version"
+      :href="object.package.links['npm'] + '/v/' + local.package.version"
     >当前版本：{{ local.package.version }}</a>
     <a class="el-button" target="_blank"
-      v-if="object.package.links?.repository"
-      :href="object.package.links.repository"
+      v-if="object.package.links?.['repository']"
+      :href="object.package.links['repository']"
     >存储库</a>
     <a class="el-button" target="_blank"
-      v-if="object.package.links?.bugs"
-      :href="object.package.links.bugs"
+      v-if="object.package.links?.['bugs']"
+      :href="object.package.links['bugs']"
     >问题反馈</a>
   </div>
 

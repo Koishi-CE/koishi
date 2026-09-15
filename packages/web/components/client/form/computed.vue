@@ -37,8 +37,9 @@
       <el-button v-if="isSwitch" @click="actions.insert()">添加分支</el-button>
     </template>
     <template #collapse v-if="isSwitch">
+      <!-- 循环项仅用于配合下标遍历，未参与渲染，改下划线前缀规避未用告警 -->
       <k-schema
-        v-for="(item, index) in branches"
+        v-for="(_item, index) in branches"
         :modelValue="branches[index]?.then"
         @update:modelValue="actions.update(index, 'then', $event)"
         :key="index"
