@@ -70,6 +70,30 @@
 			],
 			"@koishi-ce/koishi": [
 				"./packages/node/cli/lib/index.d.ts"
+			],
+			// 以下为 client 生态裸名与跨插件类型增强导入的显式映射：构建期由
+			// collectWorkspaceAliases 解析，但 vue-tsc 闸门按 paths 走，缺口会
+			// 以 TS2307 落基线（此前 27 条白名单即此因）
+			"vue-i18n": [
+				"./packages/web/client/node_modules/vue-i18n"
+			],
+			"vue-router": [
+				"./packages/web/client/node_modules/vue-router"
+			],
+			"element-plus": [
+				"./packages/web/client/node_modules/element-plus"
+			],
+			"@koishi-ce/plugin-admin/src": [
+				"./plugins/webui/admin/lib/index.d.ts"
+			],
+			"@koishi-ce/plugin-analytics/src": [
+				"./plugins/webui/analytics/lib/index.d.ts"
+			],
+			"@koishi-ce/plugin-commands/src": [
+				"./plugins/webui/commands/lib/index.d.ts"
+			],
+			"@koishi-ce/plugin-notifier/src": [
+				"./plugins/webui/notifier/lib/index.d.ts"
 			]
 		}
 	}
