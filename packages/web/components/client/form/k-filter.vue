@@ -70,6 +70,8 @@ const invalid = computed(() => {
 		const inner = extract(layer, "$and");
 		if (!inner) return true;
 	}
+	// 全部层均解析成功：结构有效，可编辑（此前隐式返回 undefined，同为 falsy，行为不变）
+	return false;
 });
 
 /**

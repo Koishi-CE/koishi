@@ -11,7 +11,7 @@
 -->
 <template>
   <el-scrollbar ref="root" @scroll="onScroll" v-bind="maxHeight ? { maxHeight } : {}">
-    <virtual-item v-if="$slots.header" @resize="virtual.saveSize('header', $event)">
+    <virtual-item v-if="$slots['header']" @resize="virtual.saveSize('header', $event)">
       <div><slot name="header"></slot></div>
     </virtual-item>
     <component :is="tag" class="virtual-list-wrapper" :style="wrapperStyle">
@@ -20,7 +20,7 @@
         <slot v-bind="item" :index="index + range.start"></slot>
       </virtual-item>
     </component>
-    <virtual-item v-if="$slots.footer" @resize="virtual.saveSize('footer', $event)">
+    <virtual-item v-if="$slots['footer']" @resize="virtual.saveSize('footer', $event)">
       <div><slot name="footer"></slot></div>
     </virtual-item>
     <div ref="shepherd"></div>
@@ -81,8 +81,11 @@ const root = ref<typeof ElScrollbar>();
 watch(
 	() => props.data.length,
 	() => {
+		// 数据变化只发生在挂载之后；判空仅作类型收窄防御，正常路径不可达
+		const wrapRef = root.value?.["wrapRef"];
+		if (!wrapRef) return;
 		const { scrollTop, clientHeight, scrollHeight } =
-			root.value.wrapRef;
+			wrapRef;
 		if (
 			!props.pinned ||
 			Math.abs(scrollTop + clientHeight - scrollHeight) < 1
@@ -157,13 +160,16 @@ onMounted(() => {
 
 /** 滚动到指定像素偏移；smooth 时带平滑动画 */
 function scrollToOffset(offset: number, smooth = false) {
+	// 调用点均发生在挂载后；判空仅作类型收窄防御，正常路径不可达
+	const wrapRef = root.value?.["wrapRef"];
+	if (!wrapRef) return;
 	if (smooth) {
-		root.value.wrapRef.scrollTo({
+		wrapRef.scrollTo({
 			top: offset,
 			behavior: "smooth",
 		});
 	} else {
-		root.value.wrapRef.scrollTop = offset;
+		wrapRef.scrollTop = offset;
 	}
 }
 
@@ -181,15 +187,13 @@ function scrollToBottom() {
 		// 检查是否真的滚到了底部：列表可能还没渲染并计算到
 		// 最后一个范围，所以要在下一个事件循环里重试，直到真正贴底
 		setTimeout(() => {
-			const offset = Math.ceil(
-				root.value.wrapRef.scrollTop,
-			);
-			const clientLength = Math.ceil(
-				root.value.wrapRef.clientHeight,
-			);
-			const scrollLength = Math.ceil(
-				root.value.wrapRef.scrollHeight,
-			);
+			// 定时器触发时组件可能已卸载（el-scrollbar 实例随之置空），
+			// 此时无从读取滚动状态，终止重试
+			const wrapRef = root.value?.["wrapRef"];
+			if (!wrapRef) return;
+			const offset = Math.ceil(wrapRef.scrollTop);
+			const clientLength = Math.ceil(wrapRef.clientHeight);
+			const scrollLength = Math.ceil(wrapRef.scrollHeight);
 			if (offset + clientLength < scrollLength) {
 				scrollToBottom();
 			}
@@ -205,7 +209,8 @@ onActivated(() => {
 	if (props.activate === "bottom") {
 		scrollToBottom();
 	} else if (props.activate === "current") {
-		root.value.setScrollTop(scrollTop);
+		// keep-alive 激活时必已挂载；判空仅作类型收窄防御
+		root.value?.["setScrollTop"](scrollTop);
 	}
 });
 
@@ -216,15 +221,12 @@ interface ScrollOffset {
 }
 
 function onScroll(ev: ScrollOffset) {
-	const offset = Math.ceil(
-		(scrollTop = root.value.wrapRef.scrollTop),
-	);
-	const clientLength = Math.ceil(
-		root.value.wrapRef.clientHeight,
-	);
-	const scrollLength = Math.ceil(
-		root.value.wrapRef.scrollHeight,
-	);
+	// scroll 事件由 el-scrollbar 转发，触发时必已挂载；判空仅作类型收窄防御
+	const wrapRef = root.value?.["wrapRef"];
+	if (!wrapRef) return;
+	const offset = Math.ceil((scrollTop = wrapRef.scrollTop));
+	const clientLength = Math.ceil(wrapRef.clientHeight);
+	const scrollLength = Math.ceil(wrapRef.scrollHeight);
 
 	// iOS 的回弹滚动会产出越界 offset，导致方向误判，直接忽略
 	if (

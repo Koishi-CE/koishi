@@ -18,7 +18,11 @@ const props = defineProps<{ src: string }>();
 
 function handleClick(ev: MouseEvent) {
 	ev.preventDefault();
-	if (ev.metaKey) return window.open(props.src, "_blank");
+	// 事件处理器的返回值无人消费：打开新窗口后统一补 undefined 返回
+	if (ev.metaKey) {
+		window.open(props.src, "_blank");
+		return undefined;
+	}
 	shared.overlayImage = ev.target as HTMLImageElement;
 }
 </script>

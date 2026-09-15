@@ -74,7 +74,7 @@ function handleClick(tree: Tree) {
 // 当前分组与路由参数双向同步；无效分组名回退为空串
 const path = computed({
 	get() {
-		const name = route.params.name?.toString();
+		const name = route.params["name"]?.toString();
 		return name !== undefined &&
 			name in ctx.internal.settings
 			? name

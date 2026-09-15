@@ -9,7 +9,7 @@
 -->
 <template>
   <div class="layout-container" :class="[container, styles]">
-    <aside class="layout-aside layout-left" :class="left" v-if="$slots.left">
+    <aside class="layout-aside layout-left" :class="left" v-if="$slots['left']">
       <slot name="left"></slot>
     </aside>
 
@@ -47,7 +47,7 @@
       </main>
     </div>
 
-    <aside class="layout-aside layout-right" :class="right" v-if="$slots.right">
+    <aside class="layout-aside layout-right" :class="right" v-if="$slots['right']">
       <slot name="right"></slot>
     </aside>
   </div>
@@ -84,8 +84,8 @@ const isRightAsideOpen = ref(false);
 
 // 布局类名：左右插槽是否存在决定骨架形态，开合状态配合移动端抽屉样式
 const styles = computed(() => ({
-	"has-left-aside": slots.left,
-	"has-right-aside": slots.right,
+	"has-left-aside": slots["left"],
+	"has-right-aside": slots["right"],
 	"is-left-aside-open": isLeftAsideOpen.value,
 	"is-right-aside-open": isRightAsideOpen.value,
 }));
