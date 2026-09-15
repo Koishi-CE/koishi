@@ -28,7 +28,7 @@
     </template>
 
     <template #left>
-      <el-scrollbar class="user-groups" ref="root">
+      <el-scrollbar class="user-groups">
         <div class="search">
           <el-input v-model="keyword">
             <template #suffix>
@@ -38,11 +38,11 @@
         </div>
         <div class="k-tab-group-title">用户组</div>
         <k-tab-group :data="data.group" v-model="activeGroup" #="{ id }">
-          {{ store.locales?.[`permission.${id}`] || data.group[id].name || '未命名' }}
+          {{ store.locales?.[`permission.${id}`] || data.group[id]?.name || '未命名' }}
         </k-tab-group>
         <div class="k-tab-group-title">用户组路线</div>
         <k-tab-group :data="data.track" v-model="activeTrack" #="{ id }">
-          {{ store.locales?.[`permission-track.${id}`] || data.track[id].name || '未命名' }}
+          {{ store.locales?.[`permission-track.${id}`] || data.track[id]?.name || '未命名' }}
         </k-tab-group>
       </el-scrollbar>
     </template>
@@ -51,7 +51,7 @@
       <template v-if="activeGroup">
         <!-- nav: 前往本地化翻译 -->
         <h2 class="k-schema-header">用户管理</h2>
-        <p>此用户组内当前共有 {{ data.group[activeGroup].count }} 个用户。</p>
+        <p>此用户组内当前共有 {{ data.group[activeGroup]?.count }} 个用户。</p>
         <el-button @click="showUserDialog = true">添加用户</el-button>
       </template>
 
@@ -61,7 +61,8 @@
           <tr v-for="(permission, index) in permissions" :key="index">
             <td class="text-left"><permission-name :id="permission" /></td>
             <td class="text-right">
-              <el-button v-if="getLink(permission)" @click="router.push(getLink(permission))">前往</el-button>
+              <!-- v-if 已保证链接非空，?? '' 分支仅为满足 router.push 的参数类型 -->
+              <el-button v-if="getLink(permission)" @click="router.push(getLink(permission) ?? '')">前往</el-button>
               <el-button @click="removePermission(index)">删除</el-button>
             </td>
           </tr>
@@ -69,7 +70,12 @@
       </template>
       <p v-else>该用户组没有权限。</p>
 
-      <el-select v-model="permission">
+      <!-- permission 初始为 undefined（未选择），exactOptionalPropertyTypes 下
+           需条件展开传参，未选择时不传 modelValue（el-select 走缺省占位态） -->
+      <el-select
+        v-bind="permission !== undefined ? { modelValue: permission } : {}"
+        @update:model-value="permission = $event"
+      >
         <el-option
           v-for="id in [...Object.keys(data.group).map(id => `group:${id}`), ...(active.type === 'track' ? [] : store.permissions ?? [])]"
           :key="id"
@@ -141,7 +147,6 @@ const createType = ref<"group" | "track">("group");
 const createInput = ref("");
 const invalid = computed(() => !createInput.value);
 const permission = ref<string>();
-const root = ref<{ $el: HTMLElement } | null>(null);
 
 interface Active {
 	type?: "group" | "track";
@@ -188,10 +193,12 @@ const activeTrack = computed<string>({
 	},
 });
 
-// 选中条目的权限列表（active 已保证 type / id 有效）
+// 选中条目的权限列表：右侧权限区仅在选中条目时渲染（v-if），
+// type / id 为空的分支不可达，判空仅满足类型收窄
 const permissions = computed(() => {
-	return data.value[active.value.type][active.value.id]
-		.permissions;
+	const { type, id } = active.value;
+	if (!type || !id) return [];
+	return data.value[type][id]?.permissions ?? [];
 });
 
 // 行内重命名：输入停顿 1s 后才发送，避免每个按键都打一次 RPC
@@ -204,15 +211,21 @@ const renameItem = debounce(
 
 const renameInput = computed<string>({
 	get() {
-		return data.value[active.value.type][active.value.id]
-			.name;
+		const { type, id } = active.value;
+		// 表头重命名输入框仅在 active.type 存在时渲染（v-if），空分支不可达；
+		// 保守判空避免以 undefined 索引数据字典
+		if (!type || !id) return "";
+		return data.value[type][id]?.name ?? "";
 	},
 	set(value) {
 		const { type, id } = active.value;
 		// 表头重命名输入框仅在 active.type 存在时渲染（v-if），空分支不可达；
 		// 保守判空避免向服务端发出 admin/rename-undefined
 		if (!type || !id) return;
-		data.value[type][id].name = value;
+		const item = data.value[type][id];
+		// 字典条目理应存在（active 已校验 id 在字典内），保守判空防御
+		if (!item) return;
+		item.name = value;
 		renameItem(type, +id, value);
 	},
 });
@@ -245,7 +258,10 @@ async function addPermission() {
 	const { type, id } = active.value;
 	// 右侧权限区仅在选中条目时渲染，空分支不可达，保守判空防御
 	if (!type || !id) return;
-	const { permissions } = data.value[type][id];
+	const item = data.value[type][id];
+	// 字典条目理应存在（active 已校验 id 在字典内），判空防御避免对 undefined 解构
+	if (!item) return;
+	const { permissions } = item;
 	permissions.push(permission.value);
 	permission.value = undefined;
 	await send(`admin/update-${type}`, +id, permissions);
@@ -256,7 +272,10 @@ async function removePermission(index: number) {
 	const { type, id } = active.value;
 	// 同 addPermission：右侧权限区仅在选中条目时渲染，保守判空防御
 	if (!type || !id) return;
-	const { permissions } = data.value[type][id];
+	const item = data.value[type][id];
+	// 字典条目理应存在（active 已校验 id 在字典内），判空防御避免对 undefined 解构
+	if (!item) return;
+	const { permissions } = item;
 	permissions.splice(index, 1);
 	await send(`admin/update-${type}`, +id, permissions);
 }
@@ -287,7 +306,8 @@ const addUser = () => toggleUser("admin/add-user");
 // 按平台 + 账号把用户移出当前用户组
 const removeUser = () => toggleUser("admin/remove-user");
 
-// 权限条目的跳转链接：group/track 指回本页面，command 跳到指令管理页
+// 权限条目的跳转链接：group/track 指回本页面，command 跳到指令管理页；
+// 其余权限没有对应页面，显式返回 undefined（模板以 v-if 过滤掉该分支）
 function getLink(name: string) {
 	if (name.startsWith("group:")) {
 		return `/admin/group/${name.slice(6)}`;
@@ -296,6 +316,7 @@ function getLink(name: string) {
 	} else if (name.startsWith("command:")) {
 		return `/commands/${name.slice(8).replace(/\./g, "/")}`;
 	}
+	return undefined;
 }
 </script>
 

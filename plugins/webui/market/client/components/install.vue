@@ -304,6 +304,8 @@ function getWorkspaceVersion(name: string) {
 	if (store.packages?.[name]?.workspace) {
 		return store.packages?.[name]?.package.version;
 	}
+	// 非 workspace 包没有工作区版本，显式返回 undefined
+	return undefined;
 }
 
 const data = computed(() => {
@@ -322,6 +324,8 @@ const danger = computed(() => {
 	if (store.market?.data[active.value]?.insecure) {
 		return "警告：从此插件的最新版本中检测出安全性问题。安装或升级此插件可能导致严重问题。";
 	}
+	// 无危险信息时显式返回 undefined（区块不渲染）
+	return;
 });
 
 const warning = computed(() => {
@@ -339,6 +343,8 @@ const warning = computed(() => {
 			return "提示：你正在更改依赖的主版本号。这可能导致不兼容的行为。";
 		}
 	} catch {}
+	// 主次版本未变或版本不可解析时无提示，显式返回 undefined（区块不渲染）
+	return;
 });
 
 const result = computed(() => {
@@ -464,6 +470,8 @@ function getResultText(peer: PeerInfo, name: string) {
 					: "等待安装"
 				: "已下载";
 	}
+	// warning 未定级没有对应文案，显式返回 undefined（单元格仅显示图标）
+	return undefined;
 }
 </script>
 
