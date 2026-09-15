@@ -148,6 +148,8 @@ const entries = computed(() => {
 				}
 			});
 		}
+		// 类型穷尽后理论上不可达；与原先的隐式 undefined 等价（falsy 即滤除）
+		return false;
 	});
 });
 

@@ -131,7 +131,10 @@ function asMessage(item: unknown): Message {
 /** 创建用户：按 index 轮询取 words 中未占用的昵称，并通知 node 侧入库。 */
 function createUser() {
 	if (users.value.length >= length) {
-		return message.error("可创建的用户数量已达上限。");
+		// 超上限仅弹提示即中止；提示调用的返回值无人消费，
+		// 显式 void 丢弃并 return（noImplicitReturns 要求各支路均返回）
+		void message.error("可创建的用户数量已达上限。");
+		return;
 	}
 	let name: string;
 	do {

@@ -89,7 +89,9 @@ const tree = ref<InstanceType<typeof ElTree> | null>(null);
 const keyword = ref("");
 
 /** el-tree 的节点过滤回调：按插件短名做大小写不敏感的包含匹配。 */
-function filterNode(value: string, data: TreeNodeData) {
+// 过滤词经 keyword 闭包读取（watch 触发 filter()）；
+// 回调首参为保持 el-tree 签名位置而下划线化
+function filterNode(_value: string, data: TreeNodeData) {
 	// el-tree 回传的 data 即本树提供的 Tree 节点数据,此处收窄取字段
 	const tree = data as Tree;
 	return tree.name
@@ -175,9 +177,10 @@ function allowDrag(node: Node) {
  * 拖拽放置约束：
  * - 非 inner（前/后插入）：不能放在根节点之前，根节点之后允许；
  * - inner（放入内部）：仅分组节点可以接收。
+ * source 参数为保持 el-tree 回调签名位置而下划线化（判定只看落点）。
  */
 function allowDrop(
-	source: Node,
+	_source: Node,
 	target: Node,
 	type: "inner" | "prev" | "next",
 ) {
@@ -234,12 +237,13 @@ function handleCollapse(
 /**
  * 拖拽落下：换算出目标分组与插入序号后转发给服务端的 teleport。
  * 注意根层级不含"全局设置"键，序号需要减一修正。
+ * event 参数为保持 el-tree 回调签名位置而下划线化（落点信息已够用）。
  */
 function handleDrop(
 	source: Node,
 	target: Node,
 	position: "before" | "after" | "inner",
-	event: DragEvent,
+	_event: DragEvent,
 ) {
 	const parent =
 		position === "inner" ? target : target.parent;

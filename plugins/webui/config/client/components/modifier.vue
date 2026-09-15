@@ -28,7 +28,7 @@ const emit = defineEmits(["update:modelValue"]);
 
 // 读写都代理到 modelValue.$filter 这一个字段
 const filter = computed({
-	get: () => props.modelValue?.$filter,
+	get: () => props.modelValue?.["$filter"],
 	set: (value) =>
 		emit("update:modelValue", {
 			...props.modelValue,
