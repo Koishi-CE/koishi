@@ -26,7 +26,7 @@
       style="width: 100%"
       height="100%"
       :border="true"
-      :cell-class-name="({ row, column, rowIndex, columnIndex }) => isCellChanged({ row, column, $index: rowIndex }, false)
+      :cell-class-name="({ row, column, rowIndex }) => isCellChanged({ row, column, $index: rowIndex }, false)
         ? 'cell-changed'
         : ''
       "
@@ -111,12 +111,14 @@
         </template>
       </el-table-column>
     </el-table>
+    <!-- pageSizes[0] 在 noUncheckedIndexedAccess 下为 number | undefined，
+      按条件展开收敛传参，避开 exactOptionalPropertyTypes 的 undefined 传值 -->
     <el-pagination
       layout="total, sizes, prev, pager, next, jumper"
       :small="true"
       :total="table?.count ?? 0"
       :page-sizes="pageSizes"
-      :default-page-size="pageSizes[0]"
+      v-bind="pageSizes[0] !== undefined ? { defaultPageSize: pageSizes[0] } : {}"
       v-model:page-size="state.pageSize"
       :default-current-page="1"
       v-model:current-page="currPage"

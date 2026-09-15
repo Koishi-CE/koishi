@@ -180,7 +180,8 @@ function getClass(data: { name?: string }) {
 }
 
 // 节点过滤：按指令名做大小写不敏感的包含匹配
-function filterNode(value: string, data: CommandData) {
+// （首参对齐 el-tree filter-node-method 签名位置，实值经 keyword 读取，故置下划线）
+function filterNode(_value: string, data: CommandData) {
 	return data.name
 		.toLowerCase()
 		.includes(keyword.value.toLowerCase());
@@ -213,7 +214,8 @@ function handleDrop(
 	source: Node,
 	target: Node,
 	position: "before" | "after" | "inner",
-	event: DragEvent,
+	// 末参对齐 el-tree node-drop 事件签名，本处未使用，置下划线
+	_event: DragEvent,
 ) {
 	const parent =
 		position === "inner" ? target : target.parent;

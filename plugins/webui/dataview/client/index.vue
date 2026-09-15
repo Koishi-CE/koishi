@@ -85,7 +85,7 @@ const colorIcon = computed(() =>
 
 const current = computed<string>({
 	get() {
-		const name = join(route.params.name ?? "");
+		const name = join(route.params["name"] ?? "");
 		return store.database?.tables[name] ? name : "";
 	},
 	set(name) {
