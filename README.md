@@ -16,6 +16,10 @@
   <a href="./NOTICE"><img src="https://img.shields.io/badge/license-MIT%2FAGPL--3.0-blue.svg" alt="License: MIT / AGPL-3.0"></a>
 </p>
 
+<p align="center">
+  <img src=".github/assets/Deploy.avif" alt="Koishi-CE 部署演示" width="720">
+</p>
+
 ## 中文
 
 `koishi` 是 [Koishi](https://koishi.chat) 聊天机器人框架的 **Bun-first 社区再分发版**：将 [koishijs/koishi](https://github.com/koishijs/koishi)（MIT）与 [koishijs/webui](https://github.com/koishijs/webui)（部分 AGPL-3.0）两个上游仓库文件级合并重构为单一 monorepo，以 GitHub 组织 [Koishi-CE](https://github.com/Koishi-CE) 发布、npm 作用域 `@koishi-ce`。**本仓库与 Koishijs 组织无隶属关系**；来源与许可证归属见 [NOTICE](./NOTICE)，上游目录映射见 [docs/process/upstream.md](./docs/process/upstream.md)。
