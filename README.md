@@ -5,8 +5,7 @@
 [![CI](https://github.com/Koishi-CE/koishi/actions/workflows/ci.yml/badge.svg)](https://github.com/Koishi-CE/koishi/actions/workflows/ci.yml)
 [![codecov](https://codecov.io/gh/Koishi-CE/koishi/graph/badge.svg)](https://codecov.io/gh/Koishi-CE/koishi)
 [![License: MIT / AGPL-3.0](https://img.shields.io/badge/license-MIT%2FAGPL--3.0-blue.svg)](./NOTICE)
-[![npm: create-koishi-ce](https://img.shields.io/npm/v/create-koishi-ce?label=create-koishi-ce)](https://www.npmjs.com/package/create-koishi-ce)
-[![runtime: Bun](https://img.shields.io/badge/runtime-Bun-fbf0df?logo=bun&logoColor=1f1f1f)](https://bun.sh)
+[![npm](https://img.shields.io/npm/v/create-koishi-ce?label=npm)](https://www.npmjs.com/package/create-koishi-ce)
 
 ## 中文
 
