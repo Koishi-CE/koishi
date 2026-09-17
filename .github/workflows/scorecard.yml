@@ -37,7 +37,9 @@ jobs:
         with:
           persist-credentials: false
       - name: Run analysis
-        uses: ossf/scorecard-action@v2
+        # 该 action 不发布 v2 漂移大 tag，只能 pin 精确版本（首跑实证：
+        # @v2 直接 Unable to resolve action）
+        uses: ossf/scorecard-action@v2.4.4
         with:
           results_file: results.sarif
           results_format: sarif
