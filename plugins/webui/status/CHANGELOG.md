@@ -1,5 +1,12 @@
 # @koishi-ce/plugin-status
 
+## 1.1.3
+
+### Patch Changes
+
+- 03da425: client 侧 tsconfig 严格选项对齐 node 侧（补 noPropertyAccessFromIndexSignature / noUnusedLocals / noUnusedParameters / noImplicitReturns / noFallthroughCasesInSwitch / noImplicitOverride / allowUnreachableCode / allowUnusedLabels 八项），并修复由此暴露的存量类型错误（未用导入、缺失返回路径、switch 贯穿与索引签名属性访问）；另新增 check:vue-types 影子基线闸门（vue-tsc 全量快照只拦新增）。
+- 51e871b: 类型债清偿中判空守卫显形的三处运行时缺陷修复：market 配置缺省 override 字段时批量安装模式暂存崩溃（缺省初始化为空对象）、market 手动安装响应缺 dist-tags 时空引用（判空保持对话框开启）、status 分析页首渲染无守卫解引用 store.status（缺失时按 0 降级，对齐同插件其他页面）。
+
 ## 1.1.2
 
 ### Patch Changes
