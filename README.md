@@ -2,6 +2,12 @@
 
 [中文](#中文) · [English](#english)
 
+[![CI](https://github.com/Koishi-CE/koishi/actions/workflows/ci.yml/badge.svg)](https://github.com/Koishi-CE/koishi/actions/workflows/ci.yml)
+[![codecov](https://codecov.io/gh/Koishi-CE/koishi/graph/badge.svg)](https://codecov.io/gh/Koishi-CE/koishi)
+[![License: MIT / AGPL-3.0](https://img.shields.io/badge/license-MIT%2FAGPL--3.0-blue.svg)](./NOTICE)
+[![npm: create-koishi-ce](https://img.shields.io/npm/v/create-koishi-ce?label=create-koishi-ce)](https://www.npmjs.com/package/create-koishi-ce)
+[![runtime: Bun](https://img.shields.io/badge/runtime-Bun-fbf0df?logo=bun&logoColor=1f1f1f)](https://bun.sh)
+
 ## 中文
 
 `koishi` 是 [Koishi](https://koishi.chat) 聊天机器人框架的 **Bun-first 社区再分发版**：将 [koishijs/koishi](https://github.com/koishijs/koishi)（MIT）与 [koishijs/webui](https://github.com/koishijs/webui)（部分 AGPL-3.0）两个上游仓库文件级合并重构为单一 monorepo，以 GitHub 组织 [Koishi-CE](https://github.com/Koishi-CE) 发布、npm 作用域 `@koishi-ce`。**本仓库与 Koishijs 组织无隶属关系**；来源与许可证归属见 [NOTICE](./NOTICE)，上游目录映射见 [docs/process/upstream.md](./docs/process/upstream.md)。
