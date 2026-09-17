@@ -17,7 +17,7 @@
 </p>
 
 <p align="center">
-  <img src=".github/assets/Deploy.avif" alt="Koishi-CE 部署演示" width="720">
+  <img src=".github/assets/Deploy.webp" alt="Koishi-CE 部署演示" width="720">
 </p>
 
 ## 中文
