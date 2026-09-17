@@ -6,7 +6,9 @@
 
 <p align="center">
   <a href="https://github.com/Koishi-CE/koishi/actions/workflows/ci.yml"><img src="https://github.com/Koishi-CE/koishi/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
+  &nbsp;
   <a href="https://codecov.io/gh/Koishi-CE/koishi"><img src="https://codecov.io/gh/Koishi-CE/koishi/graph/badge.svg" alt="codecov"></a>
+  &nbsp;
   <a href="./NOTICE"><img src="https://img.shields.io/badge/license-MIT%2FAGPL--3.0-blue.svg" alt="License: MIT / AGPL-3.0"></a>
 </p>
 
