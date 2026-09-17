@@ -14,6 +14,10 @@
   &nbsp;
   &nbsp;
   <a href="./NOTICE"><img src="https://img.shields.io/badge/license-MIT%2FAGPL--3.0-blue.svg" alt="License: MIT / AGPL-3.0"></a>
+  &nbsp;
+  &nbsp;
+  &nbsp;
+  <a href="https://scorecard.dev/viewer.html?uri=github.com/Koishi-CE/koishi"><img src="https://api.scorecard.dev/projects/github.com/Koishi-CE/koishi/badge" alt="OpenSSF Scorecard"></a>
 </p>
 
 ## 中文
