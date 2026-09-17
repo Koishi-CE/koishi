@@ -1,11 +1,14 @@
 # koishi（Koishi-CE）
 
-[中文](#中文) · [English](#english)
+<p align="center">
+  <a href="#中文">中文</a> · <a href="#english">English</a>
+</p>
 
-[![CI](https://github.com/Koishi-CE/koishi/actions/workflows/ci.yml/badge.svg)](https://github.com/Koishi-CE/koishi/actions/workflows/ci.yml)
-[![codecov](https://codecov.io/gh/Koishi-CE/koishi/graph/badge.svg)](https://codecov.io/gh/Koishi-CE/koishi)
-[![License: MIT / AGPL-3.0](https://img.shields.io/badge/license-MIT%2FAGPL--3.0-blue.svg)](./NOTICE)
-[![npm](https://img.shields.io/npm/v/create-koishi-ce?label=npm)](https://www.npmjs.com/package/create-koishi-ce)
+<p align="center">
+  <a href="https://github.com/Koishi-CE/koishi/actions/workflows/ci.yml"><img src="https://github.com/Koishi-CE/koishi/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
+  <a href="https://codecov.io/gh/Koishi-CE/koishi"><img src="https://codecov.io/gh/Koishi-CE/koishi/graph/badge.svg" alt="codecov"></a>
+  <a href="./NOTICE"><img src="https://img.shields.io/badge/license-MIT%2FAGPL--3.0-blue.svg" alt="License: MIT / AGPL-3.0"></a>
+</p>
 
 ## 中文
 
