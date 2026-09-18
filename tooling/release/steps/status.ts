@@ -2,18 +2,21 @@
 // Copyright (c) 2026-present Koishi-CE contributors.
 
 /** status 子命令：pending changeset、本地版本 vs registry、发布序。 */
-import { ROOT } from "./options.ts";
-import { probeRegistry, REGISTRY } from "./registry.ts";
+import { ROOT } from "../core/options.ts";
+import {
+	probeRegistry,
+	REGISTRY,
+} from "../core/registry.ts";
 import {
 	fetchAllPublished,
 	filterDowngrades,
-} from "./shared.ts";
+} from "../core/shared.ts";
 import {
 	countPendingChangesets,
 	discoverPackages,
 	planPublish,
 	topoSort,
-} from "./workspace.ts";
+} from "../core/workspace.ts";
 
 /** status：只读概览。 */
 export async function cmdStatus(): Promise<number> {

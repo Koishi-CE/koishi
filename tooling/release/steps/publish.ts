@@ -3,26 +3,26 @@
 
 /** publish 环：registry 比对、所有权预检、拓扑序逐包 npm publish。 */
 import { readFileSync, writeFileSync } from "node:fs";
-import type { Options } from "./options.ts";
-import { ROOT } from "./options.ts";
-import { runNpm } from "./proc.ts";
+import type { Options } from "../core/options.ts";
+import { ROOT } from "../core/options.ts";
+import { runNpm } from "../core/proc.ts";
 import {
 	npmOwners,
 	npmWhoami,
 	probeRegistry,
 	REGISTRY,
-} from "./registry.ts";
+} from "../core/registry.ts";
 import {
 	fetchAllPublished,
 	filterDowngrades,
-} from "./shared.ts";
-import type { PkgInfo } from "./workspace.ts";
+} from "../core/shared.ts";
+import type { PkgInfo } from "../core/workspace.ts";
 import {
 	discoverPackages,
 	planPublish,
 	rewriteWorkspaceProtocol,
 	topoSort,
-} from "./workspace.ts";
+} from "../core/workspace.ts";
 
 /**
  * 发布失败后的排查提示。

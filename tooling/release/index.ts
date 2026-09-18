@@ -21,17 +21,17 @@
  * 构建——build 环遗漏任一插件都会导致发布缺前端，故 targets 由 files
  * 字段自动推导而非手工列举。
  *
- * 模块划分：index（入口 / HELP / 命令分发）→ { status, pipeline } →
- * { version, build, publish } → { shared, options }，proc / registry /
- * workspace 为底层能力（进程执行 / registry 查询 / workspace 纯逻辑），
- * 依赖严格单向、无回边。
+ * 模块划分：index / pipeline（命令与编排）留根 → steps/（status,
+ * version, build, publish 四个阶段实现）→ core/（proc, registry,
+ * workspace, shared, options 底层能力：进程执行 / registry 查询 /
+ * workspace 纯逻辑 / 并发池 / 参数解析），依赖严格单向、无回边。
  */
-import { runBuildSteps } from "./build.ts";
-import { parseOptions } from "./options.ts";
+import { parseOptions } from "./core/options.ts";
 import { cmdPipeline } from "./pipeline.ts";
-import { runPublishSteps } from "./publish.ts";
-import { cmdStatus } from "./status.ts";
-import { runVersion } from "./version.ts";
+import { runBuildSteps } from "./steps/build.ts";
+import { runPublishSteps } from "./steps/publish.ts";
+import { cmdStatus } from "./steps/status.ts";
+import { runVersion } from "./steps/version.ts";
 
 const HELP = `Koishi-CE 发布工具链（tooling/release）
 

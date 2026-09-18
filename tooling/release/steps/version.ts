@@ -4,13 +4,13 @@
 /** version 子命令：changeset 消费、lockfile 刷新与版本提交。 */
 import { existsSync } from "node:fs";
 import { join, relative } from "node:path";
-import type { Options } from "./options.ts";
-import { ROOT } from "./options.ts";
-import { capture, run } from "./proc.ts";
+import type { Options } from "../core/options.ts";
+import { ROOT } from "../core/options.ts";
+import { capture, run } from "../core/proc.ts";
 import {
 	countPendingChangesets,
 	discoverPackages,
-} from "./workspace.ts";
+} from "../core/workspace.ts";
 
 /** version 环的实际执行；bumpedDirs 供 pipeline 提交版本变化用。 */
 export async function runVersion(

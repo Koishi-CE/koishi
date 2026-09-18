@@ -4,12 +4,12 @@
 /** build / test 环：根 tsdown、宿主控制台总装、webui 插件前端并发构建。 */
 import { existsSync } from "node:fs";
 import { join } from "node:path";
-import type { Options } from "./options.ts";
-import { ROOT } from "./options.ts";
-import { run } from "./proc.ts";
-import { runPool } from "./shared.ts";
-import type { PkgInfo } from "./workspace.ts";
-import { discoverPackages } from "./workspace.ts";
+import type { Options } from "../core/options.ts";
+import { ROOT } from "../core/options.ts";
+import { run } from "../core/proc.ts";
+import { runPool } from "../core/shared.ts";
+import type { PkgInfo } from "../core/workspace.ts";
+import { discoverPackages } from "../core/workspace.ts";
 
 /** webui 插件前端的并发构建数（vite 单构建内存可观，不宜拉满）。 */
 const BUILD_CONCURRENCY = 4;

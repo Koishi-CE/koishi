@@ -1,17 +1,20 @@
 // SPDX-License-Identifier: MIT
 // Copyright (c) 2026-present Koishi-CE contributors.
 
-import { runBuildSteps, runTestStep } from "./build.ts";
+import type { Options } from "./core/options.ts";
+import { ROOT } from "./core/options.ts";
+import { capture, run } from "./core/proc.ts";
+import { npmWhoami } from "./core/registry.ts";
+import {
+	runBuildSteps,
+	runTestStep,
+} from "./steps/build.ts";
 /** pipeline 子命令：preflight → version → 提交 → build → test → publish → push。 */
-import type { Options } from "./options.ts";
-import { ROOT } from "./options.ts";
-import { capture, run } from "./proc.ts";
-import { runPublishSteps } from "./publish.ts";
-import { npmWhoami } from "./registry.ts";
+import { runPublishSteps } from "./steps/publish.ts";
 import {
 	commitVersionBumps,
 	runVersion,
-} from "./version.ts";
+} from "./steps/version.ts";
 
 /** pipeline：一条龙。每环失败即中断；全部环节重跑幂等。 */
 export async function cmdPipeline(
