@@ -96,6 +96,7 @@ export class CommandDefinition<
 		fields: FieldCollector<"channel", T, A, O>,
 	): Command<U, G | T, A, O> {
 		this._channelFields.push(fields);
+		// 同 userFields：G 变体之间无结构关系（Observed 双位置不变）
 		return this as unknown as Command<U, G | T, A, O>;
 	}
 

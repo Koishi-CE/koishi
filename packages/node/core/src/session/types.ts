@@ -20,6 +20,7 @@ import type { Awaitable } from "cosmokit";
 import type { Eval } from "minato";
 import type { Argv } from "../command/index.ts";
 import type { Context } from "../context/index.ts";
+import { sessionShadow } from "../context/symbols.ts";
 import type {
 	Channel,
 	Tables,
@@ -127,6 +128,12 @@ export interface Session<
 	channel?: Channel.Observed<G>;
 	/** 当前群（guild）频道的可观察数据；私聊时与 channel 相同 */
 	guild?: Channel.Observed<G>;
+	/**
+	 * shadow 会话携带的原始会话还原键：以本会话为模板派生的
+	 * "影子会话"（如代理场景）会挂上原始会话，权限校验等消费方
+	 * 据此还原（见 context/symbols.ts 与 permission.ts 的 test）。
+	 */
+	[sessionShadow]?: Session<U, G, C>;
 	/** 本会话已确认的权限列表（会话临时授权，如通过指令授予） */
 	permissions: string[];
 	/** i18n 作用域（withScope 设置），用于解析相对路径 */

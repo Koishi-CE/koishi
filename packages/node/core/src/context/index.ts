@@ -151,6 +151,10 @@ export class Context extends satori.Context {
 	static shadow = sessionShadow;
 
 	// 值侧由类静态承载,类型侧见下方 namespace(erasableSyntaxOnly 不允许 namespace 内运行时值)
+	// 双重断言必要：Static 的 list/Basic/I18n/Delay/Advanced 成员由 config.ts 的
+	// defineContextConfig 在运行时 defineProperty 延迟注入（断开初始化顺序环），
+	// 构造点类型上不可见；且 cordis Schema<T> 泛型双位置不变，Schema<{}> 与
+	// Schema<Context.Config> 互相连单断言都不可达（上游此处为单断言，系旧类型面更松）
 	static Config = Schema.intersect([
 		Schema.object({}),
 	]) as unknown as Context.Config.Static;
@@ -195,6 +199,10 @@ export class Context extends satori.Context {
 			new Commander(this, this.config),
 			true,
 		);
+		// typeof minato.Database 是未实例化的 <S,N,C> 泛型构造器（Service 的
+		// Spread 构造重载），与 plugin() 期待的具体化 Plugin.Constructor<Context>
+		// 之间泛型签名不可互转（垫片等任何"根除"都只是换皮断言）；运行时
+		// 兼容由 cordis/minato 官方组合保证
 		this.plugin(
 			minato.Database as unknown as cordis.Plugin.Constructor<Context>,
 		);
