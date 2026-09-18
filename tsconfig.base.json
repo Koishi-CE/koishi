@@ -169,6 +169,8 @@
 		"forceConsistentCasingInFileNames": true,
 		"noEmit": true,
 		"allowImportingTsExtensions": true,
-		"erasableSyntaxOnly": true
+		"erasableSyntaxOnly": true,
+		"noUncheckedSideEffectImports": true,
+		"noErrorTruncation": true
 	}
 }

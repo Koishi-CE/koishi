@@ -28,6 +28,8 @@
 		"forceConsistentCasingInFileNames": true,
 		"allowImportingTsExtensions": true,
 		"erasableSyntaxOnly": true,
+		"noUncheckedSideEffectImports": true,
+		"noErrorTruncation": true,
 		"types": [],
 		"paths": {
 			"schemastery-vue/client": [
