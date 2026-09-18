@@ -40,14 +40,14 @@
 
 只需一条命令即可初始化全新实例：
 
-```console
-$ bun create koishi-ce
+```bash
+bun create koishi-ce
 ```
 
 <details>
 <summary>点击查看部署演示</summary>
 
-<img src=".github/assets/Deploy.webp" alt="Koishi-CE 部署演示" width="480">
+<img src=".github/assets/Deploy.webp" alt="Koishi-CE 部署演示" width="600">
 
 </details>
 
@@ -68,8 +68,8 @@ $ bun create koishi-ce
 
 Koishi-CE is a **Bun-first community redistribution** of the [Koishi](https://koishi.chat?utm_source=gemini) chatbot framework. It reorganizes [koishijs/koishi](https://github.com/koishijs/koishi?utm_source=gemini) (MIT) and [koishijs/webui](https://github.com/koishijs/webui?utm_source=gemini) (partly AGPL-3.0) into an integrated monorepo published under `@koishi-ce`.
 
-```console
-$ bun create koishi-ce
+```bash
+bun create koishi-ce
 ```
 
 *Not affiliated with the official Koishijs organization. See [NOTICE](https://www.google.com/search?q=./NOTICE&utm_source=gemini) for license details.*
