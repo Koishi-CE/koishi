@@ -3,7 +3,7 @@
 
 <h1 id="koishi">
   <a href="https://koishi.chat/" target="_blank">
-    <img src=".github/assets/koishi-ce-wordmark.svg" alt="Koishi-CE" width="400">
+    <img src=".github/assets/koishi-ce-wordmark.svg" alt="Koishi-CE" width="514">
   </a>
 </h1>
 
