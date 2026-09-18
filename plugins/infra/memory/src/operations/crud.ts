@@ -141,8 +141,9 @@ export function executeSelection(
 	env: Dict | Dict[] = {},
 ) {
 	// args[0] 在此按求值表达式使用（isAggrExpr 仅分流求值形态），
-	// 与上游一致地不做静态区分
-	const expr = sel.args[0] as unknown as Eval.Expr;
+	// 与上游一致地不做静态区分（minato Payload.args 声明为 any[]，
+	// 注解收窄即可，无须断言）
+	const expr: Eval.Expr = sel.args[0];
 	const table = sel.table as Selection;
 	if (Array.isArray(env)) env = { [sel.ref]: env };
 	const data = driver.table(sel.table, env);

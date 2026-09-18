@@ -188,12 +188,13 @@ function observeDate(target: Date, update: () => void) {
 		Date.prototype,
 	)) {
 		if (method === "valueOf") continue;
-		const methodFn = (
-			Date.prototype as unknown as Record<
-				string,
-				(...args: unknown[]) => unknown
-			>
-		)[method];
+		// Date.prototype（interface）无隐式索引签名，连单断言到 Record
+		// 都不可达——Reflect.get 返回值标注 unknown，正是动态键取值
+		// 的正确入口（typeof 收窄后 apply 合法）
+		const methodFn: unknown = Reflect.get(
+			Date.prototype,
+			method,
+		);
 		if (typeof methodFn !== "function") continue;
 		defineProperty(
 			target,

@@ -282,6 +282,10 @@ function trySeed(
 		// Node 语义入口自身加载失败：宁可不修，不能把失败扩散到消费方
 		return;
 	}
+	// 鸭子模块种子：只造消费方实际读取的 5 个字段。@types/node 的 Module
+	// 声明了 10 个必填成员，补齐其余（parent/paths/require 等）stub 才能
+	// 合法赋值——那是比双重断言更差的撒谎；双重断言在此精确表达
+	// 「明知不完整而注入」（下方两处 cache 写入同源同型）
 	const entry = {
 		exports,
 		filename: bunEntry,
