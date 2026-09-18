@@ -1,17 +1,9 @@
-# koishi（Koishi-CE）
-
-<p align="center">
-  <a href="#中文">中文</a> · <a href="#english">English</a>
-</p>
+# Koishi-CE
 
 <p align="center">
   <a href="https://github.com/Koishi-CE/koishi/actions/workflows/ci.yml"><img src="https://github.com/Koishi-CE/koishi/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
   &nbsp;
-  &nbsp;
-  &nbsp;
   <a href="https://codecov.io/gh/Koishi-CE/koishi"><img src="https://codecov.io/gh/Koishi-CE/koishi/graph/badge.svg" alt="codecov"></a>
-  &nbsp;
-  &nbsp;
   &nbsp;
   <a href="./NOTICE"><img src="https://img.shields.io/badge/license-MIT%2FAGPL--3.0-blue.svg" alt="License: MIT / AGPL-3.0"></a>
 </p>
@@ -20,82 +12,45 @@
   <img src=".github/assets/Deploy.webp" alt="Koishi-CE 部署演示">
 </p>
 
-## 中文
+Koishi-CE 是 [Koishi](https://koishi.chat) 聊天机器人框架的 **Bun-first 社区再分发版**：[koishijs/koishi](https://github.com/koishijs/koishi)（MIT）与 [koishijs/webui](https://github.com/koishijs/webui)（部分 AGPL-3.0）两个上游仓库在这里被文件级合并重构为单一 monorepo，以 GitHub 组织 [Koishi-CE](https://github.com/Koishi-CE) 发布、npm 作用域 `@koishi-ce`。**本仓库与 Koishijs 组织无隶属关系**；来源与许可证归属见 [NOTICE](./NOTICE)，上游目录映射见 [docs/process/upstream.md](./docs/process/upstream.md)。
 
-`koishi` 是 [Koishi](https://koishi.chat) 聊天机器人框架的 **Bun-first 社区再分发版**：将 [koishijs/koishi](https://github.com/koishijs/koishi)（MIT）与 [koishijs/webui](https://github.com/koishijs/webui)（部分 AGPL-3.0）两个上游仓库文件级合并重构为单一 monorepo，以 GitHub 组织 [Koishi-CE](https://github.com/Koishi-CE) 发布、npm 作用域 `@koishi-ce`。**本仓库与 Koishijs 组织无隶属关系**；来源与许可证归属见 [NOTICE](./NOTICE)，上游目录映射见 [docs/process/upstream.md](./docs/process/upstream.md)。
+## 特性
 
-### 快速开始
+### 开箱即用
+
+- `bun create koishi-ce` 一条命令生成完整实例：SQLite 数据库、本地控制台、插件市场齐活
+- 以 [Bun](https://bun.sh) 为运行时与包管理器，无需预先搭建 Node 工具链
+- 适配器与功能插件从市场安装，配置、监控与日志在控制台内完成
+
+### 同步上游
+
+- 框架与控制台两个上游仓库合并为单一 monorepo，统一构建与版本线
+- 上游改动按目录映射表手动移植对齐（[docs/process/upstream.md](./docs/process/upstream.md)）
+- MIT 与 AGPL-3.0 分区授权，逐目录溯源见 [NOTICE](./NOTICE)
+
+### 工程底线
+
+- 全仓类型检查零错误，全部 node 侧自有包有测试覆盖
+- 提交须过 CI 门禁：lint、类型检查、测试、依赖与死代码审计
+- 全部产物 ESM-only
+
+## 快速开始
 
 ```bash
 bun create koishi-ce
 ```
 
-脚手架生成一个以 Bun 为运行时的 CE 实例：内置纯 `@koishi-ce` 模板、以 npm alias 钉住上游包名（防误装官方包）、不预装 adapter（可后续从市场安装），SQLite 数据库插件默认启用、开箱即得本地数据库。启动后访问 <http://127.0.0.1:5140> 进入控制台。
+脚手架生成一个以 Bun 为运行时的 CE 实例：内置纯 `@koishi-ce` 模板、以 npm alias 钉住上游包名（防误装官方包）、不预装 adapter（后续从市场安装），SQLite 数据库插件默认启用。启动后访问 <http://127.0.0.1:5140> 进入控制台。
 
-### 仓库状态
+## 更多
 
-- 47 个 workspace 包全部 ESM-only（`index.mjs` + `index.d.ts`），运行时与包管理均为 [Bun](https://bun.sh)
-- 类型检查走 TS7 原生编译器（`@typescript/native`），全仓 0 错误
-- 全量自有测试覆盖全部 node 侧包（`bun test`；规模与覆盖率以实跑输出为准）
-- 独立工具链已一步到位：vite 8 / tsdown / biome 2 / bun test；cordis 生态冻结在 3.x（上游 cordis 4 被 `@satorijs/core` 阻塞，实证见 [docs/decisions/upgrade-plan.md](./docs/decisions/upgrade-plan.md)）
-
-### 目录结构
-
-| 目录 | 内容 |
-|---|---|
-| `packages/node/` | Node 侧核心库 ×8（core / loader / cli / console / registry / assets / utils / i18n-utils），根 tsdown 统一构建 |
-| `packages/web/` | 浏览器侧库（client / components），源码直出，无独立构建 |
-| `packages/shim/` | 上游包名占位 shim ×2（下游 npm alias 目标，版本冻结） |
-| `plugins/common/` | 通用 bot 插件 ×8（MIT） |
-| `plugins/infra/` | 基础设施插件 ×7（http / proxy / server 为 vendored 预编译） |
-| `plugins/webui/` | 控制台插件 ×18（`src/` 为 Node 侧、`client/` 为 Vue 侧） |
-| `apps/` | `create-koishi-ce` 脚手架 CLI、`@koishi-ce/scripts` 插件开发 CLI |
-| `tooling/` | 发布链脚本（`bun run release`） |
-| `docs/` | 开发手册、架构、发布流程与历史决策记录（入口 [docs/README.md](./docs/README.md)） |
-
-### 参与贡献
-
-开发环境、门禁与提交约定见 [CONTRIBUTING.md](./.github/CONTRIBUTING.md)；仓库级开发约定（agent 亦可读）见 [AGENTS.md](./AGENTS.md)。
-
-- 行为准则：[CODE_OF_CONDUCT.md](./.github/CODE_OF_CONDUCT.md)
-- 安全漏洞报告：[SECURITY.md](./.github/SECURITY.md)
-
-### 许可证
-
-MIT 与 AGPL-3.0 分区授权，各目录归属见 [NOTICE](./NOTICE)。
+- 文档入口：[docs/README.md](./docs/README.md)；目录结构与包清单见 [docs/reference/architecture.md](./docs/reference/architecture.md)
+- 参与贡献：[CONTRIBUTING.md](./.github/CONTRIBUTING.md)（仓库级开发约定见 [AGENTS.md](./AGENTS.md)）
+- 行为准则：[CODE_OF_CONDUCT.md](./.github/CODE_OF_CONDUCT.md) · 安全漏洞报告：[SECURITY.md](./.github/SECURITY.md)
+- 许可证：MIT 与 AGPL-3.0 分区授权，见 [NOTICE](./NOTICE)
 
 ---
 
 ## English
 
-`koishi` is a **Bun-first community redistribution** of the [Koishi](https://koishi.chat) chatbot framework: the [koishijs/koishi](https://github.com/koishijs/koishi) (MIT) and [koishijs/webui](https://github.com/koishijs/webui) (partly AGPL-3.0) codebases merged and restructured into a single monorepo, published under the [Koishi-CE](https://github.com/Koishi-CE) GitHub organization and the `@koishi-ce` npm scope. **Not affiliated with the Koishijs organization.** See [NOTICE](./NOTICE) for attribution and licensing, and [docs/process/upstream.md](./docs/process/upstream.md) for the upstream mapping.
-
-### Getting started
-
-```bash
-bun create koishi-ce
-```
-
-The scaffold generates a Bun-based CE instance with a pure `@koishi-ce` template: upstream package names are pinned via npm aliases to frozen shims (preventing accidental installs of the official packages), no adapter is preinstalled (install them from the market later), and the SQLite database plugin is enabled by default. The console is served at <http://127.0.0.1:5140>.
-
-### Status
-
-- 47 workspace packages, all ESM-only, on the [Bun](https://bun.sh) runtime and package manager
-- Type-checked by the TS7 native compiler (`@typescript/native`) with zero errors
-- Full in-repo test coverage of all node-side packages (`bun test`; scale and coverage figures follow actual runs)
-- Modern toolchain in place: vite 8 / tsdown / biome 2 / bun test; the cordis ecosystem stays on 3.x (cordis 4 is blocked upstream, see [docs/decisions/upgrade-plan.md](./docs/decisions/upgrade-plan.md))
-
-### Layout
-
-`packages/node` (8 core libraries), `packages/web` (browser-side), `packages/shim` (2 frozen name-occupation shims), `plugins/{common,infra,webui}` (8 + 7 + 18 plugins), `apps` (create-koishi-ce scaffold CLI, plugin-dev CLI), `tooling` (release pipeline), `docs` (see [docs/README.md](./docs/README.md)).
-
-### Contributing
-
-See [CONTRIBUTING.md](./.github/CONTRIBUTING.md); repo-wide conventions also live in [AGENTS.md](./AGENTS.md).
-
-- Code of conduct: [CODE_OF_CONDUCT.md](./.github/CODE_OF_CONDUCT.md)
-- Reporting vulnerabilities: [SECURITY.md](./.github/SECURITY.md)
-
-### License
-
-Dual-licensed by directory (MIT and AGPL-3.0); see [NOTICE](./NOTICE) for the provenance table.
+Koishi-CE is a **Bun-first community redistribution** of the [Koishi](https://koishi.chat) chatbot framework: [koishijs/koishi](https://github.com/koishijs/koishi) (MIT) and [koishijs/webui](https://github.com/koishijs/webui) (partly AGPL-3.0) merged into a single monorepo, published under the [Koishi-CE](https://github.com/Koishi-CE) organization on the `@koishi-ce` npm scope. **Not affiliated with the Koishijs organization.** Scaffold an instance with `bun create koishi-ce`, then open <http://127.0.0.1:5140> for the console. See [NOTICE](./NOTICE) for licensing and [docs/README.md](./docs/README.md) for documentation.
