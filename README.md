@@ -1,12 +1,17 @@
-# Koishi-CE
 
-<p align="center">
-  <a href="https://github.com/Koishi-CE/koishi/actions/workflows/ci.yml"><img src="https://github.com/Koishi-CE/koishi/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
-  &nbsp;
-  <a href="https://codecov.io/gh/Koishi-CE/koishi"><img src="https://codecov.io/gh/Koishi-CE/koishi/graph/badge.svg" alt="codecov"></a>
-  &nbsp;
-  <a href="./NOTICE"><img src="https://img.shields.io/badge/license-MIT%2FAGPL--3.0-blue.svg" alt="License: MIT / AGPL-3.0"></a>
-</p>
+<div align="center">
+
+<h1 id="koishi"><a href="https://koishi.chat/" target="_blank">Koishi</a>-CE</h1>
+
+[![CI](https://github.com/Koishi-CE/koishi/actions/workflows/ci.yml/badge.svg)](https://github.com/Koishi-CE/koishi/actions/workflows/ci.yml)
+&emsp;
+&emsp;
+[![codecov](https://codecov.io/gh/Koishi-CE/koishi/graph/badge.svg)](https://codecov.io/gh/Koishi-CE/koishi)
+&emsp;
+&emsp;
+[![License: MIT / AGPL-3.0](https://img.shields.io/badge/license-MIT%2FAGPL--3.0-blue.svg)](./NOTICE)
+
+</div>
 
 <p align="center">
   <img src=".github/assets/Deploy.webp" alt="Koishi-CE 部署演示">
