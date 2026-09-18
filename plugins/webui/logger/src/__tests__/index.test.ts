@@ -293,9 +293,7 @@ describe("@koishi-ce/plugin-logger", () => {
 		).toContain("hello world");
 
 		// logs 数据服务读取全量记录
-		const provider = app.get(
-			"console.services.logs",
-		) as unknown as {
+		const provider = app.get("console.services.logs") as {
 			get(): Promise<Logger.Record[]>;
 		};
 		const data = await provider.get();

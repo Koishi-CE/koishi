@@ -49,7 +49,7 @@ describe("Session Core", () => {
 			id: "1",
 			name: "作者名",
 		});
-		(session as unknown as { user: object }).user = {
+		(session as { user: unknown }).user = {
 			name: "库昵称",
 		};
 		expect(session.username).toBe("库昵称");

@@ -37,7 +37,7 @@ describe("@koishi-ce/plugin-config", () => {
 		it("收集本机包与 workspace 源码包并附全局设置条目", async () => {
 			const provider = app.get(
 				"console.services.packages",
-			) as unknown as {
+			) as {
 				get(): Promise<Dict<Record<string, unknown>>>;
 			};
 			const data = await provider.get();
@@ -58,7 +58,7 @@ describe("@koishi-ce/plugin-config", () => {
 		it("扫描 external/ 约定目录收录未启用的 workspace 插件", async () => {
 			const provider = app.get(
 				"console.services.packages",
-			) as unknown as {
+			) as {
 				get(): Promise<Dict<Record<string, unknown>>>;
 				pathKeys: Dict<string>;
 				cache: Dict<Record<string, unknown>>;
@@ -87,7 +87,7 @@ describe("@koishi-ce/plugin-config", () => {
 		it("workspaces 声明驱动收录嵌套 monorepo 子包与 plugins/ 未启用包", async () => {
 			const provider = app.get(
 				"console.services.packages",
-			) as unknown as {
+			) as {
 				get(): Promise<Dict<Record<string, unknown>>>;
 			};
 			const data = await provider.get();
@@ -170,7 +170,7 @@ describe("@koishi-ce/plugin-config", () => {
 				expect(listener).toBeTruthy();
 				const provider = app.get(
 					"console.services.packages",
-				) as unknown as {
+				) as {
 					cache: Dict<{ failed?: boolean }>;
 					pathKeys: Dict<string>;
 				};
