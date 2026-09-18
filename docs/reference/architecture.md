@@ -23,7 +23,7 @@ koishi/（Bun workspaces：packages/node/* · packages/shim/* · packages/web/* 
 ├── plugins/infra/   基础设施插件 ×7（http/proxy/server 为 vendored 预编译）
 ├── plugins/webui/   控制台插件 ×19（src/=Node 侧，client/=Vue 侧）
 ├── apps/            可部署应用（koishi-create / koishi-scripts）
-└── tooling/         发布链脚本（release/）
+└── tooling/         工程工具集（门禁检查 / 发布链 / 沙盒生成 / 上游巡检，见 tooling/README.md）
 ```
 
 ### packages/node/*（运行时核心，全部走根 tsdown）
@@ -89,7 +89,7 @@ node 侧在 `src/`、Vue 侧在 `client/`（上游约定），`koishi.public: ["
 
 ### tooling/ 与预留位
 
-- `tooling/release/`：本仓发布链（`bun run release`，见 [../process/release.md](../process/release.md)）。与 koishi-scripts 的 release 链（面向宿主工作区插件项目）互不相干。
+- `tooling/`：本仓工程工具集（零第三方依赖 TS 脚本，bun 直跑，不进发布范围）：`checks/`（门禁检查脚本，并入 `bun run check`）、`release/`（发布链 `bun run release`，见 [../process/release.md](../process/release.md)，与 koishi-scripts 的 release 链互不相干）、`sandbox/`（外部沙盒实例生成器 `bun run sandbox`）、`upstream-audit/`（上游巡检 `bun run upstream:audit`）。索引与用法见 `tooling/README.md`。
 - 预留位（.gitignore 提到，当前均不存在）：`apps/koishi-plugin-adapter/`（适配器独立仓库位）、`external/`、`archive/`（本地参考 / 归档区）。
 
 ## 3. 依赖纪律
