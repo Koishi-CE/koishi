@@ -20,6 +20,12 @@ import type { SandboxBot } from "./bot.ts";
 // 不携带类型参数：上游 Bot 的静态 MessageEncoder 签名以默认 Context 的 Bot 为参数，
 // 若以 koishi Context 或 SandboxBot 为类型参数会产生构造参数逆变冲突（TS2417），见 mock 包同款处理
 export class SandboxMessenger extends MessageEncoder {
+	// 本编码器经 SandboxBot.MessageEncoder 挂载，运行时必为 SandboxBot；
+	// 基类不携带类型参数（静态签名逆变冲突，见类注释），以协变字段
+	// 覆盖声明替代方法体内的双重断言（declare 仅类型层、零运行时产物，
+	// 且不受 override 修饰符的 ambient 限制约束）
+	declare bot: SandboxBot;
+
 	private buffer = "";
 
 	// 媒体元素转换规则:image/img/audio/video/file 的 src 为 file: 协议时,
@@ -52,8 +58,7 @@ export class SandboxMessenger extends MessageEncoder {
 			this.buffer.trim(),
 			this.rules,
 		);
-		// 本编码器经 SandboxBot.MessageEncoder 挂载，运行时 this.bot 必为 SandboxBot
-		const bot = this.bot as unknown as SandboxBot;
+		const bot = this.bot;
 		const session = bot.session(this.session.event);
 		session.messageId = Random.id();
 		bot.client.send({

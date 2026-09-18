@@ -9,7 +9,7 @@
  * 页面组件为 ./locales.vue；同时注册页面与语言选择器用到的两个图标。
  */
 import { type Context, icons } from "@koishi-ce/client";
-import type { Dict, I18n } from "@koishi-ce/koishi";
+import type { Dict } from "@koishi-ce/koishi";
 import type {} from "@koishi-ce/plugin-locales";
 import Activity from "./icons/activity.vue";
 import Globe from "./icons/globe.vue";
@@ -18,12 +18,13 @@ import Locales from "./locales.vue";
 import "virtual:uno.css";
 
 /**
- * 编辑态词典节点：叶子翻译值允许 null（用户清空翻译时置 null 表示删除该键，
- * node 侧落盘为 YAML null）。node 侧 entry 推送的就是含 null 的实态数据，
- * 因此比 I18n.Store 更贴近运行时形状（locales.vue 的回写依赖此宽松值域）。
+ * 编辑态词典：键为完整点分路径（node 侧推送的 ctx.i18n._data 即此扁平
+ * 形态，见 core 的 Dict<Dict<string>> 声明），叶子翻译值允许 null
+ * （用户清空翻译时置 null 表示删除该键，node 侧落盘为 YAML null）。
+ * 故值域收窄为 string | null——嵌套 I18n.Store 分支在扁平键模型下不存在。
  */
 export type EditableStore = {
-	[key: string]: I18n.Node | null;
+	[key: string]: string | null;
 };
 
 // 浏览器端 tsconfig 无 paths,@koishi-ce/plugin-console 解析不到真实模块,
