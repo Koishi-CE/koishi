@@ -58,8 +58,8 @@
               <el-input
                 autosize
                 type="textarea"
-                :modelValue="(store.locales?.['$' + locale]?.[`${active}.${path}`] as any)"
-                :placeholder="store.locales?.[locale]?.[`${active}.${path}`] || store.locales?.['']?.[`${active}.${path}`] as any"
+                :modelValue="store.locales?.['$' + locale]?.[`${active}.${path}`]"
+                :placeholder="(store.locales?.[locale]?.[`${active}.${path}`] || store.locales?.['']?.[`${active}.${path}`]) ?? ''"
                 @update:modelValue="handleUpdate(locale, path, $event)"
               ></el-input>
             </div>

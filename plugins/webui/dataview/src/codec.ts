@@ -46,12 +46,12 @@ export function serialize(obj: unknown): string {
 			for (const key in source) {
 				const item = source[key];
 				if (item instanceof Date) {
-					const date = new Date(item) as unknown as {
-						toJSON?: string | undefined;
-					};
-					// 置空 toJSON，使递归序列化时该值不再被压缩为 ISO 字符串。
-					// Date 原型上的 toJSON 为必选方法，经 unknown 重铸为可选形态再赋值
-					date.toJSON = undefined;
+					// 置空 toJSON（自有属性遮蔽原型上的必选方法），使递归
+					// 序列化时该值不再被压缩为 ISO 字符串；Object.assign 的
+					// 交叉类型（Date & { toJSON: undefined }）无须断言
+					const date = Object.assign(new Date(item), {
+						toJSON: undefined,
+					});
 					copy[key] = date;
 				} else {
 					copy[key] = item;
