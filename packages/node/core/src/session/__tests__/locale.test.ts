@@ -105,10 +105,10 @@ describe("Session Locale", () => {
 
 	it("i18n 语言偏好合并：prefer-user", () => {
 		const session = appUser.bots[0]!.session({}) as Session;
-		(session as unknown as { user: object }).user = {
+		(session as { user: unknown }).user = {
 			locales: ["ja-JP"],
 		};
-		(session as unknown as { channel: object }).channel = {
+		(session as { channel: unknown }).channel = {
 			locales: ["de-DE"],
 		};
 		// 用户语言被提到频道语言之前
@@ -119,10 +119,10 @@ describe("Session Locale", () => {
 		const session = appChannel.bots[0]!.session(
 			{},
 		) as Session;
-		(session as unknown as { user: object }).user = {
+		(session as { user: unknown }).user = {
 			locales: ["ja-JP"],
 		};
-		(session as unknown as { channel: object }).channel = {
+		(session as { channel: unknown }).channel = {
 			locales: ["de-DE"],
 		};
 		// 频道语言优先于用户语言
@@ -132,7 +132,7 @@ describe("Session Locale", () => {
 	it("会话自带 locales 永远最优先", () => {
 		const session = appUser.bots[0]!.session({}) as Session;
 		session.locales = ["de-DE"];
-		(session as unknown as { user: object }).user = {
+		(session as { user: unknown }).user = {
 			locales: ["ja-JP"],
 		};
 		expect(session.text("greet")).toBe("hallo");

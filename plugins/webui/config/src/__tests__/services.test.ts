@@ -67,7 +67,7 @@ describe("@koishi-ce/plugin-config", () => {
 		it("上报各服务的提供者上下文并在服务变动时刷新", async () => {
 			const provider = app.get(
 				"console.services.services",
-			) as unknown as {
+			) as {
 				get(): Promise<Dict<number>>;
 			};
 			const data = await provider.get();
@@ -90,7 +90,7 @@ describe("@koishi-ce/plugin-config", () => {
 		it("provide() 注册的服务同样上报（loader / watcher 形态）", async () => {
 			const provider = app.get(
 				"console.services.services",
-			) as unknown as {
+			) as {
 				get(): Promise<Dict<number>>;
 			};
 			// cordis 3.18 的 ctx.provide() 不给值定义自有 "ctx" 属性
