@@ -1,3 +1,8 @@
+// 类型检查基座：只被 extends，从不直接作为 tsc 入口。真实门禁是根 tsconfig.json
+// （node 侧）与 tsconfig.web.json（client 侧）两条大一统检查。files/include 跨
+// extends 是整体替换而非合并，子配置声明的 include 会覆盖本 files——故下方
+// files 仅是无 include 的配置直连本文件时的兜底，不是（也决定不了）检查范围。
+// 不开启的选项与理由见文件尾注。
 {
 	"$schema": "https://json.schemastore.org/tsconfig",
 	"files": ["packages/node/core/src/i18n/yml.d.ts"],
@@ -150,6 +155,7 @@
 		"jsx": "react-jsx",
 		"jsxImportSource": "@satorijs/element",
 		"strict": true,
+		// 以下两项已被 strict 涵盖，显式写出仅为自文档，无语义差异
 		"strictBindCallApply": true,
 		"alwaysStrict": true,
 		"noUncheckedIndexedAccess": true,
@@ -165,12 +171,27 @@
 		"verbatimModuleSyntax": true,
 		"isolatedModules": true,
 		"esModuleInterop": true,
+		// 刻意保持 true（2026-09-18 实测 false）：node 侧爆 8 条、client 侧爆 63 条
+		// 第三方 d.ts 错误（@satorijs/core、bun-types、@vueuse/core 等），本仓代码
+		// 零条——关它等于让门禁被上游依赖的类型质量绑架；自家产物 d.ts 的校验
+		// 由 tsdown 构建链承担。
 		"skipLibCheck": true,
 		"forceConsistentCasingInFileNames": true,
 		"noEmit": true,
 		"allowImportingTsExtensions": true,
 		"erasableSyntaxOnly": true,
+		// 对不存在的副作用导入（如 import "./x.css"）报 TS2882；TS7 在 project
+		// 模式真实生效（探针实证），全仓零误报，纯增量防线
 		"noUncheckedSideEffectImports": true,
+		// 报错展示 DX 项：不截断长类型错误，不影响任何检查结果
 		"noErrorTruncation": true
 	}
 }
+
+// 经实证不开启的选项（2026-09-18，勿凭清单式印象再提）：
+// - isolatedDeclarations：TS7 原生编译器在 project/noEmit 模式下不执行该检查
+//   （同文件走 CLI 文件模式才报 TS9013），本仓 noEmit 大一统架构下是安慰剂
+//   配置；且与 checkJs 互斥（后者隐含 allowJs，同开报 TS5053）。
+// - checkJs：隐含 allowJs 而类型程序无 .js 源（vendored 预编译包不在 include
+//   内），开则空转。
+// - skipLibCheck: false：理由见 skipLibCheck 行注。

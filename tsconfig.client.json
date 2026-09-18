@@ -1,3 +1,8 @@
+// client（浏览器端）类型检查基座：被 tsconfig.web.json（大一统检查入口）与各
+// webui 插件 client/tsconfig.json extends。files/include 跨 extends 整体替换，
+// 本 files 同样只是兜底，检查范围由子配置 include 决定。skipLibCheck 保持 true
+// 的理由与不开启的选项以 tsconfig.base.json 的注释为准（本侧实测 false 时爆
+// 63 条第三方 d.ts 错误，@vueuse/core、@satorijs/core 等，本仓代码零条）。
 {
 	"$schema": "https://json.schemastore.org/tsconfig",
 	"files": ["packages/web/client/global.d.ts"],
@@ -28,8 +33,12 @@
 		"forceConsistentCasingInFileNames": true,
 		"allowImportingTsExtensions": true,
 		"erasableSyntaxOnly": true,
+		// 对不存在的副作用导入报 TS2882（TS7 project 模式探针实证生效，零误报）
 		"noUncheckedSideEffectImports": true,
+		// 报错展示 DX 项，不影响检查结果
 		"noErrorTruncation": true,
+		// 浏览器纯净：不载 node/bun 类型；web 侧 *.test.ts 因此不进本程序
+		// （由 bun test 运行时覆盖，见 tsconfig.web.json 的 exclude 说明）
 		"types": [],
 		"paths": {
 			"schemastery-vue/client": [
