@@ -64,12 +64,13 @@ export class SessionExecutable extends SessionLocalized {
 			);
 			collectFields(
 				argv,
-				(
-					command as unknown as Record<
-						`_${T}Fields`,
-						FieldCollector<T>[]
-					>
-				)[`_${key}Fields`],
+				// 三元显式分流保住 `_${key}Fields` 键名的编译期检查
+				//（Record 化会把两个异构列表统一成不存在的元素类型，
+				// 键名拼错编译器也不报）；联合元素到未解析 FieldCollector<T>
+				// 仍不可证，保留末端一次断言
+				(key === "user"
+					? command._userFields
+					: command._channelFields) as FieldCollector<T>[],
 				fields,
 			);
 		};

@@ -176,13 +176,13 @@ class KoishiDatabase {
 							.map((user) => ({
 								aid: user.id,
 								bid: user.id,
+								// 与上方 filter 同款单重视图：platform 键是
+								// 运行时新平台名，FlatPick 类型上不存在；
+								// 模型声明 string(255)，单跳到 string
 								pid:
-									(
-										user as unknown as Record<
-											string,
-											string
-										>
-									)[platform] ?? "",
+									((user as Record<string, unknown>)[
+										platform
+									] as string) ?? "",
 								platform,
 							})),
 					);

@@ -33,12 +33,13 @@ export class SessionObservable extends SessionMessaging {
 		const { app, platform, guildId } = this;
 		if (!fields.length)
 			return { platform, id, guildId } as Channel;
-		const channel = await app.database.getChannel(
-			platform,
-			id,
-			fields,
-		);
-		if (channel) return channel as unknown as Channel;
+		// 显式宽化泛型实参（K 默认透传会让 FlatPick 停在 deferred
+		// 映射上、与完整 Channel 无结构关系）：keyof 宽化后返回类型
+		// 结构等价于整表行，断言即无必要；运行时 fields 列表不变
+		const channel = await app.database.getChannel<
+			keyof Channel
+		>(platform, id, fields);
+		if (channel) return channel;
 		const assignee = this.resolve(
 			app.koishi.config.autoAssign ?? true,
 		)
@@ -60,12 +61,10 @@ export class SessionObservable extends SessionMessaging {
 				// 首个 INSERT 成功后其余撞 (id, platform) 唯一键。
 				// 重查命中说明记录已被并发方创建，返回它；未命中才向上抛
 				// https://github.com/koishijs/koishi/issues/1545
-				const existing = await app.database.getChannel(
-					platform,
-					id,
-					fields,
-				);
-				if (existing) return existing as unknown as Channel;
+				const existing = await app.database.getChannel<
+					keyof Channel
+				>(platform, id, fields);
+				if (existing) return existing;
 				throw error;
 			}
 		} else {
@@ -162,12 +161,13 @@ export class SessionObservable extends SessionMessaging {
 	): Promise<User> {
 		const { app, platform } = this;
 		if (!fields.length) return {} as User;
-		const user = await app.database.getUser(
+		// 同 getChannel：keyof 宽化让 FlatPick 求值为整表行（见上方注释）
+		const user = await app.database.getUser<keyof User>(
 			platform,
 			userId,
 			fields,
 		);
-		if (user) return user as unknown as User;
+		if (user) return user;
 		const authority = this.resolve(
 			app.koishi.config.autoAuthorize ?? 1,
 		);
@@ -189,12 +189,10 @@ export class SessionObservable extends SessionMessaging {
 				// 注：createUser = create user + create binding 两步非事务，
 				// 竞态落败方已插入的 user 行成为孤儿（无 binding 指向），
 				// 属上游继承的结构性问题，此处仅消除报错并保证语义正确
-				const existing = await app.database.getUser(
-					platform,
-					userId,
-					fields,
-				);
-				if (existing) return existing as unknown as User;
+				const existing = await app.database.getUser<
+					keyof User
+				>(platform, userId, fields);
+				if (existing) return existing;
 				throw error;
 			}
 		} else {

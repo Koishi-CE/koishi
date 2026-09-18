@@ -285,10 +285,7 @@ export class Permissions {
 	) {
 		// 若传入的是 shadow 会话（symbols.ts 的 sessionShadow），
 		// 还原为原始会话再校验，避免代理层干扰
-		session =
-			((session as unknown as Record<symbol, unknown>)[
-				sessionShadow
-			] as Partial<Session>) || session;
+		session = session[sessionShadow] || session;
 		if (typeof names === "string") names = [names];
 		for (const name of this.subgraph("depends", names)) {
 			const parents = [
