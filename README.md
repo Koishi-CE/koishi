@@ -18,8 +18,6 @@
   <a href="#english">English</a>
 </p>
 
-<img src=".github/assets/Deploy.webp" alt="Koishi-CE 部署演示" width="800" style="border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.1);">
-
 </div>
 
 > [!NOTE]
@@ -27,29 +25,38 @@
 
 ---
 
-## 改动点
+## 特性
 
-* **上游单仓重构**
+* **上游单仓合并**
+  以 [Bun](https://bun.sh) 为核心运行时与包管理器，使用了大量Bun原生模块
+* **上游单仓合并**
   将框架核心与 WebUI 控制台融合为统一单仓（Monorepo），保持版本同步，按目录清晰划分 MIT 与 AGPL-3.0 授权。
 * **严格工程约束**
-  全仓严格类型检查（0 Error），内置包全量测试覆盖，严防死代码与脏依赖，产物纯 ESM 规范化。
+  全仓严格类型检查，全量测试覆盖，严防死代码与脏依赖，产物纯 ESM 规范化。
 
 ---
 
-## 快速开始
+## 部署
 
 只需一条命令即可初始化全新实例：
 
-```bash
-bun create koishi-ce
+```console
+$ bun create koishi-ce
 ```
 
+<details>
+<summary>点击查看部署演示</summary>
+
+<img src=".github/assets/Deploy.webp" alt="Koishi-CE 部署演示" width="480">
+
+</details>
+
 > [!TIP]
-> 模板已内置 SQLite 数据库支持，并通过 npm alias 锁住上游依赖避免版本冲突
+> 模板项目通过 npm alias 锁住上游依赖避免版本冲突。用户从插件市场自行添加插件
 
 ---
 
-## 架构与维护
+## 维护
 
 * **文档指南**：[项目架构与包清单](https://www.google.com/search?q=./docs/reference/architecture.md&utm_source=gemini) ｜ [开发与维护流程](https://www.google.com/search?q=./docs/README.md&utm_source=gemini)
 * **代码治理**：[贡献指南](https://www.google.com/search?q=./.github/CONTRIBUTING.md&utm_source=gemini) ｜ [仓库约定](https://www.google.com/search?q=./AGENTS.md&utm_source=gemini) ｜ [安全策略](https://www.google.com/search?q=./.github/SECURITY.md&utm_source=gemini)
@@ -61,8 +68,8 @@ bun create koishi-ce
 
 Koishi-CE is a **Bun-first community redistribution** of the [Koishi](https://koishi.chat?utm_source=gemini) chatbot framework. It reorganizes [koishijs/koishi](https://github.com/koishijs/koishi?utm_source=gemini) (MIT) and [koishijs/webui](https://github.com/koishijs/webui?utm_source=gemini) (partly AGPL-3.0) into an integrated monorepo published under `@koishi-ce`.
 
-```bash
-bun create koishi-ce
+```console
+$ bun create koishi-ce
 ```
 
 *Not affiliated with the official Koishijs organization. See [NOTICE](https://www.google.com/search?q=./NOTICE&utm_source=gemini) for license details.*
