@@ -115,9 +115,7 @@ export default class NodeLoader extends Loader {
 	}
 
 	override async migrate() {
-		await migrateManifest(
-			this.config as unknown as Dict<unknown>,
-		);
+		await migrateManifest(this.config);
 		await super.migrate();
 	}
 

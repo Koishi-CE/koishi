@@ -43,10 +43,11 @@ function resolveManifest(): string | undefined {
  * 注：package.json 按进程工作目录读写（保持历史行为）；
  * 依赖版本取自 koishi 元包的依赖表（按 loader 自身位置解析）。
  */
-export async function migrateManifest(
-	config: Dict<unknown>,
-) {
+export async function migrateManifest(config: object) {
 	try {
+		// 入参收 object（调用方的 Context.Config 是开放合并 interface，
+		// 与 Dict 双向均不可赋值）；动态键操作统一走本视图，越界论证集中一处
+		const record = config as Record<string, unknown>;
 		let isDirty = false;
 		const meta = (await Bun.file(
 			"package.json",
@@ -71,11 +72,11 @@ export async function migrateManifest(
 
 		// 旧的全局 request 配置改写为 http 插件
 		if (!meta.dependencies["@koishi-ce/plugin-http"]) {
-			const { request = {} } = config;
-			delete config["request"];
-			config["plugins"] = {
+			const { request = {} } = record;
+			delete record["request"];
+			record["plugins"] = {
 				http: request,
-				...(config["plugins"] as Record<string, unknown>),
+				...(record["plugins"] as Record<string, unknown>),
 			};
 			addDep("@koishi-ce/plugin-http");
 		}
@@ -84,9 +85,9 @@ export async function migrateManifest(
 		if (
 			!meta.dependencies["@koishi-ce/plugin-proxy-agent"]
 		) {
-			config["plugins"] = {
+			record["plugins"] = {
 				"proxy-agent": {},
-				...(config["plugins"] as Record<string, unknown>),
+				...(record["plugins"] as Record<string, unknown>),
 			};
 			addDep("@koishi-ce/plugin-proxy-agent");
 		}
@@ -139,21 +140,21 @@ export async function migrateManifest(
 
 		// http.proxyAgent 迁移为 proxy-agent 插件的配置
 		const proxyAgent = getProxyAgent(
-			(config["plugins"] ?? {}) as Dict<unknown>,
+			(record["plugins"] ?? {}) as Dict<unknown>,
 		);
 		if (proxyAgent)
-			setProxyAgent(config["plugins"] as Dict<unknown>);
+			setProxyAgent(record["plugins"] as Dict<unknown>);
 
 		// 旧的服务器顶层配置（端口等）改写为 server 插件
-		if (config["port"]) {
-			const { port, host, maxPort, selfUrl } = config;
-			delete config["port"];
-			delete config["host"];
-			delete config["maxPort"];
-			delete config["selfUrl"];
-			config["plugins"] = {
+		if (record["port"]) {
+			const { port, host, maxPort, selfUrl } = record;
+			delete record["port"];
+			delete record["host"];
+			delete record["maxPort"];
+			delete record["selfUrl"];
+			record["plugins"] = {
 				server: { port, host, maxPort, selfUrl },
-				...(config["plugins"] as Record<string, unknown>),
+				...(record["plugins"] as Record<string, unknown>),
 			};
 			addDep("@koishi-ce/plugin-server");
 		}
