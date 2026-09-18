@@ -15,7 +15,7 @@
 共 49 个 workspace 包，全部 `"type": "module"`。
 
 ```
-koishi/（Bun workspaces：packages/node/* · packages/shim/* · packages/web/* · plugins/{common,infra,webui}/* · apps/* · tooling/*）
+koishi/（Bun workspaces：packages/node/* · packages/shim/* · packages/web/* · plugins/{common,infra,webui}/* · apps/*）
 ├── packages/node/   Node 侧核心库（8 包，根 tsdown 统一构建 → lib/ ESM-only）
 ├── packages/shim/   上游包名占位 shim（2 包，纯 JS 预编译，不走 tsdown）
 ├── packages/web/    浏览器侧库（client / components，源码直出，无独立构建产物）
@@ -104,6 +104,7 @@ node 侧在 `src/`、Vue 侧在 `client/`（上游约定），`koishi.public: ["
 - `peerDependencies` **一律指向 CE 包名**（`@koishi-ce/* ^1.0.0`），不要写回上游名；代码内导入同样一律 `@koishi-ce/*`（例外仅 `@koishijs/plugin-server-proxy` 一处外部包，console 的类型引用）。
 - vendored 三包（http / proxy / server）不动。
 - 依赖方向：`plugins/webui/* → @koishi-ce/console → @koishi-ce/core`；`plugins/common/* → @koishi-ce/core`；`packages/web/*`（浏览器侧）不依赖 node 侧运行时。
+- 以上包名纪律、顶层类型字段统一（`types`，不混用旧别名 `typings`）与 ESM-only 形态由 `check:packages` 门禁强制（`tooling/checks/packages.ts`，已并入 `bun run check`）；循环依赖为 fallow 的 error 级规则（`.fallowrc.jsonc`，CI 的 fallow job 生效）。
 
 ## 4. 构建体系
 

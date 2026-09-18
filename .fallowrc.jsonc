@@ -40,9 +40,7 @@
 	],
 	"ignorePatterns": [
 		// 脚手架模板：不参与本仓构建，只在生成新项目后被消费
-		"apps/koishi-scripts/src/template/**",
-		// 无 package.json，仅存放发布脚本（fallow 会为 workspace glob 报诊断）
-		"tooling/release/**"
+		"apps/koishi-scripts/src/template/**"
 	],
 	// 插件前端用 .vue 里的 `import type X from "@koishi-ce/plugin-*/src"` 取插件
 	// 主类的类型；这条路径由宿主构建的 vite 别名解析，Node 解析器看不到
@@ -91,8 +89,9 @@
 		"unused-component-emits": "off",
 		// knip 时代即 exclude: ["duplicates"]；同名导出在多包入口属正常约定
 		"duplicate-exports": "off",
-		// 保持可见但不阻塞：core 里 command/context 的双向引用属已知架构债，见 docs/roadmap.md
-		"circular-dependencies": "warn",
-		"re-export-cycle": "warn"
+		// 全仓循环依赖已于 2026-09 断环收官清零（含 core 的 command/context 旧债），
+		// 升为错误防回归；环检测归入 dead-code 分析，CI 的 fallow job 直接咬死环回归
+		"circular-dependencies": "error",
+		"re-export-cycle": "error"
 	}
 }

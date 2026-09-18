@@ -31,7 +31,7 @@
 
 ```bash
 bun install                     # 安装依赖（Bun workspaces，产出 bun.lock）
-bun run check                   # 全量门禁 = lint + lint:client + typecheck
+bun run check                   # 全量门禁（七段，构成见 docs/guides/development.md §3）
 bun run lint                    # biome check .（格式 + lint 唯一权威）
 bun run lint:client             # eslint 仅查 *.vue（biome 只解析 .vue 的 script，模板语义归 eslint）
 bun run typecheck               # TS7 类型检查 = 两条 bunx tsc（node 侧 + client 侧大一统串行）
