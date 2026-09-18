@@ -1,7 +1,11 @@
 
 <div align="center">
 
-<h1 id="koishi"><a href="https://koishi.chat/" target="_blank">Koishi</a>-CE</h1>
+<h1 id="koishi">
+  <a href="https://koishi.chat/" target="_blank">
+    <img src=".github/assets/koishi-ce-wordmark.svg" alt="Koishi-CE" width="320">
+  </a>
+</h1>
 
 **高性能、零 Node 依赖的 Koishi 社区再分发版**
 
