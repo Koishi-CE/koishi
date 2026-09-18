@@ -69,13 +69,13 @@ const SKIP_DIRS = new Set([
 	"vendor",
 ]);
 
-/** vendored / 冻结包前缀（硬性约束豁免清单，一律不扫）。 */
+/** vendored / 冻结包前缀（正斜杠形态，硬性约束豁免清单，一律不扫）。 */
 const EXEMPT_PREFIXES = [
 	"plugins/infra/http/",
 	"plugins/infra/proxy/",
 	"plugins/infra/server/",
 	"packages/shim/",
-].map((prefix) => prefix.replaceAll("/", "\\"));
+];
 
 /** 双重断言（主目标）。 */
 const DOUBLE_RE = /\bas\s+(?:unknown|any)\s+as\b/g;
@@ -117,7 +117,7 @@ function isTestFile(relPath: string): boolean {
 	);
 }
 
-/** 递归收集受扫描的源文件（相对仓库根路径）。 */
+/** 递归收集受扫描的源文件（相对仓库根、正斜杠路径——键跨平台稳定的必要归一）。 */
 function collectFiles(dir: string, out: string[]): void {
 	for (const item of readdirSync(dir, {
 		withFileTypes: true,
@@ -127,7 +127,10 @@ function collectFiles(dir: string, out: string[]): void {
 		const full = join(dir, item.name);
 		if (item.isDirectory()) {
 			if (SKIP_DIRS.has(item.name)) continue;
-			const rel = relative(ROOT, full);
+			const rel = relative(ROOT, full).replaceAll(
+				"\\",
+				"/",
+			);
 			if (
 				EXEMPT_PREFIXES.some((prefix) =>
 					rel.startsWith(prefix),
@@ -139,7 +142,7 @@ function collectFiles(dir: string, out: string[]): void {
 		}
 		if (!item.isFile()) continue;
 		if (!/\.(?:[cm]?ts|vue)$/.test(item.name)) continue;
-		const rel = relative(ROOT, full);
+		const rel = relative(ROOT, full).replaceAll("\\", "/");
 		if (isTestFile(rel)) continue;
 		out.push(rel);
 	}
