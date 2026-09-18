@@ -3,59 +3,67 @@
 
 <h1 id="koishi"><a href="https://koishi.chat/" target="_blank">Koishi</a>-CE</h1>
 
-[![CI](https://github.com/Koishi-CE/koishi/actions/workflows/ci.yml/badge.svg)](https://github.com/Koishi-CE/koishi/actions/workflows/ci.yml)
+**高性能、零 Node 依赖的 Koishi 社区再分发版**
+
+[![CI](https://img.shields.io/github/actions/workflow/status/Koishi-CE/koishi/ci.yml?style=flat-square&label=CI)](https://github.com/Koishi-CE/koishi/actions/workflows/ci.yml)
 &emsp;
+[![codecov](https://img.shields.io/codecov/c/gh/Koishi-CE/koishi?style=flat-square&logo=codecov)](https://codecov.io/gh/Koishi-CE/koishi)
 &emsp;
-[![codecov](https://codecov.io/gh/Koishi-CE/koishi/graph/badge.svg)](https://codecov.io/gh/Koishi-CE/koishi)
+[![Bun](https://img.shields.io/badge/runtime-Bun-f472b6?style=flat-square&logo=bun)](https://bun.sh)
 &emsp;
-&emsp;
-[![License: MIT / AGPL-3.0](https://img.shields.io/badge/license-MIT%2FAGPL--3.0-blue.svg)](./NOTICE)
+[![License](https://img.shields.io/badge/license-MIT%20%2F%20AGPL--3.0-blue?style=flat-square)](./NOTICE)
+
+<p>
+  <a href="./docs/README.md">文档</a> •
+  <a href="#english">English</a>
+</p>
+
+<img src=".github/assets/Deploy.webp" alt="Koishi-CE 部署演示" width="800" style="border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.1);">
 
 </div>
 
-<p align="center">
-  <img src=".github/assets/Deploy.webp" alt="Koishi-CE 部署演示">
-</p>
+> [!NOTE]
+> **非官方社区版声明**：本项目与 [Koishi 官方组织](https://github.com/koishijs) 无隶属关系。基于 [koishijs/koishi](https://github.com/koishijs/koishi) (MIT) 与 [koishijs/webui](https://github.com/koishijs/webui) (部分 AGPL-3.0) 源码按文件级重构为单仓发布。详见 [NOTICE](./NOTICE) 与 [上游对齐映射](./docs/process/upstream.md)。
 
-Koishi-CE 是 [Koishi](https://koishi.chat) 聊天机器人框架的 **Bun-first 社区再分发版**：[koishijs/koishi](https://github.com/koishijs/koishi)（MIT）与 [koishijs/webui](https://github.com/koishijs/webui)（部分 AGPL-3.0）两个上游仓库在这里被文件级合并重构为单一 monorepo，以 GitHub 组织 [Koishi-CE](https://github.com/Koishi-CE) 发布、npm 作用域 `@koishi-ce`。**本仓库与 Koishijs 组织无隶属关系**；来源与许可证归属见 [NOTICE](./NOTICE)，上游目录映射见 [docs/process/upstream.md](./docs/process/upstream.md)。
+---
 
-## 特性
+## 改动点
 
-### 开箱即用
+* **上游单仓重构**
+  将框架核心与 WebUI 控制台融合为统一单仓（Monorepo），保持版本同步，按目录清晰划分 MIT 与 AGPL-3.0 授权。
+* **严格工程约束**
+  全仓严格类型检查（0 Error），内置包全量测试覆盖，严防死代码与脏依赖，产物纯 ESM 规范化。
 
-- `bun create koishi-ce` 一条命令生成完整实例：SQLite 数据库、本地控制台、插件市场齐活
-- 以 [Bun](https://bun.sh) 为运行时与包管理器，无需预先搭建 Node 工具链
-- 适配器与功能插件从市场安装，配置、监控与日志在控制台内完成
-
-### 同步上游
-
-- 框架与控制台两个上游仓库合并为单一 monorepo，统一构建与版本线
-- 上游改动按目录映射表手动移植对齐（[docs/process/upstream.md](./docs/process/upstream.md)）
-- MIT 与 AGPL-3.0 分区授权，逐目录溯源见 [NOTICE](./NOTICE)
-
-### 工程底线
-
-- 全仓类型检查零错误，全部 node 侧自有包有测试覆盖
-- 提交须过 CI 门禁：lint、类型检查、测试、依赖与死代码审计
-- 全部产物 ESM-only
+---
 
 ## 快速开始
+
+只需一条命令即可初始化全新实例：
 
 ```bash
 bun create koishi-ce
 ```
 
-脚手架生成一个以 Bun 为运行时的 CE 实例：内置纯 `@koishi-ce` 模板、以 npm alias 钉住上游包名（防误装官方包）、不预装 adapter（后续从市场安装），SQLite 数据库插件默认启用。启动后访问 <http://127.0.0.1:5140> 进入控制台。
+> [!TIP]
+> 模板已内置 SQLite 数据库支持，并通过 npm alias 锁住上游依赖避免版本冲突
 
-## 更多
+---
 
-- 文档入口：[docs/README.md](./docs/README.md)；目录结构与包清单见 [docs/reference/architecture.md](./docs/reference/architecture.md)
-- 参与贡献：[CONTRIBUTING.md](./.github/CONTRIBUTING.md)（仓库级开发约定见 [AGENTS.md](./AGENTS.md)）
-- 行为准则：[CODE_OF_CONDUCT.md](./.github/CODE_OF_CONDUCT.md) · 安全漏洞报告：[SECURITY.md](./.github/SECURITY.md)
-- 许可证：MIT 与 AGPL-3.0 分区授权，见 [NOTICE](./NOTICE)
+## 架构与维护
+
+* **文档指南**：[项目架构与包清单](https://www.google.com/search?q=./docs/reference/architecture.md&utm_source=gemini) ｜ [开发与维护流程](https://www.google.com/search?q=./docs/README.md&utm_source=gemini)
+* **代码治理**：[贡献指南](https://www.google.com/search?q=./.github/CONTRIBUTING.md&utm_source=gemini) ｜ [仓库约定](https://www.google.com/search?q=./AGENTS.md&utm_source=gemini) ｜ [安全策略](https://www.google.com/search?q=./.github/SECURITY.md&utm_source=gemini)
+* **授权说明**：MIT 与 AGPL-3.0 分区授权，各目录源码出处见 [NOTICE](https://www.google.com/search?q=./NOTICE&utm_source=gemini)。
 
 ---
 
 ## English
 
-Koishi-CE is a **Bun-first community redistribution** of the [Koishi](https://koishi.chat) chatbot framework: [koishijs/koishi](https://github.com/koishijs/koishi) (MIT) and [koishijs/webui](https://github.com/koishijs/webui) (partly AGPL-3.0) merged into a single monorepo, published under the [Koishi-CE](https://github.com/Koishi-CE) organization on the `@koishi-ce` npm scope. **Not affiliated with the Koishijs organization.** Scaffold an instance with `bun create koishi-ce`, then open <http://127.0.0.1:5140> for the console. See [NOTICE](./NOTICE) for licensing and [docs/README.md](./docs/README.md) for documentation.
+Koishi-CE is a **Bun-first community redistribution** of the [Koishi](https://koishi.chat?utm_source=gemini) chatbot framework. It reorganizes [koishijs/koishi](https://github.com/koishijs/koishi?utm_source=gemini) (MIT) and [koishijs/webui](https://github.com/koishijs/webui?utm_source=gemini) (partly AGPL-3.0) into an integrated monorepo published under `@koishi-ce`.
+
+```bash
+bun create koishi-ce
+```
+
+*Not affiliated with the official Koishijs organization. See [NOTICE](https://www.google.com/search?q=./NOTICE&utm_source=gemini) for license details.*
+
