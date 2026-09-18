@@ -18,13 +18,14 @@
 
 ```bash
 bun install                     # 安装依赖（Bun workspaces，产出 bun.lock）
-bun run check                   # 全量门禁 = lint + lint:client + typecheck + check:locales + check:docs-links + check:vue-types + check:packages（提交前必跑）
+bun run check                   # 全量门禁 = lint + lint:client + typecheck + check:locales + check:docs-links + check:vue-types + check:assertions + check:packages（提交前必跑）
 bun run lint                    # biome check .（格式 + lint 唯一权威）
 bun run lint:client             # eslint 仅查 *.vue 模板语义
 bun run format                  # biome format --write .
 bun run check:locales           # 词典键对齐 / 语种齐全 / 假翻译检查（零依赖，已并入 check）
 bun run check:docs-links        # 文档相对链接与锚点存活检查（零依赖，已并入 check）
 bun run check:vue-types         # vue-tsc 影子基线闸门（.vue 全量类型错误只拦新增，已并入 check）
+bun run check:assertions        # 双重断言（as unknown as）基线闸门：非测试源文件只拦新增，已并入 check
 bun run check:packages          # 包名纪律 / 元数据统一 / ESM-only / 依赖方向（零依赖，已并入 check）
 bun run fallow                  # 死代码与依赖审计（bunx 直跑 fallow：不占 devDependencies、脚本内 pin 精确版；配置见根 .fallowrc.jsonc）
 bun run typecheck               # TS7 类型检查（node 侧 + client 侧两条 bunx tsc 串行）
@@ -54,7 +55,7 @@ bun run release status                   # 发布链概览（详见 ../process/r
 
 ## 3. 门禁构成与现状
 
-`bun run check` 由七段组成：
+`bun run check` 由八段组成：
 
 1. **lint（biome）**：全仓格式 + lint（`biome check .`）。biome 尊重 `.gitignore`（`vcs.useIgnoreFile`），跳过 lib/dist 等。格式以 biome 为唯一权威——`.editorconfig` 声明的 4 空格缩进与代码现状（tab）不符，勿据此手改，统一 `bun run format`。
 2. **lint:client（eslint）**：只查 `.vue` 文件，与 biome 零重叠；核心规则 `vue/no-undef-components`（忽略 `^K`、`^el-`、`^router-` 全局组件）。不做类型感知。
@@ -62,7 +63,8 @@ bun run release status                   # 发布链概览（详见 ../process/r
 4. **check:locales**：`tooling/checks/locales.ts`（零依赖，bun 直跑）——词典键对齐 / 语种齐全 / 假翻译三查，发现问题 exit 1；覆盖范围与豁免名单见脚本头部注释。
 5. **check:docs-links**：`tooling/checks/docs-links.ts`（零依赖）——docs 全树 + 根部 / `.github` 文档的相对链接与锚点存活检查，问题 exit 1。
 6. **check:vue-types**：`tooling/checks/vue-types.ts`——vue-tsc 影子基线闸门：用隔离安装的 vue-tsc（经典 TS 5.9 运行时，版本钉死于脚本常量，首次运行自动自举到 `node_modules/.cache/vue-tsc-shadow/`）对 `tsconfig.web.json` 全量检查（含 `.vue` 的模板与 script），错误快照与入库基线（`tooling/checks/vue-types-baseline.json`）对比，**只拦新增错误键、容忍存量**——归一化键为「文件 + 错误码 + 消息」（不含行列号），`node_modules/` 内第三方 `.vue` 的条目不计。修复存量无需动基线（消失的键自动不计）；新增错误若确认可接受，用 `bun run check:vue-types -- --update` 重拍基线一并提交。存量随修复自然消化，待 Volar 工具链支持 TS7 后影子基线即可转正退役。
-7. **check:packages**：`tooling/checks/packages.ts`（零依赖）——把 AGENTS.md 硬性约束与 architecture.md §3 依赖纪律中靠人工遵守的部分固化为自动检查：包名纪律（依赖声明与源码导入不得写回上游名 `koishi` / `@koishijs/*`，豁免仅 console 的 `@koishijs/plugin-server-proxy` 类型引用）、顶层类型字段统一 `types`（不混用旧别名 `typings`）、ESM-only 形态（`type: module`、exports 无 `require` 条件、main 非 CJS 产物）、依赖方向负面规则（packages/web、packages/node、plugins/common、plugins 四个 scope，console 宿主的防御性 peer 在豁免表内附理由）。问题 exit 1；各豁免的理由见脚本头部与内联注释。
+7. **check:assertions**：`tooling/checks/assertions.ts`（零依赖，bun 直跑）——双重断言（`as unknown as` / `as any as`）基线闸门：扫描非测试源文件（`packages` / `plugins` / `apps` / `tooling` 下 `.ts` / `.mts` / `.vue`；测试文件、vendor 目录、vendored 预编译包与产物目录出范围），与入库基线（`tooling/checks/assertions-baseline.json`，兼作保留台账）对比，**只拦新增、容忍存量**——归一化键为「文件 + 类别 + 断言行文本」（不含行号，同文件挪行不算新增；同行多次按次计）。新增断言须先穷尽根除 / 上移修法，确属务实妥协的登记基线附一行理由（`reason` 字段）后 `--update` 重扫；修复存量无需动基线。另设次级检查：`.vue` 模板表达式内 `as any`（biome / eslint 均不查模板，是显式 any 的唯一逃逸口）。覆盖边界（跨行形态、注释豁免、单重 `as` 不在范围）见脚本头部注释。
+8. **check:packages**：`tooling/checks/packages.ts`（零依赖）——把 AGENTS.md 硬性约束与 architecture.md §3 依赖纪律中靠人工遵守的部分固化为自动检查：包名纪律（依赖声明与源码导入不得写回上游名 `koishi` / `@koishijs/*`，豁免仅 console 的 `@koishijs/plugin-server-proxy` 类型引用）、顶层类型字段统一 `types`（不混用旧别名 `typings`）、ESM-only 形态（`type: module`、exports 无 `require` 条件、main 非 CJS 产物）、依赖方向负面规则（packages/web、packages/node、plugins/common、plugins 四个 scope，console 宿主的防御性 peer 在豁免表内附理由）。问题 exit 1；各豁免的理由见脚本头部与内联注释。
 
 **CI（`.github/workflows/ci.yml`）**：PR 与 main push 自动触发（也支持手动 dispatch），三个并行 job：`gate`（build → 宿主前端构建 → check → test）、`client`（宿主 + 全部 webui 插件的前端构建，即 `.vue` 的实际类型门禁）、`fallow`（`bun run fallow` 死代码与依赖审计）。三个顺序要点：
 

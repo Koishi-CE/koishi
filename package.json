@@ -14,12 +14,13 @@
         "apps/*"
     ],
     "scripts": {
-        "check": "bun run lint && bun run lint:client && bun run typecheck && bun run check:locales && bun run check:docs-links && bun run check:vue-types && bun run check:packages",
+        "check": "bun run lint && bun run lint:client && bun run typecheck && bun run check:locales && bun run check:docs-links && bun run check:vue-types && bun run check:assertions && bun run check:packages",
         "lint": "biome check .",
         "lint:client": "eslint \"packages/web/*/client/**/*.vue\" \"plugins/webui/*/client/**/*.vue\"",
         "check:locales": "bun tooling/checks/locales.ts",
         "check:docs-links": "bun tooling/checks/docs-links.ts",
         "check:vue-types": "bun tooling/checks/vue-types.ts",
+        "check:assertions": "bun tooling/checks/assertions.ts",
         "check:packages": "bun tooling/checks/packages.ts",
         "sandbox": "bun tooling/sandbox/index.ts",
         "upstream:audit": "bun tooling/upstream-audit/index.ts",

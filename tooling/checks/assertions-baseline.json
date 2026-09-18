@@ -1,0 +1,169 @@
+{
+	"meta": {
+		"generatedAt": "2026-09-18T15:36:40.941Z",
+		"total": 32,
+		"pending": 32
+	},
+	"entries": [
+		{
+			"file": "packages/node/core/src/command/command/command.ts",
+			"kind": "double",
+			"snippet": "const args = (argv.args ??= [] as unknown as A);"
+		},
+		{
+			"file": "packages/node/core/src/command/command/definition.ts",
+			"kind": "double",
+			"snippet": "return this as unknown as Command<U | T, G, A, O>;"
+		},
+		{
+			"file": "packages/node/core/src/command/command/definition.ts",
+			"kind": "double",
+			"snippet": "return this as unknown as Command<U, G | T, A, O>;"
+		},
+		{
+			"file": "packages/node/core/src/context/index.ts",
+			"kind": "double",
+			"snippet": "]) as unknown as Context.Config.Static;"
+		},
+		{
+			"file": "packages/node/core/src/context/index.ts",
+			"kind": "double",
+			"snippet": "minato.Database as unknown as cordis.Plugin.Constructor<Context>,"
+		},
+		{
+			"file": "packages/node/core/src/database/index.ts",
+			"kind": "double",
+			"snippet": "user as unknown as Record<"
+		},
+		{
+			"file": "packages/node/core/src/permission.ts",
+			"kind": "double",
+			"snippet": "((session as unknown as Record<symbol, unknown>)["
+		},
+		{
+			"file": "packages/node/core/src/session/execute.ts",
+			"kind": "double",
+			"snippet": "command as unknown as Record<"
+		},
+		{
+			"file": "packages/node/core/src/session/observe.ts",
+			"kind": "double",
+			"snippet": "if (channel) return channel as unknown as Channel;"
+		},
+		{
+			"file": "packages/node/core/src/session/observe.ts",
+			"kind": "double",
+			"snippet": "if (existing) return existing as unknown as Channel;"
+		},
+		{
+			"file": "packages/node/core/src/session/observe.ts",
+			"kind": "double",
+			"snippet": "if (existing) return existing as unknown as User;"
+		},
+		{
+			"file": "packages/node/core/src/session/observe.ts",
+			"kind": "double",
+			"snippet": "if (user) return user as unknown as User;"
+		},
+		{
+			"file": "packages/node/loader/src/node/index.ts",
+			"kind": "double",
+			"snippet": "this.config as unknown as Dict<unknown>,"
+		},
+		{
+			"file": "packages/node/loader/src/node/interop.ts",
+			"kind": "double",
+			"snippet": "entry as unknown as (typeof require.cache)[string];"
+		},
+		{
+			"file": "packages/node/loader/src/node/interop.ts",
+			"kind": "double",
+			"snippet": "entry as unknown as (typeof require.cache)[string];"
+		},
+		{
+			"file": "packages/node/utils/src/observe.ts",
+			"kind": "double",
+			"snippet": "Date.prototype as unknown as Record<"
+		},
+		{
+			"file": "packages/web/client/client/plugins/setting.ts",
+			"kind": "double",
+			"snippet": "}) as unknown as Config,"
+		},
+		{
+			"file": "plugins/infra/memory/src/operations/crud.ts",
+			"kind": "double",
+			"snippet": "const expr = sel.args[0] as unknown as Eval.Expr;"
+		},
+		{
+			"file": "plugins/webui/analytics/client/charts/utils.ts",
+			"kind": "double",
+			"snippet": "} as unknown as echarts.TooltipComponentOption;"
+		},
+		{
+			"file": "plugins/webui/analytics/client/charts/utils.ts",
+			"kind": "double",
+			"snippet": "} as unknown as echarts.TooltipComponentOption;"
+		},
+		{
+			"file": "plugins/webui/config/src/shared/packages.ts",
+			"kind": "double",
+			"snippet": "} as unknown as PackageProvider.Data);"
+		},
+		{
+			"file": "plugins/webui/console/src/browser/index.ts",
+			"kind": "double",
+			"snippet": "this.ctx.loader as unknown as Record<symbol, unknown>"
+		},
+		{
+			"file": "plugins/webui/console/src/browser/index.ts",
+			"kind": "double",
+			"snippet": "} as unknown as IncomingMessage,"
+		},
+		{
+			"file": "plugins/webui/console/src/node/index.ts",
+			"kind": "double",
+			"snippet": "socket as unknown as Universal.WebSocket,"
+		},
+		{
+			"file": "plugins/webui/dataview/src/codec.ts",
+			"kind": "double",
+			"snippet": "const date = new Date(item) as unknown as {"
+		},
+		{
+			"file": "plugins/webui/dataview/src/index.ts",
+			"kind": "double",
+			"snippet": ".database as unknown as Record<"
+		},
+		{
+			"file": "plugins/webui/explorer/src/index.ts",
+			"kind": "double",
+			"snippet": "anymatchModule.default as unknown as typeof anymatchModule.default.default;"
+		},
+		{
+			"file": "plugins/webui/insight/client/index.vue",
+			"kind": "double",
+			"snippet": "() => (store.insight?.edges ?? []) as unknown as Link[],"
+		},
+		{
+			"file": "plugins/webui/insight/client/index.vue",
+			"kind": "double",
+			"snippet": "forceLink.links(value.edges as unknown as Link[]);"
+		},
+		{
+			"file": "plugins/webui/locales/client/locales.vue",
+			"kind": "any",
+			"snippet": ":modelValue=\"(store.locales?.['$' + locale]?.[`${active}.${path}`] as any)\""
+		},
+		{
+			"file": "plugins/webui/locales/client/locales.vue",
+			"kind": "any",
+			"snippet": ":placeholder=\"store.locales?.[locale]?.[`${active}.${path}`] || store.locales?.['']?.[`${active}.${path}`] as any\""
+		},
+		{
+			"file": "plugins/webui/sandbox/src/message.ts",
+			"kind": "double",
+			"snippet": "const bot = this.bot as unknown as SandboxBot;"
+		}
+	]
+}
