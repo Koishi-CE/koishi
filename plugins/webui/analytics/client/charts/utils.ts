@@ -168,6 +168,7 @@ export const Tooltip = {
 				type: "cross",
 			},
 			formatter,
+			// 同 item：echarts formatter 参数类型无泛型入口（见上方注释）
 		} as unknown as echarts.TooltipComponentOption;
 	},
 };

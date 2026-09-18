@@ -1,169 +1,117 @@
 {
 	"meta": {
-		"generatedAt": "2026-09-18T15:36:40.941Z",
-		"total": 32,
-		"pending": 32
+		"generatedAt": "2026-09-18T16:04:11.605Z",
+		"total": 18,
+		"pending": 0
 	},
 	"entries": [
 		{
 			"file": "packages/node/core/src/command/command/command.ts",
 			"kind": "double",
-			"snippet": "const args = (argv.args ??= [] as unknown as A);"
+			"snippet": "const args = (argv.args ??= [] as unknown as A);",
+			"reason": "R3 泛型数组空默认值：A 可实例化为定长元组，空数组不可证可赋，never[] 与 A 连断言重叠都不可证（上游 as any）"
 		},
 		{
 			"file": "packages/node/core/src/command/command/definition.ts",
 			"kind": "double",
-			"snippet": "return this as unknown as Command<U | T, G, A, O>;"
+			"snippet": "return this as unknown as Command<U | T, G, A, O>;",
+			"reason": "R3 宽化链死局（保留范本）：User/Channel.Observed 的 $diff/$merge 双位置不变，U|T / G|T 变体间无结构关系且 Session 内嵌 Argv 泛型致无限递归（上游 as any）"
 		},
 		{
 			"file": "packages/node/core/src/command/command/definition.ts",
 			"kind": "double",
-			"snippet": "return this as unknown as Command<U, G | T, A, O>;"
+			"snippet": "return this as unknown as Command<U, G | T, A, O>;",
+			"reason": "R3 宽化链死局（保留范本）：User/Channel.Observed 的 $diff/$merge 双位置不变，U|T / G|T 变体间无结构关系且 Session 内嵌 Argv 泛型致无限递归（上游 as any）"
 		},
 		{
 			"file": "packages/node/core/src/context/index.ts",
 			"kind": "double",
-			"snippet": "]) as unknown as Context.Config.Static;"
+			"snippet": "]) as unknown as Context.Config.Static;",
+			"reason": "R2×2：Static 成员由 config.ts 运行时 defineProperty 延迟注入（断初始化环）构造点不可见 + Schema<T> 双位置不变；minato 泛型构造器与具体化 Plugin.Constructor 互转不可达（运行时官方组合保证）"
 		},
 		{
 			"file": "packages/node/core/src/context/index.ts",
 			"kind": "double",
-			"snippet": "minato.Database as unknown as cordis.Plugin.Constructor<Context>,"
-		},
-		{
-			"file": "packages/node/core/src/database/index.ts",
-			"kind": "double",
-			"snippet": "user as unknown as Record<"
-		},
-		{
-			"file": "packages/node/core/src/permission.ts",
-			"kind": "double",
-			"snippet": "((session as unknown as Record<symbol, unknown>)["
-		},
-		{
-			"file": "packages/node/core/src/session/execute.ts",
-			"kind": "double",
-			"snippet": "command as unknown as Record<"
-		},
-		{
-			"file": "packages/node/core/src/session/observe.ts",
-			"kind": "double",
-			"snippet": "if (channel) return channel as unknown as Channel;"
-		},
-		{
-			"file": "packages/node/core/src/session/observe.ts",
-			"kind": "double",
-			"snippet": "if (existing) return existing as unknown as Channel;"
-		},
-		{
-			"file": "packages/node/core/src/session/observe.ts",
-			"kind": "double",
-			"snippet": "if (existing) return existing as unknown as User;"
-		},
-		{
-			"file": "packages/node/core/src/session/observe.ts",
-			"kind": "double",
-			"snippet": "if (user) return user as unknown as User;"
-		},
-		{
-			"file": "packages/node/loader/src/node/index.ts",
-			"kind": "double",
-			"snippet": "this.config as unknown as Dict<unknown>,"
+			"snippet": "minato.Database as unknown as cordis.Plugin.Constructor<Context>,",
+			"reason": "R2×2：Static 成员由 config.ts 运行时 defineProperty 延迟注入（断初始化环）构造点不可见 + Schema<T> 双位置不变；minato 泛型构造器与具体化 Plugin.Constructor 互转不可达（运行时官方组合保证）"
 		},
 		{
 			"file": "packages/node/loader/src/node/interop.ts",
 			"kind": "double",
-			"snippet": "entry as unknown as (typeof require.cache)[string];"
+			"snippet": "entry as unknown as (typeof require.cache)[string];",
+			"reason": "R4 鸭子模块注入 require.cache：刻意只造消费方读取的 5 字段，补齐 @types/node 全量 10 必填成员是更差的撒谎（CE 原创 interop，非上游）"
 		},
 		{
 			"file": "packages/node/loader/src/node/interop.ts",
 			"kind": "double",
-			"snippet": "entry as unknown as (typeof require.cache)[string];"
-		},
-		{
-			"file": "packages/node/utils/src/observe.ts",
-			"kind": "double",
-			"snippet": "Date.prototype as unknown as Record<"
+			"snippet": "entry as unknown as (typeof require.cache)[string];",
+			"reason": "R4 鸭子模块注入 require.cache：刻意只造消费方读取的 5 字段，补齐 @types/node 全量 10 必填成员是更差的撒谎（CE 原创 interop，非上游）"
 		},
 		{
 			"file": "packages/web/client/client/plugins/setting.ts",
 			"kind": "double",
-			"snippet": "}) as unknown as Config,"
-		},
-		{
-			"file": "plugins/infra/memory/src/operations/crud.ts",
-			"kind": "double",
-			"snippet": "const expr = sel.args[0] as unknown as Eval.Expr;"
+			"snippet": "}) as unknown as Config,",
+			"reason": "R1 变体：字面量是相对任意插件增强后 Config 的恒定部分默认值（上游裸字面量，本仓严格化产物）"
 		},
 		{
 			"file": "plugins/webui/analytics/client/charts/utils.ts",
 			"kind": "double",
-			"snippet": "} as unknown as echarts.TooltipComponentOption;"
+			"snippet": "} as unknown as echarts.TooltipComponentOption;",
+			"reason": "R2 echarts tooltip.formatter 参数类型无泛型入口（TopLevelFormatterParams 固定），本仓 FormatterCallbackParams<T> 才是 series data 真实类型，垫片须 re-declare 组件（工厂内部封装不外溢）"
 		},
 		{
 			"file": "plugins/webui/analytics/client/charts/utils.ts",
 			"kind": "double",
-			"snippet": "} as unknown as echarts.TooltipComponentOption;"
+			"snippet": "} as unknown as echarts.TooltipComponentOption;",
+			"reason": "R2 echarts tooltip.formatter 参数类型无泛型入口（TopLevelFormatterParams 固定），本仓 FormatterCallbackParams<T> 才是 series data 真实类型，垫片须 re-declare 组件（工厂内部封装不外溢）"
 		},
 		{
 			"file": "plugins/webui/config/src/shared/packages.ts",
 			"kind": "double",
-			"snippet": "} as unknown as PackageProvider.Data);"
+			"snippet": "} as unknown as PackageProvider.Data);",
+			"reason": "R4 Data 双形态：全局设置条目天然无市场元数据（shortname/manifest/version 必填不成立），根治须拆联合类型连锁 config/market 前端全部访问点"
 		},
 		{
 			"file": "plugins/webui/console/src/browser/index.ts",
 			"kind": "double",
-			"snippet": "this.ctx.loader as unknown as Record<symbol, unknown>"
+			"snippet": "this.ctx.loader as unknown as Record<symbol, unknown>",
+			"reason": "R4×2：symbol 注册表键（Symbol.for 返回值非 unique symbol 不能作接口键，无本仓挂载方可声明）+ 浏览器宿主无 HTTP 升级请求的壳对象（根除须放宽 console 公开类型并连锁改 auth 行为，超出类型收敛边界）"
 		},
 		{
 			"file": "plugins/webui/console/src/browser/index.ts",
 			"kind": "double",
-			"snippet": "} as unknown as IncomingMessage,"
+			"snippet": "} as unknown as IncomingMessage,",
+			"reason": "R4×2：symbol 注册表键（Symbol.for 返回值非 unique symbol 不能作接口键，无本仓挂载方可声明）+ 浏览器宿主无 HTTP 升级请求的壳对象（根除须放宽 console 公开类型并连锁改 auth 行为，超出类型收敛边界）"
 		},
 		{
 			"file": "plugins/webui/console/src/node/index.ts",
 			"kind": "double",
-			"snippet": "socket as unknown as Universal.WebSocket,"
-		},
-		{
-			"file": "plugins/webui/dataview/src/codec.ts",
-			"kind": "double",
-			"snippet": "const date = new Date(item) as unknown as {"
+			"snippet": "socket as unknown as Universal.WebSocket,",
+			"reason": "R2 @types/ws 与 satori Universal.WebSocket 两套第三方类型体系错位（dispatchEvent 缺声明、事件形态不同），垫片不可行"
 		},
 		{
 			"file": "plugins/webui/dataview/src/index.ts",
 			"kind": "double",
-			"snippet": ".database as unknown as Record<"
+			"snippet": ".database as unknown as Record<",
+			"reason": "R4 RPC 动态分发边界：方法集有限但参数经反序列化为 unknown[]，unknown 函数视图是正确终点；switch 展开仍须逐方法断言纯噪音"
 		},
 		{
 			"file": "plugins/webui/explorer/src/index.ts",
 			"kind": "double",
-			"snippet": "anymatchModule.default as unknown as typeof anymatchModule.default.default;"
+			"snippet": "anymatchModule.default as unknown as typeof anymatchModule.default.default;",
+			"reason": "R2 anymatch 双发布 interop：d.ts 为 ESM 形态而实现为 CJS，nodenext 类型视图对 default 多包一层，包外不可修"
 		},
 		{
 			"file": "plugins/webui/insight/client/index.vue",
 			"kind": "double",
-			"snippet": "() => (store.insight?.edges ?? []) as unknown as Link[],"
+			"snippet": "() => (store.insight?.edges ?? []) as unknown as Link[],",
+			"reason": "R3 d3-force 就地变异：forceLink 初始化把边源 number 变异为节点引用，同一对象跨生命周期两种形状互不可赋值；.vue 不进 tsc，断言仅文档性"
 		},
 		{
 			"file": "plugins/webui/insight/client/index.vue",
 			"kind": "double",
-			"snippet": "forceLink.links(value.edges as unknown as Link[]);"
-		},
-		{
-			"file": "plugins/webui/locales/client/locales.vue",
-			"kind": "any",
-			"snippet": ":modelValue=\"(store.locales?.['$' + locale]?.[`${active}.${path}`] as any)\""
-		},
-		{
-			"file": "plugins/webui/locales/client/locales.vue",
-			"kind": "any",
-			"snippet": ":placeholder=\"store.locales?.[locale]?.[`${active}.${path}`] || store.locales?.['']?.[`${active}.${path}`] as any\""
-		},
-		{
-			"file": "plugins/webui/sandbox/src/message.ts",
-			"kind": "double",
-			"snippet": "const bot = this.bot as unknown as SandboxBot;"
+			"snippet": "forceLink.links(value.edges as unknown as Link[]);",
+			"reason": "R3 d3-force 就地变异：forceLink 初始化把边源 number 变异为节点引用，同一对象跨生命周期两种形状互不可赋值；.vue 不进 tsc，断言仅文档性"
 		}
 	]
 }
