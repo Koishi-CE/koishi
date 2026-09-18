@@ -68,7 +68,7 @@ user-invocable: true
 ## subagent 调度（硬要求）
 
 - **读分析类并行**：行数盘点、上游对齐分类、候选文件的导入导出面分析，派只读子代理并行 fan-out；要求返回结论 + 文件路径 + 行号，不复述代码。
-- **写码类一族一子代理**：每个子代理在独立 git worktree + 独立分支作业（worktree 放仓库内已 ignore 的目录如 `node_modules/.tmp-*`，用完 `git worktree remove`）；子代理提示词必须自包含（AGENTS 硬约束摘要 + 健康线与四分法 + 该文件的分析结论 + 验证清单），子代理不共享工作区。
+- **写码类一族一子代理**：每个子代理在独立 git worktree + 独立分支作业（worktree 必须放**仓库外兄弟目录**——仓库内 node_modules 下会 build 挂 + biome 假绿，实证判例），用完 `git worktree remove`；子代理提示词必须自包含（AGENTS 硬约束摘要 + 健康线与四分法 + 该文件的分析结论 + 验证清单），子代理不共享工作区。
 - 验证环节（check / test / build / fallow / lib 实测）永远主代理亲自跑，不采信子代理的「应该没问题」。
 - 同一时刻只集成一个 PR；会话中途 HEAD / main 被并行会话推进属常态，动手前重核 `git status` 与 `git log --oneline -1`。
 
