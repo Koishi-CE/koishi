@@ -90,6 +90,33 @@ describe("Installer 安装链路", () => {
 		15000,
 	);
 
+	itQuiet(
+		"安装失败时还原 package.json 备份(失败回滚链)",
+		async () => {
+			setNextExitCode(1);
+			const before = await Bun.file(
+				join(tmp, "package.json"),
+			).text();
+			const code = await app.installer.install(
+				{ "koishi-plugin-demo": "^2.0.0" },
+				true,
+			);
+			expect(code).toBe(1);
+			// 失败后清单原文原样还原(依赖改动不留半改状态)
+			const after = await Bun.file(
+				join(tmp, "package.json"),
+			).text();
+			expect(after).toBe(before);
+			// 内存清单同步重建:还原后的清单仍是 1.0.0 请求
+			const deps = await app.installer.getDeps();
+			expect(deps["koishi-plugin-demo"]?.request).toBe(
+				"1.0.0",
+			);
+			setNextExitCode(0);
+		},
+		15000,
+	);
+
 	itQuiet("子进程 spawn 失败返回 -1", async () => {
 		setNextSpawnError(true);
 		setNextExitCode(0);

@@ -202,16 +202,31 @@ describe("MarketProvider 市场数据服务", () => {
 		);
 	});
 
-	it("依赖 / 注册表数据服务读取安装器缓存", async () => {
-		const dependencies = await app
-			.get("console.services.dependencies")
-			?.get();
+	it("依赖服务两拍推送:快照先行、元数据完成后填充", async () => {
+		const service = app.get(
+			"console.services.dependencies",
+		);
+		expect(service).toBeDefined();
+		const first = await service?.get();
+		// 第一拍:本地快照先行,元数据尚在拉取
 		expect(
-			dependencies?.["koishi-plugin-demo"]?.request,
+			first?.["koishi-plugin-demo"]?.request,
 		).toBeTruthy();
+		// 等元数据拉取完成(本地 registry 桩,秒级内):条目就地填充
+		await new Promise((resolve) =>
+			setTimeout(resolve, 800),
+		);
+		expect(first?.["koishi-plugin-demo"]?.latest).toBe(
+			"2.0.0",
+		);
 		expect(
-			dependencies?.["koishi-plugin-demo"]?.latest,
-		).toBe("2.0.0");
+			first?.["koishi-plugin-demo"]?.fetching,
+		).toBeUndefined();
+		// 第二拍 get() 复用上一轮结果,不再拉取
+		const second = await service?.get();
+		expect(second?.["koishi-plugin-demo"]?.latest).toBe(
+			"2.0.0",
+		);
 
 		const registry = await app
 			.get("console.services.registry")
@@ -220,6 +235,55 @@ describe("MarketProvider 市场数据服务", () => {
 			Object.keys(registry?.["koishi-plugin-demo"] ?? {}),
 		).toContain("2.0.0");
 	});
+
+	itQuiet(
+		"registry 无此包的条目两拍后标记 not-found 负缓存",
+		async () => {
+			// 向宿主清单添加一个 registry 桩里不存在的依赖
+			const manifestPath = join(tmp, "package.json");
+			const manifest = JSON.parse(
+				await Bun.file(manifestPath).text(),
+			) as {
+				dependencies: Record<string, string>;
+			};
+			manifest.dependencies["koishi-plugin-ghost"] =
+				"^1.0.0";
+			await Bun.write(
+				manifestPath,
+				JSON.stringify(manifest, null, "\t"),
+			);
+			try {
+				const service = app.get(
+					"console.services.dependencies",
+				);
+				const snapshot = await service?.get();
+				expect(
+					snapshot?.["koishi-plugin-ghost"]?.request,
+				).toBe("1.0.0");
+				await new Promise((resolve) =>
+					setTimeout(resolve, 800),
+				);
+				expect(
+					snapshot?.["koishi-plugin-ghost"]?.error,
+				).toBe("not-found");
+				// 404 负缓存:重建快照仍标记 not-found 且不再拉取
+				const again = await service?.get();
+				expect(again?.["koishi-plugin-ghost"]?.error).toBe(
+					"not-found",
+				);
+				expect(
+					again?.["koishi-plugin-ghost"]?.fetching,
+				).toBeUndefined();
+			} finally {
+				delete manifest.dependencies["koishi-plugin-ghost"];
+				await Bun.write(
+					manifestPath,
+					JSON.stringify(manifest, null, "\t"),
+				);
+			}
+		},
+		15000,
+	);
 
 	itQuiet(
 		"搜索接口失败时 get 返回空数据与错误标记",

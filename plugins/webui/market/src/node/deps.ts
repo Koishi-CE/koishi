@@ -8,19 +8,6 @@ import type {
 	DependencyMetaKey,
 	RemotePackage,
 } from "@koishi-ce/registry";
-import type { Dependency } from "./installer/index.ts";
-
-class DependencyProvider extends DataService<
-	Dict<Dependency>
-> {
-	constructor(ctx: Context) {
-		super(ctx, "dependencies", { authority: 4 });
-	}
-
-	override async get() {
-		return this.ctx.installer.getDeps();
-	}
-}
 
 class RegistryProvider extends DataService<
 	Dict<Dict<Pick<RemotePackage, DependencyMetaKey>>>
@@ -34,4 +21,4 @@ class RegistryProvider extends DataService<
 	}
 }
 
-export { DependencyProvider, RegistryProvider };
+export { RegistryProvider };

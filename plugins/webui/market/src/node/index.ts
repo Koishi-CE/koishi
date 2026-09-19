@@ -16,16 +16,15 @@ import type {
 import { gt } from "semver";
 import messageZhCN from "../../locales/message.zh-CN.yml";
 import schemaZhCN from "../../locales/schema.zh-CN.yml";
-import {
-	DependencyProvider,
-	RegistryProvider,
-} from "./deps.ts";
+import { DependencyService } from "./dependencies/service.ts";
+import type { Dependency } from "./dependencies/types.ts";
+import { RegistryProvider } from "./deps.ts";
 import Installer from "./installer/index.ts";
 import MarketProvider from "./market.ts";
 
 export * from "../shared/index.ts";
-
-export { DependencyProvider, Installer, RegistryProvider };
+export type { Dependency };
+export { DependencyService, Installer, RegistryProvider };
 
 declare module "@koishi-ce/koishi" {
 	interface Context {
@@ -36,7 +35,7 @@ declare module "@koishi-ce/koishi" {
 declare module "@koishi-ce/console" {
 	namespace Console {
 		interface Services {
-			dependencies: DependencyProvider;
+			dependencies: DependencyService;
 			registry: RegistryProvider;
 		}
 	}
@@ -243,7 +242,7 @@ export function apply(ctx: Context, config: Config) {
 	});
 
 	ctx.inject(["console", "installer"], (ctx) => {
-		ctx.plugin(DependencyProvider);
+		ctx.plugin(DependencyService);
 		ctx.plugin(RegistryProvider);
 		ctx.plugin(MarketProvider, config.search);
 

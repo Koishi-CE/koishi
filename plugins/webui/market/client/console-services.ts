@@ -19,13 +19,18 @@ declare module "@koishi-ce/plugin-console" {
 	/** cosmokit.Dict 镜像（浏览器端工程无 cosmokit 链接） */
 	type Dict<T> = { [key: string]: T };
 
-	/** src/node/installer/index.ts 的 Dependency 镜像（严格同步） */
+	/** registry 元数据拉取失败的归类镜像（严格同步 src/node/dependencies/types.ts） */
+	type DependencyError = "not-found" | "network";
+
+	/** src/node/dependencies/types.ts 的 Dependency 镜像（严格同步） */
 	interface Dependency {
 		request: string;
 		resolved?: string | undefined;
 		workspace?: boolean | undefined;
 		invalid?: boolean | undefined;
 		latest?: string | undefined;
+		error?: DependencyError | undefined;
+		fetching?: boolean | undefined;
 	}
 
 	namespace Console {

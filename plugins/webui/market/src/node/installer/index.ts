@@ -33,11 +33,14 @@ import {
 	type RemotePackage,
 } from "@koishi-ce/registry";
 import { satisfies, valid } from "semver";
+import type { Dependency } from "../dependencies/types.ts";
 import { runBun } from "./exec.ts";
 import { findMissingDeps } from "./integrity.ts";
 import {
+	backupManifest,
 	type LocalPackage,
 	loadManifest,
+	restoreManifest,
 	writeManifest,
 } from "./manifest.ts";
 import {
@@ -52,24 +55,7 @@ import {
 
 const logger = new Logger("market");
 
-export interface Dependency {
-	/**
-	 * requested semver range
-	 * @example `^1.2.3` -> `1.2.3`
-	 */
-	request: string;
-	/**
-	 * installed package version
-	 * @example `1.2.5`
-	 */
-	resolved?: string | undefined;
-	/** whether it is a workspace package */
-	workspace?: boolean | undefined;
-	/** valid (unsupported) syntax */
-	invalid?: boolean | undefined;
-	/** latest version */
-	latest?: string | undefined;
-}
+export type { Dependency };
 
 class Installer extends Service {
 	declare http: HTTP;
@@ -78,6 +64,8 @@ class Installer extends Service {
 	public tempCache: Dict<VersionMap> = {};
 
 	private pkgTasks: Dict<Promise<VersionMap>> = {};
+	/** 各包最近一次拉取失败的归类（404 与否）；依赖页的 error 徽标消费 */
+	public pkgErrors: Dict<{ notFound: boolean }> = {};
 	private manifest: LocalPackage;
 	declare private depTask: Promise<Dict<Dependency>>;
 	private flushData: () => void;
@@ -149,11 +137,23 @@ class Installer extends Service {
 	private async _getPackage(name: string) {
 		try {
 			const versions = await fetchVersions(this.http, name);
+			delete this.pkgErrors[name];
 			this.fullCache[name] = this.tempCache[name] =
 				versions;
 			this.flushData();
 			return versions;
 		} catch (error) {
+			// 404 与否决定负缓存策略：404 是 registry 的确定性答复，
+			// resolved 空表照常驻留 pkgTasks（会话内不再重试）；其余
+			// （网络抖动、超时等瞬态）清除任务让下次调用重试
+			const notFound =
+				this.http.isError(error) &&
+				error.response?.status === 404;
+			this.pkgErrors[name] = { notFound };
+			if (!notFound) {
+				// 本任务自身 catch 后恒 resolve，直接移除即可让下次调用重试
+				delete this.pkgTasks[name];
+			}
 			logger.warn(error);
 			return {};
 		}
@@ -217,11 +217,18 @@ class Installer extends Service {
 
 	refresh(refresh = false) {
 		this.pkgTasks = {};
+		this.pkgErrors = {};
 		this.fullCache = {};
 		this.tempCache = {};
 		this.depTask = this._getDeps();
 		if (!refresh) return;
 		this.refreshData();
+	}
+
+	/** 轻量重建：重读宿主清单并重置依赖汇总任务（registry 缓存不动）。 */
+	reload() {
+		this.manifest = loadManifest(this.cwd);
+		this.depTask = undefined;
 	}
 
 	async exec(args: string[]) {
@@ -260,6 +267,8 @@ class Installer extends Service {
 		forced?: boolean,
 	) {
 		const localDeps = this._getLocalDeps(deps);
+		// 备份清单原文：主安装失败时整体还原，防止半改状态残留在磁盘
+		const backup = await backupManifest(this.cwd);
 		await this.override(deps);
 
 		let shouldInstall = forced === true;
@@ -281,7 +290,14 @@ class Installer extends Service {
 
 		if (shouldInstall) {
 			const code = await this._install();
-			if (code) return code;
+			if (code) {
+				// 安装失败：还原清单原文并轻量重建内存态
+				// （registry 缓存与依赖服务快照不受影响，后者由
+				// 安装监听器统一 refresh 触发重建）
+				await restoreManifest(this.cwd, backup);
+				this.reload();
+				return code;
+			}
 			// isolated 布局的增量安装可能漏建新包目录的依赖链接(机理
 			// 见 integrity.ts 模块注释):装完即校验,缺失时补跑一次
 			// 安装——bun 按磁盘实际状态重建链接,秒级自愈,无需人工

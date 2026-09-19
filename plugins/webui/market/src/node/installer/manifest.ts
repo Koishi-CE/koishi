@@ -62,6 +62,21 @@ export function loadManifest(name: string): LocalPackage {
 	return meta;
 }
 
+/** 读取项目根 package.json 原文（安装前的备份快照）。 */
+export async function backupManifest(
+	cwd: string,
+): Promise<string> {
+	return Bun.file(resolve(cwd, "package.json")).text();
+}
+
+/** 把备份原文原样写回项目根 package.json（安装失败的回滚路径）。 */
+export async function restoreManifest(
+	cwd: string,
+	backup: string,
+): Promise<void> {
+	await Bun.write(resolve(cwd, "package.json"), backup);
+}
+
 /**
  * 把依赖增删写回项目根 package.json，返回写回后的清单。
  *
