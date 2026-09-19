@@ -1,0 +1,54 @@
+# SPDX-License-Identifier: AGPL-3.0-only
+# Copyright (c) 2019-present Shigma and Koishijs contributors.
+# Copyright (c) 2026-present Koishi-CE contributors.
+
+dependencies:
+  toolbar:
+    searchPlaceholder: Search dependencies...
+    blockPreview: Block prereleases
+    blockPreviewHint: When enabled, update detection ignores prerelease versions
+    loading: Loading...
+  filters:
+    all: All
+    pending: Pending
+    local: Workspace
+    invalid: Invalid
+    error: Failed
+    updatable: Updatable
+    installed: Installed
+  groups:
+    pending: Pending changes
+    local: Workspace dependencies
+    invalid: Invalid declarations
+    error: Failed to fetch
+    updatable: Updatable
+    installed: Installed
+  card:
+    current: Current
+    latest: Latest
+    range: Range
+    ignoredBadge: Ignored
+    fetching: Fetching version info...
+    errorNotFound: This package does not exist in the registry
+    errorNetwork: Failed to fetch version info
+    pendingSet: "Pending: pin to {version}"
+    pendingRemove: "Pending: remove dependency"
+    remove: Remove
+    update: Update
+    ignore: Ignore update
+    cancelChange: Revert change
+    currentMark: Current
+  apply:
+    count: "{count} pending change(s)"
+    description: Applying will rewrite package.json and run the installer
+    apply: Apply
+    discard: Discard
+  ignore:
+    title: "Ignore update: {name}"
+    version: "Ignore this version ({version})"
+    days7: Ignore for 7 days
+    days30: Ignore for 30 days
+    forever: Ignore forever
+    confirm: Confirm
+    cancel: Cancel
+  empty: No matching dependencies

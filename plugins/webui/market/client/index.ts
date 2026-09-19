@@ -5,6 +5,7 @@
 import {
 	type Context,
 	type Dict,
+	extendLocales,
 	global,
 	receive,
 	router,
@@ -20,7 +21,6 @@ import type {
 } from "@koishi-ce/registry";
 import { defineComponent, h, watch } from "vue";
 import Confirm from "./components/confirm.vue";
-import Dependencies from "./components/dependencies.vue";
 import Install from "./components/install.vue";
 import Market from "./components/market.vue";
 import Progress from "./components/progress.vue";
@@ -28,6 +28,8 @@ import {
 	showConfirm,
 	showManual,
 } from "./components/utils";
+import Dependencies from "./dependencies/dependencies.vue";
+import type { IgnoreRule } from "./dependencies/ignore-policy";
 import extensions from "./extensions";
 import "./icons";
 
@@ -43,8 +45,18 @@ interface MarketConfig {
 	bulkMode?: boolean;
 	removeConfig?: boolean;
 	override?: Dict<string>;
+	/** 依赖页的逐包忽略更新规则(限时 / 限版本 / 永久) */
+	ignoreUpdates?: Dict<IgnoreRule>;
+	/** 依赖页的可更新判定是否忽略预发布版本 */
+	blockPrerelease?: boolean;
 	gravatar?: string;
 }
+
+// 依赖页 UI 词典(zh-CN / en-US 两份,键空间 dependencies.*)
+const locales = import.meta.glob("./locales/*.yml", {
+	eager: true,
+	import: "default",
+});
 
 // 载荷类型与 node 侧 market 服务 throttle 广播的字段保持一致
 receive("market/patch", (data: MarketProvider.Payload) => {
@@ -73,6 +85,8 @@ receive(
 
 export default (ctx: Context) => {
 	ctx.plugin(extensions);
+
+	extendLocales(ctx, locales);
 
 	ctx.slot({
 		type: "welcome-choice",
@@ -131,6 +145,17 @@ export default (ctx: Context) => {
 					"移除插件时是否移除其已经存在的配置。",
 				),
 				override: Schema.dict(String).hidden(),
+				ignoreUpdates: Schema.dict(
+					Schema.object({
+						until: Schema.number().role("time"),
+						version: Schema.string(),
+					}),
+				).hidden(),
+				blockPrerelease: Schema.boolean()
+					.default(false)
+					.description(
+						"依赖页的可更新判定忽略预发布版本。",
+					),
 				gravatar: Schema.string().description(
 					"Gravatar 镜像地址。",
 				),
