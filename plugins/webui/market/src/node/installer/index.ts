@@ -55,8 +55,6 @@ import {
 
 const logger = new Logger("market");
 
-export type { Dependency };
-
 class Installer extends Service {
 	declare http: HTTP;
 	declare endpoint: string | undefined;

@@ -114,5 +114,3 @@ export class DependencyService extends DataService<
 		if (latest !== undefined) dep.latest = latest;
 	}
 }
-
-export default DependencyService;
