@@ -59,7 +59,9 @@ defineOptions({
   padding: 0 0;
   border-radius: 8px;
 
-  .el-popper__empty + .el-popper__arrow {
+  // 空占位标记嵌在 el-scrollbar 内层，与弹层直接子节点 .el-popper__arrow 不平级，
+  // 相邻选择器永远匹配不上——无内容时须整体隐藏弹层，否则残留箭头渲染成的黑菱形
+  &:has(.el-popper__empty) {
     display: none;
   }
 }
