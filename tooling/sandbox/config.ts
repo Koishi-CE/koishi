@@ -40,4 +40,6 @@ export const green = (text: string) =>
 export const yellow = (text: string) =>
 	`\x1b[33m${text}\x1b[39m`;
 export const dim = (text: string) =>
-	`\x1b[2m${text}\x1b[39m`;
+	// 收尾须用 22（normal intensity）而非 39（仅重置前景色）：39 清不掉
+	// SGR 2 的 faint 属性，残留状态会把终端提示符一起染灰
+	`\x1b[2m${text}\x1b[22m`;
