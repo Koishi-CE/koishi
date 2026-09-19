@@ -2,7 +2,8 @@
  * 依赖管理页样式(/dependencies)。
  *
  * 布局:工具栏常顶 + 滚动分组卡片墙 + 待应用时底部浮出批量应用栏;
- * 状态色沿用控制台主题变量(--k-color-*),六态徽标各自着色。
+ * 状态色沿用控制台主题变量(--k-color-*);卡片仅保留与分组正交的
+ * 「已忽略」徽标(分类信息由分组词头承载,不重复着色)。
  */
 
 .page-deps {
@@ -227,33 +228,11 @@
     line-height: 1;
     padding: 0.25rem 0.5rem;
     border-radius: 0.625rem;
-    border: 1px solid transparent;
+    border: 1px solid var(--k-border-color);
     white-space: nowrap;
 
-    &.pending {
-      color: var(--k-color-primary);
-      border-color: var(--k-color-primary);
-    }
-
-    &.local,
     &.ignored {
       color: var(--fg2);
-      border-color: var(--k-border-color);
-    }
-
-    &.invalid,
-    &.error {
-      color: var(--k-color-danger);
-      border-color: var(--k-color-danger);
-    }
-
-    &.updatable {
-      color: var(--k-color-success);
-      border-color: var(--k-color-success);
-    }
-
-    &.installed {
-      color: var(--fg3);
       border-color: var(--k-border-color);
     }
   }

@@ -9,9 +9,10 @@
         <h3 :title="item.name">{{ shortName }}</h3>
         <span class="dep-sub">{{ item.name }}</span>
       </div>
+      <!-- 分类信息由所在分组的词头承载(分组与分类一一对应),卡片不再重复渲染;
+           「已忽略」与分组正交,保留徽标 -->
       <div class="dep-card-badges">
         <span v-if="item.ignored" class="dep-badge ignored">{{ t("dependencies.card.ignoredBadge") }}</span>
-        <span :class="['dep-badge', item.kind]">{{ kindLabel }}</span>
       </div>
     </div>
 
