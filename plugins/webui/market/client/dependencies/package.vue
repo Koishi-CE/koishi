@@ -68,6 +68,12 @@
         <el-button v-if="change" size="small" @click="cancelChange">
           {{ t("dependencies.card.cancelChange") }}
         </el-button>
+        <el-button v-if="hasConfig" size="small" @click="configure">
+          {{ t("dependencies.card.configure") }}
+        </el-button>
+        <el-button v-if="dep" size="small" type="danger" plain @click="uninstall">
+          {{ t("dependencies.card.uninstall") }}
+        </el-button>
       </div>
     </div>
   </article>
@@ -78,10 +84,15 @@
  * 依赖卡片:数百张在卡片墙中全量实例化,任何常驻重控件都会乘以
  * 卡片总数——版本下拉(el-select 含 popper 组件树)默认以纯文本
  * 占位,点击才挂载,收起即回收;「移除依赖」以下拉空值表达,不引入
- * 魔法哨兵字符串(编解码见 dependency-helpers)。
+ * 魔法哨兵字符串(编解码见 dependency-helpers)。卸载/配置等
+ * el-button 为轻组件,常驻渲染不违背懒挂载的性能约束。
  */
 
-import { store, useConfig } from "@koishi-ce/client";
+import {
+	store,
+	useConfig,
+	useContext,
+} from "@koishi-ce/client";
 import { computed, nextTick, ref } from "vue";
 import { useI18n } from "vue-i18n";
 import type { DependencyItem } from "./dependency-groups.ts";
@@ -102,6 +113,7 @@ const emit = defineEmits<{
 
 const { t } = useI18n();
 const config = useConfig();
+const ctx = useContext();
 
 const dep = computed(
 	() => store.dependencies?.[props.item.name],
@@ -222,5 +234,21 @@ function ignoreUpdate() {
 function cancelChange() {
 	const override = config.value.market.override;
 	if (override) delete override[props.item.name];
+}
+
+/** 该插件已有配置节点(config 插件缺席时无从判定,入口不渲染)。 */
+const hasConfig = computed(
+	() => !!ctx.configWriter?.get(props.item.name)?.length,
+);
+
+/** 跳转到既有配置页(ensure 对已有配置是定位跳转,无副作用)。 */
+function configure() {
+	ctx.configWriter?.ensure(props.item.name);
+}
+
+/** 卸载:往 override 暂存移除标记,卡片进待应用态,应用时统一执行。 */
+function uninstall() {
+	const override = (config.value.market.override ??= {});
+	override[props.item.name] = "";
 }
 </script>

@@ -41,6 +41,31 @@ import "./icons";
 
 export * from "./components/utils";
 
+/**
+ * 短名化:剥离插件包名的约定前缀(社区 koishi-plugin-*、上游
+ * @koishijs/plugin-* 与本仓 @koishi-ce/plugin-* 三种组织形式,
+ * 与 @koishi-ce/registry 的 getPluginShortname 对齐)。
+ */
+function getShortname(name: string) {
+	return name.replace(
+		/(koishi-|^@(?:koishijs|koishi-ce)\/)plugin-/,
+		"",
+	);
+}
+
+/**
+ * 双查 fork 索引:短名命中优先,退回完整包名原样。
+ *
+ * forks 的键是 koishi.yml 配置键 `:` 前段的原样形态,与查询名的剥名
+ * 结果不一定一致:短名形态的配置键(手写或迁移存量)靠剥名命中;而
+ * 市场页历史上对 CE 包名不剥前缀,曾以全名形态创建配置键,此类键须
+ * 以原名兜底命中。两个键位并存时指向同一插件的两种写法,短名优先。
+ */
+function lookupForks(name: string) {
+	const forks = plugins.value.forks;
+	return forks[getShortname(name)] ?? forks[name];
+}
+
 declare module "@koishi-ce/client" {
 	interface Context {
 		configWriter: ConfigWriter;
@@ -182,17 +207,13 @@ export default class ConfigWriter extends Service {
 	 * @param passive 为 true 时只确保配置存在，不发生路由跳转 / 弹窗
 	 */
 	ensure(name: string, passive?: boolean) {
-		const shortname = name.replace(
-			/(koishi-|^@koishijs\/)plugin-/,
-			"",
-		);
-		const forks = plugins.value.forks[shortname];
+		const forks = lookupForks(name);
 		if (!forks?.length) {
 			const key = Math.random().toString(36).slice(2, 8);
 			void send(
 				"manager/unload",
 				"",
-				`${shortname}:${key}`,
+				`${getShortname(name)}:${key}`,
 				{},
 			);
 			if (!passive) router.push(`/plugins/${key}`);
@@ -209,11 +230,7 @@ export default class ConfigWriter extends Service {
 	 * @param name 插件完整包名
 	 */
 	remove(name: string) {
-		const shortname = name.replace(
-			/(koishi-|^@koishijs\/)plugin-/,
-			"",
-		);
-		const forks = plugins.value.forks[shortname];
+		const forks = lookupForks(name);
 		for (const id of forks ?? []) {
 			const tree = plugins.value.paths[id];
 			if (!tree) continue;
@@ -232,11 +249,7 @@ export default class ConfigWriter extends Service {
 	 * @returns 对应的配置树节点列表（无配置时为 undefined）
 	 */
 	get(name: string) {
-		const shortname = name.replace(
-			/(koishi-|^@koishijs\/)plugin-/,
-			"",
-		);
-		return plugins.value.forks[shortname]?.map(
+		return lookupForks(name)?.map(
 			(id) => plugins.value.paths[id],
 		);
 	}

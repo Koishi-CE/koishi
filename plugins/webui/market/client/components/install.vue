@@ -96,23 +96,12 @@
     </template>
   </el-dialog>
 
-  <el-dialog v-model="showRemoveDialog" destroy-on-close>
-    检测到你正在卸载一个已配置的插件，是否同时删除其配置？
-    <template #footer>
-      <div class="left">
-        <el-checkbox v-model="saveChoice">
-          记住我的选择
-          <k-hint>
-            未来将不再弹出此对话框。你仍然可以在用户设置中更改此行为。
-          </k-hint>
-        </el-checkbox>
-      </div>
-      <div class="right">
-        <el-button type="danger" @click="installDep('', false, true)">删除</el-button>
-        <el-button type="primary" @click="installDep('', false, false)">保留</el-button>
-      </div>
-    </template>
-  </el-dialog>
+  <remove-config-dialog
+    v-if="removeDialogShown"
+    :names="removeDialogNames"
+    @confirm="onRemoveConfirm"
+    @close="removeDialogShown = false"
+  ></remove-config-dialog>
 </template>
 
 <script lang="ts" setup>
@@ -127,6 +116,7 @@ import {
 import { parse } from "semver";
 import { computed, reactive, ref, watch } from "vue";
 import { active } from "../utils";
+import RemoveConfigDialog from "./remove-config-dialog.vue";
 import {
 	analyzeVersions,
 	install,
@@ -137,8 +127,13 @@ import {
 const ctx = useContext();
 const config = useConfig();
 
-const saveChoice = ref(false);
-const showRemoveDialog = ref(false);
+const removeDialogShown = ref(false);
+const removeDialogNames = ref<string[]>([]);
+
+/** 共享确认对话框回调:按用户选择继续单包卸载链。 */
+function onRemoveConfirm(removeConfig: boolean) {
+	installDep("", false, removeConfig);
+}
 
 // el-checkbox 的 v-model 目标：收敛为必然的 boolean（配置缺省时视为关闭）
 const bulkMode = computed({
@@ -181,21 +176,13 @@ function installDep(
 		if (
 			typeof config.value.market?.removeConfig !== "boolean"
 		) {
-			showRemoveDialog.value = true;
+			removeDialogNames.value = [target];
+			removeDialogShown.value = true;
 			return;
 		} else {
 			removeConfig = config.value.market.removeConfig;
 		}
 	}
-
-	if (saveChoice.value) {
-		config.value.market = {
-			...config.value.market,
-			removeConfig,
-		};
-	}
-	saveChoice.value = false;
-	showRemoveDialog.value = false;
 
 	versions[target] = version;
 	return install(versions, async () => {

@@ -41,11 +41,20 @@ dependencies:
     ignore: 忽略更新
     cancelChange: 取消变更
     currentMark: 当前
+    configure: 配置
+    uninstall: 卸载
   apply:
     count: 待应用 {count} 项变更
     description: 应用后将改写 package.json 并执行安装
     apply: 应用
     discard: 放弃
+  removeConfig:
+    title: 移除配置确认
+    body: 以下已配置的插件将被卸载,是否同时删除其配置?
+    remember: 记住我的选择
+    rememberHint: 未来将不再弹出此对话框。你仍然可以在用户设置中更改此行为。
+    remove: 删除配置
+    keep: 保留
   ignore:
     title: 忽略更新:{name}
     version: "忽略此版本({version})"

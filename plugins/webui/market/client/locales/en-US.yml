@@ -41,11 +41,20 @@ dependencies:
     ignore: Ignore update
     cancelChange: Revert change
     currentMark: Current
+    configure: Configure
+    uninstall: Uninstall
   apply:
     count: "{count} pending change(s)"
     description: Applying will rewrite package.json and run the installer
     apply: Apply
     discard: Discard
+  removeConfig:
+    title: Confirm config removal
+    body: The configured plugins below will be uninstalled. Also remove their configuration?
+    remember: Remember my choice
+    rememberHint: This dialog will not appear again. You can still change this behavior in user settings.
+    remove: Remove config
+    keep: Keep
   ignore:
     title: "Ignore update: {name}"
     version: "Ignore this version ({version})"

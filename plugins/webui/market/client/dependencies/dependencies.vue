@@ -107,6 +107,14 @@
     :name="ignoreTarget"
     @close="ignoreTarget = ''"
   ></ignore-update-dialog>
+
+  <!-- 页面级单例:移除配置确认对话框(与市场页详情抽屉共享) -->
+  <remove-config-dialog
+    v-if="removeDialogNames.length"
+    :names="removeDialogNames"
+    @confirm="onRemoveConfirm"
+    @close="removeDialogNames = []"
+  ></remove-config-dialog>
 </template>
 
 <script lang="ts" setup>
@@ -129,6 +137,7 @@ import { onKeyStroke } from "@vueuse/core";
 import { computed, reactive, ref } from "vue";
 import { useI18n } from "vue-i18n";
 import ManualInstall from "../components/manual.vue";
+import RemoveConfigDialog from "../components/remove-config-dialog.vue";
 import { install } from "../components/utils";
 import { MarketIcon } from "../vendor/market";
 import {
@@ -159,6 +168,8 @@ const filter = ref<FilterKey>("all");
 const searchInput = ref<{ focus?: () => void }>();
 const ignoreTarget = ref("");
 const applying = ref(false);
+/** 待确认「是否同时删除配置」的已配置移除项名单(非空即弹共享对话框) */
+const removeDialogNames = ref<string[]>([]);
 /** 分组折叠态(会话内记忆,不持久化) */
 const collapsed = reactive<Record<string, boolean>>({});
 
@@ -278,13 +289,54 @@ const updatableNames = computed(() =>
 		.map((item) => item.name),
 );
 
-/** 底部应用栏「应用」:override 暂存区整体交给既有安装链。 */
+/**
+ * 底部应用栏「应用」:override 暂存区整体交给既有安装链。
+ *
+ * 应用前批量检查暂存移除项中已配置的插件:存在且 market.removeConfig
+ * 偏好未设定(boolean,语义与市场页一致)时弹一次共享确认对话框;
+ * 偏好已设定时按偏好直接执行。安装成功回调里按选择对每个移除项
+ * 清理配置(config 插件缺席时 configuredNames 恒空,降级为直接移除)。
+ */
 async function applyChanges() {
 	const override = config.value.market.override;
 	if (!override || applying.value) return;
+	const configuredNames = Object.keys(override)
+		.filter((name) => !override[name])
+		.filter(
+			(name) => !!ctx.configWriter?.get(name)?.length,
+		);
+	const preference = config.value.market.removeConfig;
+	if (
+		configuredNames.length &&
+		typeof preference !== "boolean"
+	) {
+		removeDialogNames.value = configuredNames;
+		return;
+	}
+	await doApply(preference === true, configuredNames);
+}
+
+/** 确认对话框回调:名单清空后按用户选择继续应用。 */
+async function onRemoveConfirm(removeConfig: boolean) {
+	const names = removeDialogNames.value;
+	removeDialogNames.value = [];
+	await doApply(removeConfig, names);
+}
+
+/** 实际应用:整体交给安装链,成功回调按选择清理被移除插件的配置。 */
+async function doApply(
+	removeConfig: boolean,
+	configuredNames: string[],
+) {
+	const override = config.value.market.override;
+	if (!override) return;
 	applying.value = true;
 	try {
-		await install({ ...override });
+		await install({ ...override }, async () => {
+			if (!removeConfig) return;
+			for (const name of configuredNames)
+				ctx.configWriter?.remove(name);
+		});
 	} finally {
 		applying.value = false;
 	}
