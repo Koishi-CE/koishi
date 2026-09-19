@@ -83,12 +83,14 @@ describe("summarize 计数与分组同源", () => {
 			item("c", "updatable"),
 			item("d", "installed", { fetching: true }),
 			item("e", "installed", { ignored: true }),
+			item("f", "unconfigured"),
 		];
 		const summary = summarize(items);
-		expect(summary.total).toBe(5);
+		expect(summary.total).toBe(6);
 		expect(summary.pending).toBe(1);
 		expect(summary.updatable).toBe(2);
 		expect(summary.installed).toBe(2);
+		expect(summary.unconfigured).toBe(1);
 		expect(summary.fetching).toBe(1);
 		expect(summary.local).toBe(0);
 	});
@@ -101,6 +103,24 @@ describe("summarize 计数与分组同源", () => {
 			"invalid",
 			"local",
 			"pending",
+			"unconfigured",
+			"updatable",
+		]);
+	});
+
+	it("未配置分组按固定顺序落在 error 与 updatable 之间", () => {
+		const groups = buildGroups(
+			[
+				item("a", "unconfigured"),
+				item("b", "updatable"),
+				item("c", "error"),
+			],
+			"all",
+			"",
+		);
+		expect(groups.map((group) => group.key)).toEqual([
+			"error",
+			"unconfigured",
 			"updatable",
 		]);
 	});

@@ -121,10 +121,10 @@
 /**
  * 依赖管理页面(/dependencies 路由主体)。
  *
- * 单向数据流:store.dependencies / store.registry / override 暂存区 →
- * items 计算(classify 状态机)→ 分组 / 计数派生 → 卡片墙渲染;展示
- * 与动作彻底分离——卡片只写 override 暂存区并发事件,批量应用与忽略
- * 对话框由页面壳单点持有。
+ * 单向数据流:store.dependencies / store.registry / store.packages /
+ * override 暂存区 → items 计算(classify 状态机 + 未配置全集并集)→
+ * 分组 / 计数派生 → 卡片墙渲染;展示与动作彻底分离——卡片只写
+ * override 暂存区并发事件,批量应用与忽略对话框由页面壳单点持有。
  */
 
 import {
@@ -150,6 +150,7 @@ import {
 import {
 	classify,
 	decodeOverrideEntry,
+	PLUGIN_NAME_PATTERN,
 } from "./dependency-helpers.ts";
 import IgnoreUpdateDialog from "./ignore-dialog.vue";
 import {
@@ -192,6 +193,22 @@ function effectiveLatestOf(
 	return resolveLatest([latest], blockPrerelease.value);
 }
 
+/** config 插件提供的数据面(store.packages + configWriter)是否可用;
+ * 两者同生共死,任一缺席时未配置判定与全集并集整体关闭(降级为现状口径)。 */
+const packageInfoAvailable = computed(
+	() => !!store.packages && !!ctx.configWriter,
+);
+
+/**
+ * 未配置判定:本机已下载(paths 无 workspace 配置键)且没有任何
+ * 配置节点。调用前提是 packageInfoAvailable 为真。
+ */
+function isUnconfiguredEntry(name: string): boolean {
+	const paths = store.packages?.[name]?.paths;
+	if (paths?.length) return false;
+	return !ctx.configWriter?.get(name)?.length;
+}
+
 /** 全量条目(分类状态机在纯函数里,此处只做数据装配)。 */
 const items = computed<DependencyItem[]>(() => {
 	const deps = store.dependencies ?? {};
@@ -205,7 +222,8 @@ const items = computed<DependencyItem[]>(() => {
 			),
 		)
 		.sort();
-	return names.map((name) => {
+	const withConfig = packageInfoAvailable.value;
+	const entries = names.map((name) => {
 		const dep = deps[name];
 		const change = decodeOverrideEntry(override[name]);
 		const latest = effectiveLatestOf(name);
@@ -220,11 +238,38 @@ const items = computed<DependencyItem[]>(() => {
 				change,
 				ignored,
 				hasUpdate(dep?.resolved, latest),
+				// 未配置判定(插件名口径是硬门槛,拦下 koishi 本体等非插件依赖)
+				withConfig &&
+					!!dep &&
+					PLUGIN_NAME_PATTERN.test(name) &&
+					isUnconfiguredEntry(name),
 			),
 			ignored,
 			fetching: !!dep?.fetching,
 		};
 	});
+	// 全集并集:node_modules 里已下载但未在根声明的未配置插件包
+	// (典型是传递依赖)入页;已配置但未声明的包属于配置页视野,
+	// 不入页稀释依赖页语义。空名条目是「应用全局设置」占位,排除。
+	const packages = store.packages;
+	if (!withConfig || !packages) return entries;
+	const extras = Object.keys(packages)
+		.filter(
+			(name) =>
+				name &&
+				!(name in deps) &&
+				!(name in override) &&
+				PLUGIN_NAME_PATTERN.test(name) &&
+				isUnconfiguredEntry(name),
+		)
+		.sort()
+		.map((name) => ({
+			name,
+			kind: "unconfigured" as const,
+			ignored: false,
+			fetching: false,
+		}));
+	return entries.concat(extras);
 });
 
 const summary = computed(() => summarize(items.value));
@@ -251,6 +296,7 @@ const groupIcon: Record<string, string> = {
 	local: "file-archive",
 	invalid: "insecure",
 	error: "insecure",
+	unconfigured: "download",
 	updatable: "asc",
 	installed: "installed",
 };

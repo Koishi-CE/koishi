@@ -13,6 +13,7 @@ import {
 	getAliasTarget,
 	getShortName,
 	type PendingChange,
+	PLUGIN_NAME_PATTERN,
 } from "./dependency-helpers.ts";
 
 describe("classify 分类状态机(优先级链)", () => {
@@ -100,6 +101,86 @@ describe("classify 分类状态机(优先级链)", () => {
 		expect(
 			classify({ fetching: true }, undefined, false, false),
 		).toBe("installed");
+	});
+
+	it("未配置判定压过可更新与已安装,但让位更高优先级", () => {
+		const dep = { resolved: "1.0.0" };
+		// 根声明且无配置的插件包归未配置组(压过 updatable 与 installed)
+		expect(
+			classify(dep, undefined, false, true, true),
+		).toBe("unconfigured");
+		expect(
+			classify(dep, undefined, false, false, true),
+		).toBe("unconfigured");
+		// 默认参数为 false,不改变既有调用形态的判定
+		expect(classify(dep, undefined, false, false)).toBe(
+			"installed",
+		);
+		// 快照有条目时 error / workspace 仍先命中
+		expect(
+			classify(
+				{ error: "network" },
+				undefined,
+				false,
+				false,
+				true,
+			),
+		).toBe("error");
+		expect(
+			classify(
+				{ workspace: true },
+				undefined,
+				false,
+				false,
+				true,
+			),
+		).toBe("local");
+	});
+
+	it("快照无条目的并集包按未配置判定区分待装与未配置", () => {
+		// 全集并集收录的已下载未配置包(无 override 暂存)归 unconfigured
+		expect(
+			classify(undefined, undefined, false, false, true),
+		).toBe("unconfigured");
+		// 未判定未配置时维持既有语义:待安装的新依赖归 pending
+		expect(
+			classify(undefined, undefined, false, false, false),
+		).toBe("pending");
+		// override 暂存优先:并集包一旦暂存版本即升格待应用
+		expect(
+			classify(
+				undefined,
+				{ type: "set", version: "1.0.0" },
+				false,
+				false,
+				true,
+			),
+		).toBe("pending");
+	});
+});
+
+describe("PLUGIN_NAME_PATTERN 插件名口径(未配置判定的硬门槛)", () => {
+	it("三种插件命名前缀命中", () => {
+		expect(
+			PLUGIN_NAME_PATTERN.test("koishi-plugin-echo"),
+		).toBe(true);
+		expect(
+			PLUGIN_NAME_PATTERN.test("@koishijs/plugin-echo"),
+		).toBe(true);
+		expect(
+			PLUGIN_NAME_PATTERN.test("@koishi-ce/plugin-echo"),
+		).toBe(true);
+	});
+
+	it("非插件根依赖不命中", () => {
+		expect(PLUGIN_NAME_PATTERN.test("koishi")).toBe(false);
+		expect(
+			PLUGIN_NAME_PATTERN.test("@koishi-ce/koishi-shim"),
+		).toBe(false);
+		expect(PLUGIN_NAME_PATTERN.test("@koishijs/core")).toBe(
+			false,
+		);
+		expect(PLUGIN_NAME_PATTERN.test("cordis")).toBe(false);
 	});
 });
 

@@ -15,6 +15,7 @@ dependencies:
     alias: Pinned alias
     invalid: Invalid
     error: Failed
+    unconfigured: Unconfigured
     updatable: Updatable
     installed: Installed
   groups:
@@ -23,6 +24,7 @@ dependencies:
     alias: Pinned aliases
     invalid: Invalid declarations
     error: Failed to fetch
+    unconfigured: Unconfigured
     updatable: Updatable
     installed: Installed
   card:
@@ -43,6 +45,7 @@ dependencies:
     currentMark: Current
     configure: Configure
     uninstall: Uninstall
+    addConfig: Add config
   apply:
     count: "{count} pending change(s)"
     description: Applying will rewrite package.json and run the installer

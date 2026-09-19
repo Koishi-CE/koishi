@@ -19,7 +19,7 @@
     <div class="dep-card-meta">
       <span class="dep-meta-item">
         <label>{{ t("dependencies.card.current") }}</label>
-        <strong>{{ dep?.resolved ?? "—" }}</strong>
+        <strong>{{ currentLabel }}</strong>
       </span>
       <span v-if="latest" class="dep-meta-item">
         <label>{{ t("dependencies.card.latest") }}</label>
@@ -32,6 +32,15 @@
     </div>
 
     <p v-if="statusText" :class="['dep-card-status', item.kind]">{{ statusText }}</p>
+
+    <!-- unconfigured 卡为纯信息卡:不渲染版本下拉与卸载(传递依赖不可从根
+         清单移除;暂存版本会把包升格成直接依赖,语义混乱),只提供「添加
+         配置」入口——ensure 会创建一份配置并跳转,文案与「配置」区分 -->
+    <div v-if="item.kind === 'unconfigured'" class="dep-card-actions" @click.stop>
+      <el-button size="small" type="primary" @click="addConfig">
+        {{ t("dependencies.card.addConfig") }}
+      </el-button>
+    </div>
 
     <div v-if="actionable" class="dep-card-actions" @click.stop>
       <el-select
@@ -163,15 +172,28 @@ const statusText = computed(() => {
 	return undefined;
 });
 
-/** local / alias / invalid / 拉取中的卡片为纯信息卡,不渲染动作区。 */
+/** local / alias / invalid / unconfigured / 拉取中的卡片为纯信息卡,不渲染动作区。 */
 const actionable = computed(() => {
 	const kind = props.item.kind;
 	return (
 		kind !== "local" &&
 		kind !== "alias" &&
 		kind !== "invalid" &&
+		kind !== "unconfigured" &&
 		!props.item.fetching
 	);
+});
+
+/** 「当前」展示值:unconfigured 卡无快照条目,退显本地已下载版本。 */
+const currentLabel = computed(() => {
+	if (dep.value?.resolved) return dep.value.resolved;
+	if (props.item.kind === "unconfigured") {
+		return (
+			store.packages?.[props.item.name]?.package.version ??
+			"—"
+		);
+	}
+	return "—";
 });
 
 const selectedVersion = computed({
@@ -243,6 +265,11 @@ const hasConfig = computed(
 
 /** 跳转到既有配置页(ensure 对已有配置是定位跳转,无副作用)。 */
 function configure() {
+	ctx.configWriter?.ensure(props.item.name);
+}
+
+/** 添加配置(unconfigured 卡):ensure 会创建一份配置并跳转,副作用经文案暴露。 */
+function addConfig() {
 	ctx.configWriter?.ensure(props.item.name);
 }
 

@@ -14,8 +14,19 @@ export type ItemKind =
 	| "alias"
 	| "invalid"
 	| "error"
+	| "unconfigured"
 	| "updatable"
 	| "installed";
+
+/**
+ * 插件包名的收录口径:只认三种插件命名前缀,与 store.packages 的
+ * 数据源 LocalScanner 一致(社区 koishi-plugin-*、上游
+ * @koishijs/plugin-*、本仓 @koishi-ce/plugin-*)。作为「未配置」
+ * 分类的硬门槛,防止 koishi 本体、shim、@koishijs/core 等非插件
+ * 根依赖被误判成未配置插件。
+ */
+export const PLUGIN_NAME_PATTERN =
+	/^(koishi-plugin-|@koishi(?:js|-ce)?\/plugin-)/;
 
 /**
  * 待应用变更的显式表达:「设版本 / 移除」用可辨识联合表达,
@@ -37,23 +48,31 @@ export interface DependencyLike {
 
 /**
  * 单包分类状态机(优先级从高到低):待应用变更 > 工作区/本地 >
- * 钉名别名 > 非法声明 > registry 拉取失败 > 可更新 > 已安装。
+ * 钉名别名 > 非法声明 > registry 拉取失败 > 未配置 > 可更新 > 已安装。
  * 顺序即语义,拆分或查表都会掩盖优先级。
+ *
+ * unconfigured 参数是装配层预先算好的「未配置」判定(插件名口径 +
+ * 无配置条目):快照有条目的包在 error 之后、updatable 之前分流;
+ * 快照无条目的包(全集并集收录)以此区分「待装新依赖」与「已下载
+ * 未配置」。
  */
 export function classify(
 	dep: DependencyLike | undefined,
 	change: PendingChange | undefined,
 	ignored: boolean,
 	updateAvailable: boolean,
+	unconfigured = false,
 ): ItemKind {
 	if (change) return "pending";
 	// override 里有但快照里没有:待安装的新依赖,同样归待应用
-	if (!dep) return "pending";
+	if (!dep)
+		return unconfigured ? "unconfigured" : "pending";
 	if (dep.workspace) return "local";
 	// npm: 协议钉名别名(shim 占名):设计内形态,固定钉死无更新可言
 	if (dep.alias) return "alias";
 	if (dep.invalid) return "invalid";
 	if (dep.error) return "error";
+	if (unconfigured) return "unconfigured";
 	// 忽略规则压制的包归已安装组(卡片附「已忽略」徽标);
 	// 元数据尚在拉取(fetching)时无更新可言,同样落此组
 	if (ignored || !updateAvailable) return "installed";

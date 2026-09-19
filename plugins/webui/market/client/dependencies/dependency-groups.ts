@@ -40,6 +40,7 @@ export const GROUP_ORDER: readonly ItemKind[] = [
 	"alias",
 	"invalid",
 	"error",
+	"unconfigured",
 	"updatable",
 	"installed",
 ];
@@ -53,6 +54,7 @@ export interface GroupSummary {
 	alias: number;
 	invalid: number;
 	error: number;
+	unconfigured: number;
 	updatable: number;
 	installed: number;
 }
@@ -114,6 +116,7 @@ export function summarize(
 		alias: 0,
 		invalid: 0,
 		error: 0,
+		unconfigured: 0,
 		updatable: 0,
 		installed: 0,
 	};

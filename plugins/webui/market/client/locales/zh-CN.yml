@@ -15,6 +15,7 @@ dependencies:
     alias: 钉名别名
     invalid: 非法声明
     error: 拉取失败
+    unconfigured: 未配置
     updatable: 可更新
     installed: 已安装
   groups:
@@ -23,6 +24,7 @@ dependencies:
     alias: 钉名别名
     invalid: 非法声明
     error: 拉取失败
+    unconfigured: 未配置
     updatable: 可更新
     installed: 已安装
   card:
@@ -43,6 +45,7 @@ dependencies:
     currentMark: 当前
     configure: 配置
     uninstall: 卸载
+    addConfig: 添加配置
   apply:
     count: 待应用 {count} 项变更
     description: 应用后将改写 package.json 并执行安装
