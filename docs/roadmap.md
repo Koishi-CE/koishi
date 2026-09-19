@@ -1,8 +1,8 @@
 # 规划路线（roadmap）
 
-> **状态：讨论稿（草案，2026-09-02 起草）**——条目尚未经维护者逐条确认，不构成对外承诺；确认后逐项转入执行并滚动更新状态。
+> **状态：讨论稿（草案，2026-09-02 起草；2026-09-20 重构梳理）**——条目尚未经维护者逐条确认，不构成对外承诺；确认后逐项转入执行并滚动更新状态。
 > 素材全部来自仓库实证（决策档案、git 历史、代码标记与目录实况），每条标注**目标 / 状态 / 依据**，可溯源。
-> **本文结构**：1 阻塞项 · 2 进行中 · 3 计划与候选 · 4 近期收尾池。
+> **本文结构**：1 阻塞项 · 2 进行中 · 3 计划与候选 · 4 已落地归档 · 5 近期收尾池。
 
 ## 1. 阻塞项（等待外部条件）
 
@@ -16,8 +16,8 @@
 
 ### 1.2 `@koishijs/*` 上游冻结包跟随
 
-- **目标**：`@koishijs/plugin-database-memory`（测试）、`@koishijs/assets`（analytics dev）、`@koishijs/plugin-server-proxy`（console 类型引用）、npm 包 `@koishijs/market`（market client）随上游发布节奏跟进。
-- **状态**：跟随上游——无法自主升级（上游冻结），其余依赖不受影响。
+- **目标**：宿主 console 插件的类型引用 `@koishijs/plugin-server-proxy` 随上游发布节奏跟进——这是全仓仅剩的一处上游名外部依赖。
+- **状态**：跟随上游——无法自主升级（上游冻结）。历史依赖已全部解决：测试 memory 驱动已 CE 化（`@koishi-ce/plugin-database-memory`，`plugins/infra/memory`）、market client 对 npm 包 `@koishijs/market` 的依赖已随 vendor 化解除（d8ce130）、analytics 曾用的 `@koishijs/assets` 已随依赖清理消失。
 - **依据**：[decisions/dependency-audit.md](decisions/dependency-audit.md) §2A；AGENTS.md 硬性约束 2（导入例外清单）。
 
 ### 1.3 服务归属反查的上游根治（待 cordis 4 stable）
@@ -31,32 +31,26 @@
 ### 2.1 依赖面原生化精简
 
 - **目标**：能用 Bun / node 原生能力替代的外部依赖持续删除，压缩依赖面与安全审计面。
-- **状态**：进行中。近期已移除：execa / p-map（d236e27）、envinfo / which-pm-runs（4b07454）、create-koishi-ce 的 yargs-parser / tar / prompts / kleur（5b65d63 等，改 Bun 内置 + @clack/prompts + giget + picocolors）。原「后续候选」`fs-extra`（koishi-scripts）与 `dotenv`（loader）已于 2026-08-29 随 048e3ba、d6b4093 删除，当前无排队候选。
+- **状态**：进行中。近期已移除：execa / p-map（d236e27）、envinfo / which-pm-runs（4b07454）、create-koishi-ce 的 yargs-parser / tar / prompts / kleur（5b65d63 等，改 Bun 内置 + @clack/prompts + giget + picocolors）。原「后续候选」`fs-extra`（koishi-scripts）与 `dotenv`（loader）已于 2026-08-29 随 048e3ba、d6b4093 删除。2026-09 后续：workspace 包直接依赖的 chokidar 已清零（hmr 换 @parcel/watcher 原生绑定、explorer 上游逐字继承的死依赖整体移除），js-yaml 链已删依赖清零；当前无排队候选。
 - **依据**：git 历史代表提交如上；[decisions/upgrade-plan.md](decisions/upgrade-plan.md) Phase 1；[decisions/dependency-audit.md](decisions/dependency-audit.md) 后续变化补记。
 
 ## 3. 计划与候选
 
-### 3.1 CI 门禁流水线
-
-- **目标**：`bun run check` / `bun test` / `bun run build` 进 CI，PR 与 main 的门禁自动化。
-- **状态**：已落地（2026-09-10）。`.github/workflows/ci.yml` 三并行 job：`gate`（build → check → test；build 前置因 web 侧 tsc 的 paths 解析读 lib 产物）、`client`（宿主 + 全部 webui 插件前端构建）、`fallow`（死代码与依赖审计；2026-09-11 由 knip 迁移至 fallow，配置在根 `.fallowrc.jsonc`）。词典（check:locales）与文档链接（check:docs-links）检查同批接入 `bun run check`；Bun 版本经 setup-bun 读根 `packageManager`，不硬编码。首次在线跑通后如有时长问题再议缓存。
-- **依据**：`.github/workflows/ci.yml`；[guides/development.md](guides/development.md) §3；提交记录（ci 门禁流水线三提交）。
-
-### 3.2 上游同步常态化
-
-- **目标**：对上游 koishi / webui（及再分发插件的上游）release 线做周期性跟踪与差异审计，port 从「被动响应」转为「主动巡检」。
-- **状态**：已落地（2026-09-10）。巡检机制见 [process/upstream.md](process/upstream.md) 的 Routine inspection 节：`bun tooling/upstream-audit/index.ts` 刷新仓外上游缓存并产出目录对比底稿（含改动量排行与仅一侧存在的文件），triage 分级（安全 / bug / 特性 / 重构 / 与本仓刻意差异冲突 / 已在仓）后按 port 规则逐条推进；节奏为每个发布列车前至少一轮。首次全量巡检结论：上游欠账仅 2 项 B 级（已 port，含溯源），详见该文件 Inspection log 节。
-- **依据**：[process/upstream.md](process/upstream.md)；AGENTS.md「上游同步」条目；tooling/upstream-audit/index.ts。
-
-### 3.3 tsc6 legacy 类型检查通道退役评估
+### 3.1 tsc6 legacy 类型检查通道退役评估
 
 - **目标**：评估根脚本 `typecheck:legacy`（tsc6 通道）是否仍有保留价值，可退役则删。
 - **状态**：候选（仅评估，不预设结论）。现行类型检查走 TS7（`bun run typecheck`）；根 `typescript` 双版本仅因 @typescript-eslint/parser 尚不支持 TS7 而保留。
 - **依据**：根 package.json scripts；AGENTS.md「TS 双版本策略」；[guides/development.md](guides/development.md) §3。
 
-## 4. 近期收尾池（backlog）
+## 4. 已落地归档
+
+原「计划与候选」中已完成的条目移此存档，细节以对应文档为准：
+
+- **CI 门禁流水线**（2026-09-10 落地）：`.github/workflows/ci.yml` 三并行 job——`gate`（build → 宿主前端 → check → test + Codecov 覆盖率）、`client`（宿主 + 全部 webui 插件前端构建）、`fallow`（死代码与依赖审计，2026-09-11 由 knip 迁移至 fallow）；词典与文档链接检查同批并入 `bun run check`。详见 [guides/development.md](guides/development.md) §3。另有 triage.yml 自动分诊（issue 指派 / PR 路径打标）已另批落地。
+- **上游同步常态化**（2026-09-10 落地）：巡检机制（`bun run upstream:audit` + triage 分级 + port 规则）与首轮全量结论见 [process/upstream.md](process/upstream.md)。
+
+## 5. 近期收尾池（backlog）
 
 体量小、暂不成线的待办，随手机会清掉：
 
-- `packages/node/core/src/command/command/command.ts:140`：FIXME——空 action 列表会无限循环，现以提前返回规避。
-- `plugins/webui/market/src/node/installer/index.ts:369`：TODO——`Installer.Config` 的 `.hidden()`。
+- `plugins/webui/market/src/node/installer/index.ts`：TODO——`Installer.Config` 的 `.hidden()`。（原在同池的 core command.ts 空 action FIXME 已随 801cff7 转正删除）

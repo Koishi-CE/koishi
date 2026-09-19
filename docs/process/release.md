@@ -28,7 +28,7 @@ bun run release pipeline                  # 一条龙：preflight → version �
 4. **build**：node 侧 lib 产物 + 宿主控制台总装 + 各 webui 插件前端。
 5. **test**：`bun test packages plugins/common plugins/webui/admin plugins/webui/commands`——范围化子集（源码 `runTestStep`），不含 apps 与 tooling 用例；全量测试仍以本地 `bun test` 为准。
 6. **publish**：按拓扑序逐包发布。publish 环负责把 `workspace:*` 协议改写为真实版本号（`workspace:^` 等其他协议形式直接拒绝），并带**终局断言**（依赖字段不得残留 `workspace:` / `file:` / `link:`）。
-7. **push**：推送 `main`（只推 main，不打 tag——tag 环已删除）。
+7. **push**：推送 `main`（只推 main，不打 tag——tag 环已删除；对外 GitHub Release 的单整体 tag 手动补打，跟 core 版本走）。
 
 ## 3. changesets 约定
 

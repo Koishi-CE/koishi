@@ -20,7 +20,7 @@
 2. **代码内导入一律 `@koishi-ce/*`**；仅有的外部上游导入例外是 console 的类型引用 `@koishijs/plugin-server-proxy`（测试用 memory 驱动已 CE 化为 `@koishi-ce/plugin-database-memory`，`plugins/infra/memory`）。
 3. **cordis 生态冻结在 3.x 内洽线**：cordis / minato / @cordisjs/* / @satorijs/* 不得跳 4.x / 1.x——Phase 5 已实证被 `@satorijs/core`（内部携带 cordis ^3，无 cordis 4 线）阻塞并整体回退，重启条件见 `docs/decisions/upgrade-plan.md` Phase 5 节。
 4. **vendored 三包不动**：`plugins/infra/{http,proxy,server}` 是预编译产物包（无 `src/`、不走 tsdown、根 tsdown 配置显式 exclude），分别内联再导出 `@cordisjs/plugin-*`（`proxy` 目录系上游 `proxy-agent` 的本地改名，见 docs/process/upstream.md）。
-5. **ESM-only 产物 + Bun 运行时**：全部 50 个 workspace 包均为 `"type": "module"`，根 tsdown 单遍构建只出 ESM（`index.mjs` + `index.d.ts`），各包 exports 以 `default` 条件兜底；Bun 的 `require()` 可直接加载 ESM，loader 的插件加载链据此工作，**不要恢复 CJS 双格式产物**。运行时以 Bun 为准（Node 不作兼容目标）；`.yml` locale 走 copy loader 原样拷入产物，Bun 原生支持 yml 导入。
+5. **ESM-only 产物 + Bun 运行时**：全部 52 个 workspace 包均为 `"type": "module"`，根 tsdown 单遍构建只出 ESM（`index.mjs` + `index.d.ts`），各包 exports 以 `default` 条件兜底；Bun 的 `require()` 可直接加载 ESM，loader 的插件加载链据此工作，**不要恢复 CJS 双格式产物**。运行时以 Bun 为准（Node 不作兼容目标）；`.yml` locale 走 copy loader 原样拷入产物，Bun 原生支持 yml 导入。
 6. **许可证分区**：`packages/web/*` 与 `plugins/webui/*` 全部（含 console 宿主插件）为 AGPL-3.0，其余目录 MIT——以 `NOTICE` 为准；在 AGPL 目录新增文件同样受 AGPL 约束。
 7. **market 插件为上游原版再分发**：`plugins/webui/market/`（`@koishi-ce/plugin-market`）对齐自上游 webui `plugins/market`（原版 v2.11.11），社区版 `plugin-marketn` 已被其取代并移除。client 逻辑层与图标自 `@koishijs/market` 4.2.10 vendor 进 `client/vendor/market/`（AGPL 同许可，对 npm 包的依赖已解除）；视图四组件（`client/market/`）为本地化 fork，上游同步时须手动 diff 勿整覆盖；包根 `locales/` 词典为本地真翻译（上游原版系 Crowdin 机器人写入的未翻中文占位物），同步时同样手动 diff 勿整覆盖。宿主构建保留 `@koishijs/components` alias 作下游防御：第三方插件以 npm 名引用组件库时重定向到本仓 workspace 版，避免双实例。
 8. **packages/shim 四包不动**：`@koishi-ce/koishi-shim`（4.18.11）、`@koishi-ce/console-shim`（5.30.11）、`@koishi-ce/client-shim`（5.30.11）与 `@koishi-ce/components-shim`（1.5.22）是下游 npm alias 的占名目标——纯 JS 预编译、版本冻结跟随上游线、changesets ignore（**勿写 changeset、勿 bump、勿改回 1.x 基线**）。下游项目以六行 alias 钉名（`"koishi": "npm:@koishi-ce/koishi-shim@^4.18.11"`、`"@koishijs/client": "npm:@koishi-ce/client-shim@^5.30.11"` 等），机理与维护纪律详见 `packages/shim/README.md`。
@@ -37,7 +37,7 @@ bun run lint:client             # eslint 仅查 *.vue（biome 只解析 .vue 的
 bun run typecheck               # TS7 类型检查 = 两条 bunx tsc（node 侧 + client 侧大一统串行）
 bun run fallow                  # 死代码与依赖审计（bunx 直跑 fallow：不占 devDependencies、脚本内 pin 精确版；豁免与规则见 .fallowrc.jsonc）
 bun run build                   # 根 tsdown：全部 node 侧包 → lib/（ESM-only）
-bun test                        # 全量自有用例（125 个测试文件 / 982 用例，覆盖全部 node 侧包）
+bun test                        # 全量自有用例（126 个测试文件 / 1003 用例，2026-09-20 实测，覆盖全部 node 侧包）
 bun run test                    # 同上的脚本形态：bun test --isolate（每文件独立 global，隔离跨文件 mock.module）
 bun test --coverage             # 覆盖率（src 源码口径，All files 当前约 97% 行，以实跑输出为准）
 bun run sandbox                 # 外部沙盒实例生成（链接模式默认，--pack 为打包模式；详见 docs/guides/development.md §9）

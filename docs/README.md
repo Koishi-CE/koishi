@@ -45,7 +45,7 @@ flowchart LR
 
 | 文档 | 内容速览 | 何时读 |
 |---|---|---|
-| [guides/development.md](guides/development.md) | 环境 · 命令 · 门禁 · 构建布局 · 编码约定 · 测试 · 已知坑 | 日常开发、跑门禁前 |
+| [guides/development.md](guides/development.md) | 环境 · 命令 · 门禁 · 构建布局 · 编码约定 · 测试 · 已知坑 · 沙盒实例 | 日常开发、跑门禁前 |
 | [reference/architecture.md](reference/architecture.md) | 包清单 · 依赖纪律 · 构建 / 类型 / 测试体系 · 许可证分区 | 改包结构 / 依赖 / 构建链前 |
 | [process/release.md](process/release.md) | changesets · `bun run release` 发布链 · 事故铁律 | 发版前 |
 | [process/upstream.md](process/upstream.md) | 上游基线 · 目录映射表 · port 流程（英文） | 同步上游改动时 |
@@ -63,7 +63,7 @@ flowchart LR
 | 文档 | 内容 | 状态 |
 |---|---|---|
 | [decisions/upgrade-plan.md](decisions/upgrade-plan.md) | 依赖六阶段升级计划书 | Phase 0-4 已完成；Phase 5（cordis 4.x）被上游阻塞、已回退——重启条件仍是活约束 |
-| [decisions/dependency-audit.md](decisions/dependency-audit.md) | 99 个外部依赖立项前全量审计快照（文末附 2026-09-05 后续变化补记） | 历史快照（2026-08-27）+ 补记 |
+| [decisions/dependency-audit.md](decisions/dependency-audit.md) | 58 个外部依赖现势审计快照（依赖面收敛与工具链现代化对账） | 现势快照（2026-09-19 重拍；初版 2026-08-27 见 git 历史） |
 
 ## 文档组织约定
 

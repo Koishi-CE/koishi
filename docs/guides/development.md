@@ -2,7 +2,7 @@
 
 > `koishi`（Koishi-CE monorepo）的**开发手册**：环境、命令、门禁、构建产物布局、编码约定、测试写法与已知坑。以实际代码为准，文档滞后时听代码的。
 > **先读**：根 [AGENTS.md](../../AGENTS.md)（铁律精简版）→ 本文（方法与细节）；结构见 [../reference/architecture.md](../reference/architecture.md)，发布见 [../process/release.md](../process/release.md)。
-> **本文结构**：1 环境 · 2 命令 · 3 门禁 · 4 构建产物 · 5 编码约定 · 6 测试 · 7 已知坑 · 8 版本与发布。
+> **本文结构**：1 环境 · 2 命令 · 3 门禁 · 4 构建产物 · 5 编码约定 · 6 测试 · 7 已知坑 · 8 版本与发布 · 9 外部沙盒实例。
 
 ## 1. 环境要求
 
@@ -28,6 +28,7 @@ bun run check:vue-types         # vue-tsc 影子基线闸门（.vue 全量类型
 bun run check:assertions        # 双重断言（as unknown as）基线闸门：非测试源文件只拦新增，已并入 check
 bun run check:packages          # 包名纪律 / 元数据统一 / ESM-only / 依赖方向（零依赖，已并入 check）
 bun run fallow                  # 死代码与依赖审计（bunx 直跑 fallow：不占 devDependencies、脚本内 pin 精确版；配置见根 .fallowrc.jsonc）
+bun run upstream:audit          # 上游巡检：刷新仓外上游缓存并产出目录对比底稿（流程见 ../process/upstream.md）
 bun run typecheck               # TS7 类型检查（node 侧 + client 侧两条 bunx tsc 串行）
 bun run build                   # 根 tsdown：全部 node 侧包 → 各包 lib/（ESM-only）
 bun test                        # 全量自有用例（覆盖全部 node 侧包与 tooling 回归，秒级；文件与用例数以实跑输出为准）
@@ -66,7 +67,7 @@ bun run release status                   # 发布链概览（详见 ../process/r
 7. **check:assertions**：`tooling/checks/assertions.ts`（零依赖，bun 直跑）——双重断言（`as unknown as` / `as any as`）基线闸门：扫描非测试源文件（`packages` / `plugins` / `apps` / `tooling` 下 `.ts` / `.mts` / `.vue`；测试文件、vendor 目录、vendored 预编译包与产物目录出范围），与入库基线（`tooling/checks/assertions-baseline.json`，兼作保留台账）对比，**只拦新增、容忍存量**——归一化键为「文件 + 类别 + 断言行文本」（不含行号，同文件挪行不算新增；同行多次按次计）。新增断言须先穷尽根除 / 上移修法，确属务实妥协的登记基线附一行理由（`reason` 字段）后 `--update` 重扫；修复存量无需动基线。另设次级检查：`.vue` 模板表达式内 `as any`（biome / eslint 均不查模板，是显式 any 的唯一逃逸口）。覆盖边界（跨行形态、注释豁免、单重 `as` 不在范围）见脚本头部注释。
 8. **check:packages**：`tooling/checks/packages.ts`（零依赖）——把 AGENTS.md 硬性约束与 architecture.md §3 依赖纪律中靠人工遵守的部分固化为自动检查：包名纪律（依赖声明与源码导入不得写回上游名 `koishi` / `@koishijs/*`，豁免仅 console 的 `@koishijs/plugin-server-proxy` 类型引用）、顶层类型字段统一 `types`（不混用旧别名 `typings`）、ESM-only 形态（`type: module`、exports 无 `require` 条件、main 非 CJS 产物）、依赖方向负面规则（packages/web、packages/node、plugins/common、plugins 四个 scope，console 宿主的防御性 peer 在豁免表内附理由）。问题 exit 1；各豁免的理由见脚本头部与内联注释。
 
-**CI（`.github/workflows/ci.yml`）**：PR 与 main push 自动触发（也支持手动 dispatch），三个并行 job：`gate`（build → 宿主前端构建 → check → test）、`client`（宿主 + 全部 webui 插件的前端构建，即 `.vue` 的实际类型门禁）、`fallow`（`bun run fallow` 死代码与依赖审计）。三个顺序要点：
+**CI（`.github/workflows/ci.yml`）**：PR 与 main push 自动触发（也支持手动 dispatch），三个并行 job：`gate`（build → 宿主前端构建 → check → test，test 附带 lcov 覆盖率产出并经 codecov-action 上传 Codecov）、`client`（宿主 + 全部 webui 插件的前端构建，即 `.vue` 的实际类型门禁）、`fallow`（`bun run fallow` 死代码与依赖审计）。三个顺序要点：
 
 - **gate 里 build 前置于 check**：`tsconfig.web.json` 的部分 paths 指向各包 `lib/index.d.ts` 产物，全新环境无 lib 时 web 侧 tsc 直接 TS2307（已实测）；本地因 lib 常在而感知不到该依赖。
 - **gate 里前端构建前置于 test**：console 插件的「静态资源托管」用例读 `plugins/webui/console/dist` 真实产物（index.html / logo.png），干净环境不构建前端则整套用例必失败（首次上 CI 实证）；本地因 dist 常在而感知不到。
@@ -76,7 +77,7 @@ bun run release status                   # 发布链概览（详见 ../process/r
 
 - **入口补声明**：tsdown 配置里显式声明的构建入口（如 cli 的 worker）、前端构建脚本（`packages/web/client/{src/bin,scripts/client}.ts`）以及库对外暴露的适配层/barrel 静态不可达，靠 `entry` / `dynamicallyLoaded` 补齐（`dynamicallyLoaded` 即 knip 时代各 webui 包的 `entry: ["client/**/*.ts"]`）。
 - **依赖豁免是包名级全局的**：fallow 不支持按 workspace 覆写 `ignoreDependencies`，knip 时代散落各包的豁免清单因此收敛为一份带理由注释的长列表。
-- **规则开关**：`unused-class-members` / `unused-component-props` / `unused-component-emits` / `duplicate-exports` 关闭（反射式公共 API 与多包同名导出约定，与 knip 口径一致）；`circular-dependencies` 与 `re-export-cycle` 仅 `warn`——core 的 `command` ↔ `context` 双向引用属已知架构债（见 [roadmap](../roadmap.md)），可见但不阻塞。
+- **规则开关**：`unused-class-members` / `unused-component-props` / `unused-component-emits` / `duplicate-exports` 关闭（反射式公共 API 与多包同名导出约定，与 knip 口径一致）；`circular-dependencies` 与 `re-export-cycle` 为 `error`——全仓循环已于 2026-09 断环收官清零（含 core 的 `command` ↔ `context` 旧债），升为 error 防回归，CI 的 fallow job 直接咬死环回归。
 
 fallow 另外还带重复代码、复杂度健康度、边界违规与 PR 变更集审计（`bun run fallow:full` 全量、`bun run fallow:full -- audit --base main` 变更集审计），暂未纳入门禁，按需手动跑。
 
@@ -94,7 +95,7 @@ fallow 另外还带重复代码、复杂度健康度、边界违规与 PR 变更
 | 各 webui 插件前端 | 各插件 `dist/`（`koishi.public` 声明） | `packages/web/client/src/index.ts` 的 `build(root)` API |
 | `apps/koishi-create` | `lib/` | 根 tsdown（包级 tsdown.config.ts 补 bin 入口） |
 
-- **ESM-only + Bun 运行时**：全部 48 个 workspace 包均为 `"type": "module"`，根 tsdown 只出 ESM（exports 以 `default` 条件兜底）。loader 用 `require()` 加载插件，Bun 的 `require()` 可直接加载 ESM，插件加载链据此工作；不要恢复 CJS 双格式产物。
+- **ESM-only + Bun 运行时**：全部 52 个 workspace 包均为 `"type": "module"`，根 tsdown 只出 ESM（exports 以 `default` 条件兜底）。loader 用 `require()` 加载插件，Bun 的 `require()` 可直接加载 ESM，插件加载链据此工作；不要恢复 CJS 双格式产物。
 - `**/lib/`、`**/dist/` 均被 .gitignore 忽略，不入库。例外：vendored 三包（`plugins/infra/{http,proxy,server}`）的 `index.cjs/index.mjs/index.d.ts` 是提交进仓库的预编译产物（再导出 `@cordisjs/plugin-*`），不走 tsdown。
 - 前端构建发布前现构建（dist 不入 git），由 `bun run release build` 编排。
 
@@ -111,7 +112,7 @@ fallow 另外还带重复代码、复杂度健康度、边界违规与 PR 变更
 
 ### 命名空间与依赖纪律
 
-- 代码内导入一律 `@koishi-ce/*`。外部上游导入仅有的例外：测试用 `@koishijs/plugin-database-memory`，console 的类型引用 `@koishijs/plugin-server-proxy`。
+- 代码内导入一律 `@koishi-ce/*`。外部上游导入仅有的例外：宿主 console 插件的类型引用 `@koishijs/plugin-server-proxy`（测试用 memory 驱动已 CE 化为 `@koishi-ce/plugin-database-memory`，不再算例外）。
 - `peerDependencies` 一律指向 CE 包名（`@koishi-ce/koishi ^1.0.0` 等），不要写回上游名；详见 [../reference/architecture.md](../reference/architecture.md) 依赖纪律节。
 - 依赖方向：`plugins/webui/* → @koishi-ce/console → @koishi-ce/core`；`plugins/common/* → @koishi-ce/core`；`packages/web/*`（浏览器侧）不依赖 node 侧运行时。
 - cordis 生态冻结在 3.x 内洽线（cordis / minato / @cordisjs/* / @satorijs/* 不得跳 4.x / 1.x），依据与重启条件见 [../decisions/upgrade-plan.md](../decisions/upgrade-plan.md) Phase 5 节。
@@ -154,7 +155,7 @@ expect(app.database.getUser("mock", "A")).resolves.toHaveShape({ authority: 1 })
 
 - **shape 断言**（`toHaveShape`）由 `packages/node/core/src/__tests__/shape.ts` 注册（`expect.extend` 自定义 matcher，import 该文件一次即注册；语义：期望为实际的递归子集）。
 - 上游 port 进来的用例若带 chai 风格，迁移对照：`await expect(p).eventually.to.eql(x)` → `await expect(p).resolves.toEqual(x)`；`.to.be.rejected` → `.rejects.toThrow()`。
-- 数据库用例用 `@koishijs/plugin-database-memory`（上游包，声明于 `packages/node/core` 的 devDependencies）；时间模拟用 `bun:test` 的 mock timers（`jest.useFakeTimers()` 等；默认不冻结微任务链路，但会冻结 `Date.now()`）。
+- 数据库用例用 `@koishi-ce/plugin-database-memory`（workspace 包 `plugins/infra/memory`，声明于 `packages/node/core` 的 devDependencies）；时间模拟用 `bun:test` 的 mock timers（`jest.useFakeTimers()` 等；默认不冻结微任务链路，但会冻结 `Date.now()`）。
 - 测试文件与被测模块同目录放置：同模块用例较多时收进该模块的 `__tests__/`（如 `core/src/session/__tests__/`），较少时直下同名放置（如 `core/src/command/declaration.test.ts`）；文件型模块（无独立目录）的用例组收进包级 `src/__tests__/`（core 的 shape 断言基建同在此）。全仓 `*.test.ts`、无 `.spec.ts`；总数以 `bun test` 实跑输出为准。
 - `.yml` locale 在测试中可直接 import（Bun 原生支持）。
 
@@ -169,7 +170,7 @@ expect(app.database.getUser("mock", "A")).resolves.toHaveShape({ authority: 1 })
 7. **显式 `any` 全仓为 0，保持住**：动态边界（JSON.parse / socket 消息 / 第三方回调）用 `unknown` + 收窄；`{}` 类型用 `Record<never, never>`。
 8. **TS7 的跨文件 `declare module` 增强对「经 lib 产物 d.ts 的模块骨架」不生效**：浏览器端工程对 console 类型的消费走 `packages/web/client/client/shims.d.ts` 手写的 `"@koishi-ce/plugin-console"` 骨架，各插件 client 工程须向同一模块名镜像自己的 Services / Events 注入，载荷要用骨架自带的 `DataService<T>` 包装。market 的镜像是 `plugins/webui/market/client/console-services.ts`（类型实体经 `market/client/tsconfig.json` 指向各包 lib 产物 d.ts 解析）——**node 侧声明变更时须同步该文件**。
 9. **前端构建没有 vite 配置文件**，全部编程式 `vite.build()`：宿主总装 `packages/web/client/scripts/client.ts`（产物硬编码到 `plugins/webui/console/dist`）；单插件 `build(root)` 内置 `collectWorkspaceAliases()`——未被依赖的 workspace 包不会出现在 node_modules 链接里，必须显式映射才能被 bundler 解析。
-10. **特殊构建 hack**（动对应构建链必须复核）：analytics 的 "fuck-echarts"（`build/client.ts`，echarts chunk 内 `Symbol` 重命名）、explorer 的 monaco manualChunks（位于 `client/editor.ts`）、client 构建的 vue-i18n `esm-browser.prod` 别名。
+10. **特殊构建 hack**（动对应构建链必须复核）：analytics 的 "fuck-echarts"（`build/client.ts`，echarts chunk 内 `Symbol` 重命名；`build()` 显式加载合并该文件名，vite 不会自动发现）与 client 构建的 vue-i18n `esm-browser.prod` 别名——explorer 的 monaco manualChunks 覆盖已删（rolldown 自动分包已实现其目标）。
 11. **hmr 的 TS 即时编译由 Bun 原生完成**：require 坏 TS 抛 `AggregateError`（errors 为 Bun 的 BuildMessage，带 `message` 与 `position.{file,line,column}`，无 esbuild 式 `.text`/`.location` 字段——上游按 esbuild BuildFailure 写的错误识别分支在 Bun 下永不命中，现已在 `hmr/src/error.ts` 按真实形态重写）；`@babel/code-frame`@8 自带类型（`@types/babel__code-frame` 为 v7 线存根、从未生效，已删），esbuild devDep 已移除。
 12. **上游 port 须补 `.ts` 扩展名**：上游源码是无后缀的 bundler 风格相对导入，本仓 nodenext 类型检查要求相对导入带扩展名；port 流程见 [../process/upstream.md](../process/upstream.md)。
 13. **Biome 的 JSON 行尾不可见字符**：已知、正常、无害，看到即跳过，不调查、不修复、不报告。
@@ -203,4 +204,3 @@ bun run sandbox --start          # 生成完成后立即在本进程前台拉起
 - 沙盒内启动：`cd <沙盒>` 后执行 `bun start`（两步分开写——PowerShell 5.x 不支持 `&&` 连写；生成时加 `--start` 可由工具直接拉起，免手动 cd）。scripts.start 直指 cli 产物 `node_modules/@koishi-ce/koishi/lib/cli/index.mjs`——链接模式的 .bin 非 bun install 产物（win32 需 .exe stub，手工伪造不可靠，`bun koishi` / `bunx koishi` 均不认手工放置的脚本，后者还会自动从 npm 拉官方 koishi 包），两模式统一直指文件路径。
 - 沙盒内经市场装插件会触发 bun install 重建 node_modules，可能清掉手工 junction——重跑 `bun run sandbox` 秒级补链（幂等：已有且指向一致的链接全部复用）。
 - 沙盒 package.json 预声明 plugin-http / plugin-proxy-agent / plugin-server 三个默认插件依赖：loader 启动时的 manifest 迁移（migrateManifest，按进程 cwd 读 package.json）发现宿主未声明会自动补挂插件键并改写 koishi.yml，与模板 yml 的同名键撞 duplicate plugin 警告。
-- 已知问题：生产模式启动在 server 组后有约 50 秒间隙（依赖 http 服务的插件 start 等待服务就绪，机理未定位；console 宿主 index.html 可达、全部插件加载正常，不影响正确性）。
