@@ -25,18 +25,23 @@
 </div>
 
 > [!NOTE]
-> **非官方社区版声明**：本项目与 [Koishi 官方组织](https://github.com/koishijs) 无隶属关系。基于 [koishijs/koishi](https://github.com/koishijs/koishi) (MIT) 与 [koishijs/webui](https://github.com/koishijs/webui) (部分 AGPL-3.0) 源码按文件级重构为单仓发布。详见 [NOTICE](./NOTICE) 与 [上游对齐映射](./docs/process/upstream.md)。
+> **非官方社区版声明**：本项目与 [Koishi 官方组织](https://github.com/koishijs) 无隶属关系。基于 [koishijs/koishi](https://github.com/koishijs/koishi) (MIT) 与 [koishijs/webui](https://github.com/koishijs/webui) (部分 AGPL-3.0) 源码按文件级重构为单仓发布。详见 [NOTICE](./NOTICE) 与 [上游对齐映射](./docs/process/upstream.md)
 
 ---
 
 ## 特性
 
-* **上游单仓合并**
+* **运行时升级**\
   以 [Bun](https://bun.sh) 为核心运行时与包管理器，使用了大量Bun原生模块
-* **上游单仓合并**
-  将框架核心与 WebUI 控制台融合为统一单仓（Monorepo），保持版本同步，按目录清晰划分 MIT 与 AGPL-3.0 授权。
-* **严格工程约束**
-  全仓严格类型检查，全量测试覆盖，严防死代码与脏依赖，产物纯 ESM 规范化。
+* **工具链升级**\
+  一条 `bun run check` 串起八段门禁，配套 release 发布链、沙盒实例生成器与上游巡检等 tooling 脚本
+
+<!-- -->
+
+* **上游单仓合并**\
+  将上游的框架核心与 WebUI 控制台融合为统一单仓（Monorepo）
+* **严格工程约束**\
+  全仓严格类型检查，全量测试覆盖，严防死代码与脏依赖，产物纯 ESM 规范化
 
 ---
 
@@ -56,7 +61,7 @@ bun create koishi-ce
 </details>
 
 > [!TIP]
-> 模板项目通过 npm alias 锁住上游依赖避免版本冲突。用户从插件市场自行添加插件
+> 模板项目通过 npm alias 锁住上游依赖避免版本冲突。用户可从插件市场自行添加插件
 
 ---
 
@@ -64,7 +69,7 @@ bun create koishi-ce
 
 * **文档指南**：[项目架构与包清单](https://www.google.com/search?q=./docs/reference/architecture.md&utm_source=gemini) ｜ [开发与维护流程](https://www.google.com/search?q=./docs/README.md&utm_source=gemini)
 * **代码治理**：[贡献指南](https://www.google.com/search?q=./.github/CONTRIBUTING.md&utm_source=gemini) ｜ [仓库约定](https://www.google.com/search?q=./AGENTS.md&utm_source=gemini) ｜ [安全策略](https://www.google.com/search?q=./.github/SECURITY.md&utm_source=gemini)
-* **授权说明**：MIT 与 AGPL-3.0 分区授权，各目录源码出处见 [NOTICE](https://www.google.com/search?q=./NOTICE&utm_source=gemini)。
+* **授权说明**：MIT 与 AGPL-3.0 分区授权，各目录源码出处见 [NOTICE](https://www.google.com/search?q=./NOTICE&utm_source=gemini)
 
 ---
 
