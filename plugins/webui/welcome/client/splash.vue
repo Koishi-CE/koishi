@@ -62,7 +62,7 @@ onBeforeUnmount(() => {
   inset: 0;
   pointer-events: none;
   // slice 居中裁切会把圆心压在卡片垂直正中，整体上移留出文案区呼吸感
-  transform: translateY(-5%);
+  transform: translateY(-15%);
 
   .welcome-splash-ray {
     stroke: var(--bg3);
