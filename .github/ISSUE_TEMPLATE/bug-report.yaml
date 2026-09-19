@@ -5,7 +5,7 @@ name: Bug 报告
 description: 报告本仓库中某个包或插件的问题
 title: "Bug: "
 labels:
-  - bug
+  - 缺陷
 body:
   - type: input
     attributes:
