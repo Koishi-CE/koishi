@@ -86,6 +86,88 @@ export const templateFiles: Record<string, string> =
 	);
 
 /**
+ * 上游名 → CE 对应包的 overrides 兜底映射（值统一 npm:<目标>@^1.0.0，
+ * 经 buildUpstreamOverrides 包装）。
+ *
+ * 六行钉名依赖「落盘版本满足声明范围」：第三方插件的声明超出冻结线
+ * （如未来上游升线后的 ^6）或引用清单外的上游名（如 dependencies 直接
+ * 依赖 @koishijs/plugin-admin / @koishijs/utils）时，官方包仍会落盘。
+ * overrides 是包管理器级的强制重写——不看版本满足性，把整棵依赖树中对
+ * 这些上游名的解析一律改指 CE 对应包，与钉名构成双层防线（napuketto
+ * 事件 2026-09-19 后补）。
+ *
+ * 清单 = CE 已再分发且官方同名的包，2026-09-19 逐一 npm view 核实：
+ * - plugin-cron 不在列（上游是裸名社区包 koishi-plugin-cron，非 @koishijs
+ *   作用域）；
+ * - plugin-welcome / plugin-theme-vanilla 不在列（CE 原创，上游无此名）；
+ * - plugin-assets 的 CE 对应物是 @koishi-ce/assets（无 plugin 前缀）。
+ * 新增 CE 再分发包时须同步本表与 sandbox 生成器的同款清单
+ * （tooling/sandbox/manifest.ts，对账测试防漂移）。
+ */
+const UPSTREAM_OVERRIDES: Record<string, string> = {
+	koishi: "@koishi-ce/koishi",
+	"@koishijs/core": "@koishi-ce/koishi",
+	"@koishijs/loader": "@koishi-ce/koishi",
+	"@koishijs/utils": "@koishi-ce/utils",
+	"@koishijs/i18n-utils": "@koishi-ce/i18n-utils",
+	"@koishijs/client": "@koishi-ce/client",
+	"@koishijs/components": "@koishi-ce/components",
+	"@koishijs/console": "@koishi-ce/console",
+	"@koishijs/registry": "@koishi-ce/registry",
+	"@koishijs/plugin-console": "@koishi-ce/plugin-console",
+	"@koishijs/plugin-assets": "@koishi-ce/assets",
+};
+
+// CE 与上游同名再分发的 plugin-*：机械一一对应
+for (const name of [
+	"actions",
+	"admin",
+	"analytics",
+	"assets-local",
+	"auth",
+	"bind",
+	"broadcast",
+	"callme",
+	"commands",
+	"config",
+	"database-sqlite",
+	"dataview",
+	"echo",
+	"explorer",
+	"help",
+	"hmr",
+	"insight",
+	"inspect",
+	"locales",
+	"logger",
+	"market",
+	"mock",
+	"notifier",
+	"oobe",
+	"proxy-agent",
+	"rate-limit",
+	"sandbox",
+	"server",
+	"server-temp",
+	"status",
+]) {
+	UPSTREAM_OVERRIDES[`@koishijs/plugin-${name}`] =
+		`@koishi-ce/plugin-${name}`;
+}
+
+/** 生成模板 overrides 块：键为上游名，值统一 npm:<CE 包>@^1.0.0。 */
+export function buildUpstreamOverrides(): Record<
+	string,
+	string
+> {
+	return Object.fromEntries(
+		Object.entries(UPSTREAM_OVERRIDES).map(
+			([name, target]) => [name, `npm:${target}@^1.0.0`],
+		),
+	);
+}
+
+/**
  * 内置模板的 package.json 基础内容（name/version 会被 renderManifest 覆写，
  * prod 模式下 workspaces 与 devDependencies 会被移除）。
  */
@@ -187,6 +269,9 @@ export function baseManifest(): Manifest {
 			"@koishijs/components":
 				"npm:@koishi-ce/components-shim@^1.5.22",
 		},
+		// overrides 兜底层（语义见 UPSTREAM_OVERRIDES 注释）：不看版本
+		// 满足性强制重写整棵依赖树，拦住钉名覆盖面之外的上游声明
+		overrides: buildUpstreamOverrides(),
 		devDependencies: {
 			"@koishi-ce/client": "^1.0.0",
 			"@koishi-ce/plugin-hmr": "^1.0.0",

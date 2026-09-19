@@ -50,7 +50,7 @@ CE 包 peer 一律指 CE 名，但外部真包依赖（analytics 的 `@koishijs/
 | `client-shim` | `@koishi-ce/client-shim` | 5.30.11 | 可发布；`@koishijs/client` 名的下游 alias 目标（第三方 webui 插件常将其写进 dependencies） |
 | `components-shim` | `@koishi-ce/components-shim` | 1.5.22 | 可发布；`@koishijs/components` 名的下游 alias 目标 |
 
-下游项目以六行 npm alias 钉名（四包）：`"koishi": "npm:@koishi-ce/koishi-shim@^4.18.11"`、`"@koishijs/core": "npm:@koishi-ce/koishi-shim@4.18.11"`（精确锁，逐字相等）、`"@koishijs/loader": "npm:@koishi-ce/koishi-shim@^4.18.11"`、`"@koishijs/plugin-console": "npm:@koishi-ce/console-shim@^5.30.11"`、`"@koishijs/client": "npm:@koishi-ce/client-shim@^5.30.11"`、`"@koishijs/components": "npm:@koishi-ce/components-shim@^1.5.22"`——`create-koishi-ce` 模板已预置。Bun 对 npm alias 的满足性判定看**落盘包的 version**（对 peer 与普通依赖边同理），故 shim 版本冻结跟随上游线、不随本仓 1.0.0 基线；market 安装器的 `isGuardedRequest()` 把 `npm:@koishi-ce` 前缀与 `workspace:` 同等保护。
+下游项目以六行 npm alias 钉名（四包）：`"koishi": "npm:@koishi-ce/koishi-shim@^4.18.11"`、`"@koishijs/core": "npm:@koishi-ce/koishi-shim@4.18.11"`（精确锁，逐字相等）、`"@koishijs/loader": "npm:@koishi-ce/koishi-shim@^4.18.11"`、`"@koishijs/plugin-console": "npm:@koishi-ce/console-shim@^5.30.11"`、`"@koishijs/client": "npm:@koishi-ce/client-shim@^5.30.11"`、`"@koishijs/components": "npm:@koishi-ce/components-shim@^1.5.22"`——`create-koishi-ce` 模板已预置。Bun 对 npm alias 的满足性判定看**落盘包的 version**（对 peer 与普通依赖边同理），故 shim 版本冻结跟随上游线、不随本仓 1.0.0 基线；market 安装器的 `isGuardedRequest()` 把 `npm:@koishi-ce` 前缀与 `workspace:` 同等保护。钉名之外，模板与 sandbox 生成器另预置 41 名 `overrides` 强制重写兜底（不看版本满足性，拦钉名清单外的上游声明，语义见 `packages/shim/README.md`「三层防线」）。
 
 ### packages/web/*（浏览器侧）
 

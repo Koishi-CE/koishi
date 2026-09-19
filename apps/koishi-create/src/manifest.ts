@@ -18,6 +18,7 @@ export interface Manifest {
 	workspaces?: unknown;
 	dependencies?: Record<string, string>;
 	devDependencies?: Record<string, string>;
+	overrides?: Record<string, string>;
 	[key: string]: unknown;
 }
 

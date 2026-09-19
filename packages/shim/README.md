@@ -46,6 +46,14 @@ workspace 内部不需要这些 shim（本仓代码一律直接 `import ... from
 
 社区插件的 peer（`koishi ^4.x`、`@koishijs/plugin-console ^5.30.x` 等）与 webui 插件写进 dependencies 的 `@koishijs/client ^5.x` / `@koishijs/components ^1.5.x` 经此全部钉回 CE 对应包，不会形成第二份框架 / console / 前端库副本。注意钉名对普通依赖边同样生效的前提是**落盘版本满足声明范围**——这正是各 shim 冻结在上游版本线的原因。
 
+### 三层防线
+
+`create-koishi-ce` 模板（1.8.0 起）与 sandbox 生成器为下游实例预置了完整的防污染体系：
+
+1. **六行钉名**（dependencies 占位）：常规满足层，peer 与 dependencies 声明靠落盘版本复用槽位；market 安装器的 `isGuardedRequest()` 同步护栏防改写；
+2. **overrides 强制重写**（`overrides` 块，41 个上游名 → CE 对应包）：兜底层，**不看版本满足性**把整棵依赖树中对这些上游名的解析一律改指 CE 包——第三方插件声明钉名清单外的上游名（如 `@koishijs/plugin-admin`、`@koishijs/utils`）或超出冻结线的范围（如未来上游升线后的 `^6`）时由本层兜住；清单 = CE 已再分发且官方同名的包（CE 原创包与上游裸名社区对应物不在列，不拦官方生态的真实依赖）；
+3. **market 护栏**：`isGuardedRequest()` 把 `npm:@koishi-ce` 前缀与 `workspace:` 声明同等保护，市场安装不改写钉名行。
+
 ## 维护纪律
 
 - **版本冻结**：Bun 对 npm alias 的满足性判定看**落盘包的 version**，故 `koishi-shim` 冻结 4.18.x 线（`@koishijs/core` 一行的 alias 必须与 `@koishi-ce/loader` 的 peer 声明逐字相等——那是精确版本、不带 `^`，具体数值以该 peer 声明为准）、`console-shim` / `client-shim` 冻结 5.30.x 线（跟随上游 console / client 版本线）、`components-shim` 冻结 1.5.x 线。**勿改为本仓 1.x 基线、勿随 changesets bump**，要动只跟随上游对应版本线；本文档与各包 README 示例中的具体版本号随冻结线同步更新。

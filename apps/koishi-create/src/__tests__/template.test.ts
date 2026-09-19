@@ -5,6 +5,7 @@ import { expect, test } from "bun:test";
 import { renderManifest } from "../index.ts";
 import {
 	baseManifest,
+	buildUpstreamOverrides,
 	templateFiles,
 } from "../template.ts";
 
@@ -178,13 +179,14 @@ test("koishi.yml 预写策略：sqlite 默认启用开箱数据库，非必需�
 		expect(yml).toContain(name);
 	}
 	expect(yml).not.toContain("database-mongo");
-	// 模板依赖里不得出现官方 adapter / database 包名（只预写不预装）
-	expect(JSON.stringify(baseManifest())).not.toContain(
-		"adapter-",
-	);
-	expect(JSON.stringify(baseManifest())).not.toContain(
-		"@koishijs/plugin-database-",
-	);
+	// 模板依赖里不得出现官方 adapter / database 包名（只预写不预装）。
+	// 断言只扫 dependencies——overrides 的键含官方名是重写所需，属预期
+	expect(
+		JSON.stringify(baseManifest().dependencies),
+	).not.toContain("adapter-");
+	expect(
+		JSON.stringify(baseManifest().dependencies),
+	).not.toContain("@koishijs/plugin-database-");
 });
 
 test("koishi.yml 预写条目与模板依赖对账：CE 插件必须在册，官方 adapter 只预写不预装", () => {
@@ -263,4 +265,66 @@ test("renderManifest 渲染内置模板：常规改写生效，prod 模式保留
 	expect(prod.dependencies["@koishijs/loader"]).toBe(
 		"npm:@koishi-ce/koishi-shim@^4.18.11",
 	);
+});
+
+test("内置模板 overrides 兜底层：41 个上游名强制重定向 CE 包", () => {
+	const table = baseManifest().overrides ?? {};
+	expect(Object.keys(table)).toHaveLength(41);
+	const keys = Object.keys(table);
+	// 核心九名（钉名六行之外由 overrides 补齐覆盖面）
+	expect(table["koishi"]).toBe(
+		"npm:@koishi-ce/koishi@^1.0.0",
+	);
+	expect(table["@koishijs/core"]).toBe(
+		"npm:@koishi-ce/koishi@^1.0.0",
+	);
+	expect(table["@koishijs/loader"]).toBe(
+		"npm:@koishi-ce/koishi@^1.0.0",
+	);
+	expect(table["@koishijs/utils"]).toBe(
+		"npm:@koishi-ce/utils@^1.0.0",
+	);
+	expect(table["@koishijs/i18n-utils"]).toBe(
+		"npm:@koishi-ce/i18n-utils@^1.0.0",
+	);
+	expect(table["@koishijs/client"]).toBe(
+		"npm:@koishi-ce/client@^1.0.0",
+	);
+	expect(table["@koishijs/components"]).toBe(
+		"npm:@koishi-ce/components@^1.0.0",
+	);
+	expect(table["@koishijs/console"]).toBe(
+		"npm:@koishi-ce/console@^1.0.0",
+	);
+	expect(table["@koishijs/registry"]).toBe(
+		"npm:@koishi-ce/registry@^1.0.0",
+	);
+	// CE 原创与上游裸名社区对应物不进清单（不拦官方生态的真实依赖）
+	expect(keys.includes("@koishijs/plugin-welcome")).toBe(
+		false,
+	);
+	expect(
+		keys.includes("@koishijs/plugin-theme-vanilla"),
+	).toBe(false);
+	expect(keys.includes("@koishijs/plugin-cron")).toBe(
+		false,
+	);
+	// plugin-assets 的 CE 对应物无 plugin 前缀
+	expect(table["@koishijs/plugin-assets"]).toBe(
+		"npm:@koishi-ce/assets@^1.0.0",
+	);
+	// 全部值为 npm:@koishi-ce/ 前缀，键全为 @koishijs/ 上游名或 koishi 裸名
+	for (const key of keys) {
+		expect(
+			key === "koishi" || key.startsWith("@koishijs/"),
+		).toBe(true);
+		expect(table[key]).toMatch(/^npm:@koishi-ce\//);
+	}
+	// buildUpstreamOverrides 与 baseManifest().overrides 同源
+	expect(buildUpstreamOverrides()).toEqual(table);
+	// renderManifest 全程透传 overrides（prod 模式也不删）
+	const prod = JSON.parse(
+		renderManifest(baseManifest(), "my-app", true),
+	);
+	expect(prod.overrides).toEqual(table);
 });

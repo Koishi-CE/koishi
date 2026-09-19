@@ -215,6 +215,10 @@ describe("buildSandboxPackageJson", () => {
 			"@koishi-ce/plugin-server",
 			...aliasKeys,
 		]);
+		// overrides 兜底层随 link 模板预置
+		expect(
+			Object.keys(manifest.overrides ?? {}),
+		).toHaveLength(41);
 	});
 
 	test("打包模式：全部 tgz 以 file: 声明，上游钉名保留", () => {
@@ -239,6 +243,19 @@ describe("buildSandboxPackageJson", () => {
 		).toBe("npm:@koishi-ce/client-shim@^5.30.11");
 		expect(manifest.dependencies?.koishi).toBe(
 			"npm:@koishi-ce/koishi-shim@^4.18.11",
+		);
+	});
+
+	test("overrides 清单与脚手架模板逐字对账（防两处克隆漂移）", async () => {
+		const manifest = buildSandboxPackageJson("link") as {
+			overrides: Record<string, string>;
+		};
+		// 跨目录对账：create 模板是同一防线的事实源，两处清单漂移即红
+		const { buildUpstreamOverrides } = await import(
+			"../../apps/koishi-create/src/template.ts"
+		);
+		expect(manifest.overrides).toEqual(
+			buildUpstreamOverrides(),
 		);
 	});
 });

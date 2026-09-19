@@ -38,6 +38,73 @@ const UPSTREAM_ALIASES: Record<string, string> = {
 		"npm:@koishi-ce/components-shim@^1.5.22",
 };
 
+/**
+ * 上游名 overrides 兜底层（清单与脚手架模板的 UPSTREAM_OVERRIDES 刻意
+ * 克隆，语义见彼处注释，对账测试防漂移）：钉名靠落盘版本满足声明，
+ * overrides 不看版本满足性强制重写整棵依赖树——第三方插件声明钉名
+ * 清单外的上游名（如 @koishijs/plugin-admin）或超出冻结线的范围时，
+ * 官方包仍会落盘污染 junction 布局，由本层兜住。
+ */
+const UPSTREAM_OVERRIDE_TARGETS: Record<string, string> = {
+	koishi: "@koishi-ce/koishi",
+	"@koishijs/core": "@koishi-ce/koishi",
+	"@koishijs/loader": "@koishi-ce/koishi",
+	"@koishijs/utils": "@koishi-ce/utils",
+	"@koishijs/i18n-utils": "@koishi-ce/i18n-utils",
+	"@koishijs/client": "@koishi-ce/client",
+	"@koishijs/components": "@koishi-ce/components",
+	"@koishijs/console": "@koishi-ce/console",
+	"@koishijs/registry": "@koishi-ce/registry",
+	"@koishijs/plugin-console": "@koishi-ce/plugin-console",
+	"@koishijs/plugin-assets": "@koishi-ce/assets",
+};
+
+// CE 与上游同名再分发的 plugin-*：机械一一对应
+for (const name of [
+	"actions",
+	"admin",
+	"analytics",
+	"assets-local",
+	"auth",
+	"bind",
+	"broadcast",
+	"callme",
+	"commands",
+	"config",
+	"database-sqlite",
+	"dataview",
+	"echo",
+	"explorer",
+	"help",
+	"hmr",
+	"insight",
+	"inspect",
+	"locales",
+	"logger",
+	"market",
+	"mock",
+	"notifier",
+	"oobe",
+	"proxy-agent",
+	"rate-limit",
+	"sandbox",
+	"server",
+	"server-temp",
+	"status",
+]) {
+	UPSTREAM_OVERRIDE_TARGETS[`@koishijs/plugin-${name}`] =
+		`@koishi-ce/plugin-${name}`;
+}
+
+/** 生成沙盒 overrides 块：键为上游名，值统一 npm:<CE 包>@^1.0.0。 */
+function buildUpstreamOverrides(): Record<string, string> {
+	return Object.fromEntries(
+		Object.entries(UPSTREAM_OVERRIDE_TARGETS).map(
+			([name, target]) => [name, `npm:${target}@^1.0.0`],
+		),
+	);
+}
+
 export function buildSandboxPackageJson(
 	mode: "link" | "pack",
 	packed?: PackEntry[],
@@ -57,6 +124,7 @@ export function buildSandboxPackageJson(
 			"@koishi-ce/plugin-server": "^1.0.0",
 			...UPSTREAM_ALIASES,
 		},
+		overrides: buildUpstreamOverrides(),
 	};
 	if (mode === "pack") {
 		const dependencies: Record<string, string> = {};
