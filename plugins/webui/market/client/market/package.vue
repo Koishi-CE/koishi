@@ -38,7 +38,7 @@
       </div>
     </div>
     <k-markdown inline class="desc" :source="tt(data.manifest?.description) ?? ''"></k-markdown>
-    <div v-if="badge" class="badge-float">
+    <div v-if="badge" class="badge-row">
       <el-tooltip placement="top" :content="badge.query">
         <span
           :class="['badge-pill', badge.type]"
@@ -323,11 +323,13 @@ function timeAgo(time: string) {
     }
   }
 
-  // 认证徽章：悬浮于头像列正上方，不占布局空间，避免与长插件名挤压折行
-  .badge-float {
-    position: absolute;
-    right: 1.25rem;
-    bottom: 2.5rem;
+  // 认证徽章：右对齐独占一行，参与文档流占位——描述区随之少显示一行，
+  // 布局上保证二者永不重叠；负 margin 吃掉上下半个 gap，换回一整行描述空间
+  .badge-row {
+    flex: 0 0 auto;
+    display: flex;
+    justify-content: flex-end;
+    margin: -6px 0;
   }
 
   // 胶囊徽章：语义色 10% 底 / 20% 边
@@ -465,11 +467,6 @@ function timeAgo(time: string) {
 
     h2 {
       font-size: 1rem;
-    }
-
-    .badge-float {
-      right: 0.9rem;
-      bottom: 2.3rem;
     }
 
     .footer {
