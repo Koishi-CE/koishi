@@ -1,5 +1,16 @@
 # @koishi-ce/plugin-market
 
+## 1.3.0
+
+### Minor Changes
+
+- aca8857: 配置页插件详情头部新增「卸载插件」按钮:红色危险样式发起,确认对话框三选(取消 / 仅卸载 / 卸载并移除配置,第三项仅在探到配置节点时提供)。卸载走既有 override 应用链(备份 manifest → 移除依赖声明 → bun install → 失败回滚),零新增 RPC;暂存期间依赖页同步可见 pending 态,安装失败残留暂存时按钮转「取消卸载」可撤销
+
+### Patch Changes
+
+- 7d6a6d9: 依赖管理页:shim 钉名别名(npm: 协议)不再误判为「非法声明」,归入新的「钉名别名」状态——固定展示、不参与更新检查,且不进 registry 元数据拉取;顺带修复「移除依赖」下拉选项的词典键引号错位
+- 9925a74: 清理依赖管理重构遗留的两个无消费者导出：`dependencies/service` 的 default 导出与 `installer` 入口的 `Dependency` 类型 re-export（权威定义在 `dependencies/types`，公开面经 `node/index` 转发不受影响）。
+
 ## 1.2.0
 
 ### Minor Changes
