@@ -66,7 +66,7 @@ const spawnBunMock = (_args: string[], _cwd: string) => {
 
 // 注册须先于下方动态 import 被测模块；bun test --isolate 下各测试文件
 // 独立实例化本模块，mock 随之按文件各自生效
-mock.module("../node/installer/proc.ts", () => ({
+mock.module("../installer/proc.ts", () => ({
 	spawnBun: spawnBunMock,
 }));
 
@@ -80,11 +80,11 @@ const { App, Logger, Service } = await import(
 );
 const http = (await import("@koishi-ce/plugin-http"))
 	.default;
-const market = await import("../node/index.ts");
+const market = await import("../index.ts");
 const mockPlugin = (await import("@koishi-ce/plugin-mock"))
 	.default;
 // 加载包入口占位文件（纯 re-export，无独立逻辑），保证 src 全量被加载
-await import("../index.ts");
+await import("../../index.ts");
 
 // 供各主题测试文件复用的共享构建块（App / http / Logger / market / memory）
 export { App, http, Logger, market, memory };

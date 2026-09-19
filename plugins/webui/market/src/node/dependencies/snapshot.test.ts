@@ -14,8 +14,8 @@ import { join } from "node:path";
 import {
 	collectDependencyRequests,
 	resolveLocalDependency,
-} from "../snapshot.ts";
-import type { Dependency } from "../types.ts";
+} from "./snapshot.ts";
+import type { Dependency } from "./types.ts";
 
 /** 造一个临时宿主目录,并在 node_modules 内放置指定包的清单。 */
 function setupHost(installed: Record<string, string> = {}) {

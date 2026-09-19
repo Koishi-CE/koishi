@@ -25,7 +25,7 @@ import {
 } from "./helpers.ts";
 
 const { default: Installer } = await import(
-	"../node/installer/index.ts"
+	"../installer/index.ts"
 );
 
 beforeAll(startApp);

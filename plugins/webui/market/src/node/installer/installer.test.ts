@@ -20,7 +20,7 @@ import {
 	startApp,
 	stopApp,
 	tmp,
-} from "./helpers.ts";
+} from "../__tests__/helpers.ts";
 
 const { isResidentInCache } = await import(
 	"@koishi-ce/registry"
