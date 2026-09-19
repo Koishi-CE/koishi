@@ -97,16 +97,36 @@ export async function addManual(name: string) {
 export const showManual = ref(false);
 export const showConfirm = ref(false);
 
+/** install 过程各节点的提示文案(缺省回退既有中文文案)。 */
+export interface InstallTexts {
+	loading?: string;
+	success?: string;
+	error?: string;
+	timeout?: string;
+}
+
+const DEFAULT_INSTALL_TEXTS: Required<InstallTexts> = {
+	loading: "正在更新依赖……",
+	success: "安装成功！",
+	error: "安装失败！",
+	timeout: "安装超时！",
+};
+
 export async function install(
 	override: Dict<string>,
 	callback?: () => Awaitable<void>,
 	forced?: boolean,
+	texts?: InstallTexts,
 ) {
+	const prompt: Required<InstallTexts> = {
+		...DEFAULT_INSTALL_TEXTS,
+		...texts,
+	};
 	const instance = loading({
-		text: "正在更新依赖……",
+		text: prompt.loading,
 	});
 	const dispose = watch(socket, () => {
-		message.success("安装成功！");
+		message.success(prompt.success);
 		dispose();
 		instance.close();
 	});
@@ -118,16 +138,16 @@ export async function install(
 			forced,
 		);
 		if (code) {
-			message.error("安装失败！");
+			message.error(prompt.error);
 		} else {
 			// callback 可能返回 void 或 Promise（Awaitable），
 			// 统一经 Promise.resolve 归一后等待
 			await Promise.resolve(callback?.());
-			message.success("安装成功！");
+			message.success(prompt.success);
 		}
 	} catch (err) {
 		console.error(err);
-		message.error("安装超时！");
+		message.error(prompt.timeout);
 	} finally {
 		dispose();
 		instance.close();
