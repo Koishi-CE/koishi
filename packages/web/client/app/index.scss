@@ -5,6 +5,10 @@
 body {
   margin: 0;
   min-height: 100vh;
+  // 控制台是全 fixed 布局，body 级滚动没有正当消费者：
+  // 关闭它以兜住悬浮弹层（挂 body 的 popper）瞬态溢出产生的滚动条
+  // （贴边定位的亚像素取整溢出曾与悬停状态项形成滚动条闪烁循环）
+  overflow: hidden;
   font-family: var(--font-family);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
