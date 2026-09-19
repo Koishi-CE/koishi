@@ -1,204 +1,194 @@
 # 依赖与技术栈全量审计报告
 
-> **状态：历史快照（2026-08-27）**。本审计记录依赖升级计划立项前的基线；其行动方案（[upgrade-plan.md](upgrade-plan.md)）的 Phase 0-4 已执行完毕，文中「现状」「状态」列均为审计当日数据，与当前仓库实况的出入以 [../guides/development.md](../guides/development.md) 与 [../reference/architecture.md](../reference/architecture.md) 为准。
+> **状态：现势快照（2026-09-19）**。初版审计（2026-08-27，99 个外部依赖，升级计划立项前基线）已随 git 历史归档；其行动方案（[upgrade-plan.md](upgrade-plan.md)）的 Phase 0-4 已全部执行完毕，本文档即执行后的对账基线。Phase 5（cordis 4 跳代）冻结中，重启条件见 upgrade-plan Phase 5 节。日常现状以 [../guides/development.md](../guides/development.md) 与 [../reference/architecture.md](../reference/architecture.md) 为准。
 >
-> 审计日期:2026-08-27 · 注册表数据均于当日经 npm registry 实时验证
-> 运行环境:Bun 1.4.0 · Node v24.16.0(辅) · 包管理: Bun workspaces(`bun.lock`)
-> 范围:仓库内全部 **42 个 package.json**(含未跟踪的 `apps/create-koishi-ce`、`apps/koishi-scripts`)· **99 个外部依赖**(不含 `workspace:*` 内部引用)
+> 审计日期：2026-09-19 · 「最新」列均于当日经 npm registry 实时验证（npmjs 主查、npmmirror 兜底）
+> 运行环境：Bun 1.4.2（`packageManager` 钉定）· Node v24（辅：TS7 编译器与 vue-tsc 影子闸门宿主）· 包管理：Bun workspaces（`bun.lock`）
+> 范围：仓库内全部 **51 个 package.json**（**50 个 workspace 包** + 根）· **58 个外部依赖名**（不含 `workspace:*` 与 `@koishi-ce/*` 内部 peer 互引，后者单列于 §2.G）
 
-状态图例:[新] 当前最新 · [缓] 落后(minor/patch) · [旧] 落后(major) · [预] 最新版本为预发布 · [废] 已弃用或未使用
+状态图例：[新] 当前最新 · [缓] 落后(minor/patch) · [旧] 落后(major) · [预] 最新版本为预发布 · [废] 已弃用或未使用
 
 ---
 
 ## 1. 项目定位与结构
 
-本项目是 [koishijs/koishi](https://github.com/koishijs/koishi)(MIT)与 [koishijs/webui](https://github.com/koishijs/webui)(AGPL-3.0)的文件级合并 fork,包作用域统一重命名为 `@koishi-ce`,运行时目标为 **Bun**。构建管线正在从上游的 yarn + yakumo 向「Bun 原生 / zero-build」迁移(README 状态:**yakumo 移除、Bun workspaces 已完成;zero-build exports、Bun 测试可运行 仍未完成**)。
+本项目是 [koishijs/koishi](https://github.com/koishijs/koishi)（MIT）与 [koishijs/webui](https://github.com/koishijs/webui)（部分 AGPL-3.0）的文件级合并仓，npm 作用域 `@koishi-ce`，运行时目标 **Bun**（Node 不作兼容目标）。初版审计时「yarn + yakumo → Bun 原生」的迁移工作已全部完成：yakumo 移除、构建统一为根 tsdown 单遍 ESM-only、测试迁移 bun:test、版本管理走 changesets + 自研发布链。
 
 ```
-koishi-bun/
-├── packages/node/      运行时核心:koishi(CLI入口) core loader console utils i18n-utils
-├── packages/web/       前端基础:client(构建API+控制台前端) components market(市场组件)
-├── plugins/common/     通用插件:bind broadcast callme echo help inspect
-├── plugins/infra/      基础设施插件:hmr http mock proxy server(vendored 预编译)
-├── plugins/webui/      控制台插件 ·16:actions admin analytics auth commands config
-│                       console explorer insight locales logger market notifier oobe sandbox status
-├── apps/               create-koishi-ce(脚手架) koishi-scripts(插件开发CLI)
-│                       online(koishi.online 网站) registry(市场扫描库)
-└── tooling/            上游迁移工具(目前仅留 yakumo 配置参考,scripts 为空)
+Koishi-CE/
+├── packages/node/      运行时核心 8 包:koishi(CLI入口) core loader console utils i18n-utils assets registry
+├── packages/web/       前端基础 2 包:client(构建API+宿主前端) components
+├── packages/shim/      下游 npm alias 占名 2 包:koishi-shim(4.18.11) console-shim(5.30.11)——版本冻结勿动
+├── plugins/common/     通用插件 9:assets-local bind broadcast callme cron echo help inspect rate-limit
+├── plugins/infra/      基础设施 8:http proxy server(vendored 预编译) hmr memory mock server-temp sqlite
+├── plugins/webui/      控制台插件 19:actions admin analytics auth commands config console dataview
+│                       explorer insight locales logger market notifier oobe sandbox status
+│                       theme-vanilla welcome
+├── apps/               koishi-create(脚手架,包名 create-koishi-ce) koishi-scripts(@koishi-ce/scripts)
+├── tooling/            checks(门禁脚本) release(发布链) sandbox(沙盒实例生成) upstream-audit(上游巡检)
+└── docs/               guides / reference / decisions / process
 ```
 
-关键结构事实:
+关键结构事实（相对初版的变化不再逐一标注，初版原文见 git 历史）：
 
-- **无 CI**(`.github/` 不存在)、无 `bunfig.toml`、根目录无 `test`/`build` 脚本。
-- **`koishi` / `@koishijs/*` 的 peerDependencies 是刻意保留的**:`UPSTREAM.md` 明确「依赖本 monorepo 之外的包保留上游名,peerDependencies 仍指向上游已发布的运行时」,用于维持与上游插件生态的兼容。代码内实际导入全部走 `@koishi-ce/*`(237 处),仅 2 处例外均为外部上游包(`@koishijs/plugin-database-memory`、`@koishijs/plugin-server-proxy` 类型引用)。
-- `plugins/infra/server` 是 **vendored 预编译产物**(无 src,内联封装 `@cordisjs/plugin-server ^0.2.9`)。
-- 客户端构建不走 vite 配置文件,而是 **TypeScript 脚本编程式调用 `vite.build()`**(`packages/web/client/scripts/client.ts`、各插件 `build/client.ts`、`apps/online/src/build.ts`)。
-- `apps/create-koishi-ce`、`apps/koishi-scripts` 为未跟踪的新目录;`biome.json`、`bun.lock` 有未提交修改。
+- **CI 已建立**：`.github/workflows/ci.yml` 三 job——gate（build → 宿主前端 → check → test + lcov 上传 Codecov）、client（全部 webui 插件前端 bundle）、fallow（死代码与依赖审计）；另有 triage.yml 自动分诊与 labeler.yml 路径打标。
+- **门禁八段齐备**：`bun run check` = biome lint + eslint(.vue) + TS7 双 project 类型检查 + locales / docs-links / vue-types / assertions / packages 五个自研闸门（脚本居 `tooling/checks/`）。
+- **peerDependencies 已全面 CE 化**：内部互引一律 `@koishi-ce/* ^1.0.0`（初版保留的上游名 `koishi ^4.18.11` peer 已清零）；唯一上游名残留是 console 的类型引用 `@koishijs/plugin-server-proxy`（dev，测试用）。
+- **vendored 三包不动**：`plugins/infra/{http,proxy,server}` 为预编译产物包（无 `src/`，根 tsdown 显式 exclude），内联再导出 `@cordisjs/plugin-*`。
+- **shim 两包占名**：`packages/shim/{koishi-shim,console-shim}` 是下游 npm alias 的占名目标，纯 JS 预编译、版本冻结跟随上游线、changesets ignore。
+- **版本自主演进**：workspace 包走 1.x 线（core 1.1.6 / plugin-console 1.3.5 / client 1.3.1 等），不再镜像上游版本号；发布一律走 `bun run release` 链，禁止手动 `npm publish`。
+- 客户端构建仍无 vite 配置文件，全部编程式 `vite.build()`（宿主入口 `packages/web/client/src/bin.ts`，插件可自带 `build/client.ts` 覆盖配置）。
 
 ---
 
-## 2. 外部依赖全量清单(按业务范围分类)
+## 2. 外部依赖全量清单（按业务范围分类）
 
-### A. Cordis / Koishi 生态运行时(fork 的内核世界)
+### A. cordis / koishi 生态运行时（冻结 3.x 内洽线）
 
 | 包 | 声明 | 使用位置 | 业务范围 | 最新 | 状态 |
 |---|---|---|---|---|---|
-| cordis | ^3.18.1 | core / console / utils / loader | 依赖注入容器 + 插件生命周期框架,koishi 的底层内核 | 4.0.0-rc.8 | [预] 4.x 仍为 RC |
-| cosmokit | ^1.8.1 | 7 个包 | 生态通用工具箱(时间格式化、锁、观察者等) | 1.8.1 | [新] |
-| minato | ^3.7.0 | core 等 4 包 | ORM / 数据库抽象层(表定义、查询、驱动协议) | 4.0.1 | [旧] major |
-| @satorijs/core | ^4.6.0 | core / cli | 聊天协议内核(会话、机器人抽象) | 4.6.0 | [新] |
-| @satorijs/element | ^3.2.0 | cli | 消息元素树 / KQL 模型 | 3.2.0 | [新] |
-| @satorijs/protocol | ^1.7.0 | cli | 协议数据结构类型定义 | 1.7.0 | [新] |
-| @satorijs/components-vue | ^0.7.8 (dev) | web/client | 消息元素的 Vue 渲染组件(测试/开发用) | 0.7.8 | [新] |
-| @cordisjs/plugin-http | ^0.6.3 | core | HTTP 客户端上下文插件(`ctx.http`) | 1.5.2 | [旧] major |
-| @cordisjs/plugin-server | ^0.2.9 | plugins/infra/server(vendored) | HTTP/WebSocket 服务上下文插件(`ctx.server`) | 1.7.0 | [旧] major |
-| @cordisjs/plugin-proxy-agent | ^0.3.3 | plugins/infra/proxy | 网络代理支持 | 0.3.3 | [新] |
-| @cordiverse/{dns,fs,os,path,url} | ^1.x (dev) | apps/online | 跨运行时系统 API polyfill 套件 | 1.x | [新] |
-| reggol | ^1.7.1 (dev) | core(dev) | 生态日志库(cordis 内部同款) | 2.1.0 | [旧] major |
-| yml-register | ^1.2.5 (dev root) | 根 | require/TS 钩子,支持 `import x from '*.yml'` 语言包 | 1.2.5 | [新] |
-| ns-require | ^1.1.4 | loader(另 2 处声明未使用) | 插件命名空间化加载 | 1.1.4 | [新] |
+| cordis | ^3.18.1 | core / web-client / proxy / server | 依赖注入容器 + 插件生命周期内核 | 4.0.0-rc.10 | [预] 冻结 3.x |
+| minato | ^3.7.0 | core / memory / sqlite | ORM / 数据库抽象层 | 4.0.1 | [旧] 冻结 3.x |
+| @minatojs/sql-utils | ^5.6.0 | sqlite | 数据库迁移工具 | 6.0.0 | [旧] 冻结（minato 4 线） |
+| @cordisjs/plugin-http | ^0.6.3 | http(vendored) | HTTP 客户端上下文(`ctx.http`) | 1.5.2 | [旧] 冻结（内联再导出） |
+| @cordisjs/plugin-server | ^0.2.9 | server(vendored) | HTTP/WS 服务上下文(`ctx.server`) | 1.7.0 | [旧] 冻结（内联再导出） |
+| @cordisjs/plugin-proxy-agent | ^0.3.3 | proxy(vendored) | 网络代理支持 | 0.3.3 | [新] |
+| @satorijs/core | ^4.6.0 | core | 聊天协议内核（会话/机器人抽象） | 4.6.0 | [新] |
+| @satorijs/element | ^3.2.0 | components / notifier / sandbox | 消息元素树 / KQL 模型 | 3.2.0 | [新] |
+| @satorijs/protocol | ^1.7.0 | web-client | 协议数据结构类型 | 1.7.0 | [新] |
+| @satorijs/components-vue | ^0.7.8 (dev) | sandbox | 消息元素 Vue 渲染（测试用） | 0.7.8 | [新] |
+| cosmokit | ^1.8.1 | 10 处（core/utils 系 + web 系 + memory/sqlite/market） | 生态通用工具箱 | 1.8.1 | [新] |
+| reggol | ^2.1.0 (dev) | logger | 生态日志库（logger 前端渲染） | 2.1.0 | [新]（初版 1.7.1 → 已升 2.x） |
 | inaba | ^1.1.1 | utils | 随机数据生成 | 1.1.1 | [新] |
-| @minatojs/driver-memory | ^3.7.0 (dev) | 根 + core/bind/broadcast/help | 内存数据库驱动(测试) | 4.0.0 | [旧] 随 minato 4 配套 |
-| @koishijs/plugin-database-memory | ^3.7.0 (dev) | 根(admin 测试) | 上游内存数据库驱动插件 | 3.7.0 | [新]（上游冻结） |
-| @koishijs/assets | ^1.1.2 (dev) | analytics(dev) | 资源解析器(测试) | 1.1.2 | [新]（上游冻结） |
-| @koishijs/plugin-server-proxy | ^1.2.0 (dev) | console(dev) | 代理支持(仅类型引用) | 1.2.0 | [新]（上游冻结） |
+| fastest-levenshtein | ^1.0.16 | core | 编辑距离（命令纠错建议） | 1.0.16 | [新] |
+| @koishijs/plugin-server-proxy | ^1.2.0 (dev) | console | 代理支持（仅类型引用） | 1.2.0 | [新]（全仓唯一上游名导入例外） |
 
-**上游运行时 peer 声明(刻意保留,不计入升级对象)**:`koishi ^4.18.11`(仅限外部真包依赖的 peer 消费，如 @koishijs/plugin-database-memory / @koishijs/assets / @koishijs/plugin-server-proxy)；本仓 CE 包 peer 一律指向 CE 名（`@koishi-ce/* ^1.0.0`）。
+**冻结纪律**：cordis / minato / @cordisjs 生态整体钉在 3.x 内洽线（Phase 5 已实证被 `@satorijs/core` 阻塞并整体回退）。本表 [旧] 状态属刻意落后、**不是升级欠账**，勿在线内单独升版；重启条件见 [upgrade-plan.md](upgrade-plan.md) Phase 5 节。
 
-### B. 前端 UI 栈(控制台 Web 界面)
+### B. 前端 UI 栈（已整体追平主流）
 
 | 包 | 声明 | 使用位置 | 业务范围 | 最新 | 状态 |
 |---|---|---|---|---|---|
-| vue | ^3.5.12 | client / components / market | UI 框架 | 3.5.42 | [新] 范围内 |
-| vue-router | ^4.4.5 | client | 控制台路由 | 5.2.0 | [旧] major |
-| vue-i18n | ^9.10.2 | client | 界面国际化 | 11.4.10 | [旧] major |
-| element-plus | 2.7.7(精确锁) | client / components / config 插件 | UI 组件库(表单、树、虚拟列表等) | 2.14.5 | [缓] minor |
-| @vueuse/core | ^11.1.0 | client / components / market / 多插件 | Vue 组合式工具集 | 14.4.0 | [旧] major |
-| unocss | ^0.65.1 | client(构建脚本) | 原子化 CSS 引擎(preset-mini) | 66.8.1 | [旧] 版本线跨越 |
-| schemastery-vue | ^7.3.15 | components / client | 配置 Schema → 表单渲染 | 7.3.15 | [新] |
-| marked-vue | ^1.3.0 | client | Markdown → Vue 组件 | 1.3.0 | [新] |
-| spark-md5 | ^3.0.2 | market | MD5(gravatar 头像) | 3.0.2 | [新] |
-| ansi_up | ^5.2.1 (dev) | logger 插件(client) | ANSI 转义 → HTML(日志着色) | 6.0.6 | [旧] major |
-| echarts | ^5.5.0 (dev) | analytics 插件 | 数据可视化图表 | 6.1.0 | [旧] major |
-| vue-echarts | ^6.6.9 (dev) | analytics 插件 | echarts 的 Vue 封装 | 8.1.0 | [旧] major |
-| d3-force | ^3.0.0 (dev) | insight 插件 | 关系图谱力学布局 | 3.0.0 | [新] |
-| monaco-editor | ~0.44.0 (dev) | explorer 插件 | 代码/文本编辑器 | 0.56.0 | [缓] 跨 12 个 minor |
-| throttle-debounce | ^3.0.1 | admin(另 explorer 声明未使用) | 前端 debounce(群组表单) | 5.0.2 | [旧] major |
+| vue | ^3.5.42 / peer ^3 / dev ^3.5.12 | client + components + 5 插件(dev) | UI 框架 | 3.5.43 | [缓] patch（range 三形态待统一） |
+| vue-router | ^5.2.0 | client + 4 插件(dev) | 控制台路由 | 5.3.1 | [新]（4→5 已升） |
+| vue-i18n | ^11.4.10 | client + market(dev) | 界面国际化 | 11.4.12 | [缓] patch（9→11 已升） |
+| @vueuse/core | ^14.4.0 | client + 3 插件 | Vue 组合式工具集 | 15.0.0 | [旧] major（全仓唯一非冻结升版空间） |
+| element-plus | ^2.14.5 | client + config / explorer / locales | UI 组件库 | 2.14.6 | [缓] patch（2.7.7 精确锁已解锁） |
+| schemastery-vue | ^7.3.15 | components | 配置 Schema → 表单渲染 | 7.3.15 | [新] |
+| marked-vue | ^1.3.0 | client | Markdown 渲染 | 1.3.0 | [新] |
+| unocss | ^66.8.1 | client(构建脚本) | 原子化 CSS 引擎 | 66.10.5 | [缓] patch（0.65→66 已升） |
+| echarts | ^6.1.0 (dev) | analytics | 数据可视化图表 | 6.1.0 | [新]（5→6 已升） |
+| vue-echarts | ^8.1.0 (dev) | analytics | echarts 的 Vue 封装 | 8.3.0 | [新]（6→8 已升，range 内最新） |
+| ansi_up | ^6.0.6 (dev) | logger(client) | ANSI 转义 → HTML | 6.0.6 | [新]（5→6 已升） |
+| d3-force | ^3.0.0 (dev) | insight | 关系图谱力学布局 | 3.0.0 | [新] |
+| monaco-editor | ~0.56.0 (dev) | explorer | 代码/文本编辑器 | 0.56.0 | [新]（0.44→0.56） |
+| throttle-debounce | ^5.0.2 | admin | 前端防抖 | 5.0.2 | [新]（3→5 已升） |
+| lottie-web | ^5.13.0 (dev) | welcome | Lottie 动画（开屏描线） | 5.13.0 | [新]（welcome 插件新增） |
+| spark-md5 | ^3.0.2 (dev) | market | MD5（gravatar 头像） | 3.0.2 | [新] |
 
 ### C. 构建与打包工具链
 
 | 包 | 声明 | 使用位置 | 业务范围 | 最新 | 状态 |
 |---|---|---|---|---|---|
-| vite | ^5.4.10 | client / console / online | 前端构建(编程式 `vite.build()`) | 8.2.2 | [旧] 跨 3 个 major |
-| @vitejs/plugin-vue | ^5.1.4 | client / console | Vue SFC 编译插件 | 6.0.8 | [旧] major |
-| @maikolib/vite-plugin-yaml | ^1.0.1 | client / console | YAML 资源加载(前端 locale) | 1.1.1-0 | [预] 最新为预发布 |
-| sass | ^1.82.0 | client(构建脚本) | SCSS 编译(modern-compiler API) | 1.103.1 | [缓] minor |
-| esbuild | ^0.27.2 | plugins/infra/hmr(**运行时依赖**) | TS 即时编译(HMR 热重载) | 0.28.2 | [缓] minor |
-| @babel/code-frame | ^7.27.1 | hmr(error.ts) | 构建错误源码帧美化 | 8.0.0 | [旧] major |
-| typescript | ^5.6.2(已装 5.9.3) | 根(apps 用 `tsc -b`) | 类型系统 + 声明产出 | 7.0.2 | [旧] major |
-| @biomejs/biome | ^2.0.0 | 根 | Lint + Format(schema 已是 2.5.10) | 2.5.10 | [缓] minor |
-| yakumo | ^1.0.0-beta.16 (dev) | koishi-scripts(**仅类型引用**) | 上游构建器(历史残留) | 3.2.1 | [旧] 建议直接移除 |
+| vite | ^8.2.2 | client + 3 插件(dev) | 前端构建（编程式 `vite.build()`） | 8.3.0 | [新]（5→8 已升，range 内最新） |
+| @vitejs/plugin-vue | ^6.0.8 | client | Vue SFC 编译插件 | 6.0.9 | [缓] patch |
+| sass-embedded | ^1.102.0 | client | SCSS 编译（替代 dart-sass） | 1.104.1 | [新] |
+| tsdown | ^0.23.0 | root | node 侧单遍构建（替代 yakumo） | 0.23.0 | [新] |
+| typescript | npm:@typescript/typescript6@6.0.2 | root(dev) | TS 6 载体（供 @typescript-eslint/parser） | 6.0.2 | [新] |
+| @typescript/native | npm:typescript@7.0.2 | root(dev) | TS7 原生编译器（类型检查真身） | 7.0.2 | [新] |
+| typescript | ^5.0.0 | web-client | **源码零导入**，疑上游残留（见 §4.1） | — | [废] 存疑 |
+| @biomejs/biome | ^2.5.10 | root | Lint + Format 唯一权威 | 2.5.14 | [缓] patch（装 2.5.13） |
+| eslint + eslint-plugin-vue + @typescript-eslint/parser + vue-eslint-parser | ^10.9 / ^10.10 / ^8.68 / ^10.4 (dev) | root | 仅 .vue 模板语义 lint（biome 只解析 script） | 10.11.0 等 | [缓] minor（eslint 本体） |
+| @babel/code-frame | ^8.0.0 | hmr | 构建错误源码帧（Bun BuildMessage position） | 8.0.6 | [缓] patch（7→8 已升） |
+| @parcel/watcher | ^2.6.0 | hmr | 文件监听原生绑定（替代 chokidar） | 2.6.0 | [新] |
+| @changesets/cli | ^3.0.1 | root | 版本与 changelog（配 tooling/release 链） | 3.0.3 | [缓] patch（装 3.0.2） |
 
 ### D. CLI 脚手架与系统交互
 
 | 包 | 声明 | 使用位置 | 业务范围 | 最新 | 状态 |
 |---|---|---|---|---|---|
-| cac | ^6.7.14 | cli / koishi-scripts / client bin | 轻量 CLI 框架 | 7.0.0 | [旧] major |
-| prompts | ^2.4.2 | koishi-scripts / create-koishi-ce | 交互式命令行提示 | 2.4.2 | [新] |
-| kleur | ^4.1.5 | cli / scripts / create | 终端着色 | 4.1.5 | [新] |
-| yargs-parser | ^21.1.1 | create-koishi-ce | argv 解析 | 22.0.0 | [旧] major |
-| axios | ^1.6.8 | create-koishi-ce | 下载模板 tarball | 1.20.0 | [缓] minor(建议移除换原生 fetch) |
-| tar | ^6.2.1 | create-koishi-ce | 模板 tarball 解包 | 7.5.22 | [旧] major |
-| get-registry | ^1.2.0 | create-koishi-ce / market | npm registry 地址解析 | 1.2.0 | [新] |
-| which-pm-runs | ^1.1.0 | create / scripts / status / market | 检测当前包管理器 | 2.0.0 | [旧] major |
-| envinfo | ^7.11.1 | status 插件 | 运行环境信息采集 | 7.21.0 | [缓] minor |
-| open | ^8.4.2 | console(节点端) | 打开浏览器 | 11.0.1 | [旧] major |
-| execa | ^5.1.1 | market(安装器) | 子进程执行(包安装) | 10.0.1 | [旧] major |
-| dotenv | ^16.4.5 | loader | `.env` 配置加载 | 17.4.2 | [旧] major |
-| fs-extra | ^10.1.0 | koishi-scripts | 文件系统增强 | 11.4.0 | [旧] major |
-| globby | ^11.1.0 | koishi-scripts | glob 文件匹配 | 16.2.4 | [旧] major |
-| js-yaml | ^4.1.0 | loader / locales 插件 / scripts | YAML 解析(配置与语言包) | 5.4.1 | [旧] major |
-| semver | ^7.6.3 | registry / market | 语义版本计算 | 7.8.5 | [缓] minor |
-| p-map | ^4.0.0 | registry / market | 并发映射控制 | 7.0.6 | [旧] major |
-| chardet | ^2.0.0 | explorer 插件 | 文本编码检测 | 2.2.0 | [缓] minor |
-| file-type | ^16.5.4 | explorer 插件 | 文件类型嗅探 | 22.0.2 | [旧] major |
-| anymatch | ^3.1.3 | explorer 插件 | 路径匹配(文件树过滤) | 3.1.3 | [新] |
-| chokidar | ^3.6.0 | hmr / explorer | 文件变更监听 | 5.0.0 | [旧] major |
-| fastest-levenshtein | ^1.0.16 | core(i18n) | 编辑距离(命令纠错建议) | 1.0.16 | [新] |
-| ws | ^8.16.0 | console 声明 | ~~WebSocket~~ **全仓库无任何导入** | 8.21.3 | [废] 死依赖 |
-| uuid | ^8.3.2 | console 声明 | ~~UUID~~ **全仓库无任何导入** | 14.0.2 | [废] 死依赖 |
+| cac | ^7.0.0 | cli | 轻量 CLI 框架 | 7.0.0 | [新]（6→7 已升） |
+| @clack/prompts | ^1.7.0 | koishi-create | 交互式提示（替代 prompts） | 1.8.1 | [缓] patch（装 1.8.0） |
+| picocolors | ^1.1.1 | koishi-create + cli | 终端着色（替代 kleur） | 1.1.1 | [新] |
+| giget | ^3.3.1 | koishi-create | 远程模板拉取（替代 axios+tar 自研解包） | 3.3.1 | [新] |
+| open | ^11.0.1 | console | 打开浏览器 | 11.0.4 | [缓] patch（8→11 已升，装 11.0.3） |
+| chardet | ^2.2.0 | explorer | 文本编码检测 | 2.2.0 | [新] |
+| file-type | ^22.0.2 | assets / assets-local / explorer | 文件类型嗅探 | 22.1.1 | [缓] patch（16→22 已升，装 22.1.0） |
+| anymatch | ^3.1.3 | explorer | 路径匹配（文件树过滤） | 3.1.3 | [新] |
+| semver | ^7.8.5 / ^7.6.3 | registry / market | 语义版本计算 | 7.8.5 | [新]（range 两形态待统一） |
 
 ### E. 测试设施
 
+初版审计中的 mocha / @types/mocha / chai / chai-as-promised / chai-shape / @sinonjs/fake-timers 已于 2026-09-02 前整体退役，断言统一 `bun:test` 原生 `expect`，时间模拟用其内建 mock timers。现仅剩两个类型包：
+
 | 包 | 声明 | 使用位置 | 业务范围 | 最新 | 状态 |
 |---|---|---|---|---|---|
-| mocha | ^9.2.2 | 根(无 .mocharc、无 test 脚本) | 测试运行器 | 11.8.0 | [旧] 跨 2 major |
-| @types/mocha | ^9.1.1 | 根 | mocha 类型 | 10.0.10 | [旧] |
-| chai | ^5.1.1 | 根 + admin | 断言库 | 6.2.2 | [旧] major |
-| chai-as-promised | ^7.1.1 | 根 + admin | Promise 断言扩展 | 8.0.2 | [旧] major |
-| chai-shape | ^1.1.0 | core / echo | `.to.have.shape()` 部分匹配断言 | 1.1.0 | [新](需验证 chai 6 兼容) |
-| @sinonjs/fake-timers | ^6.0.1 | 根 + utils | 时间模拟(runtime.spec) | — | [新] 已移除（bun:test mock timers 替代） |
-| @types/node | ^25.0.9(已装 25.9.5) | 根 | Node 类型 | 26.4.0 | [旧] major |
+| bun-types | ^1.4.0 | root(dev) | Bun 运行时类型 | 1.4.2 | [新] |
+| @types/node | ^26.4.0 | root(dev) | Node 类型（TS 编译器与工具宿主） | 26.6.2 | [缓] minor（装 26.5.1） |
 
 ### F. 类型包杂项
 
-`@types/babel__code-frame`(7.27.0)、`@types/chai`(5.2.3)、`@types/chai-as-promised`(8.0.2)、`@types/d3-force`、`@types/envinfo`、`@types/fs-extra`、`@types/js-yaml`、`@types/prompts`、`@types/semver`、`@types/spark-md5`、`@types/throttle-debounce`(5.0.2,已支持 v5)、`@types/which-pm-runs`、`@types/yargs-parser` — 均随对应包同步升版即可。**`@types/uuid` 与 `@types/tar` 已被官方弃用**(uuid/tar 7 自带类型),应删除。
+`@types/d3-force`（insight）、`@types/semver`（registry / market）——随主包同步即可。初版点名的 `@types/uuid` / `@types/tar` 弃用问题已随死依赖清理消失。
+
+### G. CE 内部 peer 面（非外部依赖，单列对账）
+
+| 包 | 声明 | 声明处 | 对应 workspace 实体 |
+|---|---|---|---|
+| @koishi-ce/koishi | ^1.0.0 (peer) | 39 处（全部 node / infra / webui 插件 + koishi-shim 占名） | packages/node/cli（1.0.18） |
+| @koishi-ce/plugin-console | ^1.0.0 (peer) | 19 处（webui 插件 + console-shim 占名） | plugins/webui/console（1.3.5） |
+| @koishi-ce/console | ^1.0.0 (peer) | notifier / theme-vanilla / welcome | packages/node/console（1.1.0） |
+| @koishi-ce/loader | ^1.0.0 (peer) | hmr / config | packages/node/loader（1.1.1） |
+| @koishi-ce/core | ^1.0.0 (peer) | loader | packages/node/core（1.1.6） |
+| @koishi-ce/client | ^1.0.0 (peer) | console | packages/web/client（1.3.1） |
+| @koishi-ce/assets | ^1.0.0 (peer) | assets-local | packages/node/assets（1.0.2） |
+
+peer 声明用于下游 `bun add` 解析与防 Bun 自动装官方包，指向 CE 名是硬性约束（AGENTS.md 硬性约束 1-2），**不是升级对象**。
 
 ---
 
-## 3. 新鲜度总览(99 包,registry 实测)
+## 3. 新鲜度总览（58 名，registry 实测）
 
 | 类别 | 数量 | 代表 |
 |---|---|---|
-| [旧] 落后 ≥1 个 major | **38** | vite 5→8、vue-i18n 9→11、typescript 5→7、mocha 9→11、execa 5→10、chokidar 3→5、unocss 0.65→66 |
-| [缓] 落后 minor/patch | 12 | element-plus、sass、biome、esbuild、semver、ws(死依赖)、axios、envinfo、chardet、monaco(跨12个minor) |
-| [新] 已是最新 | 45 | cosmokit、@satorijs/* 全系、schemastery-vue、d3-force、vue(3.5.42 在范围内) |
-| [预] 最新版为预发布 | 2 | cordis(4.0.0-rc.8)、@maikolib/vite-plugin-yaml(1.1.1-0) |
-| [废] 弃用/死依赖 | 4 | @types/uuid(官方弃用)、@types/tar(官方弃用)、ws(未使用)、uuid(未使用) |
+| [新] 已是最新 | **39** | vite 8.3 / TS 7.0.2 / unocss 66 / echarts 6 / vue-router 5 / vue-i18n 11 / monaco 0.56 |
+| [缓] 落后 minor/patch | 13 | eslint、@types/node、element-plus 及 10 个 patch 漂移 |
+| [旧] 落后 major | **5** | minato、@cordisjs/plugin-{http,server}、@minatojs/sql-utils（4 个属冻结线）+ @vueuse 14→15（唯一真空间） |
+| [预] 最新为预发布 | 1 | cordis（4.0.0-rc.10，冻结线） |
+| [废] 弃用/死依赖 | **0** | 初版 4 项（ws / uuid / @types/uuid / @types/tar）已全部清理 |
+
+对比初版（2026-08-27）：外部依赖 **99 → 58（-41%）**；[旧] **38 → 5**；[废] 4 → 0。减量主要来自死依赖清理、Node 生态 API 的 Bun 原生化替换与测试栈退役。
+
+注：`typescript` 在 web/client 的 ^5.0.0 声明源码零导入（§4.1），上表口径中其 root 侧别名形态已计入 [新]，此存疑项不重复计数。
 
 ---
 
-## 4. 声明与实际使用不一致问题清单
+## 4. 声明与实际使用一致性
 
-1. **死依赖**:`ws`、`uuid`(+`@types/uuid`)声明于 `plugins/webui/console`,源码零导入(WebSocket 服务由 `@koishi-ce/plugin-server` 提供);`throttle-debounce` 声明于 explorer 但未使用;`ns-require` 声明于 web/client 与 market 但未使用。
-2. **幽灵依赖(使用了却未声明)**:`apps/online` 导入 `koa`、`@koa/router`、`vite`、`@maikolib/vite-plugin-yaml`、`js-yaml`、`tsconfig-utils`、`yakumo`(类型)但均未写入其 package.json,依赖 hoisting 存活——Bun workspaces 下有静默失效风险。
-3. **仅类型残留**:`yakumo ^1.0.0-beta.16` 只为 `PackageJson` 一个类型而存在(koishi-scripts/src/index.ts)。
-4. **历史残留物**:多数插件 package.json 仍带 `"lint": "eslint src --ext .ts"` 脚本但 ESLint 已移除;`packages/web/client/.eslintrc.yml` 残留;`packages/node/core/lib/` 为上游旧构建产物(内部仍引用 `@koishijs/*` 旧名);`packages/utils/node_modules` 空目录;`NOTICE`/`UPSTREAM.md` 引用的 `LICENSES/` 目录不存在。
-5. **peerDeps 指向上游属刻意设计**(见 ·1),非缺陷。
+1. **死依赖存疑**：`typescript ^5.0.0` 声明于 `packages/web/client`（dependencies），全仓源码零导入；vue-tsc 影子闸门用的 TS 5.9.3 是自举安装到 `node_modules/.cache/vue-tsc-shadow` 的钉版载体，与此声明无关。删除前须重建宿主前端实证（前端链假绿判例见 development.md §7）。
+2. **fallow 当前红点**（dead-code 退出码 1，待收敛或补消费）：`plugins/webui/market/src/node/dependencies/service.ts:118` 的 `default` 导出、`plugins/webui/market/src/node/installer/index.ts:58` 的 `Dependency` re-export 类型均无消费方。
+3. **range 漂移**（无害、待统一）：`semver` 两形态（registry ^7.8.5 / market ^7.6.3）；`vue` 三形态（client ^3.5.42 / components peer ^3 / 五插件 dev ^3.5.12）。
+4. **无幽灵依赖**：初版的 unlisted 问题（apps/online 靠 hoisting 存活）已随该目录删除消失，fallow unlisted 检查通过。
+5. **声明但无静态导入的正当豁免**（`.fallowrc.jsonc` ignoreDependencies，非死依赖）：vendored 三包（插件加载链按包名运行时解析）、shim 两包（下游 alias 占名）、webui 插件 dev 依赖（测试/构建期按名加载）、前端 vue 系（由宿主与工作区根提供）、sass-embedded 与 @typescript/native（构建期编程式加载/路径调用）。
+6. **peerDeps 指向 CE 名属硬性约束**（见 §2.G），非缺陷。
 
 ---
 
 ## 5. package.json 之外的技术栈
 
-- **TypeScript**:`tsconfig.base.json` — target es2022 / module esnext / `moduleResolution: bundler` / `emitDeclarationOnly + composite` / 仅 `strictBindCallApply`(未开全 strict)/ jsx react-jsx(`jsxImportSource: @satorijs/element`)/ `types: ["yml-register/types"]`。根 `tsconfig.json` 用 **paths 别名**把全部 35 个 `@koishi-ce/*` 包指向各自 `src/`(无 project references);`tsconfig.client.json` 供 Vue 客户端代码(`jsx: preserve`、`moduleResolution: node`)。
-- **构建**:无 vite/unocss 配置文件,构建逻辑全在 TS 脚本(`packages/web/client/scripts/client.ts` 及 `src/index.ts` 暴露 `build(root)` API、`src/bin.ts` 暴露 `koishi-console` CLI);node 侧走向 zero-build(部分包 exports 直指 `src/`,部分仍指 `lib/`)。`apps/create-koishi-ce` 与 `apps/koishi-scripts` 用 `tsc -b` 构建。
-- **Lint**:Biome 2.x,根脚本 `lint`/`format`;未提交的 biome.json 修改新增了排除 `**/lib/**` 与 `*.tsbuildinfo`。
-- **测试**:mocha 风格 `tests/*.spec.ts`(core/loader/utils/i18n-utils/common 插件/admin/commands),chai + chai-shape + chai-as-promised,内存库驱动跑数据库用例;**无 .mocharc、无任何 test 脚本**,README 承认测试尚未在 Bun 上完整跑通。
-- **部署**:`apps/online` 经 `vercel.json` 部署(网站 + Online Loader)。
-- **版本管理**:固定版本号手动维护(上游 yakumo version 的替代物尚未建)。
+- **TypeScript 三轨**：根 `typescript` 实为 `@typescript/typescript6@6.0.2` 别名（供 @typescript-eslint/parser）；类型检查真身是 `@typescript/native@7.0.2`（TS7 原生编译器，`bunx tsc` 双 project 串行：`tsconfig.json` node 侧 + `tsconfig.web.json` client 侧）；.vue 类型走 vue-tsc 3.3.11 影子基线闸门（自举钉版 TS 5.9.3 至隔离目录、必须 node 直跑、只拦新增，基线 26 键，以 `tooling/checks/vue-types-baseline.json` 实况为准）。
+- **严格模式**：`tsconfig.base.json` 严格全家桶（strict + noUncheckedIndexedAccess + exactOptionalPropertyTypes 等）+ nodenext 模块解析（相对导入一律带 `.ts` 扩展名）；显式 `any` 全仓 0；`as unknown as` 断言基线闸门只拦新增（18 处存留台账）。
+- **构建**：根 tsdown 单遍 → 各包 `lib/`（`index.mjs` + `index.d.ts`，ESM-only，exports 以 `default` 条件兜底）；`apps/koishi-create` 独立 tsdown；vendored 三包 exclude。
+- **Lint**：biome（tab 缩进、双引号、行尾分号）是格式唯一权威；eslint 仅补 `.vue` 模板语义。
+- **测试**：`bun test --isolate`（每文件独立 global，隔离跨文件 mock.module），125 个测试文件 / 982 用例（2026-09-19 实测，43.76s），覆盖率 src 源码口径约 97% 行；CI 产 lcov 上传 Codecov。
+- **版本管理**：changesets（`.changeset/`）+ `tooling/release` 链（preflight → version → build → test → publish → push，只推 main；单整体 tag 跟 core 版本手动补）。
+- **上游巡检**：`bun run upstream:audit`（`tooling/upstream-audit/`）+ [../process/upstream.md](../process/upstream.md) 映射表手动 diff 移植，port 进来的相对导入须补 `.ts` 扩展名。
 
 ---
 
 ## 6. 结论摘要
 
-1. 依赖分为两个世界:**cordis 生态运行时**(cordis/minato/@cordisjs/@satorijs/@koishijs 上游 peer)整体冻结在上游 koishi 4.18 配套线上,受上游节奏约束;**独立工具链**(构建、前端、CLI、测试)落后主流 2~3 年,存在 38 个 major 级跳版空间。
-2. 前沿断点:vite 已到 8、TypeScript 已到 7(原生编译器)、vue-router 5 / vue-i18n 11 / @vueuse 14 / echarts 6 / unocss 66 均已稳定——「最现代」目标可一步到位。
-3. cordis 4 / minato 4 / @cordisjs 1.x 生态跳版是最大的破坏性变更,且 cordis 4 尚处 RC,需单独决策。
-4. 存在 4 项弃用/死依赖与一批幽灵依赖、历史残留,应先行清理。
-
-后续行动见 **[upgrade-plan.md](upgrade-plan.md)**。
-
----
-
-## 后续变化补记（2026-09-05）
-
-快照正文（§1-§6）保持 2026-08-27 原样；本节记录其后的实际演进，现势以 [../guides/development.md](../guides/development.md) 与 [../reference/architecture.md](../reference/architecture.md) 为准。
-
-**总账**：外部依赖（含 peerDependencies、去重、排除 `workspace:*`）由快照的 **99 个降至约 60 个**（-40%）；package.json 由 42 个变为 48 个（47 个 workspace 包 + 根）。
-
-- **测试栈整体退役**：mocha / @types/mocha / @sinonjs/fake-timers / chai / chai-as-promised / chai-shape 及相关 @types 全部移除，断言迁移至 `bun:test` 原生 `expect`（2026-08-27 起分批，2026-09-02 f63650b 完成；shape 断言内联为 `packages/node/core/src/__tests__/shape.ts`）。
-- **原生化删除**：ws / uuid / @types/uuid（Phase 0，90ee3e2）；axios 改原生 fetch（随 create ESM-only 化，ac7e8a9）；js-yaml 全链与 @maikolib/vite-plugin-yaml（fe89812）；ns-require / dotenv（d6b4093）；fs-extra / globby（koishi-scripts 外部依赖清零，048e3ba）；execa / p-map（d236e27）；envinfo / which-pm-runs（4b07454）；get-registry（改原生 npmrc 读取）。
-- **替换**：create-koishi-ce 的 prompts → @clack/prompts、kleur → picocolors、自研 tar 远程解包 → giget（2026-09-02）；cli 的 kleur → picocolors（kleur 全仓清零）。
-- **升级**：file-type ^16 → ^22（随 assets / assets-local 移植，d1329eb）；cac 升 ^7 并保留。
-- **定性勘误**：dompurify 从来不是本仓直接依赖，仅为 monaco-editor 的传递依赖（新版已内置修复），无需治理——快照期漏洞清单中该条就此关闭。
-- **目录重组**（快照正文引用的旧路径以此为准）：`apps/online` 已删除；`apps/registry` 迁入 `packages/node/registry`（163a116）；`apps/create-koishi-ce` 更名 `apps/koishi-create`；`packages/web/client/.eslintrc.yml` 与 `UPSTREAM.md` 已删（上游纪律现居 `docs/process/upstream.md`）；根 `bunfig.toml` 已建立；`LICENSES/` 目录已建立（496bb73）。
+1. 初版审计确立的两世界格局未变，但力量对比已逆转：**独立工具链从落后主流 2~3 年追平**（TS7 / vite 8 / unocss 66 / echarts 6 / vue-i18n 11 / vue-router 5 / element-plus 2.14 / monaco 0.56），cordis 生态运行时则确认长期冻结在 3.x 内洽线。
+2. 外部依赖 99 → 58、[旧] 38 → 5、[废] 4 → 0：升级计划 Phase 0-4 的清理、原生化、替换目标全部达成。
+3. 剩余可动空间小而集中：@vueuse 14→15（唯一非冻结 major）、13 个 minor/patch 随手更、§4 的声明卫生四项（死依赖存疑、2 处未用导出、两组 range 漂移）。
+4. 冻结线不是欠账：4 个 [旧] + 1 个 [预] 全部挂 Phase 5 重启条件，勿在线内单独升版。
+5. 本文档角色已从「立项前基线」转为「现势对账基线」；下一轮治理从 §4 起步，结构性升版须待 Phase 5 解冻后与 cordis 4 迁移合并进行。
