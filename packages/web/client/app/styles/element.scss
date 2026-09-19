@@ -26,6 +26,19 @@
   --el-fill-color-light: var(--k-hover-bg);
 }
 
+// 状态色 plain 按钮的浅底/描边系列(light-9 背景、light-8/7 描边、
+// light-5 禁用字色)EP 默认为亮色系(如 danger-light-9 #fef0f0),
+// 暗色界面里成刺眼色块;按 dark 主色透明度重生成这四档,
+// 亮色主题维持 EP 默认不动。
+html.dark, .theme-root.dark {
+  @each $name in (danger, success, warning, info) {
+    --el-color-#{$name}-light-9: color-mix(in srgb, var(--k-color-#{$name}) 15%, transparent);
+    --el-color-#{$name}-light-8: color-mix(in srgb, var(--k-color-#{$name}) 25%, transparent);
+    --el-color-#{$name}-light-7: color-mix(in srgb, var(--k-color-#{$name}) 35%, transparent);
+    --el-color-#{$name}-light-5: color-mix(in srgb, var(--k-color-#{$name}) 55%, transparent);
+  }
+}
+
 .el-input-number, .el-popper {
   --el-fill-color-light: transparent;
 }
