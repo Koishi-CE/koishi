@@ -19,10 +19,12 @@
  *   均以 Bun 为准（ESM-only 产物，Bun 原生加载 TS / yml）；脚本里的环境
  *   变量注入直接写 `NODE_ENV=... ` 前缀——bun run 走 Bun Shell，跨平台
  *   原生支持，无需 cross-env 一类的依赖；
- * - "koishi" 裸名与 @koishijs/core / @koishijs/loader / @koishijs/plugin-console
- *   上游名用 npm alias 钉到 @koishi-ce shim（版本冻结线，见 packages/shim）：
- *   上游官方 adapter / database 插件与社区 koishi-plugin-* 的 peer 由此满足，
- *   不会拉入 npm 官方全家桶形成第二份框架副本；市场安装亦不改写该声明
+ * - "koishi" 裸名与 @koishijs/core / @koishijs/loader / @koishijs/plugin-console /
+ *   @koishijs/client / @koishijs/components 上游名用 npm alias 钉到 @koishi-ce
+ *   shim（版本冻结线，见 packages/shim）：上游官方 adapter / database 插件与
+ *   社区 koishi-plugin-* 的 peer 由此满足，webui 插件写进 dependencies 的
+ *   client / components 亦被钉住（满足性判定看落盘版本），不会拉入 npm
+ *   官方全家桶形成第二份框架副本；市场安装亦不改写该声明
  *   （installer 的 isGuardedRequest 护栏将 npm:@koishi-ce alias 与
  *   workspace: 同等保护）；
  * - koishi.yml 采用配置页导出形态：插件键带 uid 实例后缀，分组带中文
@@ -175,6 +177,15 @@ export function baseManifest(): Manifest {
 			// koishi-shim（4.18.11 满足 ^4.6.11），勿指回已废弃的 loader-shim
 			"@koishijs/loader":
 				"npm:@koishi-ce/koishi-shim@^4.18.11",
+			// 上游 client 名占位：第三方 webui 插件常把 @koishijs/client 写进
+			// dependencies（非 peer，napuketto 实证），无归属时 Bun 装下官方
+			// client 并连带官方 components 全家桶；版本冻结 5.30.x 线满足 ^5.x
+			"@koishijs/client":
+				"npm:@koishi-ce/client-shim@^5.30.11",
+			// 上游 components 名占位：官方 client 的硬依赖，插件生态亦常直接
+			// 依赖（element-plus 系共享组件库）；版本冻结 1.5.x 线满足 ^1.5
+			"@koishijs/components":
+				"npm:@koishi-ce/components-shim@^1.5.22",
 		},
 		devDependencies: {
 			"@koishi-ce/client": "^1.0.0",

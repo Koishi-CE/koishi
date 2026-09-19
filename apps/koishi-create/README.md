@@ -27,7 +27,7 @@ npm create koishi-ce my-app
 
 ## 生成的项目
 
-- **package.json**：`type: module`、`packageManager` 钉 Bun、workspaces 含 `plugins/*` 与 `external/*`；dependencies 预装全套 `@koishi-ce` 常用插件（console、config、market、auth、admin、help、sandbox、database-sqlite 等），并预置四行 npm alias 钉住上游名——`koishi` / `@koishijs/core` / `@koishijs/loader` 指向 `@koishi-ce/koishi-shim`、`@koishijs/plugin-console` 指向 `@koishi-ce/console-shim`，社区插件由此全部解析到 CE 框架；
+- **package.json**：`type: module`、`packageManager` 钉 Bun、workspaces 含 `plugins/*` 与 `external/*`；dependencies 预装全套 `@koishi-ce` 常用插件（console、config、market、auth、admin、help、sandbox、database-sqlite 等），并预置六行 npm alias 钉住上游名——`koishi` / `@koishijs/core` / `@koishijs/loader` 指向 `@koishi-ce/koishi-shim`、`@koishijs/plugin-console` 指向 `@koishi-ce/console-shim`、`@koishijs/client` / `@koishijs/components` 分别指向 `@koishi-ce/client-shim` / `@koishi-ce/components-shim`，社区插件（含把上游前端库写进 dependencies 的 webui 插件）由此全部解析到 CE 对应包；
 - **koishi.yml**：按 server（端口 5140-5149）/ basic / console（自动打开、市场指向 registry.koishi.chat 镜像）/ storage / adapter / develop（开发模式启用热重载）分组预写；官方 adapter 插件以 `~` 停用条目预写、不预装，装好后在控制台按需启用；数据库开箱即用——`database-sqlite` 默认启用，mongo / mysql / postgres 等其余 database 不预写占位条目，市场安装后自动出现；
 - **开发工具链**：devDependencies 预置 `@koishi-ce/client`、`@koishi-ce/plugin-hmr` 与 `@koishi-ce/scripts`（`koishi-scripts setup` 可在 external/ 下继续创建插件项目）。
 

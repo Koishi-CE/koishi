@@ -34,7 +34,7 @@ bun run release pipeline                  # 一条龙：preflight → version �
 
 - 面向发布的包改动，**随提交写 `.changeset/` 条目**（`bun run changeset`）；纯内部 / 文档 / 私有包改动不写。
 - 版本基线：全部可发布包从 1.0.0 起步、由 changesets 递进（不镜像上游版本号，随发布自然漂移，以各包 package.json 与 `release status` 为准，怀疑不一致先 `npm view <pkg> dist-tags` 核实）。
-- **shim 两包（`@koishi-ce/koishi-shim` / `@koishi-ce/console-shim`）与 workspace 私有包在 changesets ignore 列表**：勿写 changeset、勿 bump——shim 版本冻结跟随上游线（4.18.x / 5.30.x），Bun 对 npm alias 的 peer 判定看落盘包的 version，动它会让下游 alias 的 peer 匹配失效。
+- **shim 四包（`@koishi-ce/koishi-shim` / `@koishi-ce/console-shim` / `@koishi-ce/client-shim` / `@koishi-ce/components-shim`）与 workspace 私有包在 changesets ignore 列表**：勿写 changeset、勿 bump——shim 版本冻结跟随上游线（4.18.x / 5.30.x / 1.5.x），Bun 对 npm alias 的满足性判定看落盘包的 version，动它会让下游 alias 的匹配失效。新 shim 首版发布同样走发布链，且发布顺序须先于 `create-koishi-ce`（模板依赖它们）。
 - `bumpVersionsWithWorkspaceProtocolOnly: true`：只有以 `workspace:*` 被内部消费的包才随依赖连动 bump。
 
 ## 4. 发布顺序与补发

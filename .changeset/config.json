@@ -11,6 +11,8 @@
 	"ignore": [
 		"koishi",
 		"@koishi-ce/koishi-shim",
-		"@koishi-ce/console-shim"
+		"@koishi-ce/console-shim",
+		"@koishi-ce/client-shim",
+		"@koishi-ce/components-shim"
 	]
 }

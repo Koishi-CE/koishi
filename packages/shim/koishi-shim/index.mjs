@@ -10,11 +10,12 @@
  * 指向上游名。下游项目若不占住这些名字，市场运行时安装会因 peer 无归属
  * 而自动装下 npm 官方全家桶，形成第二份框架副本，破坏 cordis 对象身份。
  *
- * workspace 内由 `packages/shim/` 下的 private 占位包解决（koishi 裸名 /
- * upstream-core / upstream-loader，根依赖 workspace:* 声明归属）；下游
- * 非 workspace 项目无法使用 workspace shim，改为在 package.json 里声明
- * npm alias（create-koishi-ce 模板已预置，四行 alias 只涉及本包与
- * console-shim 两个包）：
+ * workspace 内不需要占位（本仓代码一律直接 `import ... from "@koishi-ce/*"`，
+ * 裸名 koishi 由 workspace 内的同名 private 占位包归属）；下游非
+ * workspace 项目无法使用 workspace shim，改为在 package.json 里声明
+ * npm alias（create-koishi-ce 模板已预置六行，涉及本包、console-shim、
+ * client-shim 与 components-shim 四个包，完整清单见 packages/shim/
+ * README.md）：
  *
  *   "koishi": "npm:@koishi-ce/koishi-shim@^4.18.11"
  *   "@koishijs/core": "npm:@koishi-ce/koishi-shim@4.18.11"   // 精确锁：@koishi-ce/loader 的 peer 逐字相等

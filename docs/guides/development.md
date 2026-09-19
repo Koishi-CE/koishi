@@ -183,7 +183,7 @@ expect(app.database.getUser("mock", "A")).resolves.toHaveShape({ authority: 1 })
 
 ## 8. 版本与发布
 
-- 版本由 changesets 递进管理（1.0.0 起步基线、不镜像上游版本号，随发布自然漂移，当前版本以各包 package.json 与 `bun run release status` 为准），shim 两包例外（版本冻结跟随上游线，见 [../reference/architecture.md](../reference/architecture.md)）。
+- 版本由 changesets 递进管理（1.0.0 起步基线、不镜像上游版本号，随发布自然漂移，当前版本以各包 package.json 与 `bun run release status` 为准），shim 四包例外（版本冻结跟随上游线，见 [../reference/architecture.md](../reference/architecture.md)）。
 - 版本与发布由 changesets + `bun run release` 发布链管理，禁止手动 `npm publish`——流程、命令与事故教训见 [../process/release.md](../process/release.md)。
 - 面向发布的包改动随提交写 `.changeset/` 条目（见 [../process/release.md](../process/release.md) 第 3 节）。
 

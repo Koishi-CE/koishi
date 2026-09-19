@@ -186,7 +186,18 @@ describe("planLinks / applyLinks", () => {
 });
 
 describe("buildSandboxPackageJson", () => {
-	test("链接模式：入口直指 cli 产物，预声明默认插件依赖", () => {
+	// 上游名钉名（与脚手架模板逐字同构）：market 安装触发的真实 bun
+	// install 靠它防止官方全家桶落盘，两模式都必须携带
+	const aliasKeys = [
+		"koishi",
+		"@koishijs/client",
+		"@koishijs/components",
+		"@koishijs/core",
+		"@koishijs/loader",
+		"@koishijs/plugin-console",
+	].sort();
+
+	test("链接模式：入口直指 cli 产物，预声明默认插件依赖与上游钉名", () => {
 		const manifest = buildSandboxPackageJson("link") as {
 			scripts: { start: string };
 			dependencies: Record<string, string>;
@@ -202,10 +213,11 @@ describe("buildSandboxPackageJson", () => {
 			"@koishi-ce/plugin-http",
 			"@koishi-ce/plugin-proxy-agent",
 			"@koishi-ce/plugin-server",
+			...aliasKeys,
 		]);
 	});
 
-	test("打包模式：全部 tgz 以 file: 声明", () => {
+	test("打包模式：全部 tgz 以 file: 声明，上游钉名保留", () => {
 		const manifest = buildSandboxPackageJson("pack", [
 			{
 				name: "@koishi-ce/core",
@@ -214,9 +226,19 @@ describe("buildSandboxPackageJson", () => {
 		]) as {
 			dependencies: Record<string, string>;
 		};
-		expect(manifest.dependencies).toEqual({
-			"@koishi-ce/core":
-				"file:./vendor/koishi-ce-core-1.0.0.tgz",
-		});
+		expect(
+			Object.keys(manifest.dependencies).sort(),
+		).toEqual(["@koishi-ce/core", ...aliasKeys]);
+		expect(manifest.dependencies?.["@koishi-ce/core"]).toBe(
+			"file:./vendor/koishi-ce-core-1.0.0.tgz",
+		);
+		// 钉名行不受 tgz 替换影响（napuketto 实证：dependencies 形态的
+		// 上游声明也靠落盘版本满足性拦截）
+		expect(
+			manifest.dependencies?.["@koishijs/client"],
+		).toBe("npm:@koishi-ce/client-shim@^5.30.11");
+		expect(manifest.dependencies?.koishi).toBe(
+			"npm:@koishi-ce/koishi-shim@^4.18.11",
+		);
 	});
 });

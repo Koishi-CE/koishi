@@ -26,7 +26,7 @@ bun run dev          # 启动（开发模式，启用 HMR 热更新）
 
 推荐在控制台「插件市场」页安装（已预配 registry.koishi.chat 镜像源）；也可以手动 `bun add <包名>` 后在 `koishi.yml` 中启用。
 
-根依赖中的四行 npm alias——`"koishi": "npm:@koishi-ce/koishi-shim@^4.18.11"`、`"@koishijs/plugin-console": "npm:@koishi-ce/console-shim@^5.30.11"`、`"@koishijs/core": "npm:@koishi-ce/koishi-shim@4.18.11"`、`"@koishijs/loader": "npm:@koishi-ce/koishi-shim@^4.18.11"`——已把上游生态的 peer 依赖全部钉回 @koishi-ce 框架（前两行与后两行分别只涉及 koishi-shim / console-shim 两个包；**请勿删除或改写这四行**），不会形成第二份框架 / console / loader 副本。
+根依赖中的六行 npm alias——`"koishi": "npm:@koishi-ce/koishi-shim@^4.18.11"`、`"@koishijs/plugin-console": "npm:@koishi-ce/console-shim@^5.30.11"`、`"@koishijs/core": "npm:@koishi-ce/koishi-shim@4.18.11"`、`"@koishijs/loader": "npm:@koishi-ce/koishi-shim@^4.18.11"`、`"@koishijs/client": "npm:@koishi-ce/client-shim@^5.30.11"`、`"@koishijs/components": "npm:@koishi-ce/components-shim@^1.5.22"`——已把上游生态的 peer 与 dependencies 声明全部钉回 @koishi-ce 对应包（涉及 koishi-shim / console-shim / client-shim / components-shim 四个包；**请勿删除或改写这六行**），不会形成第二份框架 / console / 前端库副本。
 
 ## 更新依赖
 

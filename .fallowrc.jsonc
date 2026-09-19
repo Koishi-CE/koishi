@@ -55,9 +55,11 @@
 		"@koishi-ce/plugin-http",
 		"@koishi-ce/plugin-proxy-agent",
 		"@koishi-ce/plugin-server",
-		// packages/shim 两包是预编译产物，依赖仅用于下游 npm alias 解析
+		// packages/shim 四包是预编译产物，依赖仅用于下游 npm alias 解析
 		"@koishi-ce/koishi",
 		"@koishi-ce/plugin-console",
+		"@koishi-ce/client",
+		"@koishi-ce/components",
 		// 各 webui 插件的 devDependencies：测试期/构建期按包名加载，无静态 import
 		"@koishi-ce/loader",
 		"@koishi-ce/plugin-analytics",

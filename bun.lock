@@ -140,6 +140,20 @@
         "@koishi-ce/koishi": "workspace:*",
       },
     },
+    "packages/shim/client-shim": {
+      "name": "@koishi-ce/client-shim",
+      "version": "5.30.11",
+      "dependencies": {
+        "@koishi-ce/client": "^1.0.0",
+      },
+    },
+    "packages/shim/components-shim": {
+      "name": "@koishi-ce/components-shim",
+      "version": "1.5.22",
+      "dependencies": {
+        "@koishi-ce/components": "^1.0.0",
+      },
+    },
     "packages/shim/console-shim": {
       "name": "@koishi-ce/console-shim",
       "version": "5.30.11",
@@ -943,7 +957,11 @@
 
     "@koishi-ce/client": ["@koishi-ce/client@workspace:packages/web/client"],
 
+    "@koishi-ce/client-shim": ["@koishi-ce/client-shim@workspace:packages/shim/client-shim"],
+
     "@koishi-ce/components": ["@koishi-ce/components@workspace:packages/web/components"],
+
+    "@koishi-ce/components-shim": ["@koishi-ce/components-shim@workspace:packages/shim/components-shim"],
 
     "@koishi-ce/console": ["@koishi-ce/console@workspace:packages/node/console"],
 

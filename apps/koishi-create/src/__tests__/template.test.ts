@@ -10,13 +10,16 @@ import {
 
 test("内置模板依赖纯度：不含任何 @koishijs / koishi-plugin 官方生态包", () => {
 	const { dependencies, devDependencies } = baseManifest();
-	// 四个上游名是刻意的 npm alias 占位（koishi 裸名 / @koishijs/plugin-console /
-	// @koishijs/core / @koishijs/loader），其余必须是 @koishi-ce 作用域
+	// 六个上游名是刻意的 npm alias 占位（koishi 裸名 / @koishijs/plugin-console /
+	// @koishijs/core / @koishijs/loader / @koishijs/client / @koishijs/components），
+	// 其余必须是 @koishi-ce 作用域
 	const guarded = new Set([
 		"koishi",
 		"@koishijs/plugin-console",
 		"@koishijs/core",
 		"@koishijs/loader",
+		"@koishijs/client",
+		"@koishijs/components",
 	]);
 	for (const key of Object.keys(dependencies ?? {})) {
 		expect(
@@ -95,6 +98,15 @@ test("内置模板钉住 console / core / loader 上游 peer 名，防 Bun 自�
 	// 再导出（与上游 koishi 主包同构），4.18.11 满足 ^4.6.11
 	expect(dependencies?.["@koishijs/loader"]).toBe(
 		"npm:@koishi-ce/koishi-shim@^4.18.11",
+	);
+	// webui 插件把 client 写进 dependencies 的形态（napuketto 实证）：
+	// 版本冻结 5.30.x 线满足 ^5.x，官方 client（连带 components）不再落盘
+	expect(dependencies?.["@koishijs/client"]).toBe(
+		"npm:@koishi-ce/client-shim@^5.30.11",
+	);
+	// 官方 client 的硬依赖、插件生态常直接依赖；冻结 1.5.x 线满足 ^1.5
+	expect(dependencies?.["@koishijs/components"]).toBe(
+		"npm:@koishi-ce/components-shim@^1.5.22",
 	);
 });
 
