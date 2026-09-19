@@ -59,7 +59,7 @@
     },
     "packages/node/cli": {
       "name": "@koishi-ce/koishi",
-      "version": "1.0.17",
+      "version": "1.0.18",
       "bin": {
         "koishi": "lib/cli/index.mjs",
       },
@@ -83,7 +83,7 @@
     },
     "packages/node/core": {
       "name": "@koishi-ce/core",
-      "version": "1.1.5",
+      "version": "1.1.6",
       "dependencies": {
         "@koishi-ce/i18n-utils": "workspace:*",
         "@koishi-ce/utils": "workspace:*",
@@ -156,7 +156,7 @@
     },
     "packages/web/client": {
       "name": "@koishi-ce/client",
-      "version": "1.3.0",
+      "version": "1.3.1",
       "bin": {
         "koishi-console": "lib/bin.mjs",
       },
@@ -653,7 +653,7 @@
     },
     "plugins/webui/market": {
       "name": "@koishi-ce/plugin-market",
-      "version": "1.1.4",
+      "version": "1.2.0",
       "dependencies": {
         "@koishi-ce/console": "workspace:*",
         "@koishi-ce/registry": "workspace:*",
