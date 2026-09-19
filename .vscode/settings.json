@@ -34,7 +34,12 @@
 		"setup": "config",
 		// tooling
 		"checks": "guard",
-		"upstream-audit": "tasks"
+		"upstream-audit": "tasks",
+		// docs
+		"decisions": "policy",
+		"guides": "instructions",
+		"process": "ci",
+		"reference": "toc"
 	},
 	"material-icon-theme.files.associations": {
 		"NOTICE": "certificate",
