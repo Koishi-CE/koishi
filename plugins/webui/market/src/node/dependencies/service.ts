@@ -35,14 +35,14 @@ export class DependencyService extends DataService<
 	Dict<Dependency>
 > {
 	// 基类 DataService 声明了 console 注入，子类覆盖须一并保留
-	static inject = ["console", "installer"];
+	static override inject = ["console", "installer"];
 
 	/** 快照代次：每次 get() 自增，用于判定后台刷新结果是否已过期 */
 	private serial = 0;
 	/** 进行中的元数据刷新任务（单飞去重） */
 	declare private task: Promise<void> | undefined;
 	/** 最近一轮快照（新快照构建时复用 latest 与 404 负缓存） */
-	private cache: Dict<Dependency> = {};
+	private snapshot: Dict<Dependency> = {};
 
 	constructor(ctx: Context) {
 		super(ctx, "dependencies", { authority: 4 });
@@ -56,10 +56,10 @@ export class DependencyService extends DataService<
 		);
 		for (const [name, dep] of Object.entries(snapshot)) {
 			resolveLocalDependency(name, dep, {
-				previous: this.cache[name],
+				previous: this.snapshot[name],
 			});
 		}
-		this.cache = snapshot;
+		this.snapshot = snapshot;
 		this.ensureMetadata();
 		return snapshot;
 	}
@@ -79,11 +79,10 @@ export class DependencyService extends DataService<
 	private async refreshMetadata() {
 		for (;;) {
 			const serial = this.serial;
-			const targets = Object.entries(this.cache)
+			const targets = Object.entries(this.snapshot)
 				.filter(([, dep]) => dep.fetching)
 				.map(([name]) => name);
 			if (!targets.length) return;
-			const installer = this.ctx.installer;
 			await mapLimit(targets, CONCURRENCY, async (name) => {
 				await this.resolveMetadata(name);
 			});
@@ -97,8 +96,8 @@ export class DependencyService extends DataService<
 
 	/** 单个条目的元数据解析：拉取版本表并填充 latest / error。 */
 	private async resolveMetadata(name: string) {
-		const dep = this.cache[name];
-		if (!dep || !dep.fetching) return;
+		const dep = this.snapshot[name];
+		if (!dep?.fetching) return;
 		const installer = this.ctx.installer;
 		// getPackage 内部单飞去重并写 fullCache；失败也 resolve 空表
 		const versions = await installer.getPackage(name);

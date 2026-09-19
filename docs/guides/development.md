@@ -137,7 +137,7 @@ fallow 另外还带重复代码、复杂度健康度、边界违规与 PR 变更
 词典纪律：
 
 - **语种集合**：7 语种（zh-CN / zh-TW / en-US / ja-JP / fr-FR / de-DE / ru-RU），以 zh-CN 为基准；例外见下。
-- **检查工具**：`bun tooling/checks/locales.ts` 检查键对齐、语种齐全与假翻译（拉丁/西里尔语种值含汉字即报；ja-JP 因汉字与中文同源无法自动检测，改动后需人工核对），改词典后必须跑。market（上游原版再分发）与 `plugins/webui/locales`（词条来自用户数据的独立插件包）完全跳过；sandbox / commands / rate-limit / sqlite 维持上游语种集合，豁免齐全检查。
+- **检查工具**：`bun tooling/checks/locales.ts` 检查键对齐、语种齐全与假翻译（拉丁/西里尔语种值含汉字即报；ja-JP 因汉字与中文同源无法自动检测，改动后需人工核对），改词典后必须跑。market（上游原版再分发）与 `plugins/webui/locales`（词条来自用户数据的独立插件包）完全跳过；sandbox / commands / rate-limit / sqlite 维持上游语种集合，豁免齐全检查；market 依赖管理页词典（client/locales）为 CE 自研中英双语，同样豁免。
 - **YAML 陷阱**：值内含半角「冒号+空格」（法语高频）必须加引号；值以 `{` 开头（插值在句首）也必须加引号；块标量（`|-`）内无此限制。
 - **中文拼接拆字**（如「文件{{夹}}」）应拆为独立的参数化键，禁止在模板里做语序相关的字符串拼接。
 

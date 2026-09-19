@@ -37,7 +37,6 @@
         v-if="versionControlReady && versionList.length"
         ref="versionSelect"
         v-model="selectedVersion"
-        size="small"
         class="dep-version-select"
         automatic-dropdown
         @visible-change="onSelectVisible"
@@ -62,7 +61,7 @@
         <el-button v-if="item.kind === 'updatable' && latest" size="small" type="primary" @click="applyUpdate">
           {{ t("dependencies.card.update") }}
         </el-button>
-        <el-button v-if="item.kind === 'updatable'" size="small" @click="$emit('ignore', item.name)">
+        <el-button v-if="item.kind === 'updatable'" size="small" @click="ignoreUpdate">
           {{ t("dependencies.card.ignore") }}
         </el-button>
         <el-button v-if="change" size="small" @click="cancelChange">
@@ -93,9 +92,10 @@ import { resolveLatest } from "./ignore-policy.ts";
 
 const props = defineProps<{ item: DependencyItem }>();
 
-defineEmits<{
+const emit = defineEmits<{
 	/** 请求打开「忽略更新」对话框(页面级单例)。 */
-	ignore: (name: string) => void;
+	// biome-ignore lint/style/useShorthandFunctionType: 调用签名风格保证影子 vue-tsc 对事件参数的跨组件推断
+	(event: "ignore", name: string): void;
 }>();
 
 const { t } = useI18n();
@@ -204,6 +204,11 @@ function applyUpdate() {
 	if (!latest.value) return;
 	const override = (config.value.market.override ??= {});
 	override[props.item.name] = latest.value;
+}
+
+/** 请求打开忽略更新对话框(事件转发经具名函数,规避内联 emit 的类型摩擦)。 */
+function ignoreUpdate() {
+	emit("ignore", props.item.name);
 }
 
 function cancelChange() {

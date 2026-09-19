@@ -67,7 +67,9 @@ class Installer extends Service {
 	/** 各包最近一次拉取失败的归类（404 与否）；依赖页的 error 徽标消费 */
 	public pkgErrors: Dict<{ notFound: boolean }> = {};
 	private manifest: LocalPackage;
-	declare private depTask: Promise<Dict<Dependency>>;
+	declare private depTask:
+		| Promise<Dict<Dependency>>
+		| undefined;
 	private flushData: () => void;
 
 	override config: Installer.Config;

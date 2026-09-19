@@ -6,7 +6,7 @@
   <k-layout main="page-deps" menu="dependencies">
     <!-- 顶部工具栏:过滤下拉(带分类计数)/ 预发布屏蔽 / 搜索框 / 摘要徽标 -->
     <div class="deps-toolbar">
-      <el-select v-model="filter" size="small" class="deps-filter">
+      <el-select v-model="filter" class="deps-filter">
         <el-option
           v-for="option in filterOptions"
           :key="option.value"
@@ -56,7 +56,7 @@
           >
             <header role="button" @click.prevent="toggleGroup(group.key)">
               <h2>
-                <market-icon :name="groupIcon[group.key]"></market-icon>
+                <market-icon :name="groupIcon[group.key] ?? 'installed'"></market-icon>
                 <span>{{ t(`dependencies.groups.${group.key}`) }}</span>
               </h2>
               <div class="dep-group-side">
@@ -73,7 +73,7 @@
                 :key="item.name"
                 v-memo="[item.name, item.kind]"
                 :item="item"
-                @ignore="ignoreTarget = $event"
+                @ignore="onIgnore"
               ></package-view>
             </div>
           </section>
@@ -185,12 +185,15 @@ function effectiveLatestOf(
 const items = computed<DependencyItem[]>(() => {
 	const deps = store.dependencies ?? {};
 	const override = config.value.market.override ?? {};
-	const names = [
-		...new Set([
-			...Object.keys(deps),
-			...Object.keys(override),
-		]),
-	].sort();
+	// 快照条目与 override 暂存条目取并集(待装新依赖只在 override 里);
+	// 不用 Set 展开写法,规避 vue-tsc 影子环境的 downlevelIteration 键
+	const names = Object.keys(deps)
+		.concat(
+			Object.keys(override).filter(
+				(name) => !(name in deps),
+			),
+		)
+		.sort();
 	return names.map((name) => {
 		const dep = deps[name];
 		const change = decodeOverrideEntry(override[name]);
@@ -243,6 +246,11 @@ const groupIcon: Record<string, string> = {
 
 function toggleGroup(key: string) {
 	collapsed[key] = !collapsed[key];
+}
+
+/** 卡片请求打开忽略对话框(页面级单例)。 */
+function onIgnore(name: string) {
+	ignoreTarget.value = name;
 }
 
 function togglePrerelease() {

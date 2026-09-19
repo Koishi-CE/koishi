@@ -51,7 +51,8 @@ const SKIP_DIRS = new Set([
 /**
  * 豁免「7 语种齐全」检查的词典目录（相对仓库根，正斜杠分隔）：
  * - sandbox / commands / rate-limit：上游即仅 zh-CN，维持对齐；
- * - sqlite：CE 自增强词典，中英双语。
+ * - sqlite：CE 自增强词典，中英双语；
+ * - market/client：CE 自研依赖管理页词典，中英双语。
  * 豁免只针对语种数量，键对齐与假翻译检查仍然生效。
  */
 const EXEMPT_DIRS = new Set([
@@ -59,6 +60,7 @@ const EXEMPT_DIRS = new Set([
 	"plugins/webui/commands/locales",
 	"plugins/common/rate-limit/locales",
 	"plugins/infra/sqlite/locales",
+	"plugins/webui/market/client/locales",
 ]);
 
 /** 递归收集仓库内全部名为 locales 的目录（跳过 node_modules / 产物目录）。 */
