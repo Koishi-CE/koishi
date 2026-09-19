@@ -73,6 +73,12 @@ bun create koishi-ce
 
 ---
 
+## 项目状态
+
+[![Repobeats analytics image](https://repobeats.axiom.co/api/embed/ee61d9e9a3df7762af021f96fec6d3990f6a961f.svg "Repobeats analytics image")](https://github.com/Koishi-CE/koishi/pulse)
+
+---
+
 ## English
 
 Koishi-CE is a **Bun-first community redistribution** of the [Koishi](https://koishi.chat?utm_source=gemini) chatbot framework. It reorganizes [koishijs/koishi](https://github.com/koishijs/koishi?utm_source=gemini) (MIT) and [koishijs/webui](https://github.com/koishijs/webui?utm_source=gemini) (partly AGPL-3.0) into an integrated monorepo published under `@koishi-ce`.
