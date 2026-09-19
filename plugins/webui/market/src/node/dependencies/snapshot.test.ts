@@ -92,6 +92,26 @@ describe("resolveLocalDependency", () => {
 		}
 	});
 
+	it("npm: 钉名别名标 alias、不判 invalid 且不参与拉取", () => {
+		const teardown = setupHost({ koishi: "4.18.11" });
+		try {
+			const dep: Dependency = {
+				request: "npm:@koishi-ce/koishi-shim@^4.18.11",
+				fetching: true,
+			};
+			resolveLocalDependency("koishi", dep, {
+				previous: undefined,
+			});
+			expect(dep.alias).toBe(true);
+			expect(dep.resolved).toBe("4.18.11");
+			expect(dep.invalid).toBeUndefined();
+			// 钉名包无更新可言:不进入 registry 元数据拉取
+			expect(dep.fetching).toBeUndefined();
+		} finally {
+			teardown();
+		}
+	});
+
 	it("非精确 semver 的请求标记 invalid 且不参与拉取", () => {
 		const teardown = setupHost();
 		try {

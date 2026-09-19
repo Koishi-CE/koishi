@@ -12,6 +12,7 @@ dependencies:
     all: 全部
     pending: 待应用
     local: 工作区
+    alias: 钉名别名
     invalid: 非法声明
     error: 拉取失败
     updatable: 可更新
@@ -19,6 +20,7 @@ dependencies:
   groups:
     pending: 待应用变更
     local: 工作区依赖
+    alias: 钉名别名
     invalid: 非法声明
     error: 拉取失败
     updatable: 可更新
@@ -28,6 +30,7 @@ dependencies:
     latest: 最新
     range: 范围
     ignoredBadge: 已忽略
+    aliasHint: 钉名至 {target},shim 占名机制,不参与更新检查
     fetching: 正在获取版本信息……
     errorNotFound: registry 中不存在此包
     errorNetwork: 版本信息拉取失败
@@ -52,3 +55,18 @@ dependencies:
     confirm: 确定
     cancel: 取消
   empty: 没有匹配的依赖
+
+extensions:
+  uninstall:
+    button: 卸载插件
+    cancel: 取消卸载
+    cancelled: 已撤销卸载暂存
+    dialogTitle: 卸载插件
+    dialogBody: "即将卸载插件 {name}，并从 package.json 移除其依赖声明。是否同时删除该插件的配置？"
+    dialogCancel: 取消
+    only: 仅卸载
+    withConfig: 卸载并移除配置
+    progress: 正在卸载插件……
+    successToast: 插件已卸载！
+    failedToast: 卸载失败！
+    timeoutToast: 卸载超时！

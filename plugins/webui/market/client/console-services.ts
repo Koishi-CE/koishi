@@ -27,6 +27,7 @@ declare module "@koishi-ce/plugin-console" {
 		request: string;
 		resolved?: string | undefined;
 		workspace?: boolean | undefined;
+		alias?: boolean | undefined;
 		invalid?: boolean | undefined;
 		latest?: string | undefined;
 		error?: DependencyError | undefined;

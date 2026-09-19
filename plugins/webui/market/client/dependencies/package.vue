@@ -41,7 +41,7 @@
         automatic-dropdown
         @visible-change="onSelectVisible"
       >
-        <el-option v-if="dep" value="" :label="t('dependencies.card.remove')""></el-option>
+        <el-option v-if="dep" value="" :label="t('dependencies.card.remove')"></el-option>
         <el-option v-for="version in versionList" :key="version" :value="version" :label="version">
           {{ version }}
           <template v-if="version === dep?.resolved">({{ t("dependencies.card.currentMark") }})</template>
@@ -86,6 +86,7 @@ import { useI18n } from "vue-i18n";
 import type { DependencyItem } from "./dependency-groups.ts";
 import {
 	decodeOverrideEntry,
+	getAliasTarget,
 	getShortName,
 } from "./dependency-helpers.ts";
 import { resolveLatest } from "./ignore-policy.ts";
@@ -141,14 +142,20 @@ const statusText = computed(() => {
 			? t("dependencies.card.errorNotFound")
 			: t("dependencies.card.errorNetwork");
 	}
+	if (props.item.kind === "alias" && dep.value?.request) {
+		return t("dependencies.card.aliasHint", {
+			target: getAliasTarget(dep.value.request) ?? "—",
+		});
+	}
 	return undefined;
 });
 
-/** local / invalid / 拉取中的卡片为纯信息卡,不渲染动作区。 */
+/** local / alias / invalid / 拉取中的卡片为纯信息卡,不渲染动作区。 */
 const actionable = computed(() => {
 	const kind = props.item.kind;
 	return (
 		kind !== "local" &&
+		kind !== "alias" &&
 		kind !== "invalid" &&
 		!props.item.fetching
 	);

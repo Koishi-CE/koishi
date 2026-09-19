@@ -93,8 +93,9 @@ describe("summarize 计数与分组同源", () => {
 		expect(summary.local).toBe(0);
 	});
 
-	it("分组顺序常量覆盖全部六态且无重复", () => {
+	it("分组顺序常量覆盖全部分类且无重复", () => {
 		expect([...GROUP_ORDER].sort()).toEqual([
+			"alias",
 			"error",
 			"installed",
 			"invalid",

@@ -37,6 +37,7 @@ export interface DependencyGroup {
 export const GROUP_ORDER: readonly ItemKind[] = [
 	"pending",
 	"local",
+	"alias",
 	"invalid",
 	"error",
 	"updatable",
@@ -49,6 +50,7 @@ export interface GroupSummary {
 	fetching: number;
 	pending: number;
 	local: number;
+	alias: number;
 	invalid: number;
 	error: number;
 	updatable: number;
@@ -109,6 +111,7 @@ export function summarize(
 		fetching: 0,
 		pending: 0,
 		local: 0,
+		alias: 0,
 		invalid: 0,
 		error: 0,
 		updatable: 0,

@@ -12,6 +12,7 @@ dependencies:
     all: All
     pending: Pending
     local: Workspace
+    alias: Pinned alias
     invalid: Invalid
     error: Failed
     updatable: Updatable
@@ -19,6 +20,7 @@ dependencies:
   groups:
     pending: Pending changes
     local: Workspace dependencies
+    alias: Pinned aliases
     invalid: Invalid declarations
     error: Failed to fetch
     updatable: Updatable
@@ -28,6 +30,7 @@ dependencies:
     latest: Latest
     range: Range
     ignoredBadge: Ignored
+    aliasHint: Pinned to {target} via the shim alias mechanism; excluded from update checks
     fetching: Fetching version info...
     errorNotFound: This package does not exist in the registry
     errorNetwork: Failed to fetch version info
@@ -52,3 +55,18 @@ dependencies:
     confirm: Confirm
     cancel: Cancel
   empty: No matching dependencies
+
+extensions:
+  uninstall:
+    button: Uninstall plugin
+    cancel: Cancel uninstall
+    cancelled: Pending uninstall reverted
+    dialogTitle: Uninstall plugin
+    dialogBody: "The plugin {name} will be uninstalled and its dependency declaration removed from package.json. Also remove its configuration?"
+    dialogCancel: Cancel
+    only: Uninstall only
+    withConfig: Uninstall and remove config
+    progress: Uninstalling plugin...
+    successToast: Plugin uninstalled!
+    failedToast: Uninstall failed!
+    timeoutToast: Uninstall timed out!

@@ -10,6 +10,7 @@ import {
 	classify,
 	decodeOverrideEntry,
 	encodeOverrideEntry,
+	getAliasTarget,
 	getShortName,
 	type PendingChange,
 } from "./dependency-helpers.ts";
@@ -58,6 +59,28 @@ describe("classify 分类状态机(优先级链)", () => {
 				false,
 			),
 		).toBe("error");
+	});
+
+	it("钉名别名归 alias,且压过 invalid 与 error", () => {
+		expect(
+			classify({ alias: true }, undefined, false, false),
+		).toBe("alias");
+		expect(
+			classify(
+				{ alias: true, invalid: true },
+				undefined,
+				false,
+				false,
+			),
+		).toBe("alias");
+		expect(
+			classify(
+				{ alias: true, error: "not-found" },
+				undefined,
+				false,
+				false,
+			),
+		).toBe("alias");
 	});
 
 	it("忽略压制与无可更新都归 installed,可更新归 updatable", () => {
@@ -120,5 +143,21 @@ describe("getShortName 短名化", () => {
 	it("非插件包名原样保留", () => {
 		expect(getShortName("cordis")).toBe("cordis");
 		expect(getShortName("@scope/pkg")).toBe("@scope/pkg");
+	});
+});
+
+describe("getAliasTarget 别名目标解析", () => {
+	it("剥出 scoped 与非 scoped 声明的真实包名", () => {
+		expect(
+			getAliasTarget("npm:@koishi-ce/koishi-shim@^4.18.11"),
+		).toBe("@koishi-ce/koishi-shim");
+		expect(getAliasTarget("npm:foo@^1.0.0")).toBe("foo");
+	});
+
+	it("无版本串与非别名请求的边界", () => {
+		expect(
+			getAliasTarget("npm:@koishi-ce/console-shim"),
+		).toBe("@koishi-ce/console-shim");
+		expect(getAliasTarget("^1.0.0")).toBeUndefined();
 	});
 });

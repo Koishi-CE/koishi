@@ -11,6 +11,7 @@
 export type ItemKind =
 	| "pending"
 	| "local"
+	| "alias"
 	| "invalid"
 	| "error"
 	| "updatable"
@@ -28,6 +29,7 @@ export type PendingChange =
 /** 依赖条目的最小消费面(classify 只看这些字段)。 */
 export interface DependencyLike {
 	workspace?: boolean | undefined;
+	alias?: boolean | undefined;
 	invalid?: boolean | undefined;
 	error?: string | undefined;
 	fetching?: boolean | undefined;
@@ -35,8 +37,8 @@ export interface DependencyLike {
 
 /**
  * 单包分类状态机(优先级从高到低):待应用变更 > 工作区/本地 >
- * 非法声明 > registry 拉取失败 > 可更新 > 已安装。顺序即语义,
- * 拆分或查表都会掩盖优先级。
+ * 钉名别名 > 非法声明 > registry 拉取失败 > 可更新 > 已安装。
+ * 顺序即语义,拆分或查表都会掩盖优先级。
  */
 export function classify(
 	dep: DependencyLike | undefined,
@@ -48,6 +50,8 @@ export function classify(
 	// override 里有但快照里没有:待安装的新依赖,同样归待应用
 	if (!dep) return "pending";
 	if (dep.workspace) return "local";
+	// npm: 协议钉名别名(shim 占名):设计内形态,固定钉死无更新可言
+	if (dep.alias) return "alias";
 	if (dep.invalid) return "invalid";
 	if (dep.error) return "error";
 	// 忽略规则压制的包归已安装组(卡片附「已忽略」徽标);
@@ -79,4 +83,15 @@ export function getShortName(name: string): string {
 		/(koishi-|^@(?:koishijs|koishi-ce)\/)plugin-/,
 		"",
 	);
+}
+
+/** 从 npm: 别名声明剥出真实包名(`npm:@koishi-ce/x@^1.0.0` -> `@koishi-ce/x`)。 */
+export function getAliasTarget(
+	request: string,
+): string | undefined {
+	if (!request.startsWith("npm:")) return undefined;
+	const rest = request.slice(4);
+	// scoped 包名自带前导 @,取最后一个 @ 之前段即包名;无版本串原样返回
+	const at = rest.lastIndexOf("@");
+	return at <= 0 ? rest : rest.slice(0, at);
 }

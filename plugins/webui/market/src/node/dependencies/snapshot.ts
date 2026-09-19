@@ -65,7 +65,12 @@ export function resolveLocalDependency(
 		// 尚未安装（或残留声明）：保持待拉取形态
 	}
 
-	if (!dep.workspace && !valid(dep.request)) {
+	if (dep.request.startsWith("npm:")) {
+		// npm: 协议钉名别名（下游 shim 占名）：声明键与真实包名不同是
+		// 设计内行为，语义上等同 workspace——固定钉死、无更新可言
+		dep.alias = true;
+		delete dep.fetching;
+	} else if (!dep.workspace && !valid(dep.request)) {
 		// 非精确 semver 的请求（file: 路径、git/url 串等）：不参与
 		// latest 刷新，前端据此降级展示
 		dep.invalid = true;

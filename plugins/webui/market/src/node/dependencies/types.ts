@@ -28,6 +28,12 @@ export interface Dependency {
 	resolved?: string | undefined;
 	/** whether it is a workspace package */
 	workspace?: boolean | undefined;
+	/**
+	 * npm: 协议钉名别名（下游 shim 占名机制，如
+	 * `npm:@koishi-ce/koishi-shim@^4.18.11`）：设计内形态而非异常，
+	 * 不判 invalid、不参与 registry 元数据拉取与更新判定
+	 */
+	alias?: boolean | undefined;
 	/** valid (unsupported) syntax */
 	invalid?: boolean | undefined;
 	/** latest version */
