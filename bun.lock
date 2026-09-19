@@ -768,7 +768,7 @@
     },
     "plugins/webui/welcome": {
       "name": "@koishi-ce/plugin-welcome",
-      "version": "1.0.3",
+      "version": "1.0.4",
       "devDependencies": {
         "@koishi-ce/client": "workspace:*",
         "@koishi-ce/koishi": "workspace:*",
