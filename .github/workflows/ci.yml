@@ -18,9 +18,9 @@
 #          package.json 的 fallow 脚本内 pin 精确版，避免门禁口径随上游
 #          发布漂移；本地手动入口 bun run fallow）。豁免与规则见根目录
 #          .fallowrc.jsonc：
-#          循环依赖仅告警（core 的 command ↔ context 已知架构债），
-#          反射式 API（unused-class-members / component props）与 duplicate-exports
-#          与 knip 时代口径一致地关闭。
+#          循环依赖与 re-export 环为 error（全仓循环已于 2026-09 断环收官
+#          清零，升为 error 防回归），反射式 API（unused-class-members /
+#          component props）与 duplicate-exports 与 knip 时代口径一致地关闭。
 #
 # Bun 版本不在此处硬编码：oven-sh/setup-bun 自动读根 package.json 的
 # packageManager（bun@1.4.2），升级只改根字段即可。

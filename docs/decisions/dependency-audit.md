@@ -4,7 +4,7 @@
 >
 > 审计日期：2026-09-19 · 「最新」列均于当日经 npm registry 实时验证（npmjs 主查、npmmirror 兜底）
 > 运行环境：Bun 1.4.2（`packageManager` 钉定）· Node v24（辅：TS7 编译器与 vue-tsc 影子闸门宿主）· 包管理：Bun workspaces（`bun.lock`）
-> 范围：仓库内全部 **51 个 package.json**（**50 个 workspace 包** + 根）· **58 个外部依赖名**（不含 `workspace:*` 与 `@koishi-ce/*` 内部 peer 互引，后者单列于 §2.G）
+> 范围：仓库内全部 **53 个 package.json**（**52 个 workspace 包** + 根）· **58 个外部依赖名**（不含 `workspace:*` 与 `@koishi-ce/*` 内部 peer 互引，后者单列于 §2.G）
 
 状态图例：[新] 当前最新 · [缓] 落后(minor/patch) · [旧] 落后(major) · [预] 最新版本为预发布 · [废] 已弃用或未使用
 
@@ -18,7 +18,7 @@
 Koishi-CE/
 ├── packages/node/      运行时核心 8 包:koishi(CLI入口) core loader console utils i18n-utils assets registry
 ├── packages/web/       前端基础 2 包:client(构建API+宿主前端) components
-├── packages/shim/      下游 npm alias 占名 2 包:koishi-shim(4.18.11) console-shim(5.30.11)——版本冻结勿动
+├── packages/shim/      下游 npm alias 占名 4 包:koishi-shim(4.18.11) console-shim / client-shim(5.30.11) components-shim(1.5.22)——版本冻结勿动
 ├── plugins/common/     通用插件 9:assets-local bind broadcast callme cron echo help inspect rate-limit
 ├── plugins/infra/      基础设施 8:http proxy server(vendored 预编译) hmr memory mock server-temp sqlite
 ├── plugins/webui/      控制台插件 19:actions admin analytics auth commands config console dataview
@@ -31,7 +31,7 @@ Koishi-CE/
 
 关键结构事实（相对初版的变化不再逐一标注，初版原文见 git 历史）：
 
-- **CI 已建立**：`.github/workflows/ci.yml` 三 job——gate（build → 宿主前端 → check → test + lcov 上传 Codecov）、client（全部 webui 插件前端 bundle）、fallow（死代码与依赖审计）；另有 triage.yml 自动分诊与 labeler.yml 路径打标。
+- **CI 已建立**：`.github/workflows/ci.yml` 三 job——gate（build → 宿主前端 → check → test + lcov 上传 Codecov）、client（全部 webui 插件前端 bundle）、fallow（死代码与依赖审计）；另有 triage.yml 自动分诊（issue 指派 / PR 路径打标）。
 - **门禁八段齐备**：`bun run check` = biome lint + eslint(.vue) + TS7 双 project 类型检查 + locales / docs-links / vue-types / assertions / packages 五个自研闸门（脚本居 `tooling/checks/`）。
 - **peerDependencies 已全面 CE 化**：内部互引一律 `@koishi-ce/* ^1.0.0`（初版保留的上游名 `koishi ^4.18.11` peer 已清零）；唯一上游名残留是 console 的类型引用 `@koishijs/plugin-server-proxy`（dev，测试用）。
 - **vendored 三包不动**：`plugins/infra/{http,proxy,server}` 为预编译产物包（无 `src/`，根 tsdown 显式 exclude），内联再导出 `@cordisjs/plugin-*`。
@@ -61,7 +61,7 @@ Koishi-CE/
 | reggol | ^2.1.0 (dev) | logger | 生态日志库（logger 前端渲染） | 2.1.0 | [新]（初版 1.7.1 → 已升 2.x） |
 | inaba | ^1.1.1 | utils | 随机数据生成 | 1.1.1 | [新] |
 | fastest-levenshtein | ^1.0.16 | core | 编辑距离（命令纠错建议） | 1.0.16 | [新] |
-| @koishijs/plugin-server-proxy | ^1.2.0 (dev) | console | 代理支持（仅类型引用） | 1.2.0 | [新]（全仓唯一上游名导入例外） |
+| @koishijs/plugin-server-proxy | ^1.2.0 (dev) | webui console 宿主 | 代理支持（仅类型引用） | 1.2.0 | [新]（全仓唯一上游名导入例外） |
 
 **冻结纪律**：cordis / minato / @cordisjs 生态整体钉在 3.x 内洽线（Phase 5 已实证被 `@satorijs/core` 阻塞并整体回退）。本表 [旧] 状态属刻意落后、**不是升级欠账**，勿在线内单独升版；重启条件见 [upgrade-plan.md](upgrade-plan.md) Phase 5 节。
 
@@ -165,7 +165,7 @@ peer 声明用于下游 `bun add` 解析与防 Bun 自动装官方包，指向 C
 ## 4. 声明与实际使用一致性
 
 1. **死依赖存疑**：`typescript ^5.0.0` 声明于 `packages/web/client`（dependencies），全仓源码零导入；vue-tsc 影子闸门用的 TS 5.9.3 是自举安装到 `node_modules/.cache/vue-tsc-shadow` 的钉版载体，与此声明无关。删除前须重建宿主前端实证（前端链假绿判例见 development.md §7）。
-2. **fallow 当前红点**（dead-code 退出码 1，待收敛或补消费）：`plugins/webui/market/src/node/dependencies/service.ts:118` 的 `default` 导出、`plugins/webui/market/src/node/installer/index.ts:58` 的 `Dependency` re-export 类型均无消费方。
+2. **fallow 红点已清零**：本快照初稿点名的两处未用导出（market dependencies/service.ts 的 `default` 导出、installer 的 `Dependency` re-export 类型）已随 9925a74 清除，dead-code 退出码 0。
 3. **range 漂移**（无害、待统一）：`semver` 两形态（registry ^7.8.5 / market ^7.6.3）；`vue` 三形态（client ^3.5.42 / components peer ^3 / 五插件 dev ^3.5.12）。
 4. **无幽灵依赖**：初版的 unlisted 问题（apps/online 靠 hoisting 存活）已随该目录删除消失，fallow unlisted 检查通过。
 5. **声明但无静态导入的正当豁免**（`.fallowrc.jsonc` ignoreDependencies，非死依赖）：vendored 三包（插件加载链按包名运行时解析）、shim 四包（下游 alias 占名）、webui 插件 dev 依赖（测试/构建期按名加载）、前端 vue 系（由宿主与工作区根提供）、sass-embedded 与 @typescript/native（构建期编程式加载/路径调用）。
@@ -179,7 +179,7 @@ peer 声明用于下游 `bun add` 解析与防 Bun 自动装官方包，指向 C
 - **严格模式**：`tsconfig.base.json` 严格全家桶（strict + noUncheckedIndexedAccess + exactOptionalPropertyTypes 等）+ nodenext 模块解析（相对导入一律带 `.ts` 扩展名）；显式 `any` 全仓 0；`as unknown as` 断言基线闸门只拦新增（18 处存留台账）。
 - **构建**：根 tsdown 单遍 → 各包 `lib/`（`index.mjs` + `index.d.ts`，ESM-only，exports 以 `default` 条件兜底）；`apps/koishi-create` 独立 tsdown；vendored 三包 exclude。
 - **Lint**：biome（tab 缩进、双引号、行尾分号）是格式唯一权威；eslint 仅补 `.vue` 模板语义。
-- **测试**：`bun test --isolate`（每文件独立 global，隔离跨文件 mock.module），125 个测试文件 / 982 用例（2026-09-19 实测，43.76s），覆盖率 src 源码口径约 97% 行；CI 产 lcov 上传 Codecov。
+- **测试**：`bun test --isolate`（每文件独立 global，隔离跨文件 mock.module），126 个测试文件 / 1003 用例（2026-09-20 实测，50.3s），覆盖率 src 源码口径约 97% 行；CI 产 lcov 上传 Codecov。
 - **版本管理**：changesets（`.changeset/`）+ `tooling/release` 链（preflight → version → build → test → publish → push，只推 main；单整体 tag 跟 core 版本手动补）。
 - **上游巡检**：`bun run upstream:audit`（`tooling/upstream-audit/`）+ [../process/upstream.md](../process/upstream.md) 映射表手动 diff 移植，port 进来的相对导入须补 `.ts` 扩展名。
 

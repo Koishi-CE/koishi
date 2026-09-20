@@ -11,7 +11,8 @@
  *   worker（TS / JSON / CSS / HTML）默认禁用（见下方注释掉的导入）
  * - 统一关闭 css / json / typescript / html 语言的重功能（补全、悬停、
  *   诊断等 web worker 语言服务），只保留基础着色，控制体积与开销；
- *   monaco 相关 chunk 的构建拆分见 build/client.ts 的 manualChunks
+ *   monaco 相关 chunk 的拆分交由 rolldown 自动分包（原 build/client.ts
+ *   的 manualChunks 覆盖已删，自动分包已达成同等目标且粒度更优）
  */
 
 import * as monaco from "monaco-editor";
