@@ -18,7 +18,7 @@ import { join } from "node:path";
  *
  * cwd / loadHostManifest / runCommand 均 mock（同 release-version.test.ts
  * 的手法），重点覆盖白名单口径：只更新 @koishi-ce/*，alias 冻结线
- * （koishi / @koishijs/*）、市场插件（koishi-plugin-*）与 bun-types
+ * （koishi / @koishijs/*）、市场插件（koishi-plugin-*）与 @types/bun
  * 一律不进命令行。
  */
 
@@ -106,7 +106,7 @@ function templateLikeManifest(): Record<string, unknown> {
 		devDependencies: {
 			"@koishi-ce/client": "^1.0.0",
 			"@koishi-ce/scripts": "^1.0.0",
-			"bun-types": "^1.4.0",
+			"@types/bun": "^1.4.0",
 		},
 	};
 }
@@ -166,7 +166,7 @@ describe("runUpdate", () => {
 		const cmdline = calls[0]?.args.join(" ") ?? "";
 		expect(cmdline).not.toContain("koishi-plugin-");
 		expect(cmdline).not.toContain("@koishijs/");
-		expect(cmdline).not.toContain(" bun-types");
+		expect(cmdline).not.toContain(" @types/bun");
 		expect(logs.join("\n")).toContain(
 			"alias 冻结线与市场插件不受影响",
 		);

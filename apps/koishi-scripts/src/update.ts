@@ -13,7 +13,7 @@
  * - 六行 npm alias 冻结线（koishi / @koishijs/* → shim，版本跟随上游
  *   线，升线属人工决策，不自动）；
  * - 市场安装的 koishi-plugin-*（版本由插件市场操作）；
- * - bun-types（跟随本机 Bun 版本）。
+ * - @types/bun（跟随本机 Bun 版本）。
  */
 import type { PackageJson } from "./index.ts";
 import { cwd, loadHostManifest } from "./index.ts";

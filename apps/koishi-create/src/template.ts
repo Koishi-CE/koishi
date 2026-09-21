@@ -277,7 +277,7 @@ export function baseManifest(): Manifest {
 			"@koishi-ce/plugin-hmr": "^1.0.0",
 			"@koishi-ce/plugin-mock": "^1.0.0",
 			"@koishi-ce/scripts": "^1.0.0",
-			"bun-types": "^1.4.0",
+			"@types/bun": "^1.4.0",
 		},
 	};
 }

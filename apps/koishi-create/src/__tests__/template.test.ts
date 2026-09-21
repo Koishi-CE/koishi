@@ -29,7 +29,7 @@ test("内置模板依赖纯度：不含任何 @koishijs / koishi-plugin 官方�
 	}
 	for (const key of Object.keys(devDependencies ?? {})) {
 		expect(
-			key === "bun-types" || key.startsWith("@koishi-ce/"),
+			key === "@types/bun" || key.startsWith("@koishi-ce/"),
 		).toBe(true);
 	}
 });

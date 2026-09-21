@@ -51,7 +51,7 @@ const { default: runSetup } = await import(
 /** 收集 console.log 输出，避免脚手架横幅刷屏并可供断言 */
 const logs: string[] = [];
 const originalLog = console.log;
-// bun-types 将 isTTY 定为非可选，经可选视图读写与删除
+// @types/bun 将 isTTY 定为非可选，经可选视图读写与删除
 const stdin = process.stdin as { isTTY?: boolean };
 const originalIsTTY = stdin.isTTY;
 

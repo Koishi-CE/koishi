@@ -12,7 +12,7 @@
 		"moduleResolution": "NodeNext",
 		"moduleDetection": "force",
 		"lib": ["ES2025"],
-		"types": ["node", "bun-types"],
+		"types": ["node", "bun"],
 		"paths": {
 			// nodenext 的 paths 目标必须是具体文件（不做目录 index 探测），否则回退
 			// node_modules 解析到 lib 产物 d.ts，与 src 源码形成双模块视图，增广合并即冲突
@@ -172,7 +172,7 @@
 		"isolatedModules": true,
 		"esModuleInterop": true,
 		// 刻意保持 true（2026-09-18 实测 false）：node 侧爆 8 条、client 侧爆 63 条
-		// 第三方 d.ts 错误（@satorijs/core、bun-types、@vueuse/core 等），本仓代码
+		// 第三方 d.ts 错误（@satorijs/core、@types/bun、@vueuse/core 等），本仓代码
 		// 零条——关它等于让门禁被上游依赖的类型质量绑架；自家产物 d.ts 的校验
 		// 由 tsdown 构建链承担。
 		"skipLibCheck": true,

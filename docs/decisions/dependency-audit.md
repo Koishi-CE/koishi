@@ -123,7 +123,7 @@ Koishi-CE/
 
 | 包 | 声明 | 使用位置 | 业务范围 | 最新 | 状态 |
 |---|---|---|---|---|---|
-| bun-types | ^1.4.0 | root(dev) | Bun 运行时类型 | 1.4.2 | [新] |
+| @types/bun | ^1.4.0 | root(dev) | Bun 运行时类型（薄封装，转发 bun-types） | 1.4.2 | [新] |
 | @types/node | ^26.4.0 | root(dev) | Node 类型（TS 编译器与工具宿主） | 26.6.2 | [缓] minor（装 26.5.1） |
 
 ### F. 类型包杂项
@@ -176,6 +176,7 @@ peer 声明用于下游 `bun add` 解析与防 Bun 自动装官方包，指向 C
    - `valid` 与 `Bun.semver.satisfies(x, "*")` **不等价**：`"=1.2.3"` 前者 null / 后者 true，`"1.2.3-beta.1"` 前者有效 / 后者 false——`installer` 与 `snapshot` 的 `!valid(request) → invalid` 判定会静默走偏（假绿）。
    - `satisfies` 的第三参 options 被 Bun 忽略：`installer/index.ts` 的 `{ includePrerelease: true }` 实测无效（node-semver true / Bun false）。
    `compare` / `gt` 可由 `order` 平替，其余函数（`intersects` / `valid` / `prerelease` / `parse`）全无平替；依赖为单包零传递依赖，保留成本可忽略。
+8. **`bun-types` → `@types/bun` 已迁移**（2026-09-21，root / 脚手架模板 / koishi-scripts 白名单一并改）：先纠正常见误传——`bun-types` **并未被废弃**（npm 上无 `deprecated` 标记），`@types/bun@1.4.2` 的 `index.d.ts` 全文只有一行 `/// <reference types="bun-types" />`，且其唯一依赖就是 `bun-types@1.4.2`；断言「两者并存会引发全局命名空间污染」不成立，因为**类型内容按构造完全相同**。迁移的真实理由是**跟随 Bun 官方约定**：Bun docs 写 `bun add -d @types/bun` + `"types": ["bun"]`，本机 `bun init` 实测生成的也是 `@types/bun`（且 `node_modules` 里 `bun-types` 依旧在场，只是降为传递依赖）。迁移后类型检查与全部门禁实测无差异；副作用是 tsconfig 的 `types` 从 `"bun-types"` 改为 `"bun"`（`@types/*` 的隐式前缀），**已确认全仓各 tsconfig 均显式声明 `types`，`node_modules/@types/` 下的自动包含不会波及 client 侧**（`tsconfig.client.json` 为 `types: []`）。
 
 ---
 
