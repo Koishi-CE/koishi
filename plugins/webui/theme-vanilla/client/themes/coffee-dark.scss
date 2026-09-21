@@ -4,32 +4,33 @@
 
 @use './mixins.scss' as *;
 
-:root, .theme-root {
-  &[theme=coffee-dark] {
-    --bg1: #231F1E;
-    --bg2: #262120;
-    --bg3: #292423;
-    --bg4: #342A27;
+:root,
+.theme-root {
+    &[theme=coffee-dark] {
+        --bg1: #231F1E;
+        --bg2: #262120;
+        --bg3: #292423;
+        --bg4: #342A27;
 
-    --k-card-bg: var(--bg3);
-    --k-hover-bg: var(--bg4);
+        --k-card-bg: var(--bg3);
+        --k-hover-bg: var(--bg4);
 
-    --k-text-active: var(--k-color-primary);
+        --k-text-active: var(--k-color-primary);
 
-    --k-color-border: #52423D;
-    --k-color-border-light: #47342F;
-    --k-color-divider: #181615;
+        --k-color-border: #52423D;
+        --k-color-border-light: #47342F;
+        --k-color-divider: #181615;
 
-    @include apply-color(primary, #F09176);
-    // @include apply-color(secondary, #6EDDD6);
+        @include apply-color(primary, #F09176);
+        // @include apply-color(secondary, #6EDDD6);
 
-    // explorer 编辑器（CodeMirror）的选区与搜索高亮：本主题底色偏暖，
-    // 用主色叠低透明度比默认值更贴合（变量清单见 explorer/client/editor.scss）
-    .cm-editor {
-      --cm-fg: #ceb5b0;
-      --cm-caret: #ceb5b0;
-      --cm-selection-bg: #F0917730;
-      --cm-match-bg: #F0917780;
+        // explorer 编辑器（CodeMirror）的选区与搜索高亮：本主题底色偏暖，
+        // 用主色叠低透明度比默认值更贴合（变量清单见 explorer/client/editor.scss）
+        .cm-editor {
+            --cm-fg: #ceb5b0;
+            --cm-caret: #ceb5b0;
+            --cm-selection-bg: #F0917730;
+            --cm-match-bg: #F0917780;
+        }
     }
-  }
 }
