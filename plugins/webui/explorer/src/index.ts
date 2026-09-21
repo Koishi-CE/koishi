@@ -24,16 +24,9 @@ import {
 	DataService,
 } from "@koishi-ce/console";
 import { type Context, Schema } from "@koishi-ce/koishi";
-import type { Tester } from "anymatch";
-import * as anymatchModule from "anymatch";
-
-// anymatch 的 d.ts 为 ESM 形态而实现为 CJS，nodenext 互操作视图会给 default 多包一层；
-// 运行时 namespace.default 即真实的 matchers => Tester 函数（module.exports），断言穿透取用
-const anymatch =
-	anymatchModule.default as unknown as typeof anymatchModule.default.default;
-
 import { detect } from "chardet";
 import { fileTypeFromBuffer } from "file-type";
+import picomatch, { type Matcher } from "picomatch";
 import deDE from "../locales/de-DE.yml";
 import enUS from "../locales/en-US.yml";
 import frFR from "../locales/fr-FR.yml";
@@ -105,7 +98,7 @@ export interface Entry {
  *
  * 继承 DataService，get() 的结果经 console 数据通道以 "explorer" 键下发，
  * 客户端通过 store.explorer 读取。配置项见下方 namespace Explorer 的
- * Config（root 相对 ctx.baseDir 解析；ignored 为 anymatch 通配列表）。
+ * Config（root 相对 ctx.baseDir 解析；ignored 为 picomatch 通配列表）。
  */
 class Explorer extends DataService<Entry[]> {
 	// 配置 schema 的值侧由类静态承载(erasableSyntaxOnly 不允许 namespace 内运行时值),
@@ -126,8 +119,8 @@ class Explorer extends DataService<Entry[]> {
 	});
 
 	task!: Promise<Entry[]>;
-	/** 由 ignored 配置编译出的 anymatch 过滤器 */
-	globFilter: Tester;
+	/** 由 ignored 配置编译出的 picomatch 过滤器 */
+	globFilter: Matcher;
 	/** 文件树的根目录（ctx.baseDir + 配置的 root 解析出的绝对路径） */
 	root: string;
 
@@ -136,7 +129,12 @@ class Explorer extends DataService<Entry[]> {
 
 		ctx.console.addEntry(clientEntry(import.meta.url));
 
-		this.globFilter = anymatch(config.ignored ?? []);
+		// 传入的路径来自 relative()，win32 下带反斜杠——picomatch 4 只有在
+		// 显式传入 options 时才注入平台检测（index.js），不传即按 posix 处理、
+		// 反斜杠路径全部匹配失败；故 windows 显式声明，不依赖该注入行为
+		this.globFilter = picomatch(config.ignored ?? [], {
+			windows: process.platform === "win32",
+		});
 		this.root = resolve(ctx.baseDir, config.root ?? "");
 
 		// 以下六个监听器是浏览器端发出的文件操作 RPC：

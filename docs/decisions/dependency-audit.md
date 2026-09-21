@@ -4,9 +4,9 @@
 >
 > 审计日期：2026-09-19 · 「最新」列均于当日经 npm registry 实时验证（npmjs 主查、npmmirror 兜底）
 > 运行环境：Bun 1.4.2（`packageManager` 钉定）· Node v24（辅：TS7 编译器与 vue-tsc 影子闸门宿主）· 包管理：Bun workspaces（`bun.lock`）
-> 范围：仓库内全部 **53 个 package.json**（**52 个 workspace 包** + 根）· **57 个外部依赖名**（不含 `workspace:*` 与 `@koishi-ce/*` 内部 peer 互引，后者单列于 §2.G）
+> 范围：仓库内全部 **53 个 package.json**（**52 个 workspace 包** + 根）· **58 个外部依赖名**（不含 `workspace:*` 与 `@koishi-ce/*` 内部 peer 互引，后者单列于 §2.G）
 >
-> 修订：2026-09-21 —— admin 前端防抖改用既有 `@vueuse/core`（`useDebounceFn`），移除 `throttle-debounce`，外部依赖名 58 → 57；其余内容仍为 2026-09-19 快照。
+> 修订：2026-09-21 —— ① admin 前端防抖改用既有 `@vueuse/core`（`useDebounceFn`），移除 `throttle-debounce`，外部依赖名 58 → 57；② explorer 路径过滤由 `anymatch` 换为直连 `picomatch` 4（版本本仓已有，显式声明后消除 CJS/ESM interop 双重断言，见 §4.9），并随主包新增类型包 `@types/picomatch`，外部依赖名 57 → 58。其余内容仍为 2026-09-19 快照。
 
 状态图例：[新] 当前最新 · [缓] 落后(minor/patch) · [旧] 落后(major) · [预] 最新版本为预发布 · [废] 已弃用或未使用
 
@@ -115,7 +115,7 @@ Koishi-CE/
 | open | ^11.0.1 | console | 打开浏览器 | 11.0.4 | [缓] patch（8→11 已升，装 11.0.3） |
 | chardet | ^2.2.0 | explorer | 文本编码检测 | 2.2.0 | [新] |
 | file-type | ^22.0.2 | assets / assets-local / explorer | 文件类型嗅探 | 22.1.1 | [缓] patch（16→22 已升，装 22.1.0） |
-| anymatch | ^3.1.3 | explorer | 路径匹配（文件树过滤） | 3.1.3 | [新] |
+| picomatch | ^4.0.7 | explorer（此前已由 vite / tsdown 等经传递依赖引入） | glob 匹配（文件树过滤） | 4.0.7 | [新]（2026-09-21 由 anymatch 换入，见 §4.9） |
 | semver | ^7.8.5 | registry / market | 语义版本计算 | 7.8.5 | [新]（两形态已统一） |
 
 ### E. 测试设施
@@ -129,7 +129,7 @@ Koishi-CE/
 
 ### F. 类型包杂项
 
-`@types/d3-force`（insight）、`@types/semver`（registry / market）——随主包同步即可。初版点名的 `@types/uuid` / `@types/tar` 弃用问题已随死依赖清理消失。
+`@types/d3-force`（insight）、`@types/semver`（registry / market）、`@types/picomatch`（explorer，§4.9）——随主包同步即可。初版点名的 `@types/uuid` / `@types/tar` 弃用问题已随死依赖清理消失。
 
 ### G. CE 内部 peer 面（非外部依赖，单列对账）
 
@@ -177,14 +177,13 @@ peer 声明用于下游 `bun add` 解析与防 Bun 自动装官方包，指向 C
    - `valid` 与 `Bun.semver.satisfies(x, "*")` **不等价**：`"=1.2.3"` 前者 null / 后者 true，`"1.2.3-beta.1"` 前者有效 / 后者 false——`installer` 与 `snapshot` 的 `!valid(request) → invalid` 判定会静默走偏（假绿）。
    - `satisfies` 的第三参 options 被 Bun 忽略：`installer/index.ts` 的 `{ includePrerelease: true }` 实测无效（node-semver true / Bun false）。
    `compare` / `gt` 可由 `order` 平替，其余函数（`intersects` / `valid` / `prerelease` / `parse`）全无平替；依赖为单包零传递依赖，保留成本可忽略。
-8. **`bun-types` → `@types/bun` 已迁移**（2026-09-21，root / 脚手架模板 / koishi-scripts 白名单一并改）：先纠正常见误传——`bun-types` **并未被废弃**（npm 上无 `deprecated` 标记），`@types/bun@1.4.2` 的 `index.d.ts` 全文只有一行 `/// <reference types="bun-types" />`，且其唯一依赖就是 `bun-types@1.4.2`；断言「两者并存会引发全局命名空间污染」不成立，因为**类型内容按构造完全相同**。迁移的真实理由是**跟随 Bun 官方约定**：Bun docs 写 `bun add -d @types/bun` + `"types": ["bun"]`，本机 `bun init` 实测生成的也是 `@types/bun`（且 `node_modules` 里 `bun-types` 依旧在场，只是降为传递依赖）。迁移后类型检查与全部门禁实测无差异；副作用是 tsconfig 的 `types` 从 `"bun-types"` 改为 `"bun"`（`@types/*` 的隐式前缀），**已确认全仓各 tsconfig 均显式声明 `types`，`node_modules/@types/` 下的自动包含不会波及 client 侧**（`tsconfig.client.json` 为 `types: []`）。
-
+8. **`bun-types` → `@types/bun` 已迁移**（2026-09-21，root / 脚手架模板 / koishi-scripts 白名单一并改）：先纠正常见误传——`bun-types` **并未被废弃**（npm 上无 `deprecated` 标记），`@types/bun@1.4.2` 的 `index.d.ts` 全文只有一行 `/// <reference types="bun-types" />`，且其唯一依赖就是 `bun-types@1.4.2`；断言「两者并存会引发全局命名空间污染」不成立，因为**类型内容按构造完全相同**。迁移的真实理由是**跟随 Bun 官方约定**：Bun docs 写 `bun add -d @types/bun` + `"types": ["bun"]`，本机 `bun init` 实测生成的也是 `@types/bun`（且 `node_modules` 里 `bun-types` 依旧在场，只是降为传递依赖）。迁移后类型检查与全部门禁实测无差异；副作用是 tsconfig 的 `types` 从 `"bun-types"` 改为 `"bun"`（`@types/*` 的隐式前缀），**已确认全仓各 tsconfig 均显式声明 `types`，`node_modules/@types/` 下的自动包含不会波及 client 侧**（`tsconfig.client.json` 为 `types: []`）。9. **explorer 路径过滤：`anymatch` → `picomatch` 直连**（2026-09-21）：原依赖 `anymatch@3.1.3` 实现是 CJS 而 d.ts 为 ESM 形态，nodenext 类型视图对 `default` 多包一层，迫使源码保留一处 `as unknown as` 双重断言（断言基线台账内的 R2 条目）。改为直连 `picomatch@4.0.7`（该版本本仓早已由 vite / tsdown / tinyglobby 等经传递依赖引入，显式声明等于零新增物理包）后：`anymatch` / `normalize-path` / 其嵌套的 `picomatch@2.3.2` 三包一并出仓，双重断言随之清零（基线 18 → 17）——这是比对 `micromatch` 后的选择，理由见下方。行为经「多模式 × 13 输入」矩阵实测与 anymatch 逐条一致（含 win32 反斜杠路径与 `**/.*` 对 dotfile 的忽略）；唯一已知语义差异是 `!` 前缀模式——anymatch 视作「纯排除」（`["!**/foo"]` 全 false），picomatch 视作取反（除 foo 外全 true），explorer 的 `ignored` 不宣传该写法、存量亦无依赖。另记一处坑：**picomatch 4 只在显式传入 options 时才注入平台检测**（`index.js` 的 `options &&` 守卫），不传 options 即按 posix 处理、win32 反斜杠路径全部漏配，故源码显式声明 `windows: process.platform === "win32"`，不依赖该注入行为。**为何不选 `micromatch`**：其匹配内核即 picomatch v2，对 explorer 的全部能力需求（braces 展开 / `capture` / `scan` / `makeRe`）无一用得上；依赖面却是 +5 物理包（braces / fill-range / to-regex-range + 自带 picomatch v2），且惯用入口 `isMatch` / `any` 每次调用都重新编译模式——落到 `traverse()` 的逐目录项热路径上会退化为 N 次正则编译，要保住「编译一次」只能用类型仅接受单个 `string` 的 `matcher()`，适配成本反高于现状。
 ---
 
 ## 5. package.json 之外的技术栈
 
 - **TypeScript 三轨**：根 `typescript` 实为 `@typescript/typescript6@6.0.2` 别名（供 @typescript-eslint/parser）；类型检查真身是 `@typescript/native@7.0.2`（TS7 原生编译器，`bunx tsc` 双 project 串行：`tsconfig.json` node 侧 + `tsconfig.web.json` client 侧）；.vue 类型走 vue-tsc 3.3.11 影子基线闸门（自举钉版 TS 5.9.3 至隔离目录、必须 node 直跑、只拦新增，基线 26 键，以 `tooling/checks/vue-types-baseline.json` 实况为准）。
-- **严格模式**：`tsconfig.base.json` 严格全家桶（strict + noUncheckedIndexedAccess + exactOptionalPropertyTypes 等）+ nodenext 模块解析（相对导入一律带 `.ts` 扩展名）；显式 `any` 全仓 0；`as unknown as` 断言基线闸门只拦新增（18 处存留台账）。
+- **严格模式**：`tsconfig.base.json` 严格全家桶（strict + noUncheckedIndexedAccess + exactOptionalPropertyTypes 等）+ nodenext 模块解析（相对导入一律带 `.ts` 扩展名）；显式 `any` 全仓 0；`as unknown as` 断言基线闸门只拦新增（17 处存留台账，2026-09-21 由 18 减去 explorer 的 anymatch interop 条目）。
 - **构建**：根 tsdown 单遍 → 各包 `lib/`（`index.mjs` + `index.d.ts`，ESM-only，exports 以 `default` 条件兜底）；`apps/koishi-create` 独立 tsdown；vendored 三包 exclude。
 - **Lint**：biome（tab 缩进、双引号、行尾分号）是格式唯一权威；eslint 仅补 `.vue` 模板语义。
 - **测试**：`bun test --isolate`（每文件独立 global，隔离跨文件 mock.module），126 个测试文件 / 1003 用例（2026-09-20 实测，50.3s），覆盖率 src 源码口径约 97% 行；CI 产 lcov 上传 Codecov。
@@ -200,3 +199,4 @@ peer 声明用于下游 `bun add` 解析与防 Bun 自动装官方包，指向 C
 3. 剩余可动空间小而集中：@vueuse 14→15（唯一非冻结 major）、13 个 minor/patch 随手更、§4 的声明卫生项（死依赖存疑、`vue` 一组 range 漂移；`semver` 两形态已于 2026-09-21 统一）。
 4. 冻结线不是欠账：4 个 [旧] + 1 个 [预] 全部挂 Phase 5 重启条件，勿在线内单独升版。
 5. 本文档角色已从「立项前基线」转为「现势对账基线」；下一轮治理从 §4 起步，结构性升版须待 Phase 5 解冻后与 cordis 4 迁移合并进行。
+6. 2026-09-21 追加一次依赖收敛：explorer 的 `anymatch` 换为直连 `picomatch`（物理包净减 2、断言基线 18 → 17、行为实测等价），类型包 `@types/picomatch` 随主包计入，外部依赖名 57 → 58——本次为「同一能力换更少依赖 + 消断言」的净收益型替换，与 §4.7 的 `semver` 保留判据（换不动或换了更亏）互为对照。

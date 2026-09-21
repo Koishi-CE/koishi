@@ -1,7 +1,7 @@
 {
 	"meta": {
-		"generatedAt": "2026-09-18T16:04:11.605Z",
-		"total": 18,
+		"generatedAt": "2026-09-21T13:37:30.346Z",
+		"total": 17,
 		"pending": 0
 	},
 	"entries": [
@@ -94,12 +94,6 @@
 			"kind": "double",
 			"snippet": ".database as unknown as Record<",
 			"reason": "R4 RPC 动态分发边界：方法集有限但参数经反序列化为 unknown[]，unknown 函数视图是正确终点；switch 展开仍须逐方法断言纯噪音"
-		},
-		{
-			"file": "plugins/webui/explorer/src/index.ts",
-			"kind": "double",
-			"snippet": "anymatchModule.default as unknown as typeof anymatchModule.default.default;",
-			"reason": "R2 anymatch 双发布 interop：d.ts 为 ESM 形态而实现为 CJS，nodenext 类型视图对 default 多包一层，包外不可修"
 		},
 		{
 			"file": "plugins/webui/insight/client/index.vue",
