@@ -5,21 +5,14 @@
 // 不开启的选项与理由见文件尾注。
 {
 	"$schema": "https://json.schemastore.org/tsconfig",
-	"files": [
-		"packages/node/core/src/i18n/yml.d.ts"
-	],
+	"files": ["packages/node/core/src/i18n/yml.d.ts"],
 	"compilerOptions": {
 		"target": "ES2025",
 		"module": "NodeNext",
 		"moduleResolution": "NodeNext",
 		"moduleDetection": "force",
-		"lib": [
-			"ES2025"
-		],
-		"types": [
-			"node",
-			"bun"
-		],
+		"lib": ["ES2025"],
+		"types": ["node", "bun"],
 		"paths": {
 			// nodenext 的 paths 目标必须是具体文件（不做目录 index 探测），否则回退
 			// node_modules 解析到 lib 产物 d.ts，与 src 源码形成双模块视图，增广合并即冲突

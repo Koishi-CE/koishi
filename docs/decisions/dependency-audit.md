@@ -4,7 +4,9 @@
 >
 > 审计日期：2026-09-19 · 「最新」列均于当日经 npm registry 实时验证（npmjs 主查、npmmirror 兜底）
 > 运行环境：Bun 1.4.2（`packageManager` 钉定）· Node v24（辅：TS7 编译器与 vue-tsc 影子闸门宿主）· 包管理：Bun workspaces（`bun.lock`）
-> 范围：仓库内全部 **53 个 package.json**（**52 个 workspace 包** + 根）· **58 个外部依赖名**（不含 `workspace:*` 与 `@koishi-ce/*` 内部 peer 互引，后者单列于 §2.G）
+> 范围：仓库内全部 **53 个 package.json**（**52 个 workspace 包** + 根）· **57 个外部依赖名**（不含 `workspace:*` 与 `@koishi-ce/*` 内部 peer 互引，后者单列于 §2.G）
+>
+> 修订：2026-09-21 —— admin 前端防抖改用既有 `@vueuse/core`（`useDebounceFn`），移除 `throttle-debounce`，外部依赖名 58 → 57；其余内容仍为 2026-09-19 快照。
 
 状态图例：[新] 当前最新 · [缓] 落后(minor/patch) · [旧] 落后(major) · [预] 最新版本为预发布 · [废] 已弃用或未使用
 
@@ -72,7 +74,7 @@ Koishi-CE/
 | vue | ^3.5.42 / peer ^3 / dev ^3.5.12 | client + components + 5 插件(dev) | UI 框架 | 3.5.43 | [缓] patch（range 三形态待统一） |
 | vue-router | ^5.2.0 | client + 4 插件(dev) | 控制台路由 | 5.3.1 | [新]（4→5 已升） |
 | vue-i18n | ^11.4.10 | client + market(dev) | 界面国际化 | 11.4.12 | [缓] patch（9→11 已升） |
-| @vueuse/core | ^14.4.0 | client + 3 插件 | Vue 组合式工具集 | 15.0.0 | [旧] major（全仓唯一非冻结升版空间） |
+| @vueuse/core | ^14.4.0 | client + 4 插件(dev) | Vue 组合式工具集 | 15.0.0 | [旧] major（全仓唯一非冻结升版空间） |
 | element-plus | ^2.14.5 | client + config / explorer / locales | UI 组件库 | 2.14.6 | [缓] patch（2.7.7 精确锁已解锁） |
 | schemastery-vue | ^7.3.15 | components | 配置 Schema → 表单渲染 | 7.3.15 | [新] |
 | marked-vue | ^1.3.0 | client | Markdown 渲染 | 1.3.0 | [新] |
@@ -82,7 +84,6 @@ Koishi-CE/
 | ansi_up | ^6.0.6 (dev) | logger(client) | ANSI 转义 → HTML | 6.0.6 | [新]（5→6 已升） |
 | d3-force | ^3.0.0 (dev) | insight | 关系图谱力学布局 | 3.0.0 | [新] |
 | monaco-editor | ~0.56.0 (dev) | explorer | 代码/文本编辑器 | 0.56.0 | [新]（0.44→0.56） |
-| throttle-debounce | ^5.0.2 | admin | 前端防抖 | 5.0.2 | [新]（3→5 已升） |
 | lottie-web | ^5.13.0 (dev) | welcome | Lottie 动画（开屏描线） | 5.13.0 | [新]（welcome 插件新增） |
 | spark-md5 | ^3.0.2 (dev) | market | MD5（gravatar 头像） | 3.0.2 | [新] |
 

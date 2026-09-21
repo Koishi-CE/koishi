@@ -128,7 +128,7 @@ import {
 } from "@koishi-ce/client";
 import type Admin from "@koishi-ce/plugin-admin/src";
 import {} from "@koishi-ce/plugin-locales";
-import { debounce } from "throttle-debounce";
+import { useDebounceFn } from "@vueuse/core";
 import { computed, ref } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import PermissionName from "./name.vue";
@@ -201,12 +201,14 @@ const permissions = computed(() => {
 	return data.value[type][id]?.permissions ?? [];
 });
 
-// 行内重命名：输入停顿 1s 后才发送，避免每个按键都打一次 RPC
-const renameItem = debounce(
-	1000,
+// 行内重命名：输入停顿 1s 后才发送，避免每个按键都打一次 RPC。
+// 防抖用 @vueuse/core（与 locales / market 等前端插件同源），
+// 不再为此单点引入 throttle-debounce。
+const renameItem = useDebounceFn(
 	(type: "group" | "track", id: number, name: string) => {
 		void send(`admin/rename-${type}`, id, name);
 	},
+	1000,
 );
 
 const renameInput = computed<string>({

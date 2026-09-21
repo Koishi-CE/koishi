@@ -66,10 +66,8 @@
 		"@koishi-ce/plugin-console": "workspace:*",
 		"@koishi-ce/plugin-locales": "workspace:*",
 		"@koishi-ce/plugin-mock": "workspace:*",
-		"@koishi-ce/plugin-database-memory": "workspace:*"
-	},
-	"dependencies": {
-		"throttle-debounce": "^5.0.2"
+		"@koishi-ce/plugin-database-memory": "workspace:*",
+		"@vueuse/core": "^14.4.0"
 	},
 	"exports": {
 		".": {

@@ -12,7 +12,7 @@
 ## 关于 docs/ 文档
 
 - **开发手册**：`docs/guides/development.md`（环境 / 门禁 / 编码约定 / 测试 / 已知坑细节）、`docs/reference/architecture.md`（目录与包清单 / 构建体系 / 依赖纪律）、`docs/process/release.md`（发布流程）、`docs/process/upstream.md`（上游映射）——均以实际代码为准，文档滞后时听代码的。
-- **历史决策记录**：`docs/decisions/upgrade-plan.md`（依赖六阶段升级计划书，含 Phase 5 cordis 4 被阻塞的实证结论与重启条件）、`docs/decisions/dependency-audit.md`（外部依赖现势审计快照，2026-09-19 重拍，58 个外部依赖；初版 2026-08-27 见 git 历史）。
+- **历史决策记录**：`docs/decisions/upgrade-plan.md`（依赖六阶段升级计划书，含 Phase 5 cordis 4 被阻塞的实证结论与重启条件）、`docs/decisions/dependency-audit.md`（外部依赖现势审计快照，2026-09-19 重拍 / 2026-09-21 修订，57 个外部依赖；初版 2026-08-27 见 git 历史）。
 
 ## 硬性约束（违反 = 错误）
 
