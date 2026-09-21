@@ -177,9 +177,10 @@ export function registerAssets(
 			if (stats?.isFile()) return sendAsset(filename);
 
 			// 控制台主体未命中时，再到各插件产物目录按文件名兜底：插件产物里的
-			// worker / 分包可能以根绝对路径引用（如 monaco 的 /editor.worker-*.js），
-			// 这类请求不带 @plugin- 前缀，会落到主体分支；产物文件名通常带内容
-			// 哈希，按 basename 在各 entry 目录内探测不会产生跨插件混淆
+			// 分包可能以根绝对路径引用（monaco 时代的 worker 即形如
+			// /editor.worker-*.js），这类请求不带 @plugin- 前缀，会落到主体分支；
+			// 产物文件名通常带内容哈希，按 basename 在各 entry 目录内探测
+			// 不会产生跨插件混淆
 			const base = name.split("/").pop() ?? "";
 			if (base) {
 				for (const entry of Object.values(

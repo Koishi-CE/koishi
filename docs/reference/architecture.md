@@ -80,7 +80,7 @@ CE 包 peer 一律指 CE 名，但**下游项目的社区插件生态**仍消费
 
 node 侧在 `src/`、Vue 侧在 `client/`（上游约定），`koishi.public: ["dist"]` 声明前端产物目录：
 
-`actions`（应用指令面板）、`admin`（权限管理）、`analytics`（统计图表，echarts）、`auth`（登录）、`commands`（指令配置）、`config`（插件配置管理，唯一带 `./shared` 与 node/browser 分入口，依赖 `@koishi-ce/registry`）、`console`（**宿主**，其 `dist/` 承载全部插件前端产物）、`explorer`（文件管理，monaco）、`insight`（依赖图，d3-force）、`locales`（翻译覆盖）、`logger`（日志）、`notifier`（通知服务）、`oobe`（开箱体验）、`sandbox`（虚拟沙箱）、`status`（运行状态）——以上 15 个来自 webui `plugins/*`；**`market`**（插件市场，来自 webui `plugins/market` 原版 v2.11.11 的再分发，社区版 `plugin-marketn` 已被其取代并移除；client 逻辑层与图标自 `@koishijs/market` 4.2.10 vendor 进 `client/vendor/market/`，对 npm 包的依赖已解除；npm 名 `@koishijs/components` 由单插件构建 alias 重定向到本仓 workspace 版，作下游防御——本仓源码已不引用该 npm 名）；`dataview` 与 `theme-vanilla` 来自独立上游仓库（见 `NOTICE`）；**`welcome`**（欢迎页，本仓原创独立插件——上游 client 内建欢迎卡迁出，宿主首页仅保留 home 插槽，含 Lottie 开屏描线动画，移植自 Il Harper 的 MIT 插件 koishi-plugin-telemetry（数据与加载接线，文件保持 MIT），见 `NOTICE`）。
+`actions`（应用指令面板）、`admin`（权限管理）、`analytics`（统计图表，echarts）、`auth`（登录）、`commands`（指令配置）、`config`（插件配置管理，唯一带 `./shared` 与 node/browser 分入口，依赖 `@koishi-ce/registry`）、`console`（**宿主**，其 `dist/` 承载全部插件前端产物）、`explorer`（文件管理，CodeMirror 6）、`insight`（依赖图，d3-force）、`locales`（翻译覆盖）、`logger`（日志）、`notifier`（通知服务）、`oobe`（开箱体验）、`sandbox`（虚拟沙箱）、`status`（运行状态）——以上 15 个来自 webui `plugins/*`；**`market`**（插件市场，来自 webui `plugins/market` 原版 v2.11.11 的再分发，社区版 `plugin-marketn` 已被其取代并移除；client 逻辑层与图标自 `@koishijs/market` 4.2.10 vendor 进 `client/vendor/market/`，对 npm 包的依赖已解除；npm 名 `@koishijs/components` 由单插件构建 alias 重定向到本仓 workspace 版，作下游防御——本仓源码已不引用该 npm 名）；`dataview` 与 `theme-vanilla` 来自独立上游仓库（见 `NOTICE`）；**`welcome`**（欢迎页，本仓原创独立插件——上游 client 内建欢迎卡迁出，宿主首页仅保留 home 插槽，含 Lottie 开屏描线动画，移植自 Il Harper 的 MIT 插件 koishi-plugin-telemetry（数据与加载接线，文件保持 MIT），见 `NOTICE`）。
 
 ### apps/*
 
@@ -123,6 +123,7 @@ node 侧在 `src/`、Vue 侧在 `client/`（上游约定），`koishi.public: ["
 - **宿主控制台总装**：`packages/web/client/scripts/client.ts`——依次构建 app（unocss preset-mini）、拷贝 vue runtime、构建 vue-router / @vueuse 外部块、client（element-plus 单独 manualChunks），产物统一输出 `plugins/webui/console/dist`，并把 vue / vue-router / @vueuse / @koishi-ce/client 指向外部块文件（宿主只装一份）。
 - **单插件前端**：`packages/web/client/src/index.ts` 的 `build(root)`（CLI：`bun packages/web/client/src/bin.ts build <插件目录>`）。内置 `collectWorkspaceAliases()` 扫描根 workspaces glob 做显式映射——未被依赖的插件不在 node_modules 链接里，bundler 无法自行解析。
 - 插件自带构建脚本：`plugins/webui/analytics/build/client.ts`（fuck-echarts：echarts chunk 内 `Symbol` 重命名；`build()` 显式加载合并该文件名，vite 不会自动发现。explorer 的 monaco manualChunks 覆盖已删——rolldown 自动分包已实现其目标）。
+- **按需分包实例（explorer 编辑器）**：CodeMirror 6 的语言包由 `plugins/webui/explorer/client/languages.ts` 动态 `import()` 注册，rolldown 为每个语言切出独立 chunk（构建后 `dist/` 只有 29 个文件，首屏内核约 441 KB）；`index.js` 里的 `import()` 被 minify 成模板字符串形态（`import(`./dist-xxx.js`)`），校验产物所属可用「静态可达 chunk 之和」口径。
 - `packages/web/components` 无构建（源码直出，被 console 打包器消费）。
 
 ### 类型检查体系

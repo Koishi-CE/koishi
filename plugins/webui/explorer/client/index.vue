@@ -54,7 +54,7 @@
       </el-scrollbar>
     </template>
 
-    <!-- 主区域四态：未选文件 / 加载中 / 媒体预览（图片、音视频）/ monaco 编辑器 -->
+    <!-- 主区域四态：未选文件 / 加载中 / 媒体预览（图片、音视频）/ CodeMirror 编辑器 -->
     <k-empty v-if="!files[active] || files[active]?.type === 'directory'">{{ t('explorer.view.empty') }}</k-empty>
     <div v-else-if="files[active]?.loading">
       <div class="el-loading-spinner">
@@ -91,7 +91,7 @@
 /**
  * 文件管理器主页面：左侧文件树 + 右侧内容区。
  *
- * 内容区按选中文件分四态展示（空态 / 加载中 / 媒体预览 / monaco 编辑器），
+ * 内容区按选中文件分四态展示（空态 / 加载中 / 媒体预览 / CodeMirror 编辑器），
  * 文件的打开内容缓存在 Entry 的 oldValue/newValue 上，"M" 标记来自两者差异。
  * 这里同时注册页面动作（保存、刷新）与文件树右键菜单动作（新建、上传、
  * 下载、重命名、删除），并实现树内就地重命名（新建条目也复用该流程）。
@@ -106,16 +106,14 @@ import {
 	useMenu,
 } from "@koishi-ce/client";
 import type { Entry } from "@koishi-ce/plugin-explorer";
-import { useElementSize } from "@vueuse/core";
 import type {
 	TreeInstance,
 	TreeNodeData,
 } from "element-plus";
-import * as monaco from "monaco-editor";
 import { computed, onActivated, ref, watch } from "vue";
 import { useI18n } from "vue-i18n";
 import { useRoute, useRouter } from "vue-router";
-import { model } from "./editor";
+import { createEditor, type EditorHandle } from "./editor";
 import { useRename } from "./rename";
 import {
 	files,
@@ -131,7 +129,7 @@ const router = useRouter();
 const keyword = ref(""); // 文件树过滤关键字
 const tree = ref<TreeInstance | null>(null); // el-tree 实例（调用 filter() 做关键字过滤）
 const root = ref<{ $el: HTMLElement } | null>(null); // 左侧滚动容器（滚动定位用）
-const editor = ref(null); // monaco 编辑器的挂载容器
+const editor = ref<HTMLElement | null>(null); // 编辑器的挂载容器
 const data = ref<TreeEntry[]>([]); // 本地文件树（含展开态，由服务端数据合并而来）
 const removing = ref<string | null>(null); // 待删除条目的路径（结尾 / 表示目录），非空弹出确认框
 
@@ -306,8 +304,28 @@ watch(
 	{ immediate: true },
 );
 
-let instance: monaco.editor.IStandaloneCodeEditor | null =
-	null;
+/** 编辑器实例（容器出现时创建、消失时销毁；CM6 下实例自身即文档载体）。 */
+let instance: EditorHandle | null = null;
+
+/**
+ * 把当前激活文件的内容与语言灌进编辑器。
+ * 切文件与新建实例两处都要调用：前者对应 monaco 时代的 setValue +
+ * setModelLanguage，后者用于容器出现得比内容加载完的情形。
+ * 内部一律以 active 为准而非调用处捕获的条目——切文件时上一个文件的
+ * 异步读取可能尚未返回，按 active 取可避免把旧内容写进新文件。
+ */
+function applyDocument() {
+	const entry = files[active.value];
+	if (
+		!instance ||
+		!entry ||
+		entry.type === "directory" ||
+		entry.filename === undefined
+	)
+		return;
+	instance.setContent(entry.newValue ?? "");
+	void instance.setLanguage(entry.filename);
+}
 
 // 关键字变化即时过滤树节点
 watch(keyword, (val) => {
@@ -316,28 +334,29 @@ watch(keyword, (val) => {
 
 const mode = useColorMode();
 
-// 编辑器容器出现/消失时创建/销毁 monaco 实例（共享全局 model）
+// 编辑器容器出现/消失时创建/销毁实例（CM6 自适应容器尺寸，无需手动 layout）
 watch(editor, () => {
-	if (!editor.value) return (instance = null);
-	instance = monaco.editor.create(editor.value, {
-		model,
-		theme: `vs-${mode.value}`,
-		tabSize: 2,
+	const container = editor.value;
+	if (!container) {
+		instance?.destroy();
+		instance = null;
+		return;
+	}
+	instance = createEditor({
+		parent: container,
+		dark: mode.value === "dark",
+		onChange: (value) => {
+			const entry = files[active.value];
+			if (entry) entry.newValue = value;
+		},
 	});
-	// noImplicitReturns：创建支路同样显式返回（返回值无人消费）
-	return;
-});
-
-const { width, height } = useElementSize(editor);
-
-// 容器尺寸变化时让 monaco 重新布局
-watch([width, height], () => {
-	instance?.layout();
+	// 实例初始为空文档：容器出现前已加载好的内容在这里补上
+	applyDocument();
 });
 
 // 明暗主题切换
 watch(mode, () => {
-	monaco.editor.setTheme(`vs-${mode.value}`);
+	instance?.setTheme(mode.value === "dark");
 });
 
 /** 节点样式回调：给当前激活文件对应的树节点加 is-active 类。 */
@@ -382,18 +401,6 @@ function allowDrop(
 	return false;
 }
 
-/** 按扩展名匹配 monaco 语言 id，无匹配时回退 plaintext。 */
-function getLanguage(filename: string) {
-	const index = filename.lastIndexOf(".");
-	const extension =
-		index === -1 ? "" : filename.slice(index);
-	for (const language of monaco.languages.getLanguages()) {
-		if (language.extensions?.includes(extension))
-			return language.id;
-	}
-	return "plaintext";
-}
-
 // 选中文件变化时按需加载内容：只有首次打开（oldValue 非字符串）才发
 // read 请求；带 mime 的组装 data URL 走媒体预览，否则解码为文本进编辑器
 watch(
@@ -423,22 +430,10 @@ watch(
 					);
 			}
 		}
-		model.setValue(entry.newValue ?? "");
-		monaco.editor.setModelLanguage(
-			model,
-			getLanguage(entry.filename),
-		);
+		applyDocument();
 	},
 	{ immediate: true },
 );
-
-// 编辑内容实时写回 entry.newValue（与 oldValue 的差异即为"M"未保存标记）；
-// 变更事件对象未用，为保持回调签名位置而下划线化
-model.onDidChangeContent((_e) => {
-	const entry = files[active.value];
-	if (!entry) return;
-	entry.newValue = model.getValue();
-});
 
 /** 点击文件节点：设为当前激活文件（目录节点忽略）。 */
 async function handleClick(data: TreeEntry) {

@@ -2,12 +2,18 @@
 // Copyright (c) 2019-present Shigma and Koishijs contributors.
 // Copyright (c) 2026-present Koishi-CE contributors.
 
-// 让 monaco 编辑器各区域（编辑区、粘性滚动、面包屑、行号槽等）
-// 的背景色跟随控制台主题变量，而非 monaco 自带的 vscode 配色
-.layout-main .monaco-editor {
-  --vscode-editor-background: var(--k-main-bg);
-  --vscode-editorStickyScroll-background: var(--k-main-bg);
-  --vscode-breadcrumb-background: var(--k-main-bg);
-  --vscode-editorGutter-background: var(--k-main-bg);
-  --vscode-editorMarkerNavigation-background: var(--k-main-bg);
+// 编辑器配色收敛为一组 --cm-* 变量，由 editor.ts 的 CodeMirror 外壳主题
+// （shellTheme）引用：编辑器背景、正文、光标、选区、高亮行、行号槽与提示框
+// 全部读这些变量，改这一处即可整体换肤。默认值跟随控制台主题变量，
+// theme-vanilla 的各主题可按需覆写（见 coffee-dark.scss）。
+.layout-main .cm-editor {
+  --cm-bg: var(--k-main-bg);
+  --cm-fg: var(--k-text-dark);
+  --cm-caret: var(--k-text-dark);
+  --cm-selection-bg: var(--k-color-primary-fade);
+  --cm-match-bg: color-mix(in srgb, var(--k-color-primary) 35%, transparent);
+  --cm-active-line-bg: color-mix(in srgb, var(--k-text-light) 12%, transparent);
+  --cm-gutter-bg: var(--k-main-bg);
+  --cm-gutter-fg: var(--k-text-light);
+  --cm-tooltip-bg: var(--k-card-bg);
 }

@@ -5,7 +5,7 @@
 /**
  * explorer 插件（浏览器端入口）：注册文件管理器页面与配套 UI。
  *
- * - /files 路由的主页面（index.vue：左侧文件树 + 右侧 monaco 编辑器）
+ * - /files 路由的主页面（index.vue：左侧文件树 + 右侧 CodeMirror 编辑器）
  * - Schema path 角色的路径选择控件（file-picker.vue，供其它插件的配置表单使用）
  * - 全局上传对话框（upload.vue）与状态栏当前语言指示（status.vue）
  * - explorer / explorer.tree 两组菜单项，供页面动作与文件树右键菜单挂载

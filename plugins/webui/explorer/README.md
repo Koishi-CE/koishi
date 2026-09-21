@@ -2,11 +2,11 @@
 
 **简体中文** | [English](#english)
 
-网页文件管理器插件，移植自上游 [koishijs/webui](https://github.com/koishijs/webui) 的 `plugins/explorer`。它把服务器上的文件以树形视图展示在控制台中，内置 monaco 编辑器，支持在线查看与编辑文本文件、上传与下载。依赖 console 服务。
+网页文件管理器插件，移植自上游 [koishijs/webui](https://github.com/koishijs/webui) 的 `plugins/explorer`。它把服务器上的文件以树形视图展示在控制台中，内置 CodeMirror 6 编辑器，支持在线查看与编辑文本文件、上传与下载。依赖 console 服务。
 
 ## 功能与页面
 
-- 「资源管理器」页面：路由 `/files/:name*`（order 600）。左侧为文件树（目录、文件、符号链接三类节点），右侧为 monaco 编辑器；文件树右键菜单支持新建文件 / 文件夹、上传、下载、重命名与删除。
+- 「资源管理器」页面：路由 `/files/:name*`（order 600）。左侧为文件树（目录、文件、符号链接三类节点），右侧为 CodeMirror 编辑器（语法高亮语言按扩展名惰性加载，清单见 `client/languages.ts`）；文件树右键菜单支持新建文件 / 文件夹、上传、下载、重命名与删除。
 - 上传：支持拖拽与粘贴，经全局上传对话框写入服务器。
 - 页面菜单：提供保存与刷新动作（对应 Ctrl+S / Ctrl+R 快捷键）。
 - 路径选择控件：为 schema `role: "path"` 的字符串字段注册 FilePicker，其他插件的配置表单中路径字段会渲染为弹窗式路径选择器。
@@ -63,11 +63,11 @@ plugins:
 
 ## English
 
-Web-based file manager plugin, ported from `plugins/explorer` of the upstream [koishijs/webui](https://github.com/koishijs/webui) repository. It presents server files as a tree in the console with a built-in monaco editor, supporting online viewing and editing, upload, and download. Depends on the console service.
+Web-based file manager plugin, ported from `plugins/explorer` of the upstream [koishijs/webui](https://github.com/koishijs/webui) repository. It presents server files as a tree in the console with a built-in CodeMirror 6 editor, supporting online viewing and editing, upload, and download. Depends on the console service.
 
 ## Features and Pages
 
-- "Explorer" page: route `/files/:name*` (order 600). File tree on the left (files, directories, symlinks), monaco editor on the right; the tree context menu supports create file / directory, upload, download, rename, and delete.
+- "Explorer" page: route `/files/:name*` (order 600). File tree on the left (files, directories, symlinks), CodeMirror editor on the right (highlighting languages are lazily loaded by file extension; see `client/languages.ts`); the tree context menu supports create file / directory, upload, download, rename, and delete.
 - Upload via drag-and-drop or paste, handled by a global upload dialog; page menus provide save and refresh actions (Ctrl+S / Ctrl+R).
 - Registers a FilePicker component for schema string fields with `role: "path"`, so path fields in other plugins' config forms render as a dialog-based picker.
 - Status bar shows the language of the file being edited.

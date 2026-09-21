@@ -23,21 +23,13 @@
     @include apply-color(primary, #F09176);
     // @include apply-color(secondary, #6EDDD6);
 
-    .monaco-editor {
-      --vscode-editor-selectionBackground: #F0917730;
-      --vscode-editor-selectionForeground: #ceb5b0;
-      --vscode-editor-inactiveSelectionBackground: #F0917720;
-      --vscode-editor-selectionHighlightBorder: #F0917780;
-      --vscode-editor-selectionHighlightBackground: #F0917715;
-
-      --vscode-charts-foreground: #ceb5b0;
-      --vscode-charts-lines: #ceb5b0;
-      --vscode-charts-red: #f24343;
-      --vscode-charts-blue: #6EDDD6;
-      --vscode-charts-yellow: #f7d979;
-      --vscode-charts-orange: #ffa777;
-      --vscode-charts-green: #9DCC57;
-      --vscode-charts-purple: #E480AD;
+    // explorer 编辑器（CodeMirror）的选区与搜索高亮：本主题底色偏暖，
+    // 用主色叠低透明度比默认值更贴合（变量清单见 explorer/client/editor.scss）
+    .cm-editor {
+      --cm-fg: #ceb5b0;
+      --cm-caret: #ceb5b0;
+      --cm-selection-bg: #F0917730;
+      --cm-match-bg: #F0917780;
     }
   }
 }

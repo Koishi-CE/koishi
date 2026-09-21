@@ -8,7 +8,7 @@
  * 以 DataService 形式向控制台客户端推送根目录的完整文件树（Entry[]），
  * 并注册 explorer/read、write、mkdir、remove、rename、refresh 六个
  * RPC 事件（均要求 authority >= 4），供浏览器端执行实际的文件操作。
- * 浏览器端对应实现在 ../client/（index.vue 文件树 + monaco 编辑器）。
+ * 浏览器端对应实现在 ../client/（index.vue 文件树 + CodeMirror 编辑器）。
  */
 
 import {
