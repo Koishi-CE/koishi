@@ -30,7 +30,7 @@ plugins:
 ## 备注
 
 - 不启用本插件时，首页仅保留插槽（analytics 等其他插件的首页面板不受影响）；脚手架（create-koishi-ce）默认模板已预写启用。
-- 无指令、无数据表；动画为 lottie-web SVG-only 精简构建，随插件前端产物打包。
+- 无指令、无数据表；动画为 lottie-web 的 `lottie_light` 精简构建（仅 SVG 渲染器、不带 AE 表达式引擎，深路径子包导入），随插件前端产物打包——比默认全量入口小得多，且不含 `eval`（本动画数据零表达式，构建期无需静音 `[EVAL]` 检查）。
 
 ## 许可证
 
@@ -68,7 +68,7 @@ plugins:
 ## Notes
 
 - When this plugin is disabled, the home page keeps only the slot (home panels of other plugins such as analytics are unaffected); the default template of create-koishi-ce ships with it pre-enabled.
-- No commands, no tables; the animation uses the SVG-only build of lottie-web, bundled into the plugin's frontend dist.
+- No commands, no tables; the animation uses the `lottie_light` build of lottie-web (SVG renderer only, no AE expression engine, imported via a deep subpath), bundled into the plugin's frontend dist — far smaller than the default full entry and free of `eval` (the bundled animation data contains no expressions, so no `[EVAL]` build-check silencing is needed).
 
 ## License
 

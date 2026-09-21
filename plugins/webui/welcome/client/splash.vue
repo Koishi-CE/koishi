@@ -3,7 +3,7 @@
 <!-- Modifications Copyright (c) 2026-present Koishi-CE contributors. -->
 
 <!--
-  欢迎页开屏动画：lottie-web（SVG-only 精简构建）驱动的描线动画。
+  欢迎页开屏动画：lottie-web（SVG-only 无表达式精简构建）驱动的描线动画。
   本文件与 splash.json 均移植自 koishi-plugin-telemetry（MIT，唯一开发者
   Il Harper，https://github.com/koishijs/koishi-plugin-telemetry）的 oob
   客户端：动画数据取自 splash.json，加载接线取自 home.vue，类名已本地化，
@@ -20,7 +20,10 @@
 
 <script lang="ts" setup>
 import type { AnimationItem } from "lottie-web";
-import lottie from "lottie-web/build/player/esm/lottie_svg.min.js";
+// lottie_light = 仅 SVG 渲染器且不带 AE 表达式引擎的精简构建；
+// 比 lottie_svg 再少一份表达式求值器（本动画数据零表达式，用不到），
+// 体积更小且不含 eval（构建期无需再静音 [EVAL] 检查）。
+import lottie from "lottie-web/build/player/esm/lottie_light.min.js";
 import { onBeforeUnmount, onMounted, ref } from "vue";
 import splashData from "./splash.json";
 
