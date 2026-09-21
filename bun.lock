@@ -672,7 +672,7 @@
         "@koishi-ce/console": "workspace:*",
         "@koishi-ce/registry": "workspace:*",
         "@koishi-ce/utils": "workspace:*",
-        "semver": "^7.6.3",
+        "semver": "^7.8.5",
       },
       "devDependencies": {
         "@koishi-ce/client": "workspace:*",

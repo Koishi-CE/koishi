@@ -115,7 +115,7 @@ Koishi-CE/
 | chardet | ^2.2.0 | explorer | 文本编码检测 | 2.2.0 | [新] |
 | file-type | ^22.0.2 | assets / assets-local / explorer | 文件类型嗅探 | 22.1.1 | [缓] patch（16→22 已升，装 22.1.0） |
 | anymatch | ^3.1.3 | explorer | 路径匹配（文件树过滤） | 3.1.3 | [新] |
-| semver | ^7.8.5 / ^7.6.3 | registry / market | 语义版本计算 | 7.8.5 | [新]（range 两形态待统一） |
+| semver | ^7.8.5 | registry / market | 语义版本计算 | 7.8.5 | [新]（两形态已统一） |
 
 ### E. 测试设施
 
@@ -166,10 +166,16 @@ peer 声明用于下游 `bun add` 解析与防 Bun 自动装官方包，指向 C
 
 1. **死依赖存疑**：`typescript ^5.0.0` 声明于 `packages/web/client`（dependencies），全仓源码零导入；vue-tsc 影子闸门用的 TS 5.9.3 是自举安装到 `node_modules/.cache/vue-tsc-shadow` 的钉版载体，与此声明无关。删除前须重建宿主前端实证（前端链假绿判例见 development.md §7）。
 2. **fallow 红点已清零**：本快照初稿点名的两处未用导出（market dependencies/service.ts 的 `default` 导出、installer 的 `Dependency` re-export 类型）已随 9925a74 清除，dead-code 退出码 0。
-3. **range 漂移**（无害、待统一）：`semver` 两形态（registry ^7.8.5 / market ^7.6.3）；`vue` 三形态（client ^3.5.42 / components peer ^3 / 五插件 dev ^3.5.12）。
+3. **range 漂移**（无害、待统一）：`vue` 三形态（client ^3.5.42 / components peer ^3 / 五插件 dev ^3.5.12）。`semver` 两形态（registry ^7.8.5 / market ^7.6.3）已于 2026-09-21 统一为 ^7.8.5（该依赖不能改用 `Bun.semver` 平替，理由见第 7 条）。
 4. **无幽灵依赖**：初版的 unlisted 问题（apps/online 靠 hoisting 存活）已随该目录删除消失，fallow unlisted 检查通过。
 5. **声明但无静态导入的正当豁免**（`.fallowrc.jsonc` ignoreDependencies，非死依赖）：vendored 三包（插件加载链按包名运行时解析）、shim 四包（下游 alias 占名）、webui 插件 dev 依赖（测试/构建期按名加载）、前端 vue 系（由宿主与工作区根提供）、sass-embedded 与 @typescript/native（构建期编程式加载/路径调用）。
 6. **peerDeps 指向 CE 名属硬性约束**（见 §2.G），非缺陷。
+7. **`semver` 依赖不可去除**（2026-09-21 评估）：`Bun.semver` 仅暴露 `satisfies` / `order` 两个函数（[官方文档](https://bun.com/docs/runtime/semver) 明言「需要其他 semver 函数请提 issue」），实测在四处关键语义上不覆盖——
+   - market 的 client 侧（`client/components/install.vue` 用 `parse`、`client/components/utils.ts` 用 `compare` / `satisfies`、`client/dependencies/ignore-policy.ts` 用 `gt` / `prerelease`、`client/utils.ts` 用 `gt`）运行在浏览器，**无 `Bun` 全局**，且与 node 侧共用同一 package.json——依赖无论如何删不掉。
+   - `registry` 的 `intersects`（两个 range 的相交判定，`Scanner.isCompatible` 的兼容性核心）无对应 API，自研 range 相交算法风险远大于收益。
+   - `valid` 与 `Bun.semver.satisfies(x, "*")` **不等价**：`"=1.2.3"` 前者 null / 后者 true，`"1.2.3-beta.1"` 前者有效 / 后者 false——`installer` 与 `snapshot` 的 `!valid(request) → invalid` 判定会静默走偏（假绿）。
+   - `satisfies` 的第三参 options 被 Bun 忽略：`installer/index.ts` 的 `{ includePrerelease: true }` 实测无效（node-semver true / Bun false）。
+   `compare` / `gt` 可由 `order` 平替，其余函数（`intersects` / `valid` / `prerelease` / `parse`）全无平替；依赖为单包零传递依赖，保留成本可忽略。
 
 ---
 
@@ -189,6 +195,6 @@ peer 声明用于下游 `bun add` 解析与防 Bun 自动装官方包，指向 C
 
 1. 初版审计确立的两世界格局未变，但力量对比已逆转：**独立工具链从落后主流 2~3 年追平**（TS7 / vite 8 / unocss 66 / echarts 6 / vue-i18n 11 / vue-router 5 / element-plus 2.14 / monaco 0.56），cordis 生态运行时则确认长期冻结在 3.x 内洽线。
 2. 外部依赖 99 → 58、[旧] 38 → 5、[废] 4 → 0：升级计划 Phase 0-4 的清理、原生化、替换目标全部达成。
-3. 剩余可动空间小而集中：@vueuse 14→15（唯一非冻结 major）、13 个 minor/patch 随手更、§4 的声明卫生四项（死依赖存疑、2 处未用导出、两组 range 漂移）。
+3. 剩余可动空间小而集中：@vueuse 14→15（唯一非冻结 major）、13 个 minor/patch 随手更、§4 的声明卫生项（死依赖存疑、`vue` 一组 range 漂移；`semver` 两形态已于 2026-09-21 统一）。
 4. 冻结线不是欠账：4 个 [旧] + 1 个 [预] 全部挂 Phase 5 重启条件，勿在线内单独升版。
 5. 本文档角色已从「立项前基线」转为「现势对账基线」；下一轮治理从 §4 起步，结构性升版须待 Phase 5 解冻后与 cordis 4 迁移合并进行。
