@@ -1,5 +1,27 @@
 # @koishi-ce/plugin-explorer
 
+## 1.2.0
+
+### Minor Changes
+
+- db59fd0: 编辑器由 monaco 整体换为 CodeMirror 6：前端产物 **13.55 MB → 0.72 MB**（首屏静态可达约 431 KB），文件数 97 → 23。
+  
+  - **体积来源说明**：monaco 的 `.` 入口会连带引入全部语言定义与 css / html / json / typescript 四个语言服务注册模块（其 worker 合计 9.15 MB），而本插件自移植起就在运行期用 `setModeConfiguration` 把这些语言服务全部关掉——这 9.15 MB 属"付了钱不用"，且仅改单处导入无法摘除。
+  - **语言**：改为 21 种语法的按需加载（YAML / JSON / JS / TS / JSX / TSX / HTML / XML / CSS / SCSS / Sass / Less / Markdown / SQL / Vue，以及经 `@codemirror/legacy-modes` 包装的 Shell / PowerShell / TOML / Dockerfile / INI / Diff）。每个语言独立成 chunk，只在打开对应类型文件时下载；清单集中在 `client/languages.ts`，新增语言只需装包 + 加一项。
+  - **语言选取原则**：只收录 Koishi 生态真实会出现的类型（纯 TS / JS 世界）；后端语言（Python / Java / C-C++ / Rust / Go / PHP）已整体剔除（连同 6 个依赖包），这类文件回退纯文本。
+  - **主题**：编辑器配色收敛为一组 `--cm-*` 变量（`client/editor.scss`），跟随控制台主题变量；`theme-vanilla` 的 coffee-dark 同步把原 monaco 变量覆写改写为 `--cm-*` 覆写。
+  - **行为差异**：不再向 `window` 挂全局 `monaco` 命名空间（仓库内无消费者）；不再有 worker，控制台侧为 monaco worker 做的根绝对路径兜底自此不再被触发（兜底逻辑保留）。
+  - 编辑器容器改为 CodeMirror 实例持有文档（不再有全局共享 model），容器尺寸自适应故移除手动 layout 调用。
+
+### Patch Changes
+
+- bf3fc59: 依赖收敛：文件树路径过滤由 `anymatch` 换为直连 `picomatch` 4（该版本本仓已由 vite / tsdown 等经传递依赖引入，显式声明不新增物理包），`anymatch` / `normalize-path` 及其嵌套的 `picomatch@2` 三包出仓，物理依赖净减 2；源码中为 anymatch 的 CJS/ESM 互操作保留的 `as unknown as` 双重断言随之清零（断言基线 18 → 17）。行为经多模式 × 13 输入矩阵实测与原先逐条一致（含 win32 反斜杠路径与 dotfile 忽略），另显式声明 `windows` 平台选项以规避 picomatch 4「不传 options 即按 posix 处理」的坑点。
+- c489bc4: 依赖跟进：`@vueuse/core` 由 ^14.4.0 升到 ^15.0.0（全仓 5 处声明：`client` 为 dependencies，admin / explorer / insight / market 四插件为 devDependencies），非冻结线 major 清零。
+  
+  破例点与本仓无实质交集：用到的 13 个符号（`useWindowSize` / `useEventListener` / `usePreferredDark` / `useResizeObserver` / `useLocalStorage` / `RemovableRef` / `useDebounceFn` / `watchDebounced` / `watchThrottled` / `useTimeoutFn` / `onKeyStroke` / `useElementSize` / `useThrottleFn`）在 15 全部保留；唯一有交集的是 `useThrottleFn` 的 `trailing` 默认值由 false 翻转为 true，而 `insight` 的 `watchThrottled` 已显式传 `trailing: true`，行为等价；被移除的 deprecated timer options（`interval` / `immediate` / `updateInterval` / `immediateCallback`）只落在本仓未使用的 composable 上。入口仍是 `dist/index.js`，宿主共享块 `vueuse.js` 的打包路径与 peer（`vue ^3.5.0`）均不变。
+- Updated dependencies [bcaad36]
+  - @koishi-ce/plugin-console@1.3.6
+
 ## 1.1.2
 
 ### Patch Changes

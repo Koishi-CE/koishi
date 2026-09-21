@@ -1,5 +1,36 @@
 # @koishi-ce/plugin-market
 
+## 1.4.0
+
+### Minor Changes
+
+- 1afd822: 依赖管理页三连改:删除卡片冗余分类徽标(保留「已忽略」)、新增显式卸载按钮与配置入口(应用前批量确认是否清理已配置插件,config 插件短名正则纳入 @koishi-ce/ 并支持原名双查)、已下载未配置的插件包入页(新增「未配置」分组,传递依赖可见并支持添加配置)。
+
+### Patch Changes
+
+- 57718ed: 依赖页暗色观感修复:依赖卡边框引用了不存在的 `--k-border-color` 变量,整条 border 声明失效(卡片描边、版本占位虚线框、悬停高亮全部丢失),改回主题正名 `--k-color-border`;宿主为状态色 plain 按钮的浅底/描边系列补暗色映射(此前用 EP 默认亮色值,暗色界面里「卸载」按钮呈刺眼浅粉色块)。
+- f6f2961: 依赖收敛：gravatar 头像摘要由 `spark-md5` 换成 `@noble/hashes` 的同步 MD5
+  （`@noble/hashes/legacy.js`），手写的 `spark-md5.d.ts` 环境声明随之出仓，market
+  前端产物 172,662 → 168,650 B（-4,012 B）。
+  
+  `spark-md5` 是 2018 年后不再发布的 UMD 包且不带类型，而 `@noble/hashes` 零依赖、
+  原生 TS + ESM，本仓早已因 `@paralleldrive/cuid2` 把它带在依赖树里；名数 1 换 1
+  不变，声明位置仍是本插件的 devDependencies（产物由宿主构建期打包）。
+  
+  **刻意保留 MD5、不换 SHA-256**：gravatar 官方对 md5 / sha256 双支持（`s.gravatar.com`
+  两者均返回同一张头像），但镜像不保证——`cravatar.cn`（create-koishi 模板里
+  `GRAVATAR_MIRROR` 的默认值）对同一邮箱 `md5 → 200` / `sha256 → 404`，换算法会让默认
+  镜像下的头像全部静默回落默认图。另：客户端必须同步计算，`crypto.subtle` 只在安全
+  上下文存在，局域网 HTTP 下为 `undefined`。
+  
+  等价性以 10 组输入（空串 / ASCII / 大小写 / 非 ASCII / 代理对 emoji / 长串 / 首尾
+  空格）逐条比对，源码级与 `bun build --target=browser` 交付形态双重复核一致。
+- c489bc4: 依赖跟进：`@vueuse/core` 由 ^14.4.0 升到 ^15.0.0（全仓 5 处声明：`client` 为 dependencies，admin / explorer / insight / market 四插件为 devDependencies），非冻结线 major 清零。
+  
+  破例点与本仓无实质交集：用到的 13 个符号（`useWindowSize` / `useEventListener` / `usePreferredDark` / `useResizeObserver` / `useLocalStorage` / `RemovableRef` / `useDebounceFn` / `watchDebounced` / `watchThrottled` / `useTimeoutFn` / `onKeyStroke` / `useElementSize` / `useThrottleFn`）在 15 全部保留；唯一有交集的是 `useThrottleFn` 的 `trailing` 默认值由 false 翻转为 true，而 `insight` 的 `watchThrottled` 已显式传 `trailing: true`，行为等价；被移除的 deprecated timer options（`interval` / `immediate` / `updateInterval` / `immediateCallback`）只落在本仓未使用的 composable 上。入口仍是 `dist/index.js`，宿主共享块 `vueuse.js` 的打包路径与 peer（`vue ^3.5.0`）均不变。
+- Updated dependencies [bcaad36]
+  - @koishi-ce/plugin-console@1.3.6
+
 ## 1.3.0
 
 ### Minor Changes

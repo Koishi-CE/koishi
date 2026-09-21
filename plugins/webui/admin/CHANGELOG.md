@@ -1,5 +1,16 @@
 # @koishi-ce/plugin-admin
 
+## 1.1.2
+
+### Patch Changes
+
+- cb9b8c8: 依赖借力消减：admin 前端行内重命名的防抖由 `throttle-debounce` 换为前端栈既有的 `@vueuse/core`（`useDebounceFn`），外部依赖净减 1 包；配套移除该库的本地类型垫片，`@vueuse/core` 改为 devDependencies 声明（构建期由宿主解析）。
+- c489bc4: 依赖跟进：`@vueuse/core` 由 ^14.4.0 升到 ^15.0.0（全仓 5 处声明：`client` 为 dependencies，admin / explorer / insight / market 四插件为 devDependencies），非冻结线 major 清零。
+  
+  破例点与本仓无实质交集：用到的 13 个符号（`useWindowSize` / `useEventListener` / `usePreferredDark` / `useResizeObserver` / `useLocalStorage` / `RemovableRef` / `useDebounceFn` / `watchDebounced` / `watchThrottled` / `useTimeoutFn` / `onKeyStroke` / `useElementSize` / `useThrottleFn`）在 15 全部保留；唯一有交集的是 `useThrottleFn` 的 `trailing` 默认值由 false 翻转为 true，而 `insight` 的 `watchThrottled` 已显式传 `trailing: true`，行为等价；被移除的 deprecated timer options（`interval` / `immediate` / `updateInterval` / `immediateCallback`）只落在本仓未使用的 composable 上。入口仍是 `dist/index.js`，宿主共享块 `vueuse.js` 的打包路径与 peer（`vue ^3.5.0`）均不变。
+- Updated dependencies [bcaad36]
+  - @koishi-ce/plugin-console@1.3.6
+
 ## 1.1.1
 
 ### Patch Changes
