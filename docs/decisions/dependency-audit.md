@@ -4,9 +4,9 @@
 >
 > 审计日期：2026-09-19 · 「最新」列均于当日经 npm registry 实时验证（npmjs 主查、npmmirror 兜底）
 > 运行环境：Bun 1.4.2（`packageManager` 钉定）· Node v24（辅：TS7 编译器与 vue-tsc 影子闸门宿主）· 包管理：Bun workspaces（`bun.lock`）
-> 范围：仓库内全部 **53 个 package.json**（**52 个 workspace 包** + 根）· **81 个外部依赖名**（不含 `workspace:*` 与 `@koishi-ce/*` 内部 peer 互引，后者单列于 §2.G）
+> 范围：仓库内全部 **53 个 package.json**（**52 个 workspace 包** + 根）· **75 个外部依赖名**（不含 `workspace:*` 与 `@koishi-ce/*` 内部 peer 互引，后者单列于 §2.G）
 >
-> 修订：2026-09-21 —— ① admin 前端防抖改用既有 `@vueuse/core`（`useDebounceFn`），移除 `throttle-debounce`，外部依赖名 58 → 57；② explorer 路径过滤由 `anymatch` 换为直连 `picomatch` 4（版本本仓已有，显式声明后消除 CJS/ESM interop 双重断言，见 §4.9），并随主包新增类型包 `@types/picomatch`，外部依赖名 57 → 58；③ explorer 编辑器由 `monaco-editor` 整体换为 CodeMirror 6（前端产物 13.55 MB → 1.10 MB，见 §4.10），移除 1 名、新增 24 名，外部依赖名 58 → 81。§2 / §3 的包名与计数已按 ③ 对账；其余内容仍为 2026-09-19 快照。
+> 修订：2026-09-21 —— ① admin 前端防抖改用既有 `@vueuse/core`（`useDebounceFn`），移除 `throttle-debounce`，外部依赖名 58 → 57；② explorer 路径过滤由 `anymatch` 换为直连 `picomatch` 4（版本本仓已有，显式声明后消除 CJS/ESM interop 双重断言，见 §4.9），并随主包新增类型包 `@types/picomatch`，外部依赖名 57 → 58；③ explorer 编辑器由 `monaco-editor` 整体换为 CodeMirror 6（前端产物 13.55 MB → 0.72 MB，见 §4.10），移除 1 名、新增 18 名；随即又剔除 6 种 Koishi 生态不会出现的语言（Python / Java / C-C++ / Rust / Go / PHP）连带其依赖，最终 58 → 75。§2 / §3 的包名与计数已按 ③ 对账；其余内容仍为 2026-09-19 快照。
 
 状态图例：[新] 当前最新 · [缓] 落后(minor/patch) · [旧] 落后(major) · [预] 最新版本为预发布 · [废] 已弃用或未使用
 
@@ -84,7 +84,7 @@ Koishi-CE/
 | ansi_up | ^6.0.6 (dev) | logger(client) | ANSI 转义 → HTML | 6.0.6 | [新]（5→6 已升） |
 | d3-force | ^3.0.0 (dev) | insight | 关系图谱力学布局 | 3.0.0 | [新] |
 | monaco-editor（已移除） | — | explorer | 代码/文本编辑器 | — | [废] 2026-09-21 被 CodeMirror 6 取代（见 §4.10） |
-| codemirror + `@codemirror/*`（24 名） | ^6.x 线 (dev) | explorer | 编辑器内核 + 语言语法，清单见 §4.10 | 6.x | [新]（2026-09-21 整体取代 monaco-editor） |
+| codemirror + `@codemirror/*`（18 名） | ^6.x 线 (dev) | explorer | 编辑器内核 + 语言语法，清单见 §4.10 | 6.x | [新]（2026-09-21 整体取代 monaco-editor） |
 | lottie-web | ^5.13.0 (dev) | welcome | Lottie 动画（开屏描线） | 5.13.0 | [新]（welcome 插件新增） |
 | spark-md5 | ^3.0.2 (dev) | market | MD5（gravatar 头像） | 3.0.2 | [新] |
 
@@ -148,19 +148,19 @@ peer 声明用于下游 `bun add` 解析与防 Bun 自动装官方包，指向 C
 
 ---
 
-## 3. 新鲜度总览（81 名，registry 实测）
+## 3. 新鲜度总览（75 名，registry 实测）
 
 | 类别 | 数量 | 代表 |
 |---|---|---|
-| [新] 已是最新 | **62** | vite 8.3 / TS 7.0.2 / unocss 66 / echarts 6 / vue-router 5 / vue-i18n 11 / CodeMirror 6 全线 24 名 |
+| [新] 已是最新 | **56** | vite 8.3 / TS 7.0.2 / unocss 66 / echarts 6 / vue-router 5 / vue-i18n 11 / CodeMirror 6 全线 18 名 |
 | [缓] 落后 minor/patch | 13 | eslint、@types/node、element-plus 及 10 个 patch 漂移 |
 | [旧] 落后 major | **5** | minato、@cordisjs/plugin-{http,server}、@minatojs/sql-utils（4 个属冻结线）+ @vueuse 14→15（唯一真空间） |
 | [预] 最新为预发布 | 1 | cordis（4.0.0-rc.10，冻结线） |
 | [废] 弃用/死依赖 | **0** | monaco-editor 已随 §4.10 的编辑器替换移除，无其它存留 |
 
-对比初版（2026-08-27）：外部依赖 **99 → 81（-18%）**；[旧] **38 → 5**；[废] 4 → 0。减量主要来自死依赖清理、Node 生态 API 的 Bun 原生化替换与测试栈退役。
+对比初版（2026-08-27）：外部依赖 **99 → 75（-24%）**；[旧] **38 → 5**；[废] 4 → 0。减量主要来自死依赖清理、Node 生态 API 的 Bun 原生化替换与测试栈退役。
 
-**名数回升的单一来源**：§4.10 的编辑器替换（-1 +24）。CodeMirror 6 生态按「一个语言一个包」切分，24 个包里 17 个是单一语言语法；同期 explorer 前端产物由 13.55 MB 降到 1.10 MB、物理包数由 97 降到 29。**只有这一处需要把「依赖名数」与「实际代码量」两个口径分开看**，其余升降仍按名数口径解读。
+**名数回升的单一来源**：§4.10 的编辑器替换（-1 +18）。CodeMirror 6 生态按「一个语言一个包」切分，18 个包里 11 个是单一语言语法；同期 explorer 前端产物由 13.55 MB 降到 0.72 MB、物理包数由 97 降到 23。**只有这一处需要把「依赖名数」与「实际代码量」两个口径分开看**，其余升降仍按名数口径解读。
 
 注：`typescript` 在 web/client 的 ^5.0.0 声明源码零导入（§4.1），上表口径中其 root 侧别名形态已计入 [新]，此存疑项不重复计数。
 
@@ -180,12 +180,14 @@ peer 声明用于下游 `bun add` 解析与防 Bun 自动装官方包，指向 C
    - `valid` 与 `Bun.semver.satisfies(x, "*")` **不等价**：`"=1.2.3"` 前者 null / 后者 true，`"1.2.3-beta.1"` 前者有效 / 后者 false——`installer` 与 `snapshot` 的 `!valid(request) → invalid` 判定会静默走偏（假绿）。
    - `satisfies` 的第三参 options 被 Bun 忽略：`installer/index.ts` 的 `{ includePrerelease: true }` 实测无效（node-semver true / Bun false）。
    `compare` / `gt` 可由 `order` 平替，其余函数（`intersects` / `valid` / `prerelease` / `parse`）全无平替；依赖为单包零传递依赖，保留成本可忽略。
-8. **`bun-types` → `@types/bun` 已迁移**（2026-09-21，root / 脚手架模板 / koishi-scripts 白名单一并改）：先纠正常见误传——`bun-types` **并未被废弃**（npm 上无 `deprecated` 标记），`@types/bun@1.4.2` 的 `index.d.ts` 全文只有一行 `/// <reference types="bun-types" />`，且其唯一依赖就是 `bun-types@1.4.2`；断言「两者并存会引发全局命名空间污染」不成立，因为**类型内容按构造完全相同**。迁移的真实理由是**跟随 Bun 官方约定**：Bun docs 写 `bun add -d @types/bun` + `"types": ["bun"]`，本机 `bun init` 实测生成的也是 `@types/bun`（且 `node_modules` 里 `bun-types` 依旧在场，只是降为传递依赖）。迁移后类型检查与全部门禁实测无差异；副作用是 tsconfig 的 `types` 从 `"bun-types"` 改为 `"bun"`（`@types/*` 的隐式前缀），**已确认全仓各 tsconfig 均显式声明 `types`，`node_modules/@types/` 下的自动包含不会波及 client 侧**（`tsconfig.client.json` 为 `types: []`）。9. **explorer 路径过滤：`anymatch` → `picomatch` 直连**（2026-09-21）：原依赖 `anymatch@3.1.3` 实现是 CJS 而 d.ts 为 ESM 形态，nodenext 类型视图对 `default` 多包一层，迫使源码保留一处 `as unknown as` 双重断言（断言基线台账内的 R2 条目）。改为直连 `picomatch@4.0.7`（该版本本仓早已由 vite / tsdown / tinyglobby 等经传递依赖引入，显式声明等于零新增物理包）后：`anymatch` / `normalize-path` / 其嵌套的 `picomatch@2.3.2` 三包一并出仓，双重断言随之清零（基线 18 → 17）——这是比对 `micromatch` 后的选择，理由见下方。行为经「多模式 × 13 输入」矩阵实测与 anymatch 逐条一致（含 win32 反斜杠路径与 `**/.*` 对 dotfile 的忽略）；唯一已知语义差异是 `!` 前缀模式——anymatch 视作「纯排除」（`["!**/foo"]` 全 false），picomatch 视作取反（除 foo 外全 true），explorer 的 `ignored` 不宣传该写法、存量亦无依赖。另记一处坑：**picomatch 4 只在显式传入 options 时才注入平台检测**（`index.js` 的 `options &&` 守卫），不传 options 即按 posix 处理、win32 反斜杠路径全部漏配，故源码显式声明 `windows: process.platform === "win32"`，不依赖该注入行为。**为何不选 `micromatch`**：其匹配内核即 picomatch v2，对 explorer 的全部能力需求（braces 展开 / `capture` / `scan` / `makeRe`）无一用得上；依赖面却是 +5 物理包（braces / fill-range / to-regex-range + 自带 picomatch v2），且惯用入口 `isMatch` / `any` 每次调用都重新编译模式——落到 `traverse()` 的逐目录项热路径上会退化为 N 次正则编译，要保住「编译一次」只能用类型仅接受单个 `string` 的 `matcher()`，适配成本反高于现状。
-10. **explorer 编辑器：`monaco-editor` → CodeMirror 6**（2026-09-21）：动因是实测体积——monaco 打进 explorer 前端的产物为 **13.55 MB / 97 文件**，其中 `ts.worker` 6.91 MB、`css.worker` 1.07 MB、`html.worker` 0.74 MB、`json.worker` 0.43 MB（四个语言服务 worker 合计 **9.15 MB**）；而本插件自移植起就在运行期用 `setModeConfiguration` 把 css / json / typescript / html 的语言服务**全部关掉**、只留词法着色——即这 9.15 MB 属「付了钱不用」。且 `monaco-editor` 的 `.` 入口（`esm/vs/index.js`）会连带引入全部语言定义与四个服务注册模块，**仅改单处导入无法摘除**（试过只改 editor.ts 时体积纹丝不动；连 `client/index.vue` 的第二处导入一并换掉才降下来）。换 CM6 后同一构建为 **1.10 MB / 29 文件**（首屏静态可达 index.js 90 KB + 内核 chunk 314 KB + 35 KB + style.css 1.8 KB ≈ **441 KB**，其余 27 个语言 chunk 全部按需 `import()` 下载），语言覆盖从 monaco 时代事实上的「四种服务包 + 全套语言定义」转为 27 种语法（含 shell / TOML / Dockerfile / INI / Diff 等经 `@codemirror/legacy-modes` 包装的流式解析器）。
-    - **代价与权衡（名数口径变差的唯一来源，见 §3）**：声明的依赖名由 1 个（monaco-editor）涨到 24 个——CM6 生态按「一个语言一个包」切分；但**物理体量同时大幅下降**：monaco-editor 解包 97.9 MB 且携带 dompurify / marked 两个传递依赖，CM6 全线 24 包落在 `node_modules` 里另仅 **4.67 MB**（含 `@codemirror/view` 1.23 MB、`legacy-modes` 1.91 MB、`state` 0.43 MB），无 worker、无二进制。同能力下两个指标发生分离，本表保留名数口径并在此说明，避免后续读者误读为依赖膨胀。此外不再需要控制台侧为 monaco worker 做的根绝对路径兜底（兜底逻辑本身保留，见 `plugins/webui/console/src/node/assets.ts`）。
-    - **清单**（均为 `plugins/webui/explorer` 的 devDependencies，前端产物由宿主构建期打包）：内核 `codemirror` / `@codemirror/{state,view,commands,language}` / `@codemirror/theme-one-dark`（暗色 token 配色）/ `@codemirror/legacy-modes`（CM5 流式解析器）；语法 `@codemirror/lang-{javascript,json,html,xml,css,sass,less,markdown,yaml,python,sql,java,cpp,rust,go,php,vue}`。
+8. **`bun-types` → `@types/bun` 已迁移**（2026-09-21，root / 脚手架模板 / koishi-scripts 白名单一并改）：先纠正常见误传——`bun-types` **并未被废弃**（npm 上无 `deprecated` 标记），`@types/bun@1.4.2` 的 `index.d.ts` 全文只有一行 `/// <reference types="bun-types" />`，且其唯一依赖就是 `bun-types@1.4.2`；断言「两者并存会引发全局命名空间污染」不成立，因为**类型内容按构造完全相同**。迁移的真实理由是**跟随 Bun 官方约定**：Bun docs 写 `bun add -d @types/bun` + `"types": ["bun"]`，本机 `bun init` 实测生成的也是 `@types/bun`（且 `node_modules` 里 `bun-types` 依旧在场，只是降为传递依赖）。迁移后类型检查与全部门禁实测无差异；副作用是 tsconfig 的 `types` 从 `"bun-types"` 改为 `"bun"`（`@types/*` 的隐式前缀），**已确认全仓各 tsconfig 均显式声明 `types`，`node_modules/@types/` 下的自动包含不会波及 client 侧**（`tsconfig.client.json` 为 `types: []`）。
+9. **explorer 路径过滤：`anymatch` → `picomatch` 直连**（2026-09-21）：原依赖 `anymatch@3.1.3` 实现是 CJS 而 d.ts 为 ESM 形态，nodenext 类型视图对 `default` 多包一层，迫使源码保留一处 `as unknown as` 双重断言（断言基线台账内的 R2 条目）。改为直连 `picomatch@4.0.7`（该版本本仓早已由 vite / tsdown / tinyglobby 等经传递依赖引入，显式声明等于零新增物理包）后：`anymatch` / `normalize-path` / 其嵌套的 `picomatch@2.3.2` 三包一并出仓，双重断言随之清零（基线 18 → 17）——这是比对 `micromatch` 后的选择，理由见下方。行为经「多模式 × 13 输入」矩阵实测与 anymatch 逐条一致（含 win32 反斜杠路径与 `**/.*` 对 dotfile 的忽略）；唯一已知语义差异是 `!` 前缀模式——anymatch 视作「纯排除」（`["!**/foo"]` 全 false），picomatch 视作取反（除 foo 外全 true），explorer 的 `ignored` 不宣传该写法、存量亦无依赖。另记一处坑：**picomatch 4 只在显式传入 options 时才注入平台检测**（`index.js` 的 `options &&` 守卫），不传 options 即按 posix 处理、win32 反斜杠路径全部漏配，故源码显式声明 `windows: process.platform === "win32"`，不依赖该注入行为。**为何不选 `micromatch`**：其匹配内核即 picomatch v2，对 explorer 的全部能力需求（braces 展开 / `capture` / `scan` / `makeRe`）无一用得上；依赖面却是 +5 物理包（braces / fill-range / to-regex-range + 自带 picomatch v2），且惯用入口 `isMatch` / `any` 每次调用都重新编译模式——落到 `traverse()` 的逐目录项热路径上会退化为 N 次正则编译，要保住「编译一次」只能用类型仅接受单个 `string` 的 `matcher()`，适配成本反高于现状。
+10. **explorer 编辑器：`monaco-editor` → CodeMirror 6**（2026-09-21）：动因是实测体积——monaco 打进 explorer 前端的产物为 **13.55 MB / 97 文件**，其中 `ts.worker` 6.91 MB、`css.worker` 1.07 MB、`html.worker` 0.74 MB、`json.worker` 0.43 MB（四个语言服务 worker 合计 **9.15 MB**）；而本插件自移植起就在运行期用 `setModeConfiguration` 把 css / json / typescript / html 的语言服务**全部关掉**、只留词法着色——即这 9.15 MB 属「付了钱不用」。且 `monaco-editor` 的 `.` 入口（`esm/vs/index.js`）会连带引入全部语言定义与四个服务注册模块，**仅改单处导入无法摘除**（试过只改 editor.ts 时体积纹丝不动；连 `client/index.vue` 的第二处导入一并换掉才降下来）。换 CM6 后同一构建为 **0.72 MB / 23 文件**（首屏静态可达 index.js 89 KB + 内核 chunk 315 KB + 35 KB + style.css 1.8 KB ≈ **431 KB**，其余 21 个语言 chunk 全部按需 `import()` 下载），语言覆盖从 monaco 时代事实上的「四种服务包 + 全套语言定义」转为 **21 种语法**（含 shell / TOML / Dockerfile / INI / Diff 等经 `@codemirror/legacy-modes` 包装的流式解析器）。
+    - **代价与权衡（名数口径变差的唯一来源，见 §3）**：声明的依赖名由 1 个（monaco-editor）涨到 18 个——CM6 生态按「一个语言一个包」切分；但**物理体量同时大幅下降**：monaco-editor 解包 97.9 MB 且携带 dompurify / marked 两个传递依赖，CM6 全线 18 包落在 `node_modules` 里另仅约 **3 MB**（含 `@codemirror/view` 1.23 MB、`legacy-modes` 1.91 MB、`state` 0.43 MB），无 worker、无二进制。同能力下两个指标发生分离，本表保留名数口径并在此说明，避免后续读者误读为依赖膨胀。此外不再需要控制台侧为 monaco worker 做的根绝对路径兜底（兜底逻辑本身保留，见 `plugins/webui/console/src/node/assets.ts`）。
+    - **清单**（均为 `plugins/webui/explorer` 的 devDependencies，前端产物由宿主构建期打包）：内核 `codemirror` / `@codemirror/{state,view,commands,language}` / `@codemirror/theme-one-dark`（暗色 token 配色）/ `@codemirror/legacy-modes`（CM5 流式解析器）；语法 `@codemirror/lang-{javascript,json,html,xml,css,sass,less,markdown,yaml,sql,vue}`。
+    - **语言取舍：只收录 Koishi 生态真实会出现的类型**。Koishi 是纯 TS / JS 世界，后端语言（Python / Java / C-C++ / Rust / Go / PHP）**不可能出现在这个目录里**，初版一并列上的 6 种已子以剔除（连带 6 个依赖包）——保守目标（`languages.ts` 的 LANGUAGES 表）同时就是交付面，不存在的类型不会因为「反正按需加载」而免于付出声明与磁盘成本。删除只是删表项 + 删依赖，将来真需要时加回同理；`languages.test.ts` 已锁上这 8 个扩展名（含 `.c` / `.h`）必须回退纯文本。
     - **注意点**：`@codemirror/lang-vue` 仍在 0.x（0.1.3），其余均为 6.x 稳定线；语言的扩展名匹配与惰性加载集中在 `plugins/webui/explorer/client/languages.ts`，新增语言只需装包 + 在表内加一项（`load` 用动态 import，rolldown 自动切 chunk）；外观收敛为一组 `--cm-*` 变量（定义在 `client/editor.scss`，`theme-vanilla` 主题可覆写）。
-    - **行为差异（相对 monaco，已知且有意）**：① 不再向 `window` 挂全局 `monaco` 命名空间（仓库内无消费者）；② 不再有语言服务（补全 / 悬停 / 诊断 / 格式化）——monaco 时代本就在运行期关着，CM6 侧保留 `basicSetup` 自带的括号匹配、自动补全（词法级）、搜索、折叠、多光标等基础能力；③ 支持的语言由 monaco 的 80+ 种转为 27 种精选（清单见上，覆盖 Koishi 目录里真实会出现的文件类型）。
+    - **语言选取原则：只列 Koishi 目录里真会出现的类型**（Koishi 生态为纯 TS / JS 世界，后端语言不在考虑范围内）；**行为差异（相对 monaco，已知且有意）**：① 不再向 `window` 挂全局 `monaco` 命名空间（仓库内无消费者）；② 不再有语言服务（补全 / 悬停 / 诊断 / 格式化）——monaco 时代本就在运行期关着，CM6 侧保留 `basicSetup` 自带的括号匹配、自动补全（词法级）、搜索、折叠、多光标等基础能力；③ 支持的语言由 monaco 的 80+ 种转为 21 种精选（清单见上）。
 ---
 
 ## 5. package.json 之外的技术栈
@@ -208,4 +210,5 @@ peer 声明用于下游 `bun add` 解析与防 Bun 自动装官方包，指向 C
 4. 冻结线不是欠账：4 个 [旧] + 1 个 [预] 全部挂 Phase 5 重启条件，勿在线内单独升版。
 5. 本文档角色已从「立项前基线」转为「现势对账基线」；下一轮治理从 §4 起步，结构性升版须待 Phase 5 解冻后与 cordis 4 迁移合并进行。
 6. 2026-09-21 追加一次依赖收敛：explorer 的 `anymatch` 换为直连 `picomatch`（物理包净减 2、断言基线 18 → 17、行为实测等价），类型包 `@types/picomatch` 随主包计入，外部依赖名 57 → 58——本次为「同一能力换更少依赖 + 消断言」的净收益型替换，与 §4.7 的 `semver` 保留判据（换不动或换了更亏）互为对照。
-7. 2026-09-21 explorer 编辑器由 monaco 换为 CodeMirror 6（§4.10）：**产物 13.55 MB → 1.10 MB、首屏约 441 KB、文件数 97 → 29**，代价是外部依赖名 58 → 81（-1 +24，CM6 一语言一包的生态切分）与「少数语言」的覆盖收窄（80+ → 27）。这是本次快照里唯一一处「名数上升而体量下降」的改动，判据是前端产物体积与首屏负载（用户实际付出的字节），并已在 §3 / §4.10 标明口径分离；若后续仍要压名数，方向是把语言表按需裁剪（`languages.ts` 表内删项即可，无需改语义）。
+7. 2026-09-21 explorer 编辑器由 monaco 换为 CodeMirror 6（§4.10）：**产物 13.55 MB → 0.72 MB、首屏约 431 KB、文件数 97 → 23**，代价是外部依赖名 58 → 75（-1 +18，CM6 一语言一包的生态切分）与「少数语言」的覆盖收窄（80+ → 21 种，且只收 Koishi 生态真会出现的类型）。这是本次快照里唯一一处「名数上升而体量下降」的改动，判据是前端产物体积与首屏负载（用户实际付出的字节），并已在 §3 / §4.10 标明口径分离；若后续仍要压名数，方向是把语言表按需裁剪（`languages.ts` 表内删项即可，无需改语义）——本轮已按此裁掉 6 种后端语言。
+

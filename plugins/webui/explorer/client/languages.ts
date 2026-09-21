@@ -41,7 +41,9 @@ const legacy = (
 /**
  * 支持的语言表（顺序即匹配顺序）。
  *
- * 只列 Koishi 目录里真正可能出现的文件类型；未命中一律回退纯文本。
+ * 只列 Koishi 目录里真正会出现的文件类型——Koishi 生态是纯 TS / JS 世界，
+ * 后端语言（Python / Java / C-C++ / Rust / Go / PHP 等）不在考虑范围内，
+ * 列了反而徒增声明与体积。未命中一律回退纯文本。
  * 语言均取自官方维护的包，语义上与 monaco 的对应语言等价（这里要的
  * 只是词法着色，不需要语言服务）。
  */
@@ -148,55 +150,10 @@ const LANGUAGES: LanguageSpec[] = [
 			(await import("@codemirror/lang-yaml")).yaml(),
 	},
 	{
-		label: "Python",
-		extensions: ["py", "pyw", "pyi"],
-		load: async () =>
-			(await import("@codemirror/lang-python")).python(),
-	},
-	{
 		label: "SQL",
 		extensions: ["sql"],
 		load: async () =>
 			(await import("@codemirror/lang-sql")).sql(),
-	},
-	{
-		label: "Java",
-		extensions: ["java"],
-		load: async () =>
-			(await import("@codemirror/lang-java")).java(),
-	},
-	{
-		label: "C/C++",
-		extensions: [
-			"c",
-			"h",
-			"cc",
-			"cpp",
-			"cxx",
-			"hh",
-			"hpp",
-			"hxx",
-		],
-		load: async () =>
-			(await import("@codemirror/lang-cpp")).cpp(),
-	},
-	{
-		label: "Rust",
-		extensions: ["rs"],
-		load: async () =>
-			(await import("@codemirror/lang-rust")).rust(),
-	},
-	{
-		label: "Go",
-		extensions: ["go"],
-		load: async () =>
-			(await import("@codemirror/lang-go")).go(),
-	},
-	{
-		label: "PHP",
-		extensions: ["php"],
-		load: async () =>
-			(await import("@codemirror/lang-php")).php(),
 	},
 	{
 		label: "Vue",

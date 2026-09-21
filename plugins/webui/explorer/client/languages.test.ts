@@ -18,7 +18,6 @@ describe("编辑器语言解析（按文件名）", () => {
 		expect(labelOf("package.json")).toBe("JSON");
 		expect(labelOf("index.ts")).toBe("TypeScript");
 		expect(labelOf("app.vue")).toBe("Vue");
-		expect(labelOf("main.py")).toBe("Python");
 		expect(labelOf("init.sql")).toBe("SQL");
 		expect(labelOf("styles.scss")).toBe("SCSS");
 		expect(labelOf("docs.md")).toBe("Markdown");
@@ -44,9 +43,9 @@ describe("编辑器语言解析（按文件名）", () => {
 	});
 
 	it("只取 basename，两种路径分隔符都能处理", () => {
-		expect(labelOf("sub/dir/file.py")).toBe("Python");
+		expect(labelOf("sub/dir/file.sql")).toBe("SQL");
 		// win32 相对路径形态（explorer 的 filename 即此形态）
-		expect(labelOf("sub\\dir\\file.py")).toBe("Python");
+		expect(labelOf("sub\\dir\\file.sql")).toBe("SQL");
 		// 目录名里带点不影响扩展名判定
 		expect(labelOf("v1.2/notes.md")).toBe("Markdown");
 	});
@@ -67,5 +66,19 @@ describe("编辑器语言解析（按文件名）", () => {
 		expect(labelOf(".gitignore")).toBe(PLAIN_TEXT);
 		expect(labelOf("LICENSE")).toBe(PLAIN_TEXT);
 		expect(resolveLanguage("no-extension")).toBeUndefined();
+	});
+
+	it("后端语言不在支持范围（Koishi 生态为纯 TS/JS）", () => {
+		for (const name of [
+			"main.py",
+			"Main.java",
+			"main.go",
+			"main.rs",
+			"index.php",
+			"main.cpp",
+			"main.c",
+			"main.h",
+		])
+			expect(labelOf(name)).toBe(PLAIN_TEXT);
 	});
 });

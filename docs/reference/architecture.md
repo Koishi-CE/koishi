@@ -123,7 +123,7 @@ node 侧在 `src/`、Vue 侧在 `client/`（上游约定），`koishi.public: ["
 - **宿主控制台总装**：`packages/web/client/scripts/client.ts`——依次构建 app（unocss preset-mini）、拷贝 vue runtime、构建 vue-router / @vueuse 外部块、client（element-plus 单独 manualChunks），产物统一输出 `plugins/webui/console/dist`，并把 vue / vue-router / @vueuse / @koishi-ce/client 指向外部块文件（宿主只装一份）。
 - **单插件前端**：`packages/web/client/src/index.ts` 的 `build(root)`（CLI：`bun packages/web/client/src/bin.ts build <插件目录>`）。内置 `collectWorkspaceAliases()` 扫描根 workspaces glob 做显式映射——未被依赖的插件不在 node_modules 链接里，bundler 无法自行解析。
 - 插件自带构建脚本：`plugins/webui/analytics/build/client.ts`（fuck-echarts：echarts chunk 内 `Symbol` 重命名；`build()` 显式加载合并该文件名，vite 不会自动发现。explorer 的 monaco manualChunks 覆盖已删——rolldown 自动分包已实现其目标）。
-- **按需分包实例（explorer 编辑器）**：CodeMirror 6 的语言包由 `plugins/webui/explorer/client/languages.ts` 动态 `import()` 注册，rolldown 为每个语言切出独立 chunk（构建后 `dist/` 只有 29 个文件，首屏内核约 441 KB）；`index.js` 里的 `import()` 被 minify 成模板字符串形态（`import(`./dist-xxx.js`)`），校验产物所属可用「静态可达 chunk 之和」口径。
+- **按需分包实例（explorer 编辑器）**：CodeMirror 6 的语言包由 `plugins/webui/explorer/client/languages.ts` 动态 `import()` 注册，rolldown 为每个语言切出独立 chunk（构建后 `dist/` 只有 23 个文件，首屏内核约 431 KB）；`index.js` 里的 `import()` 被 minify 成模板字符串形态（`import(`./dist-xxx.js`)`），校验产物所属可用「静态可达 chunk 之和」口径。
 - `packages/web/components` 无构建（源码直出，被 console 打包器消费）。
 
 ### 类型检查体系
