@@ -60,15 +60,15 @@
         }
     },
     "devDependencies": {
-        "@koishi-ce/plugin-database-memory": "workspace:*",
         "@koishi-ce/client": "workspace:*",
+        "@koishi-ce/components": "workspace:*",
         "@koishi-ce/loader": "workspace:*",
         "@koishi-ce/plugin-config": "workspace:*",
-        "@koishi-ce/components": "workspace:*",
+        "@koishi-ce/plugin-database-memory": "workspace:*",
+        "@noble/hashes": "^2.4.0",
         "@types/semver": "^7.5.8",
         "@vueuse/core": "^15.0.0",
         "cosmokit": "^1.8.1",
-        "spark-md5": "^3.0.2",
         "vue": "^3.5.12",
         "vue-i18n": "^11.4.10",
         "vue-router": "^5.2.0"

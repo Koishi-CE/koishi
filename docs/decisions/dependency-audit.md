@@ -6,7 +6,7 @@
 > 运行环境：Bun 1.4.2（`packageManager` 钉定）· Node v24（辅：TS7 编译器与 vue-tsc 影子闸门宿主）· 包管理：Bun workspaces（`bun.lock`）
 > 范围：仓库内全部 **53 个 package.json**（**52 个 workspace 包** + 根）· **75 个外部依赖名**（不含 `workspace:*` 与 `@koishi-ce/*` 内部 peer 互引，后者单列于 §2.G）
 >
-> 修订：2026-09-21 —— ① admin 前端防抖改用既有 `@vueuse/core`（`useDebounceFn`），移除 `throttle-debounce`，外部依赖名 58 → 57；② explorer 路径过滤由 `anymatch` 换为直连 `picomatch` 4（版本本仓已有，显式声明后消除 CJS/ESM interop 双重断言，见 §4.9），并随主包新增类型包 `@types/picomatch`，外部依赖名 57 → 58；③ explorer 编辑器由 `monaco-editor` 整体换为 CodeMirror 6（前端产物 13.55 MB → 0.72 MB，见 §4.10），移除 1 名、新增 18 名；随即又剔除 6 种 Koishi 生态不会出现的语言（Python / Java / C-C++ / Rust / Go / PHP）连带其依赖，最终 58 → 75；④ `@vueuse/core` 由 ^14.4.0 升到 ^15.0.0（§4.11：全仓唯一非冻结 major 落地，名数不变、逐 API 核对无破例），§2.B / §3 的状态随之由 [旧] 转 [新]。§2 / §3 的包名与计数已按 ③ 对账；其余内容仍为 2026-09-19 快照。
+> 修订：2026-09-21 —— ① admin 前端防抖改用既有 `@vueuse/core`（`useDebounceFn`），移除 `throttle-debounce`，外部依赖名 58 → 57；② explorer 路径过滤由 `anymatch` 换为直连 `picomatch` 4（版本本仓已有，显式声明后消除 CJS/ESM interop 双重断言，见 §4.9），并随主包新增类型包 `@types/picomatch`，外部依赖名 57 → 58；③ explorer 编辑器由 `monaco-editor` 整体换为 CodeMirror 6（前端产物 13.55 MB → 0.72 MB，见 §4.10），移除 1 名、新增 18 名；随即又剔除 6 种 Koishi 生态不会出现的语言（Python / Java / C-C++ / Rust / Go / PHP）连带其依赖，最终 58 → 75；④ `@vueuse/core` 由 ^14.4.0 升到 ^15.0.0（§4.11：全仓唯一非冻结 major 落地，名数不变、逐 API 核对无破例），§2.B / §3 的状态随之由 [旧] 转 [新]；⑤ market 的 gravatar 摘要由 `spark-md5` 换为 `@noble/hashes` 的同步 MD5（见 §4.12：名数 1 换 1 不变，market 前端产物 -4.0 KB，手写的 `spark-md5.d.ts` 环境声明出仓；**刻意不换 SHA-256**——实测镜像 cravatar.cn 只认 MD5）。§2 / §3 的包名与计数已按 ③⑤ 对账；其余内容仍为 2026-09-19 快照。
 
 状态图例：[新] 当前最新 · [缓] 落后(minor/patch) · [旧] 落后(major) · [预] 最新版本为预发布 · [废] 已弃用或未使用
 
@@ -86,7 +86,7 @@ Koishi-CE/
 | monaco-editor（已移除） | — | explorer | 代码/文本编辑器 | — | [废] 2026-09-21 被 CodeMirror 6 取代（见 §4.10） |
 | codemirror + `@codemirror/*`（18 名） | ^6.x 线 (dev) | explorer | 编辑器内核 + 语言语法，清单见 §4.10 | 6.x | [新]（2026-09-21 整体取代 monaco-editor） |
 | lottie-web | ^5.13.0 (dev) | welcome | Lottie 动画（开屏描线） | 5.13.0 | [新]（welcome 插件新增） |
-| spark-md5 | ^3.0.2 (dev) | market | MD5（gravatar 头像） | 3.0.2 | [新] |
+| @noble/hashes | ^2.4.0 (dev) | market | MD5（gravatar 头像摘要，`legacy.js` 的同步实现） | 2.4.0 | [新]（2026-09-21 由 spark-md5 换入，见 §4.12） |
 
 ### C. 构建与打包工具链
 
@@ -196,6 +196,14 @@ peer 声明用于下游 `bun add` 解析与防 Bun 自动装官方包，指向 C
     - **入口形态不变**仍为 `dist/index.js`（v14 起如此），宿主共享块 `vueuse.js` 的重新打包路径（`packages/web/client/scripts/client.ts`）无需改动；peer 仍为 `vue ^3.5.0`，与仓内 `vue ^3.5.42` 兼容。
     - **`element-plus` 的嵌套副本**：element-plus 2.14.5 对 `@vueuse/core` 是**精确锁 `14.4.0`**（非 range，且其上游尚未适配 15），故 `bun.lock` 新增 `element-plus/@vueuse/core@14.4.0` 嵌套项、`node_modules` 多出一份 14.4.0 副本（`@satorijs/components-vue` / `schemastery-vue` 的 peer 槽同理，peer range 宽故无约束冲突）。**运行时不受影响**：宿主构建对 `@vueuse/core` 既有硬别名（`packages/web/client/src/index.ts` 的 `alias` → `${root}/vueuse.js`）又有 `dedupe`，element-plus 内部对 vueuse 的调用（`useEventListener` / `useResizeObserver` / `useTimeoutFn` / `useThrottleFn` / `useElementBounding` / `clamp` / `refDebounced` 等）在浏览器里一律走宿主共享块的 15 版实现。**受影响面已逐条核对**：其中唯一躺在破例点上的 `useThrottleFn`，element-plus 的两处调用（`use-backtop` 的滚动监听、`image` 的懒加载）都**显式传了第三参 `true`**（trailing），故默认值翻转对它们无影响；其余符号在 15 全部保留。
     - **验证**：`bun run check` 八段全绿（TS7 双 project、vue-tsc 影子基线、断言基线均无新增）、`bun run build` 无错、`bun test` 1009 通过 / 2 失败——两个失败均为 `apps/koishi-scripts` 的 clone 非交互用例，其断言前提是「bun test 的 stdin 恒非 TTY」（`clone.ts` 的 `ask()` 直判 `process.stdin.isTTY`），本机终端为伪终端故实际落进 readline 等待；以 `< NUL` 重定向 stdin 复跑该文件 19/19 通过，与本次改动无交集。宿主前端重新构建后 `vueuse.js`（131.31 kB）与 insight 插件前端均正常产出。
+12. **market 的 gravatar 摘要：`spark-md5` → `@noble/hashes`（同步 MD5）**（2026-09-21）：动因是包体卫生——`spark-md5` 是 2018 年后不再发布的 UMD 包、**不带类型**（仓内长期靠手写的 `plugins/webui/market/client/spark-md5.d.ts` 环境声明兜底），而 `@noble/hashes` 零依赖、原生 TS + ESM、无 worker 无二进制，且本仓早已因 `@paralleldrive/cuid2` 把它带在依赖树里（显式声明属「就地转正」）。
+    - **刻意不换 SHA-256（本条的实证核心）**：gravatar 官方推荐 SHA-256，实测 `https://s.gravatar.com/avatar/<hash>.png?d=404` 对同一邮箱（`shigma10826@gmail.com`）的 md5 / sha256 摘要**均返回 200 且同为 4912 B 的同一张头像**——官方侧确实双支持。但**镜像侧不一定**：`https://cravatar.cn`（正是 `apps/koishi-create/src/template/env` 里 `GRAVATAR_MIRROR` 的默认值）对同一邮箱 `md5 → 200` / `sha256 → 404`，三次重跑稳定复现。换成 SHA-256 会让默认镜像下的头像**全部静默回落默认图**（`d=mp` 兜底不会报错），故维持 MD5。另一个保留同步实现的原因：`crypto.subtle` 只在安全上下文存在，局域网 HTTP 下为 `undefined`，而 noble 的 md5 是纯 JS 同步实现，正合该约束（这也是不选「异步 WebCrypto 换算法」的原因）。
+    - **实现**：`import { md5 } from "@noble/hashes/legacy.js"` + `bytesToHex(md5(utf8ToBytes(email.toLowerCase())))`（**noble 2.x 的子路径必须带 `.js`**；`sha2.js` 才是 sha256，`legacy.js` 收纳 md5 / sha1 / ripemd160）。语义与 `spark-md5` 的 `hash()` 相同：UTF-8 编码后取小写 hex。
+    - **等价性验证**：对「空串 / ASCII / 大写邮箱 / 非 ASCII 域名 / 代理对 emoji / 1000 字符长串 / 首尾空格」等 10 组输入逐条比对，`spark-md5` 与 noble 的 md5 输出**完全一致**；再把新实现以 `bun build --target=browser --format=esm` 打成**交付形态**（而非仅源码级 import）后复跑同一矩阵，仍逐条一致——后者是刻意补的环节，避免「源码看着对、打包后不对」的假绿。
+    - **产物**：market 前端 `dist/index.js` **172,662 → 168,650 B（-4,012 B，-2.3%）**，产物中已无 `SparkMD5` 字样（`style.css` 24,811 B 不变）；noble 的 md5 路径单独打成 browser/ESM/minify 为 **4.84 KB**（未压缩 8.94 KB，含 `legacy.js` / `_md.js` / `utils.js` 共 5 个模块）。
+    - **依赖面**：声明名数 1 换 1（不变）；物理包方面 `@noble/hashes@2.4.0` 顶替原先 hoist 的 `1.8.0`，`@paralleldrive/cuid2` 保留其嵌套 `1.8.0`。手写的 `spark-md5.d.ts` 环境声明随包删除（类型由包自带），仓内**再无任何声明依赖 `spark-md5`**。声明位置仍在 `plugins/webui/market` 的 devDependencies（前端产物由宿主构建期打包，与 `vue` / `@vueuse/core` 同口径）。
+    - **验证**：`bun run check` 八段全绿（断言基线 17 处无变化）、`bun run build` 无错、`bun run fallow` 无问题、`bun test` 1009 通过 / 2 失败（仍是 koishi-scripts clone 非交互用例的本机 TTY 问题，`< NUL` 复跑 19/19 通过）。market 前端重新构建产出正常。
+13. **本条与 §4.7 / §4.9 / §4.10 的关系**：四条替换型收敛的判据一致——**同一能力下换更少/更小/更可维护的依赖，换不动或换了更亏则保留**。§4.7 的 `semver` 属「换不动」（Bun.semver 语义不覆盖）；§4.9 的 `picomatch` 与 §4.12 的 `@noble/hashes` 属「换得动且净收益」（前者减物理包 + 消断言，后者去 UMD 包 + 去手写声明 + 减产物）；§4.10 的 CodeMirror 属「名数上升而体量下降」（口径分离，见 §3）。
 ---
 
 ## 5. package.json 之外的技术栈
@@ -220,4 +228,5 @@ peer 声明用于下游 `bun add` 解析与防 Bun 自动装官方包，指向 C
 6. 2026-09-21 追加一次依赖收敛：explorer 的 `anymatch` 换为直连 `picomatch`（物理包净减 2、断言基线 18 → 17、行为实测等价），类型包 `@types/picomatch` 随主包计入，外部依赖名 57 → 58——本次为「同一能力换更少依赖 + 消断言」的净收益型替换，与 §4.7 的 `semver` 保留判据（换不动或换了更亏）互为对照。
 7. 2026-09-21 explorer 编辑器由 monaco 换为 CodeMirror 6（§4.10）：**产物 13.55 MB → 0.72 MB、首屏约 431 KB、文件数 97 → 23**，代价是外部依赖名 58 → 75（-1 +18，CM6 一语言一包的生态切分）与「少数语言」的覆盖收窄（80+ → 21 种，且只收 Koishi 生态真会出现的类型）。这是本次快照里唯一一处「名数上升而体量下降」的改动，判据是前端产物体积与首屏负载（用户实际付出的字节），并已在 §3 / §4.10 标明口径分离；若后续仍要压名数，方向是把语言表按需裁剪（`languages.ts` 表内删项即可，无需改语义）——本轮已按此裁掉 6 种后端语言。
 8. 2026-09-21 `@vueuse/core` 14 → 15（§4.11）：**非冻结 major 就此清零**（[旧] 5 → 4，余下 4 项全属 cordis 3.x 内洽冻结线），外部依赖名数不变（75）。全部破例点中只有 `useThrottleFn` 的 `trailing` 默认值翻转与本仓有交集，而本仓该调用显式传参故行为等价；被移除的 deprecated timer options 全落在未使用的 composable 上。这是本轮唯一一次「不做替换、只跟进版本」的纯升版动作，与 §4.7 / §4.9 的替换型收敛（换不动则保留、换得动则换更少）共同构成依赖面的三种处置口径。
+9. 2026-09-21 market 的 gravatar 摘要由 `spark-md5` 换为 `@noble/hashes` 的同步 MD5（§4.12）：名数 1 换 1（75 不变）、market 前端产物 **-4,012 B**、手写的 `spark-md5.d.ts` 环境声明出仓。**关键结论是「不换 SHA-256」这个否定判断**——gravatar 官方双支持但镜像不保证，实测默认镜像 cravatar.cn 的 sha256 摘要 404，换算法等于在默认配置下静默丢头像；等价性以 10 组输入的源码级 + 打包后端到端双重复核，避免假绿。
 

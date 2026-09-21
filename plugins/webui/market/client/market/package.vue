@@ -103,7 +103,11 @@
 <script lang="ts" setup>
 import { useI18nText } from "@koishi-ce/components";
 import type { SearchObject } from "@koishi-ce/registry";
-import * as md5 from "spark-md5";
+import { md5 } from "@noble/hashes/legacy.js";
+import {
+	bytesToHex,
+	utf8ToBytes,
+} from "@noble/hashes/utils.js";
 import { computed, inject, reactive } from "vue";
 import {
 	badges,
@@ -169,11 +173,15 @@ const heartStyle = computed(() => {
 // 头像加载失败后以类目色首字母占位，避免裂图
 const failedAvatars = reactive(new Set<string>());
 
+// gravatar 摘要在浏览器里同步计算：crypto.subtle 在局域网 HTTP 下为 undefined，
+// 而多数镜像（如 create-koishi 模板默认的 cravatar.cn）只认 MD5 不认 SHA-256
 function getAvatar(email: string) {
 	return (
 		(props.gravatar || "https://s.gravatar.com") +
 		"/avatar/" +
-		(email ? md5.hash(email.toLowerCase()) : "") +
+		(email
+			? bytesToHex(md5(utf8ToBytes(email.toLowerCase())))
+			: "") +
 		".png?d=mp"
 	);
 }
@@ -481,3 +489,4 @@ function timeAgo(time: string) {
 }
 
 </style>
+
