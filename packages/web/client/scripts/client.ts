@@ -187,8 +187,8 @@ export default async function () {
 				outDir: dist,
 				emptyOutDir: false,
 				rollupOptions: {
-					// @vueuse/core v14 的 ESM 入口位于 dist/index.js
-					// （v11 时代是包根的 index.mjs）
+					// @vueuse/core v14 起的 ESM 入口位于 dist/index.js
+					// （v11 时代是包根的 index.mjs，v15 沿用 dist 形态）
 					input: {
 						vueuse: `${findModulePath("@vueuse/core")}/dist/index.js`,
 					},

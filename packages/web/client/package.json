@@ -51,7 +51,7 @@
 		"@koishi-ce/components": "workspace:*",
 		"@satorijs/protocol": "^1.7.0",
 		"@vitejs/plugin-vue": "^6.0.8",
-		"@vueuse/core": "^14.4.0",
+		"@vueuse/core": "^15.0.0",
 		"cordis": "^3.18.1",
 		"cosmokit": "^1.8.1",
 		"element-plus": "^2.14.5",

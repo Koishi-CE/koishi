@@ -6,7 +6,7 @@
 > 运行环境：Bun 1.4.2（`packageManager` 钉定）· Node v24（辅：TS7 编译器与 vue-tsc 影子闸门宿主）· 包管理：Bun workspaces（`bun.lock`）
 > 范围：仓库内全部 **53 个 package.json**（**52 个 workspace 包** + 根）· **75 个外部依赖名**（不含 `workspace:*` 与 `@koishi-ce/*` 内部 peer 互引，后者单列于 §2.G）
 >
-> 修订：2026-09-21 —— ① admin 前端防抖改用既有 `@vueuse/core`（`useDebounceFn`），移除 `throttle-debounce`，外部依赖名 58 → 57；② explorer 路径过滤由 `anymatch` 换为直连 `picomatch` 4（版本本仓已有，显式声明后消除 CJS/ESM interop 双重断言，见 §4.9），并随主包新增类型包 `@types/picomatch`，外部依赖名 57 → 58；③ explorer 编辑器由 `monaco-editor` 整体换为 CodeMirror 6（前端产物 13.55 MB → 0.72 MB，见 §4.10），移除 1 名、新增 18 名；随即又剔除 6 种 Koishi 生态不会出现的语言（Python / Java / C-C++ / Rust / Go / PHP）连带其依赖，最终 58 → 75。§2 / §3 的包名与计数已按 ③ 对账；其余内容仍为 2026-09-19 快照。
+> 修订：2026-09-21 —— ① admin 前端防抖改用既有 `@vueuse/core`（`useDebounceFn`），移除 `throttle-debounce`，外部依赖名 58 → 57；② explorer 路径过滤由 `anymatch` 换为直连 `picomatch` 4（版本本仓已有，显式声明后消除 CJS/ESM interop 双重断言，见 §4.9），并随主包新增类型包 `@types/picomatch`，外部依赖名 57 → 58；③ explorer 编辑器由 `monaco-editor` 整体换为 CodeMirror 6（前端产物 13.55 MB → 0.72 MB，见 §4.10），移除 1 名、新增 18 名；随即又剔除 6 种 Koishi 生态不会出现的语言（Python / Java / C-C++ / Rust / Go / PHP）连带其依赖，最终 58 → 75；④ `@vueuse/core` 由 ^14.4.0 升到 ^15.0.0（§4.11：全仓唯一非冻结 major 落地，名数不变、逐 API 核对无破例），§2.B / §3 的状态随之由 [旧] 转 [新]。§2 / §3 的包名与计数已按 ③ 对账；其余内容仍为 2026-09-19 快照。
 
 状态图例：[新] 当前最新 · [缓] 落后(minor/patch) · [旧] 落后(major) · [预] 最新版本为预发布 · [废] 已弃用或未使用
 
@@ -74,7 +74,7 @@ Koishi-CE/
 | vue | ^3.5.42 / peer ^3 / dev ^3.5.12 | client + components + 5 插件(dev) | UI 框架 | 3.5.43 | [缓] patch（range 三形态待统一） |
 | vue-router | ^5.2.0 | client + 4 插件(dev) | 控制台路由 | 5.3.1 | [新]（4→5 已升） |
 | vue-i18n | ^11.4.10 | client + market(dev) | 界面国际化 | 11.4.12 | [缓] patch（9→11 已升） |
-| @vueuse/core | ^14.4.0 | client + 4 插件(dev) | Vue 组合式工具集 | 15.0.0 | [旧] major（全仓唯一非冻结升版空间） |
+| @vueuse/core | ^15.0.0 | client + 4 插件(dev) | Vue 组合式工具集 | 15.0.0 | [新]（14→15 已升，见 §4.11） |
 | element-plus | ^2.14.5 | client + config / explorer / locales | UI 组件库 | 2.14.6 | [缓] patch（2.7.7 精确锁已解锁） |
 | schemastery-vue | ^7.3.15 | components | 配置 Schema → 表单渲染 | 7.3.15 | [新] |
 | marked-vue | ^1.3.0 | client | Markdown 渲染 | 1.3.0 | [新] |
@@ -152,13 +152,13 @@ peer 声明用于下游 `bun add` 解析与防 Bun 自动装官方包，指向 C
 
 | 类别 | 数量 | 代表 |
 |---|---|---|
-| [新] 已是最新 | **56** | vite 8.3 / TS 7.0.2 / unocss 66 / echarts 6 / vue-router 5 / vue-i18n 11 / CodeMirror 6 全线 18 名 |
+| [新] 已是最新 | **57** | vite 8.3 / TS 7.0.2 / unocss 66 / echarts 6 / vue-router 5 / vue-i18n 11 / @vueuse 15 / CodeMirror 6 全线 18 名 |
 | [缓] 落后 minor/patch | 13 | eslint、@types/node、element-plus 及 10 个 patch 漂移 |
-| [旧] 落后 major | **5** | minato、@cordisjs/plugin-{http,server}、@minatojs/sql-utils（4 个属冻结线）+ @vueuse 14→15（唯一真空间） |
+| [旧] 落后 major | **4** | minato、@cordisjs/plugin-{http,server}、@minatojs/sql-utils（全属冻结线；@vueuse 14→15 已于 2026-09-21 升版转 [新]，见 §4.11） |
 | [预] 最新为预发布 | 1 | cordis（4.0.0-rc.10，冻结线） |
 | [废] 弃用/死依赖 | **0** | monaco-editor 已随 §4.10 的编辑器替换移除，无其它存留 |
 
-对比初版（2026-08-27）：外部依赖 **99 → 75（-24%）**；[旧] **38 → 5**；[废] 4 → 0。减量主要来自死依赖清理、Node 生态 API 的 Bun 原生化替换与测试栈退役。
+对比初版（2026-08-27）：外部依赖 **99 → 75（-24%）**；[旧] **38 → 4**；[废] 4 → 0。减量主要来自死依赖清理、Node 生态 API 的 Bun 原生化替换与测试栈退役。
 
 **名数回升的单一来源**：§4.10 的编辑器替换（-1 +18）。CodeMirror 6 生态按「一个语言一个包」切分，18 个包里 11 个是单一语言语法；同期 explorer 前端产物由 13.55 MB 降到 0.72 MB、物理包数由 97 降到 23。**只有这一处需要把「依赖名数」与「实际代码量」两个口径分开看**，其余升降仍按名数口径解读。
 
@@ -188,6 +188,14 @@ peer 声明用于下游 `bun add` 解析与防 Bun 自动装官方包，指向 C
     - **语言取舍：只收录 Koishi 生态真实会出现的类型**。Koishi 是纯 TS / JS 世界，后端语言（Python / Java / C-C++ / Rust / Go / PHP）**不可能出现在这个目录里**，初版一并列上的 6 种已子以剔除（连带 6 个依赖包）——保守目标（`languages.ts` 的 LANGUAGES 表）同时就是交付面，不存在的类型不会因为「反正按需加载」而免于付出声明与磁盘成本。删除只是删表项 + 删依赖，将来真需要时加回同理；`languages.test.ts` 已锁上这 8 个扩展名（含 `.c` / `.h`）必须回退纯文本。
     - **注意点**：`@codemirror/lang-vue` 仍在 0.x（0.1.3），其余均为 6.x 稳定线；语言的扩展名匹配与惰性加载集中在 `plugins/webui/explorer/client/languages.ts`，新增语言只需装包 + 在表内加一项（`load` 用动态 import，rolldown 自动切 chunk）；外观收敛为一组 `--cm-*` 变量（定义在 `client/editor.scss`，`theme-vanilla` 主题可覆写）。
     - **语言选取原则：只列 Koishi 目录里真会出现的类型**（Koishi 生态为纯 TS / JS 世界，后端语言不在考虑范围内）；**行为差异（相对 monaco，已知且有意）**：① 不再向 `window` 挂全局 `monaco` 命名空间（仓库内无消费者）；② 不再有语言服务（补全 / 悬停 / 诊断 / 格式化）——monaco 时代本就在运行期关着，CM6 侧保留 `basicSetup` 自带的括号匹配、自动补全（词法级）、搜索、折叠、多光标等基础能力；③ 支持的语言由 monaco 的 80+ 种转为 21 种精选（清单见上）。
+11. **`@vueuse/core` 14 → 15**（2026-09-21）：全仓唯一一处非冻结线 major 升版，声明面 5 处（`packages/web/client` 为 dependencies，admin / explorer / insight / market 四插件为 devDependencies）由 `^14.4.0` 统一到 `^15.0.0`。升版前逐条核对上游 v15.0.0 破例点与本仓实际用量的交集：
+    - **本仓用到的符号共 13 个**：`useWindowSize` / `useEventListener` / `usePreferredDark` / `useResizeObserver` / `useLocalStorage` / `RemovableRef`（仅类型）/ `useDebounceFn` / `watchDebounced` / `watchThrottled` / `useTimeoutFn` / `onKeyStroke` / `useElementSize` / `useThrottleFn`——15 的 `dist/index.d.ts` 全部仍在（其中 `useDebounceFn` / `watchDebounced` / `watchThrottled` / `useTimeoutFn` / `useThrottleFn` 经 `export * from "@vueuse/shared"` 暴露，与 14 同机制），零删除、零改名。
+    - **`useThrottleFn` 的 `trailing` 默认值由 false 改为 true**——这是唯一与本仓有交集的破例点（`insight` 的 `watchThrottled` 构建在其上），但该调用**显式传了 `trailing: true`**（`plugins/webui/insight/client/index.vue`），行为与 14 时代逐字等价。
+    - **移除的 deprecated timer options**（`interval` / `immediate` / `updateInterval` / `immediateCallback`）只作用于 `useCountdown` / `useElementByPoint` / `useMemory` / `useNow` / `useTimeAgo(Intl)` / `useTimestamp` / `useVibrate` / `useWebSocket` 八个本仓未使用的 composable；`useTimeoutFn` 的 `immediate`（market 慢加载提示在用）不在移除清单内。
+    - **Drop `templateRef`** 与 **Drop Node 20** 两项无交集（前者本仓未用，后者运行时为 Bun / Node 24）。
+    - **入口形态不变**仍为 `dist/index.js`（v14 起如此），宿主共享块 `vueuse.js` 的重新打包路径（`packages/web/client/scripts/client.ts`）无需改动；peer 仍为 `vue ^3.5.0`，与仓内 `vue ^3.5.42` 兼容。
+    - **`element-plus` 的嵌套副本**：element-plus 2.14.5 对 `@vueuse/core` 是**精确锁 `14.4.0`**（非 range，且其上游尚未适配 15），故 `bun.lock` 新增 `element-plus/@vueuse/core@14.4.0` 嵌套项、`node_modules` 多出一份 14.4.0 副本（`@satorijs/components-vue` / `schemastery-vue` 的 peer 槽同理，peer range 宽故无约束冲突）。**运行时不受影响**：宿主构建对 `@vueuse/core` 既有硬别名（`packages/web/client/src/index.ts` 的 `alias` → `${root}/vueuse.js`）又有 `dedupe`，element-plus 内部对 vueuse 的调用（`useEventListener` / `useResizeObserver` / `useTimeoutFn` / `useThrottleFn` / `useElementBounding` / `clamp` / `refDebounced` 等）在浏览器里一律走宿主共享块的 15 版实现。**受影响面已逐条核对**：其中唯一躺在破例点上的 `useThrottleFn`，element-plus 的两处调用（`use-backtop` 的滚动监听、`image` 的懒加载）都**显式传了第三参 `true`**（trailing），故默认值翻转对它们无影响；其余符号在 15 全部保留。
+    - **验证**：`bun run check` 八段全绿（TS7 双 project、vue-tsc 影子基线、断言基线均无新增）、`bun run build` 无错、`bun test` 1009 通过 / 2 失败——两个失败均为 `apps/koishi-scripts` 的 clone 非交互用例，其断言前提是「bun test 的 stdin 恒非 TTY」（`clone.ts` 的 `ask()` 直判 `process.stdin.isTTY`），本机终端为伪终端故实际落进 readline 等待；以 `< NUL` 重定向 stdin 复跑该文件 19/19 通过，与本次改动无交集。宿主前端重新构建后 `vueuse.js`（131.31 kB）与 insight 插件前端均正常产出。
 ---
 
 ## 5. package.json 之外的技术栈
@@ -205,10 +213,11 @@ peer 声明用于下游 `bun add` 解析与防 Bun 自动装官方包，指向 C
 ## 6. 结论摘要
 
 1. 初版审计确立的两世界格局未变，但力量对比已逆转：**独立工具链从落后主流 2~3 年追平**（TS7 / vite 8 / unocss 66 / echarts 6 / vue-i18n 11 / vue-router 5 / element-plus 2.14 / monaco 0.56），cordis 生态运行时则确认长期冻结在 3.x 内洽线。
-2. 外部依赖 99 → 58、[旧] 38 → 5、[废] 4 → 0：升级计划 Phase 0-4 的清理、原生化、替换目标全部达成。
-3. 剩余可动空间小而集中：@vueuse 14→15（唯一非冻结 major）、13 个 minor/patch 随手更、§4 的声明卫生项（死依赖存疑、`vue` 一组 range 漂移；`semver` 两形态已于 2026-09-21 统一）。
-4. 冻结线不是欠账：4 个 [旧] + 1 个 [预] 全部挂 Phase 5 重启条件，勿在线内单独升版。
+2. 外部依赖 99 → 75、[旧] 38 → 4、[废] 4 → 0：升级计划 Phase 0-4 的清理、原生化、替换目标全部达成。
+3. 剩余可动空间已收窄到「非结构性」层：非冻结 major 清零（@vueuse 14→15 已于 2026-09-21 落地，见 §4.11），剩下 13 个 minor/patch 随手更与 §4 的声明卫生项（死依赖存疑、`vue` 一组 range 漂移；`semver` 两形态已于 2026-09-21 统一）。
+4. 冻结线不是欠账：剩余的 4 个 [旧] + 1 个 [预] 全部挂 Phase 5 重启条件，勿在线内单独升版。
 5. 本文档角色已从「立项前基线」转为「现势对账基线」；下一轮治理从 §4 起步，结构性升版须待 Phase 5 解冻后与 cordis 4 迁移合并进行。
 6. 2026-09-21 追加一次依赖收敛：explorer 的 `anymatch` 换为直连 `picomatch`（物理包净减 2、断言基线 18 → 17、行为实测等价），类型包 `@types/picomatch` 随主包计入，外部依赖名 57 → 58——本次为「同一能力换更少依赖 + 消断言」的净收益型替换，与 §4.7 的 `semver` 保留判据（换不动或换了更亏）互为对照。
 7. 2026-09-21 explorer 编辑器由 monaco 换为 CodeMirror 6（§4.10）：**产物 13.55 MB → 0.72 MB、首屏约 431 KB、文件数 97 → 23**，代价是外部依赖名 58 → 75（-1 +18，CM6 一语言一包的生态切分）与「少数语言」的覆盖收窄（80+ → 21 种，且只收 Koishi 生态真会出现的类型）。这是本次快照里唯一一处「名数上升而体量下降」的改动，判据是前端产物体积与首屏负载（用户实际付出的字节），并已在 §3 / §4.10 标明口径分离；若后续仍要压名数，方向是把语言表按需裁剪（`languages.ts` 表内删项即可，无需改语义）——本轮已按此裁掉 6 种后端语言。
+8. 2026-09-21 `@vueuse/core` 14 → 15（§4.11）：**非冻结 major 就此清零**（[旧] 5 → 4，余下 4 项全属 cordis 3.x 内洽冻结线），外部依赖名数不变（75）。全部破例点中只有 `useThrottleFn` 的 `trailing` 默认值翻转与本仓有交集，而本仓该调用显式传参故行为等价；被移除的 deprecated timer options 全落在未使用的 composable 上。这是本轮唯一一次「不做替换、只跟进版本」的纯升版动作，与 §4.7 / §4.9 的替换型收敛（换不动则保留、换得动则换更少）共同构成依赖面的三种处置口径。
 

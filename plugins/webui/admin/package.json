@@ -67,7 +67,7 @@
 		"@koishi-ce/plugin-locales": "workspace:*",
 		"@koishi-ce/plugin-mock": "workspace:*",
 		"@koishi-ce/plugin-database-memory": "workspace:*",
-		"@vueuse/core": "^14.4.0"
+		"@vueuse/core": "^15.0.0"
 	},
 	"exports": {
 		".": {
