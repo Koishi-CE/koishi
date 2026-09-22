@@ -18,7 +18,7 @@ import {
 	rmSync,
 	writeFileSync,
 } from "node:fs";
-import { homedir, tmpdir } from "node:os";
+import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { tarPack } from "./tar-pack.ts";
 
@@ -29,7 +29,7 @@ import { tarPack } from "./tar-pack.ts";
  * 场景（正常 / 元数据 404 / dist-tag 缺失 / tarball 404 / tarball 损坏）；
  * tarball 由 __tests__/tar-pack.ts 的 tarPack 打包（ustar + gzip，与真实
  * npm tarball 同构），scaffoldRemote 的下载-解包-改写全链路真实执行
- * （解包走 giget，含超长名 pax 条目的端到端验证）。
+ * （解包走 Bun.Archive，含超长名 pax 条目的端到端验证）。
  *
  * 覆盖率口径说明：bun 的覆盖率对同一路径的多个 query 实例只统计最后
  * 求值的那份，本文件是 koishi-create 全部测试中最后加载的实例，因此
@@ -180,7 +180,7 @@ beforeAll(async () => {
 		},
 		{
 			// 124 字符 > ustar 的 100 字节 name 上限：tarPack 前置 pax
-			// 扩展头，giget（tar 库）经 pax 还原后同样能正确落盘
+			// 扩展头，Bun.Archive 经 pax 还原后同样能正确落盘
 			path: `package/${longName}.txt`,
 			data: encoder.encode("pax"),
 		},
@@ -203,19 +203,6 @@ function reset(sc: typeof scenario): void {
 		recursive: true,
 		force: true,
 	});
-	// giget 缓存位置随平台而异（win32 为 tmpdir()/giget，POSIX 跟随
-	// XDG_CACHE_HOME——默认 ~/.cache）；逐用例清理，避免上一场景的缓存
-	// （tarball-404 的缺失或 corrupt 的损坏归档）被 giget 的
-	// 「下载失败回退缓存」吞掉
-	const cacheRoot =
-		process.env["XDG_CACHE_HOME"] ??
-		join(homedir(), ".cache");
-	for (const dir of [
-		join(tmpdir(), "giget"),
-		join(cacheRoot, "giget"),
-	]) {
-		rmSync(dir, { recursive: true, force: true });
-	}
 }
 
 describe("create-koishi-ce 远程模板", () => {
@@ -224,7 +211,7 @@ describe("create-koishi-ce 远程模板", () => {
 		await start();
 		const dir = join(workspaceRoot, "myapp");
 		expect(existsSync(join(dir, "index.js"))).toBe(true);
-		// 超长名文件经 pax 扩展头正常落盘（tarPack 打包 → giget 解包全链路）
+		// 超长名文件经 pax 扩展头正常落盘（tarPack 打包 → Bun.Archive 解包全链路）
 		expect(
 			readFileSync(join(dir, `${longName}.txt`), "utf8"),
 		).toBe("pax");

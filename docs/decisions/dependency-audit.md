@@ -2,11 +2,11 @@
 
 > **状态：现势快照（2026-09-19）**。初版审计（2026-08-27，99 个外部依赖，升级计划立项前基线）已随 git 历史归档；其行动方案（[upgrade-plan.md](upgrade-plan.md)）的 Phase 0-4 已全部执行完毕，本文档即执行后的对账基线。Phase 5（cordis 4 跳代）冻结中，重启条件见 upgrade-plan Phase 5 节。日常现状以 [../guides/development.md](../guides/development.md) 与 [../reference/architecture.md](../reference/architecture.md) 为准。
 >
-> 审计日期：2026-09-19 · 「最新」列均于当日经 npm registry 实时验证（npmjs 主查、npmmirror 兜底）
+> 审计日期：2026-09-22 · 「最新」列均于 2026-09-19 经 npm registry 实时验证（npmjs 主查、npmmirror 兜底）
 > 运行环境：Bun 1.4.2（`packageManager` 钉定）· Node v24（辅：TS7 编译器与 vue-tsc 影子闸门宿主）· 包管理：Bun workspaces（`bun.lock`）
-> 范围：仓库内全部 **53 个 package.json**（**52 个 workspace 包** + 根）· **75 个外部依赖名**（不含 `workspace:*` 与 `@koishi-ce/*` 内部 peer 互引，后者单列于 §2.G）
+> 范围：仓库内全部 **53 个 package.json**（**52 个 workspace 包** + 根）· **74 个外部依赖名**（不含 `workspace:*` 与 `@koishi-ce/*` 内部 peer 互引，后者单列于 §2.G）
 >
-> 修订：2026-09-21 —— ① admin 前端防抖改用既有 `@vueuse/core`（`useDebounceFn`），移除 `throttle-debounce`，外部依赖名 58 → 57；② explorer 路径过滤由 `anymatch` 换为直连 `picomatch` 4（版本本仓已有，显式声明后消除 CJS/ESM interop 双重断言，见 §4.9），并随主包新增类型包 `@types/picomatch`，外部依赖名 57 → 58；③ explorer 编辑器由 `monaco-editor` 整体换为 CodeMirror 6（前端产物 13.55 MB → 0.72 MB，见 §4.10），移除 1 名、新增 18 名；随即又剔除 6 种 Koishi 生态不会出现的语言（Python / Java / C-C++ / Rust / Go / PHP）连带其依赖，最终 58 → 75；④ `@vueuse/core` 由 ^14.4.0 升到 ^15.0.0（§4.11：全仓唯一非冻结 major 落地，名数不变、逐 API 核对无破例），§2.B / §3 的状态随之由 [旧] 转 [新]；⑤ market 的 gravatar 摘要由 `spark-md5` 换为 `@noble/hashes` 的同步 MD5（见 §4.12：名数 1 换 1 不变，market 前端产物 -4.0 KB，手写的 `spark-md5.d.ts` 环境声明出仓；**刻意不换 SHA-256**——实测镜像 cravatar.cn 只认 MD5）。§2 / §3 的包名与计数已按 ③⑤ 对账；其余内容仍为 2026-09-19 快照。
+> 修订：2026-09-22 —— ①-⑤ 延续 2026-09-21 的依赖收敛记录；⑥ `create-koishi-ce` 的远程模板解包由 `giget` 换为 Bun 1.4.2 原生 `Bun.Archive`，registry 版本倒序比较局部改用 `Bun.semver.order`。本次依赖名数 75 → 74，已按 §2 / §3 对账；其余内容仍为 2026-09-19 快照。
 
 状态图例：[新] 当前最新 · [缓] 落后(minor/patch) · [旧] 落后(major) · [预] 最新版本为预发布 · [废] 已弃用或未使用
 
@@ -112,7 +112,6 @@ Koishi-CE/
 | cac | ^7.0.0 | cli | 轻量 CLI 框架 | 7.0.0 | [新]（6→7 已升） |
 | @clack/prompts | ^1.7.0 | koishi-create | 交互式提示（替代 prompts） | 1.8.1 | [缓] patch（装 1.8.0） |
 | picocolors | ^1.1.1 | koishi-create + cli | 终端着色（替代 kleur） | 1.1.1 | [新] |
-| giget | ^3.3.1 | koishi-create | 远程模板拉取（替代 axios+tar 自研解包） | 3.3.1 | [新] |
 | open | ^11.0.1 | console | 打开浏览器 | 11.0.4 | [缓] patch（8→11 已升，装 11.0.3） |
 | chardet | ^2.2.0 | explorer | 文本编码检测 | 2.2.0 | [新] |
 | file-type | ^22.0.2 | assets / assets-local / explorer | 文件类型嗅探 | 22.1.1 | [缓] patch（16→22 已升，装 22.1.0） |
@@ -148,17 +147,17 @@ peer 声明用于下游 `bun add` 解析与防 Bun 自动装官方包，指向 C
 
 ---
 
-## 3. 新鲜度总览（75 名，registry 实测）
+## 3. 新鲜度总览（74 名，registry 实测）
 
 | 类别 | 数量 | 代表 |
 |---|---|---|
-| [新] 已是最新 | **57** | vite 8.3 / TS 7.0.2 / unocss 66 / echarts 6 / vue-router 5 / vue-i18n 11 / @vueuse 15 / CodeMirror 6 全线 18 名 |
+| [新] 已是最新 | **56** | vite 8.3 / TS 7.0.2 / unocss 66 / echarts 6 / vue-router 5 / vue-i18n 11 / @vueuse 15 / CodeMirror 6 全线 18 名 |
 | [缓] 落后 minor/patch | 13 | eslint、@types/node、element-plus 及 10 个 patch 漂移 |
 | [旧] 落后 major | **4** | minato、@cordisjs/plugin-{http,server}、@minatojs/sql-utils（全属冻结线；@vueuse 14→15 已于 2026-09-21 升版转 [新]，见 §4.11） |
 | [预] 最新为预发布 | 1 | cordis（4.0.0-rc.10，冻结线） |
-| [废] 弃用/死依赖 | **0** | monaco-editor 已随 §4.10 的编辑器替换移除，无其它存留 |
+| [废] 弃用/死依赖 | **0** | `giget` 已随 2026-09-22 的 Bun.Archive 原生化移除，monaco-editor 亦已随 §4.10 的编辑器替换移除；当前无废弃依赖存留 |
 
-对比初版（2026-08-27）：外部依赖 **99 → 75（-24%）**；[旧] **38 → 4**；[废] 4 → 0。减量主要来自死依赖清理、Node 生态 API 的 Bun 原生化替换与测试栈退役。
+对比初版（2026-08-27）：外部依赖 **99 → 74（-25%）**；[旧] **38 → 4**；[废] 4 → 0。减量主要来自死依赖清理、Node 生态 API 的 Bun 原生化替换与测试栈退役。
 
 **名数回升的单一来源**：§4.10 的编辑器替换（-1 +18）。CodeMirror 6 生态按「一个语言一个包」切分，18 个包里 11 个是单一语言语法；同期 explorer 前端产物由 13.55 MB 降到 0.72 MB、物理包数由 97 降到 23。**只有这一处需要把「依赖名数」与「实际代码量」两个口径分开看**，其余升降仍按名数口径解读。
 
@@ -221,7 +220,7 @@ peer 声明用于下游 `bun add` 解析与防 Bun 自动装官方包，指向 C
 ## 6. 结论摘要
 
 1. 初版审计确立的两世界格局未变，但力量对比已逆转：**独立工具链从落后主流 2~3 年追平**（TS7 / vite 8 / unocss 66 / echarts 6 / vue-i18n 11 / vue-router 5 / element-plus 2.14 / monaco 0.56），cordis 生态运行时则确认长期冻结在 3.x 内洽线。
-2. 外部依赖 99 → 75、[旧] 38 → 4、[废] 4 → 0：升级计划 Phase 0-4 的清理、原生化、替换目标全部达成。
+2. 外部依赖 99 → 74、[旧] 38 → 4、[废] 4 → 0：升级计划 Phase 0-4 的清理、原生化、替换目标全部达成；本轮继续以 Bun.Archive 移除 `giget`。
 3. 剩余可动空间已收窄到「非结构性」层：非冻结 major 清零（@vueuse 14→15 已于 2026-09-21 落地，见 §4.11），剩下 13 个 minor/patch 随手更与 §4 的声明卫生项（死依赖存疑、`vue` 一组 range 漂移；`semver` 两形态已于 2026-09-21 统一）。
 4. 冻结线不是欠账：剩余的 4 个 [旧] + 1 个 [预] 全部挂 Phase 5 重启条件，勿在线内单独升版。
 5. 本文档角色已从「立项前基线」转为「现势对账基线」；下一轮治理从 §4 起步，结构性升版须待 Phase 5 解冻后与 cordis 4 迁移合并进行。
@@ -229,4 +228,5 @@ peer 声明用于下游 `bun add` 解析与防 Bun 自动装官方包，指向 C
 7. 2026-09-21 explorer 编辑器由 monaco 换为 CodeMirror 6（§4.10）：**产物 13.55 MB → 0.72 MB、首屏约 431 KB、文件数 97 → 23**，代价是外部依赖名 58 → 75（-1 +18，CM6 一语言一包的生态切分）与「少数语言」的覆盖收窄（80+ → 21 种，且只收 Koishi 生态真会出现的类型）。这是本次快照里唯一一处「名数上升而体量下降」的改动，判据是前端产物体积与首屏负载（用户实际付出的字节），并已在 §3 / §4.10 标明口径分离；若后续仍要压名数，方向是把语言表按需裁剪（`languages.ts` 表内删项即可，无需改语义）——本轮已按此裁掉 6 种后端语言。
 8. 2026-09-21 `@vueuse/core` 14 → 15（§4.11）：**非冻结 major 就此清零**（[旧] 5 → 4，余下 4 项全属 cordis 3.x 内洽冻结线），外部依赖名数不变（75）。全部破例点中只有 `useThrottleFn` 的 `trailing` 默认值翻转与本仓有交集，而本仓该调用显式传参故行为等价；被移除的 deprecated timer options 全落在未使用的 composable 上。这是本轮唯一一次「不做替换、只跟进版本」的纯升版动作，与 §4.7 / §4.9 的替换型收敛（换不动则保留、换得动则换更少）共同构成依赖面的三种处置口径。
 9. 2026-09-21 market 的 gravatar 摘要由 `spark-md5` 换为 `@noble/hashes` 的同步 MD5（§4.12）：名数 1 换 1（75 不变）、market 前端产物 **-4,012 B**、手写的 `spark-md5.d.ts` 环境声明出仓。**关键结论是「不换 SHA-256」这个否定判断**——gravatar 官方双支持但镜像不保证，实测默认镜像 cravatar.cn 的 sha256 摘要 404，换算法等于在默认配置下静默丢头像；等价性以 10 组输入的源码级 + 打包后端到端双重复核，避免假绿。
+10. 2026-09-22 `giget` 换为 Bun.Archive：脚手架仍使用原有 `fetch` 拉取 npm tarball，Bun.Archive 负责 gzip/tar 解包与路径安全校验，临时目录搬运 `package/` 内容以保留 npm 模板的 `strip: 1` 语义；registry 的版本倒序比较则局部使用 `Bun.semver.order`，完整 range 语义仍由 `semver` 保留。
 

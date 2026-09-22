@@ -3,7 +3,7 @@
 
 /**
  * 远程模板分支（--template <包名>）的下载-解包-改写全流程：拉取 npm
- * registry 包元数据解析目标版本，经 giget 下载 tarball 并解包到目标
+ * registry 包元数据解析目标版本，经 Bun.Archive 下载 tarball 并解包到目标
  * 目录，最后改写 package.json。HttpError 与 RegistryMeta 只在本流程
  * 消费，就近定义不另立文件；本机 registry 配置探测见 registry.ts。
  *
@@ -12,9 +12,17 @@
  * 经 RemoteOptions 显式传入，由 index.ts 的 scaffold 组装，避免子模块
  * 与顶层状态的隐式耦合。
  */
-import { readFileSync, writeFileSync } from "node:fs";
+import {
+	existsSync,
+	mkdtempSync,
+	readdirSync,
+	readFileSync,
+	renameSync,
+	rmSync,
+	writeFileSync,
+} from "node:fs";
+import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { downloadTemplate } from "giget";
 import pc from "picocolors";
 import {
 	type Manifest,
@@ -57,9 +65,8 @@ interface RemoteOptions {
 /**
  * 远程模板下载与解包：
  * 1. 拉取模板包元数据，按 dist-tags 解析目标版本（ref，默认 latest）；
- * 2. 下载 tarball 并解包到目标目录（解包走 giget，其按 npm tarball 惯例
- *    剥离顶层 package/ 目录，等价于 strip: 1），网络错误统一以 HttpError
- *    提示后退出；
+ * 2. 下载 tarball 并解包到目标目录（Bun.Archive 负责 tar/gzip 解包，按 npm
+ *    tarball 惯例剥离顶层 package/ 目录），网络错误统一以 HttpError 提示后退出；
  * 3. 最后改写 package.json。
  */
 export async function scaffoldRemote({
@@ -93,30 +100,34 @@ export async function scaffoldRemote({
 			);
 		}
 
-		// 解包交给 giget：provider 的 tar 字段是函数，giget 需要时才发起
-		// 下载（HttpError 在下载阶段抛出，不经 giget 包装可直接识别）；
-		// giget 先把 tarball 落入本地缓存再解压到 rootDir，解压失败
-		// （gzip 损坏 / 归档截断）走下方非 HttpError 分支原样上抛。
-		await downloadTemplate(template, {
-			provider: "npm",
-			providers: {
-				npm: async () => ({
-					name: template,
-					version,
-					tar: async () => {
-						const tarballRes = await fetch(url);
-						if (!tarballRes.ok || !tarballRes.body) {
-							throw new HttpError(
-								tarballRes.status,
-								tarballRes.statusText,
-							);
-						}
-						return tarballRes.body;
-					},
-				}),
-			},
-			dir: rootDir,
-		});
+		const tarballRes = await fetch(url);
+		if (!tarballRes.ok || !tarballRes.body) {
+			throw new HttpError(
+				tarballRes.status,
+				tarballRes.statusText,
+			);
+		}
+		const archive = new Bun.Archive(
+			await tarballRes.blob(),
+		);
+		const tempDir = mkdtempSync(
+			join(tmpdir(), "create-koishi-ce-"),
+		);
+		try {
+			await archive.extract(tempDir);
+			const packageDir = join(tempDir, "package");
+			if (!existsSync(packageDir)) {
+				throw new Error("远程模板归档缺少 package/ 目录");
+			}
+			for (const entry of readdirSync(packageDir)) {
+				renameSync(
+					join(packageDir, entry),
+					join(rootDir, entry),
+				);
+			}
+		} finally {
+			rmSync(tempDir, { recursive: true, force: true });
+		}
 	} catch (err) {
 		if (!(err instanceof HttpError)) throw err;
 		console.log(

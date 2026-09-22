@@ -18,7 +18,7 @@ import {
 	isNonNullable,
 	Time,
 } from "cosmokit";
-import { compare, intersects } from "semver";
+import { intersects } from "semver";
 import type {
 	Registry,
 	RemotePackage,
@@ -234,7 +234,9 @@ export default class Scanner {
 			.filter((remote) => {
 				return Scanner.isCompatible(range, remote);
 			})
-			.sort((a, b) => compare(b.version, a.version));
+			.sort((a, b) =>
+				Bun.semver.order(b.version, a.version),
+			);
 
 		await onRegistry?.(registry, compatible);
 		const versions = compatible.filter(

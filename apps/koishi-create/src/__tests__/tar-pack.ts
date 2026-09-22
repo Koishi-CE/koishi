@@ -4,10 +4,10 @@
 /**
  * 测试专用 .tgz fixture 构造器（ustar + 超长名 pax 兜底 + gzip）。
  *
- * 生产代码的远程模板解包已改走 giget（见 src/index.ts scaffoldRemote），
+ * 生产代码的远程模板解包已改走 Bun.Archive（见 src/index.ts scaffoldRemote），
  * 这里只保留「打包」一侧供测试构造伪 registry 的 tarball 响应。tar
  * 归档格式稳定，此工具不随业务演进，故不再单独维护解析逻辑与单测
- * ——其正确性由 __tests__/run-remote.test.ts 的「打包 → giget 解包」
+ * ——其正确性由 __tests__/run-remote.test.ts 的「打包 → Bun.Archive 解包」
  * 端到端链路间接验证。
  */
 

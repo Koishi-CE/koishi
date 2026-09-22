@@ -31,7 +31,7 @@
 ### 2.1 依赖面原生化精简
 
 - **目标**：能用 Bun / node 原生能力替代的外部依赖持续删除，压缩依赖面与安全审计面。
-- **状态**：进行中。近期已移除：execa / p-map（d236e27）、envinfo / which-pm-runs（4b07454）、create-koishi-ce 的 yargs-parser / tar / prompts / kleur（5b65d63 等，改 Bun 内置 + @clack/prompts + giget + picocolors）。原「后续候选」`fs-extra`（koishi-scripts）与 `dotenv`（loader）已于 2026-08-29 随 048e3ba、d6b4093 删除。2026-09 后续：workspace 包直接依赖的 chokidar 已清零（hmr 换 @parcel/watcher 原生绑定、explorer 上游逐字继承的死依赖整体移除），js-yaml 链已删依赖清零；当前无排队候选。
+- **状态**：进行中。近期已移除：execa / p-map（d236e27）、envinfo / which-pm-runs（4b07454）、create-koishi-ce 的 yargs-parser / tar / prompts / kleur / giget（5b65d63 等，改 Bun 内置 + @clack/prompts + Bun.Archive + picocolors）。原「后续候选」`fs-extra`（koishi-scripts）与 `dotenv`（loader）已于 2026-08-29 随 048e3ba、d6b4093 删除。2026-09 后续：workspace 包直接依赖的 chokidar 已清零（hmr 换 @parcel/watcher 原生绑定、explorer 上游逐字继承的死依赖整体移除），js-yaml 链已删依赖清零；registry 的版本排序已局部改用 `Bun.semver.order`；当前无排队候选。
 - **依据**：git 历史代表提交如上；[decisions/upgrade-plan.md](decisions/upgrade-plan.md) Phase 1；[decisions/dependency-audit.md](decisions/dependency-audit.md) 后续变化补记。
 
 ## 3. 计划与候选
