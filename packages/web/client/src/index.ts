@@ -339,7 +339,7 @@ export async function createServer(
 						"@vueuse/core",
 						"@popperjs/core",
 						"marked",
-						"xss",
+						"dompurify",
 					],
 					alias: {
 						// 向后兼容：旧式插件以相对路径引用宿主共享包
@@ -364,7 +364,7 @@ export async function createServer(
 						"@vueuse/core",
 						"@popperjs/core",
 						"marked",
-						"xss",
+						"dompurify",
 						// logger 的前端值导入 reggol，其 browser 入口 external 了
 						// CJS 依赖 object-inspect；不经预打包裸 ESM 导入 CJS 会
 						// 报「does not provide an export named 'default'」

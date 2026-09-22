@@ -7,27 +7,28 @@
  *
  * 来源：npm 包 `marked-vue@1.3.0`（MIT，shigma/marked-vue）的
  * `src/index.ts` 就地 vendor 进本仓。收回源码自持的理由是该包已停更
- * （最后一次提交为版本 bump，无 release），其 marked 依赖被钉在
- * `^9.1.6` 永不前进，而本仓需要能自主升级解析器与消毒器。
+ * （最后一次提交为版本 bump，无 release），其依赖被钉死永不前进，而
+ * 本仓需要能自主升级解析器与消毒器。
  *
- * 行为与上游逐字等价，仅两处非行为改动：
- *   1. 上游的 `attrs: any` 改为 `Record<string, string>`（本仓显式 any
- *      为 0，且该类型与真实取值一致）；
- *   2. 遮蔽外层 `html` 的局部变量改名 `anchor`，并补齐中文注释。
+ * 收回后解析器与消毒器均已换代（见 docs/decisions/dependency-audit.md
+ * 的 §4.13 / §4.14）：
+ *   1. `marked` 9.1.6 → 18.0.14（2026-09-22）——输出差异经 72 条语料
+ *      对拍，逐条核对后全部为上游解析修复；
+ *   2. 手写消毒层 → `dompurify` 3.4.15（2026-09-22）——上游原版是
+ *      「白名单过滤 + 手写标签栈补闭合 + 手写 `<a>` 属性重建」，其中
+ *      栈式补闭合与标签名归一都是自实现的近似（会留下游离闭标签、
+ *      且标签名大小写不归一）。换成 DOMPurify 后这些工作交给真实 DOM
+ *      解析器，两处偏差随之消失；白名单与加固语义保持等价。
  *
- * 收回源码自持后解析器随之升级到 marked@18（原 marked-vue 钉在 9.x）。
- * 升级核对了 72 条语料 × 块级/行内两模式的输出差异，全部为上游解析
- * 修复（含 HTML 属性转义、禁止链接套链接、CommonMark 字符引用解码等），
- * 消毒层的前提未变。
- *
- * 安全边界（勿简化）：非 unsafe 模式下游走 sanitize()——白名单标签
- * 过滤 + 未白名单标签整体丢弃 + `<a>` 属性规范化（协议白名单、标题
- * 转义、rel/target 加固）+ 栈式补闭合。白名单刻意不含 img（非 unsafe
- * 模式下图片被整体丢弃）。
+ * 安全边界（勿简化）：非 unsafe 模式下游走 sanitize()——标签白名单
+ * + 属性收敛（仅 `<a>` 保留 href / title）+ 协议白名单（http / https /
+ * mailto / tel，越界一律剔除）+ `<a>` 的 rel / target 加固。白名单刻意
+ * 不含 img：非 unsafe 模式下的渲染对象包含第三方插件描述（市场列表、
+ * 配置页的插件选择），放行 img 等于允许其借图片请求静默外发访问者信息。
  */
+import DOMPurify from "dompurify";
 import { marked } from "marked";
 import { defineComponent, h } from "vue";
-import * as xss from "xss";
 
 /**
  * 允许的标签白名单：取自 MDN 元素分类中较温和的几类
@@ -111,101 +112,102 @@ const allowedTags = [
 	"tr",
 ];
 
+/** 链接协议白名单（单一事实来源，供下方 URI 正则构造使用）。 */
+const allowedProtocols = ["http", "https", "mailto", "tel"];
+
 /**
- * 空元素：不发栈配对。img 虽不在白名单内（会被丢弃），
- * 仍列在此处以与上游行为保持一致。
+ * DOMPurify 允许的链接（href）形态，与 allowedProtocols 等价：
+ *   - 白名单协议，大小写不敏感（`HTTPS://A.com` 同样放行）；
+ *   - 以非字母开头者——相对路径 `/x`、锚点 `#x`、协议相对 `//host`
+ *     （后者跟随当前页面协议，是本组件一直以来的既有语义）；
+ *   - 不含冒号的无协议串（`foo`），浏览器按相对路径处理。
+ * 其余（`javascript:` / `data:` / `ftp:` / `blob:` 等）一律剔除。
+ *
+ * 与旧实现（解析成 URL 再比对 protocol）相比，各类混淆写法——实体
+ * （`jAva&#115;cript:`）、裸控制字符（`java&#13;script:`、`java\0script:`）
+ * ——会在 DOM 解析阶段先被解码归一，再落到本正则判定，因此同样被拒。
  */
-const voidTags = [
-	"img",
-	"br",
-	"hr",
-	"area",
-	"base",
-	"basefont",
-	"input",
-	"link",
-	"meta",
-];
+const allowedUri = new RegExp(
+	`^(?:(?:${allowedProtocols.join("|")}):|[^a-z]|[a-z+.\\-]+(?:[^a-z+.\\-:]|$))`,
+	"i",
+);
 
-/** 链接协议白名单：越界一律降级为 `#`。 */
-const allowedProtocols = [
-	"http:",
-	"https:",
-	"mailto:",
-	"tel:",
-];
+/**
+ * 消毒配置：标签白名单 + 仅 href / title 两个属性候选 + 链接协议白名单。
+ *
+ * ALLOW_DATA_ATTR / ALLOW_ARIA_ATTR 必须显式关掉：DOMPurify 对 `data-*`
+ * 与 `aria-*` 默认「一律放行」，会绕过 ALLOWED_ATTR 的收敛，使第三方插件
+ * 描述能塞进任意自定义属性。本组件的白名单语义是「每个标签零属性、仅
+ * `<a>` 的 href / title 例外」，故一并关闭。
+ */
+const config = {
+	ALLOWED_TAGS: allowedTags,
+	ALLOWED_ATTR: ["href", "title"],
+	ALLOWED_URI_REGEXP: allowedUri,
+	ALLOW_DATA_ATTR: false,
+	ALLOW_ARIA_ATTR: false,
+};
 
-/** 链接值是否落在协议白名单内（相对 URL 按当前页面地址解析）。 */
-function checkUrl(value: string) {
-	try {
-		const url = new URL(value, location.toString());
-		return allowedProtocols.includes(url.protocol);
-	} catch {
-		return false;
+/**
+ * 属性收敛与 `<a>` 加固（afterSanitizeAttributes 钩子）。
+ *
+ * ALLOWED_ATTR 无法按标签限定，故这里把 href / title 收敛回 `<a>` 专有
+ * （与旧白名单「每个标签零属性、仅 a 例外」的语义一致）。rel / target 只
+ * 对真正的链接有意义，因此仅在 href 存活时补——非法协议的 href 会被
+ * DOMPurify 整体剔除，此时该 `<a>` 已不是链接，不必再加固。
+ *
+ * 本钩子只删属性、只写固定字面量，不引入任何被消毒值，因此放在
+ * afterSanitize* 阶段是安全的（该阶段的写入不再参与校验，也无需参与）。
+ */
+function hardenAttributes(node: Element) {
+	if (node.tagName.toLowerCase() !== "a") {
+		node.removeAttribute("href");
+		node.removeAttribute("title");
+		return;
 	}
+	if (!node.hasAttribute("href")) return;
+	node.setAttribute("rel", "noopener noreferrer");
+	node.setAttribute("target", "_blank");
 }
 
+/** 已绑定的消毒实例，以及它当初绑定的 DOM 视图。 */
+type Purifier = ReturnType<typeof DOMPurify>;
+let purifier: Purifier | undefined;
+let purifierView: unknown;
+
 /**
- * 消毒 HTML：白名单过滤 + `<a>` 属性规范化 + 栈式补闭合。
+ * 取得绑定到当前 DOM 的消毒实例（首次调用时创建并挂上钩子）。
  *
- * onTag 返回值语义（xss 约定）：返回字符串即替换该标签的原始文本，
- * 返回 undefined 即交回 xss 的默认处理（白名单内原样、白名单外按
- * stripIgnoreTag 丢弃）。
+ * 惰性初始化而非模块顶层创建：模块顶层求值发生在导入阶段，而宿主打包器
+ * 与测试环境就绪 window 的时机各不相同，顶层取 window 会在无 DOM 的环境
+ * （如 bun test）下拿到 undefined。DOMPurify 的默认导出本身是可调用的工
+ * 厂（源码首行即 `(root) => createDOMPurify(root)`），因此即使它是在无
+ * window 时求值的，此处传入 window 仍能得到功能完整的实例。
  */
-export function sanitize(html: string): string {
-	const whiteList: xss.IWhiteList = Object.fromEntries(
-		// 显式标注元组返回类型，否则 Object.fromEntries 推不出 [key, value]
-		allowedTags.map((tag): [string, string[]] => [tag, []]),
-	);
-	const stack: string[] = [];
-	html = xss.filterXSS(html, {
-		whiteList,
-		stripIgnoreTag: true,
-		onTag(tag, raw, options) {
-			// 起始 <a> 标签重建：只保留 href / title，其余属性一律丢弃
-			let anchor: string | undefined;
-			if (tag === "a" && !options.isClosing) {
-				const attrs: Record<string, string> = {};
-				xss.parseAttr(raw.slice(3), (name, value) => {
-					if (name === "href") {
-						attrs[name] = checkUrl(value) ? value : "#";
-					} else if (name === "title") {
-						attrs[name] = xss.escapeAttrValue(value);
-					}
-					return "";
-				});
-				attrs["rel"] = "noopener noreferrer";
-				attrs["target"] = "_blank";
-				anchor = `<a ${Object.entries(attrs)
-					.map(([name, value]) => `${name}="${value}"`)
-					.join(" ")}>`;
-			}
-			// 自闭合形态与空元素不发栈
-			if (raw.endsWith("/>") || voidTags.includes(tag))
-				return;
-			if (!options.isClosing) {
-				stack.push(tag);
-				return anchor;
-			}
-			// 闭合标签：向上弹出未配对的栈，顺带补齐中间缺的闭合标签
-			let result = "";
-			while (stack.length) {
-				const last = stack.pop();
-				if (last === tag) return result + raw;
-				result += `</${last}>`;
-			}
-			// 找不到配对的开标签：转义尖括号，按纯文本输出
-			return raw
-				.replace(/</g, "&lt;")
-				.replace(/>/g, "&gt;");
-		},
-	});
-	// 源码自身未闭合的标签，在文末补齐
-	while (stack.length) {
-		const last = stack.pop();
-		html += `</${last}>`;
+function getPurifier(): Purifier {
+	// client 工程（tsconfig.web.json）带 DOM lib，globalThis.window 在类型上
+	// 即为 Window | undefined（无 DOM 的运行时取到 undefined），无需断言
+	const view = globalThis.window;
+	if (!view) {
+		throw new Error(
+			"k-markdown 的消毒层需要 DOM 才能工作：浏览器下由宿主提供，" +
+				"测试下须在首次调用 sanitize() 之前注入 globalThis.window",
+		);
 	}
-	return html;
+	if (!purifier || purifierView !== view) {
+		purifierView = view;
+		purifier = DOMPurify(view);
+		purifier.addHook(
+			"afterSanitizeAttributes",
+			hardenAttributes,
+		);
+	}
+	return purifier;
+}
+
+/** 消毒 HTML：标签白名单 + 属性收敛 + 链接协议白名单 + `<a>` 加固。 */
+export function sanitize(html: string): string {
+	return getPurifier().sanitize(html, config);
 }
 
 /** Markdown 渲染组件（k-markdown）。 */

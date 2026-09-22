@@ -6,7 +6,7 @@
 > 运行环境：Bun 1.4.2（`packageManager` 钉定）· Node v24（辅：TS7 编译器与 vue-tsc 影子闸门宿主）· 包管理：Bun workspaces（`bun.lock`）
 > 范围：仓库内全部 **53 个 package.json**（**52 个 workspace 包** + 根）· **75 个外部依赖名**（不含 `workspace:*` 与 `@koishi-ce/*` 内部 peer 互引，后者单列于 §2.G）
 >
-> 修订：2026-09-22 —— ①-⑤ 延续 2026-09-21 的依赖收敛记录；⑥ `create-koishi-ce` 的远程模板解包由 `giget` 换为 Bun 1.4.2 原生 `Bun.Archive`，registry 版本倒序比较局部改用 `Bun.semver.order`；⑦ `k-markdown` 组件由 npm 包 `marked-vue` 就地 vendor 为本地实现（见 §4.13），声明面换成 `marked` + `xss` 两个直接依赖（名数 74 → 75）；⑧ 同日落地方案 B 之 B1，`marked` 9.1.6 → 18.0.14（见 §4.13），**非冻结 major 就此清零**（[旧] 5 → 4）。已按 §2 / §3 对账；其余内容仍为 2026-09-19 快照。
+> 修订：2026-09-22 —— ①-⑤ 延续 2026-09-21 的依赖收敛记录；⑥ `create-koishi-ce` 的远程模板解包由 `giget` 换为 Bun 1.4.2 原生 `Bun.Archive`，registry 版本倒序比较局部改用 `Bun.semver.order`；⑦ `k-markdown` 组件由 npm 包 `marked-vue` 就地 vendor 为本地实现（见 §4.13），声明面换成 `marked` + `xss` 两个直接依赖（名数 74 → 75）；⑧ 同日落地方案 B 之 B1，`marked` 9.1.6 → 18.0.14（见 §4.13），**非冻结 major 就此清零**（[旧] 5 → 4）；⑨ 同日续落地方案 B 之 B2，手写消毒层换成 `dompurify` 3.4.15（`xss` 出仓，见 §4.14），另引入测试期 `jsdom` + `@types/jsdom`（名数 75 → 77）。已按 §2 / §3 对账；其余内容仍为 2026-09-19 快照。
 
 状态图例：[新] 当前最新 · [缓] 落后(minor/patch) · [旧] 落后(major) · [预] 最新版本为预发布 · [废] 已弃用或未使用
 
@@ -78,7 +78,7 @@ Koishi-CE/
 | element-plus | ^2.14.5 | client + config / explorer / locales | UI 组件库 | 2.14.6 | [缓] patch（2.7.7 精确锁已解锁） |
 | schemastery-vue | ^7.3.15 | components | 配置 Schema → 表单渲染 | 7.3.15 | [新] |
 | marked | ^18.0.14 | client | Markdown 解析内核（k-markdown 组件，见 §4.13） | 18.0.14 | [新]（2026-09-22 随 §4.13 的 vendor 收回解钉并升版） |
-| xss | ^1.0.15 | client | HTML 消毒（k-markdown 非 unsafe 模式） | 1.0.15 | [新]（2026-09-22 随 vendor 转正为直接依赖，见 §4.13） |
+| dompurify | ^3.4.15 | client | HTML 消毒（k-markdown 非 unsafe 模式，见 §4.14） | 3.4.15 | [新]（2026-09-22 由 `xss` 换入，见 §4.14） |
 | unocss | ^66.8.1 | client(构建脚本) | 原子化 CSS 引擎 | 66.10.5 | [缓] patch（0.65→66 已升） |
 | echarts | ^6.1.0 (dev) | analytics | 数据可视化图表 | 6.1.0 | [新]（5→6 已升） |
 | vue-echarts | ^8.1.0 (dev) | analytics | echarts 的 Vue 封装 | 8.3.0 | [新]（6→8 已升，range 内最新） |
@@ -121,12 +121,14 @@ Koishi-CE/
 
 ### E. 测试设施
 
-初版审计中的 mocha / @types/mocha / chai / chai-as-promised / chai-shape / @sinonjs/fake-timers 已于 2026-09-02 前整体退役，断言统一 `bun:test` 原生 `expect`，时间模拟用其内建 mock timers。现仅剩两个类型包：
+初版审计中的 mocha / @types/mocha / chai / chai-as-promised / chai-shape / @sinonjs/fake-timers 已于 2026-09-02 前整体退役，断言统一 `bun:test` 原生 `expect`，时间模拟用其内建 mock timers。现为两个运行时类型包 + 一组 DOM 垫片（随 §4.14 引入）：
 
 | 包 | 声明 | 使用位置 | 业务范围 | 最新 | 状态 |
 |---|---|---|---|---|---|
 | @types/bun | ^1.4.0 | root(dev) | Bun 运行时类型（薄封装，转发 bun-types） | 1.4.2 | [新] |
 | @types/node | ^26.4.0 | root(dev) | Node 类型（TS 编译器与工具宿主） | 26.6.2 | [缓] minor（装 26.5.1） |
+| jsdom | ^30.1.1 (dev) | web-client | DOMPurify 的服务端 DOM 垫片，**仅测试期**（§4.14） | 30.1.1 | [新]（2026-09-22 随 §4.14 新增） |
+| @types/jsdom | ^30.0.0 (dev) | web-client | jsdom 的类型（jsdom 自身不带类型） | 30.0.0 | [新]（同上） |
 
 ### F. 类型包杂项
 
@@ -148,19 +150,19 @@ peer 声明用于下游 `bun add` 解析与防 Bun 自动装官方包，指向 C
 
 ---
 
-## 3. 新鲜度总览（75 名，registry 实测）
+## 3. 新鲜度总览（77 名，registry 实测）
 
 | 类别 | 数量 | 代表 |
 |---|---|---|
-| [新] 已是最新 | **56** | vite 8.3 / TS 7.0.2 / unocss 66 / echarts 6 / vue-router 5 / vue-i18n 11 / @vueuse 15 / CodeMirror 6 全线 18 名 |
+| [新] 已是最新 | **58** | vite 8.3 / TS 7.0.2 / unocss 66 / echarts 6 / vue-router 5 / vue-i18n 11 / @vueuse 15 / dompurify 3.4.15 / CodeMirror 6 全线 18 名 |
 | [缓] 落后 minor/patch | 13 | eslint、@types/node、element-plus 及 10 个 patch 漂移 |
 | [旧] 落后 major | **4** | minato、@cordisjs/plugin-{http,server}、@minatojs/sql-utils——四项全属 cordis 3.x 内洽冻结线（@vueuse 14→15 见 §4.11、marked 9→18 见 §4.13，均已升版转 [新]） |
 | [预] 最新为预发布 | 1 | cordis（4.0.0-rc.10，冻结线） |
 | [废] 弃用/死依赖 | **0** | `giget` 已随 2026-09-22 的 Bun.Archive 原生化移除，monaco-editor 亦已随 §4.10 的编辑器替换移除；当前无废弃依赖存留 |
 
-对比初版（2026-08-27）：外部依赖 **99 → 75（-24%）**；[旧] **38 → 4**；[废] 4 → 0。减量主要来自死依赖清理、Node 生态 API 的 Bun 原生化替换与测试栈退役。
+对比初版（2026-08-27）：外部依赖 **99 → 77（-22%）**；[旧] **38 → 4**；[废] 4 → 0。减量主要来自死依赖清理、Node 生态 API 的 Bun 原生化替换与测试栈退役；本轮 `xss` → `dompurify` 是 1 换 1，名数回升全部来自测试期的 DOM 垫片。
 
-**名数回升的来源有两处**：§4.10 的编辑器替换（-1 +18）与 §4.13 的 vendor 转正（-1 +2）。CodeMirror 6 生态按「一个语言一个包」切分，18 个包里 11 个是单一语言语法；同期 explorer 前端产物由 13.55 MB 降到 0.72 MB、物理包数由 97 降到 23。**前者需要把「依赖名数」与「实际代码量」两个口径分开看**，其余升降仍按名数口径解读。
+**名数回升的来源有三处**：§4.10 的编辑器替换（-1 +18）、§4.13 的 vendor 转正（-1 +2）与 §4.14 的 DOM 垫片（+2，仅测试期）。CodeMirror 6 生态按「一个语言一个包」切分，18 个包里 11 个是单一语言语法；同期 explorer 前端产物由 13.55 MB 降到 0.72 MB、物理包数由 97 降到 23。**前者需要把「依赖名数」与「实际代码量」两个口径分开看**，§4.14 的垫片同理（不进任何产物），其余升降仍按名数口径解读。
 
 注：`typescript` 在 web/client 的 ^5.0.0 声明源码零导入（§4.1），上表口径中其 root 侧别名形态已计入 [新]，此存疑项不重复计数。
 
@@ -213,8 +215,35 @@ peer 声明用于下游 `bun add` 解析与防 Bun 自动装官方包，指向 C
     - **方案 B 之 B1 已落地（2026-09-22，同日）**：解析器 `marked` **9.1.6 → 18.0.14**（声明 `^18.0.14`）。跨 9 个 major 的 changelog 确实全是解析边界修复，但输出 HTML 会变、属行为变更，故先做双装对拍：**72 条语料 × 块级/行内两模式**（涵盖 v9→v18 各条 fix 的触发场景）实测 **16 处差异，逐条核对后全部属上游解析修复**，无一处是本仓消毒层的前提变化。差异可归为四类：HTML 正确性（裸 URL 自动链接的 `href` 里裸 `&` 现转义为 `&amp;`）、安全（不再产出非法的链接套链接 `<a>` 嵌套）、CommonMark 合规（数字字符引用 `&#65;` 现解码为 `A`、`&#0;` 按规范给 U+FFFD）、块级修复（空列表项 / 空代码块多余换行 / ATX 标题闭合序列前的制表符 / 引用后接空列表 / 硬换行后的前导空白）；另含数条 O(n²) 回溯的 ReDoS 加固（regex 层，不影响输出）。
     - **B1 的代码改动只在类型面**：marked 9 把 `parse` 声明为 `typeof marked`（重载函数声明，最宽松的一条返回 `string`），只有 `parseInline` 是 `string | Promise<string>`——这正是上游只在后者加 cast 的原因；marked 18 把两者都改成三条调用签名（最宽松一条返回 `ParserOutput | Promise<ParserOutput>`），于是 `parse` 也回到联合类型，`sanitize(html)` 处出现 TS2345。修法是对三元表达式的结果**统一 cast 一次**（而非继续分支各写一个），同步更新注释说明「同步 | 异步」重载的由来。
     - **B1 验证与体积代价**：上述差异中可观测的部分已钉成 `markdown.test.ts` 的 4 组新用例，测试文件由 25 用例 / 49 断言增到 **29 用例 / 55 断言**；`bun run check` 八段全绿、`bun run build` 无错、`bun test` 128 文件 / **1040 用例全过**、`bun run fallow` 无问题、宿主控制台前端重新构建正常。**代价是字节数**：`marked.esm.js` 源码由 89,397 B 降到 46,011 B，但 minify 后反而由 **35,632 B 涨到 45,639 B（+10.0 KB / +28%）**（上游包体压缩率变差），宿主前端 `client.js` 相应由 310.68 kB 涨到 **321.05 kB（+10.4 kB / +3.3%，gzip 104.37 kB）**。这与 §4.10 的 CodeMirror 属同一类口径分离：**本条的判据是解析正确性与安全修复，不是字节数**；若后续要省这 10 KB，方向是 §4.13 开头那个被证否的候选（服务端预渲染）或换更小的解析器，而非退回 9.x。
-    - **留待方案 B 之 B2**：`xss` → `DOMPurify` 的替换仍卡在**产品口径**上——DOMPurify 默认放行 `img` / `style`，与本仓白名单差异较大，要么沿用现有白名单、要么有意放宽（比如让图片能显示）；且它在 `bun test` 下需要 DOM 垫片（jsdom / happy-dom），会引入新的测试期依赖，须先做可行性评估再动。收益侧除换掉手写消毒外，还能顺带去掉 `xss` 拖入的 `commander`（CLI-only，浏览器产物里的死重）与 `cssfilter`。
-14. **本条与 §4.7 / §4.9 / §4.10 / §4.13 的关系**：五条处置的判据一致——**同一能力下换更少/更小/更可维护的依赖，换不动或换了更亏则保留**。§4.7 的 `semver` 属「换不动」（Bun.semver 语义不覆盖）；§4.9 的 `picomatch` 与 §4.12 的 `@noble/hashes` 属「换得动且净收益」（前者减物理包 + 消断言，后者去 UMD 包 + 去手写声明 + 减产物）；§4.10 的 CodeMirror 属「名数上升而体量下降」（口径分离，见 §3）；§4.13 的 `marked-vue` 属「不是替换而是收回」——上游包已无维护价值，换任何等价物都不如自持源码，名数净 +1 是解除版本钉死的代价。
+    - **方案 B 之 B2 已落地（2026-09-22，同日）**：手写消毒层换成 `dompurify` 3.4.15、`xss` 出仓，详见下节。
+14. **`k-markdown` 的手写消毒层换成 `dompurify`（`xss` 出仓）**（2026-09-22）：§4.13 收回源码自持后，消毒层仍是上游 `marked-vue` 的手写实现——白名单过滤 + 自维护的标签栈补闭合 + 手写 `<a>` 属性重建。**这段手写实现自带两处偏差**（§4.13 已查明：白名单外标签的闭标签残留、标签名大小写不归一）。二者都无可利用面，但暴露的正是「手写近似解析器」这一层本身的问题：嵌套、大小写、自闭合、属性引号形态都得自己覆盖，而这是 DOMPurify 这类库十余年攒下的攻击面知识。
+    - **候选对比（实测）**：`xss@1.0.15` vs `dompurify@3.4.15`——
+      - **维护状态**：`xss` 的 npm 最新版 1.0.15 发布于 **2024-03-03（约 2.5 年前）**，仓库在 2026 年仍有零星提交（PR #300 加了 `filterXSSWithResult`），属**发版停摆**而非「已弃用」；DOMPurify 3.4.15 发布于 **2026-09-06（2 周前）**，维护 640K 下游、有专门的安全邮件列表。
+      - **依赖面**：`xss` 带 `commander@^2.20.3` + `cssfilter@0.0.10`；DOMPurify **零运行时依赖**。
+      - **产物体积（minify 实测）**：`xss` **18,786 B** → `dompurify` **29,354 B**（**+10.3 KB / +56%**）。这是本次替换的主要代价。
+      - **更正一处早先的误判**：本文档上一版曾称「换掉 `xss` 可顺带去掉其拖入的 `commander`（浏览器产物里的死重）」，**实测不成立**——从 `xss` 的入口 `lib/index.js` 打包后，产物里没有任何 `commander` 痕迹（它只从 `bin/xss` CLI 进来）。`commander` 只是 `node_modules` 的安装图包袱，不进产物。
+    - **测试环境是本次真正的成本**：DOMPurify 是 DOM-only 库，`bun test` 下无 DOM 时 `isSupported === false` 且 `sanitize` 为 `undefined`。三种垫片实测：
+      | 垫片 | `isSupported` | 结果 |
+      |---|---|---|
+      | 无 DOM（`bun test` 现状） | `false` | `sanitize` 未定义，调用即 TypeError |
+      | linkedom | `undefined` | **静默返回未消毒原文**（`onerror` 原样留着）——最危险的失败模式 |
+      | happy-dom | `true`（**谎报**） | 同一配置下 **27/30** 条本仓输入与 jsdom 分歧，且方向是「把所有元素都剥光」（`<p>plain</p>` → `plain`、`<h1>T</h1>` → `T`）——消毒器整体不工作 |
+      | jsdom | `true` | 全部行为正确 |
+    - **为何不用 happy-dom**（尽管 [upgrade-plan.md](upgrade-plan.md) 为「未来的 Vue 组件测试」预设了 happy-dom + vitest）：那是给**验 DOM 形状与事件**的场景，垫片只是脚手架；本条是**验消毒器**，垫片自身就是可信基的一部分，必须是保真度参照物——用会谎报 `isSupported`、并把元素整体剥光的垫片，只能产出「全绿但无意义」的假绿。两种测试的要求不同，选不同工具不构成对 ADR 的推翻。另注：垫片只进 devDependencies，**不进任何产物**，生产侧跑的是浏览器真 DOM，故不存在「happy-dom 不安全 → 控制台不安全」的推论（早先把这两件事混为一谈，此处更正）。
+    - **行为变更（逐条核对，均为「更正确」）**：29 条旧断言中 7 条需重定：
+      | 旧行为（手写层） | 新行为（DOMPurify） | 判定 |
+      |---|---|---|
+      | `<script>x</script>` → `x</script>` | → `""`（连内容整体移除） | 修掉游离闭标签 |
+      | `</b>` → `&lt;/b&gt;`（转义显示） | → `""`（真解析器忽略孤儿闭标签） | 修掉伪文本输出 |
+      | `<B>x</B>` → `<b>x</B>` | → `<b>x</b>` | 标签名归一 |
+      | 非法协议 href → 降级为 `#` | → **整体剔除**该属性（且无 href 时不补 rel/target） | 不再伪造假链接 |
+      | `<a title="<script>">` → `title="&lt;script&gt;"` | → `title="<script>"`（属性值内的尖括号按 HTML 规范无需转义） | 等价，已由 round-trip 用例证否「会变成标签」 |
+    - **一处必须显式关掉的默认（测试当场逮到）**：DOMPurify 的 `ALLOW_DATA_ATTR` / `ALLOW_ARIA_ATTR` 默认 `true`，会**绕过 `ALLOWED_ATTR` 的收敛**，使第三方插件描述能塞进任意 `data-*` / `aria-*`。本组件的白名单语义是「每个标签零属性、仅 `<a>` 的 href / title 例外」，故二者一并关掉。
+    - **产品口径：`img` 维持不放行**。四个调用点中三个走非 unsafe（`packages/web/components/client/form/computed.vue` 的 schema 描述、`plugins/webui/config/client/components/select.vue` 与 `plugins/webui/market/client/market/package.vue` 的插件描述），后两者渲染的是**市场里的第三方插件描述**。放行 `img` 等于允许恶意插件以 `![](https://tracker/x?u=…)` 让访客控制台静默发起请求（追踪像素 / IP 泄露）。故 `ALLOWED_TAGS` 仍不含 `img`——这是**收紧而非沿用默认**，并把「是否放开图片」这个独立产品决策解耦出去。
+    - **实现要点**：消毒实例**惰性创建**（`getPurifier()`：首次调用时 `DOMPurify(window)` 并挂 `afterSanitizeAttributes` 钩子），而非模块顶层创建——顶层求值发生在导入阶段，宿主打包器与测试环境就绪 window 的时机不同，顶层取 window 会在无 DOM 环境拿到降级实例。DOMPurify 的默认导出首行即 `(root) => createDOMPurify(root)`，因此即使模块是在无 window 时求值的，运行期传入 window 仍能得到完整实例。协议白名单写成 `ALLOWED_URI_REGEXP`（由 `allowedProtocols` 数组拼出，保持单一事实来源），与旧实现（解析成 URL 再比对 protocol）等价；各类混淆写法（实体 `jAva&#115;cript:`、裸控制字符 `java&#13;script:`）会在 DOM 解析阶段先被解码归一、再落到该正则判定，故同样被拒。
+    - **依赖面与验证**：名数 **1 换 1**（`xss` → `dompurify`），另加测试期 `jsdom` + `@types/jsdom` 两项，总数 75 → **77**（§2.E）。测试文件由 29 用例 / 55 断言增到 **31 用例 / 60 断言**，新增「消毒输出的二次解析安全性（round-trip）」一组：把消毒结果重新解析为 DOM，确认不产生新的可执行节点或 `on*` 属性（只比对字符串不足以证明安全）。`bun run check` 八段全绿、`bun run build` 无错、`bun test` 全仓通过、`bun run fallow` 无问题、宿主控制台前端重新构建正常。过程中断言基线闸门逮到一处 `globalThis as unknown as {...}` 双断言，已按闸门要求改用 `globalThis.window`（client 工程带 DOM lib，类型上即为 `Window | undefined`）**根除**，而非登记基线。
+    - **判据归属**：本条属 §4.9 / §4.12 那一类「换得动且净收益」，但**收益不在字节数**（产物反而 +10.3 KB），而是「用十余年攒下的解析覆盖面与持续维护的安全修复，换掉发版停摆的手写近似实现」。与 §4.10 同属单一指标反向、需把口径分开看的一类（见 §3）。
+15. **本条与 §4.7 / §4.9 / §4.10 / §4.12 / §4.13 / §4.14 的关系**：六条处置的判据一致——**同一能力下换更少/更小/更可维护的依赖，换不动或换了更亏则保留**。§4.7 的 `semver` 属「换不动」（Bun.semver 语义不覆盖）；§4.9 的 `picomatch` 与 §4.12 的 `@noble/hashes` 属「换得动且净收益」（前者减物理包 + 消断言，后者去 UMD 包 + 去手写声明 + 减产物）；§4.10 的 CodeMirror 属「名数上升而体量下降」，§4.14 的 DOMPurify 属「体量上升而覆盖面与维护性上升」——两者都是**单一指标反向**，须把口径分开看（见 §3）；§4.13 的 `marked-vue` 属「不是替换而是收回」——上游包已无维护价值，换任何等价物都不如自持源码，名数净 +1 是解除版本钉死的代价。
 ---
 
 ## 5. package.json 之外的技术栈
@@ -223,7 +252,7 @@ peer 声明用于下游 `bun add` 解析与防 Bun 自动装官方包，指向 C
 - **严格模式**：`tsconfig.base.json` 严格全家桶（strict + noUncheckedIndexedAccess + exactOptionalPropertyTypes 等）+ nodenext 模块解析（相对导入一律带 `.ts` 扩展名）；显式 `any` 全仓 0；`as unknown as` 断言基线闸门只拦新增（17 处存留台账，2026-09-21 由 18 减去 explorer 的 anymatch interop 条目）。
 - **构建**：根 tsdown 单遍 → 各包 `lib/`（`index.mjs` + `index.d.ts`，ESM-only，exports 以 `default` 条件兜底）；`apps/koishi-create` 独立 tsdown；vendored 三包 exclude。
 - **Lint**：biome（tab 缩进、双引号、行尾分号）是格式唯一权威；eslint 仅补 `.vue` 模板语义。
-- **测试**：`bun test --isolate`（每文件独立 global，隔离跨文件 mock.module），126 个测试文件 / 1003 用例（2026-09-20 实测，50.3s），覆盖率 src 源码口径约 97% 行；CI 产 lcov 上传 Codecov。
+- **测试**：`bun test --isolate`（每文件独立 global，隔离跨文件 mock.module），128 个测试文件 / 1042 用例（2026-09-22 实测，58.5s），覆盖率 src 源码口径约 97% 行；CI 产 lcov 上传 Codecov。含 DOM 依赖的组件测试（§4.14）以 jsdom 作垫片。
 - **版本管理**：changesets（`.changeset/`）+ `tooling/release` 链（preflight → version → build → test → publish → push，只推 main；单整体 tag 跟 core 版本手动补）。
 - **上游巡检**：`bun run upstream:audit`（`tooling/upstream-audit/`）+ [../process/upstream.md](../process/upstream.md) 映射表手动 diff 移植，port 进来的相对导入须补 `.ts` 扩展名。
 
@@ -232,8 +261,8 @@ peer 声明用于下游 `bun add` 解析与防 Bun 自动装官方包，指向 C
 ## 6. 结论摘要
 
 1. 初版审计确立的两世界格局未变，但力量对比已逆转：**独立工具链从落后主流 2~3 年追平**（TS7 / vite 8 / unocss 66 / echarts 6 / vue-i18n 11 / vue-router 5 / element-plus 2.14 / monaco 0.56），cordis 生态运行时则确认长期冻结在 3.x 内洽线。
-2. 外部依赖 99 → 75、[旧] 38 → 4、[废] 4 → 0：升级计划 Phase 0-4 的清理、原生化、替换目标全部达成；本轮继续以 Bun.Archive 移除 `giget`，并以 vendor 收回 `marked-vue`（§4.13，名数 +1）。
-3. 剩余可动空间已收窄到「非结构性」层：**非冻结 major 已清零**（@vueuse 14→15 见 §4.11、marked 9→18 见 §4.13），剩下 13 个 minor/patch 随手更与 §4 的声明卫生项（死依赖存疑、`vue` 一组 range 漂移；`semver` 两形态已于 2026-09-21 统一）。
+2. 外部依赖 99 → 77、[旧] 38 → 4、[废] 4 → 0：升级计划 Phase 0-4 的清理、原生化、替换目标全部达成；本轮继续以 Bun.Archive 移除 `giget`，并以 vendor 收回 `marked-vue`（§4.13，名数 +1），另加测试期 DOM 垫片（§4.14，名数 +2）。
+3. 剩余可动空间已收窄到「非结构性」层：**非冻结 major 已清零**（@vueuse 14→15 见 §4.11、marked 9→18 见 §4.13、xss→dompurify 见 §4.14），剩下 13 个 minor/patch 随手更与 §4 的声明卫生项（死依赖存疑、`vue` 一组 range 漂移；`semver` 两形态已于 2026-09-21 统一）。
 4. 冻结线不是欠账：剩余的 4 个 [旧] + 1 个 [预] **全部**挂 Phase 5 重启条件，勿在线内单独升版。
 5. 本文档角色已从「立项前基线」转为「现势对账基线」；下一轮治理从 §4 起步，结构性升版须待 Phase 5 解冻后与 cordis 4 迁移合并进行。
 6. 2026-09-21 追加一次依赖收敛：explorer 的 `anymatch` 换为直连 `picomatch`（物理包净减 2、断言基线 18 → 17、行为实测等价），类型包 `@types/picomatch` 随主包计入，外部依赖名 57 → 58——本次为「同一能力换更少依赖 + 消断言」的净收益型替换，与 §4.7 的 `semver` 保留判据（换不动或换了更亏）互为对照。
@@ -243,4 +272,5 @@ peer 声明用于下游 `bun add` 解析与防 Bun 自动装官方包，指向 C
 10. 2026-09-22 `giget` 换为 Bun.Archive：脚手架仍使用原有 `fetch` 拉取 npm tarball，Bun.Archive 负责 gzip/tar 解包与路径安全校验，临时目录搬运 `package/` 内容以保留 npm 模板的 `strip: 1` 语义；registry 的版本倒序比较则局部使用 `Bun.semver.order`，完整 range 语义仍由 `semver` 保留。
 11. 2026-09-22 `k-markdown` 由 npm 包 `marked-vue` 改为就地 vendor 的本地实现（§4.13）：`marked` / `xss` 转为直接依赖，`marked-vue` 出仓，名数净 +1（74 → 75）。**本次只解除版本钉死、不改行为**——props 语义、包裹标签、消毒白名单、`<a>` 属性加固与栈式补闭合逐字等价，并以 25 用例锁定基线；同时证否了「服务端用 `Bun.markdown` 预渲染」的候选（多语言字典 + 客户端 locale + inline 语义三重不匹配）。
 12. 2026-09-22 marked 9.1.6 → 18.0.14（§4.13 的方案 B 之 B1）：**先双装对拍再落地**——72 条语料 × 块级/行内两模式，16 处差异逐条核对后全部为上游解析修复（含 HTML 属性转义、禁止链接套链接、CommonMark 字符引用解码、块级边界修复与数条 ReDoS 加固），类型面只需把 `parse` 分支一并 cast。**非冻结 major 就此清零**，[旧] 5 → 4（余下 4 项全属 cordis 3.x 内洽冻结线），依赖名数不变；差异中可观测的部分已钉入基线测试（25 → 29 用例）。**代价是字节数**：minify 后 +10.0 KB（前端 `client.js` +3.3%），判据取解析正确性与安全修复而非体积。
+13. 2026-09-22 `k-markdown` 的手写消毒层换成 `dompurify` 3.4.15（§4.14）：名数 1 换 1（`xss` 出仓），另加测试期 `jsdom` + `@types/jsdom`（75 → 77）。**先证否了两种轻量垫片**——linkedom 在 DOMPurify 下会**静默返回未消毒原文**，happy-dom 则谎报 `isSupported: true` 且把元素整体剥光（本仓 30 条输入里 27 条与 jsdom 分歧），故只能用 jsdom。**唯一真正的成本是产物 +10.3 KB**（18,786 → 29,354 B，minify 实测），收益是手写近似解析器换成十余年攒下的攻击面覆盖面与持续维护的安全修复。行为变更 7 处、均为「更正确」（游离闭标签、孤儿闭标签转义、标签名归一、非法协议不再伪造 `#`），并新增一组 round-trip 用例把「消毒结果二次解析后仍无可执行节点」钉死。同时**更正两处早先的记述**：`commander` 不进产物（此前误称可顺带省掉）、happy-dom 的不安全仅影响测试保真度而不影响生产（此前把两件事混为一谈）。
 

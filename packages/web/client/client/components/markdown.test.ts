@@ -6,27 +6,27 @@
  * 内置 Markdown 组件（`client/components/markdown.ts`）的行为回归测试。
  *
  * 该组件是 npm 包 `marked-vue@1.3.0` 的就地 vendor 版。本文件把它的对外
- * 可观测行为逐条钉死，使后续替换解析器（marked）与消毒器（xss）时能精确
- * 看出「哪一条变了」，而非只看产物大小。
+ * 可观测行为逐条钉死，使后续替换解析器（marked）与消毒器时能精确看出
+ * 「哪一条变了」，而非只看产物大小。
  *
  * 测试文件不进入 tsconfig.web 类型检查（见其 exclude），运行时由 bun test
  * 覆盖。
  *
- * 已知的上游怪癖（此处按现状锁定，非本仓引入；均为惰性残留、无可利用面）
- *   - 白名单外标签的**开标签**被整体丢弃，但配对时栈里已压入该标签名，
- *     故其**闭标签**会原样留在输出里（`<script>` → 只剩 `</script>`）；
- *   - 标签名大小写不归一：`<B>` 的开标签被 xss 小写化，闭标签按原文透传。
+ * 消毒层已由手写实现换成 DOMPurify（2026-09-22，见 dependency-audit.md
+ * §4.13）。上游那两处手写偏差——白名单外标签的闭标签残留（`<script>` 只剩
+ * `</script>`）、标签名大小写不归一（`<B>x</B>` → `<b>x</B>`）——随真实 DOM
+ * 解析器的引入而消失，本文件对应用例如实反映新行为。
  */
 import { describe, expect, it } from "bun:test";
+import { JSDOM } from "jsdom";
 import KMarkdown, { sanitize } from "./markdown.ts";
 
-// sanitize 判定链接协议时以 location 为基准解析相对 URL；bun 无 DOM，
-// 故补一个最小桩（相对路径、`#锚点`、协议相对 URL 的判定都依赖它）
-const scope = globalThis as unknown as {
-	location?: unknown;
-};
-if (typeof scope.location === "undefined") {
-	scope.location = new URL("https://console.example/");
+// DOMPurify 是 DOM-only 库：它需要真实 DOM 才能工作。浏览器下由宿主提供
+// window，测试下由这里的 jsdom 提供。组件内对消毒实例是惰性绑定，因此注入
+// 不必抢在 import 之前，但必须在首次实际消毒之前。
+const scope = globalThis as unknown as { window?: unknown };
+if (typeof scope.window === "undefined") {
+	scope.window = new JSDOM("").window;
 }
 
 /** 组件 props（与 markdown.ts 的声明一致）。 */
@@ -60,14 +60,11 @@ function html(props: MarkdownProps): unknown {
 }
 
 describe("sanitize：白名单外标签被丢弃", () => {
-	it("script 的开标签与内容被剥离", () => {
-		// 注意：闭标签作为已知怪癖残留（见文件头注释）
-		expect(sanitize("<script>alert(1)</script>")).toBe(
-			"alert(1)</script>",
-		);
-		expect(sanitize("<iframe src=x></iframe>")).toBe(
-			"</iframe>",
-		);
+	it("script / iframe 连标签带内容整体消失", () => {
+		// 旧手写实现会把闭标签残留为孤立的 `</script>` / `</iframe>`
+		// （见文件头注释）；换成真实 DOM 解析器后整体移除
+		expect(sanitize("<script>alert(1)</script>")).toBe("");
+		expect(sanitize("<iframe src=x></iframe>")).toBe("");
 	});
 
 	it("img 整体丢弃（白名单刻意不含 img）", () => {
@@ -95,15 +92,18 @@ describe("sanitize：<a> 属性规范化", () => {
 		);
 	});
 
-	it("协议白名单外的 href 降级为 #", () => {
-		const degraded =
-			'<a href="#" rel="noopener noreferrer" target="_blank">x</a>';
-		expect(
-			sanitize('<a href="javascript:alert(1)">x</a>'),
-		).toBe(degraded);
-		expect(sanitize('<a href="ftp://a.com">x</a>')).toBe(
-			degraded,
-		);
+	it("协议白名单外的 href 整体剔除（旧实现降级为 #）", () => {
+		// 行为变更：旧手写实现把越界 href 篡改成 `#`（伪造一个无处可去的
+		// 链接），DOMPurify 直接删掉该属性；无 href 即不再是链接，故
+		// rel / target 也不再补
+		for (const href of [
+			"javascript:alert(1)",
+			"ftp://a.com",
+		]) {
+			expect(sanitize(`<a href="${href}">x</a>`)).toBe(
+				"<a>x</a>",
+			);
+		}
 	});
 
 	it("白名单协议原样保留（http / https / mailto / tel）", () => {
@@ -115,9 +115,9 @@ describe("sanitize：<a> 属性规范化", () => {
 		);
 	});
 
-	it("相对路径 / 锚点 / 协议相对 URL 按当前页面解析后放行", () => {
-		// 记录现状：协议相对 URL `//host` 会按 location 的协议解析，
-		// 故被判为 https 而放行——这是「跟随当前页面协议」的既有语义
+	it("相对路径 / 锚点 / 协议相对 URL 一律放行", () => {
+		// 协议相对 URL `//host` 跟随当前页面协议，属本组件一贯的既有
+		// 语义（旧实现解析成 URL 后比对 protocol，同样放行）
 		for (const href of ["/rel", "#anchor", "//evil.com"]) {
 			expect(sanitize(`<a href="${href}">r</a>`)).toBe(
 				`<a href="${href}" rel="noopener noreferrer" target="_blank">r</a>`,
@@ -125,13 +125,13 @@ describe("sanitize：<a> 属性规范化", () => {
 		}
 	});
 
-	it("URL 解析会把协议归一化为小写，故大写协议同样放行", () => {
+	it("URL 协议大小写不敏感", () => {
 		expect(sanitize('<a href="HTTPS://A.com">x</a>')).toBe(
 			'<a href="HTTPS://A.com" rel="noopener noreferrer" target="_blank">x</a>',
 		);
 	});
 
-	it("title 保留并转义，其余属性一律丢弃", () => {
+	it("title 保留，其余属性一律丢弃", () => {
 		expect(
 			sanitize(
 				'<a href="https://a.com" title="a&quot;b">x</a>',
@@ -139,8 +139,13 @@ describe("sanitize：<a> 属性规范化", () => {
 		).toBe(
 			'<a href="https://a.com" title="a&quot;b" rel="noopener noreferrer" target="_blank">x</a>',
 		);
+		// 属性值里的尖括号在 HTML 中无需转义（属性由引号界定，`<` 不会
+		// 提前结束属性），故 DOMPurify 按规范原样保留；它仍是惰性文本，
+		// 不会变成标签（下方 round-trip 用例钉死该结论）。
+		// 本例同时钉死「无 href 的 <a> 不补 rel / target」——该 <a> 不是
+		// 链接，加固无意义
 		expect(sanitize('<a title="<script>">x</a>')).toBe(
-			'<a title="&lt;script&gt;" rel="noopener noreferrer" target="_blank">x</a>',
+			'<a title="<script>">x</a>',
 		);
 		expect(
 			sanitize('<a data-x="1" href="https://a.com">x</a>'),
@@ -150,7 +155,7 @@ describe("sanitize：<a> 属性规范化", () => {
 	});
 });
 
-describe("sanitize：栈式补闭合", () => {
+describe("sanitize：结构补齐与规范化", () => {
 	it("文末补齐未闭合标签", () => {
 		expect(sanitize("<b>unclosed")).toBe("<b>unclosed</b>");
 		expect(sanitize('<a href="https://a.com">')).toBe(
@@ -165,12 +170,17 @@ describe("sanitize：栈式补闭合", () => {
 		);
 	});
 
-	it("无配对开标签的闭标签转义为纯文本", () => {
-		expect(sanitize("</b>")).toBe("&lt;/b&gt;");
+	it("无配对开标签的闭标签直接丢弃（旧实现转义为纯文本）", () => {
+		// 真实解析器把孤儿闭标签当文本忽略；旧手写实现会把它转义成
+		// `&lt;/b&gt;` 显示出来
+		expect(sanitize("</b>")).toBe("");
 	});
 
-	it("标签名大小写不归一（开标签被小写化，闭标签透传）", () => {
-		expect(sanitize("<B>x</B>")).toBe("<b>x</B>");
+	it("标签名统一归一为小写（旧实现闭标签透传原文）", () => {
+		expect(sanitize("<B>x</B>")).toBe("<b>x</b>");
+		expect(sanitize("<DIV><SPAN>y</SPAN></DIV>")).toBe(
+			"<div><span>y</span></div>",
+		);
 	});
 });
 
@@ -224,14 +234,13 @@ describe("k-markdown：unsafe 开关", () => {
 		expect(html({ source })).toBe("<div>t</div>");
 	});
 
-	it("unsafe 决定链接 href 是否被协议白名单改写", () => {
+	it("unsafe 决定非法链接是否被拦下", () => {
 		const source = '<a href="javascript:x">j</a>';
 		expect(html({ source, unsafe: true })).toBe(
 			'<p><a href="javascript:x">j</a></p>\n',
 		);
-		expect(html({ source })).toBe(
-			'<p><a href="#" rel="noopener noreferrer" target="_blank">j</a></p>\n',
-		);
+		// 非 unsafe：href 被整体剔除（旧实现降级为 `#`）
+		expect(html({ source })).toBe("<p><a>j</a></p>\n");
 	});
 
 	it("图片仅在 unsafe 下渲染（白名单不含 img）", () => {
@@ -276,10 +285,62 @@ describe("k-markdown：解析输出基线", () => {
 		);
 	});
 
-	it("script 经解析 + 消毒后的整体输出", () => {
-		expect(html({ source: "<script>x</script>" })).toBe(
-			"x</script>",
+	it("script 经解析 + 消毒后整体消失", () => {
+		expect(html({ source: "<script>x</script>" })).toBe("");
+	});
+});
+
+describe("消毒输出的二次解析安全性（round-trip）", () => {
+	// 本组把「消毒后的字符串再交给 HTML 解析器」当作最终验收：只比对字符串
+	// 不足以证明安全，需确认重构 DOM 后不产生新的可执行节点或属性。
+
+	/** 把消毒结果重新解析为 DOM，返回 body 内的元素描述。 */
+	function reparse(html: string) {
+		const dom = new JSDOM(`<!doctype html><body>${html}`);
+		const body = dom.window.document.body;
+		const elements = [...body.querySelectorAll("*")].map(
+			(node) => ({
+				tag: node.tagName.toLowerCase(),
+				attrs: [...node.attributes].map((a) => a.name),
+			}),
 		);
+		return { text: body.textContent, elements };
+	}
+
+	it("属性值里的尖括号不会变成标签", () => {
+		// `<a title="<script>">x</a>` 的输出里含字面的 `<script>`，但它位于
+		// 引号界定的属性值内；二次解析后应仍只有 a 一个元素
+		const html = sanitize('<a title="<script>">x</a>');
+		const { text, elements } = reparse(html);
+		expect(elements.map((e) => e.tag)).toEqual(["a"]);
+		expect(text).toBe("x");
+	});
+
+	it("事件处理器与危险协议在二次解析后仍不存在", () => {
+		for (const source of [
+			"<img src=x onerror=alert(1)>",
+			'<a href="javascript:alert(1)">x</a>',
+			'<div onclick="steal()">t</div>',
+			"<svg onload=alert(1)></svg>",
+			"<style>*{x:expression(alert(1))}</style>",
+			"<script>alert(1)</script>",
+		]) {
+			const { elements } = reparse(sanitize(source));
+			for (const element of elements) {
+				for (const attr of element.attrs) {
+					expect(attr.startsWith("on")).toBe(false);
+				}
+				expect(
+					[
+						"script",
+						"style",
+						"img",
+						"svg",
+						"iframe",
+					].includes(element.tag),
+				).toBe(false);
+			}
+		}
 	});
 });
 
