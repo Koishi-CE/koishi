@@ -25,6 +25,7 @@ flowchart LR
   subgraph D["decisions · 档案 · 只读"]
     P1["upgrade-plan.md"]
     P2["dependency-audit.md"]
+    P3["frontend-structure-audit.md"]
   end
   R --- AG
   R --- RM
@@ -37,6 +38,7 @@ flowchart LR
   ARC --- UP
   ARC --- P1
   P1 --- P2
+  ARC --- P3
 ```
 
 ## 手册清单
@@ -64,6 +66,7 @@ flowchart LR
 |---|---|---|
 | [decisions/upgrade-plan.md](decisions/upgrade-plan.md) | 依赖六阶段升级计划书 | Phase 0-4 已完成；Phase 5（cordis 4.x）被上游阻塞、已回退——重启条件仍是活约束 |
 | [decisions/dependency-audit.md](decisions/dependency-audit.md) | 57 个外部依赖现势审计快照（依赖面收敛与工具链现代化对账） | 现势快照（2026-09-19 重拍，2026-09-21 修订；初版 2026-08-27 见 git 历史） |
+| [decisions/frontend-structure-audit.md](decisions/frontend-structure-audit.md) | `packages/web/*` 与 `plugins/webui/*` 前端组织现势审查（职责说明 · 约定锚点 · 问题清单 · 整改建议） | 现势快照（2026-09-22 实测）；§5 整改建议为讨论稿，待维护者确认 |
 
 ## 文档组织约定
 
