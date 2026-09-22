@@ -15,6 +15,11 @@
  *      为 0，且该类型与真实取值一致）；
  *   2. 遮蔽外层 `html` 的局部变量改名 `anchor`，并补齐中文注释。
  *
+ * 收回源码自持后解析器随之升级到 marked@18（原 marked-vue 钉在 9.x）。
+ * 升级核对了 72 条语料 × 块级/行内两模式的输出差异，全部为上游解析
+ * 修复（含 HTML 属性转义、禁止链接套链接、CommonMark 字符引用解码等），
+ * 消毒层的前提未变。
+ *
  * 安全边界（勿简化）：非 unsafe 模式下游走 sanitize()——白名单标签
  * 过滤 + 未白名单标签整体丢弃 + `<a>` 属性规范化（协议白名单、标题
  * 转义、rel/target 加固）+ 栈式补闭合。白名单刻意不含 img（非 unsafe
@@ -217,12 +222,14 @@ const KMarkdown = defineComponent({
 	},
 	setup(props) {
 		return () => {
-			// marked 的 parseInline 声明为 string | Promise<string>，但其
-			// Promise 只在 async 模式下出现，本组件为同步渲染——故按同步
-			// 结果取用（与上游 marked-vue 的处理一致）
-			const html = props.inline
-				? (marked.parseInline(props.source || "") as string)
-				: marked.parse(props.source || "");
+			// marked 的 parse / parseInline 均声明为「同步 | 异步」重载，
+			// 异步形态只在 options.async 为 true 时出现，本组件是同步渲染，
+			// 故统一按同步结果取用（与上游 marked-vue 的处理一致）
+			const html = (
+				props.inline
+					? marked.parseInline(props.source || "")
+					: marked.parse(props.source || "")
+			) as string;
 			return h(
 				props.tag || (props.inline ? "span" : "div"),
 				{

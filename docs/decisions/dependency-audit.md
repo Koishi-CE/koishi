@@ -6,7 +6,7 @@
 > 运行环境：Bun 1.4.2（`packageManager` 钉定）· Node v24（辅：TS7 编译器与 vue-tsc 影子闸门宿主）· 包管理：Bun workspaces（`bun.lock`）
 > 范围：仓库内全部 **53 个 package.json**（**52 个 workspace 包** + 根）· **75 个外部依赖名**（不含 `workspace:*` 与 `@koishi-ce/*` 内部 peer 互引，后者单列于 §2.G）
 >
-> 修订：2026-09-22 —— ①-⑤ 延续 2026-09-21 的依赖收敛记录；⑥ `create-koishi-ce` 的远程模板解包由 `giget` 换为 Bun 1.4.2 原生 `Bun.Archive`，registry 版本倒序比较局部改用 `Bun.semver.order`；⑦ `k-markdown` 组件由 npm 包 `marked-vue` 就地 vendor 为本地实现（见 §4.13），声明面换成 `marked` + `xss` 两个直接依赖（名数 74 → 75，`marked` 有意暂留 9.x、方案 B 待办）。已按 §2 / §3 对账；其余内容仍为 2026-09-19 快照。
+> 修订：2026-09-22 —— ①-⑤ 延续 2026-09-21 的依赖收敛记录；⑥ `create-koishi-ce` 的远程模板解包由 `giget` 换为 Bun 1.4.2 原生 `Bun.Archive`，registry 版本倒序比较局部改用 `Bun.semver.order`；⑦ `k-markdown` 组件由 npm 包 `marked-vue` 就地 vendor 为本地实现（见 §4.13），声明面换成 `marked` + `xss` 两个直接依赖（名数 74 → 75）；⑧ 同日落地方案 B 之 B1，`marked` 9.1.6 → 18.0.14（见 §4.13），**非冻结 major 就此清零**（[旧] 5 → 4）。已按 §2 / §3 对账；其余内容仍为 2026-09-19 快照。
 
 状态图例：[新] 当前最新 · [缓] 落后(minor/patch) · [旧] 落后(major) · [预] 最新版本为预发布 · [废] 已弃用或未使用
 
@@ -77,7 +77,7 @@ Koishi-CE/
 | @vueuse/core | ^15.0.0 | client + 4 插件(dev) | Vue 组合式工具集 | 15.0.0 | [新]（14→15 已升，见 §4.11） |
 | element-plus | ^2.14.5 | client + config / explorer / locales | UI 组件库 | 2.14.6 | [缓] patch（2.7.7 精确锁已解锁） |
 | schemastery-vue | ^7.3.15 | components | 配置 Schema → 表单渲染 | 7.3.15 | [新] |
-| marked | ^9.1.6 | client | Markdown 解析内核（k-markdown 组件，见 §4.13） | 18.0.14 | [旧] major（有意暂留，方案 B 待办，见 §4.13） |
+| marked | ^18.0.14 | client | Markdown 解析内核（k-markdown 组件，见 §4.13） | 18.0.14 | [新]（2026-09-22 随 §4.13 的 vendor 收回解钉并升版） |
 | xss | ^1.0.15 | client | HTML 消毒（k-markdown 非 unsafe 模式） | 1.0.15 | [新]（2026-09-22 随 vendor 转正为直接依赖，见 §4.13） |
 | unocss | ^66.8.1 | client(构建脚本) | 原子化 CSS 引擎 | 66.10.5 | [缓] patch（0.65→66 已升） |
 | echarts | ^6.1.0 (dev) | analytics | 数据可视化图表 | 6.1.0 | [新]（5→6 已升） |
@@ -154,11 +154,11 @@ peer 声明用于下游 `bun add` 解析与防 Bun 自动装官方包，指向 C
 |---|---|---|
 | [新] 已是最新 | **56** | vite 8.3 / TS 7.0.2 / unocss 66 / echarts 6 / vue-router 5 / vue-i18n 11 / @vueuse 15 / CodeMirror 6 全线 18 名 |
 | [缓] 落后 minor/patch | 13 | eslint、@types/node、element-plus 及 10 个 patch 漂移 |
-| [旧] 落后 major | **5** | minato、@cordisjs/plugin-{http,server}、@minatojs/sql-utils（四项属 cordis 3.x 冻结线）+ marked（9.1.6 → 18.0.14，非冻结线但有意暂留，见 §4.13；@vueuse 14→15 已于 2026-09-21 升版转 [新]，见 §4.11） |
+| [旧] 落后 major | **4** | minato、@cordisjs/plugin-{http,server}、@minatojs/sql-utils——四项全属 cordis 3.x 内洽冻结线（@vueuse 14→15 见 §4.11、marked 9→18 见 §4.13，均已升版转 [新]） |
 | [预] 最新为预发布 | 1 | cordis（4.0.0-rc.10，冻结线） |
 | [废] 弃用/死依赖 | **0** | `giget` 已随 2026-09-22 的 Bun.Archive 原生化移除，monaco-editor 亦已随 §4.10 的编辑器替换移除；当前无废弃依赖存留 |
 
-对比初版（2026-08-27）：外部依赖 **99 → 75（-24%）**；[旧] **38 → 5**；[废] 4 → 0。减量主要来自死依赖清理、Node 生态 API 的 Bun 原生化替换与测试栈退役。
+对比初版（2026-08-27）：外部依赖 **99 → 75（-24%）**；[旧] **38 → 4**；[废] 4 → 0。减量主要来自死依赖清理、Node 生态 API 的 Bun 原生化替换与测试栈退役。
 
 **名数回升的来源有两处**：§4.10 的编辑器替换（-1 +18）与 §4.13 的 vendor 转正（-1 +2）。CodeMirror 6 生态按「一个语言一个包」切分，18 个包里 11 个是单一语言语法；同期 explorer 前端产物由 13.55 MB 降到 0.72 MB、物理包数由 97 降到 23。**前者需要把「依赖名数」与「实际代码量」两个口径分开看**，其余升降仍按名数口径解读。
 
@@ -210,7 +210,10 @@ peer 声明用于下游 `bun add` 解析与防 Bun 自动装官方包，指向 C
     - **另记一条使用面事实**：白名单刻意不含 `img`，故**非 unsafe 模式下 Markdown 图片会被整体丢弃**（`![alt](url)` 渲染成空段落），只有 `unsafe`（当前仅插件 usage 文档在用）才放行。这是上游既有语义，本次不改，但下游插件作者写 usage 文档时需知道。
     - **为何不走「服务端用 `Bun.markdown` 预渲染」**（曾被列入候选，经核查证否）：四个使用点中三个的 source 是 `tt()`（`useI18nText`）的产物，而 `Manifest.description` 本身是 `string | Dict<string>` 多语言字典、当前语言存在**客户端本地配置**里——预渲染会把「切换界面语言」变成一次 RPC 重渲染；且 `Bun.markdown.html` 只产块级 HTML、无 inline 模式，与 `inline` prop 语义不对等，消毒责任也只是从浏览器移到服务端而不会消失。故本条只做「收回源码」，不动渲染时机。
     - **依赖面与验证**：声明名数 2 换 1（`marked-vue` → `marked` + `xss`，净 +1）。`bun run check` 八段全绿（含 vue-tsc 影子基线与断言基线 17 处无新增）、`bun run build` 无错、`bun test` 新增 25 用例全过、`bun run fallow` 无问题；`packages/web/client/package.json` 的 `files` 已含 `client/`，产物分发不受影响（`marked` / `xss` 本就在宿主构建的 `dedupe` 与 `optimizeDeps.include` 清单内，构建链路无需改动）。
-    - **留待方案 B**：本次**只解除版本钉死、不动解析器与消毒器版本**——`marked` 9.1.6 → 18.x 的 changelog 全是解析边界修复（嵌套 blockquote / 列表项 tab / autolink / 转义等），输出 HTML 会变、属行为变更，须以上述对拍测试逐条确认后再单独落地；`xss` → `DOMPurify` 同理。
+    - **方案 B 之 B1 已落地（2026-09-22，同日）**：解析器 `marked` **9.1.6 → 18.0.14**（声明 `^18.0.14`）。跨 9 个 major 的 changelog 确实全是解析边界修复，但输出 HTML 会变、属行为变更，故先做双装对拍：**72 条语料 × 块级/行内两模式**（涵盖 v9→v18 各条 fix 的触发场景）实测 **16 处差异，逐条核对后全部属上游解析修复**，无一处是本仓消毒层的前提变化。差异可归为四类：HTML 正确性（裸 URL 自动链接的 `href` 里裸 `&` 现转义为 `&amp;`）、安全（不再产出非法的链接套链接 `<a>` 嵌套）、CommonMark 合规（数字字符引用 `&#65;` 现解码为 `A`、`&#0;` 按规范给 U+FFFD）、块级修复（空列表项 / 空代码块多余换行 / ATX 标题闭合序列前的制表符 / 引用后接空列表 / 硬换行后的前导空白）；另含数条 O(n²) 回溯的 ReDoS 加固（regex 层，不影响输出）。
+    - **B1 的代码改动只在类型面**：marked 9 把 `parse` 声明为 `typeof marked`（重载函数声明，最宽松的一条返回 `string`），只有 `parseInline` 是 `string | Promise<string>`——这正是上游只在后者加 cast 的原因；marked 18 把两者都改成三条调用签名（最宽松一条返回 `ParserOutput | Promise<ParserOutput>`），于是 `parse` 也回到联合类型，`sanitize(html)` 处出现 TS2345。修法是对三元表达式的结果**统一 cast 一次**（而非继续分支各写一个），同步更新注释说明「同步 | 异步」重载的由来。
+    - **B1 验证与体积代价**：上述差异中可观测的部分已钉成 `markdown.test.ts` 的 4 组新用例，测试文件由 25 用例 / 49 断言增到 **29 用例 / 55 断言**；`bun run check` 八段全绿、`bun run build` 无错、`bun test` 128 文件 / **1040 用例全过**、`bun run fallow` 无问题、宿主控制台前端重新构建正常。**代价是字节数**：`marked.esm.js` 源码由 89,397 B 降到 46,011 B，但 minify 后反而由 **35,632 B 涨到 45,639 B（+10.0 KB / +28%）**（上游包体压缩率变差），宿主前端 `client.js` 相应由 310.68 kB 涨到 **321.05 kB（+10.4 kB / +3.3%，gzip 104.37 kB）**。这与 §4.10 的 CodeMirror 属同一类口径分离：**本条的判据是解析正确性与安全修复，不是字节数**；若后续要省这 10 KB，方向是 §4.13 开头那个被证否的候选（服务端预渲染）或换更小的解析器，而非退回 9.x。
+    - **留待方案 B 之 B2**：`xss` → `DOMPurify` 的替换仍卡在**产品口径**上——DOMPurify 默认放行 `img` / `style`，与本仓白名单差异较大，要么沿用现有白名单、要么有意放宽（比如让图片能显示）；且它在 `bun test` 下需要 DOM 垫片（jsdom / happy-dom），会引入新的测试期依赖，须先做可行性评估再动。收益侧除换掉手写消毒外，还能顺带去掉 `xss` 拖入的 `commander`（CLI-only，浏览器产物里的死重）与 `cssfilter`。
 14. **本条与 §4.7 / §4.9 / §4.10 / §4.13 的关系**：五条处置的判据一致——**同一能力下换更少/更小/更可维护的依赖，换不动或换了更亏则保留**。§4.7 的 `semver` 属「换不动」（Bun.semver 语义不覆盖）；§4.9 的 `picomatch` 与 §4.12 的 `@noble/hashes` 属「换得动且净收益」（前者减物理包 + 消断言，后者去 UMD 包 + 去手写声明 + 减产物）；§4.10 的 CodeMirror 属「名数上升而体量下降」（口径分离，见 §3）；§4.13 的 `marked-vue` 属「不是替换而是收回」——上游包已无维护价值，换任何等价物都不如自持源码，名数净 +1 是解除版本钉死的代价。
 ---
 
@@ -229,14 +232,15 @@ peer 声明用于下游 `bun add` 解析与防 Bun 自动装官方包，指向 C
 ## 6. 结论摘要
 
 1. 初版审计确立的两世界格局未变，但力量对比已逆转：**独立工具链从落后主流 2~3 年追平**（TS7 / vite 8 / unocss 66 / echarts 6 / vue-i18n 11 / vue-router 5 / element-plus 2.14 / monaco 0.56），cordis 生态运行时则确认长期冻结在 3.x 内洽线。
-2. 外部依赖 99 → 75、[旧] 38 → 5、[废] 4 → 0：升级计划 Phase 0-4 的清理、原生化、替换目标全部达成；本轮继续以 Bun.Archive 移除 `giget`，并以 vendor 收回 `marked-vue`（§4.13，名数 +1）。
-3. 剩余可动空间已收窄到「非结构性」层：非冻结 major 仅剩 §4.13 有意暂留的 `marked`（方案 B 待办，@vueuse 14→15 已于 2026-09-21 落地，见 §4.11），剩下 13 个 minor/patch 随手更与 §4 的声明卫生项（死依赖存疑、`vue` 一组 range 漂移；`semver` 两形态已于 2026-09-21 统一）。
-4. 冻结线不是欠账：剩余的 5 个 [旧] + 1 个 [预] 中，4 个 [旧] + 1 个 [预] 全部挂 Phase 5 重启条件，勿在线内单独升版；另 1 个 [旧]（`marked`）不属冻结线，其保留与升级口径见 §4.13。
+2. 外部依赖 99 → 75、[旧] 38 → 4、[废] 4 → 0：升级计划 Phase 0-4 的清理、原生化、替换目标全部达成；本轮继续以 Bun.Archive 移除 `giget`，并以 vendor 收回 `marked-vue`（§4.13，名数 +1）。
+3. 剩余可动空间已收窄到「非结构性」层：**非冻结 major 已清零**（@vueuse 14→15 见 §4.11、marked 9→18 见 §4.13），剩下 13 个 minor/patch 随手更与 §4 的声明卫生项（死依赖存疑、`vue` 一组 range 漂移；`semver` 两形态已于 2026-09-21 统一）。
+4. 冻结线不是欠账：剩余的 4 个 [旧] + 1 个 [预] **全部**挂 Phase 5 重启条件，勿在线内单独升版。
 5. 本文档角色已从「立项前基线」转为「现势对账基线」；下一轮治理从 §4 起步，结构性升版须待 Phase 5 解冻后与 cordis 4 迁移合并进行。
 6. 2026-09-21 追加一次依赖收敛：explorer 的 `anymatch` 换为直连 `picomatch`（物理包净减 2、断言基线 18 → 17、行为实测等价），类型包 `@types/picomatch` 随主包计入，外部依赖名 57 → 58——本次为「同一能力换更少依赖 + 消断言」的净收益型替换，与 §4.7 的 `semver` 保留判据（换不动或换了更亏）互为对照。
 7. 2026-09-21 explorer 编辑器由 monaco 换为 CodeMirror 6（§4.10）：**产物 13.55 MB → 0.72 MB、首屏约 431 KB、文件数 97 → 23**，代价是外部依赖名 58 → 75（-1 +18，CM6 一语言一包的生态切分）与「少数语言」的覆盖收窄（80+ → 21 种，且只收 Koishi 生态真会出现的类型）。这是本次快照里唯一一处「名数上升而体量下降」的改动，判据是前端产物体积与首屏负载（用户实际付出的字节），并已在 §3 / §4.10 标明口径分离；若后续仍要压名数，方向是把语言表按需裁剪（`languages.ts` 表内删项即可，无需改语义）——本轮已按此裁掉 6 种后端语言。
 8. 2026-09-21 `@vueuse/core` 14 → 15（§4.11）：**非冻结 major 就此清零**（[旧] 5 → 4，余下 4 项全属 cordis 3.x 内洽冻结线），外部依赖名数不变（75）。全部破例点中只有 `useThrottleFn` 的 `trailing` 默认值翻转与本仓有交集，而本仓该调用显式传参故行为等价；被移除的 deprecated timer options 全落在未使用的 composable 上。这是本轮唯一一次「不做替换、只跟进版本」的纯升版动作，与 §4.7 / §4.9 的替换型收敛（换不动则保留、换得动则换更少）共同构成依赖面的三种处置口径。
 9. 2026-09-21 market 的 gravatar 摘要由 `spark-md5` 换为 `@noble/hashes` 的同步 MD5（§4.12）：名数 1 换 1（75 不变）、market 前端产物 **-4,012 B**、手写的 `spark-md5.d.ts` 环境声明出仓。**关键结论是「不换 SHA-256」这个否定判断**——gravatar 官方双支持但镜像不保证，实测默认镜像 cravatar.cn 的 sha256 摘要 404，换算法等于在默认配置下静默丢头像；等价性以 10 组输入的源码级 + 打包后端到端双重复核，避免假绿。
 10. 2026-09-22 `giget` 换为 Bun.Archive：脚手架仍使用原有 `fetch` 拉取 npm tarball，Bun.Archive 负责 gzip/tar 解包与路径安全校验，临时目录搬运 `package/` 内容以保留 npm 模板的 `strip: 1` 语义；registry 的版本倒序比较则局部使用 `Bun.semver.order`，完整 range 语义仍由 `semver` 保留。
-11. 2026-09-22 `k-markdown` 由 npm 包 `marked-vue` 改为就地 vendor 的本地实现（§4.13）：`marked` / `xss` 转为直接依赖，`marked-vue` 出仓，名数净 +1（74 → 75）。**本次只解除版本钉死、不改行为**——props 语义、包裹标签、消毒白名单、`<a>` 属性加固与栈式补闭合逐字等价，并以 25 用例锁定基线；`marked` 9.1.6 → 18.x 的升级与 `xss` → `DOMPurify` 的替换列入方案 B，须以上述基线对拍后单独落地。同时证否了「服务端用 `Bun.markdown` 预渲染」的候选（多语言字典 + 客户端 locale + inline 语义三重不匹配）。
+11. 2026-09-22 `k-markdown` 由 npm 包 `marked-vue` 改为就地 vendor 的本地实现（§4.13）：`marked` / `xss` 转为直接依赖，`marked-vue` 出仓，名数净 +1（74 → 75）。**本次只解除版本钉死、不改行为**——props 语义、包裹标签、消毒白名单、`<a>` 属性加固与栈式补闭合逐字等价，并以 25 用例锁定基线；同时证否了「服务端用 `Bun.markdown` 预渲染」的候选（多语言字典 + 客户端 locale + inline 语义三重不匹配）。
+12. 2026-09-22 marked 9.1.6 → 18.0.14（§4.13 的方案 B 之 B1）：**先双装对拍再落地**——72 条语料 × 块级/行内两模式，16 处差异逐条核对后全部为上游解析修复（含 HTML 属性转义、禁止链接套链接、CommonMark 字符引用解码、块级边界修复与数条 ReDoS 加固），类型面只需把 `parse` 分支一并 cast。**非冻结 major 就此清零**，[旧] 5 → 4（余下 4 项全属 cordis 3.x 内洽冻结线），依赖名数不变；差异中可观测的部分已钉入基线测试（25 → 29 用例）。**代价是字节数**：minify 后 +10.0 KB（前端 `client.js` +3.3%），判据取解析正确性与安全修复而非体积。
 

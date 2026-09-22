@@ -244,7 +244,7 @@ describe("k-markdown：unsafe 开关", () => {
 });
 
 describe("k-markdown：解析输出基线", () => {
-	// 本组为解析器（marked 9.1.6）的输出快照。升级 marked 或换解析器时
+	// 本组为解析器（marked 18.0.14）的输出快照。升级 marked 或换解析器时
 	// 若这些值变化，需逐条确认是有意变更还是回归，不可顺手改期望值。
 	it("块级结构", () => {
 		expect(html({ source: "# T" })).toBe("<h1>T</h1>\n");
@@ -279,6 +279,52 @@ describe("k-markdown：解析输出基线", () => {
 	it("script 经解析 + 消毒后的整体输出", () => {
 		expect(html({ source: "<script>x</script>" })).toBe(
 			"x</script>",
+		);
+	});
+});
+
+describe("解析输出基线：marked 9 → 18 的差异", () => {
+	// 2026-09-22 解析器由 marked@9.1.6 升至 marked@18.0.14（见 NOTICE 与
+	// docs/decisions/dependency-audit.md）。升级前以 72 条语料 × 块级/行内
+	// 两模式对拍，共 16 处差异，逐条核对后确认全部属上游解析修复。本组把
+	// 其中可观测且有结论的部分钉死，作为下一次升级的对照基线。
+	// 涉及 <a> 的用例一律 unsafe: true，以隔离解析器（消毒层会重写 <a>）。
+
+	it("自动链接的 href 里 & 被转义（9 透传裸 &）", () => {
+		expect(
+			html({
+				source: "https://a.com/b?c=1&d=2",
+				unsafe: true,
+			}),
+		).toBe(
+			'<p><a href="https://a.com/b?c=1&amp;d=2">https://a.com/b?c=1&amp;d=2</a></p>\n',
+		);
+	});
+
+	it("不再产出链接套链接（9 会给出非法嵌套 <a>）", () => {
+		expect(
+			html({ source: "[a [b](/y)](/x)", unsafe: true }),
+		).toBe('<p>[a <a href="/y">b</a>](/x)</p>\n');
+	});
+
+	it("数字字符引用按 CommonMark 解码（9 原样保留）", () => {
+		expect(html({ source: "&#65; &#x41;" })).toBe(
+			"<p>A A</p>\n",
+		);
+	});
+
+	it("块级修复：空列表项 / 空代码块 / 标题闭合序列", () => {
+		// 列表项只有尾随空格时，9 认不出列表
+		expect(html({ source: "- \n" })).toBe(
+			"<ul>\n<li></li>\n</ul>\n",
+		);
+		// 空代码块不再多出一个换行
+		expect(html({ source: "```\n```\n" })).toBe(
+			"<pre><code></code></pre>\n",
+		);
+		// ATX 标题的闭合序列前允许制表符（9 会把它当正文留下）
+		expect(html({ source: "# a\t#\n" })).toBe(
+			"<h1>a</h1>\n",
 		);
 	});
 });
