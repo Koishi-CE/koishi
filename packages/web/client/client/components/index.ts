@@ -20,7 +20,6 @@ import Element, {
 	ElMessage,
 	ElMessageBox,
 } from "element-plus";
-import Markdown from "marked-vue";
 import type { App } from "vue";
 import components, {
 	SchemaBase,
@@ -33,6 +32,7 @@ import Dynamic from "./dynamic.vue";
 import * as icons from "./icons";
 import layout from "./layout";
 import link from "./link";
+import Markdown from "./markdown.ts";
 import Perms from "./perms.vue";
 import slot from "./slot";
 

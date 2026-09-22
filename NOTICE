@@ -39,6 +39,7 @@ The AGPL-3.0 portions remain under AGPL-3.0 in this repository; the MIT portions
 | `plugins/common/rate-limit` | [koishijs/common](https://github.com/koishijs/common) `packages/rate-limit` | [MIT](./LICENSE) |
 | `plugins/common/cron`（以 `Bun.cron` 原生重写，非直接移植） | [koishijs/koishi-plugin-cron](https://github.com/koishijs/koishi-plugin-cron) · [cron-fix](https://github.com/koishi-shangxue-plugins/service-more/tree/main/packages/cron-fix)（修复参考，MIT） | [MIT](./LICENSE) |
 | `packages/web/{client,components}` | [koishijs/webui](https://github.com/koishijs/webui) `packages/*` | [AGPL-3.0](./LICENSES/AGPL-3.0.txt) |
+| `packages/web/client/client/components/markdown.ts`（Markdown 渲染组件，自 npm 包 `marked-vue@1.3.0` 就地 vendor，仅调整类型标注与变量命名） | [shigma/marked-vue](https://github.com/shigma/marked-vue) | [MIT](./LICENSE) \*\*\* |
 | `plugins/webui/welcome/client/splash.{json,vue}`（欢迎页开屏动画：数据与加载接线，类名已本地化） | [koishijs/koishi-plugin-telemetry](https://github.com/koishijs/koishi-plugin-telemetry)（唯一开发者 [Il Harper](https://github.com/ilharp)）`clients/oob/client/{splash.json,home.vue}` | [MIT](./LICENSE) \*\* |
 | `plugins/webui/*`（其余 17 个，`welcome` 系上游 client 内建欢迎卡迁出为本仓独立插件） | [koishijs/webui](https://github.com/koishijs/webui) `plugins/*`（含 `market`，对齐原版 v2.11.11） | [AGPL-3.0](./LICENSES/AGPL-3.0.txt) |
 | `plugins/webui/{dataview,theme-vanilla}` | [koishijs/koishi-plugin-dataview](https://github.com/koishijs/koishi-plugin-dataview) · [koishijs/koishi-plugin-theme-vanilla](https://github.com/koishijs/koishi-plugin-theme-vanilla)（原 `koishijs/theme-vanilla`，上游已改名） | [AGPL-3.0](./LICENSES/AGPL-3.0.txt) |
@@ -47,3 +48,5 @@ The AGPL-3.0 portions remain under AGPL-3.0 in this repository; the MIT portions
 \* MIT as declared in the upstream `package.json` of each package.
 
 \*\* MIT 文件包含于 AGPL 目录：该文件仍以 MIT 授权（© Il Harper (ilharp)，telemetry 唯一开发者），其余部分适用所在目录的 AGPL-3.0。MIT files inside an AGPL directory remain under MIT (© Il Harper (ilharp), sole developer of telemetry); the rest of the directory stays under AGPL-3.0.
+
+\*\*\* 同上：该文件仍以 MIT 授权（© Shigma），其余部分适用所在目录的 AGPL-3.0。Same as above: the file remains under MIT (© Shigma); the rest of the directory stays under AGPL-3.0.

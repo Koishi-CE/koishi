@@ -35,6 +35,7 @@
 		"packages/web/components/client/schemastery-vue-runtime.ts",
 		// web 侧测试文件运行时由 bun test 覆盖；client 工程 types: [] 保持
 		// 浏览器纯净（不载 bun），故测试代码不进入本类型检查
+		"packages/web/client/client/**/*.test.ts",
 		"packages/web/components/client/**/*.test.ts",
 		"plugins/webui/explorer/client/**/*.test.ts",
 		"plugins/webui/market/client/**/*.test.ts"
