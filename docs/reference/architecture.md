@@ -12,7 +12,7 @@
 
 ## 2. 目录结构与包清单
 
-共 53 个 workspace 包（node ×8 · shim ×4 · web ×3 · common ×9 · infra ×8 · webui ×19 · apps ×2），全部 `"type": "module"`。
+共 54 个 workspace 包（node ×8 · shim ×4 · web ×4 · common ×9 · infra ×8 · webui ×19 · apps ×2），全部 `"type": "module"`。
 
 ```
 koishi/（Bun workspaces：packages/node/* · packages/shim/* · packages/web/* · plugins/{common,infra,webui}/* · apps/*）

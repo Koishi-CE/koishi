@@ -74,12 +74,12 @@
 			{
 				"up": "packages/client",
 				"ours": "packages/web/client",
-				"note": "本仓 devMode fork；node 侧构建器已拆至 packages/web/builder、宿饯 SPA 已拆至 packages/web/app（上游 app/、src/、scripts/ 在本目录缺席属预期）；浏览器库源码本仓在 src/（上游在 client/），文件名集合不再两两对应，diff 仅作线索，须手工对位"
+				"note": "本仓 devMode fork；node 侧构建器已拆至 packages/web/builder、宿主 SPA 已拆至 packages/web/app（上游 app/、src/、scripts/ 在本目录缺席属预期）；浏览器库源码本仓在 src/（上游在 client/），文件名集合不再两两对应，diff 仅作线索，须手工对位"
 			},
 			{
 				"up": "packages/client/app",
 				"ours": "packages/web/app",
-				"note": "宿饯 SPA（本仓拆为独立包 @koishi-ce/console-app）；本仓源码在 src/ 下（上游 app/ 为扁平形态），文件名集合不再两两对应，diff 退化为单边清单，须手工对位"
+				"note": "宿主 SPA（本仓拆为独立包 @koishi-ce/console-app）；本仓源码在 src/ 下（上游 app/ 为扁平形态），文件名集合不再两两对应，diff 退化为单边清单，须手工对位"
 			},
 			{
 				"up": "packages/components",
