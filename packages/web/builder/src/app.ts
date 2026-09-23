@@ -17,6 +17,11 @@
  * 现已拆为独立包 `@koishi-ce/console-app`（`packages/web/app`），应用源码
  * 位于其 `src/` 下。同一拆分也让宿主 SPA 的发布节奏与浏览器运行时库解耦
  * （改首页布局不再牵动库的版本号）。
+ *
+ * 注意：宿主侧 devMode（plugins/webui/console 的 node/index.ts 构造器）
+ * 另有一份等价解析（同一包名 + `../src`）。两处无法合并为一次调用——
+ * 本包顶层 `import * as vite`，而 console 的生产路径不得静态引本包。
+ * 改动包名或应用子路径时须两处同步（那处代码亦有指向本函数的注释）。
  */
 
 import { resolve } from "node:path";
