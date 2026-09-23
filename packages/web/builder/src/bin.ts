@@ -9,7 +9,7 @@
  *
  * 极简手写 CLI（不引 CLI 框架）：仅 `build [root]` 一个子命令 +
  * help/version。带 root（或 cwd 本身是含 client/ 的插件目录）时构建
- * 该 webui 插件的前端；否则执行宿主控制台前端总装（scripts/client.ts，
+ * 该 webui 插件的前端；否则执行宿主控制台前端总装（assemble.ts，
  * 产物写入 plugins/webui/console/dist）。
  */
 
@@ -57,7 +57,7 @@ async function main() {
 			await build(resolve(process.cwd(), target));
 			return;
 		}
-		const host = await import("../scripts/client.ts");
+		const host = await import("./assemble.ts");
 		await host.default();
 		return;
 	}

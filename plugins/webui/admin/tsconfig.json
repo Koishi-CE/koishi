@@ -25,11 +25,8 @@
 			"@koishi-ce/utils": [
 				"../../../packages/node/utils/src/index.ts"
 			],
-			"@koishi-ce/client": [
-				"../../../packages/web/client/src/index.ts"
-			],
-			"@koishi-ce/client/lib": [
-				"../../../packages/web/client/src/index.ts"
+			"@koishi-ce/console-builder": [
+				"../../../packages/web/builder/src/index.ts"
 			],
 			"@koishi-ce/components": [
 				"../../../packages/web/components/client/index.ts"

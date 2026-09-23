@@ -1,0 +1,61 @@
+{
+    "name": "@koishi-ce/console-builder",
+    "description": "Build toolchain for the Koishi console frontend",
+    "version": "1.0.0",
+    "type": "module",
+    "main": "lib/index.mjs",
+    "module": "lib/index.mjs",
+    "types": "lib/index.d.ts",
+    "exports": {
+        ".": {
+            "source": "./src/index.ts",
+            "types": "./lib/index.d.ts",
+            "import": "./lib/index.mjs",
+            "default": "./lib/index.mjs"
+        },
+        "./package.json": "./package.json"
+    },
+    "files": [
+        "lib",
+        "src"
+    ],
+    "bin": {
+        "koishi-console": "lib/bin.mjs"
+    },
+    "contributors": [
+        "Shigma <shigma10826@gmail.com>",
+        "Oppenheymu <oppenheymu@gmail.com>"
+    ],
+    "license": "AGPL-3.0",
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/Koishi-CE/koishi.git",
+        "directory": "packages/web/builder"
+    },
+    "bugs": {
+        "url": "https://github.com/Koishi-CE/koishi/issues"
+    },
+    "homepage": "https://koishi.chat",
+    "keywords": [
+        "bot",
+        "chatbot",
+        "koishi",
+        "webui",
+        "console",
+        "build",
+        "vite"
+    ],
+    "dependencies": {
+        "@koishi-ce/client": "workspace:*",
+        "@koishi-ce/components": "workspace:*",
+        "@vitejs/plugin-vue": "^6.0.8",
+        "@vueuse/core": "^15.0.0",
+        "sass-embedded": "^1.102.0",
+        "typescript": "^5.0.0",
+        "unocss": "^66.8.1",
+        "vite": "^8.2.2",
+        "vue": "^3.5.42",
+        "vue-i18n": "^11.4.10",
+        "vue-router": "^5.2.0"
+    }
+}

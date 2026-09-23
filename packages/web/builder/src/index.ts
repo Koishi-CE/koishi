@@ -3,12 +3,14 @@
 // Copyright (c) 2026-present Koishi-CE contributors.
 
 /**
- * @koishi-ce/client 构建入口。
+ * @koishi-ce/console-builder 构建入口（node 侧）。
  *
  * 提供两个编程式 API（本仓库的前端构建没有 vite 配置文件，全部在此完成）：
  * - `build(root)`：构建单个 webui 插件的前端（`<插件目录>/client/` → `dist/`），
  *   由 `koishi-console` CLI（src/bin.ts）暴露给各插件使用；
  * - `createServer(baseDir)`：创建开发模式的 vite 中间件服务器。
+ *
+ * 宿主总装在 assemble.ts（同包 `koishi-console build` 的无参分支）。
  */
 
 import { existsSync } from "node:fs";
@@ -16,7 +18,11 @@ import { mkdir, rm } from "node:fs/promises";
 import { resolve } from "node:path";
 import vue from "@vitejs/plugin-vue";
 import * as vite from "vite";
+import { locateApp } from "./app.ts";
 import { yaml } from "./yaml.ts";
+
+// 宿主 SPA（app 目录）定位的唯一入口，转出给宿主侧的 devMode 等调用方
+export { locateApp };
 
 // vite 8 基于 rolldown,rollup 已不在依赖树中;这里按实际消费的字段
 // 局部声明构建产物类型(替代原先的 `import type { RollupOutput }`)
@@ -48,7 +54,7 @@ async function collectWorkspaceAliases(): Promise<
 	} catch {
 		// 下游 npm 安装形态（.bun 嵌套布局或根提升布局）四级上跳不落在
 		// 任何仓库根：读不到清单即没有 workspace 源码可映射，空表即正确
-		// 语义（本函数在模块顶层 await 执行，抛出会拖垮整个 client 加载）
+		// 语义（本函数在模块顶层 await 执行，抛出会拖垮整个 builder 加载）
 		return {};
 	}
 	const aliases: Record<string, string> = {};
@@ -294,9 +300,8 @@ export async function createServer(
 	baseDir: string,
 	config: vite.InlineConfig = {},
 ) {
-	// 开发模式下以本包的 app/ 宿主应用为入口
-	// （源码 src/ 与产物 lib/ 都在包根下一级，相对定位两者一致）
-	const root = resolve(import.meta.dir, "../app");
+	// 开发模式下以宿主控制台 SPA 为入口（定位集中在 app.ts）
+	const root = locateApp();
 	return vite.createServer(
 		vite.mergeConfig(
 			{

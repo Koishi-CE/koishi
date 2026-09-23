@@ -274,6 +274,7 @@ export function baseManifest(): Manifest {
 		overrides: buildUpstreamOverrides(),
 		devDependencies: {
 			"@koishi-ce/client": "^1.0.0",
+			"@koishi-ce/console-builder": "^1.0.0",
 			"@koishi-ce/plugin-hmr": "^1.0.0",
 			"@koishi-ce/plugin-mock": "^1.0.0",
 			"@koishi-ce/scripts": "^1.0.0",

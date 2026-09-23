@@ -5,8 +5,8 @@
  * "schemastery-vue/client" 虚拟子路径的真实文件载体（compiler-sfc 专用）。
  *
  * - 运行时：该子路径在包内并不存在，构建器用 resolve.alias 把它映射到
- *   同目录 schemastery-vue-runtime.ts（见 packages/web/client/src/index.ts
- *   与 scripts/client.ts），本文件不会进入任何产物。
+ *   同目录 schemastery-vue-runtime.ts（见 packages/web/builder/src/index.ts
+ *   与 src/assemble.ts），本文件不会进入任何产物。
  * - 类型：vue 的 compiler-sfc 在解析 .vue 文件内 defineProps 等类型时走
  *   TypeScript 模块解析（compiler-sfc 的 resolveWithTS），既不认 vite
  *   别名也不认 ambient declare module，必须由 tsconfig 的 paths 把子路径
