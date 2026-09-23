@@ -1,5 +1,31 @@
 # @koishi-ce/client
 
+## 1.3.3
+
+### Patch Changes
+
+- e2492f7: 内置 Markdown 渲染组件（`k-markdown`）不再依赖 npm 包 `marked-vue`，改为就地 vendor 的本地实现（`client/components/markdown.ts`，源自 `marked-vue@1.3.0`，MIT）。该包自 2023 年起停更、无 release，且把 `marked` 钉在 `^9.1.6` 永不前进；收回源码后本包直接声明 `marked` / `xss`，可自主升级解析器与消毒器。
+  
+  运行时行为零变化：props 语义（`source` / `inline` / `tag` / `unsafe`）、包裹标签与 `markdown` class，以及非 unsafe 模式下的消毒白名单、`<a>` 属性规范化（协议白名单、`rel` / `target` 加固）与栈式补闭合均与上游逐字等价；另新增 25 条回归测试锁定该行为基线。
+- c277a4e: `k-markdown` 的手写消毒层换成 `dompurify`（`xss` 出仓）。
+  
+  原消毒层是 `marked-vue` 的手写实现（白名单过滤 + 自维护标签栈补闭合 + 手写 `<a>` 属性重建），自带两处偏差：白名单外标签的闭标签会残留（`<script>x</script>` → `x</script>`）、标签名大小写不归一（`<B>x</B>` → `<b>x</B>`）。二者都无可利用面，但暴露的正是「手写近似解析器」这一层的问题——嵌套、大小写、自闭合、属性引号形态都得自己覆盖。换入 DOMPurify 后由真实 DOM 解析器承担这些工作，偏差随之消失。
+  
+  行为变更有 7 处，逐条核对后均为「更正确」：`<script>` / `<iframe>` 连内容整体移除；孤儿闭标签（`</b>`）直接丢弃而非转义显示；标签名统一归一为小写；非法协议的 href 由「降级为 `#`」改为整体剔除（且无 href 时不补 `rel` / `target`，不再伪造假链接）；属性值内的尖括号按 HTML 规范原样保留（已由 round-trip 用例证否「会变成标签」）。另需显式关掉 DOMPurify 默认开启的 `ALLOW_DATA_ATTR` / `ALLOW_ARIA_ATTR`，否则它们会绕过 `ALLOWED_ATTR` 的收敛。
+  
+  产品口径不变：`ALLOWED_TAGS` 仍不含 `img`——非 unsafe 模式的渲染对象包含市场里的第三方插件描述，放行图片等于允许其借图片请求静默外发访客信息。
+  
+  代价是产物 +10.3 KB（`xss` 18,786 B → `dompurify` 29,354 B，minify 实测）；换来的是十余年攒下的攻击面覆盖面与持续维护的安全修复（`xss` 的 npm 最新版已停在 2024-03，属发版停摆）。测试期新增 `jsdom` + `@types/jsdom`（DOMPurify 是 DOM-only 库）：linkedom 会**静默返回未消毒原文**、happy-dom 会谎报 `isSupported` 并把元素整体剥光（30 条输入里 27 条与 jsdom 分歧），两者均已实测证否。
+  
+  回归测试由 29 用例 / 55 断言增至 31 用例 / 60 断言，新增一组「消毒输出的二次解析安全性（round-trip）」：把消毒结果重新解析为 DOM，确认不产生新的可执行节点或 `on*` 属性。
+- df92195: `k-markdown` 的 Markdown 解析器由 `marked@9.1.6` 升到 `marked@18.0.14`（跨 9 个 major）。原 `marked-vue` 把解析器钉在 9.x，其更新几乎全是解析边界修复与 ReDoS 加固，长期停留在 9 意味着持续吃旧 bug。
+  
+  升级前先做双装对拍（72 条语料 × 块级/行内两模式），实测 16 处输出差异，逐条核对后确认全部是上游解析修复，无一处涉及本仓消毒层的前提：HTML 正确性（裸 URL 自动链接的 `href` 里裸 `&` 现转义为 `&amp;`）、安全（不再产出非法的链接套链接 `<a>` 嵌套）、CommonMark 合规（数字字符引用 `&#65;` 现解码为 `A`）、块级修复（空列表项、空代码块的多余换行、ATX 标题闭合序列前的制表符、引用后接空列表、硬换行后的前导空白）。
+  
+  代码改动仅在类型面：marked 9 的 `parse` 是 `typeof marked`（重载函数，最宽松一条返回 `string`），marked 18 改为三条调用签名后回到 `string | Promise<string>`，故渲染函数对两个分支的结果统一 cast 一次。上述差异中可观测的部分已钉成 4 组新回归用例（测试文件 25 → 29 用例）。
+  
+  代价是字节数：`marked` minify 后由 35,632 B 涨到 45,639 B（+10.0 KB），宿主前端 `client.js` 相应由 310.68 kB 涨到 321.05 kB（+10.4 kB / +3.3%，gzip 104.37 kB）——本次判据是解析正确性与安全修复，不是体积。
+
 ## 1.3.2
 
 ### Patch Changes
