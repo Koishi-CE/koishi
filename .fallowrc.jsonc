@@ -24,8 +24,8 @@
 		"packages/node/cli/src/worker/*.ts",
 		"packages/node/core/src/context/index.ts",
 		"packages/node/loader/src/node/index.ts",
-		"packages/web/client/scripts/client.ts",
-		"packages/web/client/src/bin.ts",
+		"packages/web/builder/src/assemble.ts",
+		"packages/web/builder/src/bin.ts",
 		"plugins/webui/config/src/shared/console-events.ts",
 		"tooling/upstream-audit/index.ts"
 	],

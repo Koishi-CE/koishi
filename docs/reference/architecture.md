@@ -12,13 +12,13 @@
 
 ## 2. 目录结构与包清单
 
-共 52 个 workspace 包（node ×8 · shim ×4 · web ×2 · common ×9 · infra ×8 · webui ×19 · apps ×2），全部 `"type": "module"`。
+共 53 个 workspace 包（node ×8 · shim ×4 · web ×3 · common ×9 · infra ×8 · webui ×19 · apps ×2），全部 `"type": "module"`。
 
 ```
 koishi/（Bun workspaces：packages/node/* · packages/shim/* · packages/web/* · plugins/{common,infra,webui}/* · apps/*）
 ├── packages/node/   Node 侧核心库（8 包，根 tsdown 统一构建 → lib/ ESM-only）
 ├── packages/shim/   上游包名占位 shim（4 包，纯 JS 预编译，不走 tsdown）
-├── packages/web/    浏览器侧库（client / components，源码直出，无独立构建产物）
+├── packages/web/    控制台前端（client / components 为浏览器库源码直出；builder 为 node 侧构建器）
 ├── plugins/common/  通用 bot 插件 ×9（MIT）
 ├── plugins/infra/   基础设施插件 ×8（http/proxy/server 为 vendored 预编译）
 ├── plugins/webui/   控制台插件 ×19（src/=Node 侧，client/=Vue 侧）
@@ -52,12 +52,13 @@ CE 包 peer 一律指 CE 名，但**下游项目的社区插件生态**仍消费
 
 下游项目以六行 npm alias 钉名（四包）：`"koishi": "npm:@koishi-ce/koishi-shim@^4.18.11"`、`"@koishijs/core": "npm:@koishi-ce/koishi-shim@4.18.11"`（精确锁，逐字相等）、`"@koishijs/loader": "npm:@koishi-ce/koishi-shim@^4.18.11"`、`"@koishijs/plugin-console": "npm:@koishi-ce/console-shim@^5.30.11"`、`"@koishijs/client": "npm:@koishi-ce/client-shim@^5.30.11"`、`"@koishijs/components": "npm:@koishi-ce/components-shim@^1.5.22"`——`create-koishi-ce` 模板已预置。Bun 对 npm alias 的满足性判定看**落盘包的 version**（对 peer 与普通依赖边同理），故 shim 版本冻结跟随上游线、不随本仓 1.0.0 基线；market 安装器的 `isGuardedRequest()` 把 `npm:@koishi-ce` 前缀与 `workspace:` 同等保护。钉名之外，模板与 sandbox 生成器另预置 41 名 `overrides` 强制重写兜底（不看版本满足性，拦钉名清单外的上游声明，语义见 `packages/shim/README.md`「三层防线」）。
 
-### packages/web/*（浏览器侧）
+### packages/web/*（控制台前端）
 
 | 目录 | 包名 | 说明 |
 |---|---|---|
-| `client` | `@koishi-ce/client` | 控制台前端运行时 + **构建器**：`src/index.ts` 暴露编程式 `build(root)`（vite.build + collectWorkspaceAliases）；`src/bin.ts` 暴露 `koishi-console` CLI；`scripts/client.ts` 是宿主前端总装脚本 |
+| `client` | `@koishi-ce/client` | 控制台**浏览器运行时库**：根 Context、六个核心服务、内置组件与词典，外加宿主 SPA 源码（`app/`，devMode 与宿主总装共用）。**无独立构建产物**，`client/` 源码由 console 打包器消费 |
 | `components` | `@koishi-ce/components` | 前端共享组件库（`client/` 源码），**无独立构建**，仅作为客户端源码被 console 打包器消费 |
+| `builder` | `@koishi-ce/console-builder` | **node 侧构建器**（走根 tsdown）：`src/index.ts` 暴露编程式 `build(root)`（vite.build + collectWorkspaceAliases）与 `createServer(baseDir)`；`src/bin.ts` 暴露 `koishi-console` CLI；`src/assemble.ts` 是宿主前端总装（CLI 无参分支） |
 
 ### plugins/common/*（通用插件 ×9，均 MIT）
 
@@ -105,7 +106,7 @@ node 侧在 `src/`、Vue 侧在 `client/`（上游约定），`koishi.public: ["
 
 - `peerDependencies` **一律指向 CE 包名**（`@koishi-ce/* ^1.0.0`），不要写回上游名；代码内导入同样一律 `@koishi-ce/*`（例外仅 `@koishijs/plugin-server-proxy` 一处外部包，宿主插件 console 的类型引用）。
 - vendored 三包（http / proxy / server）不动。
-- 依赖方向：`plugins/webui/* → @koishi-ce/console → @koishi-ce/core`；`plugins/common/* → @koishi-ce/core`；`packages/web/*`（浏览器侧）不依赖 node 侧运行时。
+- 依赖方向：`plugins/webui/* → @koishi-ce/console → @koishi-ce/core`；`plugins/common/* → @koishi-ce/core`；`packages/web/*` 中浏览器侧的 `client` / `components` 不依赖 node 侧运行时（`builder` 是 node 侧构建器，仅依赖 `client` / `components` 与构建工具，方向为 `console 插件 → builder → client / components`）。
 - 以上包名纪律、顶层类型字段统一（`types`，不混用旧别名 `typings`）与 ESM-only 形态由 `check:packages` 门禁强制（`tooling/checks/packages.ts`，已并入 `bun run check`）；循环依赖为 fallow 的 error 级规则（`.fallowrc.jsonc`，CI 的 fallow job 生效）。
 
 ## 4. 构建体系
@@ -114,14 +115,14 @@ node 侧在 `src/`、Vue 侧在 `client/`（上游约定），`koishi.public: ["
 
 根 `tsdown.config.ts` 用 workspace 模式一次构建所有 node 侧包：
 
-- `workspace.include`：`packages/node/*`、`packages/web/*`、`apps/{koishi-create,koishi-scripts}`、`plugins/{common,infra,webui}/*`；`exclude`：vendored 三包、`packages/web/components`（仅作客户端源码）、`packages/shim/*`（纯 JS 预编译）。
+- `workspace.include`：`packages/node/*`、`packages/web/*`、`apps/{koishi-create,koishi-scripts}`、`plugins/{common,infra,webui}/*`；`exclude`：vendored 三包、`packages/web/{components,client}`（仅作客户端源码，无 node 侧入口）、`packages/shim/*`（纯 JS 预编译）。
 - **单遍 ESM-only 构建**：`index.mjs` + `index.d.ts`，各包 exports 以 `default` 条件兜底；`deps.neverBundle: [/^@koishi-ce\//]` 把 workspace 互引按包名外部化；`loader: { ".yml": "copy" }` 把 locale yml 原样拷入产物并改写引用路径。
 - 包级差异配置：`apps/{koishi-create,koishi-scripts}` 各有 `tsdown.config.ts`（只补 bin 入口等差异，随根 workspace 模式自动合并；进目录单独 build 仅调试用）。
 
 ### 前端：vite 编程式构建（无配置文件）
 
-- **宿主控制台总装**：`packages/web/client/scripts/client.ts`——依次构建 app（unocss preset-mini）、拷贝 vue runtime、构建 vue-router / @vueuse 外部块、client（element-plus 单独 manualChunks），产物统一输出 `plugins/webui/console/dist`，并把 vue / vue-router / @vueuse / @koishi-ce/client 指向外部块文件（宿主只装一份）。
-- **单插件前端**：`packages/web/client/src/index.ts` 的 `build(root)`（CLI：`bun packages/web/client/src/bin.ts build <插件目录>`）。内置 `collectWorkspaceAliases()` 扫描根 workspaces glob 做显式映射——未被依赖的插件不在 node_modules 链接里，bundler 无法自行解析。
+- **宿主控制台总装**：`packages/web/builder/src/assemble.ts`——依次构建 app（unocss preset-mini）、拷贝 vue runtime、构建 vue-router / @vueuse 外部块、client（element-plus 单独 manualChunks），产物统一输出 `plugins/webui/console/dist`，并把 vue / vue-router / @vueuse / @koishi-ce/client 指向外部块文件（宿主只装一份）。
+- **单插件前端**：`packages/web/builder/src/index.ts` 的 `build(root)`（CLI：`bun packages/web/builder/src/bin.ts build <插件目录>`）。内置 `collectWorkspaceAliases()` 扫描根 workspaces glob 做显式映射——未被依赖的插件不在 node_modules 链接里，bundler 无法自行解析。
 - 插件自带构建脚本：`plugins/webui/analytics/build/client.ts`（fuck-echarts：echarts chunk 内 `Symbol` 重命名；`build()` 显式加载合并该文件名，vite 不会自动发现。explorer 的 monaco manualChunks 覆盖已删——rolldown 自动分包已实现其目标）。
 - **按需分包实例（explorer 编辑器）**：CodeMirror 6 的语言包由 `plugins/webui/explorer/client/languages.ts` 动态 `import()` 注册，rolldown 为每个语言切出独立 chunk（构建后 `dist/` 只有 23 个文件，首屏内核约 431 KB）；`index.js` 里的 `import()` 被 minify 成模板字符串形态（`import(`./dist-xxx.js`)`），校验产物所属可用「静态可达 chunk 之和」口径。
 - `packages/web/components` 无构建（源码直出，被 console 打包器消费）。

@@ -41,8 +41,8 @@ bun run sandbox [目录]          # 外部沙盒实例：链接模式（详见�
 前端产物（vite，编程式构建，无配置文件）：
 
 ```bash
-bun packages/web/client/src/bin.ts build               # 宿主控制台前端 → plugins/webui/console/dist
-bun packages/web/client/src/bin.ts build plugins/webui/status   # 单个 webui 插件的前端
+bun packages/web/builder/src/bin.ts build               # 宿主控制台前端 → plugins/webui/console/dist
+bun packages/web/builder/src/bin.ts build plugins/webui/status   # 单个 webui 插件的前端
 ```
 
 独立构建与发布：
@@ -91,11 +91,11 @@ fallow 另外还带重复代码、复杂度健康度、边界违规与 PR 变更
 |---|---|---|
 | node 侧库产物 | 各包 `lib/`（`index.mjs` ESM + `index.d.ts`） | 根 `tsdown.config.ts` 单遍构建所有 node 侧 workspace 包 |
 | `.yml` locale | 随 `lib/` 拷贝 | tsdown `loader: { ".yml": "copy" }` |
-| 宿主控制台前端 | `plugins/webui/console/dist/` | `packages/web/client/scripts/client.ts`（总装：app + vue runtime 外部块 + client） |
-| 各 webui 插件前端 | 各插件 `dist/`（`koishi.public` 声明） | `packages/web/client/src/index.ts` 的 `build(root)` API |
+| 宿主控制台前端 | `plugins/webui/console/dist/` | `packages/web/builder/src/assemble.ts`（总装：app + vue runtime 外部块 + client） |
+| 各 webui 插件前端 | 各插件 `dist/`（`koishi.public` 声明） | `packages/web/builder/src/index.ts` 的 `build(root)` API |
 | `apps/koishi-create` | `lib/` | 根 tsdown（包级 tsdown.config.ts 补 bin 入口） |
 
-- **ESM-only + Bun 运行时**：全部 52 个 workspace 包均为 `"type": "module"`，根 tsdown 只出 ESM（exports 以 `default` 条件兜底）。loader 用 `require()` 加载插件，Bun 的 `require()` 可直接加载 ESM，插件加载链据此工作；不要恢复 CJS 双格式产物。
+- **ESM-only + Bun 运行时**：全部 53 个 workspace 包均为 `"type": "module"`，根 tsdown 只出 ESM（exports 以 `default` 条件兜底）。loader 用 `require()` 加载插件，Bun 的 `require()` 可直接加载 ESM，插件加载链据此工作；不要恢复 CJS 双格式产物。
 - `**/lib/`、`**/dist/` 均被 .gitignore 忽略，不入库。例外：vendored 三包（`plugins/infra/{http,proxy,server}`）的 `index.cjs/index.mjs/index.d.ts` 是提交进仓库的预编译产物（再导出 `@cordisjs/plugin-*`），不走 tsdown。
 - 前端构建发布前现构建（dist 不入 git），由 `bun run release build` 编排。
 
@@ -169,8 +169,8 @@ expect(app.database.getUser("mock", "A")).resolves.toHaveShape({ authority: 1 })
 6. **biome 对 `.vue` 只解析 script 块、不追踪模板引用**：biome.json 已对 `**/*.vue` 关闭 noUnusedVariables / noUnusedImports / noUnusedFunctionParameters / useVueMultiWordComponentNames / useImportType（模板使用会假阳性，useImportType 会把模板组件的值导入改回 `import type` 使运行时失注册）；模板语义检查归 eslint。
 7. **显式 `any` 全仓为 0，保持住**：动态边界（JSON.parse / socket 消息 / 第三方回调）用 `unknown` + 收窄；`{}` 类型用 `Record<never, never>`。
 8. **TS7 的跨文件 `declare module` 增强对「经 lib 产物 d.ts 的模块骨架」不生效**：浏览器端工程对 console 类型的消费走 `packages/web/client/client/shims.d.ts` 手写的 `"@koishi-ce/plugin-console"` 骨架，各插件 client 工程须向同一模块名镜像自己的 Services / Events 注入，载荷要用骨架自带的 `DataService<T>` 包装。market 的镜像是 `plugins/webui/market/client/console-services.ts`（类型实体经 `market/client/tsconfig.json` 指向各包 lib 产物 d.ts 解析）——**node 侧声明变更时须同步该文件**。
-9. **前端构建没有 vite 配置文件**，全部编程式 `vite.build()`：宿主总装 `packages/web/client/scripts/client.ts`（产物硬编码到 `plugins/webui/console/dist`）；单插件 `build(root)` 内置 `collectWorkspaceAliases()`——未被依赖的 workspace 包不会出现在 node_modules 链接里，必须显式映射才能被 bundler 解析。
-10. **特殊构建 hack**（动对应构建链必须复核）：analytics 的 "fuck-echarts"（`build/client.ts`，echarts chunk 内 `Symbol` 重命名；`build()` 显式加载合并该文件名，vite 不会自动发现）与 client 构建的 vue-i18n `esm-browser.prod` 别名——explorer 的 monaco manualChunks 覆盖已删（rolldown 自动分包已实现其目标）。explorer 编辑器（CodeMirror 6）的语言包靠 `client/languages.ts` 的动态 import 切 chunk：改该文件后用 `bun packages/web/client/src/bin.ts build plugins/webui/explorer` 复核 dist 仍只含首屏内核（约 431 KB / 23 个文件）而把各语言留在按需 chunk 里；若发现全部语言被打进首屏，优先查是否有人把 `load` 里的动态 import 改成了顶层静态 import（同时注意：`monaco` 时代的 `basic-languages/monaco.contribution` 式入口会把语言服务连带引入，CM6 无此问题）。
+9. **前端构建没有 vite 配置文件**，全部编程式 `vite.build()`：宿主总装 `packages/web/builder/src/assemble.ts`（产物硬编码到 `plugins/webui/console/dist`）；单插件 `build(root)` 内置 `collectWorkspaceAliases()`——未被依赖的 workspace 包不会出现在 node_modules 链接里，必须显式映射才能被 bundler 解析。
+10. **特殊构建 hack**（动对应构建链必须复核）：analytics 的 "fuck-echarts"（`build/client.ts`，echarts chunk 内 `Symbol` 重命名；`build()` 显式加载合并该文件名，vite 不会自动发现）与 client 构建的 vue-i18n `esm-browser.prod` 别名——explorer 的 monaco manualChunks 覆盖已删（rolldown 自动分包已实现其目标）。explorer 编辑器（CodeMirror 6）的语言包靠 `client/languages.ts` 的动态 import 切 chunk：改该文件后用 `bun packages/web/builder/src/bin.ts build plugins/webui/explorer` 复核 dist 仍只含首屏内核（约 431 KB / 23 个文件）而把各语言留在按需 chunk 里；若发现全部语言被打进首屏，优先查是否有人把 `load` 里的动态 import 改成了顶层静态 import（同时注意：`monaco` 时代的 `basic-languages/monaco.contribution` 式入口会把语言服务连带引入，CM6 无此问题）。
 11. **hmr 的 TS 即时编译由 Bun 原生完成**：require 坏 TS 抛 `AggregateError`（errors 为 Bun 的 BuildMessage，带 `message` 与 `position.{file,line,column}`，无 esbuild 式 `.text`/`.location` 字段——上游按 esbuild BuildFailure 写的错误识别分支在 Bun 下永不命中，现已在 `hmr/src/error.ts` 按真实形态重写）；`@babel/code-frame`@8 自带类型（`@types/babel__code-frame` 为 v7 线存根、从未生效，已删），esbuild devDep 已移除。
 12. **上游 port 须补 `.ts` 扩展名**：上游源码是无后缀的 bundler 风格相对导入，本仓 nodenext 类型检查要求相对导入带扩展名；port 流程见 [../process/upstream.md](../process/upstream.md)。
 13. **Biome 的 JSON 行尾不可见字符**：已知、正常、无害，看到即跳过，不调查、不修复、不报告。

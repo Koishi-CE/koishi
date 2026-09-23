@@ -3,22 +3,25 @@
 // Copyright (c) 2026-present Koishi-CE contributors.
 
 /**
- * 宿主控制台前端的总装构建脚本（编程式 vite.build，本仓库没有 vite 配置文件）。
+ * 宿主控制台前端的总装构建（编程式 vite.build，本仓库没有 vite 配置文件）。
  *
+ * 是 `koishi-console build` 的无参分支（src/bin.ts）背后的实现。
  * 产物目录硬编码为 `plugins/webui/console/dist/`，内容分四部分：
- * - 主应用（本包 `app/` 目录）→ `index.js`
- * - client 组件库（本包 `client/` 目录）→ `client.js`（element-plus 单独成 chunk）
+ * - 宿主 SPA（`@koishi-ce/client` 的 `app/` 目录）→ `index.js`
+ * - client 组件库（同一包的 `client/` 目录）→ `client.js`（element-plus 单独成 chunk）
  * - vue / vue-router / @vueuse/core 三个运行时共享包 → `vue.js` 等，
  *   供主应用、client 与所有 webui 插件以 external 依赖的方式共享
  */
 
+import { existsSync } from "node:fs";
 import { appendFile } from "node:fs/promises";
 import { resolve } from "node:path";
 import vue from "@vitejs/plugin-vue";
 import mini from "unocss/preset-mini";
 import unocss from "unocss/vite";
 import * as vite from "vite";
-import { yaml } from "../src/yaml.ts";
+import { locateApp } from "./app.ts";
+import { yaml } from "./yaml.ts";
 
 // vite 8 基于 rolldown,rollup 已不在依赖树中;这里按实际消费的字段
 // 局部声明构建产物类型(与 src/index.ts 的 BuildResult 同构)
@@ -50,9 +53,26 @@ function findModulePath(id: string) {
 	);
 }
 
-// 源码 scripts/ 与打包后 lib/ 到仓库根的深度一致（四级），两种运行
+// 源码 src/ 与打包后 lib/ 到仓库根的深度一致（四级），两种运行
 // 形态下相对定位结果相同
 const cwd = resolve(import.meta.dir, "../../../..");
+
+/**
+ * 校验按层数推导出的仓库根确实成立。
+ *
+ * 总装的产物落点在另一个包内（`plugins/webui/console/dist`），只能在
+ * 仓库形态下执行：下游 npm 安装形态下四级上跳落在无关目录，此时显式
+ * 报错，而不是把产物写到无关路径。
+ */
+function assertRepoLayout(): void {
+	if (existsSync(`${cwd}/package.json`)) return;
+	throw new Error(
+		`宿主总装只能在仓库内执行：未能从 ${import.meta.dir} 定位到仓库根。` +
+			"构建单个插件前端请改用 `koishi-console build <插件目录>`。",
+	);
+}
+
+/** 宿主控制台总装的产物落点（console 宿主包内的 dist）。 */
 const dist = `${cwd}/plugins/webui/console/dist`;
 
 /**
@@ -73,7 +93,7 @@ async function build(
 	return (await vite.build({
 		root,
 		build: {
-			outDir: `${cwd}/plugins/webui/console/dist`,
+			outDir: dist,
 			emptyOutDir: true,
 			// 样式合并为单个 style.css，方便服务端一次性下发
 			cssCodeSplit: false,
@@ -143,22 +163,20 @@ async function build(
 }
 
 export default async function () {
+	assertRepoLayout();
 	// 第一步：构建控制台主应用（入口为 app/index.html，产物 index.js）
-	const { output } = await build(
-		`${cwd}/packages/web/client/app`,
-		{
-			plugins: [
-				unocss({
-					presets: [
-						mini({
-							// 宿主 html 已自带基础样式，这里关掉 unocss 的全局 reset
-							preflight: false,
-						}),
-					],
-				}),
-			],
-		},
-	);
+	const { output } = await build(locateApp(), {
+		plugins: [
+			unocss({
+				presets: [
+					mini({
+						// 宿主 html 已自带基础样式，这里关掉 unocss 的全局 reset
+						preflight: false,
+					}),
+				],
+			}),
+		],
+	});
 
 	// 第二步：三个运行时共享包。vue 直接复制官方 runtime esm-browser 产物；
 	// vue-router 与 @vueuse/core 以各自官方浏览器产物为入口重新打包，

@@ -55,7 +55,7 @@ const viteConfigs: {
 		ws?: { port?: number };
 	};
 }[] = [];
-mock.module("@koishi-ce/client/lib", () => ({
+mock.module("@koishi-ce/console-builder", () => ({
 	createServer: async (
 		_baseDir: string,
 		config: unknown,

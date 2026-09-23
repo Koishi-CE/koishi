@@ -97,6 +97,18 @@
 			"formatter": {
 				"enabled": false
 			}
+		},
+		{
+			"includes": [
+				"packages/web/components/client/shims.d.ts"
+			],
+			"linter": {
+				"rules": {
+					"style": {
+						"useExportType": "off"
+					}
+				}
+			}
 		}
 	]
 }

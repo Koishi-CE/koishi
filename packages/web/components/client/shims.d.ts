@@ -7,7 +7,7 @@
  * 等)进入类型程序。浏览器端代码统一从 "schemastery-vue/client" 导入:
  * 该子路径在包内并不存在,类型由本 ambient 声明提供;运行时由构建器别名
  * 映射到同目录 schemastery-vue-runtime.ts(补齐真实包缺失的 SchemaBase
- * 具名导出,见 packages/web/client/src/index.ts 的 resolve.alias)。
+ * 具名导出,见 packages/web/builder/src/index.ts 的 resolve.alias)。
  *
  * 双轨说明:vue 的 compiler-sfc 解析 .vue 内 defineProps 等类型时走
  * TypeScript 模块解析,只认 tsconfig paths 指向的真实文件,既不认 vite
@@ -53,8 +53,10 @@ declare module "schemastery-vue/client" {
 	};
 
 	export default SchemaBase;
+	// SchemaBase 同占 value 与 type 两面，消费方按值调用它，故必须写成值导出
+	// （与运行时镜像 schemastery-vue-client.ts 保持一致；biome.json 已对
+	// 本文件关掉 useExportType，防止自动修复把它改成 export type）
 	export { SchemaBase, SchemaBase as form };
-
 	export const IconAdd: Component;
 	export const IconArrowDown: Component;
 	export const IconArrowUp: Component;

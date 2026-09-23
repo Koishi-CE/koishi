@@ -5,7 +5,7 @@
 /**
  * koishi-scripts CLI 入口（包名 @koishi-ce/scripts）。
  *
- * 手写极简 CLI（不引 CLI 框架，先例 packages/web/client/src/bin.ts），
+ * 手写极简 CLI（不引 CLI 框架，先例 packages/web/builder/src/bin.ts），
  * 注册六个子命令：
  * - setup：按本仓库范式初始化插件项目（别名 create / init / new）；
  * - clone：把已有插件仓库克隆到宿主工作区 external/ 并安装依赖；

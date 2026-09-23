@@ -11,11 +11,8 @@
 			"@koishi-ce/loader": ["../loader/src/index.ts"],
 			"@koishi-ce/registry": ["../registry/src/index.ts"],
 			"@koishi-ce/utils": ["../utils/src/index.ts"],
-			"@koishi-ce/client": [
-				"../../web/client/src/index.ts"
-			],
-			"@koishi-ce/client/lib": [
-				"../../web/client/src/index.ts"
+			"@koishi-ce/console-builder": [
+				"../../web/builder/src/index.ts"
 			],
 			"@koishi-ce/components": [
 				"../../web/components/client/index.ts"

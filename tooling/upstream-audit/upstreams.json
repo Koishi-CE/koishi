@@ -74,7 +74,7 @@
 			{
 				"up": "packages/client",
 				"ours": "packages/web/client",
-				"note": "本仓 devMode fork，diff 仅作线索"
+				"note": "本仓 devMode fork，且 node 侧构建器已拆至 packages/web/builder（上游 src/ 与 scripts/ 在本目录缺席属预期），diff 仅作线索"
 			},
 			{
 				"up": "packages/components",
