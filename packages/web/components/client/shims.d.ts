@@ -53,7 +53,7 @@ declare module "schemastery-vue/client" {
 	};
 
 	export default SchemaBase;
-	export { SchemaBase, SchemaBase as form };
+	export type { SchemaBase, SchemaBase as form };
 
 	export const IconAdd: Component;
 	export const IconArrowDown: Component;
