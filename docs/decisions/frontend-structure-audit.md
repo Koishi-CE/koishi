@@ -2,6 +2,7 @@
 
 > 对 `packages/web/*` 与 `plugins/webui/*` 前端代码组织的一次**现势审查快照**：实然职责说明、约定锚点、问题清单与整改建议。本文只做盘点与论证，不含任何代码改动。
 > **状态**：现势快照（2026-09-22 实测，全部数字为该日在本仓实跑统计）；§5 的整改建议为讨论稿，落地前需维护者确认。相关：[../reference/architecture.md](../reference/architecture.md) §4 构建体系 · [../process/upstream.md](../process/upstream.md) Restructure map · [../guides/development.md](../guides/development.md) §3。
+> **落地进度**：§5.1 P1（拆分 `packages/web/client`）已分两步实施——**第一步（本次改动）**：node 侧构建器与宿主总装拆为 `packages/web/builder`（`@koishi-ce/console-builder`），`@koishi-ce/client` 收窄为浏览器运行时库 + 宿主 SPA 源码；**第二步待做**：`app/` 拆为独立包（须注意它**必须可发布**——`plugins/webui/console` 的 `devMode` 在运行期解析 `@koishi-ce/client` 包内的 `app/`，本条已实测，原文 §5.1 的「`private: true`」设想不成立）。本文 §2 / §4 描述的是**拆分前**结构，读数前先对照 [../reference/architecture.md](../reference/architecture.md) 的现势包清单。
 > **本文结构**：1 范围与方法 · 2 职责说明（实然结构）· 3 约定锚点 · 4 问题清单 · 5 整改建议 · 6 附录：职责速查表。
 
 ## 1. 范围与方法

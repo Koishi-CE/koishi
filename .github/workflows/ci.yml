@@ -57,7 +57,7 @@ jobs:
       # logo.png），不构建前端则整套用例在干净环境下必失败；本地因 dist
       # 常在而感知不到，此处必须先出宿主控制台前端
       - name: 宿主控制台前端（console 静态资源测试的依赖）
-        run: bun packages/web/client/src/bin.ts build
+        run: bun packages/web/builder/src/bin.ts build
       - run: bun run check
       - name: test（含 lcov 覆盖率产出）
         run: bun run test --coverage --coverage-reporter=text --coverage-reporter=lcov --coverage-dir=coverage
@@ -78,11 +78,11 @@ jobs:
       # 前端构建走 src 别名，理论上不依赖 lib；先 build 与本地已验证形态一致
       - run: bun run build
       - name: 宿主控制台前端
-        run: bun packages/web/client/src/bin.ts build
+        run: bun packages/web/builder/src/bin.ts build
       - name: 全部 webui 插件前端
         run: |
           for dir in plugins/webui/*/client; do
-            bun packages/web/client/src/bin.ts build "$(dirname "$dir")"
+            bun packages/web/builder/src/bin.ts build "$(dirname "$dir")"
           done
 
   fallow:

@@ -12,7 +12,7 @@
 // TS 源码发布,直接导入会把不满足严格配置的源码拉进类型程序。虚拟子路径
 // 的类型由上方 reference 引入的 ambient 兜底 + 根 tsconfig.client.json
 // 的 paths(compiler-sfc 需要)双轨提供,运行时由构建器别名映射到同目录
-// schemastery-vue-runtime.ts(见 packages/web/client/src/index.ts)。
+// schemastery-vue-runtime.ts(见 packages/web/builder/src/index.ts)。
 import form from "schemastery-vue/client";
 import type { App } from "vue";
 import Computed from "./computed.vue";

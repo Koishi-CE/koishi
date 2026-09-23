@@ -24,7 +24,7 @@
 		"packages/node/loader/src",
 		"packages/node/registry/src",
 		"packages/node/utils/src",
-		"packages/web/client/src",
+		"packages/web/builder/src",
 		"plugins/common/bind/src",
 		"plugins/common/broadcast/src",
 		"plugins/common/callme/src",

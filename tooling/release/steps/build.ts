@@ -59,7 +59,7 @@ export async function runBuildSteps(
 	);
 	code = await run(
 		process.execPath,
-		["packages/web/client/src/bin.ts", "build"],
+		["packages/web/builder/src/bin.ts", "build"],
 		ROOT,
 	);
 	if (code !== 0) {
@@ -81,7 +81,7 @@ export async function runBuildSteps(
 				const pluginCode = await run(
 					process.execPath,
 					[
-						"packages/web/client/src/bin.ts",
+						"packages/web/builder/src/bin.ts",
 						"build",
 						pkg.dir,
 					],

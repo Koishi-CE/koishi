@@ -39,7 +39,7 @@ Koishi-CE/
 - **vendored 三包不动**：`plugins/infra/{http,proxy,server}` 为预编译产物包（无 `src/`，根 tsdown 显式 exclude），内联再导出 `@cordisjs/plugin-*`。
 - **shim 四包占名**：`packages/shim/{koishi-shim,console-shim,client-shim,components-shim}` 是下游 npm alias 的占名目标，纯 JS 预编译、版本冻结跟随上游线、changesets ignore。
 - **版本自主演进**：workspace 包走 1.x 线（core 1.1.6 / plugin-console 1.3.5 / client 1.3.1 等），不再镜像上游版本号；发布一律走 `bun run release` 链，禁止手动 `npm publish`。
-- 客户端构建仍无 vite 配置文件，全部编程式 `vite.build()`（宿主入口 `packages/web/client/src/bin.ts`，插件可自带 `build/client.ts` 覆盖配置）。
+- 客户端构建仍无 vite 配置文件，全部编程式 `vite.build()`（宿主入口 `packages/web/builder/src/bin.ts`，插件可自带 `build/client.ts` 覆盖配置）。
 
 ---
 
@@ -195,7 +195,7 @@ peer 声明用于下游 `bun add` 解析与防 Bun 自动装官方包，指向 C
     - **`useThrottleFn` 的 `trailing` 默认值由 false 改为 true**——这是唯一与本仓有交集的破例点（`insight` 的 `watchThrottled` 构建在其上），但该调用**显式传了 `trailing: true`**（`plugins/webui/insight/client/index.vue`），行为与 14 时代逐字等价。
     - **移除的 deprecated timer options**（`interval` / `immediate` / `updateInterval` / `immediateCallback`）只作用于 `useCountdown` / `useElementByPoint` / `useMemory` / `useNow` / `useTimeAgo(Intl)` / `useTimestamp` / `useVibrate` / `useWebSocket` 八个本仓未使用的 composable；`useTimeoutFn` 的 `immediate`（market 慢加载提示在用）不在移除清单内。
     - **Drop `templateRef`** 与 **Drop Node 20** 两项无交集（前者本仓未用，后者运行时为 Bun / Node 24）。
-    - **入口形态不变**仍为 `dist/index.js`（v14 起如此），宿主共享块 `vueuse.js` 的重新打包路径（`packages/web/client/scripts/client.ts`）无需改动；peer 仍为 `vue ^3.5.0`，与仓内 `vue ^3.5.42` 兼容。
+    - **入口形态不变**仍为 `dist/index.js`（v14 起如此），宿主共享块 `vueuse.js` 的重新打包路径（`packages/web/builder/src/assemble.ts`）无需改动；peer 仍为 `vue ^3.5.0`，与仓内 `vue ^3.5.42` 兼容。
     - **`element-plus` 的嵌套副本**：element-plus 2.14.5 对 `@vueuse/core` 是**精确锁 `14.4.0`**（非 range，且其上游尚未适配 15），故 `bun.lock` 新增 `element-plus/@vueuse/core@14.4.0` 嵌套项、`node_modules` 多出一份 14.4.0 副本（`@satorijs/components-vue` / `schemastery-vue` 的 peer 槽同理，peer range 宽故无约束冲突）。**运行时不受影响**：宿主构建对 `@vueuse/core` 既有硬别名（`packages/web/client/src/index.ts` 的 `alias` → `${root}/vueuse.js`）又有 `dedupe`，element-plus 内部对 vueuse 的调用（`useEventListener` / `useResizeObserver` / `useTimeoutFn` / `useThrottleFn` / `useElementBounding` / `clamp` / `refDebounced` 等）在浏览器里一律走宿主共享块的 15 版实现。**受影响面已逐条核对**：其中唯一躺在破例点上的 `useThrottleFn`，element-plus 的两处调用（`use-backtop` 的滚动监听、`image` 的懒加载）都**显式传了第三参 `true`**（trailing），故默认值翻转对它们无影响；其余符号在 15 全部保留。
     - **验证**：`bun run check` 八段全绿（TS7 双 project、vue-tsc 影子基线、断言基线均无新增）、`bun run build` 无错、`bun test` 1009 通过 / 2 失败——两个失败均为 `apps/koishi-scripts` 的 clone 非交互用例，其断言前提是「bun test 的 stdin 恒非 TTY」（`clone.ts` 的 `ask()` 直判 `process.stdin.isTTY`），本机终端为伪终端故实际落进 readline 等待；以 `< NUL` 重定向 stdin 复跑该文件 19/19 通过，与本次改动无交集。宿主前端重新构建后 `vueuse.js`（131.31 kB）与 insight 插件前端均正常产出。
 12. **market 的 gravatar 摘要：`spark-md5` → `@noble/hashes`（同步 MD5）**（2026-09-21）：动因是包体卫生——`spark-md5` 是 2018 年后不再发布的 UMD 包、**不带类型**（仓内长期靠手写的 `plugins/webui/market/client/spark-md5.d.ts` 环境声明兜底），而 `@noble/hashes` 零依赖、原生 TS + ESM、无 worker 无二进制，且本仓早已因 `@paralleldrive/cuid2` 把它带在依赖树里（显式声明属「就地转正」）。

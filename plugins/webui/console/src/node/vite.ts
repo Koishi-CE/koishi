@@ -52,7 +52,7 @@ export async function createDevServer(
 	const { cacheDir = "cache/vite", dev } = config;
 	// 惰性动态加载：避免生产环境（非 devMode）加载 vite 依赖
 	const { createServer } = await import(
-		"@koishi-ce/client/lib"
+		"@koishi-ce/console-builder"
 	);
 
 	// Vite 6.0.9 起 host 校验默认仅放行 localhost 与 IP 直连，域名访问

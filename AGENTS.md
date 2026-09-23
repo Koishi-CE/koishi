@@ -20,7 +20,7 @@
 2. **代码内导入一律 `@koishi-ce/*`**；仅有的外部上游导入例外是 console 的类型引用 `@koishijs/plugin-server-proxy`（测试用 memory 驱动已 CE 化为 `@koishi-ce/plugin-database-memory`，`plugins/infra/memory`）。
 3. **cordis 生态冻结在 3.x 内洽线**：cordis / minato / @cordisjs/* / @satorijs/* 不得跳 4.x / 1.x——Phase 5 已实证被 `@satorijs/core`（内部携带 cordis ^3，无 cordis 4 线）阻塞并整体回退，重启条件见 `docs/decisions/upgrade-plan.md` Phase 5 节。
 4. **vendored 三包不动**：`plugins/infra/{http,proxy,server}` 是预编译产物包（无 `src/`、不走 tsdown、根 tsdown 配置显式 exclude），分别内联再导出 `@cordisjs/plugin-*`（`proxy` 目录系上游 `proxy-agent` 的本地改名，见 docs/process/upstream.md）。
-5. **ESM-only 产物 + Bun 运行时**：全部 52 个 workspace 包均为 `"type": "module"`，根 tsdown 单遍构建只出 ESM（`index.mjs` + `index.d.ts`），各包 exports 以 `default` 条件兜底；Bun 的 `require()` 可直接加载 ESM，loader 的插件加载链据此工作，**不要恢复 CJS 双格式产物**。运行时以 Bun 为准（Node 不作兼容目标）；`.yml` locale 走 copy loader 原样拷入产物，Bun 原生支持 yml 导入。
+5. **ESM-only 产物 + Bun 运行时**：全部 53 个 workspace 包均为 `"type": "module"`，根 tsdown 单遍构建只出 ESM（`index.mjs` + `index.d.ts`），各包 exports 以 `default` 条件兜底；Bun 的 `require()` 可直接加载 ESM，loader 的插件加载链据此工作，**不要恢复 CJS 双格式产物**。运行时以 Bun 为准（Node 不作兼容目标）；`.yml` locale 走 copy loader 原样拷入产物，Bun 原生支持 yml 导入。
 6. **许可证分区**：`packages/web/*` 与 `plugins/webui/*` 全部（含 console 宿主插件）为 AGPL-3.0，其余目录 MIT——以 `NOTICE` 为准；在 AGPL 目录新增文件同样受 AGPL 约束。
 7. **market 插件为上游原版再分发**：`plugins/webui/market/`（`@koishi-ce/plugin-market`）对齐自上游 webui `plugins/market`（原版 v2.11.11），社区版 `plugin-marketn` 已被其取代并移除。client 逻辑层与图标自 `@koishijs/market` 4.2.10 vendor 进 `client/vendor/market/`（AGPL 同许可，对 npm 包的依赖已解除）；视图四组件（`client/market/`）为本地化 fork，上游同步时须手动 diff 勿整覆盖；包根 `locales/` 词典为本地真翻译（上游原版系 Crowdin 机器人写入的未翻中文占位物），同步时同样手动 diff 勿整覆盖。宿主构建保留 `@koishijs/components` alias 作下游防御：第三方插件以 npm 名引用组件库时重定向到本仓 workspace 版，避免双实例。
 8. **packages/shim 四包不动**：`@koishi-ce/koishi-shim`（4.18.11）、`@koishi-ce/console-shim`（5.30.11）、`@koishi-ce/client-shim`（5.30.11）与 `@koishi-ce/components-shim`（1.5.22）是下游 npm alias 的占名目标——纯 JS 预编译、版本冻结跟随上游线、changesets ignore（**勿写 changeset、勿 bump、勿改回 1.x 基线**）。下游项目以六行 alias 钉名（`"koishi": "npm:@koishi-ce/koishi-shim@^4.18.11"`、`"@koishijs/client": "npm:@koishi-ce/client-shim@^5.30.11"` 等），机理与维护纪律详见 `packages/shim/README.md`。
@@ -41,8 +41,8 @@ bun test                        # 全量自有用例（126 个测试文件 / 100
 bun run test                    # 同上的脚本形态：bun test --isolate（每文件独立 global，隔离跨文件 mock.module）
 bun test --coverage             # 覆盖率（src 源码口径，All files 当前约 97% 行，以实跑输出为准）
 bun run sandbox                 # 外部沙盒实例生成（链接模式默认，--pack 为打包模式；详见 docs/guides/development.md §9）
-bun packages/web/client/src/bin.ts build            # 宿主控制台前端 → plugins/webui/console/dist
-bun packages/web/client/src/bin.ts build <插件目录>  # 单个 webui 插件的前端
+bun packages/web/builder/src/bin.ts build            # 宿主控制台前端 → plugins/webui/console/dist
+bun packages/web/builder/src/bin.ts build <插件目录>  # 单个 webui 插件的前端
 ```
 
 - `apps/koishi-create` 有自己的 tsdown.config.ts，进目录 `bun run build`；发布链见 `docs/process/release.md`。
@@ -64,8 +64,8 @@ bun packages/web/client/src/bin.ts build <插件目录>  # 单个 webui 插件�
 - **Bun 对失败的解析按「父目录快照」做进程内缓存**：市场装完插件报 `failed to resolve`（重启即消）即此因；防御已内建（resolvePackageJson / resolvePlugin / isResidentInCache 全程纯 fs）。**新增对「可能刚装上的包」的解析时，兜底一律不得走解析 API**。
 - **Bun 会把 exports 的 `"bun"` 条件用在 require 上**：CJS 链 require 到 ESM namespace 的 interop 已在 loader `node/interop.ts` 处理，勿动。
 - **TS7 的跨文件 `declare module` 增强对经 lib 产物 d.ts 的模块骨架不生效**：node 侧 Services / Events 声明变更时须同步镜像 `plugins/webui/market/client/console-services.ts`。
-- **前端构建无 vite 配置文件**（全部编程式 `vite.build()`）；`collectWorkspaceAliases()` 是跨包解析的关键，动 client 构建须复核。
-- **特殊构建 hack**：插件可自带 `build/client.ts` 导出 vite 配置覆盖（`@koishi-ce/client` 的 `build()` 显式加载合并，vite 不会自动发现该文件名），analytics 的 "fuck-echarts" 即经此接入；另有 client 构建的 vue-i18n esm-browser.prod 别名。
+- **前端构建无 vite 配置文件**（全部编程式 `vite.build()`）；`collectWorkspaceAliases()` 是跨包解析的关键，动 builder 构建须复核。
+- **特殊构建 hack**：插件可自带 `build/client.ts` 导出 vite 配置覆盖（`@koishi-ce/console-builder` 的 `build()` 显式加载合并，vite 不会自动发现该文件名），analytics 的 "fuck-echarts" 即经此接入；另有 client 构建的 vue-i18n esm-browser.prod 别名。
 - **Bun 下 require 坏 TS 抛 `AggregateError`**（errors 为 BuildMessage：`message` + `position.{file,line,column}`，非 esbuild 的 `{ text, location }` 形态），hmr 的错误帧据此识别（`src/error.ts`）；TS 即时编译由 Bun 原生完成，esbuild 已从 hmr 移除。
 - **hmr 文件监听用 @parcel/watcher 原生绑定**（Bun 1.4.0 win32 无任何原生监听 API）；`bun install` 提示 Blocked postinstall（@parcel/watcher）属预期——install 脚本仅 build-from-source 兜底，平台预编译包就位即可用，勿加 trustedDependencies、勿调查。explorer 的 chokidar 系上游继承的死依赖（watchers 集合从未填充），已连同字段与 stop override 整体移除——workspace 包的直接依赖已无 chokidar（devDep 树仍经 unocss/sass/vue-router 传递保留，属构建工具内部依赖）。
 - **测试断言新标准是 `bun:test` 的 `expect`**：不要新增 chai 断言（存量逐步迁移）。
