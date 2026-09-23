@@ -18,7 +18,7 @@ import {
 	reactive,
 	watchEffect,
 } from "vue";
-import { Schema } from "../../../components/client/index.ts";
+import { Schema } from "../../../components/src/index.ts";
 import type { Context } from "../context";
 import { Service } from "../utils";
 import { pickMessages } from "./messages";

@@ -7,8 +7,8 @@
  *
  * 是 `koishi-console build` 的无参分支（src/bin.ts）背后的实现。
  * 产物目录硬编码为 `plugins/webui/console/dist/`，内容分四部分：
- * - 宿主 SPA（`@koishi-ce/client` 的 `app/` 目录）→ `index.js`
- * - client 组件库（同一包的 `client/` 目录）→ `client.js`（element-plus 单独成 chunk）
+ * - 宿主 SPA（`@koishi-ce/console-app` 包，经 `locateApp()` 定位）→ `index.js`
+ * - client 组件库（`@koishi-ce/client` 的 `src/` 目录）→ `client.js`（element-plus 单独成 chunk）
  * - vue / vue-router / @vueuse/core 三个运行时共享包 → `vue.js` 等，
  *   供主应用、client 与所有 webui 插件以 external 依赖的方式共享
  */
@@ -141,9 +141,9 @@ async function build(
 				"@vueuse/core": `${root}/vueuse.js`,
 				"@koishi-ce/client": `${root}/client.js`,
 				// 虚拟子路径的运行时载体（补齐真实包缺失的 SchemaBase 具名
-				// 导出，见 packages/web/components/client/schemastery-vue-runtime.ts）；
+				// 导出，见 packages/web/components/src/schemastery-vue-runtime.ts）；
 				// 类型面由根 tsconfig.client.json 的 paths 解析到类型载体
-				"schemastery-vue/client": `${cwd}/packages/web/components/client/schemastery-vue-runtime.ts`,
+				"schemastery-vue/client": `${cwd}/packages/web/components/src/schemastery-vue-runtime.ts`,
 				...(isClient
 					? {
 							// client 组件库本体需要真实打包 vue-i18n：直接别名到官方
@@ -164,7 +164,7 @@ async function build(
 
 export default async function () {
 	assertRepoLayout();
-	// 第一步：构建控制台主应用（入口为 app/index.html，产物 index.js）
+	// 第一步：构建控制台主应用（入口为 app 包的 src/index.html，产物 index.js）
 	const { output } = await build(locateApp(), {
 		plugins: [
 			unocss({
@@ -219,14 +219,14 @@ export default async function () {
 	// 第三步：构建 client 组件库（isClient = true，打包真实 vue-i18n）；
 	// element-plus 体积大，单独拆为 element chunk
 	await build(
-		`${cwd}/packages/web/client/client`,
+		`${cwd}/packages/web/client/src`,
 		{
 			build: {
 				outDir: dist,
 				emptyOutDir: false,
 				rollupOptions: {
 					input: {
-						client: `${cwd}/packages/web/client/client/index.ts`,
+						client: `${cwd}/packages/web/client/src/index.ts`,
 					},
 					output: {
 						// element-plus 体积大，单独拆为 element chunk

@@ -48,6 +48,7 @@
     "dependencies": {
         "@koishi-ce/client": "workspace:*",
         "@koishi-ce/components": "workspace:*",
+        "@koishi-ce/console-app": "workspace:*",
         "@vitejs/plugin-vue": "^6.0.8",
         "@vueuse/core": "^15.0.0",
         "sass-embedded": "^1.102.0",

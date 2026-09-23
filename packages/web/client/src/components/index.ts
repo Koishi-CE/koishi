@@ -23,7 +23,7 @@ import Element, {
 import type { App } from "vue";
 import components, {
 	SchemaBase,
-} from "../../../components/client/index.ts";
+} from "../../../components/src/index.ts";
 
 import { store } from "../data";
 import ChatImage from "./chat/image.vue";
@@ -46,7 +46,7 @@ export const message = ElMessage;
 export const messageBox = ElMessageBox;
 
 export * from "vue-i18n";
-export * from "../../../components/client/index.ts";
+export * from "../../../components/src/index.ts";
 export * from "./common";
 export * from "./layout";
 export * from "./link";

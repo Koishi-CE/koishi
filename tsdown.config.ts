@@ -15,7 +15,7 @@ import { defineConfig } from "tsdown";
  *   的 workspace 链接提供）；类型声明只保留对依赖的引用，不做跨包内联。
  * - locale 的 .yml 原样拷入产物（引用路径自动改写），Bun 运行时原生
  *   支持 yml 导入，直接加载。
- * - packages/web/{client,components}、market 仅作为客户端源码被 console
+ * - packages/web/{app,client,components}、market 仅作为客户端源码被 console
  *   打包器消费，无独立运行时产物（webui 前端的 vite 构建由
  *   packages/web/builder 驱动）；webui 插件的 .vue 部分由 vite 构建。
  * - 例外（不走本配置）：vendored 三包（plugins/infra/{http,proxy,
@@ -42,8 +42,9 @@ const extensions = [
 // vendored 三包（plugins/infra/{http,proxy,server}）是预编译
 // 产物包（无 src/、分别内联再导出 @cordisjs/plugin-*），显式排除；
 // file-type-compat 是同样不走构建的纯 JS 预编译 shim（见其 index.js 注释）；
-// packages/web/{client,components} 仅作为客户端源码被 console 打包器消费，
-// 无独立运行时产物，同样排除（前者的 node 侧构建器已拆至 packages/web/builder）
+// packages/web/{app,client,components} 是纯前端源码包，无独立运行时产物
+// （app 是宿主 SPA，src/ 即 vite root；client / components 的浏览器库源码
+// 同在各自 src/ 下；其 node 侧构建器已拆至 packages/web/builder），同样排除
 const workspace = {
 	include: [
 		"packages/node/*",
@@ -59,6 +60,7 @@ const workspace = {
 		"plugins/infra/proxy",
 		"plugins/infra/server",
 		"plugins/infra/file-type-compat",
+		"packages/web/app",
 		"packages/web/components",
 		"packages/web/client",
 		// packages/shim/* 全部是上游包名占位 shim（纯 JS 预编译、无 src/，

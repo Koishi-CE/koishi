@@ -605,13 +605,13 @@ describe("@koishi-ce/plugin-console（NodeConsole）", () => {
 			devBase = `http://127.0.0.1:${devApp.server.port}`;
 		});
 
-		it("构造期以 client 包定位 root，并桥接 /vite 请求", async () => {
+		it("构造期以 console-app 包定位 root，并桥接 /vite 请求", async () => {
 			const host = devApp.console as unknown as HostView & {
 				root: string;
 			};
-			// root 指向 @koishi-ce/client 包内的 app 目录（devMode 分支）
+			// root 指向 @koishi-ce/console-app 的 src/ 目录（devMode 分支）
 			expect(host.root.replace(/\\/g, "/")).toContain(
-				"/app",
+				"packages/web/app/src",
 			);
 			const response = await fetch(
 				`${devBase}/vite/anything`,

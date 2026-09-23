@@ -79,14 +79,24 @@ async function collectWorkspaceAliases(): Promise<
 				// 引用彼此的 client API,如 market 引用 config 的 EnvInfo 类型,
 				// 上游与 npm 产物的 exports 均未声明它,同样靠仓库内别名解析)。
 				// 子路径键必须先插入——别名解析按插入序取首个命中项
+				const srcEntry = `${dir}/src/index.ts`;
 				const clientEntry = `${dir}/client/index.ts`;
-				if (existsSync(`${dir}/src`))
-					aliases[`${name}/src`] = `${dir}/src`;
-				if (existsSync(clientEntry))
+				const hasSrc = existsSync(`${dir}/src`);
+				const hasClient = existsSync(clientEntry);
+				// 无任何入口的包不建别名：指向不存在路径的假会
+				// 让 bundler 报出与真实原因无关的解析错误
+				if (!hasSrc && !hasClient) continue;
+				if (hasSrc) aliases[`${name}/src`] = `${dir}/src`;
+				if (hasClient)
 					aliases[`${name}/client`] = clientEntry;
-				aliases[name] = existsSync(clientEntry)
+				// 插件包同时有 src/（node 侧）与 client/（浏览器侧）时，裸名
+				// 在浏览器构建语境下应落到 client 入口；其余包（浏览器库、
+				// 宿主 SPA、无前端的插件）落到 src/index.ts
+				aliases[name] = hasClient
 					? clientEntry
-					: `${dir}/src`;
+					: existsSync(srcEntry)
+						? srcEntry
+						: `${dir}/src`;
 			} catch {}
 		}
 	}
@@ -107,14 +117,14 @@ function locateRuntimeShim(): string {
 	const fromAlias = (
 		workspaceAliases["@koishi-ce/components"] ?? ""
 	).replace(
-		/client\/index\.ts$/,
-		"client/schemastery-vue-runtime.ts",
+		/src\/index\.ts$/,
+		"src/schemastery-vue-runtime.ts",
 	);
 	if (fromAlias) return fromAlias;
 	// 源码形态（src/）与产物形态（lib/）都在包根下一级，先回到包根
 	let dir = resolve(import.meta.dir, "..");
 	while (true) {
-		const candidate = `${dir}/node_modules/@koishi-ce/components/client/schemastery-vue-runtime.ts`;
+		const candidate = `${dir}/node_modules/@koishi-ce/components/src/schemastery-vue-runtime.ts`;
 		if (existsSync(candidate))
 			return candidate.replace(/\\/g, "/");
 		const parent = resolve(dir, "..");

@@ -32,8 +32,7 @@
 	// 运行时动态加载的代码：前端由 vite 编程式构建、插件前端由 console 宿主按名 import()
 	// 载入，静态图里没有引用边。对应 knip 时代各 webui 包的 entry: ["client/**/*.ts"]。
 	"dynamicallyLoaded": [
-		"packages/web/*/client/**",
-		"packages/web/client/app/**",
+		"packages/web/*/src/**",
 		"plugins/webui/*/build/**",
 		"plugins/webui/*/client/**",
 		"plugins/webui/*/src/browser/**"
@@ -48,9 +47,7 @@
 	// 注意：源码里不要 import 各包的构建产物（如 `../lib`）。CI 的 fallow job
 	// 不跑 bun run build，干净检出下这类路径解析不到，会报 unresolved imports
 	// 并以退出码 1 挂掉门禁（本地因 lib/ 常在而感知不到）
-	"ignoreUnresolvedImports": [
-		"@koishi-ce/plugin-*/src"
-	],
+	"ignoreUnresolvedImports": ["@koishi-ce/plugin-*/src"],
 	// 包名级豁免：这些依赖要么由运行时/宿主提供，要么由构建期编程式加载
 	"ignoreDependencies": [
 		// 根 package.json 声明的 vendored 三包：插件加载链按包名运行时解析，无静态 import
@@ -62,6 +59,9 @@
 		"@koishi-ce/plugin-console",
 		"@koishi-ce/client",
 		"@koishi-ce/components",
+		// 宿主 SPA：由 builder 的 locateApp() 与 console 宿主的 devMode 分支
+		// 按包名运行期解析（Bun.resolveSync），无静态 import
+		"@koishi-ce/console-app",
 		// 各 webui 插件的 devDependencies：测试期/构建期按包名加载，无静态 import
 		"@koishi-ce/loader",
 		"@koishi-ce/plugin-analytics",

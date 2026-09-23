@@ -26,7 +26,7 @@ import {
 import {
 	Schema,
 	SchemaBase,
-} from "../../../components/client/index.ts";
+} from "../../../components/src/index.ts";
 import type { Config } from "..";
 import type { Context } from "../context";
 import { insert, type Ordered, Service } from "../utils";

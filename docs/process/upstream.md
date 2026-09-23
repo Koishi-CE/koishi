@@ -22,7 +22,7 @@ No git history is preserved, so baselines are stated as upstream release lines r
 | `packages/node/console` | webui `packages/console` |
 | `packages/node/registry` | webui `packages/registry` |
 | `packages/node/assets` | [koishijs/assets](https://github.com/koishijs/assets) `packages/core` |
-| `packages/web/{client,components}` | webui `packages/*` |
+| `packages/web/{app,client,components}`（源码目录统一为 `src/`，见下） | webui `packages/*` |
 | `plugins/infra/{http,server,hmr,mock}` | koishi `plugins/*` |
 | `plugins/infra/proxy`（上游目录为 `proxy-agent`，本地改名） | koishi `plugins/proxy-agent` |
 | `plugins/infra/memory`（两源合并：koishi 包装层 + minato 驱动实现） | [cordiverse/database](https://github.com/cordiverse/database)（原 `cordiverse/minato`，已改名）`packages/memory`（`@minatojs/driver-memory` 3.7.0）· [koishijs/upstream](https://github.com/koishijs/upstream) `database/memory`（包装层 3.7.0；上游 `repository.directory` 仍写旧路径 `plugins/database/*`，实存路径在仓库根 `database/*`） |
@@ -40,6 +40,18 @@ No git history is preserved, so baselines are stated as upstream release lines r
 | `packages/shim/*`, `apps/*`, `tooling/*`, root configs | original work of this repository |
 
 Local regrouping (upstream packages are flat `packages/*` / `plugins/*`): `packages/node` and `packages/web` split by runtime, `plugins/{common,infra,webui}` split by origin/role. Upstream package names map to the `@koishi-ce` scope (`@koishijs/X` → `@koishi-ce/X`, `koishi` → `@koishi-ce/koishi`).
+
+Source layout rule: **every package keeps its sources in `src/`** (node-side packages and the three browser-side packages alike). This repo therefore differs from upstream on three directories and porting has to be matched by hand:
+
+| This repo | Upstream | Note |
+| --- | --- | --- |
+| `packages/web/client/src/` | webui `packages/client/client/` | browser runtime library |
+| `packages/web/components/src/` | webui `packages/components/client/` | shared component library |
+| `packages/web/app/src/` | webui `packages/client/app/` | host SPA (split into its own package here) |
+
+`packages/web/client` additionally lacks upstream `src/` and `scripts/` (the node-side builder and the host assembly now live in `packages/web/builder`). Because of these renames the file-name sets no longer pair up with upstream, so `tooling/upstream-audit` reports these directories as one-sided lists — treat its output as a checklist, not as a diff (the mapping notes in `tooling/upstream-audit/upstreams.json` say the same).
+
+The one directory deliberately **not** renamed is `plugins/webui/*/client/`: that sub-path (`@koishi-ce/plugin-config/client`) is the public surface through which plugins import each other, fixed both by upstream and by published npm packages.
 
 Naming rules:
 

@@ -1,15 +1,15 @@
 {
 	"meta": {
-		"generatedAt": "2026-09-19T07:05:13.229Z",
+		"generatedAt": "2026-09-23T15:52:13.254Z",
 		"vueTscVersion": "3.3.11",
 		"typescriptVersion": "5.9.3",
 		"total": 26
 	},
 	"entries": [
-		"packages/web/client/app/settings/theme.vue::TS2322::Type 'string' is not assignable to type '{ readonly type: PropType<EpPropMergeType<(BooleanConstructor | NumberConstructor | ObjectConstructor | StringConstructor)[], unknown, unknown>>; readonly required: true; readonly validator: ((val: unknown) => boolean) | undefined; __epPropKey: true; }'.",
-		"packages/web/components/client/form/k-filter-expr.vue::TS2322::Type 'string' is not assignable to type '{ readonly type: PropType<EpPropMergeType<(BooleanConstructor | NumberConstructor | ObjectConstructor | StringConstructor)[], unknown, unknown>>; readonly required: true; readonly validator: ((val: unknown) => boolean) | undefined; __epPropKey: true; }'.",
-		"packages/web/components/client/form/k-filter-expr.vue::TS2322::Type 'string' is not assignable to type '{ readonly type: PropType<EpPropMergeType<(NumberConstructor | StringConstructor)[], unknown, unknown>>; readonly required: false; readonly validator: ((val: unknown) => boolean) | undefined; __epPropKey: true; }'.",
-		"packages/web/components/client/virtual/virtual.ts::TS2802::Type 'MapIterator<number>' can only be iterated through when using the '--downlevelIteration' flag or with a '--target' of 'es2015' or higher.",
+		"packages/web/app/src/settings/theme.vue::TS2322::Type 'string' is not assignable to type '{ readonly type: PropType<EpPropMergeType<(BooleanConstructor | NumberConstructor | ObjectConstructor | StringConstructor)[], unknown, unknown>>; readonly required: true; readonly validator: ((val: unknown) => boolean) | undefined; __epPropKey: true; }'.",
+		"packages/web/components/src/form/k-filter-expr.vue::TS2322::Type 'string' is not assignable to type '{ readonly type: PropType<EpPropMergeType<(BooleanConstructor | NumberConstructor | ObjectConstructor | StringConstructor)[], unknown, unknown>>; readonly required: true; readonly validator: ((val: unknown) => boolean) | undefined; __epPropKey: true; }'.",
+		"packages/web/components/src/form/k-filter-expr.vue::TS2322::Type 'string' is not assignable to type '{ readonly type: PropType<EpPropMergeType<(NumberConstructor | StringConstructor)[], unknown, unknown>>; readonly required: false; readonly validator: ((val: unknown) => boolean) | undefined; __epPropKey: true; }'.",
+		"packages/web/components/src/virtual/virtual.ts::TS2802::Type 'MapIterator<number>' can only be iterated through when using the '--downlevelIteration' flag or with a '--target' of 'es2015' or higher.",
 		"plugins/webui/admin/client/group.vue::TS2322::Type 'string' is not assignable to type '{ readonly type: PropType<EpPropMergeType<(BooleanConstructor | NumberConstructor | ObjectConstructor | StringConstructor)[], unknown, unknown>>; readonly required: true; readonly validator: ((val: unknown) => boolean) | undefined; __epPropKey: true; }'.",
 		"plugins/webui/commands/client/commands.vue::TS2322::Type '(_value: string, data: CommandData) => boolean' is not assignable to type '{ readonly type: PropType<FilterNodeMethodFunction>; readonly required: false; readonly validator: ((val: unknown) => boolean) | undefined; __epPropKey: true; }'.",
 		"plugins/webui/commands/client/commands.vue::TS2322::Type '(node: Node) => boolean' is not assignable to type '{ readonly type: PropType<AllowDragFunction>; readonly required: false; readonly validator: ((val: unknown) => boolean) | undefined; __epPropKey: true; }'.",

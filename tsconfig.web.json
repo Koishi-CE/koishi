@@ -11,9 +11,9 @@
 	"$schema": "https://json.schemastore.org/tsconfig",
 	"extends": "./tsconfig.client",
 	"include": [
-		"packages/web/client/app",
-		"packages/web/client/client",
-		"packages/web/components/client",
+		"packages/web/app/src",
+		"packages/web/client/src",
+		"packages/web/components/src",
 		"plugins/webui/admin/client",
 		"plugins/webui/analytics/client",
 		"plugins/webui/auth/client",
@@ -32,11 +32,11 @@
 		"plugins/webui/welcome/client"
 	],
 	"exclude": [
-		"packages/web/components/client/schemastery-vue-runtime.ts",
+		"packages/web/components/src/schemastery-vue-runtime.ts",
 		// web 侧测试文件运行时由 bun test 覆盖；client 工程 types: [] 保持
 		// 浏览器纯净（不载 bun），故测试代码不进入本类型检查
-		"packages/web/client/client/**/*.test.ts",
-		"packages/web/components/client/**/*.test.ts",
+		"packages/web/client/src/**/*.test.ts",
+		"packages/web/components/src/**/*.test.ts",
 		"plugins/webui/explorer/client/**/*.test.ts",
 		"plugins/webui/market/client/**/*.test.ts"
 	],
@@ -46,7 +46,7 @@
 		"tsBuildInfoFile": "./node_modules/.cache/tsc/web.tsbuildinfo",
 		"paths": {
 			"schemastery-vue/client": [
-				"./packages/web/components/client/schemastery-vue-client.ts"
+				"./packages/web/components/src/schemastery-vue-client.ts"
 			],
 			"@koishi-ce/plugin-config/client": [
 				"./plugins/webui/config/client/index.ts"

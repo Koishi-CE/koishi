@@ -201,7 +201,7 @@ function onKeyDown(ev: KeyboardEvent) {
 
 <style lang="scss">
 
-@use '../../../../components/client/viewer-toolbar.scss' as *;
+@use '../../../../components/src/viewer-toolbar.scss' as *;
 
 .overlay-enter-from, .overlay-leave-to {
   opacity: 0;

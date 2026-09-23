@@ -28,7 +28,7 @@ export type EditableStore = {
 };
 
 // 浏览器端 tsconfig 无 paths,@koishi-ce/plugin-console 解析不到真实模块,
-// Console.Services 来自 packages/web/client/client/shims.d.ts 的手写环境声明;
+// Console.Services 来自 packages/web/client/src/shims.d.ts 的手写环境声明;
 // 这里按同名环境声明合并为其补充 locales 键,使 ctx.page 的 fields 通过检查
 // (DataService 同样解析自该环境声明,与 insight 客户端的做法保持一致)
 declare module "@koishi-ce/plugin-console" {

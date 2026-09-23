@@ -27,7 +27,7 @@ declare module "@koishi-ce/client" {
 }
 
 // 浏览器侧协议事件的类型增强：send() 的类型来自 @koishi-ce/client 内置的
-// "@koishi-ce/plugin-console" 手写垫片（见 packages/web/client/client/shims.d.ts），
+// "@koishi-ce/plugin-console" 手写垫片（见 packages/web/client/src/shims.d.ts），
 // 与服务端 src/index.ts 对 "@koishi-ce/console" 的增强一一对应（去 this 参数）。
 // 其中 set-user 的 data 在服务端监听器里 null 表示删除用户、对象表示写入
 // （layout.vue 的 removeUser 即传 null），故比服务端声明多含 null。

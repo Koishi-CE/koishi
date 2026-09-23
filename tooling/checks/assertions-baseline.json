@@ -1,8 +1,8 @@
 {
 	"meta": {
-		"generatedAt": "2026-09-21T13:37:30.346Z",
+		"generatedAt": "2026-09-23T15:52:13.352Z",
 		"total": 17,
-		"pending": 0
+		"pending": 1
 	},
 	"entries": [
 		{
@@ -48,7 +48,7 @@
 			"reason": "R4 鸭子模块注入 require.cache：刻意只造消费方读取的 5 字段，补齐 @types/node 全量 10 必填成员是更差的撒谎（CE 原创 interop，非上游）"
 		},
 		{
-			"file": "packages/web/client/client/plugins/setting.ts",
+			"file": "packages/web/client/src/plugins/setting.ts",
 			"kind": "double",
 			"snippet": "}) as unknown as Config,",
 			"reason": "R1 变体：字面量是相对任意插件增强后 Config 的恒定部分默认值（上游裸字面量，本仓严格化产物）"

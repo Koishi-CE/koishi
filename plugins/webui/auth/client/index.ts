@@ -56,7 +56,7 @@ import "virtual:uno.css";
 
 // 浏览器侧协议事件与数据服务的类型增强:send()/store 的类型来自
 // @koishi-ce/client 内置的 "@koishi-ce/plugin-console" 手写垫片(见
-// packages/web/client/client/shims.d.ts),因此这里增强的是该垫片模块,
+// packages/web/client/src/shims.d.ts),因此这里增强的是该垫片模块,
 // 与服务端 src/index.ts 对 "@koishi-ce/console" 的增强一一对应。
 interface AuthData extends Auth {
 	tokens: Omit<LoginToken, "token" | "id">[];
