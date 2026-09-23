@@ -54,7 +54,10 @@
 	},
 	"overrides": [
 		{
-			"includes": ["**/tests/**", "**/*.{spec,test}.*"],
+			"includes": [
+				"**/tests/**",
+				"**/*.{spec,test}.*"
+			],
 			"linter": {
 				"rules": {
 					"suspicious": {
@@ -68,7 +71,9 @@
 			}
 		},
 		{
-			"includes": ["**/*.vue"],
+			"includes": [
+				"**/*.vue"
+			],
 			"linter": {
 				"rules": {
 					"correctness": {
@@ -84,7 +89,9 @@
 			}
 		},
 		{
-			"includes": ["apps/*/src/template/**"],
+			"includes": [
+				"apps/*/src/template/**"
+			],
 			"formatter": {
 				"enabled": false
 			},
@@ -93,9 +100,23 @@
 			}
 		},
 		{
-			"includes": ["**/package.json"],
+			"includes": [
+				"**/package.json"
+			],
 			"formatter": {
 				"enabled": false
+			}
+		},
+		{
+			"includes": [
+				"packages/web/components/client/shims.d.ts"
+			],
+			"linter": {
+				"rules": {
+					"style": {
+						"useExportType": "off"
+					}
+				}
 			}
 		}
 	]
