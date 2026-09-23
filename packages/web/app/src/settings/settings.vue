@@ -26,7 +26,7 @@
 
     <keep-alive>
       <k-content :key="path">
-        <template v-for="item of ctx.internal.settings[path] ?? []">
+        <template v-for="(item, index) of ctx.internal.settings[path] ?? []" :key="index">
           <template v-if="item.disabled?.()"></template>
           <component v-else-if="item.component" :is="item.component" />
           <k-form v-else-if="item.schema" :schema="item.schema" v-model="config" :initial="config" />

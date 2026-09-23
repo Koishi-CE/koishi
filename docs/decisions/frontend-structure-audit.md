@@ -2,7 +2,7 @@
 
 > 对 `packages/web/*` 与 `plugins/webui/*` 前端代码组织的一次**现势审查快照**：实然职责说明、约定锚点、问题清单与整改建议。本文只做盘点与论证，不含任何代码改动。
 > **状态**：现势快照（2026-09-22 实测，全部数字为该日在本仓实跑统计）；§5 的整改建议为讨论稿，落地前需维护者确认。相关：[../reference/architecture.md](../reference/architecture.md) §4 构建体系 · [../process/upstream.md](../process/upstream.md) Restructure map · [../guides/development.md](../guides/development.md) §3。
-> **落地进度**：§5.1 P1（拆分 `packages/web/client`）已分两步实施——**第一步（本次改动）**：node 侧构建器与宿主总装拆为 `packages/web/builder`（`@koishi-ce/console-builder`），`@koishi-ce/client` 收窄为浏览器运行时库 + 宿主 SPA 源码；**第二步待做**：`app/` 拆为独立包（须注意它**必须可发布**——`plugins/webui/console` 的 `devMode` 在运行期解析 `@koishi-ce/client` 包内的 `app/`，本条已实测，原文 §5.1 的「`private: true`」设想不成立）。本文 §2 / §4 描述的是**拆分前**结构，读数前先对照 [../reference/architecture.md](../reference/architecture.md) 的现势包清单。
+> **落地进度**：§5.1 P1（拆分 `packages/web/client`）已分两步落地完成——**第一步**：node 侧构建器与宿主总装拆为 `packages/web/builder`（`@koishi-ce/console-builder`）；**第二步**：宿主 SPA 拆为 `packages/web/app`（`@koishi-ce/console-app`）。`@koishi-ce/client` 由此收窄为纯浏览器运行时库。**原文 §5.1 的「`private: true`」设想不成立**（已实测）：console 宿主的 `devMode` 在运行期按包名解析宿主 SPA 目录，故 `app` 必须可发布——第二步顺带把它从 client 的发布节奏里解耦出来。本文 §2 / §4 描述的是**拆分前**结构，读数前先对照 [../reference/architecture.md](../reference/architecture.md) 的现势包清单。
 > **本文结构**：1 范围与方法 · 2 职责说明（实然结构）· 3 约定锚点 · 4 问题清单 · 5 整改建议 · 6 附录：职责速查表。
 
 ## 1. 范围与方法
@@ -221,7 +221,7 @@
 
 | 图标 | 份数 | 位置 |
 |---|---|---|
-| `star-empty` / `star-full` / `tag` / `file-archive` / `search` | 2 | `packages/web/client/client/components/icons/svg/` 与 `plugins/webui/market/client/vendor/market/icons/misc/` |
+| `star-empty` / `star-full` / `tag` / `file-archive` / `search` | 2 | `packages/web/client/src/components/icons/svg/` 与 `plugins/webui/market/client/vendor/market/icons/misc/` |
 | `activity.vue` | 4 | admin · commands · explorer · locales |
 | `check.vue` / `trash-can.vue` / `refresh.vue` / `manage.vue` | 3 | 分散于 auth / commands / config / admin / dataview / explorer / market |
 | `download.vue` / `save.vue` / `user.vue` | 2 | explorer / market、config / explorer、`client` 主图标库 / analytics |
@@ -288,12 +288,12 @@
 
 **证据**：
 
-- `packages/web/client/client/components/` 同层混放：组件（`perms.vue` / `dynamic.vue`）、纯逻辑模块（`link.ts` / `markdown.ts` / `slot.ts`）、测试（`markdown.test.ts`）、目录（`chat/` / `common/` / `icons/` / `layout/`）。
-- `packages/web/components/client/` 同层混放：平铺组件（`image-viewer.vue` / `k-comment.vue`）与目录（`form/` / `virtual/`）与构建载体（`schemastery-vue-*.ts`）。
+- `packages/web/client/src/components/` 同层混放：组件（`perms.vue` / `dynamic.vue`）、纯逻辑模块（`link.ts` / `markdown.ts` / `slot.ts`）、测试（`markdown.test.ts`）、目录（`chat/` / `common/` / `icons/` / `layout/`）。
+- `packages/web/components/src/` 同层混放：平铺组件（`image-viewer.vue` / `k-comment.vue`）与目录（`form/` / `virtual/`）与构建载体（`schemastery-vue-*.ts`）。
 
 **影响**：`components/` 目录同时承担"组件集合"与"若干纯函数工具"两种职责；`packages/web` 两个包的 `client/` 根目录组织风格不同（一个目录化程度高、一个平铺为主）。
 
-**建议**：`packages/web/client/client/` 内增设 `logic/`（或 `utils/`）收纳 `link.ts` / `markdown.ts` / `slot.ts`；`packages/web/components/client/` 把两个平铺组件归入 `common/`。两项均为**纯本仓可控范围**，不影响上游同步。
+**建议**：`packages/web/client/src/` 内增设 `logic/`（或 `utils/`）收纳 `link.ts` / `markdown.ts` / `slot.ts`；`packages/web/components/src/` 把两个平铺组件归入 `common/`。两项均为**纯本仓可控范围**，不影响上游同步。
 
 #### B4 `build/` 目录语义不一
 
@@ -342,25 +342,32 @@
 
 #### P1（中期，收益最高，代价最高）：拆分 `packages/web/client`
 
-目标形态：
+目标形态（**已落地**；实际拆分次序为 builder 先行，下文接线项一并记录）：
 
 ```
 packages/web/
-├── app/            宿主控制台 SPA（现 packages/web/client/app）
-├── client/         对外浏览器运行时库（现 packages/web/client/client）
-│   └── 构建器与 CLI 保留在此包（现 src/ + scripts/）
-└── components/     共享组件库（不变）
+├── app/            宿主控制台 SPA（自 packages/web/client/app 拆出）
+│   └── src/        应用源码（vite root，含 index.html）
+├── client/         对外浏览器运行时库（原 client/ 目录改名 src/）
+│   └── src/
+├── components/     共享组件库（client/ 目录改名 src/）
+│   └── src/
+└── builder/        node 侧构建器与 koishi-console CLI（builder 的先行拆分）
 ```
 
-需要同步的接线：`createServer()` 的 app 定位改为显式解析或参数化；`collectWorkspaceAliases()` 的 `<name>/client` 子路径映射需覆盖新包；`files` / `exports` / `tsconfig.web.json` 的 paths 与 include；`bun packages/web/client/src/bin.ts build` 的文档与脚本引用；console 的 dev 服务器调用链。
+落地后的接线方式：三处浏览器侧源码目录统一叫 `src/`（本仓统一约定：包的源码一律 `src/`，与 node 侧一致）；app 定位统一走 `builder` 的 `locateApp()`（按包名解析包下 `src/`，源码与产物形态同解），`collectWorkspaceAliases()` 对无入口的包跳过裸名映射；`files` / `exports` / `tsconfig.web.json` 的 include / eslint 的 glob / `.fallowrc.jsonc` 均已同步；CLI 文档引用改为 `packages/web/builder/src/bin.ts`；console 的 devMode 同样按包名解析 `src/`。
 
-**先决条件**：确认 `app/` 是否必须随 npm 发布（若 `createServer()` 仅在开发模式使用，可考虑把 app 保留在 client 包并仅在 `files` 中排除其源码）。
+**唯一例外**：`plugins/webui/*/client/` 保持 `client/` 不改名——该子路径（`@koishi-ce/plugin-config/client`）是插件生态跳包引用彼此的**公开面**，上游与 npm 产物均以它为准。
+
+**代价（已权衡接受）**：这三个目录与上游 `webui` 的文件名集合不再两两对应，`tooling/upstream-audit` 的 file-set diff 与 churn 排名对其退化为「单边存在」清单（映射与注记已同步，diff 仅作线索）；port 时需按 `src/` → 上游 `client/`（或 `app/`）手工对位。换来的是全仓一致的目录语义。
+
+**先决条件（已证伪）**： `app/` **必须**随 npm 发布——console 宿主的 `devMode` 在运行期解析它（该配置项面向下游用户），故不能声明为 `private`。
 
 **风险**：改动集中在构建链，回归面覆盖前端总装、单插件构建、开发服务器三类场景，必须逐项验证。
 
 #### P2（短期）：消除 icons 重叠
 
-只处理 `packages/web/client/client/components/icons/` 与 `plugins/webui/market/client/vendor/market/icons/` 的 5 组重名（`star-*` / `tag` / `file-archive` / `search`）。market 的 vendor 树是同许可本地化的产物，可改为引用主图标库；插件自带 `icons/` 不动（上游约定）。
+只处理 `packages/web/client/src/components/icons/` 与 `plugins/webui/market/client/vendor/market/icons/` 的 5 组重名（`star-*` / `tag` / `file-archive` / `search`）。market 的 vendor 树是同许可本地化的产物，可改为引用主图标库；插件自带 `icons/` 不动（上游约定）。
 
 #### P3（短期，零代码风险）：locales 纪律化
 
@@ -382,7 +389,7 @@ packages/web/
 
 #### P6（可选）：`components/` 收拢逻辑模块
 
-`packages/web/client/client/components/` 增设 `logic/` 收纳 `link.ts` / `markdown.ts` / `slot.ts`；`packages/web/components/client/` 增设 `common/` 收纳两个平铺组件。纯本仓范围，风险低。
+`packages/web/client/src/components/` 增设 `logic/` 收纳 `link.ts` / `markdown.ts` / `slot.ts`；`packages/web/components/src/` 增设 `common/` 收纳两个平铺组件。纯本仓范围，风险低。
 
 ### 5.2 优先级
 
@@ -413,12 +420,12 @@ packages/web/
 
 | 路径 | 一句话职责 | 修改前须知 |
 |---|---|---|
-| `packages/web/client/app/` | 宿主控制台 SPA 源码 | 改动影响总装产物与开发服务器；`index.ts` 是唯一入口 |
-| `packages/web/client/client/` | 对外浏览器运行时库源码（`@koishi-ce/client` 默认入口） | 是下游 API 面，命名与导出变更需谨慎 |
-| `packages/web/client/src/` | 编程式构建器与 `koishi-console` CLI | 改动影响全部插件的前端构建 |
-| `packages/web/client/scripts/` | 宿主总装脚本（不发布） | 改产物落点会同时影响 console 包与本仓命令 |
+| `packages/web/app/src/` | 宿主控制台 SPA 源码（`@koishi-ce/console-app`，`src/` 即 vite root） | 改动影响总装产物与开发服务器；`src/index.ts` 是唯一入口 |
+| `packages/web/client/src/` | 对外浏览器运行时库源码（`@koishi-ce/client` 默认入口） | 是下游 API 面，命名与导出变更需谨慎 |
+| `packages/web/builder/src/index.ts` | 编程式构建器与 `koishi-console` CLI（`@koishi-ce/console-builder`） | 改动影响全部插件的前端构建 |
+| `packages/web/builder/src/assemble.ts` | 宿主总装（CLI 无参分支） | 改产物落点会同时影响 console 包与本仓命令 |
 | `packages/web/client/global.d.ts` | 全仓浏览器侧全局类型声明 | 被 `tsconfig.client.json` 的 `files` 引用 |
-| `packages/web/components/client/` | 共享组件库（表单 / 虚拟列表 / 展示件） | 无构建，改源码即改宿主产物 |
+| `packages/web/components/src/` | 共享组件库（表单 / 虚拟列表 / 展示件） | 无构建，改源码即改宿主产物 |
 | `plugins/webui/*/client/` | 插件前端实现（Vue + UI 注册） | 入口固定 `client/index.ts`，多一个文件也会被构建发现 |
 | `plugins/webui/*/client/locales/` | 插件前端词条 | 与包根 `locales/`（Node 侧）分离 |
 | `plugins/webui/*/build/client.ts` | 可选 vite 配置覆盖 | 文件名固定，vite 不自动发现，靠 `build()` 显式加载 |

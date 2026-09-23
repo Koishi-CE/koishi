@@ -3,10 +3,10 @@
 
 /**
  * 浏览器端类型垫片(packages/web/client 自身使用;app 项目通过
- * app/shims.d.ts 引用本文件):
+ * app/src/shims.d.ts 引用本文件):
  *
  * 1. "schemastery-vue/client" 虚拟子路径:由根 tsconfig.client.json 的
- *    paths 解析到 packages/web/components/client/schemastery-vue-client.ts
+ *    paths 解析到 packages/web/components/src/schemastery-vue-client.ts
  *    (真实模块,单一事实源),运行时经构建器别名映射回真实包。
  * 2. "@koishi-ce/plugin-console":本包 node_modules 中没有该插件的链接
  *    (依赖方向相反,浏览器端 tsconfig 也没有 paths),且该插件源码含有

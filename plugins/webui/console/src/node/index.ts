@@ -132,13 +132,17 @@ class NodeConsole extends Console {
 			loader.envData.clientCount = this.layer.clients.size;
 		});
 
+		// devMode 下 root 指向宿主 SPA 源码（@koishi-ce/console-app 的
+		// src/ 目录，由 vite 现场编译）；生产模式指向本包 dist/
+		// （总装产物已就位）。包名与子路径须与 builder 的 locateApp()
+		// （packages/web/builder/src/app.ts）保持一致
 		this.root = config.devMode
 			? resolve(
 					Bun.resolveSync(
-						"@koishi-ce/client/package.json",
+						"@koishi-ce/console-app/package.json",
 						import.meta.dir,
 					),
-					"../app",
+					"../src",
 				)
 			: findDistRoot(import.meta.dir);
 	}

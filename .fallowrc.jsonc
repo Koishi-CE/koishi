@@ -32,8 +32,7 @@
 	// 运行时动态加载的代码：前端由 vite 编程式构建、插件前端由 console 宿主按名 import()
 	// 载入，静态图里没有引用边。对应 knip 时代各 webui 包的 entry: ["client/**/*.ts"]。
 	"dynamicallyLoaded": [
-		"packages/web/*/client/**",
-		"packages/web/client/app/**",
+		"packages/web/*/src/**",
 		"plugins/webui/*/build/**",
 		"plugins/webui/*/client/**",
 		"plugins/webui/*/src/browser/**"
@@ -60,6 +59,9 @@
 		"@koishi-ce/plugin-console",
 		"@koishi-ce/client",
 		"@koishi-ce/components",
+		// 宿主 SPA：由 builder 的 locateApp() 与 console 宿主的 devMode 分支
+		// 按包名运行期解析（Bun.resolveSync），无静态 import
+		"@koishi-ce/console-app",
 		// 各 webui 插件的 devDependencies：测试期/构建期按包名加载，无静态 import
 		"@koishi-ce/loader",
 		"@koishi-ce/plugin-analytics",

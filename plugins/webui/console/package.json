@@ -19,7 +19,6 @@
 		"./package.json": "./package.json"
 	},
 	"files": [
-		"app",
 		"lib",
 		"dist",
 		"src"
@@ -61,11 +60,15 @@
 	},
 	"peerDependencies": {
 		"@koishi-ce/client": "^1.0.0",
+		"@koishi-ce/console-app": "^1.0.0",
 		"@koishi-ce/console-builder": "^1.0.0",
 		"@koishi-ce/koishi": "^1.0.0"
 	},
 	"peerDependenciesMeta": {
 		"@koishi-ce/client": {
+			"optional": true
+		},
+		"@koishi-ce/console-app": {
 			"optional": true
 		},
 		"@koishi-ce/console-builder": {
@@ -74,6 +77,7 @@
 	},
 	"devDependencies": {
 		"@koishi-ce/client": "workspace:*",
+		"@koishi-ce/console-app": "workspace:*",
 		"@koishi-ce/console-builder": "workspace:*",
 		"@koishi-ce/loader": "workspace:*",
 		"@koishi-ce/plugin-server": "workspace:*",

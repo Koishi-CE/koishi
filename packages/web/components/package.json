@@ -1,49 +1,48 @@
 {
-	"name": "@koishi-ce/components",
-	"description": "Client components for Koishi",
-	"version": "1.0.4",
-	"type": "module",
-	"main": "client/index.ts",
-	"files": [
-		"client",
-		"tsconfig.client.json"
-	],
-	"contributors": [
-		"Shigma <shigma10826@gmail.com>",
-		"Oppenheymu <oppenheymu@gmail.com>"
-	],
-	"license": "AGPL-3.0",
-	"repository": {
-		"type": "git",
-		"url": "git+https://github.com/Koishi-CE/koishi.git",
-		"directory": "packages/web/components"
-	},
-	"bugs": {
-		"url": "https://github.com/Koishi-CE/koishi/issues"
-	},
-	"homepage": "https://koishi.chat",
-	"keywords": [
-		"bot",
-		"chatbot",
-		"koishi",
-		"webui",
-		"component"
-	],
-	"peerDependencies": {
-		"vue": "^3"
-	},
-	"dependencies": {
-		"@satorijs/element": "^3.2.0",
-		"cosmokit": "^1.8.1",
-		"schemastery-vue": "^7.3.15"
-	},
-	"devDependencies": {
-		"@koishi-ce/koishi": "workspace:*"
-	},
-	"exports": {
-		".": {
-			"source": "./client/index.ts",
-			"default": "./client/index.ts"
-		}
-	}
+    "name": "@koishi-ce/components",
+    "description": "Client components for Koishi",
+    "version": "1.0.4",
+    "type": "module",
+    "main": "src/index.ts",
+    "files": [
+        "src"
+    ],
+    "contributors": [
+        "Shigma <shigma10826@gmail.com>",
+        "Oppenheymu <oppenheymu@gmail.com>"
+    ],
+    "license": "AGPL-3.0",
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/Koishi-CE/koishi.git",
+        "directory": "packages/web/components"
+    },
+    "bugs": {
+        "url": "https://github.com/Koishi-CE/koishi/issues"
+    },
+    "homepage": "https://koishi.chat",
+    "keywords": [
+        "bot",
+        "chatbot",
+        "koishi",
+        "webui",
+        "component"
+    ],
+    "peerDependencies": {
+        "vue": "^3"
+    },
+    "dependencies": {
+        "@satorijs/element": "^3.2.0",
+        "cosmokit": "^1.8.1",
+        "schemastery-vue": "^7.3.15"
+    },
+    "devDependencies": {
+        "@koishi-ce/koishi": "workspace:*"
+    },
+    "exports": {
+        ".": {
+            "source": "./src/index.ts",
+            "default": "./src/index.ts"
+        }
+    }
 }

@@ -4,7 +4,7 @@
 >
 > 审计日期：2026-09-22 · 「最新」列均于 2026-09-19 经 npm registry 实时验证（npmjs 主查、npmmirror 兜底）
 > 运行环境：Bun 1.4.2（`packageManager` 钉定）· Node v24（辅：TS7 编译器与 vue-tsc 影子闸门宿主）· 包管理：Bun workspaces（`bun.lock`）
-> 范围：仓库内全部 **54 个 package.json**（**53 个 workspace 包** + 根）· **75 个外部依赖名**（不含 `workspace:*` 与 `@koishi-ce/*` 内部 peer 互引，后者单列于 §2.G）
+> 范围：仓库内全部 **55 个 package.json**（**54 个 workspace 包** + 根）· **75 个外部依赖名**（不含 `workspace:*` 与 `@koishi-ce/*` 内部 peer 互引，后者单列于 §2.G）
 >
 > 修订：2026-09-22 —— ①-⑤ 延续 2026-09-21 的依赖收敛记录；⑥ `create-koishi-ce` 的远程模板解包由 `giget` 换为 Bun 1.4.2 原生 `Bun.Archive`，registry 版本倒序比较局部改用 `Bun.semver.order`；⑦ `k-markdown` 组件由 npm 包 `marked-vue` 就地 vendor 为本地实现（见 §4.13），声明面换成 `marked` + `xss` 两个直接依赖（名数 74 → 75）；⑧ 同日落地方案 B 之 B1，`marked` 9.1.6 → 18.0.14（见 §4.13），**非冻结 major 就此清零**（[旧] 5 → 4）；⑨ 同日续落地方案 B 之 B2，手写消毒层换成 `dompurify` 3.4.15（`xss` 出仓，见 §4.14），另引入测试期 `jsdom` + `@types/jsdom`（名数 75 → 77）。已按 §2 / §3 对账；其余内容仍为 2026-09-19 快照。
 
@@ -164,13 +164,13 @@ peer 声明用于下游 `bun add` 解析与防 Bun 自动装官方包，指向 C
 
 **名数回升的来源有三处**：§4.10 的编辑器替换（-1 +18）、§4.13 的 vendor 转正（-1 +2）与 §4.14 的 DOM 垫片（+2，仅测试期）。CodeMirror 6 生态按「一个语言一个包」切分，18 个包里 11 个是单一语言语法；同期 explorer 前端产物由 13.55 MB 降到 0.72 MB、物理包数由 97 降到 23。**前者需要把「依赖名数」与「实际代码量」两个口径分开看**，§4.14 的垫片同理（不进任何产物），其余升降仍按名数口径解读。
 
-注：`typescript` 在 web/client 的 ^5.0.0 声明源码零导入（§4.1），上表口径中其 root 侧别名形态已计入 [新]，此存疑项不重复计数。
+注：`typescript` 在 web/builder 的 ^5.0.0 声明源码零导入（§4.1），上表口径中其 root 侧别名形态已计入 [新]，此存疑项不重复计数。
 
 ---
 
 ## 4. 声明与实际使用一致性
 
-1. **死依赖存疑**：`typescript ^5.0.0` 声明于 `packages/web/client`（dependencies），全仓源码零导入；vue-tsc 影子闸门用的 TS 5.9.3 是自举安装到 `node_modules/.cache/vue-tsc-shadow` 的钉版载体，与此声明无关。删除前须重建宿主前端实证（前端链假绿判例见 development.md §7）。
+1. **死依赖存疑**：`typescript ^5.0.0` 声明于 `packages/web/builder`（dependencies，随构建器从 `packages/web/client` 迁出），全仓源码零导入；vue-tsc 影子闸门用的 TS 5.9.3 是自举安装到 `node_modules/.cache/vue-tsc-shadow` 的钉版载体，与此声明无关。删除前须重建宿主前端实证（前端链假绿判例见 development.md §7）。
 2. **fallow 红点已清零**：本快照初稿点名的两处未用导出（market dependencies/service.ts 的 `default` 导出、installer 的 `Dependency` re-export 类型）已随 9925a74 清除，dead-code 退出码 0。
 3. **range 漂移**（无害、待统一）：`vue` 三形态（client ^3.5.42 / components peer ^3 / 五插件 dev ^3.5.12）。`semver` 两形态（registry ^7.8.5 / market ^7.6.3）已于 2026-09-21 统一为 ^7.8.5（该依赖不能改用 `Bun.semver` 平替，理由见第 7 条）。
 4. **无幽灵依赖**：初版的 unlisted 问题（apps/online 靠 hoisting 存活）已随该目录删除消失，fallow unlisted 检查通过。
@@ -196,7 +196,7 @@ peer 声明用于下游 `bun add` 解析与防 Bun 自动装官方包，指向 C
     - **移除的 deprecated timer options**（`interval` / `immediate` / `updateInterval` / `immediateCallback`）只作用于 `useCountdown` / `useElementByPoint` / `useMemory` / `useNow` / `useTimeAgo(Intl)` / `useTimestamp` / `useVibrate` / `useWebSocket` 八个本仓未使用的 composable；`useTimeoutFn` 的 `immediate`（market 慢加载提示在用）不在移除清单内。
     - **Drop `templateRef`** 与 **Drop Node 20** 两项无交集（前者本仓未用，后者运行时为 Bun / Node 24）。
     - **入口形态不变**仍为 `dist/index.js`（v14 起如此），宿主共享块 `vueuse.js` 的重新打包路径（`packages/web/builder/src/assemble.ts`）无需改动；peer 仍为 `vue ^3.5.0`，与仓内 `vue ^3.5.42` 兼容。
-    - **`element-plus` 的嵌套副本**：element-plus 2.14.5 对 `@vueuse/core` 是**精确锁 `14.4.0`**（非 range，且其上游尚未适配 15），故 `bun.lock` 新增 `element-plus/@vueuse/core@14.4.0` 嵌套项、`node_modules` 多出一份 14.4.0 副本（`@satorijs/components-vue` / `schemastery-vue` 的 peer 槽同理，peer range 宽故无约束冲突）。**运行时不受影响**：宿主构建对 `@vueuse/core` 既有硬别名（`packages/web/client/src/index.ts` 的 `alias` → `${root}/vueuse.js`）又有 `dedupe`，element-plus 内部对 vueuse 的调用（`useEventListener` / `useResizeObserver` / `useTimeoutFn` / `useThrottleFn` / `useElementBounding` / `clamp` / `refDebounced` 等）在浏览器里一律走宿主共享块的 15 版实现。**受影响面已逐条核对**：其中唯一躺在破例点上的 `useThrottleFn`，element-plus 的两处调用（`use-backtop` 的滚动监听、`image` 的懒加载）都**显式传了第三参 `true`**（trailing），故默认值翻转对它们无影响；其余符号在 15 全部保留。
+    - **`element-plus` 的嵌套副本**：element-plus 2.14.5 对 `@vueuse/core` 是**精确锁 `14.4.0`**（非 range，且其上游尚未适配 15），故 `bun.lock` 新增 `element-plus/@vueuse/core@14.4.0` 嵌套项、`node_modules` 多出一份 14.4.0 副本（`@satorijs/components-vue` / `schemastery-vue` 的 peer 槽同理，peer range 宽故无约束冲突）。**运行时不受影响**：宿主构建对 `@vueuse/core` 既有硬别名（`packages/web/builder/src/assemble.ts` 的 `alias` → `${root}/vueuse.js`）又有 `dedupe`，element-plus 内部对 vueuse 的调用（`useEventListener` / `useResizeObserver` / `useTimeoutFn` / `useThrottleFn` / `useElementBounding` / `clamp` / `refDebounced` 等）在浏览器里一律走宿主共享块的 15 版实现。**受影响面已逐条核对**：其中唯一躺在破例点上的 `useThrottleFn`，element-plus 的两处调用（`use-backtop` 的滚动监听、`image` 的懒加载）都**显式传了第三参 `true`**（trailing），故默认值翻转对它们无影响；其余符号在 15 全部保留。
     - **验证**：`bun run check` 八段全绿（TS7 双 project、vue-tsc 影子基线、断言基线均无新增）、`bun run build` 无错、`bun test` 1009 通过 / 2 失败——两个失败均为 `apps/koishi-scripts` 的 clone 非交互用例，其断言前提是「bun test 的 stdin 恒非 TTY」（`clone.ts` 的 `ask()` 直判 `process.stdin.isTTY`），本机终端为伪终端故实际落进 readline 等待；以 `< NUL` 重定向 stdin 复跑该文件 19/19 通过，与本次改动无交集。宿主前端重新构建后 `vueuse.js`（131.31 kB）与 insight 插件前端均正常产出。
 12. **market 的 gravatar 摘要：`spark-md5` → `@noble/hashes`（同步 MD5）**（2026-09-21）：动因是包体卫生——`spark-md5` 是 2018 年后不再发布的 UMD 包、**不带类型**（仓内长期靠手写的 `plugins/webui/market/client/spark-md5.d.ts` 环境声明兜底），而 `@noble/hashes` 零依赖、原生 TS + ESM、无 worker 无二进制，且本仓早已因 `@paralleldrive/cuid2` 把它带在依赖树里（显式声明属「就地转正」）。
     - **刻意不换 SHA-256（本条的实证核心）**：gravatar 官方推荐 SHA-256，实测 `https://s.gravatar.com/avatar/<hash>.png?d=404` 对同一邮箱（`shigma10826@gmail.com`）的 md5 / sha256 摘要**均返回 200 且同为 4912 B 的同一张头像**——官方侧确实双支持。但**镜像侧不一定**：`https://cravatar.cn`（正是 `apps/koishi-create/src/template/env` 里 `GRAVATAR_MIRROR` 的默认值）对同一邮箱 `md5 → 200` / `sha256 → 404`，三次重跑稳定复现。换成 SHA-256 会让默认镜像下的头像**全部静默回落默认图**（`d=mp` 兜底不会报错），故维持 MD5。另一个保留同步实现的原因：`crypto.subtle` 只在安全上下文存在，局域网 HTTP 下为 `undefined`，而 noble 的 md5 是纯 JS 同步实现，正合该约束（这也是不选「异步 WebCrypto 换算法」的原因）。
@@ -206,7 +206,7 @@ peer 声明用于下游 `bun add` 解析与防 Bun 自动装官方包，指向 C
     - **依赖面**：声明名数 1 换 1（不变）；物理包方面 `@noble/hashes@2.4.0` 顶替原先 hoist 的 `1.8.0`，`@paralleldrive/cuid2` 保留其嵌套 `1.8.0`。手写的 `spark-md5.d.ts` 环境声明随包删除（类型由包自带），仓内**再无任何声明依赖 `spark-md5`**。声明位置仍在 `plugins/webui/market` 的 devDependencies（前端产物由宿主构建期打包，与 `vue` / `@vueuse/core` 同口径）。
     - **验证**：`bun run check` 八段全绿（断言基线 17 处无变化）、`bun run build` 无错、`bun run fallow` 无问题、`bun test` 1009 通过 / 2 失败（仍是 koishi-scripts clone 非交互用例的本机 TTY 问题，`< NUL` 复跑 19/19 通过）。market 前端重新构建产出正常。
 13. **`k-markdown` 改用就地 vendor 的本地实现（`marked-vue` 出仓）**（2026-09-22）：`k-markdown` 原先直接注册 npm 包 `marked-vue@1.3.0` 的默认导出。该包已停维护（`shigma/marked-vue` 最后一次提交是 2023 年的版本 bump，无 release、0 star），其全部价值只是把 `marked` 包成约 90 行的 Vue 组件加一段手写消毒，却把解析器**钉在 `^9.1.6` 永不前进**（caret 永远够不到 18.x）——而 `marked` 的更新几乎全是解析边界修复，长期停在 9 意味着持续吃旧 bug（依赖面的「声明名已是最新」与「包仍被维护」是两件事，本条也是审计口径的一个补白）。
-    - **做法**：把上游 `src/index.ts` 整体 vendor 进 `packages/web/client/client/components/markdown.ts`（AGPL 目录，原档 MIT，已在 NOTICE 登记溯源），`marked` / `xss` 由 marked-vue 的传递依赖**转正为 `packages/web/client` 的直接依赖**（`^9.1.6` / `^1.0.15`）。相对上游仅两处非行为改动：`attrs: any` 改为 `Record<string, string>`（本仓显式 any 为 0），以及遮蔽外层 `html` 的局部变量改名 `anchor`。
+    - **做法**：把上游 `src/index.ts` 整体 vendor 进 `packages/web/client/src/components/markdown.ts`（AGPL 目录，原档 MIT，已在 NOTICE 登记溯源），`marked` / `xss` 由 marked-vue 的传递依赖**转正为 `packages/web/client` 的直接依赖**（`^9.1.6` / `^1.0.15`）。相对上游仅两处非行为改动：`attrs: any` 改为 `Record<string, string>`（本仓显式 any 为 0），以及遮蔽外层 `html` 的局部变量改名 `anchor`。
     - **行为零变化**：props 语义（`source` / `inline` / `tag` / `unsafe`）、默认包裹标签与 `markdown` class、非 unsafe 模式下的消毒白名单、`<a>` 属性规范化（协议白名单、`rel` / `target` 加固、title 转义）与栈式补闭合全部逐字等价。新增 `client/components/markdown.test.ts`，以 **25 用例 / 49 断言**锁定该基线——它同时是后续换解析器与消毒器的对拍依据。
     - **顺带查明的两处上游怪癖（按现状锁定，均为惰性残留）**：① 白名单外标签的**开标签**被丢弃，但其**闭标签**因栈里已压入标签名而原样留下（`<script>x</script>` → `x</script>`、`<iframe>` → `</iframe>`）；② 标签名大小写不归一（`<B>x</B>` → `<b>x</B>`）。二者都无可利用面，但正说明这段手写消毒的覆盖面有限，是方案 B 的动因之一。
     - **另记一条使用面事实**：白名单刻意不含 `img`，故**非 unsafe 模式下 Markdown 图片会被整体丢弃**（`![alt](url)` 渲染成空段落），只有 `unsafe`（当前仅插件 usage 文档在用）才放行。这是上游既有语义，本次不改，但下游插件作者写 usage 文档时需知道。
@@ -239,7 +239,7 @@ peer 声明用于下游 `bun add` 解析与防 Bun 自动装官方包，指向 C
       | 非法协议 href → 降级为 `#` | → **整体剔除**该属性（且无 href 时不补 rel/target） | 不再伪造假链接 |
       | `<a title="<script>">` → `title="&lt;script&gt;"` | → `title="<script>"`（属性值内的尖括号按 HTML 规范无需转义） | 等价，已由 round-trip 用例证否「会变成标签」 |
     - **一处必须显式关掉的默认（测试当场逮到）**：DOMPurify 的 `ALLOW_DATA_ATTR` / `ALLOW_ARIA_ATTR` 默认 `true`，会**绕过 `ALLOWED_ATTR` 的收敛**，使第三方插件描述能塞进任意 `data-*` / `aria-*`。本组件的白名单语义是「每个标签零属性、仅 `<a>` 的 href / title 例外」，故二者一并关掉。
-    - **产品口径：`img` 维持不放行**。四个调用点中三个走非 unsafe（`packages/web/components/client/form/computed.vue` 的 schema 描述、`plugins/webui/config/client/components/select.vue` 与 `plugins/webui/market/client/market/package.vue` 的插件描述），后两者渲染的是**市场里的第三方插件描述**。放行 `img` 等于允许恶意插件以 `![](https://tracker/x?u=…)` 让访客控制台静默发起请求（追踪像素 / IP 泄露）。故 `ALLOWED_TAGS` 仍不含 `img`——这是**收紧而非沿用默认**，并把「是否放开图片」这个独立产品决策解耦出去。
+    - **产品口径：`img` 维持不放行**。四个调用点中三个走非 unsafe（`packages/web/components/src/form/computed.vue` 的 schema 描述、`plugins/webui/config/client/components/select.vue` 与 `plugins/webui/market/client/market/package.vue` 的插件描述），后两者渲染的是**市场里的第三方插件描述**。放行 `img` 等于允许恶意插件以 `![](https://tracker/x?u=…)` 让访客控制台静默发起请求（追踪像素 / IP 泄露）。故 `ALLOWED_TAGS` 仍不含 `img`——这是**收紧而非沿用默认**，并把「是否放开图片」这个独立产品决策解耦出去。
     - **实现要点**：消毒实例**惰性创建**（`getPurifier()`：首次调用时 `DOMPurify(window)` 并挂 `afterSanitizeAttributes` 钩子），而非模块顶层创建——顶层求值发生在导入阶段，宿主打包器与测试环境就绪 window 的时机不同，顶层取 window 会在无 DOM 环境拿到降级实例。DOMPurify 的默认导出首行即 `(root) => createDOMPurify(root)`，因此即使模块是在无 window 时求值的，运行期传入 window 仍能得到完整实例。协议白名单写成 `ALLOWED_URI_REGEXP`（由 `allowedProtocols` 数组拼出，保持单一事实来源），与旧实现（解析成 URL 再比对 protocol）等价；各类混淆写法（实体 `jAva&#115;cript:`、裸控制字符 `java&#13;script:`）会在 DOM 解析阶段先被解码归一、再落到该正则判定，故同样被拒。
     - **依赖面与验证**：名数 **1 换 1**（`xss` → `dompurify`），另加测试期 `jsdom` + `@types/jsdom` 两项，总数 75 → **77**（§2.E）。测试文件由 29 用例 / 55 断言增到 **31 用例 / 60 断言**，新增「消毒输出的二次解析安全性（round-trip）」一组：把消毒结果重新解析为 DOM，确认不产生新的可执行节点或 `on*` 属性（只比对字符串不足以证明安全）。`bun run check` 八段全绿、`bun run build` 无错、`bun test` 全仓通过、`bun run fallow` 无问题、宿主控制台前端重新构建正常。过程中断言基线闸门逮到一处 `globalThis as unknown as {...}` 双断言，已按闸门要求改用 `globalThis.window`（client 工程带 DOM lib，类型上即为 `Window | undefined`）**根除**，而非登记基线。
     - **判据归属**：本条属 §4.9 / §4.12 那一类「换得动且净收益」，但**收益不在字节数**（产物反而 +10.3 KB），而是「用十余年攒下的解析覆盖面与持续维护的安全修复，换掉发版停摆的手写近似实现」。与 §4.10 同属单一指标反向、需把口径分开看的一类（见 §3）。

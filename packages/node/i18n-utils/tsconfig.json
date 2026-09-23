@@ -15,7 +15,7 @@
 				"../../web/builder/src/index.ts"
 			],
 			"@koishi-ce/components": [
-				"../../web/components/client/index.ts"
+				"../../web/components/src/index.ts"
 			],
 			"@koishi-ce/plugin-bind": [
 				"../../../plugins/common/bind/src/index.ts"

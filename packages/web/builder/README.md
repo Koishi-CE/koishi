@@ -8,7 +8,7 @@ Koishi 控制台前端的构建工具链（node 侧），从 [`@koishi-ce/client
 
 - `build(root, config)`：构建单个 webui 插件的前端（`<插件目录>/client/index.ts` → 同包 `dist/`）。插件可在 `<插件目录>/build/client.ts` 导出一份 vite 配置覆盖默认值（vite 不会自动发现该文件名，由本函数显式加载并合并）；
 - `createServer(baseDir, config)`：创建开发模式下的 vite 中间件服务器（`middlewareMode`，由宿主挂载到 `/vite` 前缀）。
-- `locateApp()`：定位宿主控制台 SPA 目录（供总装与开发服务器共用）。
+- `locateApp()`：定位宿主控制台 SPA 目录（即 `@koishi-ce/console-app` 的包根，供总装与开发服务器共用）。
 
 ## CLI
 
@@ -31,7 +31,7 @@ The build toolchain for the Koishi console frontend (node side), split out of [`
 
 - `build(root, config)` — bundles a single webui plugin frontend (`<plugin>/client/index.ts` into that plugin's `dist/`). A plugin may export a vite config from `<plugin>/build/client.ts` to override the defaults (vite never auto-discovers that filename; this function loads and merges it explicitly).
 - `createServer(baseDir, config)` — creates the vite dev middleware server mounted by the host under `/vite`.
-- `locateApp()` — resolves the host console SPA directory (shared by the assembly and the dev server).
+- `locateApp()` — resolves the host console SPA directory (the package root of `@koishi-ce/console-app`, shared by the assembly and the dev server).
 
 ## CLI
 

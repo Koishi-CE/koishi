@@ -17,7 +17,7 @@ export * from "./env-info.ts";
 export * from "./tree.ts";
 
 // 浏览器端 tsconfig 无 paths,@koishi-ce/plugin-console 解析不到真实模块,
-// store 的键与 send 的事件类型均来自 packages/web/client/client/shims.d.ts 的
+// store 的键与 send 的事件类型均来自 packages/web/client/src/shims.d.ts 的
 // 手写环境声明;这里按同名环境声明合并补齐本插件的服务,与服务端
 // src/shared/index.ts 对 "@koishi-ce/console" 的声明一一对应。
 // manager/* 事件签名以 src/shared/console-events.ts 为唯一权威定义,

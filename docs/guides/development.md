@@ -75,7 +75,7 @@ bun run release status                   # 发布链概览（详见 ../process/r
 
 **依赖与死代码审计（fallow）**：`bun run fallow` = `bunx fallow@<pin> dead-code`，即 CI 的 `fallow` job 口径；工具不进 devDependencies（bunx 直跑，与 knip 时代的既有策略一致），但版本在 `package.json` 脚本内 **pin 到精确版**——浮动的 `fallow@3` 会让门禁口径随上游发布漂移（fallow 迭代极快，2026-08 单月发布 11 个 minor），而 dead-code 退出码直接决定 CI 红绿、审计基线数字又常被 PR 引用，必须可复现；升级即改脚本内版本号（单点）并复核审计基线。全部豁免与规则开关集中在根 `.fallowrc.jsonc`，三条要点：
 
-- **入口补声明**：tsdown 配置里显式声明的构建入口（如 cli 的 worker）、前端构建脚本（`packages/web/client/{src/bin,scripts/client}.ts`）以及库对外暴露的适配层/barrel 静态不可达，靠 `entry` / `dynamicallyLoaded` 补齐（`dynamicallyLoaded` 即 knip 时代各 webui 包的 `entry: ["client/**/*.ts"]`）。
+- **入口补声明**：tsdown 配置里显式声明的构建入口（如 cli 的 worker）、前端构建器入口（`packages/web/builder/src/{assemble,bin}.ts`）以及库对外暴露的适配层/barrel 静态不可达，靠 `entry` / `dynamicallyLoaded` 补齐（`dynamicallyLoaded` 即 knip 时代各 webui 包的 `entry: ["client/**/*.ts"]`）。
 - **依赖豁免是包名级全局的**：fallow 不支持按 workspace 覆写 `ignoreDependencies`，knip 时代散落各包的豁免清单因此收敛为一份带理由注释的长列表。
 - **规则开关**：`unused-class-members` / `unused-component-props` / `unused-component-emits` / `duplicate-exports` 关闭（反射式公共 API 与多包同名导出约定，与 knip 口径一致）；`circular-dependencies` 与 `re-export-cycle` 为 `error`——全仓循环已于 2026-09 断环收官清零（含 core 的 `command` ↔ `context` 旧债），升为 error 防回归，CI 的 fallow job 直接咬死环回归。
 
@@ -95,7 +95,7 @@ fallow 另外还带重复代码、复杂度健康度、边界违规与 PR 变更
 | 各 webui 插件前端 | 各插件 `dist/`（`koishi.public` 声明） | `packages/web/builder/src/index.ts` 的 `build(root)` API |
 | `apps/koishi-create` | `lib/` | 根 tsdown（包级 tsdown.config.ts 补 bin 入口） |
 
-- **ESM-only + Bun 运行时**：全部 53 个 workspace 包均为 `"type": "module"`，根 tsdown 只出 ESM（exports 以 `default` 条件兜底）。loader 用 `require()` 加载插件，Bun 的 `require()` 可直接加载 ESM，插件加载链据此工作；不要恢复 CJS 双格式产物。
+- **ESM-only + Bun 运行时**：全部 54 个 workspace 包均为 `"type": "module"`，根 tsdown 只出 ESM（exports 以 `default` 条件兜底）。loader 用 `require()` 加载插件，Bun 的 `require()` 可直接加载 ESM，插件加载链据此工作；不要恢复 CJS 双格式产物。
 - `**/lib/`、`**/dist/` 均被 .gitignore 忽略，不入库。例外：vendored 三包（`plugins/infra/{http,proxy,server}`）的 `index.cjs/index.mjs/index.d.ts` 是提交进仓库的预编译产物（再导出 `@cordisjs/plugin-*`），不走 tsdown。
 - 前端构建发布前现构建（dist 不入 git），由 `bun run release build` 编排。
 
@@ -133,7 +133,7 @@ fallow 另外还带重复代码、复杂度健康度、边界违规与 PR 变更
 
 1. **bot 侧指令文案**（node 插件）：`locales/*.yml`（7 语种）+ `ctx.i18n`，键以 `commands.<name>.` 开头对齐上游惯例。
 2. **node 侧配置 schema 描述**：Schemastery 的 `.i18n({ "zh-CN": zhCN, ... })`——词典 import 自包内 `locales/`，挂在 `static Config` 或 Schema 链尾。注意其词典递归会滤掉 `$` 前缀键，**union 内 const 选项的显示名走不到 `.i18n()`**，需以 `Dict<string>` 形态经 `extra("description", dict)` 写入（description() 方法只收 string）；宿主侧可用 `pickMessages()` / 扩展侧用 `pickFrom()` 从词典摘取该形态。
-3. **前端 UI 文案**（client）：宿主 `$i18n` 服务持有唯一 vue-i18n 实例（fallback zh-CN），宿主词典在 `packages/web/client/client/locales/`；各扩展在自己的 `client/locales/` 放词典（键收纳在 `<扩展名>.*` 命名空间下），并在 client 入口 `ctx.$i18n.extend(locale, dict)` 注入——构建别名保证 vue-i18n 单实例，词典在构建期由 yaml 插件内联。组件内用 `useI18n()`（全局 composer）；纯 ts 模块（echarts 配置等）经 `@koishi-ce/client` 的 `root.$i18n.t(key, args?)` 访问。activity 页名 / 菜单 label / 设置分区 title 均支持 getter（`MaybeRefOrGetter` / `MaybeGetter`），传 `() => ctx.$i18n.t(...)` 即可随语言实时切换。
+3. **前端 UI 文案**（client）：宿主 `$i18n` 服务持有唯一 vue-i18n 实例（fallback zh-CN），宿主词典在 `packages/web/client/src/locales/`；各扩展在自己的 `client/locales/` 放词典（键收纳在 `<扩展名>.*` 命名空间下），并在 client 入口 `ctx.$i18n.extend(locale, dict)` 注入——构建别名保证 vue-i18n 单实例，词典在构建期由 yaml 插件内联。组件内用 `useI18n()`（全局 composer）；纯 ts 模块（echarts 配置等）经 `@koishi-ce/client` 的 `root.$i18n.t(key, args?)` 访问。activity 页名 / 菜单 label / 设置分区 title 均支持 getter（`MaybeRefOrGetter` / `MaybeGetter`），传 `() => ctx.$i18n.t(...)` 即可随语言实时切换。
 
 词典纪律：
 
@@ -168,9 +168,11 @@ expect(app.database.getUser("mock", "A")).resolves.toHaveShape({ authority: 1 })
 5. **Bun 会把 exports 的 `"bun"` 条件用在 require 上**（Node 的 require 条件集不含它）：postgres@3.x 这类包（bun 条件指向 ESM 源码、default 指向 CJS 产物）在 Bun 下被 CJS 依赖链 require 到 ESM namespace，esbuild 产物的 node 兼容 interop 会把整个 namespace 当 default。修复在 loader 的 `node/interop.ts`：`NodeLoader.import` require 插件前遍历依赖树，把「Node require 语义入口的加载结果」预置进 `require.cache`。ESM import 侧不读 require.cache，无副作用。
 6. **biome 对 `.vue` 只解析 script 块、不追踪模板引用**：biome.json 已对 `**/*.vue` 关闭 noUnusedVariables / noUnusedImports / noUnusedFunctionParameters / useVueMultiWordComponentNames / useImportType（模板使用会假阳性，useImportType 会把模板组件的值导入改回 `import type` 使运行时失注册）；模板语义检查归 eslint。
 7. **显式 `any` 全仓为 0，保持住**：动态边界（JSON.parse / socket 消息 / 第三方回调）用 `unknown` + 收窄；`{}` 类型用 `Record<never, never>`。
-8. **TS7 的跨文件 `declare module` 增强对「经 lib 产物 d.ts 的模块骨架」不生效**：浏览器端工程对 console 类型的消费走 `packages/web/client/client/shims.d.ts` 手写的 `"@koishi-ce/plugin-console"` 骨架，各插件 client 工程须向同一模块名镜像自己的 Services / Events 注入，载荷要用骨架自带的 `DataService<T>` 包装。market 的镜像是 `plugins/webui/market/client/console-services.ts`（类型实体经 `market/client/tsconfig.json` 指向各包 lib 产物 d.ts 解析）——**node 侧声明变更时须同步该文件**。
+8. **TS7 的跳文件 `declare module` 增强对「经 lib 产物 d.ts 的模块骨架」不生效**：浏览器端工程对 console 类型的消费走 `packages/web/client/src/shims.d.ts` 手写的 `"@koishi-ce/plugin-console"` 骨架，各插件 client 工程须向同一模块名镜像自己的 Services / Events 注入，载荷要用骨架自带的 `DataService<T>` 包装。market 的镜像是 `plugins/webui/market/client/console-services.ts`（类型实体经 `market/client/tsconfig.json` 指向各包 lib 产物 d.ts 解析）——**node 侧声明变更时须同步该文件**。
 9. **前端构建没有 vite 配置文件**，全部编程式 `vite.build()`：宿主总装 `packages/web/builder/src/assemble.ts`（产物硬编码到 `plugins/webui/console/dist`）；单插件 `build(root)` 内置 `collectWorkspaceAliases()`——未被依赖的 workspace 包不会出现在 node_modules 链接里，必须显式映射才能被 bundler 解析。
 10. **特殊构建 hack**（动对应构建链必须复核）：analytics 的 "fuck-echarts"（`build/client.ts`，echarts chunk 内 `Symbol` 重命名；`build()` 显式加载合并该文件名，vite 不会自动发现）与 client 构建的 vue-i18n `esm-browser.prod` 别名——explorer 的 monaco manualChunks 覆盖已删（rolldown 自动分包已实现其目标）。explorer 编辑器（CodeMirror 6）的语言包靠 `client/languages.ts` 的动态 import 切 chunk：改该文件后用 `bun packages/web/builder/src/bin.ts build plugins/webui/explorer` 复核 dist 仍只含首屏内核（约 431 KB / 23 个文件）而把各语言留在按需 chunk 里；若发现全部语言被打进首屏，优先查是否有人把 `load` 里的动态 import 改成了顶层静态 import（同时注意：`monaco` 时代的 `basic-languages/monaco.contribution` 式入口会把语言服务连带引入，CM6 无此问题）。
+11. **`biome.json` 里不能写注释**：该文件若出现 `//`，Biome 会**静默丢弃整个 `overrides` 数组**（不报错、不警告），后果是 `**/package.json` 又被格式化、测试与 `.vue` 的豁免规则全部失效——表现为 `biome check .` 的文件数从 904 爆到 1088、错误数上万。配置说明一律写进本文档，不要写进 `biome.json`。
+12. **`packages/web/components/src/shims.d.ts` 的 `SchemaBase` 必须是值导出**（`export { SchemaBase, SchemaBase as form }`）。Biome 的 `style.useExportType` 会误判它是 type-only 并建议改成 `export type`，而一旦改成类型导出，调用点（`client/src/components/index.ts`、`plugins/setting.ts`）立刻报 TS1362——已在 `biome.json` 的 overrides 里对该文件关掉该规则，见上一条的配置位置说明。
 11. **hmr 的 TS 即时编译由 Bun 原生完成**：require 坏 TS 抛 `AggregateError`（errors 为 Bun 的 BuildMessage，带 `message` 与 `position.{file,line,column}`，无 esbuild 式 `.text`/`.location` 字段——上游按 esbuild BuildFailure 写的错误识别分支在 Bun 下永不命中，现已在 `hmr/src/error.ts` 按真实形态重写）；`@babel/code-frame`@8 自带类型（`@types/babel__code-frame` 为 v7 线存根、从未生效，已删），esbuild devDep 已移除。
 12. **上游 port 须补 `.ts` 扩展名**：上游源码是无后缀的 bundler 风格相对导入，本仓 nodenext 类型检查要求相对导入带扩展名；port 流程见 [../process/upstream.md](../process/upstream.md)。
 13. **Biome 的 JSON 行尾不可见字符**：已知、正常、无害，看到即跳过，不调查、不修复、不报告。

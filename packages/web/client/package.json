@@ -3,18 +3,17 @@
     "description": "Koishi Console browser runtime",
     "version": "1.3.3",
     "type": "module",
-    "main": "client/index.ts",
+    "main": "src/index.ts",
     "exports": {
         ".": {
-            "source": "./client/index.ts",
-            "default": "./client/index.ts"
+            "source": "./src/index.ts",
+            "default": "./src/index.ts"
         },
         "./global": "./global.d.ts",
         "./package.json": "./package.json"
     },
     "files": [
-        "app",
-        "client",
+        "src",
         "global.d.ts"
     ],
     "contributors": [

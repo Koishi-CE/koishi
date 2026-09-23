@@ -53,7 +53,7 @@ defineProps({
 defineEmits(["update:modelValue"]);
 
 // SchemaBase 的运行时载体（schemastery-vue 的 form 对象）挂有 useModel
-// 静态成员，但类型垫片（components/client/shims.d.ts）未声明，此处原地
+// 静态成员，但类型垫片（components/src/shims.d.ts）未声明，此处原地
 // 断言补全；返回 ref 运行时初始为 undefined，类型按 el-cascader 的
 // v-model 载荷形态（string[]，emitPath: false 的多选值）标注
 const { useModel } = SchemaBase as typeof SchemaBase & {

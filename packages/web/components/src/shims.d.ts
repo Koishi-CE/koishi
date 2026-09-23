@@ -57,6 +57,7 @@ declare module "schemastery-vue/client" {
 	// （与运行时镜像 schemastery-vue-client.ts 保持一致；biome.json 已对
 	// 本文件关掉 useExportType，防止自动修复把它改成 export type）
 	export { SchemaBase, SchemaBase as form };
+
 	export const IconAdd: Component;
 	export const IconArrowDown: Component;
 	export const IconArrowUp: Component;

@@ -100,7 +100,7 @@
 		},
 		{
 			"includes": [
-				"packages/web/components/client/shims.d.ts"
+				"packages/web/components/src/shims.d.ts"
 			],
 			"linter": {
 				"rules": {

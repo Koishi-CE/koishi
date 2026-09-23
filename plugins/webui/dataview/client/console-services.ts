@@ -5,7 +5,7 @@
 /**
  * dataview 客户端的 console 服务类型注入。
  *
- * 浏览器端工程对 console 类型的消费走 packages/web/client/client/shims.d.ts
+ * 浏览器端工程对 console 类型的消费走 packages/web/client/src/shims.d.ts
  * 手写的 "@koishi-ce/plugin-console" 骨架（浏览器端没有指向真实插件的
  * node_modules 链接与 paths），因此本文件向同一模块名镜像 dataview 侧注入的
  * Services / Events。载荷一律用骨架自带的 DataService<T> 包装，保证 client

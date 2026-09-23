@@ -167,6 +167,19 @@
         "@koishi-ce/koishi": "^1.0.0",
       },
     },
+    "packages/web/app": {
+      "name": "@koishi-ce/console-app",
+      "version": "1.0.0",
+      "dependencies": {
+        "@koishi-ce/client": "workspace:*",
+        "@koishi-ce/components": "workspace:*",
+        "@vueuse/core": "^15.0.0",
+        "element-plus": "^2.14.5",
+        "vue": "^3.5.42",
+        "vue-i18n": "^11.4.10",
+        "vue-router": "^5.2.0",
+      },
+    },
     "packages/web/builder": {
       "name": "@koishi-ce/console-builder",
       "version": "1.0.0",
@@ -176,6 +189,7 @@
       "dependencies": {
         "@koishi-ce/client": "workspace:*",
         "@koishi-ce/components": "workspace:*",
+        "@koishi-ce/console-app": "workspace:*",
         "@vitejs/plugin-vue": "^6.0.8",
         "@vueuse/core": "^15.0.0",
         "sass-embedded": "^1.102.0",
@@ -564,6 +578,7 @@
       },
       "devDependencies": {
         "@koishi-ce/client": "workspace:*",
+        "@koishi-ce/console-app": "workspace:*",
         "@koishi-ce/console-builder": "workspace:*",
         "@koishi-ce/loader": "workspace:*",
         "@koishi-ce/plugin-server": "workspace:*",
@@ -572,11 +587,13 @@
       },
       "peerDependencies": {
         "@koishi-ce/client": "^1.0.0",
+        "@koishi-ce/console-app": "^1.0.0",
         "@koishi-ce/console-builder": "^1.0.0",
         "@koishi-ce/koishi": "^1.0.0",
       },
       "optionalPeers": [
         "@koishi-ce/client",
+        "@koishi-ce/console-app",
         "@koishi-ce/console-builder",
       ],
     },
@@ -1058,6 +1075,8 @@
     "@koishi-ce/components-shim": ["@koishi-ce/components-shim@workspace:packages/shim/components-shim"],
 
     "@koishi-ce/console": ["@koishi-ce/console@workspace:packages/node/console"],
+
+    "@koishi-ce/console-app": ["@koishi-ce/console-app@workspace:packages/web/app"],
 
     "@koishi-ce/console-builder": ["@koishi-ce/console-builder@workspace:packages/web/builder"],
 

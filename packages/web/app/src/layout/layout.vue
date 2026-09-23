@@ -27,7 +27,7 @@
           <slot name="menu">
             <!-- menu 为字符串时，渲染 ctx.internal.menus 中注册的同名菜单 -->
             <template v-if="typeof menu === 'string'">
-              <template v-for="item in ctx.internal.menus[menu]" :key="menu">
+              <template v-for="(item, index) in ctx.internal.menus[menu]" :key="index">
                 <!-- 以 "." 开头的是相对菜单 id，需拼上所属菜单前缀再查 action -->
                 <layout-menu-item
                   v-if="item.id !== '@separator'"
@@ -37,7 +37,7 @@
               </template>
             </template>
             <template v-else>
-              <layout-menu-item v-for="item in menu" :item="item" />
+              <layout-menu-item v-for="(item, index) in menu" :key="index" :item="item" />
             </template>
           </slot>
         </template>

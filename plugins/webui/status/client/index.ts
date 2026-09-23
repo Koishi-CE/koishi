@@ -25,7 +25,7 @@ import "./icons";
 import "virtual:uno.css";
 
 // 浏览器端 Store 消费的 Console.Services 声明在 "@koishi-ce/plugin-console"
-// 模块（packages/web/client/client/shims.d.ts 骨架 + 各插件同名增强合并），
+// 模块（packages/web/client/src/shims.d.ts 骨架 + 各插件同名增强合并），
 // 而本插件 node 侧 lib 产物注入的目标模块名是 "@koishi-ce/console"（另一
 // 实体），两处互不传导，导致 store.status / store.envinfo 在 client 侧
 // 无类型。这里按 analytics / logger 等插件的同款模式向 client 侧镜像注入

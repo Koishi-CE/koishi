@@ -33,7 +33,7 @@ import "virtual:uno.css";
 import "./editor.scss";
 
 // 浏览器端 tsconfig 无 paths,@koishi-ce/plugin-console 解析不到真实模块,
-// Console.Services 来自 packages/web/client/client/shims.d.ts 的手写环境声明;
+// Console.Services 来自 packages/web/client/src/shims.d.ts 的手写环境声明;
 // 这里按同名环境声明合并为其补充 explorer 键与 Events（严格镜像
 // src/index.ts 对 "@koishi-ce/console" 的声明,两处须保持同步）
 declare module "@koishi-ce/plugin-console" {

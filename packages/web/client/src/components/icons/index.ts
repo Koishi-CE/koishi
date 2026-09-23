@@ -18,7 +18,7 @@ import {
 	markRaw,
 	reactive,
 } from "vue";
-import * as components from "../../../../components/client/index.ts";
+import * as components from "../../../../components/src/index.ts";
 import Default from "./activity/default.vue";
 import Ellipsis from "./activity/ellipsis.vue";
 import Home from "./activity/home.vue";

@@ -29,7 +29,7 @@
 				"../../../packages/web/builder/src/index.ts"
 			],
 			"@koishi-ce/components": [
-				"../../../packages/web/components/client/index.ts"
+				"../../../packages/web/components/src/index.ts"
 			],
 			"@koishi-ce/plugin-bind": ["../bind/src/index.ts"],
 			"@koishi-ce/plugin-broadcast": ["./src/index.ts"],

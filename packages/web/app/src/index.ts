@@ -3,7 +3,7 @@
 // Copyright (c) 2026-present Koishi-CE contributors.
 
 /**
- * 控制台前端宿主应用入口（scripts/client.ts 总装构建的主入口）。
+ * 控制台前端宿主应用入口（宿主总装构建的主入口）。
  *
  * 依次注册内置的功能插件（首页 / 布局 / 设置 / 状态栏 / 全局样式 / 主题），
  * 启动应用根上下文后，在非静态模式下与 Koishi 服务端建立 WebSocket 连接。
