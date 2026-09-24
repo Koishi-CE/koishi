@@ -74,7 +74,7 @@ bun create koishi-ce
 
 ---
 
-## 项目状态
+## 状态
 
 [![Repobeats analytics image](https://repobeats.axiom.co/api/embed/ee61d9e9a3df7762af021f96fec6d3990f6a961f.svg "Repobeats analytics image")](https://github.com/Koishi-CE/koishi/pulse)
 
