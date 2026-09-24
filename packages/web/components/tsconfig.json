@@ -1,7 +1,7 @@
 {
-	"extends": "../../../../tsconfig.client",
-	"include": [".", "../tsconfig.json"],
-	"exclude": ["./schemastery-vue-runtime.ts"],
+	"extends": "../../../tsconfig.client",
+	"include": ["src"],
+	"exclude": ["./src/schemastery-vue-runtime.ts"],
 	"compilerOptions": {
 		"alwaysStrict": true,
 		"noPropertyAccessFromIndexSignature": true,
@@ -15,7 +15,7 @@
 		"baseUrl": ".",
 		"paths": {
 			"schemastery-vue/client": [
-				"./schemastery-vue-client.ts"
+				"./src/schemastery-vue-client.ts"
 			]
 		}
 	}

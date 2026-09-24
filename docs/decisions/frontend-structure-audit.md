@@ -79,7 +79,7 @@ packages/web/
 │   ├── global.d.ts
 │   ├── package.json
 │   ├── README.md
-│   └── src/
+│   ├── src/
 │       ├── components/
 │       │   ├── chat/
 │       │   │   ├── image.vue
@@ -168,13 +168,13 @@ packages/web/
 │       │   ├── setting.ts
 │       │   └── theme.ts
 │       ├── shims.d.ts
-│       ├── tsconfig.json
 │       └── utils.ts
+│   └── tsconfig.json
 └── components/
     ├── CHANGELOG.md
     ├── package.json
     ├── README.md
-    └── src/
+    ├── src/
         ├── form/
         │   ├── computed.vue
         │   ├── index.ts
@@ -189,7 +189,6 @@ packages/web/
         ├── schemastery-vue-client.ts
         ├── schemastery-vue-runtime.ts
         ├── shims.d.ts
-        ├── tsconfig.json
         ├── viewer-toolbar.scss
         └── virtual/
             ├── index.ts
@@ -197,6 +196,7 @@ packages/web/
             ├── list.vue
             ├── virtual.test.ts
             └── virtual.ts
+    └── tsconfig.json
 plugins/webui/
 ├── admin/
 │   └── client/
