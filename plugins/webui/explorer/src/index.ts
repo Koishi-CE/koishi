@@ -260,8 +260,17 @@ class Explorer extends DataService<Entry[]> {
 			entries
 				.filter((entry): entry is Entry => !!entry)
 				.sort((a, b) => {
-					if (a.type !== b.type)
-						return a.type === "directory" ? -1 : 1;
+					// 目录恒在前，其余（file / symlink）按名称的
+					// 字母序。类型比较必须只在「目录 vs 非目录」
+					// 之间产生方向：若写成 a.type !== b.type 即
+					// 返回 ±1，file 与 symlink 会互相判定对方更
+					// 大，与按名的 file/file 比较共同构成
+					// link < a.png < b.txt < link 的环，排序结果
+					// 随 readdir 顺序漂移（CI 上本用例曾因此偶发
+					// 失败）。
+					const aDir = a.type === "directory";
+					const bDir = b.type === "directory";
+					if (aDir !== bDir) return aDir ? -1 : 1;
 					return a.name.localeCompare(b.name);
 				}),
 		);
