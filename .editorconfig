@@ -1,6 +1,6 @@
 root = true
 
-# 代码类文件（ts / js / mjs / json / vue 的 script 段）：tab，与 biome 默认缩进一致
+# 代码类文件：tab，与 biome 默认缩进一致
 [*]
 insert_final_newline = true
 indent_style = tab
