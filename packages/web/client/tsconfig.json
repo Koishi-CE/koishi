@@ -1,6 +1,9 @@
 {
 	"extends": "../../../../tsconfig.client",
-	"include": ["."],
+	"include": [
+		".",
+		"../tsconfig.json"
+	],
 	"compilerOptions": {
 		"alwaysStrict": true,
 		"noPropertyAccessFromIndexSignature": true,
