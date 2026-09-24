@@ -1,56 +1,56 @@
 {
-    // TSGo
-    "js/ts.experimental.useTsgo": true,
-    // Editor
-    "editor.defaultFormatter": "biomejs.biome",
-    "editor.formatOnSave": true,
-    "editor.codeActionsOnSave": {
-        "source.fixAll.biome": "explicit",
-        "source.organizeImports.biome": "explicit"
-    },
-    // Material Icon Theme
-    "material-icon-theme.folders.associations": {
-        "webui": "client",
-        // apps
-        "koishi-create": "generator",
-        "koishi-scripts": "scripts",
-        // packages/node
-        "i18n-utils": "i18n",
-        "loader": "hook",
-        "registry": "verdaccio",
-        // packages/shim
-        "shim": "middleware",
-        "client-shim": "client",
-        "components-shim": "components",
-        "console-shim": "console",
-        "koishi-shim": "core",
-        // packages/web
-        "builder": "tools",
-        // plugins/common
-        "assets-local": "resource",
-        // plugins/infra
-        "hmr": "plugin",
-        "http": "connection",
-        "memory": "temp",
-        "server-temp": "server",
-        "sqlite": "database",
-        "operations": "functions",
-        "setup": "config",
-        // plugins/webui
-        "installer": "download",
-        // tooling
-        "checks": "guard",
-        "upstream-audit": "tasks",
-        // docs
-        "decisions": "policy",
-        "guides": "instructions",
-        "process": "ci",
-        "reference": "toc"
-    },
-    "material-icon-theme.files.associations": {
-        "NOTICE": "certificate",
-        // templates
-        "env": "tune",
-        "gitignore": "git"
-    }
+	// TSGo
+	"js/ts.experimental.useTsgo": true,
+	// Editor
+	"editor.defaultFormatter": "biomejs.biome",
+	"editor.formatOnSave": true,
+	"editor.codeActionsOnSave": {
+		"source.fixAll.biome": "explicit",
+		"source.organizeImports.biome": "explicit"
+	},
+	// Material Icon Theme
+	"material-icon-theme.folders.associations": {
+		"webui": "client",
+		// apps
+		"koishi-create": "generator",
+		"koishi-scripts": "scripts",
+		// packages/node
+		"i18n-utils": "i18n",
+		"loader": "hook",
+		"registry": "verdaccio",
+		// packages/shim
+		"shim": "middleware",
+		"client-shim": "client",
+		"components-shim": "components",
+		"console-shim": "console",
+		"koishi-shim": "core",
+		// packages/web
+		"builder": "tools",
+		// plugins/common
+		"assets-local": "resource",
+		// plugins/infra
+		"hmr": "plugin",
+		"http": "connection",
+		"memory": "temp",
+		"server-temp": "server",
+		"sqlite": "database",
+		"operations": "functions",
+		"setup": "config",
+		// plugins/webui
+		"installer": "download",
+		// tooling
+		"checks": "guard",
+		"upstream-audit": "tasks",
+		// docs
+		"decisions": "policy",
+		"guides": "instructions",
+		"process": "ci",
+		"reference": "toc"
+	},
+	"material-icon-theme.files.associations": {
+		"NOTICE": "certificate",
+		// templates
+		"env": "tune",
+		"gitignore": "git"
+	}
 }
