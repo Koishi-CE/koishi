@@ -66,7 +66,7 @@ flowchart LR
 |---|---|---|
 | [decisions/upgrade-plan.md](decisions/upgrade-plan.md) | 依赖六阶段升级计划书 | Phase 0-4 已完成；Phase 5（cordis 4.x）被上游阻塞、已回退——重启条件仍是活约束 |
 | [decisions/dependency-audit.md](decisions/dependency-audit.md) | 57 个外部依赖现势审计快照（依赖面收敛与工具链现代化对账） | 现势快照（2026-09-19 重拍，2026-09-21 修订；初版 2026-08-27 见 git 历史） |
-| [decisions/frontend-structure-audit.md](decisions/frontend-structure-audit.md) | `packages/web/*` 与 `plugins/webui/*` 前端组织现势审查（职责说明 · 约定锚点 · 问题清单 · 整改建议） | 现势快照（2026-09-22 实测）；§5.1 P1（拆分 `packages/web/client`）已分两步落地，其余建议待维护者确认 |
+| [decisions/frontend-structure-audit.md](decisions/frontend-structure-audit.md) | `packages/web/*` 与 `plugins/webui/*` 前端组织现势审查（完整文件树 · 职责说明 · 约定锚点 · 问题清单 · 整改建议） | 现势快照（2026-09-24 重拍）；拆包（`packages/web/{app,builder,client,components}`）已落地并核销，其余建议待维护者确认 |
 
 ## 文档组织约定
 
