@@ -1,9 +1,24 @@
 root = true
 
+# 代码类文件（ts / js / mjs / json / vue 的 script 段）：tab，与 biome 默认缩进一致
 [*]
 insert_final_newline = true
-indent_style = space
-indent_size = 4
+indent_style = tab
 end_of_line = lf
 charset = utf-8
 trim_trailing_whitespace = true
+
+# 文档与工作流配置：2 空格（biome 不接管其格式）
+[*.{md,yml,yaml}]
+indent_style = space
+indent_size = 2
+
+# .vue：模板段 2 空格（biome 只格式化 script 段，编排语义归 eslint）
+[*.vue]
+indent_style = space
+indent_size = 2
+
+# 脚手架模板：biome 豁免格式化，与下游生成项目保持 2 空格一致
+[apps/*/src/template/**]
+indent_style = space
+indent_size = 2

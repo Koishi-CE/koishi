@@ -51,7 +51,7 @@ bun packages/web/builder/src/bin.ts build <插件目录>  # 单个 webui 插件�
 
 ## 代码风格
 
-- 缩进 tab、双引号、行尾分号——**biome 是格式的唯一权威**（`.editorconfig` 声明的 4 空格与代码现状不符，勿据此手改格式，跑 `bun run format` 即可）；`.vue` 文件 2 空格缩进。
+- 缩进 tab、双引号、行尾分号——**biome 是格式的唯一权威**（`.editorconfig` 已与之对齐：代码 tab，文档 `.md`/`.yml`、`.vue` 与脚手架模板 2 空格；改完仍以 `bun run format` 为准）；`.vue` 文件 2 空格缩进。
 - TS 严格全家桶（`tsconfig.base.json`）：`strict` + `noUncheckedIndexedAccess` + `noPropertyAccessFromIndexSignature` + `exactOptionalPropertyTypes` + `noUnusedLocals/Parameters` + `verbatimModuleSyntax` + `isolatedModules` + `erasableSyntaxOnly`；类型导入一律 `import type`；模块解析 nodenext（相对导入一律带 `.ts` 扩展名）。
 - TS 双版本策略：根 `typescript` 实为 typescript6（供 @typescript-eslint/parser），类型检查走 `@typescript/native`（TS7 原生编译器）。
 - 显式 `any` 全仓为 0，保持住：动态边界用 `unknown` + 收窄。
