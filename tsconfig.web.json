@@ -65,9 +65,13 @@
 				"./packages/web/client/node_modules/@vueuse/core"
 			],
 			// 宿主 client 与 app 以包名引用组件库（源码形态，无 lib 产物），
-			// 与构建器 collectWorkspaceAliases 的裸名映射目标一致
+			// 与构建器 collectWorkspaceAliases 的裸名映射目标一致；组件库
+			// 的注入工具反向以类型形式引用 client（import type，运行时擦除）
 			"@koishi-ce/components": [
 				"./packages/web/components/src/index.ts"
+			],
+			"@koishi-ce/client": [
+				"./packages/web/client/src/index.ts"
 			],
 			"@koishi-ce/console": [
 				"./packages/node/console/lib/index.d.ts"

@@ -8,7 +8,7 @@ import {
 	defineComponent,
 	h,
 } from "vue";
-import { useContext } from "../context";
+import { useContext } from "./injection";
 
 /** 插槽条目的基础形状：参与排序的组件 */
 export interface SlotItem {

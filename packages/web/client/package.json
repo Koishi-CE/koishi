@@ -45,9 +45,7 @@
         "@vueuse/core": "^15.0.0",
         "cordis": "^3.18.1",
         "cosmokit": "^1.8.1",
-        "dompurify": "^3.4.15",
         "element-plus": "^2.14.5",
-        "marked": "^18.0.14",
         "vue": "^3.5.42",
         "vue-i18n": "^11.4.10",
         "vue-router": "^5.2.0"

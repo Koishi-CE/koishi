@@ -4,7 +4,7 @@
 
 import { type App, defineComponent, h } from "vue";
 import { RouterLink } from "vue-router";
-import { useContext } from "../context";
+import { useContext } from "./injection";
 
 /**
  * activity 页面链接组件（k-activity-link）：

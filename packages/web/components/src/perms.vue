@@ -28,18 +28,13 @@
 </template>
 
 <script lang="ts" setup>
-// SchemaBase 经由 components 包的再导出获取:本包的 node_modules 没有
-// schemastery-vue 链接(它是 components 的依赖,Bun 隔离布局下不跨包可见)
+// store 由宿主启动时注入（见 ./injection.ts），此处读取服务端下发的
+// 权限名列表；响应式追踪经同一 reactive 单例保持
 
-// store 直接引自数据层模块：本文件位于包内部，引自家 barrel
-// （@koishi-ce/client → components/index.ts → 本文件）会成环
-import {
-	type Schema,
-	SchemaBase,
-} from "@koishi-ce/components";
 import type { CascaderOption } from "element-plus";
 import { computed, type PropType, type Ref } from "vue";
-import { store } from "../data";
+import { type Schema, SchemaBase } from "./form";
+import { useStore } from "./injection";
 
 defineProps({
 	schema: {} as PropType<Schema>,
@@ -51,6 +46,8 @@ defineProps({
 });
 
 defineEmits(["update:modelValue"]);
+
+const store = useStore();
 
 // SchemaBase 的运行时载体（schemastery-vue 的 form 对象）挂有 useModel
 // 静态成员，但类型垫片（components/src/shims.d.ts）未声明，此处原地
@@ -102,7 +99,6 @@ const options = computed(() => {
 		const path = name.split(":");
 		addNode(result, path);
 	}
-	console.log(result);
 	return result;
 });
 </script>

@@ -74,7 +74,7 @@
 			{
 				"up": "packages/client",
 				"ours": "packages/web/client",
-				"note": "本仓 devMode fork；node 侧构建器已拆至 packages/web/builder、宿主 SPA 已拆至 packages/web/app（上游 app/、src/、scripts/ 在本目录缺席属预期）；浏览器库源码本仓在 src/（上游在 client/），文件名集合不再两两对应，diff 仅作线索，须手工对位"
+				"note": "本仓 devMode fork；node 侧构建器已拆至 packages/web/builder、宿主 SPA 已拆至 packages/web/app（上游 app/、src/、scripts/ 在本目录缺席属预期）；浏览器库源码本仓在 src/（上游在 client/），文件名集合不再两两对应，diff 仅作线索，须手工对位；上游 client/src/components/**（UI 组件）已整体移入本仓 packages/web/components/src/**，client 仅保留运行时内核与再导出"
 			},
 			{
 				"up": "packages/client/app",
@@ -84,7 +84,7 @@
 			{
 				"up": "packages/components",
 				"ours": "packages/web/components",
-				"note": "本仓源码在 src/（上游在 client/），文件名集合不再两两对应，须手工对位"
+				"note": "本仓源码在 src/（上游在 client/），文件名集合不再两两对应，须手工对位；本包为全仓唯一 UI 库——除上游 packages/components 外还承载自上游 client/src/components/ 迁入的 common/layout/chat/icons/dynamic/perms/slot/link/markdown（同步时两边上游改动都 port 到本目录）"
 			},
 			{
 				"up": "plugins/*",

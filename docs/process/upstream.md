@@ -49,6 +49,8 @@ Source layout rule: **every package keeps its sources in `src/`** (node-side pac
 | `packages/web/components/src/` | webui `packages/components/client/` | shared component library |
 | `packages/web/app/src/` | webui `packages/client/app/` | host SPA (split into its own package here) |
 
+Sub-tree remapping on top of the table above: the client-side UI components (`common/`, `layout/`, `chat/`, `icons/`, `dynamic.vue`, `perms.vue`, `slot.ts`, `link.ts`, `markdown.ts`) were moved from `packages/web/client/src/components/` into `packages/web/components/src/` (client is now a headless runtime core that re-exports the component library). Upstream changes touching webui `packages/client/client/src/components/**` therefore port into `packages/web/components/src/**` — the two table rows above are supersets of upstream's original split, and `tooling/upstream-audit` reports the moved files on both sides accordingly.
+
 `packages/web/client` additionally lacks upstream `src/` and `scripts/` (the node-side builder and the host assembly now live in `packages/web/builder`). Because of these renames the file-name sets no longer pair up with upstream, so `tooling/upstream-audit` reports these directories as one-sided lists — treat its output as a checklist, not as a diff (the mapping notes in `tooling/upstream-audit/upstreams.json` say the same).
 
 The one directory deliberately **not** renamed is `plugins/webui/*/client/`: that sub-path (`@koishi-ce/plugin-config/client`) is the public surface through which plugins import each other, fixed both by upstream and by published npm packages.

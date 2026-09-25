@@ -41,9 +41,9 @@
 </template>
 
 <script setup lang="ts">
-import { Schema, SchemaBase } from "@koishi-ce/components";
 import { computed, type PropType } from "vue";
-import { store } from "../data";
+import { Schema, SchemaBase } from "./form";
+import { useStore } from "./injection";
 
 const props = defineProps({
 	schema: {} as PropType<Schema>,
@@ -55,6 +55,10 @@ const props = defineProps({
 });
 
 defineEmits(["update:modelValue"]);
+
+// store 由宿主启动时注入（见 ./injection.ts），此处读取服务端下发的
+// schema 仓库；响应式追踪经同一 reactive 单例保持
+const store = useStore();
 
 // 按本地 schema 标注的名称，从服务端下发的 schema 仓库中取出完整定义；
 // 元信息做一层合并，保留本地的 meta 覆盖权

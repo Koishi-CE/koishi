@@ -2,12 +2,11 @@
 // Copyright (c) 2019-present Shigma and Koishijs contributors.
 // Copyright (c) 2026-present Koishi-CE contributors.
 
-import * as components from "@koishi-ce/components";
 /**
  * 图标中心：所有内置图标的注册表与 <k-icon> 组件。
  *
  * 图标分两类来源：本目录下的 svg / activity 组件，以及
- * @koishi-ce/components 中现成的 Icon* 组件；统一以字符串名注册到
+ * schemastery-vue 体系（./form 透出）现成的 Icon* 组件；统一以字符串名注册到
  * registry，业务侧通过 <k-icon name="..."/> 按名渲染。
  * 新图标可随时经 register() 补充注册。
  */
@@ -19,6 +18,7 @@ import {
 	markRaw,
 	reactive,
 } from "vue";
+import * as schema from "../form";
 import Default from "./activity/default.vue";
 import Ellipsis from "./activity/ellipsis.vue";
 import Home from "./activity/home.vue";
@@ -72,8 +72,8 @@ register("activity:moon", Moon);
 register("activity:settings", Settings);
 register("activity:sun", Sun);
 
-register("arrow-up", components.IconArrowUp);
-register("arrow-down", components.IconArrowDown);
+register("arrow-up", schema.IconArrowUp);
+register("arrow-down", schema.IconArrowDown);
 register("arrow-left", ArrowLeft);
 register("arrow-right", ArrowRight);
 register("box-open", BoxOpen);
@@ -83,15 +83,15 @@ register("chevron-left", ChevronLeft);
 register("chevron-right", ChevronRight);
 register("chevron-up", ChevronUp);
 register("clipboard-list", ClipboardList);
-register("close", components.IconClose);
-register("delete", components.IconDelete);
+register("close", schema.IconClose);
+register("delete", schema.IconDelete);
 register("edit", Edit);
-register("ellipsis", components.IconEllipsis);
+register("ellipsis", schema.IconEllipsis);
 register("exclamation-full", ExclamationFull);
 register("expand", Expand);
-register("external", components.IconExternal);
-register("eye-slash", components.IconEyeSlash);
-register("eye", components.IconEye);
+register("external", schema.IconExternal);
+register("eye-slash", schema.IconEyeSlash);
+register("eye", schema.IconEye);
 register("file-archive", FileArchive);
 register("filter", Filter);
 register("github", GitHub);
@@ -100,7 +100,7 @@ register("info-full", InfoFull);
 register("koishi", Koishi);
 register("link", Link);
 register("paper-plane", PaperPlane);
-register("add", components.IconAdd);
+register("add", schema.IconAdd);
 register("question-empty", QuestionEmpty);
 register("redo", Redo);
 register("search", Search);

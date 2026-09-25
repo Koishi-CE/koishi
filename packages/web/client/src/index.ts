@@ -3,18 +3,23 @@
 // Copyright (c) 2026-present Koishi-CE contributors.
 
 /**
- * @koishi_ce/client 包的主入口（Koishi 控制台前端组件库）。
+ * @koishi-ce/client 包的主入口（Koishi 控制台浏览器运行时）。
  *
  * 职责：
- * - 创建根 Context（`root`），安装内置组件库并启动六个核心服务
+ * - 创建根 Context（`root`），安装共享组件库并启动六个核心服务
  *   （action / i18n / loader / router / setting / theme）；
- * - 通过 `export *` 汇总对外暴露组件、数据层与各服务插件的公共 API，
- *   供宿主 app 与各控制台插件统一从 `@koishi-ce/client` 导入；
+ * - 本包是无界面的运行时内核（Context 依赖注入、数据同步、路由、
+ *   国际化与各服务插件），UI 组件已全量收敛至 `@koishi-ce/components`
+ *   （全仓唯一 UI 库）；此处对其公共 API 做全量二次转出，使宿主 app
+ *   与各控制台插件统一从 `@koishi-ce/client` 导入的历史消费面保持不变；
  * - 声明可被其它插件以 `declare module` 合并增强的 `ActionContext`、
  *   `Config` 接口。
  */
-import install from "./components";
+import install, {
+	provideStore,
+} from "@koishi-ce/components";
 import { Context } from "./context";
+import { store } from "./data";
 
 declare module "@koishi-ce/plugin-console" {
 	export interface ClientConfig {
@@ -22,6 +27,10 @@ declare module "@koishi-ce/plugin-console" {
 		unsupported?: string[];
 	}
 }
+
+// 向组件库注入全局数据仓库：组件库的 schema 控件扩展（dynamic/perms）
+// 经 useStore() 读取服务端下发数据，注入须先于任何组件渲染
+provideStore(store);
 
 // Satori 协议类型的两个命名空间别名：旧代码多用 Universal，新代码建议用 Satori
 export * as Satori from "@satorijs/protocol";
@@ -39,7 +48,10 @@ export const ScopeStatus = {
 
 export type ScopeStatus =
 	(typeof ScopeStatus)[keyof typeof ScopeStatus];
-export * from "./components";
+// 共享组件库（唯一 UI 库）的公共 API 全量二次转出
+export * from "@koishi-ce/components";
+// vue-i18n 的导出面（原挂在组件库入口下，随组件收敛挪回运行时入口）
+export * from "vue-i18n";
 export * from "./context";
 export * from "./data";
 export * from "./plugins/action";
@@ -67,7 +79,7 @@ export interface Config {
 /** 根 Context：整个控制台前端共享的唯一上下文实例 */
 export const root = new Context();
 
-// 在根 Vue 应用上安装内置组件库（组件注册 + schema 扩展注册）
+// 在根 Vue 应用上安装共享组件库（组件注册 + schema 扩展注册）
 root.app.use(install);
 
 // activity 事件的兜底监听：正常传入的 activity 实例恒为真值，

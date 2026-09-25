@@ -2,6 +2,10 @@
 // Copyright (c) 2019-present Shigma and Koishijs contributors.
 // Copyright (c) 2026-present Koishi-CE contributors.
 
+import {
+	Overlay,
+	type SlotOptions,
+} from "@koishi-ce/components";
 /**
  * 路由服务：控制台页面（activity）与插槽视图的注册中心。
  *
@@ -24,8 +28,6 @@ import {
 	createWebHistory,
 	START_LOCATION,
 } from "vue-router";
-import type { SlotOptions } from "../components";
-import Overlay from "../components/chat/overlay.vue";
 import type { Context } from "../context";
 import { global, type Store, store } from "../data";
 import { insert, Service } from "../utils";
