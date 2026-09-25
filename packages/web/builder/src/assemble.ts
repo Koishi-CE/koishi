@@ -93,6 +93,12 @@ async function build(
 	const { rollupOptions = {} } = config.build || {};
 	return (await vite.build({
 		root,
+		// 透传 publicDir：vite 仅接受相对 root 的路径，而静态资产可放
+		// root（src/）外。其余构建不传此字段，维持 vite 默认的 root/public
+		// 约定（显式条件展开，避免 undefined 值覆盖默认配置）
+		...(config.publicDir
+			? { publicDir: config.publicDir }
+			: {}),
 		build: {
 			outDir: dist,
 			emptyOutDir: true,
@@ -169,6 +175,9 @@ export default async function () {
 	assertRepoLayout();
 	// 第一步：构建控制台主应用（入口为 app 包的 src/index.html，产物 index.js）
 	const { output } = await build(locateApp(), {
+		// favicon 等静态资产在包根 assets/（root 外），经 publicDir 原样
+		// 拷入 dist 根，index.html 以 /logo.png 引用
+		publicDir: "../assets",
 		plugins: [
 			unocss({
 				presets: [

@@ -320,6 +320,8 @@ export async function createServer(
 			{
 				root,
 				base: "/vite/",
+				// 与总装构建一致：静态资产在包根 assets/（root 外）
+				publicDir: "../assets",
 				server: {
 					middlewareMode: true,
 					fs: {
