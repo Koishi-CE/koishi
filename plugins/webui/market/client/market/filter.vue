@@ -10,7 +10,7 @@
 <template>
   <div class="market-filter-group">
     <div class="market-filter-title">
-      <h2 class="text">{{ t("type.sort") }}</h2>
+      <h2 class="text">{{ t("market.type.sort") }}</h2>
     </div>
     <template v-for="(item, key) in comparators" :key="key">
       <div
@@ -19,7 +19,7 @@
         :class="{ active: activeSort[0] === key }"
         @click="toggleSort('sort:' + key, $event)">
         <span class="icon"><market-icon :name="item.icon"></market-icon></span>
-        <span class="text">{{ t(`sort.${key}`) }}</span>
+        <span class="text">{{ t(`market.sort.${key}`) }}</span>
         <span class="spacer"></span>
         <span class="order"><market-icon :name="activeSort[1]"></market-icon></span>
       </div>
@@ -27,7 +27,7 @@
   </div>
   <div class="market-filter-group">
     <div class="market-filter-title">
-      <h2 class="text">{{ t("type.filter") }}</h2>
+      <h2 class="text">{{ t("market.type.filter") }}</h2>
     </div>
     <template v-for="(item, key) in badges" :key="key">
       <div
@@ -36,7 +36,7 @@
         :class="{ [key]: true, active: words.includes(item.query), disabled: words.includes(item.negate) }"
         @click="toggleQuery(item, $event)">
         <span class="icon"><market-icon :name="key"></market-icon></span>
-        <span class="text">{{ t(`badge.${key}`) }}</span>
+        <span class="text">{{ t(`market.badge.${key}`) }}</span>
         <span class="spacer"></span>
         <span class="count" v-if="data">
           {{ data.filter((x) => validate(x, item.query, config)).length }}
@@ -46,14 +46,14 @@
   </div>
   <div class="market-filter-group">
     <div class="market-filter-title">
-      <h2 class="text">{{ t("type.category") }}</h2>
+      <h2 class="text">{{ t("market.type.category") }}</h2>
     </div>
     <div
       v-for="key in categories" :key="key" class="market-filter-item"
       :class="{ active: words.includes('category:' + key) }"
       @click="toggleCategory('category:' + key, $event)">
       <span class="icon"><market-icon :name="'solid:' + key"></market-icon></span>
-      <span class="text">{{ t(`category.${key}`) }}</span>
+      <span class="text">{{ t(`market.category.${key}`) }}</span>
       <span class="spacer"></span>
       <span class="count" v-if="data">
         {{ data.filter((item) => resolveCategory(item.category) === key).length }}
@@ -65,6 +65,7 @@
 <script lang="ts" setup>
 import type { SearchObject } from "@koishi-ce/registry";
 import { computed, inject, ref, watch } from "vue";
+import { useI18n } from "vue-i18n";
 import {
 	type Badge,
 	badges,
@@ -73,9 +74,8 @@ import {
 	kConfig,
 	MarketIcon,
 	resolveCategory,
-	useMarketI18n,
 	validate,
-} from "../vendor/market";
+} from "../vendor";
 
 const props = defineProps<{
 	modelValue: string[];
@@ -84,7 +84,7 @@ const props = defineProps<{
 
 const emit = defineEmits(["update:modelValue"]);
 
-const { t } = useMarketI18n();
+const { t } = useI18n();
 
 const config = inject(kConfig, {});
 

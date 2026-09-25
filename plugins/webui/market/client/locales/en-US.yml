@@ -82,3 +82,51 @@ extensions:
     successToast: Plugin uninstalled!
     failedToast: Uninstall failed!
     timeoutToast: Uninstall timed out!
+
+market:
+  type:
+    sort: Sort
+    filter: Filter
+    category: Category
+
+  badge:
+    installed: Installed
+    verified: Verified
+    insecure: Insecure
+    preview: Preview
+    newborn: New
+    portable: Portable
+
+  sort:
+    default: Relevance
+    rating: By rating
+    download: By downloads
+    created: By creation date
+    updated: By update date
+
+  category:
+    all: All plugins
+    other: Uncategorized
+    adapter: Adapters
+    general: General
+    extension: Extensions
+    webui: Console
+    manage: Management
+    preset: Presets
+    image: Image
+    media: Media
+    tool: Tools
+    life: Lifestyle
+    ai: AI
+    meme: Fun
+    game: Games
+    gametool: Game tools
+
+  time:
+    just-now: Just now
+    minutes-ago: '{0} minutes ago'
+    hours-ago: '{0} hours ago'
+    days-ago: '{0} days ago'
+
+  search:
+    placeholder: Search for plugins

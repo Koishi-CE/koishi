@@ -72,7 +72,7 @@ import MarketFilter from "../market/filter.vue";
 import MarketList from "../market/list.vue";
 import MarketSearch from "../market/search.vue";
 import { active } from "../utils";
-import { getSorted, kConfig } from "../vendor/market";
+import { getSorted, kConfig } from "../vendor";
 
 function installed(data: SearchObject) {
 	if (store.packages) {

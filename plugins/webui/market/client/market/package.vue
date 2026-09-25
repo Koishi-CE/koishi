@@ -4,7 +4,7 @@
 
 <!--
   市场插件卡片（本地化 fork 自 @koishijs/market 4.2.10 的
-  client/components/package.vue，逻辑层来自本仓 client/vendor/market）。
+  client/components/package.vue，逻辑层来自本仓 client/vendor）。
   视觉重设计参考 marketn：类目色渐变图标块、胶囊徽章、
   心跳新鲜度指示（替代评分星）、头像首字母占位。
 -->
@@ -45,7 +45,7 @@
           @click.stop.prevent="$emit('query', badge.query)"
         >
           <market-icon :name="badge.type"></market-icon>
-          <span>{{ t(`badge.${badge.type}`) }}</span>
+          <span>{{ t(`market.badge.${badge.type}`) }}</span>
         </span>
       </el-tooltip>
     </div>
@@ -77,8 +77,8 @@
       <div class="avatars">
         <el-tooltip
           v-for="({ email, name }) in getUsers(data)"
-          :key="name ?? email"
-          :content="name ?? email"
+          :key="name ?? email ?? ''"
+          :content="name ?? email ?? ''"
           placement="top"
         >
           <span
@@ -109,15 +109,15 @@ import {
 	utf8ToBytes,
 } from "@noble/hashes/utils.js";
 import { computed, inject, reactive } from "vue";
+import { useI18n } from "vue-i18n";
 import {
 	badges,
 	getUsers,
 	kConfig,
 	MarketIcon,
 	resolveCategory,
-	useMarketI18n,
 	validate,
-} from "../vendor/market";
+} from "../vendor";
 
 defineEmits(["query"]);
 
@@ -175,7 +175,7 @@ const failedAvatars = reactive(new Set<string>());
 
 // gravatar 摘要在浏览器里同步计算：crypto.subtle 在局域网 HTTP 下为 undefined，
 // 而多数镜像（如 create-koishi 模板默认的 cravatar.cn）只认 MD5 不认 SHA-256
-function getAvatar(email: string) {
+function getAvatar(email: string | undefined) {
 	return (
 		(props.gravatar || "https://s.gravatar.com") +
 		"/avatar/" +
@@ -202,23 +202,23 @@ function formatSize(value: number) {
 	}
 }
 
-const { t } = useMarketI18n();
+const { t } = useI18n();
 
 function timeAgo(time: string) {
 	const now = new Date();
 	const input = new Date(time);
 	const diff = now.getTime() - input.getTime();
-	if (diff < 30000) return t("time.just-now");
+	if (diff < 30000) return t("market.time.just-now");
 	if (diff < 3600000)
-		return t("time.minutes-ago", [
+		return t("market.time.minutes-ago", [
 			Math.floor(diff / 60000),
 		]);
 	if (diff < 86400000)
-		return t("time.hours-ago", [
+		return t("market.time.hours-ago", [
 			Math.floor(diff / 3600000),
 		]);
 	if (diff < 604800000)
-		return t("time.days-ago", [
+		return t("market.time.days-ago", [
 			Math.floor(diff / 86400000),
 		]);
 	return input.toLocaleDateString();

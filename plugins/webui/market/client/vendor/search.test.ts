@@ -2,71 +2,25 @@
 // Copyright (c) 2019-present Shigma and Koishijs contributors.
 // Copyright (c) 2026-present Koishi-CE contributors.
 
-// vendor 逻辑层（utils.ts）的纯函数回归测试。测试文件不进入 tsconfig.web
+// 逻辑层搜索/查询域的纯函数回归测试。测试文件不进入 tsconfig.web
 // 类型检查（见其 exclude），运行时由 bun test 覆盖。
 
 import { describe, expect, test } from "bun:test";
-import type {
-	SearchObject,
-	User,
-} from "@koishi-ce/registry";
+import type { User } from "@koishi-ce/registry";
 import {
-	badges,
-	categories,
-	comparators,
 	getFiltered,
-	getSorted,
 	getUsers,
 	hasFilter,
-	resolveCategory,
 	validate,
 	validateWord,
-} from "./utils.ts";
+} from "./search.ts";
+import {
+	mockPackage,
+	mockSearch,
+	mockUser,
+} from "./test-utils.ts";
 
-function mockUser(username: string, email: string): User {
-	return { username, email };
-}
-
-function mockPackage(
-	name: string,
-	overrides: Partial<SearchObject["package"]> = {},
-): SearchObject["package"] {
-	const alice = mockUser("alice", "alice@test.dev");
-	return {
-		name,
-		keywords: [],
-		maintainers: [alice],
-		publisher: alice,
-		...overrides,
-	} as SearchObject["package"];
-}
-
-function mockSearch(
-	overrides: Partial<SearchObject> = {},
-): SearchObject {
-	const base: SearchObject = {
-		shortname: "fake",
-		searchScore: 0,
-		score: {} as SearchObject["score"],
-		rating: 5,
-		license: "MIT",
-		createdAt: "2026-01-01T00:00:00.000Z",
-		updatedAt: "2026-01-01T00:00:00.000Z",
-		package: mockPackage("koishi-plugin-fake"),
-		manifest: {
-			description: "a fake plugin",
-			service: {
-				required: [],
-				optional: [],
-				implements: [],
-			},
-			locales: [],
-		},
-	};
-	return { ...base, ...overrides } as SearchObject;
-}
-
-describe("validateWord / hasFilter / resolveCategory", () => {
+describe("validateWord / hasFilter", () => {
 	test("普通词与已知操作符合法，未知操作符非法", () => {
 		expect(validateWord("console")).toBe(true);
 		expect(validateWord("is:installed")).toBe(true);
@@ -80,12 +34,6 @@ describe("validateWord / hasFilter / resolveCategory", () => {
 			hasFilter(["sort:rating", "show:hidden", "limit:10"]),
 		).toBe(false);
 		expect(hasFilter(["category:general"])).toBe(true);
-	});
-
-	test("resolveCategory 兜底 other", () => {
-		expect(resolveCategory("adapter")).toBe("adapter");
-		expect(resolveCategory("nonexistent")).toBe("other");
-		expect(resolveCategory(undefined)).toBe("other");
 	});
 });
 
@@ -139,52 +87,17 @@ describe("validate", () => {
 			false,
 		);
 	});
-});
 
-describe("getSorted", () => {
-	const market = [
-		mockSearch({
-			package: mockPackage("koishi-plugin-a"),
-			rating: 3,
-		}),
-		mockSearch({
-			package: mockPackage("koishi-plugin-b"),
-			rating: 9,
-		}),
-		mockSearch({
-			deprecated: true,
-			package: mockPackage("koishi-plugin-c"),
-			rating: 10,
-		}),
-	];
-
-	test("默认过滤 deprecated，show:deprecated 放行", () => {
-		expect(
-			getSorted(market, []).map((d) => d.rating),
-		).toEqual([9, 3]);
-		expect(
-			getSorted(market, ["show:deprecated"]).map(
-				(d) => d.rating,
-			),
-		).toEqual([10, 9, 3]);
-	});
-
-	test("sort:rating 与 -asc 控制顺序", () => {
-		expect(
-			getSorted(market, ["sort:rating"]).map(
-				(d) => d.rating,
-			),
-		).toEqual([9, 3]);
-		expect(
-			getSorted(market, ["sort:rating-asc"]).map(
-				(d) => d.rating,
-			),
-		).toEqual([3, 9]);
-	});
-
-	test("默认比较器按搜索词相似度加权", () => {
-		const [first] = getSorted(market, ["b"]) ?? [];
-		expect(first?.rating).toBe(9);
+	test("未知操作符与未知日期方向放行，不参与相似度匹配", () => {
+		expect(validate(mockSearch(), "unknown:foo")).toBe(
+			true,
+		);
+		expect(validate(mockSearch(), "sort:rating")).toBe(
+			true,
+		);
+		expect(validate(mockSearch(), "updated:foo")).toBe(
+			true,
+		);
 	});
 });
 
@@ -235,26 +148,5 @@ describe("getFiltered / getUsers", () => {
 		expect(getUsers(noMatch)).toEqual([
 			{ email: undefined, name: "carol" },
 		]);
-	});
-});
-
-describe("vendor 面锁定", () => {
-	test("badges / comparators / categories 与上游对齐", () => {
-		expect(Object.keys(badges)).toEqual([
-			"installed",
-			"verified",
-			"insecure",
-			"preview",
-			"portable",
-			"newborn",
-		]);
-		expect(Object.keys(comparators)).toEqual([
-			"default",
-			"rating",
-			"download",
-			"created",
-			"updated",
-		]);
-		expect(categories).toHaveLength(14);
 	});
 });

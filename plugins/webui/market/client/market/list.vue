@@ -55,7 +55,7 @@ import {
 	getSorted,
 	hasFilter,
 	kConfig,
-} from "../vendor/market";
+} from "../vendor";
 import MarketPackage from "./package.vue";
 
 const props = defineProps<{

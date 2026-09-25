@@ -5,14 +5,14 @@
 <template>
   <k-slot name="plugin-select-base">
     <template #title="{ packages }">
-      <span class="title">{{ t(`category.${active}`) }} ({{ packages.length }})</span>
+      <span class="title">{{ t(`market.category.${active}`) }} ({{ packages.length }})</span>
     </template>
     <template #tabs>
       <div class="tabs">
         <el-scrollbar>
           <span class="tab-item" v-for="key in extended" :key="key" @click.stop="active = key" :class="{ active: active === key }">
             <market-icon :name="'solid:' + key"></market-icon>
-            <span class="title">{{ t(`category.${key}`) }}</span>
+            <span class="title">{{ t(`market.category.${key}`) }}</span>
           </span>
         </el-scrollbar>
       </div>
@@ -24,16 +24,16 @@
 import { store } from "@koishi-ce/client";
 import type { PackageProvider } from "@koishi-ce/plugin-config";
 import { provide, ref } from "vue";
+import { useI18n } from "vue-i18n";
 import {
 	categories,
 	MarketIcon,
 	resolveCategory,
-	useMarketI18n,
-} from "../vendor/market";
+} from "../vendor";
 
 const extended = ["all", "other", ...categories];
 
-const { t } = useMarketI18n();
+const { t } = useI18n();
 
 const active = ref("all");
 

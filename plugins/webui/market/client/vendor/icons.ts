@@ -1,6 +1,7 @@
-import { type Component, defineComponent, h } from "vue";
-import Download from "~icons/k/download";
-import FileArchive from "~icons/k/file-archive";
+// SPDX-License-Identifier: AGPL-3.0-only
+// Copyright (c) 2019-present Shigma and Koishijs contributors.
+// Copyright (c) 2026-present Koishi-CE contributors.
+
 /**
  * market 图标注册表（<market-icon> 组件）。
  *
@@ -11,7 +12,13 @@ import FileArchive from "~icons/k/file-archive";
  * search / star-empty / star-full / tag）直接复用主库资产，其余以
  * market- 前缀命名；outline / solid 两套线型以 market-outline- /
  * market-solid- 前缀保留。渲染层与 name 查找契约不变，调用点零改动。
+ *
+ * name 键保持开放 string：调用点大量传运行时数据（比较器 icon 名、
+ * 徽标名），闭联合类型会过度约束。
  */
+import { type Component, defineComponent, h } from "vue";
+import Download from "~icons/k/download";
+import FileArchive from "~icons/k/file-archive";
 import Asc from "~icons/k/market-asc";
 import Award from "~icons/k/market-award";
 import Balance from "~icons/k/market-balance";
@@ -130,18 +137,20 @@ const registry: Record<string, Component> = {
 	...solid,
 };
 
-export default defineComponent({
+export const MarketIcon = defineComponent({
 	props: {
 		name: String,
 	},
-	render(props: { name?: string }) {
-		const icon = props.name
-			? registry[props.name]
-			: undefined;
-		return icon
-			? h(icon, {
-					class: "market-icon",
-				})
-			: [];
+	setup(props) {
+		return () => {
+			const icon = props.name
+				? registry[props.name]
+				: undefined;
+			return icon
+				? h(icon, {
+						class: "market-icon",
+					})
+				: [];
+		};
 	},
 });

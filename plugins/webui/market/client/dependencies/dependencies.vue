@@ -139,7 +139,7 @@ import { useI18n } from "vue-i18n";
 import ManualInstall from "../components/manual.vue";
 import RemoveConfigDialog from "../components/remove-config-dialog.vue";
 import { install } from "../components/utils";
-import { MarketIcon } from "../vendor/market";
+import { MarketIcon } from "../vendor";
 import {
 	buildGroups,
 	type DependencyItem,

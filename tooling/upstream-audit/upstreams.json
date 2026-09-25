@@ -90,7 +90,7 @@
 				"up": "plugins/*",
 				"ours": "plugins/webui/*",
 				"glob": true,
-				"note": "market 客户端视图为本地化 fork，禁止整覆盖"
+				"note": "market 客户端整体本地化（视图 fork + vendor 逻辑层按域重组 + 词典真翻译），禁止整覆盖，按语义评估移植"
 			}
 		]
 	},

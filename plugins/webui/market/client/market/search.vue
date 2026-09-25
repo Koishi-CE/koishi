@@ -17,7 +17,7 @@
         @click="onClickWord(index)"
       >{{ word }}</span>
       <input
-        :placeholder="t('search.placeholder')"
+        :placeholder="t('market.search.placeholder')"
         v-model="lastWord"
         ref="input"
         @blur="onEnter"
@@ -36,11 +36,8 @@
 <script lang="ts" setup>
 import { useDebounceFn } from "@vueuse/core";
 import { computed, ref, watch } from "vue";
-import {
-	MarketIcon,
-	useMarketI18n,
-	validateWord,
-} from "../vendor/market";
+import { useI18n } from "vue-i18n";
+import { MarketIcon, validateWord } from "../vendor";
 
 const props = defineProps<{
 	modelValue: string[];
@@ -113,7 +110,7 @@ function onClear() {
 	emit("update:modelValue", words.value);
 }
 
-const { t } = useMarketI18n();
+const { t } = useI18n();
 </script>
 
 <style lang="scss" scoped>
