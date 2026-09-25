@@ -1,5 +1,12 @@
 # @koishi-ce/console-app
 
+## 1.0.3
+
+### Patch Changes
+
+- Updated dependencies [74774de]
+  - @koishi-ce/client@1.4.2
+
 ## 1.0.2
 
 ### Patch Changes

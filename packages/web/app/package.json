@@ -1,7 +1,7 @@
 {
     "name": "@koishi-ce/console-app",
     "description": "Koishi Console host SPA",
-    "version": "1.0.2",
+    "version": "1.0.3",
     "type": "module",
     "exports": {
         "./package.json": "./package.json"

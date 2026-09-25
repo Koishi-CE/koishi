@@ -169,7 +169,7 @@
     },
     "packages/web/app": {
       "name": "@koishi-ce/console-app",
-      "version": "1.0.2",
+      "version": "1.0.3",
       "dependencies": {
         "@koishi-ce/client": "workspace:*",
         "@koishi-ce/components": "workspace:*",
@@ -182,7 +182,7 @@
     },
     "packages/web/builder": {
       "name": "@koishi-ce/console-builder",
-      "version": "1.0.2",
+      "version": "1.0.3",
       "bin": {
         "koishi-console": "lib/bin.mjs",
       },
@@ -204,7 +204,7 @@
     },
     "packages/web/client": {
       "name": "@koishi-ce/client",
-      "version": "1.4.1",
+      "version": "1.4.2",
       "dependencies": {
         "@koishi-ce/components": "workspace:*",
         "@satorijs/protocol": "^1.7.0",
@@ -567,7 +567,7 @@
     },
     "plugins/webui/console": {
       "name": "@koishi-ce/plugin-console",
-      "version": "1.4.0",
+      "version": "1.4.1",
       "dependencies": {
         "@koishi-ce/console": "workspace:*",
         "open": "^11.0.1",
