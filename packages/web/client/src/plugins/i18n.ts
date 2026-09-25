@@ -113,31 +113,31 @@ if (import.meta.hot) {
 		instance?.extend(locale, messages ?? {});
 	};
 	import.meta.hot.accept(
-		"../locales/de-DE.yml",
+		"../../locales/de-DE.yml",
 		replace("de-DE"),
 	);
 	import.meta.hot.accept(
-		"../locales/en-US.yml",
+		"../../locales/en-US.yml",
 		replace("en-US"),
 	);
 	import.meta.hot.accept(
-		"../locales/fr-FR.yml",
+		"../../locales/fr-FR.yml",
 		replace("fr-FR"),
 	);
 	import.meta.hot.accept(
-		"../locales/ja-JP.yml",
+		"../../locales/ja-JP.yml",
 		replace("ja-JP"),
 	);
 	import.meta.hot.accept(
-		"../locales/ru-RU.yml",
+		"../../locales/ru-RU.yml",
 		replace("ru-RU"),
 	);
 	import.meta.hot.accept(
-		"../locales/zh-CN.yml",
+		"../../locales/zh-CN.yml",
 		replace("zh-CN"),
 	);
 	import.meta.hot.accept(
-		"../locales/zh-TW.yml",
+		"../../locales/zh-TW.yml",
 		replace("zh-TW"),
 	);
 }

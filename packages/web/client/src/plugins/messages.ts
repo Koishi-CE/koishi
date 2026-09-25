@@ -11,13 +11,13 @@
  * 任何服务，先于此拆分可用。
  */
 import { type Dict, valueMap } from "cosmokit";
-import deDE from "../locales/de-DE.yml";
-import enUS from "../locales/en-US.yml";
-import frFR from "../locales/fr-FR.yml";
-import jaJP from "../locales/ja-JP.yml";
-import ruRU from "../locales/ru-RU.yml";
-import zhCN from "../locales/zh-CN.yml";
-import zhTW from "../locales/zh-TW.yml";
+import deDE from "../../locales/de-DE.yml";
+import enUS from "../../locales/en-US.yml";
+import frFR from "../../locales/fr-FR.yml";
+import jaJP from "../../locales/ja-JP.yml";
+import ruRU from "../../locales/ru-RU.yml";
+import zhCN from "../../locales/zh-CN.yml";
+import zhTW from "../../locales/zh-TW.yml";
 
 /** 宿主自身的全局词典：随服务启动注入，键结构见 client/locales/zh-CN.yml */
 export const localeMessages: Dict<Dict> = {

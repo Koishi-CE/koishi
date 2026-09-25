@@ -133,7 +133,7 @@ fallow 另外还带重复代码、复杂度健康度、边界违规与 PR 变更
 
 1. **bot 侧指令文案**（node 插件）：`locales/*.yml`（7 语种）+ `ctx.i18n`，键以 `commands.<name>.` 开头对齐上游惯例。
 2. **node 侧配置 schema 描述**：Schemastery 的 `.i18n({ "zh-CN": zhCN, ... })`——词典 import 自包内 `locales/`，挂在 `static Config` 或 Schema 链尾。注意其词典递归会滤掉 `$` 前缀键，**union 内 const 选项的显示名走不到 `.i18n()`**，需以 `Dict<string>` 形态经 `extra("description", dict)` 写入（description() 方法只收 string）；宿主侧可用 `pickMessages()` / 扩展侧用 `pickFrom()` 从词典摘取该形态。
-3. **前端 UI 文案**（client）：宿主 `$i18n` 服务持有唯一 vue-i18n 实例（fallback zh-CN），宿主词典在 `packages/web/client/src/locales/`；各扩展在自己的 `client/locales/` 放词典（键收纳在 `<扩展名>.*` 命名空间下），并在 client 入口 `ctx.$i18n.extend(locale, dict)` 注入——构建别名保证 vue-i18n 单实例，词典在构建期由 yaml 插件内联。组件内用 `useI18n()`（全局 composer）；纯 ts 模块（echarts 配置等）经 `@koishi-ce/client` 的 `root.$i18n.t(key, args?)` 访问。activity 页名 / 菜单 label / 设置分区 title 均支持 getter（`MaybeRefOrGetter` / `MaybeGetter`），传 `() => ctx.$i18n.t(...)` 即可随语言实时切换。
+3. **前端 UI 文案**（client）：宿主 `$i18n` 服务持有唯一 vue-i18n 实例（fallback zh-CN），宿主词典在 `packages/web/client/locales/`；各扩展在自己的 `client/locales/` 放词典（键收纳在 `<扩展名>.*` 命名空间下），并在 client 入口 `ctx.$i18n.extend(locale, dict)` 注入——构建别名保证 vue-i18n 单实例，词典在构建期由 yaml 插件内联。组件内用 `useI18n()`（全局 composer）；纯 ts 模块（echarts 配置等）经 `@koishi-ce/client` 的 `root.$i18n.t(key, args?)` 访问。activity 页名 / 菜单 label / 设置分区 title 均支持 getter（`MaybeRefOrGetter` / `MaybeGetter`），传 `() => ctx.$i18n.t(...)` 即可随语言实时切换。
 
 词典纪律：
 
