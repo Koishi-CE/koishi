@@ -24,7 +24,7 @@ import {
 import { mkdir, writeFile } from "node:fs/promises";
 import net from "node:net";
 import { tmpdir } from "node:os";
-import { join } from "node:path";
+import { join, relative } from "node:path";
 import {
 	App,
 	Logger,
@@ -678,6 +678,148 @@ describe("@koishi-ce/plugin-console（NodeConsole）", () => {
 		it("停机时关闭 Vite 服务器并释放端口", async () => {
 			await devApp.stop();
 			expect(viteClosed).toBe(true);
+		});
+	});
+
+	describe("安全加固（403 弱放行与 head 注入转义）", () => {
+		it("逃逸 root 后借 node_modules 锚点的路径不再放行（403）", async () => {
+			const host = app.console as unknown as {
+				root: string;
+			};
+			const dir = join(
+				tmpdir(),
+				`koishi-console-test-weak-${Date.now()}`,
+			);
+			await mkdir(join(dir, "node_modules"), {
+				recursive: true,
+			});
+			const secret = join(
+				dir,
+				"node_modules",
+				"secret.txt",
+			);
+			await writeFile(secret, "top-secret");
+			// 以 root 为基准的最短相对路径（win 反斜杠归一为 URL 斜杠）：
+			// resolve 归一化后逃出 root，且路径中含 node_modules 段——
+			// 修复前该形态经 includes('node_modules') 弱放行直读盘上文件
+			const rel = relative(host.root, secret).replaceAll(
+				"\\",
+				"/",
+			);
+			const raw = await rawRequest(
+				app.server.port,
+				`/console/${rel}`,
+			);
+			expect(raw).toContain(" 403 ");
+			expect(raw).not.toContain("top-secret");
+		});
+
+		it("主体资源穿越 403 不受 node_modules 子串影响", async () => {
+			// 逃逸 + node_modules 组合是弱放行形态；同盘上不存在的
+			// node_modules 目标在修复前后都应统一 403 而非 404/200
+			const raw = await rawRequest(
+				app.server.port,
+				"/console/../../fake/node_modules/secret.txt",
+			);
+			expect(raw).toContain(" 403 ");
+		});
+
+		describe("head 注入转义（独立宿主实例）", () => {
+			const secApp = new App();
+
+			beforeAll(async () => {
+				const secPort = await freePort();
+				secApp.plugin(Server, {
+					host: "127.0.0.1",
+					port: secPort,
+					maxPort: secPort + 100,
+				});
+				secApp.plugin(
+					NodeConsole as unknown as Plugin.Constructor<App>,
+					{
+						uiPath: "/console",
+						// selfUrl 是配置值：其内容会进入 KOISHI_CONFIG 的
+						// JSON 注入，用于验证 < → \u003c 转义
+						selfUrl:
+							"http://host/</script><script>alert(1)</script>",
+						head: [
+							{
+								tag: "meta",
+								attrs: {
+									name: "x",
+									content: '"><script>alert(1)</script>',
+								},
+							},
+							{
+								tag: "title",
+								content:
+									"</title><script>alert(1)</script>",
+							},
+							{
+								tag: "script",
+								content: 'var s = "</script>"',
+							},
+							{
+								tag: "style",
+								content: 'a::after{content:"</style>"}',
+							},
+							{
+								tag: "img src=x onerror=alert(1)",
+								content: "y",
+							},
+						],
+					},
+				);
+				await secApp.start();
+			});
+
+			afterAll(async () => {
+				await secApp.stop();
+			});
+
+			async function fetchHtml() {
+				const response = await fetch(
+					`http://127.0.0.1:${secApp.server.port}/console/`,
+				);
+				return response.text();
+			}
+
+			it("KOISHI_CONFIG 的 < 转义为 \\u003c，配置值无法闭合 script 标签", async () => {
+				const html = await fetchHtml();
+				expect(html).toContain("\\u003c/script>");
+				// 注入序列不再以明文形态存在（合法标签自身的 </script>
+				// 闭合不受影响，故只能以组合序列断言）
+				expect(html).not.toContain(
+					"</script><script>alert(1)",
+				);
+			});
+
+			it("head 属性值按实体转义（inline 含引号）", async () => {
+				const html = await fetchHtml();
+				expect(html).toContain(
+					'content="&quot;&gt;&lt;script&gt;',
+				);
+			});
+
+			it("文本类标签的 content 按实体转义", async () => {
+				const html = await fetchHtml();
+				expect(html).toContain(
+					"&lt;/title&gt;&lt;script&gt;alert(1)",
+				);
+			});
+
+			it("script/style 的 content 原样保留，仅中和闭合序列", async () => {
+				const html = await fetchHtml();
+				// <\/script 在 JS 字符串/正则语义下与 </script 等价，
+				// 管理员的代码功能不被破坏
+				expect(html).toContain('var s = "<\\/script>"');
+				expect(html).toContain('content:"<\\/style>"');
+			});
+
+			it("非法 tag 名整条跳过，不注入产物 HTML", async () => {
+				const html = await fetchHtml();
+				expect(html).not.toContain("img src=x");
+			});
 		});
 	});
 });

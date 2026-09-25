@@ -10,6 +10,16 @@
  * 原类方法以 this→console 参数化为模块函数，由 index.ts 的 NodeConsole
  * 薄委托调用；transformImport（裸导入改写）为类私有方法，经参数显式
  * 传入以维持类内可见性不变。
+ *
+ * 本地安全加固（上游同步时勿回退，与上游逐字 diff 预期不一致）：
+ * - 主体资源的 403 判定删除上游的 `includes('node_modules')` 弱放行——
+ *   该条件允许路径先逃逸出 root 再以磁盘上任意 node_modules 目录为锚
+ *   放行（如 /console/../../Other/node_modules/x），构成越界读文件面；
+ *   本仓构建管线不产生指向 node_modules 的资源引用，无合法消费者；
+ * - transformHtml 的 KOISHI_CONFIG 注入把 JSON 中的 `<` 转义为 `\u003c`，
+ *   防止配置值中的 `</script>` 提前闭合标签注入任意 HTML；
+ * - head 注入的 content 按标签语义分派转义（script/style 中和闭合序列、
+ *   其余标签按实体转义），tag 名以正则白名单校验。
  */
 
 import {
@@ -59,15 +69,37 @@ async function transformHtml(
 			(_, $1) => `${$1}="${uiPath}`,
 		);
 	}
-	let headInjection = `<script>KOISHI_CONFIG = ${JSON.stringify(console.createGlobal())}</script>`;
+	// JSON.stringify 不转义 `<`：配置值（uiPath/selfUrl 等）中的
+	// `</script>` 会提前闭合 script 标签注入任意 HTML。统一把 `<`
+	// 转写为 `\u003c`——JSON 字符串语法等价，脚本解析语义不变
+	let headInjection = `<script>KOISHI_CONFIG = ${JSON.stringify(console.createGlobal()).replace(/</g, "\\u003c")}</script>`;
 	for (const { tag, attrs = {}, content } of head) {
+		// tag 原样内插进产物 HTML，仅放行合法的 HTML 标签名，
+		// 防止借 tag 夹带属性或第二个标签（如 img src=x onerror=...）
+		if (!/^[a-zA-Z][a-zA-Z0-9-]*$/.test(tag)) continue;
 		const attrString = Object.entries(attrs)
 			.map(
 				([key, value]) =>
 					` ${key}="${h.escape(value ?? "", true)}"`,
 			)
 			.join("");
-		headInjection += `<${tag}${attrString}>${content ?? ""}</${tag}>`;
+		// content 的转义按标签语义分派：script/style 的内容是代码，
+		// 实体转义会破坏功能，仅中和闭合序列（`<\/script` 在 JS 与 CSS
+		// 的字符串/正则转义规则下与 `</script` 等价）防提前出标签；
+		// 其余标签的内容是文本，按 HTML 实体转义
+		const escaped =
+			tag === "script"
+				? (content ?? "").replace(
+						/<\/script/gi,
+						"<\\/script",
+					)
+				: tag === "style"
+					? (content ?? "").replace(
+							/<\/style/gi,
+							"<\\/style",
+						)
+					: h.escape(content ?? "");
+		headInjection += `<${tag}${attrString}>${escaped}</${tag}>`;
 	}
 	return template.replace(
 		"<title>",
@@ -163,10 +195,14 @@ export function registerAssets(
 			}
 
 			const filename = resolve(console.root, name);
+			// 防路径穿越：主体资源只允许位于 root 内。上游此处的
+			// `!filename.includes('node_modules')` 分支是弱放行——路径先
+			// 逃逸出 root 再以磁盘上任意 node_modules 目录为锚即可放行
+			// （如 /console/../../Other/node_modules/x 直接读出盘上文件）；
+			// 本仓产物不产生指向 node_modules 的资源引用，root 外一律 403
 			if (
 				filename !== console.root &&
-				!filename.startsWith(console.root + sep) &&
-				!filename.includes("node_modules")
+				!filename.startsWith(console.root + sep)
 			) {
 				return (ctx.status = 403);
 			}
