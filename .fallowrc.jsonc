@@ -40,7 +40,12 @@
 	],
 	"ignorePatterns": [
 		// 脚手架模板：不参与本仓构建，只在生成新项目后被消费
-		"apps/koishi-scripts/src/template/**"
+		"apps/koishi-scripts/src/template/**",
+		// console 类型接线文件：纯 d.ts 副作用导入（无运行时依赖），完整性由
+		// check:console-wiring 闸门对账，不属于依赖审计对象。fallow 对它的包名
+		// 副作用导入的 unlisted 判定在 CI（无 lib 产物）与本地（有 lib）口径
+		// 漂移（2026-09-25 起 CI 稳定误报 @koishi-ce/plugin-dataview），整体豁免
+		"packages/web/client/console-services.d.ts"
 	],
 	// 插件前端用 .vue 里的 `import type X from "@koishi-ce/plugin-*/src"` 取插件
 	// 主类的类型；这条路径由宿主构建的 vite 别名解析，Node 解析器看不到
