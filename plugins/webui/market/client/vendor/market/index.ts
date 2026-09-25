@@ -7,5 +7,5 @@
 // 已被本仓 client/market/ 的本地化 fork 取代，此处仅保留本插件实际
 // 消费的 MarketIcon 与 utils 逻辑面。
 
-export { default as MarketIcon } from "./icons";
+export { default as MarketIcon } from "./icons.ts";
 export * from "./utils";
