@@ -73,8 +73,11 @@ afterAll(() => {
 	rmSync(workspaceRoot, { recursive: true, force: true });
 });
 
-/** 平台对应的 bin 扩展名（win32 为 .cmd 批处理） */
+/** 平台对应的 npm 系 bin 扩展名（win32 为 .cmd 批处理） */
 const binExt = process.platform === "win32" ? ".cmd" : "";
+
+/** Windows 下 Bun 生成的 bin shim 为 .exe（bunx 垫片），相关用例仅 win32 有意义 */
+const itWin = process.platform === "win32" ? it : it.skip;
 
 /** 在 external/ 下造一个项目，返回其目录 */
 function seedProject(
@@ -185,6 +188,90 @@ describe("runVersion", () => {
 			"1/1 个项目消费了 changeset",
 		);
 	});
+
+	itWin(
+		"项目本地仅 Bun 形态（.exe）bin 时命中本地 .exe",
+		() => {
+			resetWorkspace();
+			const dir = seedProject("bun-local", [
+				"fix-something.md",
+			]);
+			const localBin = join(
+				dir,
+				"node_modules",
+				".bin",
+				"changeset.exe",
+			);
+			mkdirSync(join(dir, "node_modules", ".bin"), {
+				recursive: true,
+			});
+			writeFileSync(localBin, "");
+
+			expect(runVersion()).toBe(0);
+			expect(calls[0]?.cmd).toBe(localBin);
+		},
+	);
+
+	itWin(
+		"同一候选目录下 .cmd 与 .exe 并存时 .cmd 优先（npm 场景行为不变）",
+		() => {
+			resetWorkspace();
+			const dir = seedProject("cmd-over-exe", [
+				"fix-something.md",
+			]);
+			mkdirSync(join(dir, "node_modules", ".bin"), {
+				recursive: true,
+			});
+			const cmdBin = join(
+				dir,
+				"node_modules",
+				".bin",
+				"changeset.cmd",
+			);
+			writeFileSync(cmdBin, "");
+			writeFileSync(
+				join(dir, "node_modules", ".bin", "changeset.exe"),
+				"",
+			);
+
+			expect(runVersion()).toBe(0);
+			expect(calls[0]?.cmd).toBe(cmdBin);
+		},
+	);
+
+	itWin(
+		"项目本地 Bun 形态 .exe 整体优先于工作区根 .cmd",
+		() => {
+			resetWorkspace();
+			const dir = seedProject("bun-local-over-root-cmd", [
+				"fix-something.md",
+			]);
+			mkdirSync(join(dir, "node_modules", ".bin"), {
+				recursive: true,
+			});
+			const localBin = join(
+				dir,
+				"node_modules",
+				".bin",
+				"changeset.exe",
+			);
+			writeFileSync(localBin, "");
+			mkdirSync(
+				join(workspaceRoot, "node_modules", ".bin"),
+				{ recursive: true },
+			);
+			const rootBin = join(
+				workspaceRoot,
+				"node_modules",
+				".bin",
+				"changeset.cmd",
+			);
+			writeFileSync(rootBin, "");
+
+			expect(runVersion()).toBe(0);
+			expect(calls[0]?.cmd).toBe(localBin);
+		},
+	);
 
 	it("项目本地无 bin 时回退工作区根 node_modules/.bin", () => {
 		resetWorkspace();
