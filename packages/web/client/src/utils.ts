@@ -3,13 +3,7 @@
 // Copyright (c) 2026-present Koishi-CE contributors.
 
 import * as cordis from "cordis";
-import {
-	inject,
-	markRaw,
-	nextTick,
-	onBeforeUnmount,
-	type Ref,
-} from "vue";
+import { inject, markRaw, nextTick, type Ref } from "vue";
 import type { Context } from "./context";
 
 /**
@@ -27,16 +21,10 @@ export abstract class Service<
 /**
  * 在组件 setup 中获取与当前组件生命周期绑定的 Context。
  *
- * 实现：从父级注入根 Context，创建一个空的插件 fork，使得返回的
- * 子上下文在组件卸载时（onBeforeUnmount）自动 dispose，从而组件内
- * 通过它注册的副作用（effect / 事件监听等）会随组件销毁被清理。
+ * 实现随 UI 组件收敛移入 @koishi-ce/components（组件库不依赖本包
+ * 运行时，注入工具须住组件库侧），此处再导出以保持公共 API 不变。
  */
-export function useContext() {
-	const parent = inject("cordis") as Context;
-	const fork = parent.plugin(() => {});
-	onBeforeUnmount(() => fork.dispose());
-	return fork.ctx;
-}
+export { useContext } from "@koishi-ce/components";
 
 /**
  * 获取当前扩展（extension）通过 RPC 携带的只读数据。
