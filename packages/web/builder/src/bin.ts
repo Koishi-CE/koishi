@@ -54,7 +54,17 @@ async function main() {
 		const target =
 			root ?? (existsSync("client") ? "." : undefined);
 		if (target !== undefined) {
-			await build(resolve(process.cwd(), target));
+			const built = await build(
+				resolve(process.cwd(), target),
+			);
+			// 目录无 client/ 时 build 跳过构建：显式报错退出，
+			// 不允许 exit 0 的静默假成（排查无从下手）
+			if (!built) {
+				console.error(
+					`目录 ${resolve(process.cwd(), target)} 下没有 client/ 子目录，不是可构建的 webui 插件前端。`,
+				);
+				process.exitCode = 1;
+			}
 			return;
 		}
 		const host = await import("./assemble.ts");

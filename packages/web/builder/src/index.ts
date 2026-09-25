@@ -18,12 +18,14 @@ import { mkdir, rm } from "node:fs/promises";
 import { resolve } from "node:path";
 import vue from "@vitejs/plugin-vue";
 import * as vite from "vite";
+import { collectWorkspaceAliases } from "./alias.ts";
 import { locateApp } from "./app.ts";
 import { iconsPlugin } from "./icons.ts";
 import { yaml } from "./yaml.ts";
 
-// 宿主 SPA（app 目录）定位的唯一入口，转出给宿主侧的 devMode 等调用方
-export { locateApp };
+// 宿主 SPA（app 目录）定位的唯一入口，转出给宿主侧的 devMode 等调用方；
+// 工作区别名计算（独立模块，供单测与外部复用），转出
+export { collectWorkspaceAliases, locateApp };
 
 // vite 8 基于 rolldown,rollup 已不在依赖树中;这里按实际消费的字段
 // 局部声明构建产物类型(替代原先的 `import type { RollupOutput }`)
@@ -34,74 +36,6 @@ interface BuildResult {
 		source?: string | Uint8Array;
 		code?: string;
 	}>;
-}
-
-// 将全部工作区包名映射到其源码目录,行为对齐根 tsconfig 的 paths 别名。
-// 没有被任何工作区包依赖的插件(如 plugin-logger)不会出现在 node_modules
-// 的链接里,bundler 无法按包名解析,必须显式提供这层映射。
-async function collectWorkspaceAliases(): Promise<
-	Record<string, string>
-> {
-	// 源码形态(src/)与产物形态(lib/)都在包根下一级，上跳四级到仓库根一致
-	const repoRoot = resolve(
-		import.meta.dir,
-		"../../../..",
-	).replace(/\\/g, "/");
-	let manifest: { workspaces?: string[] };
-	try {
-		manifest = await Bun.file(
-			`${repoRoot}/package.json`,
-		).json();
-	} catch {
-		// 下游 npm 安装形态（.bun 嵌套布局或根提升布局）四级上跳不落在
-		// 任何仓库根：读不到清单即没有 workspace 源码可映射，空表即正确
-		// 语义（本函数在模块顶层 await 执行，抛出会拖垮整个 builder 加载）
-		return {};
-	}
-	const aliases: Record<string, string> = {};
-	for (const pattern of manifest.workspaces ?? []) {
-		// scanSync 产出的相对路径在 Windows 上是反斜杠,统一归一化为正斜杠
-		const files = new Bun.Glob(
-			`${pattern}/package.json`,
-		).scanSync({
-			cwd: repoRoot,
-		});
-		for (const file of files) {
-			const rel = file.replaceAll("\\", "/");
-			const dir = `${repoRoot}/${rel.slice(0, -"/package.json".length)}`;
-			try {
-				const { name } = await Bun.file(
-					`${dir}/package.json`,
-				).json();
-				if (!name) continue;
-				// 控制台前端语境下,裸包名对到浏览器端入口(替代上游 lib 的 browser
-				// 导出条件);`<name>/src` 子路径对到源码目录,供共享代码引用;
-				// `<name>/client` 子路径对到浏览器端入口(上游生态以该子路径跨插件
-				// 引用彼此的 client API,如 market 引用 config 的 EnvInfo 类型,
-				// 上游与 npm 产物的 exports 均未声明它,同样靠仓库内别名解析)。
-				// 子路径键必须先插入——别名解析按插入序取首个命中项
-				const srcEntry = `${dir}/src/index.ts`;
-				const clientEntry = `${dir}/client/index.ts`;
-				const hasSrc = existsSync(`${dir}/src`);
-				const hasClient = existsSync(clientEntry);
-				// 无任何入口的包不建别名：指向不存在路径的假会
-				// 让 bundler 报出与真实原因无关的解析错误
-				if (!hasSrc && !hasClient) continue;
-				if (hasSrc) aliases[`${name}/src`] = `${dir}/src`;
-				if (hasClient)
-					aliases[`${name}/client`] = clientEntry;
-				// 插件包同时有 src/（node 侧）与 client/（浏览器侧）时，裸名
-				// 在浏览器构建语境下应落到 client 入口；其余包（浏览器库、
-				// 宿主 SPA、无前端的插件）落到 src/index.ts
-				aliases[name] = hasClient
-					? clientEntry
-					: existsSync(srcEntry)
-						? srcEntry
-						: `${dir}/src`;
-			} catch {}
-		}
-	}
-	return aliases;
 }
 
 const workspaceAliases = await collectWorkspaceAliases();
@@ -139,14 +73,16 @@ const runtimeShimPath = locateRuntimeShim();
 /**
  * 构建单个 webui 插件的前端产物。
  *
- * @param root 插件目录（无 `client/` 子目录时视为该插件没有前端，直接跳过）
+ * @param root 插件目录（无 `client/` 子目录时视为该插件没有前端，跳过）
  * @param config 额外的 vite 配置，逐层合并覆盖下方默认值
+ * @returns 是否执行了构建：目录无 `client/` 时为 false（CLI 据此把
+ *   「传错目录静默假成」改为显式报错；程序化调用方可按需忽略）
  */
 export async function build(
 	root: string,
 	config: vite.UserConfig = {},
-) {
-	if (!existsSync(`${root}/client`)) return;
+): Promise<boolean> {
+	if (!existsSync(`${root}/client`)) return false;
 
 	// 插件可自带 `build/client.ts` 导出额外的 vite 配置覆盖下方默认值
 	// （vite 只自动发现 vite.config.*，不会加载该路径，须在此显式接线），
@@ -284,7 +220,12 @@ export async function build(
 		if (fileName === "index.css") fileName = "style.css";
 		const dest = `${root}/dist/${fileName}`;
 		if (item.type === "asset") {
-			if (item.source === undefined) continue;
+			if (item.source === undefined) {
+				console.warn(
+					`[console-builder] 产物 ${fileName} 为 asset 但缺少 source，已跳过写入`,
+				);
+				continue;
+			}
 			await Bun.write(dest, item.source);
 		} else if (item.code !== undefined) {
 			// JS 产物再过一次 rolldown 的 minify：仅压缩空白、不动标识符
@@ -297,8 +238,15 @@ export async function build(
 				mangle: false,
 			});
 			await Bun.write(dest, code);
+		} else {
+			// chunk 产物缺 code 时静默丢弃会让浏览器端以 404 的形式
+			// 暴露（产物引用了不存在的分包），留痕指向真实原因
+			console.warn(
+				`[console-builder] 产物 ${fileName} 为 chunk 但缺少 code，已跳过写入`,
+			);
 		}
 	}
+	return true;
 }
 
 /**
