@@ -10,7 +10,7 @@
  */
 import type { Context } from "@koishi-ce/client";
 import Sandbox from "./layout.vue";
-import "./icons";
+import "./icons.ts";
 
 import "virtual:uno.css";
 

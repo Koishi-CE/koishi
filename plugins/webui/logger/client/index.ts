@@ -7,7 +7,7 @@ import type { Message } from "reggol";
 import Logs from "./index.vue";
 import Settings from "./settings.vue";
 import "./index.scss";
-import "./icons";
+import "./icons.ts";
 
 import "virtual:uno.css";
 

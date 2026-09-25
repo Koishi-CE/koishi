@@ -20,7 +20,7 @@ import Bots from "./bots";
 import Config from "./config.vue";
 import EnvInfo from "./envinfo.vue";
 import Load from "./load";
-import "./icons";
+import "./icons.ts";
 
 import "virtual:uno.css";
 

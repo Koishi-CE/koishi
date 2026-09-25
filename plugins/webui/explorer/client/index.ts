@@ -26,7 +26,7 @@ const locales = import.meta.glob("./locales/*.yml", {
 
 import Status from "./status.vue";
 import Upload from "./upload.vue";
-import "./icons";
+import "./icons.ts";
 import "./editor";
 
 import "virtual:uno.css";

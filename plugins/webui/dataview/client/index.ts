@@ -13,7 +13,7 @@
 import type { Context, Dict } from "@koishi-ce/client";
 import { messages, schema } from "./config.ts";
 import Database from "./index.vue";
-import "./icons";
+import "./icons.ts";
 
 import "virtual:uno.css";
 

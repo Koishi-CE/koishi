@@ -37,7 +37,7 @@ const locales = import.meta.glob("./locales/*.yml", {
 
 import "virtual:uno.css";
 import "./index.scss";
-import "./icons";
+import "./icons.ts";
 
 export * from "./components/utils";
 

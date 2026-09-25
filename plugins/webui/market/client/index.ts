@@ -31,7 +31,7 @@ import {
 import Dependencies from "./dependencies/dependencies.vue";
 import type { IgnoreRule } from "./dependencies/ignore-policy";
 import extensions from "./extensions";
-import "./icons";
+import "./icons.ts";
 
 import "virtual:uno.css";
 

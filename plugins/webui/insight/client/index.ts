@@ -20,7 +20,7 @@ const locales = import.meta.glob("./locales/*.yml", {
 	import: "default",
 });
 
-import "./icons";
+import "./icons.ts";
 
 import "virtual:uno.css";
 
