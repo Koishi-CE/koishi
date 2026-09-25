@@ -8,6 +8,7 @@
 import { describe, expect, it } from "bun:test";
 import {
 	classify,
+	type DependencyLike,
 	decodeOverrideEntry,
 	encodeOverrideEntry,
 	getAliasTarget,
@@ -85,7 +86,7 @@ describe("classify 分类状态机(优先级链)", () => {
 	});
 
 	it("忽略压制与无可更新都归 installed,可更新归 updatable", () => {
-		const dep = { resolved: "1.0.0" };
+		const dep: DependencyLike = {};
 		expect(classify(dep, undefined, true, true)).toBe(
 			"installed",
 		);
@@ -104,7 +105,7 @@ describe("classify 分类状态机(优先级链)", () => {
 	});
 
 	it("未配置判定压过可更新与已安装,但让位更高优先级", () => {
-		const dep = { resolved: "1.0.0" };
+		const dep: DependencyLike = {};
 		// 根声明且无配置的插件包归未配置组(压过 updatable 与 installed)
 		expect(
 			classify(dep, undefined, false, true, true),

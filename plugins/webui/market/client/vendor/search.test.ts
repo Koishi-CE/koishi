@@ -140,7 +140,9 @@ describe("getFiltered / getUsers", () => {
 		const noMatch = mockSearch({
 			package: mockPackage("koishi-plugin-fake", {
 				maintainers: [
-					{ username: "carol", email: undefined } as User,
+					// registry 的 User 声明 email 必有，运行时可能缺失：模拟缺
+					// email 的维护者形状（见 search.ts 的 MarketUser 头注释）
+					{ username: "carol" } as User,
 				],
 				contributors: [stranger],
 			}),

@@ -50,6 +50,11 @@
 			"schemastery-vue/client": [
 				"./packages/web/components/src/form/schemastery-client.ts"
 			],
+			// client 包无 lib 产物（源码形态被宿主与 app 以包名引用，见
+			// tsconfig.web.json 同款映射），node_modules 解析必死，须显式指源码
+			"@koishi-ce/client": [
+				"./packages/web/client/src/index.ts"
+			],
 			"@koishi-ce/plugin-config/client": [
 				"./plugins/webui/config/client/index.ts"
 			],

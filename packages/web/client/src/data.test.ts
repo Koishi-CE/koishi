@@ -84,6 +84,13 @@ function makeCtx() {
 	};
 }
 
+/** send 的宽松签名视图：超时、未知 id、离线用例刻意使用服务端不存在的
+ * 事件名（宽松实现本就接受任意 type），绕开 keyof Events 的强类型重载 */
+const sendRaw = send as (
+	type: string,
+	...args: unknown[]
+) => Promise<unknown> | undefined;
+
 /** 以给定实例发起 connect 并完成 open 握手 */
 async function openSocket(instances: FakeWebSocket[]) {
 	const { ctx } = makeCtx();
@@ -201,7 +208,7 @@ describe("send 与 response 结算", () => {
 	});
 
 	it("发送 { id, type, args } 报文，response 按 id 结算 value", async () => {
-		const promise = send("get", 1, "a") as Promise<unknown>;
+		const promise = sendRaw("get", 1, "a")!;
 		const frame = JSON.parse(ws.sent.at(-1)!) as {
 			id: string;
 			type: string;
@@ -219,7 +226,7 @@ describe("send 与 response 结算", () => {
 	});
 
 	it("response 携带 error 时按原值 reject", async () => {
-		const promise = send("boom") as Promise<unknown>;
+		const promise = sendRaw("boom")!;
 		const frame = JSON.parse(ws.sent.at(-1)!) as {
 			id: string;
 		};
@@ -250,7 +257,7 @@ describe("send 与 response 结算", () => {
 			// bun 的 fake timers 组合会把用例挂死（实证），先经
 			// catch 收拢再对捕获值断言
 			let caught: unknown;
-			const promise = send("slow")!.catch((error) => {
+			const promise = sendRaw("slow")!.catch((error) => {
 				caught = error;
 			});
 			jest.advanceTimersByTime(60_001);
@@ -265,7 +272,7 @@ describe("send 与 response 结算", () => {
 		const original = socket.value;
 		socket.value = null;
 		try {
-			expect(send("offline")).toBeUndefined();
+			expect(sendRaw("offline")).toBeUndefined();
 		} finally {
 			socket.value = original;
 		}
@@ -380,7 +387,9 @@ describe("心跳（heartbeat）", () => {
 			expect(ws.closed).toBe(true);
 		} finally {
 			jest.useRealTimers();
-			global.heartbeat = undefined;
+			// 还原初始态：KOISHI_CONFIG 无 heartbeat 键（可选属性用 delete，
+			// exactOptionalPropertyTypes 不接受显式 undefined 赋值）
+			delete global.heartbeat;
 		}
 	});
 });

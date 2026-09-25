@@ -233,7 +233,7 @@ console 宿主插件(server 侧)工程质量仍是矩阵之最:403/404 判定的
 
 **测试盘点**:前端 client 侧 10 个测试文件(components 2、explorer 1、market 7),server 侧 31 个。真正裸奔的高风险纯逻辑与上轮完全一致:builder 的 collectWorkspaceAliases 路径推算、client 的 data.ts RPC、messages 词典摘取、config 的 tree/utils,四块零测试。另 builder 目录全仓零测试文件。
 
-**tsconfig 双编译器分界**:三层结构未变(基座 tsconfig.client.json → tsconfig.web.json 大一统 → 19 个 client 子工程),但 34100bd7 后插件级大幅瘦身(7/16 已零 paths,其余仅 1-2 条本工程特有映射);基座→web 的 paths 整体重写重复仍在,由 console-wiring 闸门对账兜底。两个失准:tsconfig.web.json 头注释「17 个 client tsconfig」实测 19 个(16→17→19 第三次漂移,无闸门);market/client/tsconfig.json 的 `schemastery-vue/client` 指向已不存在的 `src/schemastery-vue-client.ts`(997d3ab0 已移至 form/,当前未 import 故为哑弹,一旦使用即 TS2307)。builder 属前端域仍走 node 基座。
+**tsconfig 双编译器分界**:三层结构未变(基座 tsconfig.client.json → tsconfig.web.json 大一统 → 19 个 client 子工程),但 34100bd7 后插件级大幅瘦身(7/16 已零 paths,其余仅 1-2 条本工程特有映射);基座→web 的 paths 整体重写重复仍在,由 console-wiring 闸门对账兜底。两个失准:tsconfig.web.json 头注释「17 个 client tsconfig」实测 19 个(16→17→19 第三次漂移,无闸门);market/client/tsconfig.json 的 `schemastery-vue/client` 指向已不存在的 `src/schemastery-vue-client.ts`(997d3ab0 已移至 form/,当前未 import 故为哑弹,一旦使用即 TS2307;2026-09-25 已随 IDE 归属修复改指 form/schemastery-client.ts,见 development.md §7 条 21)。builder 属前端域仍走 node 基座。
 
 **vue-tsc 影子闸门**:健康运转,基线 26→31 键(净增 5 键全部有 commit 级归因:locales.vue 的 EditableStore vs I18n.Store 消费端类型债,commit 自述待专项清偿);闸门脚本未变。
 

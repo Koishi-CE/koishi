@@ -4,7 +4,12 @@
 	"compilerOptions": {
 		"paths": {
 			"schemastery-vue/client": [
-				"../../../../packages/web/components/src/schemastery-vue-client.ts"
+				"../../../../packages/web/components/src/form/schemastery-client.ts"
+			],
+			// client 包无 lib 产物，node_modules 解析必死，须显式指源码
+			// （本文件声明了 paths 即整体替换 extends 链，基座映射不继承）
+			"@koishi-ce/client": [
+				"../../../../packages/web/client/src/index.ts"
 			],
 			"@koishi-ce/plugin-config/client": [
 				"../../config/client/index.ts"
@@ -22,6 +27,11 @@
 			"@koishi-ce/koishi": [
 				"../../../../packages/node/cli/lib/index.d.ts"
 			]
-		}
+		},
+		// 本文件是 IDE 的归属锚（门禁走 tsconfig.web.json，*.test.ts 被 exclude，
+		// 不经本程序）。client 目录下 *.test.ts 归属到这后要解析 bun:test，而基座
+		// types:[] 是浏览器纯净——补 "bun" 仅为 IDE 观感（声明链携带的 bun 全局
+		// 只在 IDE 生效），门禁的浏览器纯净由 client 程序的 types:[] 保持。
+		"types": ["bun"]
 	}
 }

@@ -1,4 +1,12 @@
 {
 	"extends": "../../../tsconfig.client",
-	"include": ["src"]
+	"include": ["src"],
+	"compilerOptions": {
+		// 本文件是 IDE 的归属锚（门禁走 tsconfig.web.json，*.test.ts 被 exclude，
+		// 不经本程序）。src 下 *.test.ts 归属到这后要解析 bun:test，而基座 types:[]
+		// 是浏览器纯净——补 "bun" 仅为 IDE 观感；代价是 IDE 里本包源码也能看到
+		// bun 全局（bun:test 的声明链携带），「浏览器源码误用 node API」的抓错
+		// 完全交给门禁的 client 程序（types:[]）。
+		"types": ["bun"]
+	}
 }
