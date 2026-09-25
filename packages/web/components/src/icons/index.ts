@@ -5,8 +5,9 @@
 /**
  * 图标中心：所有内置图标的注册表与 <k-icon> 组件。
  *
- * 图标分两类来源：本目录下的 svg / activity 组件，以及
- * schemastery-vue 体系（./form 透出）现成的 Icon* 组件；统一以字符串名注册到
+ * 图标分两类来源：包根 assets/icons/ 下的 .svg 资产（经 ~icons/k/* 虚拟
+ * 模块在编译期转为 Vue 组件，构建接线见 console-builder 的 icons.ts），
+ * 以及 schemastery-vue 体系（./form 透出）现成的 Icon* 组件；统一以字符串名注册到
  * registry，业务侧通过 <k-icon name="..."/> 按名渲染。
  * 新图标可随时经 register() 补充注册。
  */
@@ -18,46 +19,46 @@ import {
 	markRaw,
 	reactive,
 } from "vue";
+import Default from "~icons/k/activity-default";
+import Ellipsis from "~icons/k/activity-ellipsis";
+import Home from "~icons/k/activity-home";
+import Moon from "~icons/k/activity-moon";
+import Settings from "~icons/k/activity-settings";
+import Sun from "~icons/k/activity-sun";
+import ArrowLeft from "~icons/k/arrow-left";
+import ArrowRight from "~icons/k/arrow-right";
+import BoxOpen from "~icons/k/box-open";
+import CheckFull from "~icons/k/check-full";
+import ChevronDown from "~icons/k/chevron-down";
+import ChevronLeft from "~icons/k/chevron-left";
+import ChevronRight from "~icons/k/chevron-right";
+import ChevronUp from "~icons/k/chevron-up";
+import ClipboardList from "~icons/k/clipboard-list";
+import Edit from "~icons/k/edit";
+import ExclamationFull from "~icons/k/exclamation-full";
+import Expand from "~icons/k/expand";
+import FileArchive from "~icons/k/file-archive";
+import Filter from "~icons/k/filter";
+import GitHub from "~icons/k/github";
+import GitLab from "~icons/k/gitlab";
+import InfoFull from "~icons/k/info-full";
+import Koishi from "~icons/k/koishi";
+import Link from "~icons/k/link";
+import PaperPlane from "~icons/k/paper-plane";
+import QuestionEmpty from "~icons/k/question-empty";
+import Redo from "~icons/k/redo";
+import Search from "~icons/k/search";
+import SearchMinus from "~icons/k/search-minus";
+import SearchPlus from "~icons/k/search-plus";
+import StarEmpty from "~icons/k/star-empty";
+import StarFull from "~icons/k/star-full";
+import Start from "~icons/k/start";
+import Tag from "~icons/k/tag";
+import TimesFull from "~icons/k/times-full";
+import Tools from "~icons/k/tools";
+import Undo from "~icons/k/undo";
+import User from "~icons/k/user";
 import * as schema from "../form";
-import Default from "./activity/default.vue";
-import Ellipsis from "./activity/ellipsis.vue";
-import Home from "./activity/home.vue";
-import Moon from "./activity/moon.vue";
-import Settings from "./activity/settings.vue";
-import Sun from "./activity/sun.vue";
-import ArrowLeft from "./svg/arrow-left.vue";
-import ArrowRight from "./svg/arrow-right.vue";
-import BoxOpen from "./svg/box-open.vue";
-import CheckFull from "./svg/check-full.vue";
-import ChevronDown from "./svg/chevron-down.vue";
-import ChevronLeft from "./svg/chevron-left.vue";
-import ChevronRight from "./svg/chevron-right.vue";
-import ChevronUp from "./svg/chevron-up.vue";
-import ClipboardList from "./svg/clipboard-list.vue";
-import Edit from "./svg/edit.vue";
-import ExclamationFull from "./svg/exclamation-full.vue";
-import Expand from "./svg/expand.vue";
-import FileArchive from "./svg/file-archive.vue";
-import Filter from "./svg/filter.vue";
-import GitHub from "./svg/github.vue";
-import GitLab from "./svg/gitlab.vue";
-import InfoFull from "./svg/info-full.vue";
-import Koishi from "./svg/koishi.vue";
-import Link from "./svg/link.vue";
-import PaperPlane from "./svg/paper-plane.vue";
-import QuestionEmpty from "./svg/question-empty.vue";
-import Redo from "./svg/redo.vue";
-import Search from "./svg/search.vue";
-import SearchMinus from "./svg/search-minus.vue";
-import SearchPlus from "./svg/search-plus.vue";
-import StarEmpty from "./svg/star-empty.vue";
-import StarFull from "./svg/star-full.vue";
-import Start from "./svg/start.vue";
-import Tag from "./svg/tag.vue";
-import TimesFull from "./svg/times-full.vue";
-import Tools from "./svg/tools.vue";
-import Undo from "./svg/undo.vue";
-import User from "./svg/user.vue";
 
 import "./style.scss";
 

@@ -5,7 +5,8 @@
     "type": "module",
     "main": "src/index.ts",
     "files": [
-        "src"
+        "src",
+        "assets"
     ],
     "contributors": [
         "Shigma <shigma10826@gmail.com>",
@@ -50,6 +51,7 @@
         ".": {
             "source": "./src/index.ts",
             "default": "./src/index.ts"
-        }
+        },
+        "./package.json": "./package.json"
     }
 }

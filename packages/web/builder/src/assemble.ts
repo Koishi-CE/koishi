@@ -21,6 +21,7 @@ import mini from "unocss/preset-mini";
 import unocss from "unocss/vite";
 import * as vite from "vite";
 import { locateApp } from "./app.ts";
+import { iconsPlugin } from "./icons.ts";
 import { yaml } from "./yaml.ts";
 
 // vite 8 基于 rolldown,rollup 已不在依赖树中;这里按实际消费的字段
@@ -122,6 +123,8 @@ async function build(
 			},
 		},
 		plugins: [
+			// 图标虚拟模块（~icons/k/*）的编译期转换，见 icons.ts
+			await iconsPlugin(),
 			// 钉死剥离模板注释：注释写在 template 根元素之前时，SFC 会被
 			// 编译成多根 fragment，Vue 随之禁用 attribute 透传（外部传入的
 			// class 落不到 svg 上，侧栏图标因此丢掉尺寸类）；生产语义本就

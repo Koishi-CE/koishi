@@ -19,6 +19,7 @@ import { resolve } from "node:path";
 import vue from "@vitejs/plugin-vue";
 import * as vite from "vite";
 import { locateApp } from "./app.ts";
+import { iconsPlugin } from "./icons.ts";
 import { yaml } from "./yaml.ts";
 
 // 宿主 SPA（app 目录）定位的唯一入口，转出给宿主侧的 devMode 等调用方
@@ -212,6 +213,8 @@ export async function build(
 					},
 				},
 				plugins: [
+					// 图标虚拟模块（~icons/k/*）的编译期转换，见 icons.ts
+					await iconsPlugin(),
 					// 钉死剥离模板注释：注释写在 template 根元素之前时，SFC 会被
 					// 编译成多根 fragment，Vue 随之禁用 attribute 透传（外部传入的
 					// class 落不到 svg 上，侧栏图标因此丢掉尺寸类）；生产语义本就
@@ -324,6 +327,8 @@ export async function createServer(
 					},
 				},
 				plugins: [
+					// 图标虚拟模块（~icons/k/*）的编译期转换，见 icons.ts
+					await iconsPlugin(),
 					// 钉死剥离模板注释：注释写在 template 根元素之前时，SFC 会被
 					// 编译成多根 fragment，Vue 随之禁用 attribute 透传（外部传入的
 					// class 落不到 svg 上，侧栏图标因此丢掉尺寸类）；生产语义本就

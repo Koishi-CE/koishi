@@ -119,7 +119,7 @@ fallow 另外还带重复代码、复杂度健康度、边界违规与 PR 变更
 
 ### Biome / ESLint
 
-- biome：recommended 基线 + organizeImports；`useNamingConvention`、`noFloatingPromises` 等规则为全局关闭（启用清单以 `biome.json` 为准）；tests / spec 文件关 `noTemplateCurlyInString` 与 `noNonNullAssertion`；脚手架模板目录（`apps/*/src/template/**`）整体禁用格式与 lint，package.json 不做格式化。
+- biome：recommended 基线 + organizeImports；`useNamingConvention`、`noFloatingPromises` 等规则为全局关闭（启用清单以 `biome.json` 为准）；tests / spec 文件关 `noTemplateCurlyInString` 与 `noNonNullAssertion`；脚手架模板目录（`apps/*/src/template/**`）与集中图标资产目录（`**/assets/icons/**`，纯 svg 数据供编译期消费，其 a11y 语义由使用方的 `<k-icon>` 上下文提供，`noSvgWithoutTitle` 不适用于资产本体）整体禁用格式与 lint，package.json 不做格式化。
 - eslint（仅 .vue）：模板指令合法性、编译宏正确性、`no-mutating-props` 等；组件引用检查忽略 `^K` / `^el-` / `^router-`。
 
 ### 格式

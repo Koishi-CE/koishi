@@ -93,6 +93,15 @@
 			}
 		},
 		{
+			"includes": ["**/assets/icons/**"],
+			"formatter": {
+				"enabled": false
+			},
+			"linter": {
+				"enabled": false
+			}
+		},
+		{
 			"includes": ["**/package.json"],
 			"formatter": {
 				"enabled": false
