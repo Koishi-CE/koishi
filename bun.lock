@@ -37,7 +37,7 @@
     },
     "apps/koishi-scripts": {
       "name": "@koishi-ce/scripts",
-      "version": "1.2.1",
+      "version": "1.2.2",
       "bin": {
         "koishi-scripts": "lib/bin.mjs",
       },
@@ -169,7 +169,7 @@
     },
     "packages/web/app": {
       "name": "@koishi-ce/console-app",
-      "version": "1.0.1",
+      "version": "1.0.2",
       "dependencies": {
         "@koishi-ce/client": "workspace:*",
         "@koishi-ce/components": "workspace:*",
@@ -182,7 +182,7 @@
     },
     "packages/web/builder": {
       "name": "@koishi-ce/console-builder",
-      "version": "1.0.1",
+      "version": "1.0.2",
       "bin": {
         "koishi-console": "lib/bin.mjs",
       },
@@ -204,7 +204,7 @@
     },
     "packages/web/client": {
       "name": "@koishi-ce/client",
-      "version": "1.4.0",
+      "version": "1.4.1",
       "dependencies": {
         "@koishi-ce/components": "workspace:*",
         "@satorijs/protocol": "^1.7.0",
@@ -226,7 +226,7 @@
     },
     "packages/web/components": {
       "name": "@koishi-ce/components",
-      "version": "1.0.4",
+      "version": "1.1.0",
       "dependencies": {
         "@satorijs/element": "^3.2.0",
         "cosmokit": "^1.8.1",

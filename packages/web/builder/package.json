@@ -1,7 +1,7 @@
 {
     "name": "@koishi-ce/console-builder",
     "description": "Build toolchain for the Koishi console frontend",
-    "version": "1.0.1",
+    "version": "1.0.2",
     "type": "module",
     "main": "lib/index.mjs",
     "module": "lib/index.mjs",
