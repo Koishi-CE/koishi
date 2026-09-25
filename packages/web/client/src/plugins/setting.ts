@@ -2,6 +2,7 @@
 // Copyright (c) 2019-present Shigma and Koishijs contributors.
 // Copyright (c) 2026-present Koishi-CE contributors.
 
+import { Schema, SchemaBase } from "@koishi-ce/components";
 /**
  * 设置服务：控制台本地配置（localStorage）与设置面板的管理。
  *
@@ -23,10 +24,6 @@ import {
 	ref,
 	watch,
 } from "vue";
-import {
-	Schema,
-	SchemaBase,
-} from "../../../components/src/index.ts";
 import type { Config } from "..";
 import type { Context } from "../context";
 import { insert, type Ordered, Service } from "../utils";

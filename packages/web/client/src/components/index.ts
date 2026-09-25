@@ -11,19 +11,16 @@
  *   any+dynamic（由服务端下发 schema 的动态表单，见 dynamic.vue）
  *   与 array+perms（权限多级选择器，见 perms.vue）。
  */
-// "@koishi-ce/components" 的 exports 仅有 "source" 条件,浏览器侧 tsconfig
-// 无法解析(无 paths),故直接相对导入工作区内该包的浏览器端入口,
-// 与构建器 collectWorkspaceAliases 的映射目标一致
 
+import components, {
+	SchemaBase,
+} from "@koishi-ce/components";
 import Element, {
 	ElLoading,
 	ElMessage,
 	ElMessageBox,
 } from "element-plus";
 import type { App } from "vue";
-import components, {
-	SchemaBase,
-} from "../../../components/src/index.ts";
 
 import { store } from "../data";
 import ChatImage from "./chat/image.vue";
@@ -45,8 +42,8 @@ export const message = ElMessage;
 /** 全局对话框（ElMessageBox） */
 export const messageBox = ElMessageBox;
 
+export * from "@koishi-ce/components";
 export * from "vue-i18n";
-export * from "../../../components/src/index.ts";
 export * from "./common";
 export * from "./layout";
 export * from "./link";

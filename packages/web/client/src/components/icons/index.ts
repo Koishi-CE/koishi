@@ -2,6 +2,7 @@
 // Copyright (c) 2019-present Shigma and Koishijs contributors.
 // Copyright (c) 2026-present Koishi-CE contributors.
 
+import * as components from "@koishi-ce/components";
 /**
  * 图标中心：所有内置图标的注册表与 <k-icon> 组件。
  *
@@ -18,7 +19,6 @@ import {
 	markRaw,
 	reactive,
 } from "vue";
-import * as components from "../../../../components/src/index.ts";
 import Default from "./activity/default.vue";
 import Ellipsis from "./activity/ellipsis.vue";
 import Home from "./activity/home.vue";

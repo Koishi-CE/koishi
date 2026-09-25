@@ -17,7 +17,7 @@ Koishi 控制台的通用前端组件库，移植自上游 [koishijs/webui](http
 
 ## 用法
 
-本包以源码形态被消费（exports 仅 source 条件），通常由 `@koishi-ce/client` 依赖引入，插件前端直接使用全局组件即可：
+本包以源码形态被消费（exports 的 source 与 default 条件均指向 src 源码），通常由 `@koishi-ce/client` 依赖引入，插件前端直接使用全局组件即可：
 
 ```vue
 <template>
@@ -48,7 +48,7 @@ It also enables schemastery-vue forms, registers a "computed value" editor for u
 
 ## Usage
 
-Consumed as source (exports expose only a `source` condition); usually pulled in through `@koishi-ce/client`. Use the global components directly in plugin frontends:
+Consumed as source (exports expose the `src` source code for both the `source` and `default` conditions); usually pulled in through `@koishi-ce/client`. Use the global components directly in plugin frontends:
 
 ```vue
 <template>

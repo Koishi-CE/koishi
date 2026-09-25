@@ -64,6 +64,11 @@
 			"@vueuse/core": [
 				"./packages/web/client/node_modules/@vueuse/core"
 			],
+			// 宿主 client 与 app 以包名引用组件库（源码形态，无 lib 产物），
+			// 与构建器 collectWorkspaceAliases 的裸名映射目标一致
+			"@koishi-ce/components": [
+				"./packages/web/components/src/index.ts"
+			],
 			"@koishi-ce/console": [
 				"./packages/node/console/lib/index.d.ts"
 			],

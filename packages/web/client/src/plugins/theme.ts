@@ -2,6 +2,7 @@
 // Copyright (c) 2019-present Shigma and Koishijs contributors.
 // Copyright (c) 2026-present Koishi-CE contributors.
 
+import { Schema } from "@koishi-ce/components";
 /**
  * 主题服务：管理控制台的深浅色模式与主题注册。
  *
@@ -18,7 +19,6 @@ import {
 	reactive,
 	watchEffect,
 } from "vue";
-import { Schema } from "../../../components/src/index.ts";
 import type { Context } from "../context";
 import { Service } from "../utils";
 import { pickMessages } from "./messages";
