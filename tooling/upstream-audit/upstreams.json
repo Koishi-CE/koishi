@@ -121,12 +121,6 @@
 		]
 	},
 	{
-		"name": "cron",
-		"url": "https://github.com/koishijs/koishi-plugin-cron.git",
-		"baseline": "仅参考：本仓以 Bun.cron 原生重写，非移植",
-		"mappings": []
-	},
-	{
 		"name": "cordiverse-server",
 		"url": "https://github.com/cordiverse/server.git",
 		"baseline": "@koishijs/plugin-server-temp@1.5.0；上游 2025-03-19 起删除了 temp 包（线已死，仅存档）",

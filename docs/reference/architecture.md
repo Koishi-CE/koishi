@@ -61,9 +61,11 @@ CE 包 peer 一律指 CE 名，但**下游项目的社区插件生态**仍消费
 | `components` | `@koishi-ce/components` | 前端共享组件库（`src/` 源码），**无独立构建**，仅作为客户端源码被 console 打包器消费 |
 | `builder` | `@koishi-ce/console-builder` | **node 侧构建器**（走根 tsdown）：`src/index.ts` 暴露编程式 `build(root)`（vite.build + collectWorkspaceAliases）与 `createServer(baseDir)`；`src/bin.ts` 暴露 `koishi-console` CLI；`src/assemble.ts` 是宿主前端总装（CLI 无参分支） |
 
-### plugins/common/*（通用插件 ×9，均 MIT）
+### plugins/common/*（通用插件 ×8，均 MIT）
 
-`bind`（跨平台账户绑定，需 database）、`broadcast`（广播，需 database）、`callme`（昵称）、`echo`（回声，`koishi.browser: true`）、`help`（指令帮助，多语言 locale）、`inspect`（用户/频道/消息诊断）来自上游 koishi `plugins/common/*`；`assets-local`（本地资源落盘，来自 [koishijs/assets](https://github.com/koishijs/assets) `packages/local`）、`rate-limit`（指令限流，来自 [koishijs/common](https://github.com/koishijs/common) `packages/rate-limit`）与 `cron`（定时任务，以 `Bun.cron` 原生调度重写、非直接移植，来自 [koishijs/koishi-plugin-cron](https://github.com/koishijs/koishi-plugin-cron)）为后续再分发。均带 `koishi` 元数据，locale 放 `src/locales/*.yml`。
+`bind`（跨平台账户绑定，需 database）、`broadcast`（广播，需 database）、`callme`（昵称）、`echo`（回声，`koishi.browser: true`）、`help`（指令帮助，多语言 locale）、`inspect`（用户/频道/消息诊断）来自上游 koishi `plugins/common/*`；`assets-local`（本地资源落盘，来自 [koishijs/assets](https://github.com/koishijs/assets) `packages/local`）与 `rate-limit`（指令限流，来自 [koishijs/common](https://github.com/koishijs/common) `packages/rate-limit`）为后续再分发。均带 `koishi` 元数据，locale 放 `src/locales/*.yml`。
+
+`cron`（计划任务）已于 2026-09 迁出，由 [Koishi-CE/services](https://github.com/Koishi-CE/services) 仓（`packages/cron`）继续维护。
 
 ### plugins/infra/*（基础设施 ×8）
 
