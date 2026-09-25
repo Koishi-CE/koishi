@@ -179,11 +179,17 @@ export function connect(
 			"[koishi] websocket disconnected, will retry in 1s...",
 		);
 		setTimeout(() => {
-			connect(ctx, callback).then(location.reload, () => {
-				console.log(
-					"[koishi] websocket disconnected, will retry in 1s...",
-				);
-			});
+			// reload 取值放在成功分支内：location.reload 的成员访问
+			// 若写在 then 实参位置，会在重连发起时即求值——无 location
+			// 全局的环境（非浏览器运行时）此处直接 ReferenceError
+			connect(ctx, callback).then(
+				() => location.reload(),
+				() => {
+					console.log(
+						"[koishi] websocket disconnected, will retry in 1s...",
+					);
+				},
+			);
 		}, 1000);
 	};
 
