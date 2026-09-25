@@ -4,9 +4,9 @@
 
 import { type Context, icons } from "@koishi-ce/client";
 import type {} from "@koishi-ce/plugin-admin";
+import Activity from "~icons/k/activity-group";
+import TrashCan from "~icons/k/trash-can";
 import UserGroup from "./group.vue";
-import Activity from "./icons/activity.vue";
-import TrashCan from "./icons/trash-can.vue";
 
 import "virtual:uno.css";
 

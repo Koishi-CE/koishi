@@ -36,13 +36,13 @@ import {
 	resolveComponent,
 	watch,
 } from "vue";
+import At from "~icons/k/at";
+import Check from "~icons/k/check";
+import Lock from "~icons/k/lock";
+import SignIn from "~icons/k/sign-in";
+import SignOut from "~icons/k/sign-out";
+import UserFull from "~icons/k/user-full";
 import BindDialog from "./bind-dialog.vue";
-import At from "./icons/at.vue";
-import Check from "./icons/check.vue";
-import Lock from "./icons/lock.vue";
-import SignIn from "./icons/sign-in.vue";
-import SignOut from "./icons/sign-out.vue";
-import UserFull from "./icons/user-full.vue";
 import Login from "./login.vue";
 import Profile from "./profile.vue";
 import SyncDialog from "./sync-dialog.vue";

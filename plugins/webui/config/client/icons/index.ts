@@ -11,16 +11,16 @@
  */
 import { icons } from "@koishi-ce/client";
 
-import AddGroup from "./add-group.vue";
-import AddPlugin from "./add-plugin.vue";
-import Check from "./check.vue";
-import Clone from "./clone.vue";
-import Manage from "./manage.vue";
-import Play from "./play.vue";
-import Plugin from "./plugin.vue";
-import Save from "./save.vue";
-import Stop from "./stop.vue";
-import TrashCan from "./trash-can.vue";
+import AddGroup from "~icons/k/add-group";
+import AddPlugin from "~icons/k/add-plugin";
+import Check from "~icons/k/check";
+import Clone from "~icons/k/clone";
+import Manage from "~icons/k/manage";
+import Play from "~icons/k/play";
+import Plugin from "~icons/k/plugin";
+import Save from "~icons/k/save";
+import Stop from "~icons/k/stop";
+import TrashCan from "~icons/k/trash-can";
 
 icons.register("activity:plugin", Plugin);
 icons.register("add-group", AddGroup);

@@ -11,8 +11,8 @@
 import { type Context, icons } from "@koishi-ce/client";
 import type { Dict } from "@koishi-ce/koishi";
 import type {} from "@koishi-ce/plugin-locales";
-import Activity from "./icons/activity.vue";
-import Globe from "./icons/globe.vue";
+import Activity from "~icons/k/activity-locales";
+import Globe from "~icons/k/globe";
 import Locales from "./locales.vue";
 
 import "virtual:uno.css";

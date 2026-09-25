@@ -7,10 +7,10 @@
  * 用户 / 群组 / 心形用于首页数值卡，历史时钟备用。
  */
 import { icons } from "@koishi-ce/client";
-import Guild from "./guild.vue";
-import Heart from "./heart.vue";
-import History from "./history.vue";
-import User from "./user.vue";
+import Guild from "~icons/k/analytic-guild";
+import Heart from "~icons/k/analytic-heart";
+import History from "~icons/k/analytic-history";
+import User from "~icons/k/analytic-user";
 
 icons.register("analytic:guild", Guild);
 icons.register("analytic:heart", Heart);

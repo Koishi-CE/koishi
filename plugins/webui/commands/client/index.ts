@@ -4,10 +4,10 @@
 
 import { type Context, icons } from "@koishi-ce/client";
 import type {} from "@koishi-ce/plugin-commands";
+import Activity from "~icons/k/activity-commands";
+import Check from "~icons/k/check";
+import TrashCan from "~icons/k/trash-can";
 import Commands from "./commands.vue";
-import Activity from "./icons/activity.vue";
-import Check from "./icons/check.vue";
-import TrashCan from "./icons/trash-can.vue";
 import Locales from "./locales.vue";
 import Settings from "./settings.vue";
 

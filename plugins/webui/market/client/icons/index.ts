@@ -4,11 +4,11 @@
 
 import { icons } from "@koishi-ce/client";
 
-import NavDeps from "./activity/deps.vue";
-import NavMarket from "./activity/market.vue";
+import NavDeps from "~icons/k/activity-deps";
+import NavMarket from "~icons/k/activity-market";
 
-import Refresh from "./market/refresh.vue";
-import Rocket from "./market/rocket.vue";
+import Refresh from "~icons/k/refresh";
+import Rocket from "~icons/k/rocket";
 
 icons.register("activity:deps", NavDeps);
 icons.register("activity:market", NavMarket);

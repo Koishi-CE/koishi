@@ -6,12 +6,12 @@
 
 import { icons } from "@koishi-ce/client";
 
-import Database from "./database.vue";
-import FilterOff from "./filter-off.vue";
-import FilterOn from "./filter-on.vue";
-import Refresh from "./refresh.vue";
-import RgbOff from "./rgb-off.vue";
-import RgbOn from "./rgb-on.vue";
+import Database from "~icons/k/database";
+import FilterOff from "~icons/k/filter-off";
+import FilterOn from "~icons/k/filter-on";
+import Refresh from "~icons/k/refresh";
+import RgbOff from "~icons/k/rgb-off";
+import RgbOn from "~icons/k/rgb-on";
 
 icons.register("database", Database);
 icons.register("refresh", Refresh);
