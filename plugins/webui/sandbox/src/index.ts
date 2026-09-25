@@ -77,7 +77,7 @@ declare module "@koishi-ce/console" {
 			this: Client,
 			platform: string,
 			pid: string,
-			data: Partial<User>,
+			data: Partial<User> | null,
 		): Promise<void>;
 	}
 }

@@ -10,6 +10,8 @@
  * 注册进 console 的 Services 接口，使浏览器端能以类型安全的方式
  * 访问 `store.packages`、`store.services`、`store.config`。
  */
+import type { DataService } from "@koishi-ce/console";
+import type { Dict } from "@koishi-ce/koishi";
 import type { PackageProvider } from "./packages.ts";
 import type { ServiceProvider } from "./services.ts";
 import type { ConfigWriter } from "./writer.ts";
@@ -17,7 +19,13 @@ import type { ConfigWriter } from "./writer.ts";
 declare module "@koishi-ce/console" {
 	namespace Console {
 		interface Services {
-			packages: PackageProvider;
+			// packages 显式标注 DataService 载荷而非直接引用类：TS7 对
+			// d.ts 里 `export declare abstract class`（PackageProvider 是
+			// 全仓唯一 abstract Provider）的条件类型匹配会静默推出
+			// unknown（2026-09-25 探针实证，ServiceProvider / ConfigWriter
+			// 等非 abstract 类无此问题）。载荷实体 PackageProvider.Data
+			// 仍为单一事实源。
+			packages: DataService<Dict<PackageProvider.Data>>;
 			services: ServiceProvider;
 			config: ConfigWriter;
 		}

@@ -96,8 +96,12 @@ export function hasCoreDeps(tree: Tree): boolean {
 export function getFullName(shortname: string) {
 	if (!shortname) return shortname;
 	if (shortname.startsWith("./")) {
-		return Object.values(store.packages ?? {}).find(
-			(data) => data.paths?.includes(shortname),
+		// 提前收窄空值：Object.values 的 lib 重载对 `T | {}` 联合会把
+		// 回调参数推成 unknown，早退保持 data 的真实载荷类型
+		const { packages } = store;
+		if (!packages) return shortname;
+		return Object.values(packages).find((data) =>
+			data.paths?.includes(shortname),
 		)?.package?.name;
 	}
 	if (shortname.includes("/")) {

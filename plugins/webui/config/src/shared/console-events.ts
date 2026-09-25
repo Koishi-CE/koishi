@@ -5,12 +5,10 @@
 /**
  * config 插件的 manager/* 控制台事件签名（唯一权威定义）。
  *
- * 服务端（writer.ts）与浏览器端（client/components/utils.ts）分别对
- * "@koishi-ce/console" 与 "@koishi-ce/plugin-console" 做同名声明合并：
- * 浏览器端 tsconfig 无 paths，console 的类型来自宿主 shims 的手写环境
- * 声明，模块名必须分开挂载。Events 文本以本文件的 ManagerEvents 为
- * 唯一来源，两端经 extends 引用，避免双份镜像漂移。本文件须被两端
- * import（type-only 即可）才会进入各自的类型程序。
+ * 本文件的 declare module 块把 ManagerEvents 合并进 "@koishi-ce/console"
+ * 的 Events 接口，是 node 侧（writer.ts 经本文件获得 send 事件类型）与
+ * 浏览器端（client/components/utils.ts 经 type-only import 拉入本文件）
+ * 共用的唯一挂载点，避免双份镜像漂移。
  */
 
 /** manager/* 事件的载荷签名（配置的重载 / 停用 / 移除 / 改名 / 拖拽）。 */
@@ -38,9 +36,5 @@ interface ManagerEvents {
 }
 
 declare module "@koishi-ce/console" {
-	interface Events extends ManagerEvents {}
-}
-
-declare module "@koishi-ce/plugin-console" {
 	interface Events extends ManagerEvents {}
 }

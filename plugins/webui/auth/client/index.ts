@@ -27,8 +27,6 @@ import type { Binding } from "@koishi-ce/koishi";
 import type {
 	Auth,
 	LoginToken,
-	UserLogin,
-	UserUpdate,
 } from "@koishi-ce/plugin-auth";
 import {
 	defineComponent,
@@ -62,28 +60,6 @@ interface AuthData extends Auth {
 	tokens: Omit<LoginToken, "token" | "id">[];
 	bindings: Omit<Binding, "aid">[];
 }
-
-declare module "@koishi-ce/plugin-console" {
-	interface Events {
-		"login/platform"(
-			platform: string,
-			pid: string,
-		): Promise<UserLogin>;
-		"login/password"(name: string, password: string): void;
-		"login/token"(id: number, token: string): void;
-		"user/delete-token"(inc: number): void;
-		"user/unbind"(platform: string, pid: string): void;
-		"user/update"(data: UserUpdate): void;
-		"user/logout"(): void;
-	}
-
-	namespace Console {
-		export interface Services {
-			user: DataService<AuthData>;
-		}
-	}
-}
-
 icons.register("at", At);
 icons.register("check", Check);
 icons.register("lock", Lock);

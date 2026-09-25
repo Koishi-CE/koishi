@@ -29,16 +29,6 @@ import {
 	resolveComponent,
 } from "vue";
 
-// send() 的事件类型取自 "@koishi-ce/plugin-console" 手写垫片（浏览器端工程
-// 解析不到真实模块），在此按 node 侧 src/index.ts 的 declare module
-// "@koishi-ce/console" 逐事件同签名镜像，两处须保持同步
-// （与 plugin-commands 的 client/utils.ts 为同一模式）。
-declare module "@koishi-ce/plugin-console" {
-	interface Events {
-		"notifier/button"(id: string): void;
-	}
-}
-
 // 由配置管理面板注入的「当前插件」信息（此处仅需 path 字段）
 const current = inject<Ref<{ path: string }>>(
 	"manager.settings.current",

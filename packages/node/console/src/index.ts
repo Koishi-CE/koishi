@@ -175,7 +175,12 @@ export abstract class Console extends Service {
 	 * @param client 发起请求的客户端，初始数据可按客户端定制
 	 * @returns 以入口 id 为键的响应表，并附带本服务的 `_id`
 	 */
-	async get(client: Client) {
+	// 返回类型须显式标注：推断签名经 dts 产物会丢失索引签名部分（只剩
+	// { _id }），而浏览器端 Store 的载荷推导（Console.Services[K] extends
+	// DataService<infer T>）依赖完整形状。上游同步时保留本标注。
+	async get(
+		client: Client,
+	): Promise<EntryResponse & { _id: string }> {
 		return {
 			...valueMap(
 				this.entries,

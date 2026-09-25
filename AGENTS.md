@@ -31,7 +31,7 @@
 
 ```bash
 bun install                     # 安装依赖（Bun workspaces，产出 bun.lock）
-bun run check                   # 全量门禁（八段，构成见 docs/guides/development.md §3）
+bun run check                   # 全量门禁（九段，构成见 docs/guides/development.md §3）
 bun run lint                    # biome check .（格式 + lint 唯一权威）
 bun run lint:client             # eslint 仅查 *.vue（biome 只解析 .vue 的 script，模板语义归 eslint）
 bun run typecheck               # TS7 类型检查 = 两条 bunx tsc（node 侧 + client 侧大一统串行）
@@ -64,7 +64,7 @@ bun packages/web/builder/src/bin.ts build <插件目录>  # 单个 webui 插件�
 - **TS7 buildinfo 错误回声**：改根 tsconfig / 依赖结构后旧错误复活，先删 `node_modules/.cache/tsc/{node,web}.tsbuildinfo`。
 - **Bun 对失败的解析按「父目录快照」做进程内缓存**：市场装完插件报 `failed to resolve`（重启即消）即此因；防御已内建（resolvePackageJson / resolvePlugin / isResidentInCache 全程纯 fs）。**新增对「可能刚装上的包」的解析时，兜底一律不得走解析 API**。
 - **Bun 会把 exports 的 `"bun"` 条件用在 require 上**：CJS 链 require 到 ESM namespace 的 interop 已在 loader `node/interop.ts` 处理，勿动。
-- **TS7 的跨文件 `declare module` 增强对经 lib 产物 d.ts 的模块骨架不生效**：node 侧 Services / Events 声明变更时须同步镜像 `plugins/webui/market/client/console-services.ts`。
+- **console 类型消费走「源头共享」，client 侧零手工镜像**（2026-09-25 落地）：浏览器端类型程序以基座 paths 指向各包 lib 产物 d.ts，node 侧的 Services / Events 增强（`declare module "@koishi-ce/console"`）经接线文件 `packages/web/client/console-services.d.ts` 拉入生效。新增带控制台增强的插件时须同步接线文件（`check:console-wiring` 对账拦截）。两个现役约束：`export *` 转发的实体不能被 augment（增强会新建同名实体顶替转发，须挂实体声明地模块）；模块名被无 import 的纯声明文件（ambient）占据时会遮蔽 paths 解析。旧判例「TS7 跨文件 declare module 增强对经 lib 产物 d.ts 的骨架不生效」在 typescript@7.0.2 下经探针实证已不成立。
 - **前端构建无 vite 配置文件**（全部编程式 `vite.build()`）；`collectWorkspaceAliases()` 是跨包解析的关键，动 builder 构建须复核。
 - **特殊构建 hack**：插件可自带 `build/client.ts` 导出 vite 配置覆盖（`@koishi-ce/console-builder` 的 `build()` 显式加载合并，vite 不会自动发现该文件名），analytics 的 "fuck-echarts" 即经此接入；另有 client 构建的 vue-i18n esm-browser.prod 别名。
 - **Bun 下 require 坏 TS 抛 `AggregateError`**（errors 为 BuildMessage：`message` + `position.{file,line,column}`，非 esbuild 的 `{ text, location }` 形态），hmr 的错误帧据此识别（`src/error.ts`）；TS 即时编译由 Bun 原生完成，esbuild 已从 hmr 移除。

@@ -6,7 +6,6 @@
  * dataview 客户端入口：注册「数据库」页面与「数据库设置」面板。
  *
  * 页面路由 /database/:name*（name 为表名，可省略），权限 4，
- * 订阅 database 数据服务（类型镜像见 console-services.ts）。
  * 语言包与配置 schema 位于 config.ts（叶子模块，供组件引用不断环）。
  */
 

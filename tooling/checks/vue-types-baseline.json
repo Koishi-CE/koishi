@@ -1,9 +1,9 @@
 {
 	"meta": {
-		"generatedAt": "2026-09-23T15:52:13.254Z",
+		"generatedAt": "2026-09-25T09:23:18.437Z",
 		"vueTscVersion": "3.3.11",
 		"typescriptVersion": "5.9.3",
-		"total": 26
+		"total": 31
 	},
 	"entries": [
 		"packages/web/app/src/settings/theme.vue::TS2322::Type 'string' is not assignable to type '{ readonly type: PropType<EpPropMergeType<(BooleanConstructor | NumberConstructor | ObjectConstructor | StringConstructor)[], unknown, unknown>>; readonly required: true; readonly validator: ((val: unknown) => boolean) | undefined; __epPropKey: true; }'.",
@@ -25,6 +25,11 @@
 		"plugins/webui/explorer/client/index.vue::TS2802::Type 'Generator<string, void, undefined>' can only be iterated through when using the '--downlevelIteration' flag or with a '--target' of 'es2015' or higher.",
 		"plugins/webui/insight/client/tooltip.ts::TS2802::Type 'TouchList' can only be iterated through when using the '--downlevelIteration' flag or with a '--target' of 'es2015' or higher.",
 		"plugins/webui/locales/client/locales.vue::TS2322::Type '(_value: string, data: Tree) => boolean' is not assignable to type '{ readonly type: PropType<FilterNodeMethodFunction>; readonly required: false; readonly validator: ((val: unknown) => boolean) | undefined; __epPropKey: true; }'.",
+		"plugins/webui/locales/client/locales.vue::TS2322::Type 'Node | undefined' is not assignable to type 'string | number | null | undefined'.",
+		"plugins/webui/locales/client/locales.vue::TS2322::Type 'Node' is not assignable to type 'string'.",
+		"plugins/webui/locales/client/locales.vue::TS2322::Type 'Store' is not assignable to type 'EditableStore'.",
+		"plugins/webui/locales/client/locales.vue::TS2322::Type 'null' is not assignable to type 'Node'.",
+		"plugins/webui/locales/client/locales.vue::TS2345::Argument of type 'Dict<EditableStore>' is not assignable to parameter of type 'Dict<Store>'.",
 		"plugins/webui/market/client/components/install.vue::TS2322::Type 'string' is not assignable to type '{ readonly type: PropType<EpPropMergeType<(BooleanConstructor | NumberConstructor | ObjectConstructor | StringConstructor)[], unknown, unknown>>; readonly required: true; readonly validator: ((val: unknown) => boolean) | undefined; __epPropKey: true; }'.",
 		"plugins/webui/market/client/dependencies/dependencies.vue::TS2322::Type 'string' is not assignable to type '{ readonly type: PropType<EpPropMergeType<(BooleanConstructor | NumberConstructor | ObjectConstructor | StringConstructor)[], unknown, unknown>>; readonly required: true; readonly validator: ((val: unknown) => boolean) | undefined; __epPropKey: true; }'.",
 		"plugins/webui/market/client/dependencies/dependencies.vue::TS2322::Type 'string' is not assignable to type '{ readonly type: PropType<EpPropMergeType<(NumberConstructor | StringConstructor)[], unknown, unknown>>; readonly required: false; readonly validator: ((val: unknown) => boolean) | undefined; __epPropKey: true; }'.",

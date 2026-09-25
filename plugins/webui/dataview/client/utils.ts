@@ -5,7 +5,7 @@
 /**
  * dataview 客户端工具：RPC 报文的查询封装与展示辅助。
  *
- * serialize / deserialize 的编解码协议与 node 侧共享（../src/codec.ts
+ * serialize / deserialize 的编解码协议与 node 侧共享（../src/shared/codec.ts
  * 纯协议模块，相对路径引入以保证两侧实现同源），差异仅在 binary 分支：
  * 客户端把 `"b<len>"` 还原为字节数数值（node 侧丢弃为 undefined）。
  */
@@ -16,7 +16,7 @@ import type { Methods } from "@koishi-ce/plugin-dataview";
 import {
 	deserialize as deserializeBase,
 	serialize,
-} from "../src/codec.ts";
+} from "../src/shared/codec.ts";
 
 export { serialize };
 

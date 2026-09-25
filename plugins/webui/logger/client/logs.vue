@@ -33,20 +33,8 @@ import {
 } from "@koishi-ce/client";
 import {} from "@koishi-ce/plugin-config";
 import { AnsiUp } from "ansi_up";
-import { Logger, type Message } from "reggol";
-
-// reggol v2 移除了 Logger.Record 类型别名,此处等价替代
-interface LogRecord extends Message {
-	id: number;
-	timestamp: number;
-	content: string;
-	// 来源信息:node 侧运行时写入 paths(日志来源插件),用于生成跳转链接
-	// (索引签名与 meta 字段须与本插件 client/index.ts 的同名接口保持同步)
-	meta?: { paths?: string[] };
-	// 开放索引签名:virtual-list 的 data prop 为 Record<string, unknown>[],
-	// 接口缺索引签名就无法作为其数据源
-	[key: string]: unknown;
-}
+import { Logger } from "reggol";
+import type { LogRecord } from "./record.ts";
 
 const props = defineProps<{
 	logs: LogRecord[];

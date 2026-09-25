@@ -2,7 +2,6 @@
 // Copyright (c) 2019-present Shigma and Koishijs contributors.
 // Copyright (c) 2026-present Koishi-CE contributors.
 
-/// <reference path="./shims.d.ts" />
 import type {
 	Promisify,
 	Universal,
@@ -10,7 +9,6 @@ import type {
 import type {
 	ClientConfig,
 	Console,
-	DataService,
 	Events,
 } from "@koishi-ce/plugin-console";
 import { markRaw, reactive, ref } from "vue";
@@ -19,11 +17,16 @@ import type { Context } from "./context";
 /**
  * 全局数据仓库的类型：按服务名映射到该 DataService 推送的负载数据。
  * 服务端每类数据（entry、schema、permissions 等）对应 Store 的一个键。
+ *
+ * 载荷经结构化推导（get() 的返回类型）而非 `extends DataService<infer T>`
+ * 的泛型实参推导：TS7 下后者对部分 Provider 类（如 config 的多级继承 +
+ * namespace 载荷形态）会静默断掉推出 unknown，结构推导对继承深度与
+ * abstract 修饰免疫，且能拿到子类 override 后更精确的返回类型。
  */
 export type Store = {
-	[K in keyof Console.Services]?: Console.Services[K] extends DataService<
-		infer T
-	>
+	[K in keyof Console.Services]?: Console.Services[K] extends {
+		get(...args: unknown[]): Promise<infer T>;
+	}
 		? T
 		: never;
 };

@@ -15,7 +15,6 @@ import {
 	type Context,
 	extendLocales,
 } from "@koishi-ce/client";
-import type { Entry } from "@koishi-ce/plugin-explorer";
 import FilePicker from "./file-picker.vue";
 import Layout from "./index.vue";
 
@@ -31,38 +30,6 @@ import "./editor";
 
 import "virtual:uno.css";
 import "./editor.scss";
-
-// 浏览器端 tsconfig 无 paths,@koishi-ce/plugin-console 解析不到真实模块,
-// Console.Services 来自 packages/web/client/src/shims.d.ts 的手写环境声明;
-// 这里按同名环境声明合并为其补充 explorer 键与 Events（严格镜像
-// src/index.ts 对 "@koishi-ce/console" 的声明,两处须保持同步）
-declare module "@koishi-ce/plugin-console" {
-	namespace Console {
-		export interface Services {
-			explorer: DataService<Entry[]>;
-		}
-	}
-
-	interface Events {
-		"explorer/read"(
-			filename: string,
-			binary?: boolean,
-		): Promise<import("@koishi-ce/plugin-explorer").File>;
-		"explorer/write"(
-			filename: string,
-			content: string,
-			binary?: boolean,
-		): Promise<void>;
-		"explorer/mkdir"(filename: string): Promise<void>;
-		"explorer/remove"(filename: string): Promise<void>;
-		"explorer/rename"(
-			oldValue: string,
-			newValue: string,
-		): Promise<void>;
-		"explorer/refresh"(): void;
-	}
-}
-
 export default (ctx: Context) => {
 	// 注入本扩展的 UI 语言包（各语种键均收纳在 explorer.* 命名空间下）
 	extendLocales(ctx, locales);

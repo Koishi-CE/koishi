@@ -76,6 +76,42 @@
 			"@koishi-ce/console": [
 				"./packages/node/console/lib/index.d.ts"
 			],
+			"@koishi-ce/plugin-console": [
+				"./plugins/webui/console/lib/index.d.ts"
+			],
+			"@koishi-ce/plugin-admin": [
+				"./plugins/webui/admin/lib/index.d.ts"
+			],
+			"@koishi-ce/plugin-analytics": [
+				"./plugins/webui/analytics/lib/index.d.ts"
+			],
+			"@koishi-ce/plugin-auth": [
+				"./plugins/webui/auth/lib/index.d.ts"
+			],
+			"@koishi-ce/plugin-commands": [
+				"./plugins/webui/commands/lib/index.d.ts"
+			],
+			"@koishi-ce/plugin-explorer": [
+				"./plugins/webui/explorer/lib/index.d.ts"
+			],
+			"@koishi-ce/plugin-insight": [
+				"./plugins/webui/insight/lib/index.d.ts"
+			],
+			"@koishi-ce/plugin-locales": [
+				"./plugins/webui/locales/lib/index.d.ts"
+			],
+			"@koishi-ce/plugin-logger": [
+				"./plugins/webui/logger/lib/index.d.ts"
+			],
+			"@koishi-ce/plugin-notifier": [
+				"./plugins/webui/notifier/lib/index.d.ts"
+			],
+			"@koishi-ce/plugin-sandbox": [
+				"./plugins/webui/sandbox/lib/index.d.ts"
+			],
+			"@koishi-ce/plugin-status": [
+				"./plugins/webui/status/lib/index.d.ts"
+			],
 			"@koishi-ce/registry": [
 				"./packages/node/registry/lib/index.d.ts"
 			],

@@ -19,6 +19,7 @@
 import { store } from "@koishi-ce/client";
 import { computed, inject, type Ref } from "vue";
 import Logs from "./logs.vue";
+import type { LogRecord } from "./record.ts";
 
 // 由配置管理面板注入的「当前插件」信息（此处仅需 path 字段）
 const current = inject<Ref<{ path: string }>>(
@@ -31,14 +32,14 @@ const logs = computed(() => {
 	// TODO: 插件路径未注入（非插件详情上下文）或服务数据未就绪时保守返回空
 	const path = current?.value.path;
 	if (!store.logs || !path) return [];
-	const results = [];
+	// store.logs 的静态类型是 reggol 的 Logger.Record[]，其 Meta 未声明
+	// paths 字段；收窄为本插件扩展后的 LogRecord 形态（子类型方向，
+	// 单重断言合法，不进 assertions 闸门）
+	const records = store.logs as LogRecord[];
+	const results: LogRecord[] = [];
 	let last = Infinity;
-	for (
-		let index = store.logs.length - 1;
-		index > 0;
-		--index
-	) {
-		const record = store.logs[index];
+	for (let index = records.length - 1; index > 0; --index) {
+		const record = records[index];
 		if (!record) continue;
 		if (record.id >= last) break;
 		last = record.id;

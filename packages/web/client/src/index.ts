@@ -21,13 +21,6 @@ import install, {
 import { Context } from "./context";
 import { store } from "./data";
 
-declare module "@koishi-ce/plugin-console" {
-	export interface ClientConfig {
-		/** 服务端声明不支持的功能列表（版本不兼容时用于前端降级提示） */
-		unsupported?: string[];
-	}
-}
-
 // 向组件库注入全局数据仓库：组件库的 schema 控件扩展（dynamic/perms）
 // 经 useStore() 读取服务端下发数据，注入须先于任何组件渲染
 provideStore(store);
@@ -35,6 +28,8 @@ provideStore(store);
 // Satori 协议类型的两个命名空间别名：旧代码多用 Universal，新代码建议用 Satori
 export * as Satori from "@satorijs/protocol";
 export * as Universal from "@satorijs/protocol";
+
+import type { ScopeStatus as CordisScopeStatus } from "cordis";
 // cordis 以 ambient const enum 声明 ScopeStatus,verbatimModuleSyntax 下
 // 禁止对其实施运行时访问/再导出(TS2748);这里按等价值展开为 const 对象,
 // 与 cordis(@cordisjs/core)运行时导出的枚举数值保持一致
@@ -48,6 +43,19 @@ export const ScopeStatus = {
 
 export type ScopeStatus =
 	(typeof ScopeStatus)[keyof typeof ScopeStatus];
+// 编译期对账守卫：本地数值集与 cordis 的枚举类型双向一致，cordis 升级
+// 增删枚举值或改值时此处类型错误强制同步（键名不在 const enum 的类型
+// 面内，数值对账已覆盖实际语义风险）
+type _ScopeStatusGuard = [CordisScopeStatus] extends [
+	ScopeStatus,
+]
+	? [ScopeStatus] extends [CordisScopeStatus]
+		? true
+		: never
+	: never;
+const _scopeStatusGuard: _ScopeStatusGuard = true;
+void _scopeStatusGuard;
+
 // 共享组件库（唯一 UI 库）的公共 API 全量二次转出
 export * from "@koishi-ce/components";
 // vue-i18n 的导出面（原挂在组件库入口下，随组件收敛挪回运行时入口）

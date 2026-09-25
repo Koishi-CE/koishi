@@ -9,7 +9,6 @@
  * 页面组件为 ./locales.vue；同时注册页面与语言选择器用到的两个图标。
  */
 import { type Context, icons } from "@koishi-ce/client";
-import type { Dict } from "@koishi-ce/koishi";
 import type {} from "@koishi-ce/plugin-locales";
 import Activity from "~icons/k/activity-locales";
 import Globe from "~icons/k/globe";
@@ -26,27 +25,6 @@ import "virtual:uno.css";
 export type EditableStore = {
 	[key: string]: string | null;
 };
-
-// 浏览器端 tsconfig 无 paths,@koishi-ce/plugin-console 解析不到真实模块,
-// Console.Services 来自 packages/web/client/src/shims.d.ts 的手写环境声明;
-// 这里按同名环境声明合并为其补充 locales 键,使 ctx.page 的 fields 通过检查
-// (DataService 同样解析自该环境声明,与 insight 客户端的做法保持一致)
-declare module "@koishi-ce/plugin-console" {
-	namespace Console {
-		export interface Services {
-			locales: DataService<Dict<EditableStore>>;
-		}
-	}
-
-	// send() 的 l10n 事件镜像声明:node 侧真实声明位于本包 src/index.ts 的
-	// declare module "@koishi-ce/console"(浏览器端类型程序不可见,见 commands
-	// 插件 client/utils.ts 的同款模式),两处须保持同步;参数按运行时编辑态
-	// (值可为 null)声明,是 node 侧 Dict<I18n.Store> 的宽松超类型
-	interface Events {
-		l10n(data: Dict<EditableStore>): void;
-	}
-}
-
 icons.register("activity:locales", Activity);
 icons.register("globe", Globe);
 

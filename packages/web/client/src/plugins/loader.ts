@@ -98,7 +98,9 @@ export default class LoaderService extends Service {
 			"entry-data",
 			({ id, data }) => {
 				const entry = store.entry?.[id];
-				if (!entry) return;
+				// 真实载荷类型含上游 EntryResponse 的宽松 string 形态，
+				// 该形态无随附数据可写，防御性收窄
+				if (!entry || typeof entry === "string") return;
 				entry.data = data;
 				const extension = this.extensions[id];
 				if (extension) extension.data.value = data;

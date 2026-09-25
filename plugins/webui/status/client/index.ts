@@ -14,7 +14,6 @@
  * 并注册本插件的前端设置项 mergeThreshold（状态灯合并显示阈值）。
  */
 import { type Context, Schema } from "@koishi-ce/client";
-import type { ProfileProvider } from "@koishi-ce/plugin-status";
 import Analytics from "./analytics.vue";
 import Bots from "./bots";
 import Config from "./config.vue";
@@ -23,23 +22,6 @@ import Load from "./load";
 import "./icons.ts";
 
 import "virtual:uno.css";
-
-// 浏览器端 Store 消费的 Console.Services 声明在 "@koishi-ce/plugin-console"
-// 模块（packages/web/client/src/shims.d.ts 骨架 + 各插件同名增强合并），
-// 而本插件 node 侧 lib 产物注入的目标模块名是 "@koishi-ce/console"（另一
-// 实体），两处互不传导，导致 store.status / store.envinfo 在 client 侧
-// 无类型。这里按 analytics / logger 等插件的同款模式向 client 侧镜像注入
-// 两个数据服务（node 侧真实声明位于本包 src/index.ts，须保持同步）。
-declare module "@koishi-ce/plugin-console" {
-	namespace Console {
-		export interface Services {
-			status: DataService<ProfileProvider.Payload>;
-			envinfo: DataService<
-				Record<string, Record<string, string>>
-			>;
-		}
-	}
-}
 
 declare module "@koishi-ce/client" {
 	interface Config {
