@@ -1,9 +1,9 @@
 // client（浏览器端）类型检查基座：被 tsconfig.web.json（大一统检查入口）与各
-// webui 插件 client/tsconfig.json extends。extends 语义（2026-09-25 --showConfig
-// 实证）：include 由子配置声明并整体替换，本 files（global.d.ts：*.vue / *.yml
-// 模块声明 + vue-i18n / vite / element-plus 类型引用）却照原样下发进每个 client
-// 子工程——含 .vue 导入的工程没有它直接 TS2307，是必要的共享声明而非可裁剪的
-// 兜底。skipLibCheck 保持 true
+// webui 插件 client/tsconfig.json extends。extends 语义（2026-09-25 双编译器
+// --listFilesOnly 实证）：files 跨 extends 是并集而非覆盖，本 files（global.d.ts：
+// *.vue / *.yml 模块声明 + vue-i18n / vite / element-plus 类型引用）与子配置
+// 显式 files 同时进入每个 client 子工程——含 .vue 导入的工程没有它直接
+// TS2307，是必要的共享声明而非可裁剪的兜底。skipLibCheck 保持 true
 // 的理由与不开启的选项以 tsconfig.base.json 的注释为准（本侧实测 false 时爆
 // 63 条第三方 d.ts 错误，@vueuse/core、@satorijs/core 等，本仓代码零条）。
 {

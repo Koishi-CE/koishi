@@ -1,8 +1,9 @@
 // 类型检查基座：只被 extends，从不直接作为 tsc 入口。真实门禁是根 tsconfig.json
 // （node 侧）与 tsconfig.web.json（client 侧）两条大一统检查。extends 语义
-// （2026-09-25 --showConfig 实证）：include 与 files 各自独立继承——include 由
-// 子配置声明并整体替换，files 却照原样下发进每个子工程的类型程序，故下方
-// files 是全部 node 侧工程共享的 yml 模块全局声明，并非「无 include 时的兜底」。
+// （2026-09-25 双编译器 --listFilesOnly 实证）：files 跨 extends 是并集而非
+// 覆盖——子配置声明的 files 与本 files 同时进入程序；include 由子配置声明。
+// 故下方 files 是全部 node 侧工程共享的 yml 模块全局声明，并非「无 include
+// 时的兜底」。注意 --showConfig 对此边界显示不完整，勿以其为准。
 // 不开启的选项与理由见文件尾注。
 {
 	"$schema": "https://json.schemastore.org/tsconfig",
