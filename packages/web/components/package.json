@@ -1,57 +1,56 @@
 {
-    "name": "@koishi-ce/components",
-    "description": "Client components for Koishi",
-    "version": "1.1.0",
-    "type": "module",
-    "main": "src/index.ts",
-    "files": [
-        "src",
-        "assets"
-    ],
-    "contributors": [
-        "Shigma <shigma10826@gmail.com>",
-        "Oppenheymu <oppenheymu@gmail.com>"
-    ],
-    "license": "AGPL-3.0",
-    "repository": {
-        "type": "git",
-        "url": "git+https://github.com/Koishi-CE/koishi.git",
-        "directory": "packages/web/components"
-    },
-    "bugs": {
-        "url": "https://github.com/Koishi-CE/koishi/issues"
-    },
-    "homepage": "https://koishi.chat",
-    "keywords": [
-        "bot",
-        "chatbot",
-        "koishi",
-        "webui",
-        "component"
-    ],
-    "peerDependencies": {
-        "element-plus": "^2",
-        "vue": "^3",
-        "vue-i18n": "^11",
-        "vue-router": "^5"
-    },
-    "dependencies": {
-        "@satorijs/element": "^3.2.0",
-        "cosmokit": "^1.8.1",
-        "dompurify": "^3.4.15",
-        "marked": "^18.0.14",
-        "schemastery-vue": "^7.3.15"
-    },
-    "devDependencies": {
-        "@koishi-ce/koishi": "workspace:*",
-        "@types/jsdom": "^30.0.0",
-        "jsdom": "^30.1.1"
-    },
-    "exports": {
-        ".": {
-            "source": "./src/index.ts",
-            "default": "./src/index.ts"
-        },
-        "./package.json": "./package.json"
-    }
+	"name": "@koishi-ce/components",
+	"description": "Client components for Koishi",
+	"version": "1.1.0",
+	"type": "module",
+	"main": "src/index.ts",
+	"files": [
+		"src",
+		"assets"
+	],
+	"contributors": [
+		"Shigma <shigma10826@gmail.com>",
+		"Oppenheymu <oppenheymu@gmail.com>"
+	],
+	"license": "AGPL-3.0",
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/Koishi-CE/koishi.git",
+		"directory": "packages/web/components"
+	},
+	"bugs": {
+		"url": "https://github.com/Koishi-CE/koishi/issues"
+	},
+	"homepage": "https://koishi.chat",
+	"keywords": [
+		"bot",
+		"chatbot",
+		"koishi",
+		"webui",
+		"component"
+	],
+	"peerDependencies": {
+		"element-plus": "^2",
+		"vue": "^3",
+		"vue-i18n": "^11",
+		"vue-router": "^5"
+	},
+	"dependencies": {
+		"@satorijs/element": "^3.2.0",
+		"cosmokit": "^1.8.1",
+		"dompurify": "^3.4.15",
+		"marked": "^18.0.14",
+		"schemastery-vue": "^7.3.15"
+	},
+	"devDependencies": {
+		"@koishi-ce/koishi": "workspace:*",
+		"jsdom": "^30.1.1"
+	},
+	"exports": {
+		".": {
+			"source": "./src/index.ts",
+			"default": "./src/index.ts"
+		},
+		"./package.json": "./package.json"
+	}
 }
