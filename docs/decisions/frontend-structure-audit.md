@@ -5,6 +5,161 @@
 > **范围**:`packages/web/*`(4 包)与 `plugins/webui/*`(19 插件)的 client 侧;server 侧仅看与 client 联动的接口面。
 > **口径**:一切以当日代码为准,本文档会过时;滞后时听代码的。
 
+## packages/web 文件树
+
+> 审计基线快照(2026-09-25):已排除 `node_modules/`、`lib/`、`dist/` 产物;`assets/icons/` 的 133 个 svg 折叠为计数行。
+
+```text
+packages/web/
+├── app/                                # 宿主壳 @koishi-ce/console-app(§2.2)
+│   ├── assets/
+│   │   └── logo.png
+│   ├── src/
+│   │   ├── home/                       # 首页插槽视图
+│   │   │   ├── home.vue
+│   │   │   └── index.ts
+│   │   ├── layout/                     # 三栏骨架与顶栏
+│   │   │   ├── header.vue
+│   │   │   ├── index.ts
+│   │   │   ├── layout.vue
+│   │   │   └── menu-item.vue
+│   │   ├── settings/                   # /settings 页与主题控件
+│   │   │   ├── index.ts
+│   │   │   ├── settings.vue
+│   │   │   └── theme.vue
+│   │   ├── status/                     # 状态栏
+│   │   │   ├── index.ts
+│   │   │   ├── loading.vue
+│   │   │   └── status.vue
+│   │   ├── styles/                     # 全局样式层(index/element/hc/layout 四件)
+│   │   │   ├── element.scss
+│   │   │   ├── hc.scss
+│   │   │   ├── index.scss
+│   │   │   ├── index.ts
+│   │   │   └── layout.scss
+│   │   ├── theme/                      # 主题壳(活动栏/菜单/状态栏视图)
+│   │   │   ├── activity/
+│   │   │   │   ├── button.vue
+│   │   │   │   ├── index.vue
+│   │   │   │   ├── item.vue
+│   │   │   │   ├── separator.vue
+│   │   │   │   └── utils.ts
+│   │   │   ├── menu/
+│   │   │   │   ├── index.vue
+│   │   │   │   ├── menu-item.vue
+│   │   │   │   └── menu.vue
+│   │   │   ├── blank.vue               # 404 兜底(死文件,P2)
+│   │   │   ├── index.ts
+│   │   │   ├── index.vue
+│   │   │   └── status.vue
+│   │   ├── index.html
+│   │   ├── index.scss
+│   │   ├── index.ts
+│   │   └── shims.d.ts
+│   ├── tsconfig.json
+│   ├── package.json
+│   ├── CHANGELOG.md
+│   └── README.md
+├── builder/                            # 构建层 @koishi-ce/console-builder(§2.1)
+│   ├── src/
+│   │   ├── app.ts
+│   │   ├── assemble.ts                 # 宿主总装(console dist)
+│   │   ├── bin.ts                      # CLI 入口
+│   │   ├── icons.ts                    # unplugin-icons 封装(~icons/k/*)
+│   │   ├── index.ts                    # build()/createServer()/collectWorkspaceAliases
+│   │   └── yaml.ts                     # .yml transform(Bun.YAML.parse)
+│   ├── tsconfig.json
+│   ├── tsdown.config.ts
+│   ├── package.json
+│   ├── CHANGELOG.md
+│   └── README.md
+├── client/                             # 运行时内核 @koishi-ce/client(§2.2)
+│   ├── locales/                        # 宿主词典,7 语(发布面缺失,P1-5)
+│   │   ├── de-DE.yml
+│   │   ├── en-US.yml
+│   │   ├── fr-FR.yml
+│   │   ├── ja-JP.yml
+│   │   ├── ru-RU.yml
+│   │   ├── zh-CN.yml
+│   │   └── zh-TW.yml
+│   ├── src/
+│   │   ├── plugins/                    # 六服务(action/i18n/loader/router/setting/theme)
+│   │   │   ├── action.ts
+│   │   │   ├── i18n.ts
+│   │   │   ├── loader.ts
+│   │   │   ├── messages.ts
+│   │   │   ├── router.ts
+│   │   │   ├── setting.ts
+│   │   │   └── theme.ts
+│   │   ├── context.ts
+│   │   ├── data.ts                     # WebSocket/RPC/patch(P1-6)
+│   │   ├── index.ts
+│   │   ├── shims.d.ts                  # console 类型镜像骨架(P1-4)
+│   │   └── utils.ts
+│   ├── global.d.ts
+│   ├── tsconfig.json
+│   ├── package.json
+│   ├── CHANGELOG.md
+│   └── README.md
+├── components/                         # UI 库 @koishi-ce/components(§2.3)
+│   ├── assets/
+│   │   ├── icons/                      # 集中图标资产:133 个 .svg(零死账,§4)
+│   │   └── README.md
+│   ├── src/
+│   │   ├── chat/                       # 聊天图与全屏查看器
+│   │   │   ├── image.vue
+│   │   │   ├── overlay.vue
+│   │   │   └── utils.ts
+│   │   ├── common/                     # 基础件 k-button / k-hint / k-tab
+│   │   │   ├── index.ts
+│   │   │   ├── k-button.vue
+│   │   │   ├── k-hint.vue
+│   │   │   └── k-tab.vue
+│   │   ├── form/                       # schemastery 扩展与 k-filter 三件套
+│   │   │   ├── computed.vue
+│   │   │   ├── index.ts
+│   │   │   ├── k-filter-button.vue
+│   │   │   ├── k-filter-expr.vue
+│   │   │   ├── k-filter-types.ts
+│   │   │   └── k-filter.vue
+│   │   ├── icons/                      # 图标注册表与 k-icon 渲染层
+│   │   │   ├── index.ts
+│   │   │   ├── style.scss
+│   │   │   └── virtual.d.ts
+│   │   ├── layout/                     # k-card / k-content / k-empty / k-tab-group
+│   │   │   ├── card.vue
+│   │   │   ├── content.vue
+│   │   │   ├── empty.vue
+│   │   │   ├── index.ts
+│   │   │   ├── tab-group.vue
+│   │   │   └── tab-item.vue
+│   │   ├── virtual/                    # 虚拟列表(模型/测量/滚动壳)
+│   │   │   ├── index.ts
+│   │   │   ├── item.ts
+│   │   │   ├── list.vue
+│   │   │   ├── virtual.test.ts
+│   │   │   └── virtual.ts
+│   │   ├── dynamic.vue
+│   │   ├── image-viewer.vue            # 与 chat/overlay 重复(P1-11)
+│   │   ├── index.scss
+│   │   ├── index.ts
+│   │   ├── injection.ts
+│   │   ├── k-comment.vue
+│   │   ├── link.ts
+│   │   ├── markdown.test.ts
+│   │   ├── markdown.ts                 # marked + DOMPurify 消毒管线
+│   │   ├── perms.vue
+│   │   ├── schemastery-vue-client.ts   # 双轨:类型载体
+│   │   ├── schemastery-vue-runtime.ts  # 双轨:运行时载体
+│   │   ├── shims.d.ts
+│   │   ├── slot.ts                     # KSlot 具名插槽合并
+│   │   └── viewer-toolbar.scss
+│   ├── tsconfig.json
+│   ├── package.json
+│   ├── CHANGELOG.md
+│   └── README.md
+```
+
 ## 1. 总览
 
 ### 1.1 基线数据
