@@ -150,9 +150,9 @@ async function build(
 				"@vueuse/core": `${root}/vueuse.js`,
 				"@koishi-ce/client": `${root}/client.js`,
 				// 虚拟子路径的运行时载体（补齐真实包缺失的 SchemaBase 具名
-				// 导出，见 packages/web/components/src/schemastery-vue-runtime.ts）；
+				// 导出，见 packages/web/components/src/form/schemastery-runtime.ts）；
 				// 类型面由根 tsconfig.client.json 的 paths 解析到类型载体
-				"schemastery-vue/client": `${cwd}/packages/web/components/src/schemastery-vue-runtime.ts`,
+				"schemastery-vue/client": `${cwd}/packages/web/components/src/form/schemastery-runtime.ts`,
 				...(isClient
 					? {
 							// client 组件库本体需要真实打包 vue-i18n：直接别名到官方

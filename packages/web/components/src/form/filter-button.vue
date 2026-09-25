@@ -18,12 +18,12 @@
 
 <script lang="ts" setup>
 import { computed, ref } from "vue";
-import KFilter from "./k-filter.vue";
+import KFilter from "./filter.vue";
 import type {
 	FilterExpr,
 	FilterOptions,
 	Operand,
-} from "./k-filter-types";
+} from "./filter-types";
 
 const props = defineProps<{
 	modelValue: FilterExpr | null;
@@ -41,7 +41,7 @@ const config = computed({
 	set: (value) => emit("update:modelValue", value),
 });
 
-// 实体字段（查询对象的左侧）的中文文案，键与 k-filter-expr 保持一致
+// 实体字段（查询对象的左侧）的中文文案，键与 filter-expr 保持一致
 const entities: Record<string, string> = {
 	userId: "用户 ID",
 	guildId: "群组 ID",

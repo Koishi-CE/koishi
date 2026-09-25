@@ -5,7 +5,7 @@
 //
 // paths 为各工程 paths 覆盖的合并（extends 的 paths 会被整体替换，故须
 // 重写基座已有映射）；exclude 收录各工程 exclude 的并集——
-// schemastery-vue-runtime.ts 引入的第三方源码不满足超严格配置，原工程
+// schemastery-runtime.ts 引入的第三方源码不满足超严格配置，原工程
 // 即显式排除，只允许进入打包管线（见该文件头注释）。
 {
 	"$schema": "https://json.schemastore.org/tsconfig",
@@ -32,7 +32,7 @@
 		"plugins/webui/welcome/client"
 	],
 	"exclude": [
-		"packages/web/components/src/schemastery-vue-runtime.ts",
+		"packages/web/components/src/form/schemastery-runtime.ts",
 		// web 侧测试文件运行时由 bun test 覆盖；client 工程 types: [] 保持
 		// 浏览器纯净（不载 bun），故测试代码不进入本类型检查
 		"packages/web/client/src/**/*.test.ts",
@@ -46,7 +46,7 @@
 		"tsBuildInfoFile": "./node_modules/.cache/tsc/web.tsbuildinfo",
 		"paths": {
 			"schemastery-vue/client": [
-				"./packages/web/components/src/schemastery-vue-client.ts"
+				"./packages/web/components/src/form/schemastery-client.ts"
 			],
 			"@koishi-ce/plugin-config/client": [
 				"./plugins/webui/config/client/index.ts"

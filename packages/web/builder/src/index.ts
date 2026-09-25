@@ -108,7 +108,7 @@ const workspaceAliases = await collectWorkspaceAliases();
 
 // 虚拟子路径 "schemastery-vue/client" 的运行时载体（补齐真实包缺失的
 // SchemaBase 具名导出）绝对路径；类型面由根 tsconfig.client.json 的
-// paths 解析到 schemastery-vue-client.ts。
+// paths 解析到 schemastery-client.ts。
 // 优先从 components 包的工作区别名推导；下游（npm 安装）形态下工作区
 // 别名表为空，从本包根向父级逐级 node_modules 纯 fs 探测 components 包
 // （不走解析 API：Bun 会把失败的解析按父目录快照缓存，刚装好的包可能
@@ -119,13 +119,13 @@ function locateRuntimeShim(): string {
 		workspaceAliases["@koishi-ce/components"] ?? ""
 	).replace(
 		/src\/index\.ts$/,
-		"src/schemastery-vue-runtime.ts",
+		"src/form/schemastery-runtime.ts",
 	);
 	if (fromAlias) return fromAlias;
 	// 源码形态（src/）与产物形态（lib/）都在包根下一级，先回到包根
 	let dir = resolve(import.meta.dir, "..");
 	while (true) {
-		const candidate = `${dir}/node_modules/@koishi-ce/components/src/schemastery-vue-runtime.ts`;
+		const candidate = `${dir}/node_modules/@koishi-ce/components/src/form/schemastery-runtime.ts`;
 		if (existsSync(candidate))
 			return candidate.replace(/\\/g, "/");
 		const parent = resolve(dir, "..");
@@ -255,7 +255,7 @@ export async function build(
 							workspaceAliases["@koishi-ce/components"],
 						// 虚拟子路径的运行时载体（补齐真实包缺失的 SchemaBase
 						// 具名导出）；类型面由 tsconfig.client.json 的 paths
-						// 解析到 schemastery-vue-client.ts。下游探测失败时
+						// 解析到 schemastery-client.ts。下游探测失败时
 						// 省略该键（空串值会炸 resolve）
 						...(runtimeShimPath
 							? {

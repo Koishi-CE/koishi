@@ -107,10 +107,10 @@ import {
 	useI18nText,
 } from "schemastery-vue";
 import { computed, type PropType } from "vue";
-import KFilterButton from "./k-filter-button.vue";
-import type { FilterExpr } from "./k-filter-types";
+import KFilterButton from "./filter-button.vue";
+import type { FilterExpr } from "./filter-types";
 
-/** $switch 分支:case 为过滤条件(k-filter 结构),then 为命中时取的配置值 */
+/** $switch 分支:case 为过滤条件(filter 结构),then 为命中时取的配置值 */
 interface SwitchBranch {
 	case: FilterExpr | null;
 	then: unknown;

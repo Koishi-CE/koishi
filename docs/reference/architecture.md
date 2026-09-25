@@ -130,7 +130,7 @@ node 侧在 `src/`、Vue 侧在 `client/`（上游约定），`koishi.public: ["
 
 ### 类型检查体系
 
-- 实际检查 = 两条纯 `bunx tsc` 串行（TS7 native）：node 侧大一统 `tsconfig.json` + client 侧大一统 `tsconfig.web.json`（paths 为各工程 paths 的合并，exclude 挡住 `schemastery-vue-runtime.ts`——第三方源码不进类型程序）。`tsconfig.base.json` 的 paths 把全部 `@koishi-ce/*` 指向各自 src 的**具体 .ts 文件**（nodenext 下指目录会回退解析 lib 产物 d.ts，与 src 形成双模块视图）。
+- 实际检查 = 两条纯 `bunx tsc` 串行（TS7 native）：node 侧大一统 `tsconfig.json` + client 侧大一统 `tsconfig.web.json`（paths 为各工程 paths 的合并，exclude 挡住 `components/src/form/schemastery-runtime.ts`——第三方源码不进类型程序）。`tsconfig.base.json` 的 paths 把全部 `@koishi-ce/*` 指向各自 src 的**具体 .ts 文件**（nodenext 下指目录会回退解析 lib 产物 d.ts，与 src 形成双模块视图）。
 - 各 `client/tsconfig.json` 形如 `{"extends": "...tsconfig.client", "include": ["."]}`；新增 client 工程时须同步 `tsconfig.web.json` 的 include/paths。
 
 ## 5. 测试体系

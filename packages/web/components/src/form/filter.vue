@@ -5,7 +5,7 @@
 <!--
   过滤器编辑器（全局组件 k-filter）：以「或 → 与 → 单条表达式」三层结构
   编辑 minato 查询条件——外层各组之间为 $or，组内各行之间为 $and，
-  每行由 k-filter-expr 编辑。单项时省略包裹键，空组自动折叠为 undefined，
+  每行由 filter-expr 编辑。单项时省略包裹键，空组自动折叠为 undefined，
   以保持 modelValue 的最简形态。无法按此结构解析时整体降级为提示文案。
 -->
 <template>
@@ -30,11 +30,11 @@
 
 <script lang="ts" setup>
 import { computed } from "vue";
-import KFilterExpr from "./k-filter-expr.vue";
+import KFilterExpr from "./filter-expr.vue";
 import type {
 	FilterExpr,
 	FilterOptions,
-} from "./k-filter-types";
+} from "./filter-types";
 
 /** 收窄辅助：判断值是否为普通对象（过滤表达式的载体） */
 function isRecord(
@@ -43,7 +43,7 @@ function isRecord(
 	return typeof value === "object" && value !== null;
 }
 
-/** 收窄辅助：对象值即按过滤表达式对待（k-filter-expr 的产出恒为对象形态） */
+/** 收窄辅助：对象值即按过滤表达式对待（filter-expr 的产出恒为对象形态） */
 function isFilterExpr(value: unknown): value is FilterExpr {
 	return typeof value === "object" && value !== null;
 }

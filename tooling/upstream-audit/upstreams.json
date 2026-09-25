@@ -84,7 +84,7 @@
 			{
 				"up": "packages/components",
 				"ours": "packages/web/components",
-				"note": "本仓源码在 src/（上游在 client/），文件名集合不再两两对应，须手工对位；本包为全仓唯一 UI 库——除上游 packages/components 外还承载自上游 client/src/components/ 迁入的 common/layout/chat/icons/dynamic/perms/slot/link/markdown（同步时两边上游改动都 port 到本目录）"
+				"note": "本仓源码在 src/（上游在 client/）；除上游 packages/components 外还承载自上游 client/src/components/ 迁入的 common/layout/chat/icons/dynamic/perms/slot/link/markdown（同步时两边上游改动都 port 到本目录）。2026-09-25 经用户授权豁免逐字对齐，内部已重组为域分层（core/common/layout/form/display/chat/virtual/icons，文件去 k- 前缀，markdown 拆管线与视图，两个图片查看器合流共享变换与工具条）——文件名集合不再两两对应，diff 仅作线索，按文件名语义对位、按语义评估移植（对位表见 docs/process/upstream.md）"
 			},
 			{
 				"up": "plugins/*",

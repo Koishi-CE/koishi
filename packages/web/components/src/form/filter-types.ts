@@ -3,8 +3,9 @@
 // Copyright (c) 2026-present Koishi-CE contributors.
 
 /**
- * k-filter 家族（k-filter / k-filter-expr / k-filter-button）共享的
- * 过滤表达式类型：minato 查询条件的结构化形态与宿主选项。
+ * k-filter 家族（filter.vue / filter-expr.vue / filter-button.vue 三件，
+ * 全局注册名 k-filter）共享的过滤表达式类型：minato 查询条件的结构化
+ * 形态与宿主选项。
  */
 
 /** 单条表达式的操作数：[{ $: 实体名 }, 比较值] */

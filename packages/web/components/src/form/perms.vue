@@ -28,13 +28,13 @@
 </template>
 
 <script lang="ts" setup>
-// store 由宿主启动时注入（见 ./injection.ts），此处读取服务端下发的
+// store 由宿主启动时注入（见 ../core/injection.ts），此处读取服务端下发的
 // 权限名列表；响应式追踪经同一 reactive 单例保持
 
 import type { CascaderOption } from "element-plus";
 import { computed, type PropType, type Ref } from "vue";
-import { type Schema, SchemaBase } from "./form";
-import { useStore } from "./injection";
+import { useStore } from "../core/injection";
+import { type Schema, SchemaBase } from "./index";
 
 defineProps({
 	schema: {} as PropType<Schema>,

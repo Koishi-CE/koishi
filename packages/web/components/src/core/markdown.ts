@@ -3,22 +3,21 @@
 // Copyright (c) 2026-present Koishi-CE contributors.
 
 /**
- * 内置 Markdown 渲染组件（全局注册为 k-markdown）。
+ * Markdown 消毒管线（DOMPurify 白名单 + 协议审查 + `<a>` 加固）。
+ * 渲染视图（k-markdown 组件）见 display/markdown.ts，两者原是
+ * marked-vue vendor 一体文件，按职责拆分至此。
  *
  * 来源：npm 包 `marked-vue@1.3.0`（MIT，shigma/marked-vue）的
  * `src/index.ts` 就地 vendor 进本仓。收回源码自持的理由是该包已停更
  * （最后一次提交为版本 bump，无 release），其依赖被钉死永不前进，而
  * 本仓需要能自主升级解析器与消毒器。
  *
- * 收回后解析器与消毒器均已换代（见 docs/decisions/dependency-audit.md
- * 的 §4.13 / §4.14）：
- *   1. `marked` 9.1.6 → 18.0.14（2026-09-22）——输出差异经 72 条语料
- *      对拍，逐条核对后全部为上游解析修复；
- *   2. 手写消毒层 → `dompurify` 3.4.15（2026-09-22）——上游原版是
- *      「白名单过滤 + 手写标签栈补闭合 + 手写 `<a>` 属性重建」，其中
- *      栈式补闭合与标签名归一都是自实现的近似（会留下游离闭标签、
- *      且标签名大小写不归一）。换成 DOMPurify 后这些工作交给真实 DOM
- *      解析器，两处偏差随之消失；白名单与加固语义保持等价。
+ * 收回后消毒器已换代（见 docs/decisions/dependency-audit.md §4.14）：
+ * 手写消毒层 → `dompurify` 3.4.15（2026-09-22）——上游原版是
+ * 「白名单过滤 + 手写标签栈补闭合 + 手写 `<a>` 属性重建」，其中
+ * 栈式补闭合与标签名归一都是自实现的近似（会留下游离闭标签、
+ * 且标签名大小写不归一）。换成 DOMPurify 后这些工作交给真实 DOM
+ * 解析器，两处偏差随之消失；白名单与加固语义保持等价。
  *
  * 安全边界（勿简化）：非 unsafe 模式下游走 sanitize()——标签白名单
  * + 属性收敛（仅 `<a>` 保留 href / title）+ 协议白名单（http / https /
@@ -27,8 +26,6 @@
  * 配置页的插件选择），放行 img 等于允许其借图片请求静默外发访问者信息。
  */
 import DOMPurify from "dompurify";
-import { marked } from "marked";
-import { defineComponent, h } from "vue";
 
 /**
  * 允许的标签白名单：取自 MDN 元素分类中较温和的几类
@@ -209,38 +206,3 @@ function getPurifier(): Purifier {
 export function sanitize(html: string): string {
 	return getPurifier().sanitize(html, config);
 }
-
-/** Markdown 渲染组件（k-markdown）。 */
-const KMarkdown = defineComponent({
-	props: {
-		/** Markdown 源码 */
-		source: String,
-		/** 行内模式：走行内解析，且默认包裹 span 而非 div */
-		inline: Boolean,
-		/** 自定义包裹标签（缺省为 inline ? "span" : "div"） */
-		tag: String,
-		/** 跳过消毒（仅供可信来源，如插件自带的 usage 文档） */
-		unsafe: Boolean,
-	},
-	setup(props) {
-		return () => {
-			// marked 的 parse / parseInline 均声明为「同步 | 异步」重载，
-			// 异步形态只在 options.async 为 true 时出现，本组件是同步渲染，
-			// 故统一按同步结果取用（与上游 marked-vue 的处理一致）
-			const html = (
-				props.inline
-					? marked.parseInline(props.source || "")
-					: marked.parse(props.source || "")
-			) as string;
-			return h(
-				props.tag || (props.inline ? "span" : "div"),
-				{
-					class: "markdown",
-					innerHTML: props.unsafe ? html : sanitize(html),
-				},
-			);
-		};
-	},
-});
-
-export default KMarkdown;

@@ -4,6 +4,7 @@
 > **方法**:六个分区并行扫描(builder / client+app 宿主 / components / 插件矩阵前后两半 / 横切层)+ 架构中枢人工复核 + 重磅发现逐条实证(文中所列 P1 级问题均经代码二次确认,带 `file:line` 证据)。
 > **范围**:`packages/web/*`(4 包)与 `plugins/webui/*`(19 插件)的 client 侧;server 侧仅看与 client 联动的接口面。
 > **口径**:一切以当日代码为准,本文档会过时;滞后时听代码的。
+> **时效注记(2026-09-25 晚)**:components 包经用户授权豁免上游对齐后已重组为域分层(core/common/form/display/chat/virtual/icons,文件去 k- 前缀)——本文件的 components 文件树快照、P1-11(image-viewer 与 chat/overlay 重复,已抽 use-transform + toolbar 合流)与 P2 文案 bug(redo 误标,已随合流修复)自此失效,其余结论不受影响。
 
 ## packages/web 文件树
 

@@ -5,7 +5,8 @@
 <!--
   overlay.vue：全屏图片查看器（经 router 的 global 插槽挂载）。
   打开时把图片从原位"飞入"屏幕中心（appear 阶段从原坐标过渡到居中），
-  关闭时回到原坐标；支持放大/缩小/旋转/复原，左右切换页面内相邻图片，
+  关闭时回到原坐标；底部工具条（共享组件 ViewerToolbar）提供
+  放大/缩小/旋转/复原，左右切换页面内相邻图片，
   键盘操作：方向键切换、Esc 关闭、Enter 关闭并滚动定位到原图片。
 -->
 <template>
@@ -17,23 +18,7 @@
       <span class="button right" :class="{ disabled: !siblings.next }" @click.stop="setImage(siblings.next)">
         <k-icon name="chevron-right"/>
       </span>
-      <span class="button bottom" @click.stop>
-        <el-tooltip placement="top" :content="t('overlay.zoomOut')" :offset="20">
-          <k-icon name="search-minus" @click="scale -= 0.2"/>
-        </el-tooltip>
-        <el-tooltip placement="top" :content="t('overlay.zoomIn')" :offset="20">
-          <k-icon name="search-plus" @click="scale += 0.2"/>
-        </el-tooltip>
-        <el-tooltip placement="top" :content="t('overlay.reset')" :offset="20">
-          <k-icon name="expand" @click="scale = 1, rotate = 0"/>
-        </el-tooltip>
-        <el-tooltip placement="top" :content="t('overlay.rotateLeft')" :offset="20">
-          <k-icon name="undo" @click="rotate -= 90"/>
-        </el-tooltip>
-        <el-tooltip placement="top" :content="t('overlay.rotateRight')" :offset="20">
-          <k-icon name="redo" @click="rotate += 90"/>
-        </el-tooltip>
-      </span>
+      <ViewerToolbar :ctrl="ctrl"/>
       <transition appear :duration="1" @before-appear="onBeforeAppear" @after-appear="onAfterAppear">
         <img ref="img" :style="{ transform }" :src="shared.overlayImage.src"/>
       </transition>
@@ -49,19 +34,18 @@ import {
 	ref,
 	watch,
 } from "vue";
-import { useI18n } from "vue-i18n";
-import { shared } from "./utils";
+import { shared } from "./state";
+import ViewerToolbar from "./toolbar.vue";
+import { useImageTransform } from "./use-transform";
 
-const { t } = useI18n();
+// 缩放 / 旋转的变换控制器（与容器内查看器共用同一套实现）；
+// 切换 / 关闭查看器时复位由 useImageTransform 的复位触发源承担。
+// transform 解构到顶层：嵌在 ctrl 对象里的 computed 不受模板
+// 顶层 ref 解包眷顾，直接绑 :style 会把 ref 本体传下去
+const ctrl = useImageTransform(() => shared.overlayImage);
+const { transform } = ctrl;
 
-// 用户手动调整的缩放与旋转量（复原即回到 1 / 0）
-const scale = ref(1);
-const rotate = ref(0);
 const img = ref<HTMLImageElement | null>(null);
-
-const transform = computed(() => {
-	return `scale(${scale.value}) rotate(${rotate.value}deg)`;
-});
 
 // 相邻图片：以文档中 .chat-image（chat/image.vue 渲染）的出现顺序为准；
 // 查看器未打开时不存在相邻图，prev / next 均为 undefined
@@ -96,13 +80,11 @@ const defaultScale = computed(() => {
 	);
 });
 
-// 切换/关闭查看器时重置手动缩放与旋转；
+// 切换/关闭查看器时的动画编排（缩放旋转复位由 useImageTransform 承担）：
 // 关闭（el 为空）时把图片移回原位，切换则平滑过渡到新图居中
 watch(
 	() => shared.overlayImage,
 	(el, origin) => {
-		scale.value = 1;
-		rotate.value = 0;
 		if (!el) {
 			// 关闭：飞回原图位置（img 尚未挂载时无从摆放，跳过）
 			if (img.value) moveToOrigin(img.value, origin);
@@ -201,7 +183,7 @@ function onKeyDown(ev: KeyboardEvent) {
 
 <style lang="scss">
 
-@use '../viewer-toolbar.scss' as *;
+@use './toolbar.scss' as *;
 
 .overlay-enter-from, .overlay-leave-to {
   opacity: 0;

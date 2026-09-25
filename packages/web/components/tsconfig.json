@@ -1,17 +1,17 @@
 {
 	"extends": "../../../tsconfig.client",
 	"include": ["src"],
-	"exclude": ["./src/schemastery-vue-runtime.ts"],
+	"exclude": ["./src/form/schemastery-runtime.ts"],
 	"compilerOptions": {
 		// paths 勿删：bun test 只认本文件直接声明的 paths（不跟随 extends），测试经
 		// form/index.ts 拉入 "schemastery-vue/client" 导入——该子路径在 schemastery-vue
 		// 包内不存在，无映射即 MODULE_NOT_FOUND；compiler-sfc 解析 .vue 内类型时也只认
 		// tsconfig paths（自发起文件向上找最近 tsconfig，命中的即本文件）。机理详见
-		// src/schemastery-vue-client.ts 头注释。paths 无 baseUrl 时相对本文件解析，
+		// src/form/schemastery-client.ts 头注释。paths 无 baseUrl 时相对本文件解析，
 		// 与已删除的 baseUrl: "." 等价（过时用法）。
 		"paths": {
 			"schemastery-vue/client": [
-				"./src/schemastery-vue-client.ts"
+				"./src/form/schemastery-client.ts"
 			]
 		}
 	}

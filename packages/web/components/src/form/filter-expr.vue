@@ -51,7 +51,7 @@ import type {
 	FilterExpr,
 	FilterOptions,
 	Operand,
-} from "./k-filter-types";
+} from "./filter-types";
 
 const props = defineProps<{
 	modelValue: FilterExpr | null;

@@ -4,60 +4,37 @@
 
 <!--
   图片查看器（全局组件 k-image-viewer）：在容器内居中展示单张图片，
-  底部悬浮工具条提供缩小 / 放大 / 复原 / 旋转操作。切换图片后自动复位
-  缩放与旋转，容器尺寸变化（useResizeObserver）或图片换源时重新按
-  naturalWidth / naturalHeight 等比缩放并居中。
+  底部悬浮工具条（共享组件 ViewerToolbar）提供缩小 / 放大 / 复原 / 旋转
+  操作。切换图片后自动复位缩放与旋转，容器尺寸变化（useResizeObserver）
+  或图片换源时重新按 naturalWidth / naturalHeight 等比缩放并居中。
 -->
 <template>
   <div class="image-viewer" ref="container">
     <slot></slot>
-    <span class="button bottom" @click.stop>
-      <el-tooltip placement="top" content="缩小" :offset="20">
-        <k-icon name="search-minus" @click="scale -= 0.2"/>
-      </el-tooltip>
-      <el-tooltip placement="top" content="放大" :offset="20">
-        <k-icon name="search-plus" @click="scale += 0.2"/>
-      </el-tooltip>
-      <el-tooltip placement="top" content="复原" :offset="20">
-        <k-icon name="expand" @click="scale = 1, rotate = 0"/>
-      </el-tooltip>
-      <el-tooltip placement="top" content="逆时针旋转" :offset="20">
-        <k-icon name="undo" @click="rotate -= 90"/>
-      </el-tooltip>
-      <el-tooltip placement="top" content="逆时针旋转" :offset="20">
-        <k-icon name="redo" @click="rotate += 90"/>
-      </el-tooltip>
-    </span>
+    <ViewerToolbar :ctrl="ctrl"/>
     <img v-if="src" :key="src" ref="img" :style="{ transform }" :src="src"/>
   </div>
 </template>
 
 <script lang="ts" setup>
 import { useResizeObserver } from "@vueuse/core";
-import { computed, ref, watch } from "vue";
+import { ref, watch } from "vue";
+import ViewerToolbar from "./toolbar.vue";
+import { useImageTransform } from "./use-transform";
 
 const props = defineProps<{
 	src?: string;
 }>();
 
-// 用户缩放 / 旋转量（transform 叠加在居中定位之上）
-const scale = ref(1);
-const rotate = ref(0);
+// 缩放 / 旋转的变换控制器（与全屏查看器共用同一套实现）；
+// 切换图片源时复位（不关心新旧值，仅监听变化）。
+// transform 解构到顶层：嵌在 ctrl 对象里的 computed 不受模板
+// 顶层 ref 解包眷顾，直接绑 :style 会把 ref 本体传下去
+const ctrl = useImageTransform(() => props.src);
+const { transform } = ctrl;
+
 const img = ref<HTMLImageElement | null>(null);
 const container = ref<HTMLDivElement | null>(null);
-
-const transform = computed(() => {
-	return `scale(${scale.value}) rotate(${rotate.value}deg)`;
-});
-
-// 切换图片源时复位缩放与旋转（不关心新旧值，仅监听变化）
-watch(
-	() => props.src,
-	() => {
-		scale.value = 1;
-		rotate.value = 0;
-	},
-);
 
 // 图片元素挂载 / 更新后重新定位居中
 watch(img, moveToCenter);
@@ -93,7 +70,7 @@ function moveToCenter(el: HTMLImageElement | null) {
 
 <style lang="scss">
 
-@use './viewer-toolbar.scss' as *;
+@use './toolbar.scss' as *;
 
 .image-viewer {
   position: absolute;

@@ -4,19 +4,25 @@
 
 /**
  * @koishi-ce/components 共享组件库入口（Vue 插件形态）——全仓唯一的
- * UI 组件库。汇总并装配：
+ * UI 组件库。源码按域分层组织：
  *
- * - element-plus（全量安装与全局样式）；
- * - 表单（schemastery-vue 的 k-schema 体系 + k-filter 过滤器）；
- * - 虚拟列表（virtual-list）；
- * - 基础组件（k-button / k-hint / k-tab）与布局（k-card / k-content /
- *   k-empty / k-tab-group / k-tab-item）；
- * - 插槽（k-slot）与页面链接（k-activity-link）；
- * - 图标中心（k-icon 与全部内置图标）；
- * - Markdown 渲染（k-markdown）与聊天图片查看（chat 子模块）；
- * - 通用展示件（k-comment 通知条、k-image-viewer 图片查看器）；
- * - 两个依赖宿主数据仓库的 schema 控件扩展（any+dynamic 动态表单、
- *   array+perms 权限选择器），与 form 的扩展注册同构。
+ * - `core/`：纯逻辑与基础设施（injection 注入、slot 插槽合并、markdown
+ *   消毒管线），无视图；
+ * - `common/`：基础原子件（k-button / k-hint / k-tab / k-activity-link）；
+ * - `layout/`：容器与排版（k-card / k-content / k-empty / k-tab-group /
+ *   k-tab-item）；
+ * - `form/`：表单域——schemastery-vue 双轨载体（schemastery-client /
+ *   schemastery-runtime）、schema 控件扩展（any+dynamic 动态表单、
+ *   array+perms 权限选择器、union+computed 计算属性）与 k-filter 过滤器；
+ * - `display/`：展示与视听——k-comment 通知条、k-markdown 渲染
+ *   （消费 core/markdown 消毒管线）、image-viewer 域（容器内查看器
+ *   k-image-viewer 与全屏查看器 overlay 共用 use-transform 变换状态与
+ *   toolbar 工具条）；
+ * - `chat/`：聊天图片（chat-image，点击经 image-viewer 的共享状态打开
+ *   全屏查看器）；
+ * - `virtual/`：虚拟列表（模型 / 测量 / 滚动壳）；
+ * - `icons/`：图标中心（k-icon 与全部内置图标，svg 资产在包根
+ *   `assets/icons/`）。
  *
  * 宿主 `@koishi-ce/client` 以 `export *` 二次转出本包全部公共 API
  * （历史兼容面：控制台插件统一从 client 导入）。
@@ -29,17 +35,17 @@ import Element, {
 import type { App } from "vue";
 import ChatImage from "./chat/image.vue";
 import common from "./common";
-import Dynamic from "./dynamic.vue";
+import link from "./common/link";
+import { useStore } from "./core/injection";
+import slot from "./core/slot";
+import Comment from "./display/comment.vue";
+import ImageViewer from "./display/image-viewer/viewer.vue";
+import Markdown from "./display/markdown.ts";
 import form, { SchemaBase } from "./form";
+import Dynamic from "./form/dynamic.vue";
+import Perms from "./form/perms.vue";
 import * as icons from "./icons";
-import ImageViewer from "./image-viewer.vue";
-import { useStore } from "./injection";
-import Comment from "./k-comment.vue";
 import layout from "./layout";
-import link from "./link";
-import Markdown from "./markdown.ts";
-import Perms from "./perms.vue";
-import slot from "./slot";
 import virtual from "./virtual";
 
 // 组件库的全局样式（含 element-plus 覆盖等）
@@ -55,14 +61,14 @@ export const message = ElMessage;
 /** 全局对话框（ElMessageBox） */
 export const messageBox = ElMessageBox;
 
-export { default as Overlay } from "./chat/overlay.vue";
 export * from "./common";
+export * from "./common/link";
+export * from "./core/injection";
+export * from "./core/slot";
+export { default as Overlay } from "./display/image-viewer/overlay.vue";
 export * from "./form";
 export * as icons from "./icons";
-export * from "./injection";
 export * from "./layout";
-export * from "./link";
-export * from "./slot";
 export * from "./virtual";
 export { ChatImage, Markdown };
 
@@ -74,14 +80,14 @@ export { ChatImage, Markdown };
 // cosmokit 的导出面仍经 form 链完整透出，包的公共 API 不变。
 
 // schema 控件扩展：dynamic 角色——实际 schema 由服务端按 meta.extra.name 下发，
-// 组件内再经 useStore() 读取 store.schema "水合"（见 dynamic.vue）
+// 组件内再经 useStore() 读取 store.schema "水合"（见 form/dynamic.vue）
 SchemaBase.extensions.add({
 	type: "any",
 	role: "dynamic",
 	component: Dynamic,
 });
 
-// schema 控件扩展：perms 角色——权限路径多级选择器（见 perms.vue），
+// schema 控件扩展：perms 角色——权限路径多级选择器（见 form/perms.vue），
 // 权限数据（store.permissions）未就绪时校验不过
 SchemaBase.extensions.add({
 	type: "array",

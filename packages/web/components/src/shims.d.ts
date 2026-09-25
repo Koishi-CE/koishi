@@ -6,12 +6,12 @@
  * 无法通过本仓库的超严格编译配置(verbatimModuleSyntax / noUncheckedIndexedAccess
  * 等)进入类型程序。浏览器端代码统一从 "schemastery-vue/client" 导入:
  * 该子路径在包内并不存在,类型由本 ambient 声明提供;运行时由构建器别名
- * 映射到同目录 schemastery-vue-runtime.ts(补齐真实包缺失的 SchemaBase
+ * 映射到 form/schemastery-runtime.ts(补齐真实包缺失的 SchemaBase
  * 具名导出,见 packages/web/builder/src/index.ts 的 resolve.alias)。
  *
  * 双轨说明:vue 的 compiler-sfc 解析 .vue 内 defineProps 等类型时走
  * TypeScript 模块解析,只认 tsconfig paths 指向的真实文件,既不认 vite
- * 别名也不认本 ambient 声明——故同一套实体在 schemastery-vue-client.ts
+ * 别名也不认本 ambient 声明——故同一套实体在 form/schemastery-client.ts
  * (真实模块,供 compiler-sfc 经根 tsconfig.client.json 的 paths 解析)
  * 有一份镜像,两处必须同步修改。注意 declare module 内的相对导出不可
  * 解析,只能内联声明;部分插件 client tsconfig 自带 paths 会整体覆盖
@@ -29,8 +29,8 @@ declare module "schemastery-vue/client" {
 	import type { App, Component } from "vue";
 
 	export { Schema } from "@koishi-ce/koishi";
-	// 对齐运行时载体（schemastery-vue-runtime.ts → schemastery-vue 源码）的
-	// `export * from 'cosmokit'` 透传（与 schemastery-vue-client.ts 镜像同步，
+	// 对齐运行时载体（form/schemastery-runtime.ts → schemastery-vue 源码）的
+	// `export * from 'cosmokit'` 透传（与 form/schemastery-client.ts 镜像同步，
 	// 由该文件统一说明缘由）
 	export * from "cosmokit";
 
@@ -54,7 +54,7 @@ declare module "schemastery-vue/client" {
 
 	export default SchemaBase;
 	// SchemaBase 同占 value 与 type 两面，消费方按值调用它，故必须写成值导出
-	// （与运行时镜像 schemastery-vue-client.ts 保持一致；biome.json 已对
+	// （与运行时镜像 form/schemastery-client.ts 保持一致；biome.json 已对
 	// 本文件关掉 useExportType，防止自动修复把它改成 export type）
 	export { SchemaBase, SchemaBase as form };
 
@@ -83,7 +83,7 @@ declare module "schemastery-vue/client" {
 	/**
 	 * 多语言文案取值钩子（schemastery-vue 源码 utils.ts 的同名导出）：
 	 * 返回的函数把 string | Dict<string> 形态的文案按当前语言链解析为纯文本。
-	 * 与 schemastery-vue-client.ts 垫片镜像同步。
+	 * 与 form/schemastery-client.ts 垫片镜像同步。
 	 */
 	export function useI18nText(): (
 		message?: string | { [key: string]: string },

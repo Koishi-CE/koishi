@@ -3,9 +3,9 @@
 // Copyright (c) 2026-present Koishi-CE contributors.
 
 import type { App } from "vue";
-import Button from "./k-button.vue";
-import Hint from "./k-hint.vue";
-import Tab from "./k-tab.vue";
+import Button from "./button.vue";
+import Hint from "./hint.vue";
+import Tab from "./tab.vue";
 
 /** 注册公共基础组件（k-button / k-hint / k-tab） */
 export default function (app: App) {

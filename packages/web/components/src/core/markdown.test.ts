@@ -3,7 +3,8 @@
 // Copyright (c) 2026-present Koishi-CE contributors.
 
 /**
- * 内置 Markdown 组件（`client/components/markdown.ts`）的行为回归测试。
+ * Markdown 渲染组件与消毒管线（`core/markdown.ts` + `display/markdown.ts`）
+ * 的行为回归测试。
  *
  * 该组件是 npm 包 `marked-vue@1.3.0` 的就地 vendor 版。本文件把它的对外
  * 可观测行为逐条钉死，使后续替换解析器（marked）与消毒器时能精确看出
@@ -19,7 +20,8 @@
  */
 import { describe, expect, it } from "bun:test";
 import { JSDOM } from "jsdom";
-import KMarkdown, { sanitize } from "./markdown.ts";
+import KMarkdown from "../display/markdown.ts";
+import { sanitize } from "./markdown.ts";
 
 // DOMPurify 是 DOM-only 库：它需要真实 DOM 才能工作。浏览器下由宿主提供
 // window，测试下由这里的 jsdom 提供。组件内对消毒实例是惰性绑定，因此注入

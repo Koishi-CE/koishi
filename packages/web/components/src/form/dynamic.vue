@@ -42,8 +42,8 @@
 
 <script setup lang="ts">
 import { computed, type PropType } from "vue";
-import { Schema, SchemaBase } from "./form";
-import { useStore } from "./injection";
+import { useStore } from "../core/injection";
+import { Schema, SchemaBase } from "./index";
 
 const props = defineProps({
 	schema: {} as PropType<Schema>,
@@ -56,7 +56,7 @@ const props = defineProps({
 
 defineEmits(["update:modelValue"]);
 
-// store 由宿主启动时注入（见 ./injection.ts），此处读取服务端下发的
+// store 由宿主启动时注入（见 ../core/injection.ts），此处读取服务端下发的
 // schema 仓库；响应式追踪经同一 reactive 单例保持
 const store = useStore();
 
