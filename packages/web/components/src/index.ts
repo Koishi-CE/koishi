@@ -44,6 +44,9 @@ import virtual from "./virtual";
 
 // 组件库的全局样式（含 element-plus 覆盖等）
 import "./index.scss";
+// element-plus 全量样式：组件库装配 EP 的归口，须与下方 install 的
+// app.use(Element) 同住一处
+import "element-plus/dist/index.css";
 
 /** 全局 loading 遮罩服务（ElLoading.service） */
 export const loading = ElLoading.service;
