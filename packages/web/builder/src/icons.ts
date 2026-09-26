@@ -19,6 +19,24 @@
 import { createRequire } from "node:module";
 import { dirname, resolve } from "node:path";
 
+/**
+ * 剥除 svg 根元素之前的注释（许可头、版权头等）。
+ *
+ * 这些注释位于 <svg> 之前，unplugin-icons 的 vue3 编译器调
+ * compileTemplate 时未透传 comments 选项，注释去留随构建进程的
+ * NODE_ENV 漂移：development 环境下注释被保留进产物，图标组件被
+ * 编译成「注释 + svg」的多根 fragment。Vue 运行时对这种 fragment 的
+ * attribute 透传修复（getChildRoot，DEV_ROOT_FRAGMENT）仅在 dev
+ * 运行时生效，prod 运行时外部传入的 class 落不到 svg 上，图标
+ * 回落 .k-icon { height: 1em } 的 1em 尺寸（侧栏图标变小）。
+ * 在 loader 层剥除后产物恒为单根，与编译模式无关。
+ */
+export function stripLeadingSvgComments(
+	svg: string,
+): string {
+	return svg.replace(/^(?:\s|<!--[\s\S]*?-->)*/, "");
+}
+
 /** 创建图标编译插件；返回单个 vite 插件，调用方直接并入 plugins 数组 */
 export async function iconsPlugin() {
 	// components 的 exports 暴露 ./package.json，借此定位包根
@@ -37,8 +55,11 @@ export async function iconsPlugin() {
 	return Icons({
 		compiler: "vue3",
 		customCollections: {
-			// 集合名 k 是本仓集中图标资产的命名空间
-			k: FileSystemIconLoader(dir),
+			// 集合名 k 是本仓集中图标资产的命名空间；transform 剥根元素
+			// 前注释保证产物恒为单根（机理见 stripLeadingSvgComments）
+			k: FileSystemIconLoader(dir, (svg) =>
+				stripLeadingSvgComments(svg),
+			),
 		},
 		// 现有尺寸行为依赖「svg 不带固定宽高 + .k-icon 样式的 height: 1em」
 		// （非方形图标宽度按 viewBox 比例展开）；unplugin-icons 默认注入
