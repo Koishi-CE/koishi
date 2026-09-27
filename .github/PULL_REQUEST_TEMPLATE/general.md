@@ -1,6 +1,10 @@
-# PR 说明
+# SPDX-License-Identifier: MIT
+# Copyright (c) 2026-present Koishi-CE contributors.
+
+# PR 说明（通用）
 
 - **本仓一切改动都走 PR，禁止直推 `main`**：PR 由维护者合并，AI / agent 产出的 PR 不自审自并。规矩见根 `AGENTS.md` 的 git 提交流程节与 `docs/guides/development.md` 的 PR 工作流节。
+- 本模板用于**跨领域 / 一次性**改动；域内改动请选对应领域的模板（修复 / 特性 / 文档 / 依赖与上游 / 重构与性能 / 发布）。
 - 标题与正文一律简体中文，标题用提交信息风格（`fix(core): ……`）。
 - 空章节写「无」，不要删标题——便于对账。
 

@@ -47,7 +47,7 @@ flowchart LR
 
 | 文档 | 内容速览 | 何时读 |
 |---|---|---|
-| [guides/development.md](guides/development.md) | PR 工作流 · 环境 · 命令 · 门禁 · 构建布局 · 编码约定 · 测试 · 已知坑 · 沙盒实例 | 日常开发、开 PR、跑门禁前 |
+| [guides/development.md](guides/development.md) | PR 工作流与模板 · 环境 · 命令 · 门禁 · 构建布局 · 编码约定 · 测试 · 已知坑 · 沙盒实例 | 日常开发、开 PR、跑门禁前 |
 | [reference/architecture.md](reference/architecture.md) | 包清单 · 依赖纪律 · 构建 / 类型 / 测试体系 · 许可证分区 | 改包结构 / 依赖 / 构建链前 |
 | [process/release.md](process/release.md) | changesets · `bun run release` 发布链 · 事故铁律 | 发版前 |
 | [process/upstream.md](process/upstream.md) | 上游基线 · 目录映射表 · port 流程（英文） | 同步上游改动时 |

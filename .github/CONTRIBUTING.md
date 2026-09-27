@@ -25,7 +25,7 @@ bun test         # 全量测试
 
 1. 从最新 `main` 切出改动分支：`git switch -c <type>/<范围>`（`type` 取 `feat` / `fix` / `docs` / `chore` / `build` / `refactor`）。
 2. 提交到该分支，提交信息用简体中文，格式参考历史：`feat:` / `fix:` / `docs:` / `chore:` / `build:`，可带 scope（如 `fix(core):`）。
-3. 推送分支并开 PR（`git push -u origin <分支>` → `gh pr create`），正文按 [PULL_REQUEST_TEMPLATE.md](./.github/PULL_REQUEST_TEMPLATE.md)：改动说明、验证证据、changeset 情况、影响面。**禁止 `git push origin main` 与对 `main` 的强推。**
+3. 推送分支并开 PR（`git push -u origin <分支>` → `gh pr create`），正文按 `.github/PULL_REQUEST_TEMPLATE/` 下对应领域的模板填写（修复 / 特性 / 文档 / 依赖与上游 / 重构与性能 / 发布，兜底「通用」；清单与 CLI 用法见该目录 `config.yml`）。**禁止 `git push origin main` 与对 `main` 的强推。**
 4. 等 CI 三个 job 全绿、评审通过后 squash merge；合并后同步 `main` 并删除改动分支。AI / agent 产出的 PR 由维护者合并，工具不自行合并。
 
 唯一的例外是发布链的版本提交：`bun run release pipeline` 会把版本提交（含 `bun.lock`）直接推送到 `main`（见 [docs/process/release.md](./docs/process/release.md)），该行为是发布链既定设计，不构成直推 `main` 的许可。

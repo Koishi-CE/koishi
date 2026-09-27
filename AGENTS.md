@@ -31,7 +31,7 @@
 
 ```bash
 bun install                     # 安装依赖（Bun workspaces，产出 bun.lock）
-bun run check                   # 全量门禁（九段，构成见 docs/guides/development.md §4）
+bun run check                   # 全量门禁（十段，构成见 docs/guides/development.md §4）
 bun run lint                    # biome check .（格式 + lint 唯一权威）
 bun run lint:client             # eslint 仅查 *.vue（biome 只解析 .vue 的 script，模板语义归 eslint）
 bun run typecheck               # TS7 类型检查 = 两条 bunx tsc（node 侧 + client 侧大一统串行）
@@ -79,7 +79,7 @@ bun packages/web/builder/src/bin.ts build <插件目录>  # 单个 webui 插件�
 1. 从最新 `main` 切出改动分支：`git switch -c <type>/<范围>`（`type` 取 `feat` / `fix` / `docs` / `chore` / `build` / `refactor`，如 `docs/pr-only-workflow`）。
 2. 先跑 `bun run check`（必要时先 `bun run format`）确保通过；涉及构建改动加跑 `bun run build` 与 `bun test`。
 3. 在分支上提交（可小步多次）：`git add -A` 后提交，提交信息用简体中文，格式参考现有历史（`feat:` / `fix:` / `docs:` / `chore:` / `build:`，可带 scope 如 `fix(core):`）。
-4. 推分支并开 PR：`git push -u origin <分支>` → `gh pr create`，正文按 `.github/PULL_REQUEST_TEMPLATE.md`（改动说明 + 验证证据）。**禁止 `git push origin main`，禁止对 `main` 强推。**
+4. 推分支并开 PR：`git push -u origin <分支>` → `gh pr create --template "<领域模板名>"`，正文按 `.github/PULL_REQUEST_TEMPLATE/` 下对应领域的模板（修复 / 特性 / 文档 / 依赖与上游 / 重构与性能 / 发布，兜底「通用」，清单见该目录 `config.yml`）。**禁止 `git push origin main`，禁止对 `main` 强推。**
 5. 等 CI 三个 job（`gate` / `client` / `fallow`）全绿后停在 ready 状态，把 PR 链接与验证证据汇报给用户，由用户合并；**AI 不自行合并**（用户明确指示合并时按指示办）。
 6. 例外只有一条：`bun run release pipeline` 的版本提交与推送 `main`（见 `docs/process/release.md`）——那是发布链的既定行为，不构成「人可以直推 main」的许可。
 7. PR 合并后同步本地产物：`git switch main` → `git pull --ff-only` → 删除已合并的本地 / 远程分支，再汇报最终状态。

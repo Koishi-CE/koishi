@@ -21,14 +21,17 @@
 
 ## checks/ — 门禁检查脚本
 
-四个零依赖脚本，均已并入 `bun run check`（门禁九段的构成见 [开发手册](../docs/guides/development.md) §4）：
+七个零依赖脚本，均已并入 `bun run check`（门禁十段的构成见 [开发手册](../docs/guides/development.md) §4）：
 
 | 脚本 | script 名 | 检查内容 |
 | --- | --- | --- |
 | locales.ts | `check:locales` | 词典键对齐（以 zh-CN 为基准）/ 语种齐全 / 假翻译（非中文语种的叶值仍为中文） |
-| docs-links.ts | `check:docs-links` | docs 与根部门面 markdown 的相对链接与锚点存活 |
+| docs-links.ts | `check:docs-links` | docs、根部门面与 `.github`（含 PR 模板目录）markdown 的相对链接与锚点存活 |
 | vue-types.ts | `check:vue-types` | vue-tsc 影子基线闸门：.vue 全量类型错误只拦新增（`--update` 重拍同目录基线 JSON） |
+| assertions.ts | `check:assertions` | 双重断言（`as unknown as`）基线闸门：非测试源文件只拦新增（`--update` 重拍基线） |
 | packages.ts | `check:packages` | 包名纪律（一律 `@koishi-ce/*`）/ 元数据统一 / ESM-only / 依赖方向 |
+| console-wiring.ts | `check:console-wiring` | console 类型源头共享的接线与 paths 层对账 |
+| pr-templates.ts | `check:pr-templates` | PR 模板与 `.github/PULL_REQUEST_TEMPLATE/config.yml` 清单对账（孤儿文件 / 字段形态） |
 
 发现任何问题退出码置 1；具体规则与豁免清单见各脚本头部注释。
 

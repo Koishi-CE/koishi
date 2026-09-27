@@ -1,0 +1,39 @@
+# SPDX-License-Identifier: MIT
+# Copyright (c) 2026-present Koishi-CE contributors.
+
+# PR 模板选择器（config.yml）。本仓库 PR 模板按改动领域拆分，全部位于本目录，
+# 开 PR 时从下拉里选一个；也可用 CLI 指定（名称照抄下方 name 字段）：
+#
+#   gh pr create --template "修复 (bug fix)"
+#
+# blank_issues_enabled: false 使「不选模板」这条路消失——「通用」是兜底，
+# 域内改动请选对应领域的模板（修复 / 特性 / 文档 / 依赖与上游 / 重构与性能 / 发布）。
+#
+# 新增或改名模板时三处同步：本文件、对应 .md、以及 CONTRIBUTING「提交约定」与
+# docs/guides/development.md §2 里「PR 正文按模板」的说法。正文口径与硬性约束
+# 一律以根 AGENTS.md 为准，模板只负责把该领域必须交代的信息问全。
+blank_issues_enabled: false
+
+# 模板清单（下拉顺序即此顺序；「通用」放最后作兜底）。
+templates:
+  - name: "修复 (bug fix)"
+    description: "缺陷修复：现象与复现 → 根因 → 修法 → 回归用例"
+    body: bug_fix.md
+  - name: "特性 (feature)"
+    description: "新能力或功能增强：接口变化 → 实现要点 → 用例与词典 → changeset"
+    body: feature.md
+  - name: "文档 (docs)"
+    description: "文档与手册改动：改动清单 → 依据 → 链接与锚点检查"
+    body: docs.md
+  - name: "依赖与上游 (deps / upstream)"
+    description: "依赖升版、替换、上下游同步 port：冻结线复核 → 对账与等价性证据"
+    body: dependencies_upstream.md
+  - name: "重构与性能 (refactor / perf)"
+    description: "行为零变化的结构调整，或行为等价的性能优化：不变论证 → 指标对照"
+    body: refactor_perf.md
+  - name: "发布 (release)"
+    description: "发布链、changesets 配置与包发布面字段：发布面影响 → 打包预演"
+    body: release.md
+  - name: "通用 (general)"
+    description: "跨领域或一次性改动；域内改动请优先选对应领域的模板"
+    body: general.md
