@@ -120,7 +120,7 @@ remote: - Changes must be made through a pull request.
 remote: - Commits must have verified signatures.
 ```
 
-因此推送改用 **GitHub App 的 installation token**：仓库装一个只授 `Contents: Read and write` 权限的 App（Webhook 关闭、仅安装到本仓），把它加入 ruleset 的 bypass 名单，App ID 与私钥存成仓库 secret `APP_ID` / `APP_PRIVATE_KEY`，由 `actions/create-github-app-token@v3` 在推送前换取。
+因此推送改用 **GitHub App 的 installation token**：仓库装一个只授 `Contents: Read and write` 权限的 App（Webhook 关闭、仅安装到本仓），**Client ID** 存成仓库 variable `APP_CLIENT_ID`、私钥存成 secret `APP_PRIVATE_KEY`，由 `actions/create-github-app-token@v3` 在推送前换取。取 token 用 `client-id` 输入而非 `app-id`——后者在 v3 的 `action.yml` 里已带 `deprecationMessage: "Use 'client-id' instead."`（README 亦写明 legacy `app-id` 仍被接受但推荐 `client-id`）；Client ID 不是秘密（它本就出现在 App 的安装 URL 里），故按官方示例放 repository variable 而非 secret。
 
 bypass 模式必须选让规则对该 actor **不生效**的那一档：`Always` 或 `exempt`（`Pull requests only` 对直推无效）。官方 API 对 `exempt` 的定义是「规则不会为该 actor 运行，也不产生 bypass 审计条目」（原文：When `bypass_mode` is `exempt`, rules will not be run for that actor and a bypass audit entry will not be created.）；自 GitHub 2025-09-10 的 ruleset exemptions 更新起，它是**给机器人用的推荐模式**——同样免于规则，但审计日志里不会留下 bypass 事件（`Always` 会）。本仓当前用的就是 `exempt`。
 
