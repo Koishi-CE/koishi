@@ -69,6 +69,8 @@ npm 的暂存发布（staged publishing）会在版本公开前插入人工批�
 
 触发为 `push: main` 且 `paths: ['.changeset/**']`（只有携带 changeset 的合并才值得跑），外加 `workflow_dispatch` 作补发 / 重跑逃生舱；`concurrency: group: release` 且不取消进行中的运行，避免两个运行同时消费 changeset 撞版本号。
 
+`workflow_dispatch` 另带一个 `skip-version` 布尔输入：changeset 一旦被消费，重跑就再也走不到 publish（version 环无条目可消费 → `changed=false` → publish 被跳过），此时置 `skip-version=true` 可跳过 version 环、直接构建当前 main 并交给 publish，由 registry 比对决定哪些版本真的需要发（已发布的自动跳过）。它不改变审批语义——publish 依旧卡在 `environment: release`。
+
 | job | 职责 | 权限 |
 | --- | --- | --- |
 | `prepare` | `release version --commit` → `release build` → `release test` → 用 GitHub App token 推送版本提交 → 打包 artifact | `contents: write`，**无** `id-token` |
@@ -81,6 +83,7 @@ npm 的暂存发布（staged publishing）会在版本公开前插入人工批�
 - **推送凭证是 GitHub App 的 installation token**：默认 `GITHUB_TOKEN` 推 `main` 会被 ruleset 以 `GH013` 拒绝，且它**无法被加入 ruleset 的 bypass 名单**（GitHub 的安全限制）；能进该名单的只有 GitHub App，模式还必须是 `Always` 或 `exempt`（`Pull requests only` 对直推无效）。仓库侧配置、最小暴露清单与三个必须知道的语义见 §7.5。
 - **`publish` 不跑 `bun install`**：`release publish` 只用 `node:` 内建模块与 npm CLI，不需要 `node_modules`；而 install 与构建是构建期代码执行的主要入口，不该出现在持 OIDC token 的 job 里。构建期可执行的代码（`package.json` 脚本、`tsdown.config.ts`、各插件 `build/client.ts`）若与 token 同处一个 job，一处被改坏即可发布这 53 个包的任意版本。附带说明：Bun 本身不执行依赖的 postinstall（`bun install --help` 原文 "dependency scripts are never run"，根 `package.json` 亦无 `trustedDependencies`），该层默认即关闭，此处仍按最小权限切分。
 - **版本先落 main、发布待审批**：`prepare` 不挂 environment，故版本提交与 CHANGELOG 会在构建测试通过后立即进 main，而包要等 `environment: release` 的批准才真正上线。若某次审批长期不点，main 的版本会暂时领先 npm——`release publish` 的 registry 比对（`filterDowngrades`）能安全处理这种中间态，但排查「版本号对不上」时要知道它的存在。
+- **publish 升级 npm 必须走用户级 prefix**：runner 的 npm 是系统级安装（`/usr/local`，属 root），`npm install -g npm@11` 会因写 `/usr/local/share/man/man5` 而 EACCES——2026-09-27 首次跑通 `prepare` 后 publish 即死在这一步（run 36331787266，此前 `publish` 从未真正执行过）。现改为 `npm install -g npm@11 --prefix "$HOME/.npm-global"` 并把该 bin 写进 `GITHUB_PATH`（后者只对后续步骤生效，故安装与写 PATH 必须在同一步）。
 
 ### 7.2 OIDC 的信任边界（改本文件前必读）
 
@@ -94,7 +97,7 @@ npm 的信任配置把 `repository` / `workflow_ref.file` / `environment` 三个
 ### 7.3 与本地链的关系
 
 - 本地 `bun run release pipeline` 仍可用（走本机 2FA 认证），适合演练与排查；**日常发布不再需要它**。
-- 补发 / 重发坏版本：优先 `workflow_dispatch` 重跑 CI 链；确实要在本地补发时仍走 `bun run release publish --only <包名>`。
+- 补发 / 重发坏版本：优先 `workflow_dispatch` 重跑 CI 链——**changeset 已被消费时必须置 `skip-version=true`**（见 §7.1），否则 `prepare` 会 `changed=false`、publish 直接跳过；确实要在本地补发时仍走 `bun run release publish --only <包名>`。
 - OIDC 模式下 `npm whoami` / `npm owner ls` 必然失败（没有登录态——npm 换到的是**包级**短时 token，见 npm CLI 的 `lib/utils/oidc.js`），故 `release` 工具检测到 `ACTIONS_ID_TOKEN_REQUEST_URL` 时自动跳过登录与所有权预检；本地路径行为不变。
 - **npm CLI 需 ≥ 11.15.0**：`permissions` 字段（由 `--allow-publish` 生成）自该版本起才随 trust 请求下发，更早版本会被 registry 以 `400 Bad Request` 拒绝（症状极具迷惑性：读取现状全部成功、逐包创建全部 E400）。CI 里由 workflow 显式 `npm install -g npm@11` 保证，本地开发口径为 11.20.0。
 - 发布产物自动带 provenance（npm 侧 OIDC 成功即自动开启），下游可核验来源 commit 与 workflow。
