@@ -182,7 +182,7 @@
     },
     "packages/web/builder": {
       "name": "@koishi-ce/console-builder",
-      "version": "1.0.3",
+      "version": "1.0.4",
       "bin": {
         "koishi-console": "lib/bin.mjs",
       },
@@ -236,7 +236,6 @@
       },
       "devDependencies": {
         "@koishi-ce/koishi": "workspace:*",
-        "@types/jsdom": "^30.0.0",
         "jsdom": "^30.1.1",
       },
       "peerDependencies": {
