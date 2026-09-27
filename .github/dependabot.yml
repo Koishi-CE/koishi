@@ -1,0 +1,85 @@
+# SPDX-License-Identifier: MIT
+# Copyright (c) 2026-present Koishi-CE contributors.
+
+# Dependabot 依赖更新配置
+#
+# 定位：只做「非结构性」的依赖漂移收敛（minor / patch 与安全更新）。
+# 结构性升版（major）一律走人工审计——判据与现势清单见
+# docs/decisions/dependency-audit.md，cordis 生态的跳代时机见
+# docs/decisions/upgrade-plan.md 的 Phase 5 节。
+#
+# 冻结线由 ignore 显式屏蔽。这些包的版本是刻意选择而非升级欠账，
+# 交给机器人按 semver 漂移会直接破坏运行时契约：
+#   - cordis / minato / @minatojs/* / @cordisjs/* / @satorijs/* /
+#     cosmokit / @cordiverse/*：3.x 内洽线，跳 4.x 会引入双 DI 容器
+#     （upgrade-plan Phase 5 已实证被 @satorijs/core 阻塞）
+#   - @koishijs/*：上游生态，随上游同步而非 npm 版本漂移
+#   - @koishi-ce/*：本仓自发布的包，peer ^1.0.0 / dependency workspace:*
+#     是防 Bun 自动装官方包的解析面（AGENTS.md 硬性约束 1-2），非升级对象
+#   - typescript / @typescript/native：npm: alias 形态的 TS 双版本载体，
+#     alias 左侧才是真包名，Dependabot 的 alias 重写会拆掉整条类型检查链
+#
+# Bun 侧只配根目录一条：Dependabot 会沿根 package.json 的 workspaces
+# 字段递归发现全部 workspace 包，同一依赖只开一个 PR。若实际只扫到根
+# manifest（workspace 包未被覆盖），再按目录逐条补配。
+#
+# 已知上游缺陷：本仓 bun.lock 是 lockfileVersion 2（Bun 1.4.2 写入），
+# 而 dependabot-core 的 updater 镜像内 Bun 版本不跟随仓库 packageManager
+# （dependabot-core#15897），会把 v2 锁文件静默降级重写（#15848），
+# 使 PR diff 被整份锁文件重排淹没、真实依赖变更不可评审。CI 的 gate job
+# 有仅对 Dependabot PR 生效的锁文件格式守门 step 兜底。
+
+version: 2
+updates:
+  # ---- Bun workspaces（根一条覆盖全部包）----
+  - package-ecosystem: "bun"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "09:00"
+      timezone: "Asia/Shanghai"
+    open-pull-requests-limit: 5
+    commit-message:
+      prefix: "chore(deps)"
+      prefix-development: "chore(deps-dev)"
+    labels:
+      - "范围:工具链与构建"
+    assignees:
+      - "Oppenheymu"
+    ignore:
+      # ① cordis 生态 3.x 内洽冻结线
+      - dependency-name: "cordis"
+      - dependency-name: "minato"
+      - dependency-name: "@minatojs/*"
+      - dependency-name: "@cordisjs/*"
+      - dependency-name: "@cordiverse/*"
+      - dependency-name: "@satorijs/*"
+      - dependency-name: "cosmokit"
+      # ② 上游 koishi 生态（含全仓唯一上游名导入例外 plugin-server-proxy）
+      - dependency-name: "@koishijs/*"
+      # ③ CE 自发布包的内部互引（peer 与 workspace:* 声明面）
+      - dependency-name: "@koishi-ce/*"
+      # ④ npm: alias 形态的依赖（TS 双版本策略载体）
+      - dependency-name: "typescript"
+      - dependency-name: "@typescript/native"
+      # ⑤ 全局：major 升版一律人工评估
+      #    （ignore 不作用于 security updates，安全更新仍会照常提出）
+      - dependency-name: "*"
+        update-types: ["version-update:semver-major"]
+
+  # ---- GitHub Actions ----
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "09:00"
+      timezone: "Asia/Shanghai"
+    open-pull-requests-limit: 3
+    commit-message:
+      prefix: "ci(deps)"
+    labels:
+      - "范围:工具链与构建"
+    assignees:
+      - "Oppenheymu"

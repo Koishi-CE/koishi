@@ -208,3 +208,24 @@ bun run sandbox --start          # 生成完成后立即在本进程前台拉起
 - 沙盒内启动：`cd <沙盒>` 后执行 `bun start`（两步分开写——PowerShell 5.x 不支持 `&&` 连写；生成时加 `--start` 可由工具直接拉起，免手动 cd）。scripts.start 直指 cli 产物 `node_modules/@koishi-ce/koishi/lib/cli/index.mjs`——链接模式的 .bin 非 bun install 产物（win32 需 .exe stub，手工伪造不可靠，`bun koishi` / `bunx koishi` 均不认手工放置的脚本，后者还会自动从 npm 拉官方 koishi 包），两模式统一直指文件路径。
 - 沙盒内经市场装插件会触发 bun install 重建 node_modules，可能清掉手工 junction——重跑 `bun run sandbox` 秒级补链（幂等：已有且指向一致的链接全部复用）。
 - 沙盒 package.json 预声明 plugin-http / plugin-proxy-agent / plugin-server 三个默认插件依赖：loader 启动时的 manifest 迁移（migrateManifest，按进程 cwd 读 package.json）发现宿主未声明会自动补挂插件键并改写 koishi.yml，与模板 yml 的同名键撞 duplicate plugin 警告。
+
+## 10. 依赖更新（Dependabot）
+
+依赖漂移由 `.github/dependabot.yml` 驱动，两条 update 条目：`bun`（根目录一条，沿根 `package.json` 的 `workspaces` 字段递归覆盖全部 workspace 包，同一依赖只开一个 PR）与 `github-actions`。每周一 09:00（Asia/Shanghai）开 PR，上限 bun 侧 5 个 / Actions 侧 3 个。
+
+**分工：Dependabot 只做非结构性升版**（minor / patch 与安全更新），major 一律人工评估——现势清单与判据见 [dependency-audit.md](../decisions/dependency-audit.md)，cordis 生态的跳代时机见 [upgrade-plan.md](../decisions/upgrade-plan.md) 的 Phase 5 节。`ignore` 清单就是第 5 节的依赖纪律在配置里的投影，改配置前先读：
+
+| 模式 | 理由 |
+|---|---|
+| `cordis` / `minato` / `@minatojs/*` / `@cordisjs/*` / `@satorijs/*` / `cosmokit` / `@cordiverse/*` | 3.x 内洽冻结线：跳线会引入双 DI 容器（Phase 5 已实证被 @satorijs/core 阻塞） |
+| `@koishijs/*` | 上游生态，随上游同步而非按 npm 版本漂移 |
+| `@koishi-ce/*` | 本仓自发布包，peer `^1.0.0` 与 `workspace:*` 是刻意设计的解析面（AGENTS.md 硬性约束 1-2），非升级对象 |
+| `typescript` / `@typescript/native` | `npm:` alias 形态的 TS 双版本载体，alias 左侧才是真包名，重写会拆掉类型检查链 |
+| `*` + `version-update:semver-major` | 全局：major 走人工审计（`ignore` 不作用于 security updates，安全更新照常提出） |
+
+**两个必须知道的坑**：
+
+1. **锁文件会被降级重写**：dependabot-core 的 bun updater 镜像内 Bun 版本不跟随仓库 `packageManager`（dependabot-core#15897），会把 `lockfileVersion: 2` 的 `bun.lock` 静默降级重写（#15848），后果是 PR diff 被整份锁文件重排淹没、真实依赖变更不可评审。CI 的 gate job 有一段**仅对 Dependabot PR 生效**（判据 `github.actor`）的格式守门 step；它红了就用仓库钉定的 Bun 重新 `bun install` 后再提交，常规 PR 完全不受该 step 影响。
+2. **Dependabot PR 的 token 是只读的**：GitHub 把 Dependabot 触发的 workflow 按 fork 处理——secrets 不可用、`GITHUB_TOKEN` 无写权限。故两处配套：triage 的 labeler job 显式跳过 Dependabot PR（否则其 `pull-requests: write` 被降级后必然失败），PR 标签改由 `dependabot.yml` 的 `labels` 字段直接指定；Codecov 上传在 Dependabot PR 上降级为 tokenless 或直接失败（`fail_ci_if_error` 默认 false，不影响门禁结论）。
+
+**启用前提（仓库设置，非代码）**：`dependabot.yml` 存在于默认分支即自动生效 version updates；**Dependabot alerts 与 security updates 须在仓库 Settings → Code security 里手动开启**，否则上表最后一行「安全更新照常提出」不成立。

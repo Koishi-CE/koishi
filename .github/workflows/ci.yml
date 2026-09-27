@@ -5,6 +5,10 @@
 #          （test 附带 lcov 覆盖率产出，随后经 codecov-action 上传，驱动
 #            Codecov 在 PR 上的覆盖率评论与 status check；未配 CODECOV_TOKEN
 #            secret 时公开仓自动降级 tokenless 上传，fork PR 出不了评论属预期）
+#          （Dependabot PR 的 workflow 按 fork 处理：secrets 不可用、
+#            GITHUB_TOKEN 只读，覆盖率上传同样降级；gate 内另有仅对
+#            Dependabot PR 生效的锁文件格式守门 step，动机与上游缺陷见
+#            .github/dependabot.yml 头部注释）
 #          （build 必须前置于 check：tsconfig.web.json 的部分 paths 指向各包
 #            lib/index.d.ts 产物，全新环境无 lib 时 web 侧 tsc 直接 TS2307，
 #            已实测；本地因 lib 常在而感知不到该顺序依赖）
@@ -49,6 +53,24 @@ jobs:
     steps:
       - uses: actions/checkout@v5
       - uses: oven-sh/setup-bun@v2
+      # 锁文件格式守门（仅 Dependabot PR）：其 updater 镜像内的 Bun 版本
+      # 不跟随仓库 packageManager，会把 lockfileVersion 2 的 bun.lock 静默
+      # 降级重写（dependabot-core#15848 / #15897），使 PR diff 被整份锁文件
+      # 重排淹没、真实依赖变更不可评审。常规 PR 零影响；Bun 升级使基线
+      # 前移时同步调整下方阈值。
+      - name: 锁文件格式守门（仅 Dependabot PR）
+        if: github.actor == 'dependabot[bot]'
+        run: |
+          bun -e '
+            const text = await Bun.file("bun.lock").text();
+            const match = /"lockfileVersion":\s*(\d+)/.exec(text);
+            const version = match ? Number(match[1]) : 0;
+            console.log(`bun.lock lockfileVersion=${match ? version : "<未找到>"}`);
+            if (version < 2) {
+              console.log("::error::bun.lock 的 lockfileVersion 低于基线 2，疑似被 Dependabot 的旧版 Bun 降级重写；请用仓库钉定的 Bun（根 package.json 的 packageManager）重新执行 bun install 后提交。");
+              process.exit(1);
+            }
+          '
       # CI 环境下 bun install 自动 frozen-lockfile；@parcel/watcher 的
       # postinstall 拦截提示属预期（平台预编译包就位即可用）
       - run: bun install

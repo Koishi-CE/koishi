@@ -10,7 +10,11 @@
 #   assignee 写死 Oppenheymu（repository_owner 是组织名，不能作
 #   assignee）；引入第二维护者前没有按内容分派的空间。
 # - label-pr 按 .github/labeler.yml 的路径规则自动打「范围」与
-#   「文档」label，只增不减（sync-labels 关闭）。
+#   「文档」label，只增不减（sync-labels 关闭）。Dependabot PR 显式跳过：
+#   由 Dependabot 触发的 workflow 按 fork 处理（secrets 不可用、
+#   GITHUB_TOKEN 只读），此处声明的 pull-requests: write 会被降级，
+#   actions/labeler 必然失败；Dependabot PR 的标签改由
+#   .github/dependabot.yml 的 labels 字段直接指定。
 # - PR 不做自动 assign：社区作者非协作者会导致 assign 失败，
 #   收益近零不如不做。
 
@@ -39,7 +43,7 @@ jobs:
           GH_TOKEN: ${{ github.token }}
 
   label-pr:
-    if: github.event_name == 'pull_request'
+    if: github.event_name == 'pull_request' && github.actor != 'dependabot[bot]'
     runs-on: ubuntu-latest
     permissions:
       contents: read
