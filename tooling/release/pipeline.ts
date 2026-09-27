@@ -4,7 +4,10 @@
 import type { Options } from "./core/options.ts";
 import { ROOT } from "./core/options.ts";
 import { capture, run } from "./core/proc.ts";
-import { npmWhoami } from "./core/registry.ts";
+import {
+	isOidcTrustedPublishing,
+	npmWhoami,
+} from "./core/registry.ts";
 import {
 	runBuildSteps,
 	runTestStep,
@@ -51,14 +54,21 @@ export async function cmdPipeline(
 		);
 	}
 	if (!options.dryRun) {
-		const whoami = npmWhoami(ROOT);
-		if (whoami === null) {
-			process.stderr.write(
-				"[pipeline] ❌ npm 未登录（先 npm login）\n",
+		// OIDC 下没有 npm 登录态（换的是包级短时 token），whoami 必然 E401
+		if (isOidcTrustedPublishing()) {
+			console.log(
+				"[pipeline] 🔐 OIDC 可信发布模式（id-token: write），跳过 npm 登录预检",
 			);
-			return 1;
+		} else {
+			const whoami = npmWhoami(ROOT);
+			if (whoami === null) {
+				process.stderr.write(
+					"[pipeline] ❌ npm 未登录（先 npm login）\n",
+				);
+				return 1;
+			}
+			console.log(`[pipeline] npm 身份：${whoami}`);
 		}
-		console.log(`[pipeline] npm 身份：${whoami}`);
 	}
 
 	// version 环 + 版本提交

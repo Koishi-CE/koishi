@@ -15,6 +15,24 @@ export const REGISTRY =
 	process.env["RELEASE_REGISTRY"] ??
 	"https://registry.npmjs.org";
 
+/**
+ * 是否处于 OIDC 可信发布环境（能换到 npm 发布 token 的 Actions 运行）。
+ *
+ * 判定依据 `ACTIONS_ID_TOKEN_REQUEST_URL`：GitHub 只在 workflow 的 job 显式
+ * 声明 `permissions: id-token: write` 时才注入它，因此它是「本次运行有权换
+ * OIDC token」的充分必要条件。不用 GITHUB_ACTIONS——任何 Actions 运行都为真，
+ * 与「能否免 token 发布」无关。
+ *
+ * 该模式下没有 npm 登录态：npm CLI 在 publish 时用 GitHub 的 id_token 换一个
+ * **包级**短时 token（npm/lib/utils/oidc.js 的 `/-/npm/v1/oidc/token/exchange/
+ * package/<包名>`），因此 `npm whoami` / `npm owner ls` 必然失败，依赖登录态的
+ * 预检必须跳过。
+ */
+export function isOidcTrustedPublishing(): boolean {
+	const url = process.env["ACTIONS_ID_TOKEN_REQUEST_URL"];
+	return typeof url === "string" && url !== "";
+}
+
 /** 查询单包全部已发布版本；404 → 空集（首发），其余失败重试 3 次后抛错。 */
 export async function fetchPublishedVersions(
 	name: string,

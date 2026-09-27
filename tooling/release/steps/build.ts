@@ -107,15 +107,19 @@ export async function runBuildSteps(
 	return 0;
 }
 
-/** test 环：全量自有用例（与 AGENTS 门禁命令一致）。 */
+/** test 环：自有用例子集（与 CI 门禁同口径）。 */
 export async function runTestStep(): Promise<number> {
 	console.log(
-		"[test] 🧪 bun test（packages + common + admin + commands）",
+		"[test] 🧪 bun test --isolate（packages + common + admin + commands）",
 	);
 	return await run(
 		process.execPath,
 		[
 			"test",
+			// --isolate 不可省：缺了跨文件 mock.module 会互相串扰
+			// （根 bun run test 脚本带它，ci.yml 亦有同样注释）；
+			// 原地发布链曾漏掉该旗标，CI 发布路径与本地路径因此不一致
+			"--isolate",
 			"packages",
 			"plugins/common",
 			"plugins/webui/admin",

@@ -28,10 +28,13 @@
  */
 import { parseOptions } from "./core/options.ts";
 import { cmdPipeline } from "./pipeline.ts";
-import { runBuildSteps } from "./steps/build.ts";
+import {
+	runBuildSteps,
+	runTestStep,
+} from "./steps/build.ts";
 import { runPublishSteps } from "./steps/publish.ts";
 import { cmdStatus } from "./steps/status.ts";
-import { runVersion } from "./steps/version.ts";
+import { cmdVersion } from "./steps/version.ts";
 
 const HELP = `Koishi-CE 发布工具链（tooling/release）
 
@@ -41,6 +44,8 @@ const HELP = `Koishi-CE 发布工具链（tooling/release）
   status            概览：pending changeset、本地版本 vs registry、发布序
   version           消费 .changeset/ 条目（changeset version + bun install）
   build             根 tsdown + 宿主控制台总装 + 各 webui 插件前端 dist
+  test              自有用例子集（bun test --isolate packages plugins/common
+                    plugins/webui/admin plugins/webui/commands）
   publish           registry 比对 → 所有权预检 → 拓扑序逐包 npm publish
   pipeline          一条龙：preflight → version → 提交 → build → test → publish
 
@@ -50,13 +55,19 @@ const HELP = `Koishi-CE 发布工具链（tooling/release）
                     重发坏版本用（须先 bump 版本），同样走 workspace:*
                     改写与终局断言——2026-08-31 事故（绕链手动发布把
                     workspace:* 带上 npm、下游 install 全炸）后，禁止手动 npm publish
-  --push            pipeline 末尾推送 main
+  --commit          version 消费后提交版本变化（CI 拆分 job 用；须在 main）
+  --push            version / pipeline 推送 main（须在 main）
   --allow-dirty     跳过工作区洁净检查（版本提交仍只含版本相关文件）
   --skip-build      pipeline 跳过构建环
   --skip-test       pipeline 跳过测试环
   -h, --help        显示本帮助
 
-环境变量：RELEASE_REGISTRY 可切换 registry 查询源（默认 registry.npmjs.org）。`;
+环境变量：RELEASE_REGISTRY 可切换 registry 查询源（默认 registry.npmjs.org）。
+
+CI（.github/workflows/release.yml）把发布拆成三个 job：version 提交版本、
+build 构建并测试（无 id-token）、publish 在 environment 审批下用 OIDC 发包。
+GitHub Actions 里授予了 id-token: write 时（ACTIONS_ID_TOKEN_REQUEST_URL 存在），
+npm 登录态预检与所有权预检自动跳过——OIDC 下没有 token，这两项必然失败。`;
 
 /** CLI 入口：解析命令与旗标并分发。 */
 async function main(): Promise<number> {
@@ -72,7 +83,7 @@ async function main(): Promise<number> {
 	const options = parseOptions(rest);
 	if (options === null) {
 		process.stderr.write(
-			"[release] ❌ 未知旗标（支持 --dry-run / --push / --allow-dirty / --skip-build / --skip-test）\n",
+			"[release] ❌ 未知旗标（支持 --dry-run / --only <名单> / --commit / --push / --allow-dirty / --skip-build / --skip-test）\n",
 		);
 		console.log(HELP);
 		return 1;
@@ -82,10 +93,13 @@ async function main(): Promise<number> {
 			return await cmdStatus();
 		}
 		case "version": {
-			return (await runVersion(options)).code;
+			return await cmdVersion(options);
 		}
 		case "build": {
 			return await runBuildSteps(options);
+		}
+		case "test": {
+			return await runTestStep();
 		}
 		case "publish": {
 			return await runPublishSteps(options);

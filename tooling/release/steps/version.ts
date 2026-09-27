@@ -128,7 +128,7 @@ export async function commitVersionBumps(
 		) ?? ""
 	).trim();
 	if (staged === "") {
-		console.log("[pipeline] 版本相关文件无变化，跳过提交");
+		console.log("[version] 版本相关文件无变化，跳过提交");
 		return 0;
 	}
 	const code = await run(
@@ -141,7 +141,69 @@ export async function commitVersionBumps(
 		ROOT,
 	);
 	if (code === 0) {
-		console.log("[pipeline] ✅ 版本变化已提交");
+		console.log("[version] ✅ 版本变化已提交");
 	}
 	return code;
+}
+
+/**
+ * version 子命令：消费 changeset，可选提交与推送。
+ *
+ * CI 里「构建」与「发布」必须拆成权限不同的两个 job（发布 job 才拿
+ * id-token: write），一条 pipeline 串不完，故把提交与推送开放为旗标。
+ *
+ * 带 --commit / --push 时强制在 main 上：版本提交直推 main 是全仓唯一的
+ * 既定例外（见 AGENTS.md 的 git 提交流程节），但绝不允许从别的分支
+ * `--push` 把该分支的提交推到 main。
+ */
+export async function cmdVersion(
+	options: Options,
+): Promise<number> {
+	// 护栏必须前置：若放在 runVersion 之后，在非 main 分支上执行
+	// `version --commit` 会先把 changeset 白白消费掉、把工作区改脏，然后才
+	// 拒绝——那已经不是「拒绝」，而是「半途改完再报错」。
+	if (!options.dryRun && (options.commit || options.push)) {
+		const branch = capture(
+			"git",
+			["rev-parse", "--abbrev-ref", "HEAD"],
+			ROOT,
+		)?.trim();
+		if (branch !== "main") {
+			process.stderr.write(
+				`[version] ❌ --commit / --push 只能在 main 上执行（当前分支 ${branch ?? "未知"}）\n`,
+			);
+			return 1;
+		}
+	}
+	const version = await runVersion(options);
+	if (version.code !== 0) {
+		return version.code;
+	}
+	if (
+		options.dryRun ||
+		(!options.commit && !options.push)
+	) {
+		return 0;
+	}
+	if (options.commit && version.consumed) {
+		const commitCode = await commitVersionBumps(
+			version.bumpedDirs,
+		);
+		if (commitCode !== 0) {
+			return commitCode;
+		}
+	}
+	if (options.push) {
+		const code = await run(
+			"git",
+			["push", "origin", "main"],
+			ROOT,
+		);
+		if (code !== 0) {
+			console.log("[version] ❌ push main 失败");
+			return code;
+		}
+		console.log("[version] 📤 已推送 main");
+	}
+	return 0;
 }
