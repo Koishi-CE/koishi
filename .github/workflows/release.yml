@@ -54,10 +54,19 @@
 # trustedDependencies），这一层默认就是关的；此处仍按最小权限切分。
 #
 # npm 版本：OIDC 发布需 npm >= 11.5.1，runner 自带的 10.x 不支持可信发布，
-# 故在 publish job 显式升级到 11（与本地开发口径 11.20.0 同一大版本）。
+# 故在 publish job 显式升级到 11（与本地开发口径 11.20.0 同一大版本）。注意
+# runner 的 npm 装在 /usr/local（属 root），直接 `npm install -g` 会 EACCES，
+# 因此装进用户级 prefix 再前置 PATH，动机与现场见该步骤的注释。
 #
 # 触发：只认「携带 changeset 的合并」，其余（补发 / 上次失败）走
 # workflow_dispatch。
+#
+# 补发路径（`skip-version` 输入）：changeset 一旦被消费，重跑就再也走不到
+# publish——version 环无条目可消费，`changed=false`，publish 被 if 跳过。
+# 故 workflow_dispatch 提供 `skip-version`：置 true 时跳过 version 环，直接构建
+# 当前 main 并交给 publish，由 `release publish` 的 registry 比对决定哪些版本
+# 真的需要发（已发布的自动跳过）。它只影响「要不要消费 changeset」，不改变任何
+# 审批：publish 依旧卡在 environment。
 #
 # 自激的边界（改用 App token 后新增的行为，别照抄旧结论）：GitHub 只对
 # GITHUB_TOKEN 免触发——用它做的事所触发的事件不创建新的 workflow 运行，而
@@ -92,6 +101,12 @@ on:
     branches: [main]
     paths: ['.changeset/**']
   workflow_dispatch:
+    inputs:
+      # 补发通道：changeset 已被消费 / 上次 publish 失败时，跳过 version 环直接发布
+      skip-version:
+        description: 跳过 changeset 消费，构建并发布当前 main 的版本（补齐「版本已升、包未发」的中间态）
+        type: boolean
+        default: false
 
 # 严禁并发：两个运行同时消费 changeset 会撞版本号
 concurrency:
@@ -131,6 +146,13 @@ jobs:
       - id: bump
         name: 消费 changeset（只提交，推送留到构建与测试通过之后）
         run: |
+          # skip-version（补发）：changeset 已被消费，跳过 version 环但继续构建与
+          # 发布——changed 在此处的含义是「本次运行要构建并发布」
+          if [ "${{ inputs.skip-version }}" = "true" ]; then
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+            echo "::notice::skip-version：跳过 changeset 消费，直接构建并发布当前提交"
+            exit 0
+          fi
           before=$(git rev-parse HEAD)
           bun run release version --commit
           after=$(git rev-parse HEAD)
@@ -164,7 +186,8 @@ jobs:
       #   · 用完整 URL 而非 git remote，绕开 .git/config 里的 remote 配置。
       #   · core.hooksPath 指向空处以禁用 hook：构建期代码若被污染，塞一个
       #     .git/hooks/pre-push 就能在这个步骤里读到 GH_TOKEN 并外传。
-      - if: steps.bump.outputs.changed == 'true'
+      # skip-version 时不推：那次运行没有新提交可推（补发场景）。
+      - if: steps.bump.outputs.changed == 'true' && !inputs.skip-version
         name: 推送版本提交
         env:
           GH_TOKEN: ${{ steps.app-token.outputs.token }}
@@ -205,8 +228,20 @@ jobs:
       id-token: write # OIDC：换包级短时 token + 自动 provenance
     steps:
       - uses: oven-sh/setup-bun@v2
-      - name: 升级 npm（runner 自带的 10.x 不支持可信发布）
-        run: npm install -g npm@11
+      # runner 上的 npm 是系统级安装（/usr/local/lib/node_modules/npm），而
+      # /usr/local 属 root：`npm install -g npm@11` 会往 /usr/local/share/man/man5
+      # 写而 EACCES——现场见 run 36331787266 的 publish job（此前从未跑到这一步，
+      # 是因为首次 dispatch 在 prepare 的推送就失败了）。改为装进用户级 prefix
+      # 并把它的 bin 前置进 PATH：GITHUB_PATH 只对后续步骤生效，故安装与写 PATH
+      # 必须在同一步；不用 sudo，也就不会在 npm 缓存里留下 root-owned 文件。
+      - name: 升级 npm（OIDC 发布需 npm ≥ 11.15.0）
+        run: |
+          npm install -g npm@11 --prefix "$HOME/.npm-global"
+          echo "$HOME/.npm-global/bin" >> "$GITHUB_PATH"
+      # 留证据：publish 环内部同样按 PATH 找 npm（tooling/release/core/proc.ts 的
+      # runNpm），这行确认后续步骤真的用上了 11
+      - name: 确认 npm 版本
+        run: npm --version
       - uses: actions/download-artifact@v8
         with:
           name: release-workspace
