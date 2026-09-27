@@ -1,0 +1,86 @@
+# SPDX-License-Identifier: MIT
+# Copyright (c) 2026-present Koishi-CE contributors.
+
+# CODEOWNERS —— 谁是需要复核这些路径的人。
+#
+# 生效位置：GitHub 按 .github/CODEOWNERS → /CODEOWNERS → docs/CODEOWNERS
+# 的顺序取第一份命中的文件，本仓放这里。
+#
+# 语法要点（写新规则前先读）：
+# - 每行 `模式 所有者...`；`#` 开头为注释；空行忽略。
+# - 所有者只能是「本仓协作者」或「组织 team」；组织当前没有 team，
+#   因此全部写个人 handle。写错的 handle 会被 GitHub 静默忽略该行。
+# - 模式顺序有意义：**同一文件被多条规则命中时，最后一条生效**。
+#   故本文件先写通配（`*` / `目录/**`），再写显式文件路径，后者压前者。
+# - 以 `/` 开头的模式锚定仓库根；`**` 跨目录；`*` 不跨 `/`。
+#
+# 现状（2026-09-27 核对）：本仓 ruleset「保护主分支」尚未开启
+# require_code_owner_review，故本文件现在只做「路由 + 通知」，不拦合并。
+# 要让它拦合并须在 Settings → Rules 的该 ruleset 里勾选
+# "Require review from Code Owners"（届时每个 PR 都需要下方 owner 之一批准）。
+#
+# 维护纪律：新增高风险路径（发布链 / 根配置 / CI / 预编译产物等）时在本文件
+# 补一条规则，并在 docs/guides/development.md 的 PR 工作流节确认口径一致。
+#
+# 已知限制：GitHub 的 CODEOWNERS 没有排除语法，规则一律是「附加」。`*` 兜底
+# 使 @Oppenheymu 成为所有文件的 owner，因此开着 "Require review from Code
+# Owners" 时，由 @Oppenheymu 自己提的 PR 若只触及他独有的路径，无需他人批准；
+# 触及下方两人共有的显式路径时，必须由 @PaperKoi 批准。
+# 若将来要把「谁的代码谁回避」写成硬约束，需要 GitHub 的 team 机制
+# （组织当前没有 team），届时把下方 owner 换成 @Koishi-CE/<team> 即可。
+
+# ---- 通配兜底与范围划分（自上而下，越靠下越具体） ----
+
+# 兜底：兜住所有改动，未单列的路径默认归活跃维护者。
+*                                   @Oppenheymu
+
+# 核心框架与插件生态
+/packages/node/**                   @Oppenheymu @PaperKoi
+/plugins/common/**                  @Oppenheymu @PaperKoi
+
+# 浏览器侧与 webui（AGPL 分区，见 NOTICE）
+/packages/web/**                    @Oppenheymu @PaperKoi
+/plugins/webui/**                   @Oppenheymu @PaperKoi
+
+# 工具链、脚手架与应用
+/tooling/**                         @Oppenheymu @PaperKoi
+/apps/**                            @Oppenheymu @PaperKoi
+
+# 文档与社区健康文件
+/docs/**                            @Oppenheymu @PaperKoi
+.github/CODEOWNERS                  @Oppenheymu @PaperKoi
+
+# 敏感路径：冻结与预编译产物——改动必须两人过目（规则见 packages/shim/README.md）
+/packages/shim/**                   @Oppenheymu @PaperKoi
+/plugins/infra/http/**              @Oppenheymu @PaperKoi
+/plugins/infra/proxy/**             @Oppenheymu @PaperKoi
+/plugins/infra/server/**            @Oppenheymu @PaperKoi
+
+# ---- 显式文件路径（最后命中即生效，压住上方通配） ----
+
+# 发布链与版本管理（一切发布走发布链，禁止手动 npm publish）
+/tooling/release/**                 @Oppenheymu @PaperKoi
+/.changeset/**                      @Oppenheymu @PaperKoi
+
+# 依赖面与仓库级配置（改动影响全仓解析与门禁口径）
+/package.json                       @Oppenheymu @PaperKoi
+/bun.lock                           @Oppenheymu @PaperKoi
+/bunfig.toml                        @Oppenheymu @PaperKoi
+/tsdown.config.ts                   @Oppenheymu @PaperKoi
+/tsconfig.json                      @Oppenheymu @PaperKoi
+/tsconfig.base.json                 @Oppenheymu @PaperKoi
+/tsconfig.web.json                  @Oppenheymu @PaperKoi
+/tsconfig.client.json               @Oppenheymu @PaperKoi
+/biome.json                         @Oppenheymu @PaperKoi
+/eslint.config.ts                   @Oppenheymu @PaperKoi
+/.fallowrc.jsonc                    @Oppenheymu @PaperKoi
+
+# CI、自动分诊与模板（门禁与流程的唯一执行面）
+/.github/workflows/**               @Oppenheymu @PaperKoi
+/.github/dependabot.yml             @Oppenheymu @PaperKoi
+/.github/labeler.yml                @Oppenheymu @PaperKoi
+/.github/PULL_REQUEST_TEMPLATE/**   @Oppenheymu @PaperKoi
+
+# 仓库常驻指令与贡献入口（改规矩的人与审规矩的人至少两位之一同意）
+/AGENTS.md                          @Oppenheymu @PaperKoi
+/.github/CONTRIBUTING.md            @Oppenheymu @PaperKoi

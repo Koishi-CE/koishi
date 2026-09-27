@@ -32,6 +32,7 @@ git switch main && git pull --ff-only    # 6. 合并后同步 main 并删除已�
 - **提交粒度**：分支内可小步多次提交；提交信息格式与 scope 约定同主历史（`feat:` / `fix:` / `docs:` / `chore:` / `build:`）。
 - **PR 正文**：按仓库 PR 模板写全——`.github/PULL_REQUEST_TEMPLATE/` 下按改动领域分模板（修复 / 特性 / 文档 / 依赖与上游 / 重构与性能 / 发布，兜底「通用」，清单见该目录 `config.yml`）；改动说明、验证证据（实跑的门禁段与结论）、changeset 情况、影响面与风险四件是各模板的公共要求。
 - **合并条件**：CI 三 job（`gate` / `client` / `fallow`）全绿 + 评审通过 + squash merge；有行为变化的包同步写 changeset（见 [../process/release.md](../process/release.md) 第 3 节）。
+- **评审路由（CODEOWNERS）**：[.github/CODEOWNERS](../../.github/CODEOWNERS) 按路径指派 code owner（`*` 兜底 + 发布链 / 根配置 / CI / 预编译产物等敏感路径两人共管）。仓库 ruleset「保护主分支」当前**未**开启 "Require review from Code Owners"（2026-09-27 核对），故它现在只做路由与通知；新增高风险路径时记得在该文件补规则。
 - **唯一例外**：`bun run release pipeline` 的版本提交（含 `bun.lock`）由发布链直接推送 `main`（见 [../process/release.md](../process/release.md) 第 2 节第 7 环）——这是发布链的既定设计，不构成直推 `main` 的许可。
 - **并行会话注意**：同一时刻 HEAD / `main` 可能被其它会话推进，动手前重核 `git status` 与 `git log --oneline -1`，PR 合并前先 rebase 最新 `main`。
 
