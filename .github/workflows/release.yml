@@ -24,6 +24,25 @@
 # 为什么推送排在构建与测试之后：推送是最后一步，构建或测试失败则 main 上不会
 # 留下「版本已升、包却没发出去」的提交（早先是 version 环先推、再构建）。
 #
+# 为什么推送要用 GitHub App 的 installation token（而不是默认 GITHUB_TOKEN）：
+# main 由 ruleset「保护主分支」保护（pull_request / merge_queue /
+# required_signatures / code_coverage / code_scanning / non_fast_forward /
+# deletion），而 **GITHUB_TOKEN 无法被加入该 ruleset 的 bypass 名单**（GitHub
+# 的安全限制），于是 `git push origin HEAD:main` 必然被拒，报
+# `GH013: Repository rule violations found for refs/heads/main`。App 的
+# installation token 可以进 bypass 名单（模式必须 Always，`Pull requests only`
+# 对直推不生效），故推送改用 App 认证。最小暴露：App 只授
+# `Contents: Read and write`、只装在 Koishi-CE/koishi，token 只在这一步取用
+# （其余步骤仍是默认 GITHUB_TOKEN），publish 仍卡在 environment 审批。
+#
+# 代价必须写清：bypass 的语义是「**免于该 ruleset 的全部规则**」，不是「只免
+# 签名」——这个 App 被滥用即可往 main 推任意内容（绕过 PR、merge queue、签名）。
+# 另外 App token 落在**会执行构建期代码**的 prepare job 里（bun install / build /
+# test 都在它前面跑），理论上可被污染的构建期代码窃取：`.git/hooks/pre-push`
+# 就是现成通道，故推送用 `-c core.hooksPath=/dev/null` 显式禁用 hook；剩余面
+# （改写 .git/config 的 url.*.insteadOf 之类）靠 CODEOWNERS 对构建文件的强制
+# 复核兜底。仓库侧前置见文件末清单与 docs/process/release.md §7。
+#
 # 为什么 publish 不跑 bun install：`release publish` 只做 registry 比对、
 # workspace:* 改写与逐包 npm publish，用不到 node_modules（工具链自身只用
 # node: 内建模块）；而 install 是构建期代码执行的主要入口，不该出现在持
@@ -35,8 +54,15 @@
 # 故在 publish job 显式升级到 11（与本地开发口径 11.20.0 同一大版本）。
 #
 # 触发：只认「携带 changeset 的合并」，其余（补发 / 上次失败）走
-# workflow_dispatch。prepare 自己推的版本提交由 GITHUB_TOKEN 完成，按 GitHub
-# 规矩不会触发新的 workflow 运行，因此不会自激循环。
+# workflow_dispatch。
+#
+# 自激的边界（改用 App token 后新增的行为，别照抄旧结论）：GitHub 只对
+# GITHUB_TOKEN 免触发——用它做的事所触发的事件不创建新的 workflow 运行，而
+# App token 不在豁免之列。`release version --commit` 会 `git add .changeset`
+# （被消费的 changeset 文件以删除形式入库），该提交因此命中本文件的
+# `paths: ['.changeset/**']`。所以一次发布会多出一次运行：那次运行消费不到
+# changeset，`changed=false`，只跑 install 与 version 即空转退出，不会再推送，
+# 故不构成循环；`concurrency: group: release` 还保证两者串行。
 #
 # 前置（均为仓库设置，非代码）：
 #   1. Settings → Environments 建 `release` 并勾 Required reviewers。名字必须
@@ -45,7 +71,10 @@
 #   2. 该 Environment 的 Deployment branches 必须限制为 main：workflow_dispatch
 #      是在「被 dispatch 的那个 ref」上取 workflow 文件的，不限制的话，有写权限
 #      者可以在分支上改本文件后 dispatch，借 environment 拿到 OIDC。
-#   3. 主分支 ruleset 需放行 GitHub Actions 的 bypass，否则 prepare 推不上去。
+#   3. 建一个 GitHub App（Repository permissions 只给 Contents: Read and write，
+#      Webhook 关掉，仅安装到 Koishi-CE/koishi），把 App ID 与私钥存成仓库
+#      secret `APP_ID` / `APP_PRIVATE_KEY`，并把它加进主分支 ruleset 的 bypass
+#      名单（模式 Always）。GITHUB_TOKEN 进不了该名单，这一步没有替代品。
 #   4. 开启 require_code_owner_review（CODEOWNERS 已覆盖 .github/workflows/**、
 #      tooling/release/**、.changeset/**、package.json、bun.lock、tsdown.config.ts）。
 #      这是本模型下唯一「零成本把危险改动变成需双人过目」的手段。
@@ -76,9 +105,14 @@ jobs:
     outputs:
       changed: ${{ steps.bump.outputs.changed }}
     steps:
+      # persist-credentials: false —— checkout 默认把 GITHUB_TOKEN 写进
+      # .git/config 的 http.<url>.extraheader 并一直生效；推送已改用 App token，
+      # 留着这份凭证会让请求头里的身份归属变得不确定。本 job 其余步骤都不需要
+      # GITHUB_TOKEN 认证，关掉无副作用。
       - uses: actions/checkout@v7
         with:
           fetch-depth: 0
+          persist-credentials: false
       - uses: oven-sh/setup-bun@v2
       # CI 环境下 bun install 自动 frozen-lockfile；@parcel/watcher 的
       # postinstall 拦截提示属预期（平台预编译包就位即可用）
@@ -107,10 +141,29 @@ jobs:
       - if: steps.bump.outputs.changed == 'true'
         name: 发布前测试
         run: bun run release test
-      # HEAD:main 而非 main：runner 上未必存在名为 main 的本地分支
+      # 取 App installation token（1 小时有效）。repositories 显式限定：不写的
+      # 话 token 会覆盖该 App 安装到的所有仓库。私钥只在这里出现，其输出由
+      # create-github-app-token 自行 ::add-mask::。
+      - if: steps.bump.outputs.changed == 'true'
+        id: app-token
+        uses: actions/create-github-app-token@v3
+        with:
+          app-id: ${{ secrets.APP_ID }}
+          private-key: ${{ secrets.APP_PRIVATE_KEY }}
+          repositories: koishi
+      # HEAD:main 而非 main：runner 上未必存在名为 main 的本地分支。
+      # 三点讲究：
+      #   · 凭证走 env + shell 变量，不把 ${{ steps.app-token.outputs.token }}
+      #     内联进 run——脚本原文进日志，内联会把 token 明文写进去。
+      #   · 用完整 URL 而非 git remote，绕开 .git/config 里的 remote 配置。
+      #   · core.hooksPath 指向空处以禁用 hook：构建期代码若被污染，塞一个
+      #     .git/hooks/pre-push 就能在这个步骤里读到 GH_TOKEN 并外传。
       - if: steps.bump.outputs.changed == 'true'
         name: 推送版本提交
-        run: git push origin HEAD:main
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+        run: |
+          git -c core.hooksPath=/dev/null push "https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" HEAD:main
       # 打包给 publish job；node_modules 与 .git 都不需要
       - if: steps.bump.outputs.changed == 'true'
         name: 打包工作区
