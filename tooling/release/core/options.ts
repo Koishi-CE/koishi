@@ -25,6 +25,8 @@ export interface Options {
 	allowDirty: boolean;
 	skipBuild: boolean;
 	skipTest: boolean;
+	/** --commit：version 环消费 changeset 后提交版本变化（CI 拆分 job 用）。 */
+	commit: boolean;
 	/** --only：仅发布名单内的包（逗号分隔包名；补发 / 重发场景）。 */
 	only: string[];
 }
@@ -39,6 +41,7 @@ export function parseOptions(
 		allowDirty: false,
 		skipBuild: false,
 		skipTest: false,
+		commit: false,
 		only: [],
 	};
 	for (let i = 0; i < args.length; i += 1) {
@@ -62,6 +65,10 @@ export function parseOptions(
 			}
 			case "--push": {
 				options.push = true;
+				break;
+			}
+			case "--commit": {
+				options.commit = true;
 				break;
 			}
 			case "--allow-dirty": {

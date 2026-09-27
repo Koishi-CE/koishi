@@ -1,0 +1,162 @@
+# 发布流水线（npm OIDC 可信发布）
+#
+# 形态：两个串联 job，按「能不能换到 OIDC token」切分——只有 publish 持
+# id-token: write 且挂 environment 审批。动机：npm 的可信发布把发布权授给
+# 「谁能让本文件在 main 上跑起来」，因此**构建期可执行的代码绝不能与 OIDC
+# token 同处一个 job**。package.json 的脚本、tsdown.config.ts、各插件
+# build/client.ts 都是构建期执行的代码，一处被改坏就能拿着 token 发这 53 个
+# 包的任意版本。
+#
+#   prepare  消费 changeset → 构建 → 测试 → 推送版本提交 → 打包 artifact
+#            （contents: write，**无** id-token）
+#   publish  解包 artifact → 逐包 npm publish
+#            （id-token: write + environment 审批，**无** contents: write）
+#
+# 为什么 version 与 build 合成一个 job、不再跨 job 传 SHA：
+# 早先的写法是 version job 输出提交 SHA，build job 用
+# `actions/checkout` 的 `ref: ${{ needs.version.outputs.sha }}` 取那份代码。
+# CodeQL 的 actions/cache-poisoning 查询会判定为「可被 workflow_dispatch 影响
+# 的 ref 被特权 job 检出并执行」，在 .github/workflows/release.yml 上稳定报
+# 3 条 high（Cache Poisoning via execution of untrusted code）。合成一个 job
+# 后用默认 checkout（触发本次运行的提交），既消掉该污点，也免掉 SHA 传递这笔
+# 额外状态：构建与测试跑的就是本 job 里刚提交的那棵树。
+#
+# 为什么推送排在构建与测试之后：推送是最后一步，构建或测试失败则 main 上不会
+# 留下「版本已升、包却没发出去」的提交（早先是 version 环先推、再构建）。
+#
+# 为什么 publish 不跑 bun install：`release publish` 只做 registry 比对、
+# workspace:* 改写与逐包 npm publish，用不到 node_modules（工具链自身只用
+# node: 内建模块）；而 install 是构建期代码执行的主要入口，不该出现在持
+# token 的 job 里。补充：Bun 本身不执行依赖的 postinstall（`bun install --help`
+# 原文 "dependency scripts are never run"，根 package.json 亦无
+# trustedDependencies），这一层默认就是关的；此处仍按最小权限切分。
+#
+# npm 版本：OIDC 发布需 npm >= 11.5.1，runner 自带的 10.x 不支持可信发布，
+# 故在 publish job 显式升级到 11（与本地开发口径 11.20.0 同一大版本）。
+#
+# 触发：只认「携带 changeset 的合并」，其余（补发 / 上次失败）走
+# workflow_dispatch。prepare 自己推的版本提交由 GITHUB_TOKEN 完成，按 GitHub
+# 规矩不会触发新的 workflow 运行，因此不会自激循环。
+#
+# 前置（均为仓库设置，非代码）：
+#   1. Settings → Environments 建 `release` 并勾 Required reviewers。名字必须
+#      与 npm 信任配置的 environment claim 严格同名，否则 OIDC 不认；而 claim
+#      不声明 environment 时，删掉本文件里的 environment: 即可绕过审批。
+#   2. 该 Environment 的 Deployment branches 必须限制为 main：workflow_dispatch
+#      是在「被 dispatch 的那个 ref」上取 workflow 文件的，不限制的话，有写权限
+#      者可以在分支上改本文件后 dispatch，借 environment 拿到 OIDC。
+#   3. 主分支 ruleset 需放行 GitHub Actions 的 bypass，否则 prepare 推不上去。
+#   4. 开启 require_code_owner_review（CODEOWNERS 已覆盖 .github/workflows/**、
+#      tooling/release/**、.changeset/**、package.json、bun.lock、tsdown.config.ts）。
+#      这是本模型下唯一「零成本把危险改动变成需双人过目」的手段。
+
+name: Release
+
+on:
+  push:
+    branches: [main]
+    paths: ['.changeset/**']
+  workflow_dispatch:
+
+# 严禁并发：两个运行同时消费 changeset 会撞版本号
+concurrency:
+  group: release
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  prepare:
+    name: prepare（消费 changeset → 构建 → 测试 → 推送）
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    permissions:
+      contents: write # 提交版本变化 + 推送 main
+    outputs:
+      changed: ${{ steps.bump.outputs.changed }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+      - uses: oven-sh/setup-bun@v2
+      # CI 环境下 bun install 自动 frozen-lockfile；@parcel/watcher 的
+      # postinstall 拦截提示属预期（平台预编译包就位即可用）
+      - run: bun install
+      # commitVersionBumps 走 git commit；checkout 不带身份，不配必然失败
+      - name: 配置 git 身份
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+      - id: bump
+        name: 消费 changeset（只提交，推送留到构建与测试通过之后）
+        run: |
+          before=$(git rev-parse HEAD)
+          bun run release version --commit
+          after=$(git rev-parse HEAD)
+          if [ "$before" = "$after" ]; then
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+            echo "::notice::无版本变化（条目可能全部命中 changesets ignore 列表），跳过构建与发布"
+          else
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+          fi
+      - if: steps.bump.outputs.changed == 'true'
+        run: bun run release build
+      # 发布前测试：复用工具链自己的 test 环，避免在 YAML 里另写一份口径
+      # （发布链曾漏掉 --isolate，与门禁口径不一致，就是这么漂移出来的）
+      - if: steps.bump.outputs.changed == 'true'
+        name: 发布前测试
+        run: bun run release test
+      # HEAD:main 而非 main：runner 上未必存在名为 main 的本地分支
+      - if: steps.bump.outputs.changed == 'true'
+        name: 推送版本提交
+        run: git push origin HEAD:main
+      # 打包给 publish job；node_modules 与 .git 都不需要
+      - if: steps.bump.outputs.changed == 'true'
+        name: 打包工作区
+        run: tar --exclude=./node_modules --exclude=./.git -czf "$RUNNER_TEMP/release-workspace.tgz" .
+      - if: steps.bump.outputs.changed == 'true'
+        uses: actions/upload-artifact@v7
+        with:
+          name: release-workspace
+          path: ${{ runner.temp }}/release-workspace.tgz
+          retention-days: 1
+
+  publish:
+    name: publish（OIDC 发包，需 environment 审批）
+    needs: prepare
+    if: needs.prepare.outputs.changed == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    # 与 npm 信任配置的 environment claim 同名；required reviewers 在这里生效。
+    # 这是「合并 ≠ 上线」的唯一结构性保证——审批发生在包真正推上 npm 之前。
+    # 审批前请看清本次运行的 commit 与 workflow 内容（准备 job 持 contents: write，
+    # 若其构建期代码被污染，可能已向 main 推过东西）。
+    #
+    # 用对象形式而非 `environment: release` 简写：GitHub 两者都接受，但
+    # SchemaStore 的 github-workflow.json 里，job 级 environment 是
+    # `oneOf: [string, #/definitions/environment]`，而 definitions.environment
+    # 是 required:["name"] 的对象——编辑器若缓存了旧版 schema（job 级直接
+    # $ref 到对象定义），简写会被误报 "Value 'release' is not valid"。
+    # 对象形式在新旧 schema 与 GitHub 本体下均合法。
+    environment:
+      name: release
+    permissions:
+      contents: read # tag / GitHub Release 仍由人工补打，此处不需要写权限
+      id-token: write # OIDC：换包级短时 token + 自动 provenance
+    steps:
+      - uses: oven-sh/setup-bun@v2
+      - name: 升级 npm（runner 自带的 10.x 不支持可信发布）
+        run: npm install -g npm@11
+      - uses: actions/download-artifact@v8
+        with:
+          name: release-workspace
+          path: ${{ runner.temp }}
+      - name: 解包到工作区
+        run: |
+          mkdir -p "$GITHUB_WORKSPACE"
+          tar -xzf "$RUNNER_TEMP/release-workspace.tgz" -C "$GITHUB_WORKSPACE"
+      # 不跑 bun install：工具链只用 node: 内建模块，npm publish 也不需要 node_modules
+      - name: 逐包发布
+        working-directory: ${{ github.workspace }}
+        run: bun run release publish

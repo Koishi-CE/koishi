@@ -2,7 +2,7 @@
 
 > 本仓全部可发布包的版本与发布管理：changesets 管版本，`bun run release` 发布链（`tooling/release/`）管执行。**铁律：一切发布走发布链，禁止手动 `npm publish`。** 实现代码见 `tooling/release/index.ts`（该目录与 `apps/koishi-scripts` 的 release 链互不相干——后者面向宿主工作区的插件项目）。发布链第 7 环会把版本提交直接推送 `main`，**这是全仓唯一允许直推 `main` 的路径**（其余一切改动走 PR，见 [../guides/development.md](../guides/development.md) §2）。
 > **先读**：开发与门禁见 [../guides/development.md](../guides/development.md)；版本基线与 shim 例外见 [../reference/architecture.md](../reference/architecture.md)。
-> **本文结构**：1 命令 · 2 发布链环节 · 3 changesets 约定 · 4 发布顺序与补发 · 5 暂存区（staged publish）与 409 · 6 事故记录。
+> **本文结构**：1 命令 · 2 发布链环节 · 3 changesets 约定 · 4 发布顺序与补发 · 5 暂存区（staged publish）与 409 · 6 事故记录 · 7 CI 发布（OIDC 可信发布）。
 
 ## 1. 命令
 
@@ -10,11 +10,12 @@
 bun run release status                    # 概览：pending changeset、本地版本 vs registry、发布序
 bun run release version                   # 消费 .changeset/ 条目（changeset version）+ bun install 刷新 lockfile
 bun run release build                     # 根 tsdown → 宿主控制台总装（console/dist）→ 各 webui 插件前端 dist
+bun run release test                      # 范围化自有用例（bun test --isolate 的子集）
 bun run release publish                   # registry 比对 → 所有权预检 → 拓扑序逐包 npm publish（workspace 协议改写）
 bun run release pipeline                  # 一条龙：preflight → version → 提交 → build → test → publish → push
 ```
 
-旗标：`--dry-run`（只打印计划不落盘）、`--only <包名,逗号分隔>`（仅 publish 环生效，只发布名单内的包）、`--skip-build` / `--skip-test` / `--push`（仅 pipeline 环生效）、`--allow-dirty`（跳过工作区洁净检查）；另有 `--help` 与环境变量 `RELEASE_REGISTRY`（切换 registry 查询源，默认 registry.npmjs.org）。
+旗标：`--dry-run`（只打印计划不落盘）、`--only <包名,逗号分隔>`（仅 publish 环生效，只发布名单内的包）、`--commit`（version 环消费后提交版本变化，CI 用）与 `--push`（version / pipeline 推送 main；两者都强制在 main 上）、`--skip-build` / `--skip-test`（仅 pipeline 环生效）、`--allow-dirty`（跳过工作区洁净检查）；另有 `--help` 与环境变量 `RELEASE_REGISTRY`（切换 registry 查询源，默认 registry.npmjs.org）。
 
 行为约定：任何一步失败立即中断并保留现场；重跑幂等（已发布版本经 registry 比对自动跳过）——例外是 npm 暂存区中的版本不计入比对，此时重跑不幂等（见 §5）。webui 插件 dist 不入 git，发布前必须现构建——build 环的前端 targets 为 `plugins/webui` 下 files 含 `dist` 且带 `client/` 的插件（宿主 console 除外，由总装覆盖），遗漏任一插件都会导致发布缺前端。
 
@@ -26,7 +27,7 @@ bun run release pipeline                  # 一条龙：preflight → version �
 2. **version**：消费 `.changeset/` 条目 bump 版本，刷新 `bun.lock`，产生版本提交。
 3. **提交**：版本变更落为一个 git 提交。
 4. **build**：node 侧 lib 产物 + 宿主控制台总装 + 各 webui 插件前端。
-5. **test**：`bun test packages plugins/common plugins/webui/admin plugins/webui/commands`——范围化子集（源码 `runTestStep`），不含 apps 与 tooling 用例；全量测试仍以本地 `bun test` 为准。
+5. **test**：`bun run release test` = `bun test --isolate packages plugins/common plugins/webui/admin plugins/webui/commands`——范围化子集（源码 `runTestStep`），不含 apps 与 tooling 用例；全量测试仍以本地 `bun test` 为准。`--isolate` 不可省（缺了跨文件 `mock.module` 互相串扰）。
 6. **publish**：按拓扑序逐包发布。publish 环负责把 `workspace:*` 协议改写为真实版本号（`workspace:^` 等其他协议形式直接拒绝），并带**终局断言**（依赖字段不得残留 `workspace:` / `file:` / `link:`）。
 7. **push**：推送 `main`（只推 main，不打 tag——tag 环已删除；对外 GitHub Release 的单整体 tag 手动补打，跟 core 版本走）。**这是全仓唯一允许直推 `main` 的路径**：本仓一切改动都走 PR（见 [../guides/development.md](../guides/development.md) §2 与根 `AGENTS.md` 的 git 提交流程节），发布链的版本提交是既定例外，不构成人工直推 `main` 的许可。
 
@@ -59,3 +60,48 @@ npm 的暂存发布（staged publishing）会在版本公开前插入人工批�
 ## 6. 事故记录（为什么禁止手动 publish）
 
 2026-08-31：绕链手动 `npm publish` 把 `workspace:*` 原样带上 npm（config@1.0.5 / market@1.0.6 / hmr@1.0.3 污染，koishi@1.0.3 漏发），下游 `bun install` 全部解析失败。处置：发布链补齐 workspace 协议改写的终局断言，坏版本用补发流程覆盖。**workspace 协议的消费从不靠 changesets，只靠发布链**——这也是禁止手动 publish 的根本原因。
+
+## 7. CI 发布（OIDC 可信发布）
+
+本地发布链之外，仓库另有 `.github/workflows/release.yml`：**携带 changeset 的 PR 合并进 main 后，由 CI 自动消费 changeset 并把包发上 npm**，全程无需本地发包。npm 侧走**可信发布（Trusted Publisher / OIDC）**，不存在任何长期 token（本机也从此不持有发布能力）。
+
+### 7.1 触发与两 job 分工
+
+触发为 `push: main` 且 `paths: ['.changeset/**']`（只有携带 changeset 的合并才值得跑），外加 `workflow_dispatch` 作补发 / 重跑逃生舱；`concurrency: group: release` 且不取消进行中的运行，避免两个运行同时消费 changeset 撞版本号。
+
+| job | 职责 | 权限 |
+| --- | --- | --- |
+| `prepare` | `release version --commit` → `release build` → `release test` → 推送版本提交 → 打包 artifact | `contents: write`，**无** `id-token` |
+| `publish` | 解包 artifact → `release publish`（逐包 npm publish） | `id-token: write` + `environment: release` 审批，**无** `contents: write` |
+
+设计约束：
+
+- **消费 changeset 与构建必须同处一个 job**。早先拆成两个 job、由 version 输出提交 SHA 供 build 用 `actions/checkout` 的 `ref: ${{ needs.version.outputs.sha }}` 检出，被 CodeQL 的 `actions/cache-poisoning` 判定为「可被 `workflow_dispatch` 影响的 ref 被特权 job 检出并执行」，在该文件上稳定报 3 条 high（Cache Poisoning via execution of untrusted code）。合成一个 job 后用默认 checkout，既消掉这个污点，也免掉 SHA 传递这笔状态——构建与测试跑的就是本 job 里刚提交的那棵树。
+- **推送排在构建与测试之后**：这样构建或测试失败时，main 上不会留下「版本已升、包却没发出去」的提交。推送用 `git push origin HEAD:main`（runner 上未必存在名为 `main` 的本地分支）。
+- **`publish` 不跑 `bun install`**：`release publish` 只用 `node:` 内建模块与 npm CLI，不需要 `node_modules`；而 install 与构建是构建期代码执行的主要入口，不该出现在持 OIDC token 的 job 里。构建期可执行的代码（`package.json` 脚本、`tsdown.config.ts`、各插件 `build/client.ts`）若与 token 同处一个 job，一处被改坏即可发布这 53 个包的任意版本。附带说明：Bun 本身不执行依赖的 postinstall（`bun install --help` 原文 "dependency scripts are never run"，根 `package.json` 亦无 `trustedDependencies`），该层默认即关闭，此处仍按最小权限切分。
+- **版本先落 main、发布待审批**：`prepare` 不挂 environment，故版本提交与 CHANGELOG 会在构建测试通过后立即进 main，而包要等 `environment: release` 的批准才真正上线。若某次审批长期不点，main 的版本会暂时领先 npm——`release publish` 的 registry 比对（`filterDowngrades`）能安全处理这种中间态，但排查「版本号对不上」时要知道它的存在。
+
+### 7.2 OIDC 的信任边界（改本文件前必读）
+
+npm 的信任配置把 `repository` / `workflow_ref.file` / `environment` 三个 claim 钉死，语义是**「谁能让 `.github/workflows/release.yml` 在 `Koishi-CE/koishi` 里跑起来，谁就能发这 53 个包」**——授的是工作流文件，不是人。因此：
+
+- **job 上的 `environment: release` 不可删**。npm 侧声明了 environment claim，缺了它 OIDC 校验直接不通过；反过来说，若当初不声明 environment，删掉这一行就能绕过 GitHub 的审批——这正是声明它的意义。
+- **`.github/workflows/**` 与 `tooling/release/**` 必须开 CODEOWNERS 复核**：本模型下改这两处等于拿到发布权。
+- **`release` Environment 的 Deployment branches 必须限制为 `main`**：`workflow_dispatch` 是在**被 dispatch 的那个 ref** 上取 workflow 文件的，不限制的话，有写权限者可以在分支上改本文件后 dispatch，借这个 environment 拿到 OIDC。限制到 `main` 后，非 main ref 的运行访不到该 environment，`environment: release` 的 claim 也就无从满足。
+- 三个 claim 任何一处与实际不符 OIDC 都不认（仓库名大小写、workflow 文件名、environment 名）。要改必须 revoke 后重建——registry 每包只允许一条信任配置，没有 update 语义。
+
+### 7.3 与本地链的关系
+
+- 本地 `bun run release pipeline` 仍可用（走本机 2FA 认证），适合演练与排查；**日常发布不再需要它**。
+- 补发 / 重发坏版本：优先 `workflow_dispatch` 重跑 CI 链；确实要在本地补发时仍走 `bun run release publish --only <包名>`。
+- OIDC 模式下 `npm whoami` / `npm owner ls` 必然失败（没有登录态——npm 换到的是**包级**短时 token，见 npm CLI 的 `lib/utils/oidc.js`），故 `release` 工具检测到 `ACTIONS_ID_TOKEN_REQUEST_URL` 时自动跳过登录与所有权预检；本地路径行为不变。
+- **npm CLI 需 ≥ 11.15.0**：`permissions` 字段（由 `--allow-publish` 生成）自该版本起才随 trust 请求下发，更早版本会被 registry 以 `400 Bad Request` 拒绝（症状极具迷惑性：读取现状全部成功、逐包创建全部 E400）。CI 里由 workflow 显式 `npm install -g npm@11` 保证，本地开发口径为 11.20.0。
+- 发布产物自动带 provenance（npm 侧 OIDC 成功即自动开启），下游可核验来源 commit 与 workflow。
+
+### 7.4 仓库侧前置（非代码）
+
+1. `release` Environment + Required reviewers（名字须与 claim 严格同名）。评审人可列多位，语义是「**其中任意一位**批准即可」（GitHub 文档原文：Only one of the required reviewers needs to approve the job for it to proceed）；
+2. 同一 Environment 的 **Deployment branches 限制为 `main`**（动机见 §7.2）；
+3. 主分支 ruleset 放行 GitHub Actions 的 bypass，否则 `prepare` job 推不上去；
+4. 开启 `require_code_owner_review`；
+5. npm 侧 53 个包的信任配置与上表一致：`repository=Koishi-CE/koishi`、`workflow_ref.file=release.yml`、`environment=release`、权限仅 `publish`（不含 stage publish，避免引入人工批准环节的暂存流程）。

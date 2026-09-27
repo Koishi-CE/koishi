@@ -7,6 +7,7 @@ import type { Options } from "../core/options.ts";
 import { ROOT } from "../core/options.ts";
 import { runNpm } from "../core/proc.ts";
 import {
+	isOidcTrustedPublishing,
 	npmOwners,
 	npmWhoami,
 	probeRegistry,
@@ -106,33 +107,45 @@ export async function runPublishSteps(
 		toPublish.push(...kept);
 	}
 	// 所有权预检：别人的包（版本领先于 registry 的第三方插件）跳过而非 403 中断；
-	// 首发包不做预检（首个发布者自动成为 owner）
+	// 首发包不做预检（首个发布者自动成为 owner）。
+	//
+	// OIDC 可信发布下跳过整个预检：没有登录态，`npm whoami` 必然 E401、
+	// `npm owner ls` 只会拿到空集——而空集会命中下面的「不是 owner」分支，
+	// 把本仓所有已发布过的包静默判成他人插件全部跳过（＝什么都没发）。
+	// 跳过是安全的：本仓 workspaces 只含自有目录（packages/* plugins/* apps/*），
+	// 不存在需要靠 owner 查询甄别的第三方包。
 	if (!options.dryRun) {
-		const whoami = npmWhoami(ROOT);
-		if (whoami === null) {
-			process.stderr.write(
-				"[publish] ❌ 未获取到 npm 登录身份（先 npm login）\n",
+		if (isOidcTrustedPublishing()) {
+			console.log(
+				"[publish] 🔐 OIDC 可信发布模式（id-token: write），跳过 npm 登录与所有权预检",
 			);
-			return 1;
-		}
-		const kept: PkgInfo[] = [];
-		for (const pkg of toPublish) {
-			if ((published.get(pkg.name)?.size ?? 0) === 0) {
-				kept.push(pkg);
-				continue;
+		} else {
+			const whoami = npmWhoami(ROOT);
+			if (whoami === null) {
+				process.stderr.write(
+					"[publish] ❌ 未获取到 npm 登录身份（先 npm login）\n",
+				);
+				return 1;
 			}
-			const owners = npmOwners(ROOT, pkg.name);
-			if (!owners.includes(whoami)) {
-				plan.skipped.push({
-					pkg,
-					reason: `当前账号 ${whoami} 不是 owner（${owners.join(", ") || "未知"}），疑似他人插件`,
-				});
-			} else {
-				kept.push(pkg);
+			const kept: PkgInfo[] = [];
+			for (const pkg of toPublish) {
+				if ((published.get(pkg.name)?.size ?? 0) === 0) {
+					kept.push(pkg);
+					continue;
+				}
+				const owners = npmOwners(ROOT, pkg.name);
+				if (!owners.includes(whoami)) {
+					plan.skipped.push({
+						pkg,
+						reason: `当前账号 ${whoami} 不是 owner（${owners.join(", ") || "未知"}），疑似他人插件`,
+					});
+				} else {
+					kept.push(pkg);
+				}
 			}
+			toPublish.length = 0;
+			toPublish.push(...kept);
 		}
-		toPublish.length = 0;
-		toPublish.push(...kept);
 	}
 	if (plan.skipped.length > 0) {
 		console.log(
@@ -177,8 +190,10 @@ export async function runPublishSteps(
 			);
 		}
 		try {
-			// stdin 直通终端：npm 的 OTP 浏览器认证要求 stdin/stdout 双 TTY，
-			// 断开 stdin 会直接抛 EOTP（逐包弹浏览器逐包认证，属预期流程）
+			// stdin 直通终端：本地发布走 npm 的 OTP 浏览器认证，要求 stdin/stdout
+			// 双 TTY，断开 stdin 会直接抛 EOTP（逐包弹浏览器逐包认证，属预期流程）。
+			// OIDC 模式（CI）下不需要 OTP——npm 会用 id_token 换包级短时 token，
+			// 此处 inherit 在 runner 上无害，保留以免两条路径分叉。
 			const code = await runNpm(
 				["publish", "--access", "public"],
 				pkg.dir,
