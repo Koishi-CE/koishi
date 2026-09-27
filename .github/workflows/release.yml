@@ -86,8 +86,9 @@
 #      是在「被 dispatch 的那个 ref」上取 workflow 文件的，不限制的话，有写权限
 #      者可以在分支上改本文件后 dispatch，借 environment 拿到 OIDC。
 #   3. 建一个 GitHub App（Repository permissions 只给 Contents: Read and write，
-#      Webhook 关掉，仅安装到 Koishi-CE/koishi），把 App ID 与私钥存成仓库
-#      secret `APP_ID` / `APP_PRIVATE_KEY`，并把它加进主分支 ruleset 的 bypass
+#      Webhook 关掉，仅安装到 Koishi-CE/koishi），把 Client ID 存成仓库
+#      variable `APP_CLIENT_ID`（Client ID 非敏感，官方示例即用 variable）、
+#      私钥存成 secret `APP_PRIVATE_KEY`，并把它加进主分支 ruleset 的 bypass
 #      名单（模式 `Always` 或 `exempt`）。GITHUB_TOKEN 进不了该名单，这一步
 #      没有替代品。
 #   4. 开启 require_code_owner_review（CODEOWNERS 已覆盖 .github/workflows/**、
@@ -173,14 +174,18 @@ jobs:
       - if: steps.bump.outputs.changed == 'true'
         name: 发布前测试
         run: bun run release test
-      # 取 App installation token（1 小时有效）。repositories 显式限定：不写的
-      # 话 token 会覆盖该 App 安装到的所有仓库。私钥只在这里出现，其输出由
-      # create-github-app-token 自行 ::add-mask::。
+      # 取 App installation token（1 小时有效）。用 client-id 而不是 app-id：
+      # v3 的 action.yml 给 app-id 标了 deprecationMessage「Use 'client-id'
+      # instead.」，README 亦写明「legacy app-id is also accepted, but client-id
+      # is recommended」。Client ID 不是秘密（它本就出现在 App 的安装 URL 里），
+      # 故按官方示例放 repository variable 而非 secret。
+      # repositories 显式限定：不写的话 token 会覆盖该 App 安装到的所有仓库。
+      # 私钥只在这里出现，其输出由 create-github-app-token 自行 ::add-mask::。
       - if: steps.bump.outputs.changed == 'true'
         id: app-token
         uses: actions/create-github-app-token@v3
         with:
-          app-id: ${{ secrets.APP_ID }}
+          client-id: ${{ vars.APP_CLIENT_ID }}
           private-key: ${{ secrets.APP_PRIVATE_KEY }}
           repositories: koishi
       # HEAD:main 而非 main：runner 上未必存在名为 main 的本地分支。
