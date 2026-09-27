@@ -65,7 +65,9 @@
 # （被消费的 changeset 文件以删除形式入库），该提交因此命中本文件的
 # `paths: ['.changeset/**']`。所以一次发布会多出一次运行：那次运行消费不到
 # changeset，`changed=false`，只跑 install 与 version 即空转退出，不会再推送，
-# 故不构成循环；`concurrency: group: release` 还保证两者串行。
+# 故不构成循环；`concurrency: group: release` 还保证两者串行。同一原因也会触发
+# 一次 `ci.yml`（它的 `push: main` 没有 paths 过滤）——每次发布固定多出一轮完整
+# CI，这是改由 App token 推送（而非 GITHUB_TOKEN）的固有代价。
 #
 # 前置（均为仓库设置，非代码）：
 #   1. Settings → Environments 建 `release` 并勾 Required reviewers。名字必须

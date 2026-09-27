@@ -131,5 +131,5 @@ bypass 模式必须选让规则对该 actor **不生效**的那一档：`Always`
 必须知道的三个语义：
 
 1. **bypass 的语义是「免于该 ruleset 的全部规则」**，不是「只免签名」：这个 App 被滥用即可往 `main` 推任意内容（绕过 PR、merge queue、签名）。缓解即上面的最小暴露清单，以及 `publish` 仍卡在 `environment` 审批。
-2. **App token 推送会触发新的 workflow 运行**（GitHub 只对 `GITHUB_TOKEN` 免触发）。版本提交会 `git add .changeset`——被消费的 changeset 以**删除**形式入库，命中本 workflow 的 `paths: ['.changeset/**']`，因此一次发布会多出一次运行：那次运行消费不到 changeset，`changed=false`，只跑 install 与 version 即空转退出，不会再推送，`concurrency: group: release` 亦保证两者串行。
+2. **App token 推送会触发新的 workflow 运行**（GitHub 只对 `GITHUB_TOKEN` 免触发）。版本提交会 `git add .changeset`——被消费的 changeset 以**删除**形式入库，命中本 workflow 的 `paths: ['.changeset/**']`，因此一次发布会多出一次运行：那次运行消费不到 changeset，`changed=false`，只跑 install 与 version 即空转退出，不会再推送，`concurrency: group: release` 亦保证两者串行。另外 `ci.yml` 的 `push: main` 没有 paths 过滤，同一次推送还会触发一轮完整 CI——每次发布固定多出的运行成本在此（`GITHUB_TOKEN` 推送时两者都不会发生）。
 3. **App token 推送的提交不会被 GitHub 自动签名**（`git push` 不产生签名）。这里无关紧要——bypass 让签名规则不适用；但若哪天想撤掉 bypass、改用「签名过 `required_signatures`」，就得在 workflow 里另配 GPG / SSH 签名并再放一份私钥。
