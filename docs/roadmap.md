@@ -40,13 +40,13 @@
 
 - **目标**：评估根脚本 `typecheck:legacy`（tsc6 通道）是否仍有保留价值，可退役则删。
 - **状态**：候选（仅评估，不预设结论）。现行类型检查走 TS7（`bun run typecheck`）；根 `typescript` 双版本仅因 @typescript-eslint/parser 尚不支持 TS7 而保留。
-- **依据**：根 package.json scripts；AGENTS.md「TS 双版本策略」；[guides/development.md](guides/development.md) §3。
+- **依据**：根 package.json scripts；AGENTS.md「TS 双版本策略」；[guides/development.md](guides/development.md) §4。
 
 ## 4. 已落地归档
 
 原「计划与候选」中已完成的条目移此存档，细节以对应文档为准：
 
-- **CI 门禁流水线**（2026-09-10 落地）：`.github/workflows/ci.yml` 三并行 job——`gate`（build → 宿主前端 → check → test + Codecov 覆盖率）、`client`（宿主 + 全部 webui 插件前端构建）、`fallow`（死代码与依赖审计，2026-09-11 由 knip 迁移至 fallow）；词典与文档链接检查同批并入 `bun run check`。详见 [guides/development.md](guides/development.md) §3。另有 triage.yml 自动分诊（issue 指派 / PR 路径打标）已另批落地。
+- **CI 门禁流水线**（2026-09-10 落地）：`.github/workflows/ci.yml` 三并行 job——`gate`（build → 宿主前端 → check → test + Codecov 覆盖率）、`client`（宿主 + 全部 webui 插件前端构建）、`fallow`（死代码与依赖审计，2026-09-11 由 knip 迁移至 fallow）；词典与文档链接检查同批并入 `bun run check`。详见 [guides/development.md](guides/development.md) §4。另有 triage.yml 自动分诊（issue 指派 / PR 路径打标）已另批落地。
 - **上游同步常态化**（2026-09-10 落地）：巡检机制（`bun run upstream:audit` + triage 分级 + port 规则）与首轮全量结论见 [process/upstream.md](process/upstream.md)。
 
 ## 5. 近期收尾池（backlog）

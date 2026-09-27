@@ -21,14 +21,17 @@
 
 ## checks/ — 门禁检查脚本
 
-四个零依赖脚本，均已并入 `bun run check`（门禁七段的构成见 [开发手册](../docs/guides/development.md)）：
+七个零依赖脚本，均已并入 `bun run check`（门禁十段的构成见 [开发手册](../docs/guides/development.md) §4）：
 
 | 脚本 | script 名 | 检查内容 |
 | --- | --- | --- |
 | locales.ts | `check:locales` | 词典键对齐（以 zh-CN 为基准）/ 语种齐全 / 假翻译（非中文语种的叶值仍为中文） |
-| docs-links.ts | `check:docs-links` | docs 与根部门面 markdown 的相对链接与锚点存活 |
+| docs-links.ts | `check:docs-links` | docs、根部门面与 `.github`（含 PR 模板目录）markdown 的相对链接与锚点存活 |
 | vue-types.ts | `check:vue-types` | vue-tsc 影子基线闸门：.vue 全量类型错误只拦新增（`--update` 重拍同目录基线 JSON） |
+| assertions.ts | `check:assertions` | 双重断言（`as unknown as`）基线闸门：非测试源文件只拦新增（`--update` 重拍基线） |
 | packages.ts | `check:packages` | 包名纪律（一律 `@koishi-ce/*`）/ 元数据统一 / ESM-only / 依赖方向 |
+| console-wiring.ts | `check:console-wiring` | console 类型源头共享的接线与 paths 层对账 |
+| pr-templates.ts | `check:pr-templates` | PR 模板与 `.github/PULL_REQUEST_TEMPLATE/config.yml` 清单对账（孤儿文件 / 字段形态） |
 
 发现任何问题退出码置 1；具体规则与豁免清单见各脚本头部注释。
 
@@ -46,7 +49,7 @@ bun run release pipeline           # 一条龙：preflight → version → 提�
 
 常用旗标：`--dry-run` 只打印计划；`--only <包名>` 补发漏发 / 重发坏版本；`--allow-dirty`、`--skip-build`、`--skip-test` 跳过对应检查。任何一步失败立即中断并保留现场，重跑幂等。
 
-铁律：**一切发布走本发布链，禁止手动 `npm publish`**（历史上绕链发布把 `workspace:*` 原样带上 npm，下游全炸）。流程与约定详见 [发布流程](../docs/process/release.md)。
+铁律：**一切发布走本发布链，禁止手动 `npm publish`**（历史上绕链发布把 `workspace:*` 原样带上 npm，下游全炸）。流程与约定详见 [发布流程](../docs/process/release.md)；发布链的版本提交是全仓唯一允许直推 `main` 的路径（其余改动走 PR，见 [开发手册](../docs/guides/development.md) §2）。
 
 ## sandbox/ — 外部沙盒实例生成器
 
@@ -59,7 +62,7 @@ bun run sandbox -- --force         # 清空重建（仅限本工具生成的目�
 bun run sandbox -- --start         # 生成完成后立即在本进程前台拉起实例
 ```
 
-默认落点为工作区同级 `koishi-ce-sandbox`。两种模式的机理、已知坑与启动方式详见 [开发手册 §9](../docs/guides/development.md)。与本仓 `plugins/webui/sandbox` 插件（控制台内嵌调试沙盒）无任何关系。
+默认落点为工作区同级 `koishi-ce-sandbox`。两种模式的机理、已知坑与启动方式详见 [开发手册 §10](../docs/guides/development.md)。与本仓 `plugins/webui/sandbox` 插件（控制台内嵌调试沙盒）无任何关系。
 
 ## upstream-audit/ — 上游巡检
 

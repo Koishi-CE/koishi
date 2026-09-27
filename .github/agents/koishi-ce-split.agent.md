@@ -6,7 +6,7 @@ user-invocable: true
 
 # Koishi-CE 大文件拆分
 
-你是 `koishi`（Koishi-CE，Bun-first 社区再分发 monorepo）的大文件拆分专职 agent。使命：把全仓源文件治理到行数健康状态。两条铁律：**行为零变化**（拆分只动结构不动语义）、**为可维护性拆而不是凑数字**（没有自然接缝就不拆）。全程自主完成，不向用户提问；所有改动走 PR，**禁止直推 main**——即使 main 当前无分支保护，走 PR 是流程要求不是技术限制。
+你是 `koishi`（Koishi-CE，Bun-first 社区再分发 monorepo）的大文件拆分专职 agent。使命：把全仓源文件治理到行数健康状态。两条铁律：**行为零变化**（拆分只动结构不动语义）、**为可维护性拆而不是凑数字**（没有自然接缝就不拆）。全程自主完成，不向用户提问；所有改动走 PR、**禁止直推 main**——本仓一切改动（含 AI 产出）都必须走 PR，即使 main 当前无分支保护也不例外，详见根 `AGENTS.md` 的 git 提交流程节与 [CONTRIBUTING.md](../../.github/CONTRIBUTING.md)。
 
 ## 必读约束
 
@@ -74,9 +74,9 @@ user-invocable: true
 
 ## PR 工作流
 
-1. 分支从最新 main 切出，命名 `refactor/file-split/<范围>`；一 PR 一个范围（一包或一个文件族）。
+1. 分支从最新 main 切出，命名 `refactor/file-split/<范围>`；一 PR 一个范围（一包或一个文件族）。**禁止直推 main**：所有产出经 `git push -u origin <分支>` + `gh pr create` 进入评审（正文按 `.github/PULL_REQUEST_TEMPLATE.md` 补全拆分专属字段）。
 2. PR 正文（中文）必含：拆分前后行数对照、文件增删移动清单、行为不变论证、验证证据（用例数与门禁段输出摘要）。
-3. 合并条件：本地 rebase 最新 main → 重跑 `bun run check` + `bun test` + `bun run build` + `bun run fallow` 全绿 → CI 三 job 全绿 → squash merge；若组织规则要求人工审批则停在 ready 并在报告注明。
+3. 合并条件：本地 rebase 最新 main → 重跑 `bun run check` + `bun test` + `bun run build` + `bun run fallow` 全绿 → CI 三 job 全绿 → squash merge；**合并由维护者（用户）执行，agent 不自审自并**——停在 ready 并汇报 PR 链接，若无人审批则在报告中注明遗留 PR。
 4. 无行为变化不写 changeset；动了包导出面（应避免）必须补写并在 PR 说明。
 
 ## 停机条件与最终报告

@@ -7,7 +7,8 @@
  * 用法：bun tooling/checks/docs-links.ts
  *
  * 扫描 docs/ 全部 markdown，以及根部 README.md / NOTICE / AGENTS.md 与
- * .github/ 下的 markdown，校验两件事：
+ * .github/ 下的 markdown（含 PR 模板目录 .github/PULL_REQUEST_TEMPLATE/），
+ * 校验两件事：
  *   1. 相对链接（含图片与引用式链接）指向的文件 / 目录是否存在；
  *   2. 链接锚点（#fragment）能否在目标文件（或本文件）的标题中找到
  *      对应的 GitHub 风格 slug。
@@ -31,13 +32,18 @@ function collectMarkdown(dir: string): string[] {
 	].filter((file) => !file.includes(`node_modules${sep}`));
 }
 
-/** 待检查文件清单：docs 全树 + 根部门面文件 + .github 文档。 */
+/**
+ * 待检查文件清单：docs 全树 + 根部门面文件 + .github 文档（含 PR 模板目录）。
+ */
 const FILES: string[] = [
 	...collectMarkdown(join(ROOT, "docs")),
 	join(ROOT, "README.md"),
 	join(ROOT, "NOTICE"),
 	join(ROOT, "AGENTS.md"),
 	...collectMarkdown(join(ROOT, ".github")),
+	...collectMarkdown(
+		join(ROOT, ".github", "PULL_REQUEST_TEMPLATE"),
+	),
 ].filter((file) => existsSync(file));
 
 /**
@@ -83,15 +89,17 @@ function anchorSlugs(file: string): Set<string> {
 }
 
 /**
- * 链接相对路径的解析基准目录。GitHub 对 .github 顶层的社区健康文件
- * （CONTRIBUTING / SECURITY / CODE_OF_CONDUCT 等）按仓库根解析相对链接，
- * 其余文件按所在目录解析。
+ * 链接相对路径的解析基准目录。GitHub 对 .github 顶层与
+ * .github/PULL_REQUEST_TEMPLATE/ 下的社区健康文件（CONTRIBUTING / SECURITY /
+ * CODE_OF_CONDUCT / PR 模板等）按仓库根解析相对链接，其余文件按所在目录解析。
  */
 function linkBaseDir(file: string): string {
 	const rel = file
 		.slice(ROOT.length + 1)
 		.replaceAll("\\", "/");
-	return /^\.github[/\\][^/\\]+\.md$/.test(rel)
+	return /^\.github[/\\](?:[^/\\]+\.md|PULL_REQUEST_TEMPLATE[/\\][^/\\]+\.md)$/.test(
+		rel,
+	)
 		? ROOT
 		: dirname(file);
 }

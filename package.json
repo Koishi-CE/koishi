@@ -14,7 +14,7 @@
         "apps/*"
     ],
     "scripts": {
-        "check": "bun run lint && bun run lint:client && bun run typecheck && bun run check:locales && bun run check:docs-links && bun run check:vue-types && bun run check:assertions && bun run check:packages && bun run check:console-wiring",
+        "check": "bun run lint && bun run lint:client && bun run typecheck && bun run check:locales && bun run check:docs-links && bun run check:vue-types && bun run check:assertions && bun run check:packages && bun run check:console-wiring && bun run check:pr-templates",
         "lint": "biome check .",
         "lint:client": "eslint \"packages/web/*/src/**/*.vue\" \"plugins/webui/*/client/**/*.vue\"",
         "check:locales": "bun tooling/checks/locales.ts",
@@ -23,6 +23,7 @@
         "check:assertions": "bun tooling/checks/assertions.ts",
         "check:packages": "bun tooling/checks/packages.ts",
         "check:console-wiring": "bun tooling/checks/console-wiring.ts",
+        "check:pr-templates": "bun tooling/checks/pr-templates.ts",
         "sandbox": "bun tooling/sandbox/index.ts",
         "upstream:audit": "bun tooling/upstream-audit/index.ts",
         "fallow": "bunx fallow@3.25.0 dead-code",

@@ -2,7 +2,7 @@
 
 > `koishi`（Koishi-CE monorepo）的**开发手册**：环境、命令、门禁、构建产物布局、编码约定、测试写法与已知坑。以实际代码为准，文档滞后时听代码的。
 > **先读**：根 [AGENTS.md](../../AGENTS.md)（铁律精简版）→ 本文（方法与细节）；结构见 [../reference/architecture.md](../reference/architecture.md)，发布见 [../process/release.md](../process/release.md)。
-> **本文结构**：1 环境 · 2 命令 · 3 门禁 · 4 构建产物 · 5 编码约定 · 6 测试 · 7 已知坑 · 8 版本与发布 · 9 外部沙盒实例。
+> **本文结构**：1 环境 · 2 PR 工作流（禁止直推 main） · 3 命令 · 4 门禁 · 5 构建产物 · 6 编码约定 · 7 测试 · 8 已知坑 · 9 版本与发布 · 10 外部沙盒实例 · 11 依赖更新。
 
 ## 1. 环境要求
 
@@ -14,11 +14,32 @@
 - 不要引入 pnpm / yarn / npm 的锁文件；无全局安装要求，所有工具都在 workspace devDependencies。
 - TypeScript 双版本：根 `devDependencies.typescript` 实为 `npm:@typescript/typescript6`（供 @typescript-eslint/parser，其对 TS7 的支持尚未落地，见 eslint.config.ts 头部注释）；真正的类型检查用 `@typescript/native`（TS7 原生编译器，`bun run ts7` 可直接调用）。
 
-## 2. 常用命令
+## 2. PR 工作流（禁止直推 main）
+
+**铁律：本仓一切改动都走 PR，禁止直接推送 `main`**——含人类维护者与各类 AI / agent 工具产出的改动，改动再小也不例外。这是流程要求而非技术限制：`main` 当前没有分支保护，但「没有保护」不等于「可以直推」。合并由维护者执行，AI / agent 产出的 PR 不自审自并。精简版纪律见根 [AGENTS.md](../../AGENTS.md) 的 git 提交流程节，面向人类贡献者的版本见 [.github/CONTRIBUTING.md](../../.github/CONTRIBUTING.md)。
+
+```bash
+git switch -c docs/pr-only-workflow     # 1. 从最新 main 切出改动分支（<type>/<范围>）
+# ...改代码 → bun run check（构建类改动加 bun run build / bun test）...
+git add -A && git commit -m "docs: ……"  # 2. 分支上提交，简体中文提交信息
+git push -u origin docs/pr-only-workflow # 3. 推分支（不是 main）
+gh pr create --template "文档 (docs)"     # 4. 开 PR，选领域模板（清单见 .github/PULL_REQUEST_TEMPLATE/config.yml）
+# 5. 等 CI 三个 job 全绿 → 汇报 PR 链接与验证证据 → 由维护者合并
+git switch main && git pull --ff-only    # 6. 合并后同步 main 并删除已合并分支
+```
+
+- **分支命名**：`<type>/<范围>`，`type` 取 `feat` / `fix` / `docs` / `chore` / `build` / `refactor`（如 `fix(core):` 类改动 → `fix/core-xxx`、文档类 → `docs/pr-only-workflow`）。
+- **提交粒度**：分支内可小步多次提交；提交信息格式与 scope 约定同主历史（`feat:` / `fix:` / `docs:` / `chore:` / `build:`）。
+- **PR 正文**：按仓库 PR 模板写全——`.github/PULL_REQUEST_TEMPLATE/` 下按改动领域分模板（修复 / 特性 / 文档 / 依赖与上游 / 重构与性能 / 发布，兜底「通用」，清单见该目录 `config.yml`）；改动说明、验证证据（实跑的门禁段与结论）、changeset 情况、影响面与风险四件是各模板的公共要求。
+- **合并条件**：CI 三 job（`gate` / `client` / `fallow`）全绿 + 评审通过 + squash merge；有行为变化的包同步写 changeset（见 [../process/release.md](../process/release.md) 第 3 节）。
+- **唯一例外**：`bun run release pipeline` 的版本提交（含 `bun.lock`）由发布链直接推送 `main`（见 [../process/release.md](../process/release.md) 第 2 节第 7 环）——这是发布链的既定设计，不构成直推 `main` 的许可。
+- **并行会话注意**：同一时刻 HEAD / `main` 可能被其它会话推进，动手前重核 `git status` 与 `git log --oneline -1`，PR 合并前先 rebase 最新 `main`。
+
+## 3. 常用命令
 
 ```bash
 bun install                     # 安装依赖（Bun workspaces，产出 bun.lock）
-bun run check                   # 全量门禁 = lint + lint:client + typecheck + check:locales + check:docs-links + check:vue-types + check:assertions + check:packages（提交前必跑）
+bun run check                   # 全量门禁 = lint + lint:client + typecheck + check:locales + check:docs-links + check:vue-types + check:assertions + check:packages + check:console-wiring + check:pr-templates（提交前必跑）
 bun run lint                    # biome check .（格式 + lint 唯一权威）
 bun run lint:client             # eslint 仅查 *.vue 模板语义
 bun run format                  # biome format --write .
@@ -27,6 +48,8 @@ bun run check:docs-links        # 文档相对链接与锚点存活检查（零�
 bun run check:vue-types         # vue-tsc 影子基线闸门（.vue 全量类型错误只拦新增，已并入 check）
 bun run check:assertions        # 双重断言（as unknown as）基线闸门：非测试源文件只拦新增，已并入 check
 bun run check:packages          # 包名纪律 / 元数据统一 / ESM-only / 依赖方向（零依赖，已并入 check）
+bun run check:console-wiring    # console 类型源头共享的接线对账（零依赖，已并入 check）
+bun run check:pr-templates      # PR 模板与 .github/PULL_REQUEST_TEMPLATE/config.yml 清单对账（零依赖，已并入 check）
 bun run fallow                  # 死代码与依赖审计（bunx 直跑 fallow：不占 devDependencies、脚本内 pin 精确版；配置见根 .fallowrc.jsonc）
 bun run upstream:audit          # 上游巡检：刷新仓外上游缓存并产出目录对比底稿（流程见 ../process/upstream.md）
 bun run typecheck               # TS7 类型检查（node 侧 + client 侧两条 bunx tsc 串行）
@@ -35,7 +58,7 @@ bun test                        # 全量自有用例（覆盖全部 node 侧包�
 bun run test                    # 同上的脚本形态：带 --isolate（每文件独立 global），CI 与提交前一律走这个
 bun test packages/node/core     # 定向跑某包测试
 bun test --coverage             # 覆盖率（src 源码口径）
-bun run sandbox [目录]          # 外部沙盒实例：链接模式（详见第 9 节；--pack 为打包模式）
+bun run sandbox [目录]          # 外部沙盒实例：链接模式（详见第 10 节；--pack 为打包模式）
 ```
 
 前端产物（vite，编程式构建，无配置文件）：
@@ -54,19 +77,20 @@ bun run release status                   # 发布链概览（详见 ../process/r
 
 `apps/koishi-create` 与 `apps/koishi-scripts` 均在根 tsdown workspace 内：包级 `tsdown.config.ts` 只补 bin 入口等差异，平时随根 `bun run build` 一次产出，进目录单独 build 仅在调试该包时需要。
 
-## 3. 门禁构成与现状
+## 4. 门禁构成与现状
 
-`bun run check` 由九段组成：
+`bun run check` 由十段组成：
 
 1. **lint（biome）**：全仓格式 + lint（`biome check .`）。biome 尊重 `.gitignore`（`vcs.useIgnoreFile`），跳过 lib/dist 等。格式以 biome 为唯一权威——`.editorconfig` 已与之一致（代码 tab；文档 `.md`/`.yml`、`.vue` 与脚手架模板 2 空格），手写文件仍统一跑 `bun run format` 收尾。
 2. **lint:client（eslint）**：只查 `.vue` 文件，与 biome 零重叠；核心规则 `vue/no-undef-components`（忽略 `^K`、`^el-`、`^router-` 全局组件）。不做类型感知。
 3. **typecheck**：两条纯 `bunx tsc` 串行——node 侧大一统 `tsconfig.json`（include 为全部 node 工程 src 的并集）+ client 侧大一统 `tsconfig.web.json`（include 为全部 client 工程并集）。**不要恢复逐 tsconfig 并行 spawn**（旧方案 50 进程并发在 win32 下有 Bun.spawn 竞态且无必要）。两条链已开 `incremental`，buildinfo 分文件存 `node_modules/.cache/tsc/`（node / web 各一份，入口文件集合不同不能共用；删掉即全量重建）。另有调试用的 legacy 通道 `bun run typecheck:legacy`（tsc6，写 `node-legacy.tsbuildinfo`）。新增 client 工程时须同步 `tsconfig.web.json` 的 include/paths。
 4. **check:locales**：`tooling/checks/locales.ts`（零依赖，bun 直跑）——词典键对齐 / 语种齐全 / 假翻译三查，发现问题 exit 1；覆盖范围与豁免名单见脚本头部注释。
-5. **check:docs-links**：`tooling/checks/docs-links.ts`（零依赖）——docs 全树 + 根部 / `.github` 文档的相对链接与锚点存活检查，问题 exit 1。
+5. **check:docs-links**：`tooling/checks/docs-links.ts`（零依赖）——docs 全树 + 根部 / `.github` 文档（含 PR 模板目录）的相对链接与锚点存活检查，问题 exit 1。
 6. **check:vue-types**：`tooling/checks/vue-types.ts`——vue-tsc 影子基线闸门：用隔离安装的 vue-tsc（经典 TS 5.9 运行时，版本钉死于脚本常量，首次运行自动自举到 `node_modules/.cache/vue-tsc-shadow/`）对 `tsconfig.web.json` 全量检查（含 `.vue` 的模板与 script），错误快照与入库基线（`tooling/checks/vue-types-baseline.json`）对比，**只拦新增错误键、容忍存量**——归一化键为「文件 + 错误码 + 消息」（不含行列号），`node_modules/` 内第三方 `.vue` 的条目不计。修复存量无需动基线（消失的键自动不计）；新增错误若确认可接受，用 `bun run check:vue-types -- --update` 重拍基线一并提交。存量随修复自然消化，待 Volar 工具链支持 TS7 后影子基线即可转正退役。
 7. **check:assertions**：`tooling/checks/assertions.ts`（零依赖，bun 直跑）——双重断言（`as unknown as` / `as any as`）基线闸门：扫描非测试源文件（`packages` / `plugins` / `apps` / `tooling` 下 `.ts` / `.mts` / `.vue`；测试文件、vendor 目录、vendored 预编译包与产物目录出范围），与入库基线（`tooling/checks/assertions-baseline.json`，兼作保留台账）对比，**只拦新增、容忍存量**——归一化键为「文件 + 类别 + 断言行文本」（不含行号，同文件挪行不算新增；同行多次按次计）。新增断言须先穷尽根除 / 上移修法，确属务实妥协的登记基线附一行理由（`reason` 字段）后 `--update` 重扫；修复存量无需动基线。另设次级检查：`.vue` 模板表达式内 `as any`（biome / eslint 均不查模板，是显式 any 的唯一逃逸口）。覆盖边界（跨行形态、注释豁免、单重 `as` 不在范围）见脚本头部注释。
 8. **check:packages**：`tooling/checks/packages.ts`（零依赖）——把 AGENTS.md 硬性约束与 architecture.md §3 依赖纪律中靠人工遵守的部分固化为自动检查：包名纪律（依赖声明与源码导入不得写回上游名 `koishi` / `@koishijs/*`，豁免仅 console 的 `@koishijs/plugin-server-proxy` 类型引用）、顶层类型字段统一 `types`（不混用旧别名 `typings`）、ESM-only 形态（`type: module`、exports 无 `require` 条件、main 非 CJS 产物）、依赖方向负面规则（packages/web、packages/node、plugins/common、plugins 四个 scope，console 宿主的防御性 peer 在豁免表内附理由）。问题 exit 1；各豁免的理由见脚本头部与内联注释。
 9. **check:console-wiring**：`tooling/checks/console-wiring.ts`（零依赖）——console 类型源头共享的接线对账：node 侧声明 console 增强的插件包集合与接线文件 `packages/web/client/console-services.d.ts` 的导入包集合双向一致（漏接线则该插件的 store 键 / 事件类型在浏览器端静默缺失），基座 tsconfig.client.json 的 paths 键集必须被 tsconfig.web.json 完整重写（extends 整体替换语义，漏写即全程序断链）。问题 exit 1。
+10. **check:pr-templates**：`tooling/checks/pr-templates.ts`（零依赖，bun 直跑）——PR 模板选择器 `.github/PULL_REQUEST_TEMPLATE/config.yml` 与模板文件对账：清单登记的 `body` 文件必须存在、目录内的 `.md`（README 除外）不得是清单外的孤儿、`name` 不得重复、字段只认 GitHub 的 `name` / `description` / `body` 三键。该目录漂移不会让其它门禁变红，只会让开 PR 的人选到空模板或 404。问题 exit 1；模板口径见 `.github/PULL_REQUEST_TEMPLATE/README.md`。
 
 **CI（`.github/workflows/ci.yml`）**：PR 与 main push 自动触发（也支持手动 dispatch），三个并行 job：`gate`（build → 宿主前端构建 → check → test，test 附带 lcov 覆盖率产出并经 codecov-action 上传 Codecov）、`client`（宿主 + 全部 webui 插件的前端构建，即 `.vue` 的实际类型门禁）、`fallow`（`bun run fallow` 死代码与依赖审计）。三个顺序要点：
 
@@ -86,7 +110,7 @@ fallow 另外还带重复代码、复杂度健康度、边界违规与 PR 变更
 
 **`.vue` 的类型检查**：tsc 侧经 `packages/web/client/global.d.ts` 把 `*.vue` 声明为不透明 `Component`，SFC 的 script / template 不进入 tsc 程序——错误实际由构建期 vite（compiler-sfc，含 defineProps 类型解析）暴露，前端构建是 `.vue` 的实际类型门禁。vue-tsc 需要经典 TS 运行时、与本仓 TS7-native 策略冲突，故不走 tsc 主链，而是经 check:vue-types 以影子基线旁路拦截新增（见上文第 6 段）；待 Volar 工具链支持 TS7 后再评估转正。
 
-## 4. 构建产物布局
+## 5. 构建产物布局
 
 | 产物 | 位置 | 产生方式 |
 |---|---|---|
@@ -100,7 +124,7 @@ fallow 另外还带重复代码、复杂度健康度、边界违规与 PR 变更
 - `**/lib/`、`**/dist/` 均被 .gitignore 忽略，不入库。例外：vendored 三包（`plugins/infra/{http,proxy,server}`）的 `index.cjs/index.mjs/index.d.ts` 是提交进仓库的预编译产物（再导出 `@cordisjs/plugin-*`），不走 tsdown。
 - 前端构建发布前现构建（dist 不入 git），由 `bun run release build` 编排。
 
-## 5. 编码约定
+## 6. 编码约定
 
 ### TypeScript（tsconfig.base.json，全 workspace 继承）
 
@@ -143,7 +167,7 @@ fallow 另外还带重复代码、复杂度健康度、边界违规与 PR 变更
 - **YAML 陷阱**：值内含半角「冒号+空格」（法语高频）必须加引号；值以 `{` 开头（插值在句首）也必须加引号；块标量（`|-`）内无此限制。
 - **中文拼接拆字**（如「文件{{夹}}」）应拆为独立的参数化键，禁止在模板里做语序相关的字符串拼接。
 
-## 6. 测试写法
+## 7. 测试写法
 
 框架：`bun:test`（`describe` / `it` / `before` / `after` 从 `bun:test` 导入）+ **`bun:test` 的 `expect` 断言**（唯一标准；chai 及其插件已于 2026-09-02 全量迁出仓库，勿再引入）。
 
@@ -160,7 +184,7 @@ expect(app.database.getUser("mock", "A")).resolves.toHaveShape({ authority: 1 })
 - 测试文件与被测模块同目录放置：同模块用例较多时收进该模块的 `__tests__/`（如 `core/src/session/__tests__/`），较少时直下同名放置（如 `core/src/command/declaration.test.ts`）；文件型模块（无独立目录）的用例组收进包级 `src/__tests__/`（core 的 shape 断言基建同在此）。全仓 `*.test.ts`、无 `.spec.ts`；总数以 `bun test` 实跑输出为准。
 - `.yml` locale 在测试中可直接 import（Bun 原生支持）。
 
-## 7. 已知坑（历史经验，别再踩）
+## 8. 已知坑（历史经验，别再踩）
 
 1. **测试进程对 workspace 包加载 src 而非 lib**：Bun 运行时按「离文件最近的 tsconfig.json」取 paths 且不跟随 extends——各包 tsconfig.json 里的 paths 块把 `@koishi-ce/*` 指到 src，覆盖率才能统计源码。该 paths 块**手工维护**（`tooling/sync-test-paths.ts` 已删除）：改 `tsconfig.base.json` 的 paths 后须同步各包 tsconfig。因此改 src 后跑测试无需先 build，测试验证的始终是源码。
 2. **workspace 包在测试之外的解析走 lib 产物**（Bun 对 workspace 包的解析不读 exports 的 `source` 条件，直接落 lib 产物）：改 src 后要先 `bun run build` 才在运行时生效。
@@ -186,13 +210,13 @@ expect(app.database.getUser("mock", "A")).resolves.toHaveShape({ authority: 1 })
 20. **vue-tsc 必须隔离目录安装且用 node 跑，bunx / bun 直跑崩或静默失效**：仓库根 `typescript` 是 `@typescript/typescript6` 别名包，vue-tsc 对 `typescript/lib/tsc` 的深路径引用被其 exports 挡住（`bunx vue-tsc` 直接 ERR_PACKAGE_PATH_NOT_EXPORTED），bun 直跑则静默失效。影子环境（`node_modules/.cache/vue-tsc-shadow/`）自举时须先预写独立 package.json，否则 `bun add` 会被根 workspace 吸附、把依赖装进根 node_modules 并改写根 package.json / bun.lock（2026-09-14 实证）；spawn 裸名 `node` 在 win32 多重 node 共存（mise shim 等）下不可靠，须经 `Bun.which("node")` 解析绝对路径。另 vue-tsc 有诊断时退出码在 1 与 2 间漂移，崩溃识别以「非零退出且 stdout 无诊断行」为准（check:vue-types 已按此实现）。
 21. **client 侧 `*.test.ts` 的 IDE 归属锚须补 `types: ["bun"]`**（2026-09-25 落地四处）：client 类型域的测试文件不进门禁（`tsconfig.web.json` 的 exclude，保持基座 `types: []` 的浏览器纯净），但 IDE 按「最近的 tsconfig.json」归属——`packages/web/{client,components}` 与 `plugins/webui/{explorer,market}/client` 四个标准名 tsconfig 兜住全部 client 侧测试，而 `bun:test` 的模块声明只在 `@types/bun` 里，缺它 IDE 即报「找不到模块 bun:test」。四处均已补 `types: ["bun"]`（IDE-only 宽松：bun 全局只在 IDE 程序可见，「浏览器源码误用 node API」的抓错仍完全靠门禁程序的 `types: []`）。新增 client 侧测试时确认其归属锚在四处之列；另注意 components / explorer / market 三处各自声明了 paths（extends 链整体替换语义，基座映射不会自动到达），往基座补 paths 后这三处要手动同步。
 
-## 8. 版本与发布
+## 9. 版本与发布
 
 - 版本由 changesets 递进管理（1.0.0 起步基线、不镜像上游版本号，随发布自然漂移，当前版本以各包 package.json 与 `bun run release status` 为准），shim 四包例外（版本冻结跟随上游线，见 [../reference/architecture.md](../reference/architecture.md)）。
 - 版本与发布由 changesets + `bun run release` 发布链管理，禁止手动 `npm publish`——流程、命令与事故教训见 [../process/release.md](../process/release.md)。
 - 面向发布的包改动随提交写 `.changeset/` 条目（见 [../process/release.md](../process/release.md) 第 3 节）。
 
-## 9. 外部沙盒实例（tooling/sandbox/）
+## 10. 外部沙盒实例（tooling/sandbox/）
 
 在工作区之外生成由本仓 workspace 包组成的 koishi-ce 运行实例，用于「先测试再发包」：数据写回、市场装插件等运行时副作用全部落在沙盒目录（loader 的 baseDir 取自进程 cwd 与配置文件位置），工作区零污染。
 
@@ -209,7 +233,7 @@ bun run sandbox --start          # 生成完成后立即在本进程前台拉起
 - 沙盒内经市场装插件会触发 bun install 重建 node_modules，可能清掉手工 junction——重跑 `bun run sandbox` 秒级补链（幂等：已有且指向一致的链接全部复用）。
 - 沙盒 package.json 预声明 plugin-http / plugin-proxy-agent / plugin-server 三个默认插件依赖：loader 启动时的 manifest 迁移（migrateManifest，按进程 cwd 读 package.json）发现宿主未声明会自动补挂插件键并改写 koishi.yml，与模板 yml 的同名键撞 duplicate plugin 警告。
 
-## 10. 依赖更新（Dependabot）
+## 11. 依赖更新（Dependabot）
 
 依赖漂移由 `.github/dependabot.yml` 驱动，两条 update 条目：`bun`（根目录一条，沿根 `package.json` 的 `workspaces` 字段递归覆盖全部 workspace 包，同一依赖只开一个 PR）与 `github-actions`。每周一 09:00（Asia/Shanghai）开 PR，上限 bun 侧 5 个 / Actions 侧 3 个。
 
