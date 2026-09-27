@@ -30,10 +30,13 @@
 # deletion），而 **GITHUB_TOKEN 无法被加入该 ruleset 的 bypass 名单**（GitHub
 # 的安全限制），于是 `git push origin HEAD:main` 必然被拒，报
 # `GH013: Repository rule violations found for refs/heads/main`。App 的
-# installation token 可以进 bypass 名单（模式必须 Always，`Pull requests only`
-# 对直推不生效），故推送改用 App 认证。最小暴露：App 只授
-# `Contents: Read and write`、只装在 Koishi-CE/koishi，token 只在这一步取用
-# （其余步骤仍是默认 GITHUB_TOKEN），publish 仍卡在 environment 审批。
+# installation token 可以进 bypass 名单（模式须让规则对该 actor 不生效：
+# `Always` 或 `exempt`，`Pull requests only` 则对直推无效）。官方 API 定义：
+# `exempt` 时「规则不会为该 actor 运行，也不产生 bypass 审计条目」，故它是
+# GitHub 对机器人的推荐模式（`Always` 会在审计日志里留下 bypass 事件）。
+# 故推送改用 App 认证。最小暴露：App 只授 `Contents: Read and write`、只装在
+# Koishi-CE/koishi，token 只在这一步取用（其余步骤仍是默认 GITHUB_TOKEN），
+# publish 仍卡在 environment 审批。
 #
 # 代价必须写清：bypass 的语义是「**免于该 ruleset 的全部规则**」，不是「只免
 # 签名」——这个 App 被滥用即可往 main 推任意内容（绕过 PR、merge queue、签名）。
@@ -74,7 +77,8 @@
 #   3. 建一个 GitHub App（Repository permissions 只给 Contents: Read and write，
 #      Webhook 关掉，仅安装到 Koishi-CE/koishi），把 App ID 与私钥存成仓库
 #      secret `APP_ID` / `APP_PRIVATE_KEY`，并把它加进主分支 ruleset 的 bypass
-#      名单（模式 Always）。GITHUB_TOKEN 进不了该名单，这一步没有替代品。
+#      名单（模式 `Always` 或 `exempt`）。GITHUB_TOKEN 进不了该名单，这一步
+#      没有替代品。
 #   4. 开启 require_code_owner_review（CODEOWNERS 已覆盖 .github/workflows/**、
 #      tooling/release/**、.changeset/**、package.json、bun.lock、tsdown.config.ts）。
 #      这是本模型下唯一「零成本把危险改动变成需双人过目」的手段。
