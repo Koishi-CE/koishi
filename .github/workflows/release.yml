@@ -138,11 +138,15 @@ jobs:
       # CI 环境下 bun install 自动 frozen-lockfile；@parcel/watcher 的
       # postinstall 拦截提示属预期（平台预编译包就位即可用）
       - run: bun install
-      # commitVersionBumps 走 git commit；checkout 不带身份，不配必然失败
-      - name: 配置 git 身份
+      # commitVersionBumps 走 git commit；checkout 不带身份，不配必然失败。
+      # 署名用维护者 PaperKoi 的账号与绑定邮箱（而不是 github-actions[bot]）：
+      # GitHub 的贡献统计认 author/committer 邮箱，用 bot 身份会让版本提交在贡献
+      # 墙上挂一个 `github-actions[bot]`。署名与推送认证是两件事——推送仍走 App 的
+      # installation token（见下方推送步骤），改署名不影响任何权限。
+      - name: 配置 git 身份（PaperKoi）
         run: |
-          git config user.name 'github-actions[bot]'
-          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git config user.name 'PaperKoi'
+          git config user.email '331636065+PaperKoi@users.noreply.github.com'
       - id: bump
         name: 消费 changeset（只提交，推送留到构建与测试通过之后）
         run: |

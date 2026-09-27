@@ -136,3 +136,12 @@ bypass 模式必须选让规则对该 actor **不生效**的那一档：`Always`
 1. **bypass 的语义是「免于该 ruleset 的全部规则」**，不是「只免签名」：这个 App 被滥用即可往 `main` 推任意内容（绕过 PR、merge queue、签名）。缓解即上面的最小暴露清单，以及 `publish` 仍卡在 `environment` 审批。
 2. **App token 推送会触发新的 workflow 运行**（GitHub 只对 `GITHUB_TOKEN` 免触发）。版本提交会 `git add .changeset`——被消费的 changeset 以**删除**形式入库，命中本 workflow 的 `paths: ['.changeset/**']`，因此一次发布会多出一次运行：那次运行消费不到 changeset，`changed=false`，只跑 install 与 version 即空转退出，不会再推送，`concurrency: group: release` 亦保证两者串行。另外 `ci.yml` 的 `push: main` 没有 paths 过滤，同一次推送还会触发一轮完整 CI——每次发布固定多出的运行成本在此（`GITHUB_TOKEN` 推送时两者都不会发生）。
 3. **App token 推送的提交不会被 GitHub 自动签名**（`git push` 不产生签名）。这里无关紧要——bypass 让签名规则不适用；但若哪天想撤掉 bypass、改用「签名过 `required_signatures`」，就得在 workflow 里另配 GPG / SSH 签名并再放一份私钥。
+
+### 7.6 版本提交的署名（贡献归属）
+
+提交的**署名**与推送的**认证**是两件事，别混为一谈：
+
+- **署名**由 `prepare` 里 `git config user.name / user.email` 决定，只影响「这些提交计入谁的贡献主页」——workflow 里显式配成维护者 **PaperKoi**（`PaperKoi` / `331636065+PaperKoi@users.noreply.github.com`，即其 GitHub 账号与绑定邮箱）。此前用 `github-actions[bot]`，结果版本提交在仓库贡献墙上挂了一个 bot 账号（2026-09-27 那次 `chore(release): 消费 changeset…` 即此）。
+- **认证**仍是 GitHub App 的 installation token（见 §7.5），即绕过 ruleset 的身份不受署名影响。
+
+两者都改不产生额外权限：署名只是 `git config`，App token 仍只出现在推送那一步。
