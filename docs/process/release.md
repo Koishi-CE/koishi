@@ -71,13 +71,14 @@ npm 的暂存发布（staged publishing）会在版本公开前插入人工批�
 
 | job | 职责 | 权限 |
 | --- | --- | --- |
-| `prepare` | `release version --commit` → `release build` → `release test` → 推送版本提交 → 打包 artifact | `contents: write`，**无** `id-token` |
+| `prepare` | `release version --commit` → `release build` → `release test` → 用 GitHub App token 推送版本提交 → 打包 artifact | `contents: write`，**无** `id-token` |
 | `publish` | 解包 artifact → `release publish`（逐包 npm publish） | `id-token: write` + `environment: release` 审批，**无** `contents: write` |
 
 设计约束：
 
 - **消费 changeset 与构建必须同处一个 job**。早先拆成两个 job、由 version 输出提交 SHA 供 build 用 `actions/checkout` 的 `ref: ${{ needs.version.outputs.sha }}` 检出，被 CodeQL 的 `actions/cache-poisoning` 判定为「可被 `workflow_dispatch` 影响的 ref 被特权 job 检出并执行」，在该文件上稳定报 3 条 high（Cache Poisoning via execution of untrusted code）。合成一个 job 后用默认 checkout，既消掉这个污点，也免掉 SHA 传递这笔状态——构建与测试跑的就是本 job 里刚提交的那棵树。
-- **推送排在构建与测试之后**：这样构建或测试失败时，main 上不会留下「版本已升、包却没发出去」的提交。推送用 `git push origin HEAD:main`（runner 上未必存在名为 `main` 的本地分支）。
+- **推送排在构建与测试之后**：这样构建或测试失败时，main 上不会留下「版本已升、包却没发出去」的提交；推送用 `git push … HEAD:main`（runner 上未必存在名为 `main` 的本地分支）。
+- **推送凭证是 GitHub App 的 installation token**：默认 `GITHUB_TOKEN` 推 `main` 会被 ruleset 以 `GH013` 拒绝，且它**无法被加入 ruleset 的 bypass 名单**（GitHub 的安全限制）；能进该名单的只有 GitHub App，模式还必须是 `Always` 或 `exempt`（`Pull requests only` 对直推无效）。仓库侧配置、最小暴露清单与三个必须知道的语义见 §7.5。
 - **`publish` 不跑 `bun install`**：`release publish` 只用 `node:` 内建模块与 npm CLI，不需要 `node_modules`；而 install 与构建是构建期代码执行的主要入口，不该出现在持 OIDC token 的 job 里。构建期可执行的代码（`package.json` 脚本、`tsdown.config.ts`、各插件 `build/client.ts`）若与 token 同处一个 job，一处被改坏即可发布这 53 个包的任意版本。附带说明：Bun 本身不执行依赖的 postinstall（`bun install --help` 原文 "dependency scripts are never run"，根 `package.json` 亦无 `trustedDependencies`），该层默认即关闭，此处仍按最小权限切分。
 - **版本先落 main、发布待审批**：`prepare` 不挂 environment，故版本提交与 CHANGELOG 会在构建测试通过后立即进 main，而包要等 `environment: release` 的批准才真正上线。若某次审批长期不点，main 的版本会暂时领先 npm——`release publish` 的 registry 比对（`filterDowngrades`）能安全处理这种中间态，但排查「版本号对不上」时要知道它的存在。
 
@@ -102,6 +103,33 @@ npm 的信任配置把 `repository` / `workflow_ref.file` / `environment` 三个
 
 1. `release` Environment + Required reviewers（名字须与 claim 严格同名）。评审人可列多位，语义是「**其中任意一位**批准即可」（GitHub 文档原文：Only one of the required reviewers needs to approve the job for it to proceed）；
 2. 同一 Environment 的 **Deployment branches 限制为 `main`**（动机见 §7.2）；
-3. 主分支 ruleset 放行 GitHub Actions 的 bypass，否则 `prepare` job 推不上去；
+3. 主分支 ruleset 的 **bypass 名单里加入发布用的 GitHub App（模式 `Always` 或 `exempt`）**，否则 `prepare` job 推不上去——不能按「放行 GitHub Actions」来配，`GITHUB_TOKEN` 进不了该名单（见 §7.5）；
 4. 开启 `require_code_owner_review`；
 5. npm 侧 53 个包的信任配置与上表一致：`repository=Koishi-CE/koishi`、`workflow_ref.file=release.yml`、`environment=release`、权限仅 `publish`（不含 stage publish，避免引入人工批准环节的暂存流程）。
+
+### 7.5 版本提交的推送凭证（GitHub App）
+
+`prepare` 要把版本提交直推 `main`，而 `main` 受 ruleset「保护主分支」保护（`pull_request` / `merge_queue` / `required_signatures` / `code_coverage` / `code_scanning` / `non_fast_forward` / `deletion`）。**默认 `GITHUB_TOKEN` 无法被加入该 ruleset 的 bypass 名单**（GitHub 的安全限制，UI 里选不到它），实测 2026-09-27 的首次 `workflow_dispatch`（run 36328581773）9 步里 8 步成功，只有推送被拒：
+
+```text
+remote: error: GH013: Repository rule violations found for refs/heads/main.
+remote: - Changes must be made through a pull request.
+remote: - Commits must have verified signatures.
+```
+
+因此推送改用 **GitHub App 的 installation token**：仓库装一个只授 `Contents: Read and write` 权限的 App（Webhook 关闭、仅安装到本仓），把它加入 ruleset 的 bypass 名单，App ID 与私钥存成仓库 secret `APP_ID` / `APP_PRIVATE_KEY`，由 `actions/create-github-app-token@v3` 在推送前换取。
+
+bypass 模式必须选让规则对该 actor **不生效**的那一档：`Always` 或 `exempt`（`Pull requests only` 对直推无效）。官方 API 对 `exempt` 的定义是「规则不会为该 actor 运行，也不产生 bypass 审计条目」（原文：When `bypass_mode` is `exempt`, rules will not be run for that actor and a bypass audit entry will not be created.）；自 GitHub 2025-09-10 的 ruleset exemptions 更新起，它是**给机器人用的推荐模式**——同样免于规则，但审计日志里不会留下 bypass 事件（`Always` 会）。本仓当前用的就是 `exempt`。
+
+最小暴露的落实方式（改 workflow 时不要放宽）：
+
+- App 只授 `Contents: Read and write`、只装在 `Koishi-CE/koishi`；取 token 时显式写 `repositories: koishi`，不依赖默认值（默认覆盖该 App 安装到的全部仓库）。
+- token 只出现在「推送版本提交」这一步（`env` 传入、脚本里用 `${GH_TOKEN}` 引用而不是把 token 内联进 `run`，避免明文进日志），其余步骤仍用默认 `GITHUB_TOKEN`。
+- `prepare` 的 `actions/checkout` 必须 `persist-credentials: false`：否则 checkout 会把 `GITHUB_TOKEN` 持久化到 `.git/config` 的 `http.<url>.extraheader`，与推送 URL 里的 App token 争同一个 `Authorization` 头。
+- 推送用完整 URL 而非 `git remote`，并加 `-c core.hooksPath=/dev/null`：`prepare` 里有 `bun install` / `build` / `test` 这些构建期代码，被污染时可在 `.git/hooks/pre-push` 里读到该 token。这是「让持 `contents: write` 的 job 拿到 bypass 能力」的固有代价，剩余面靠 CODEOWNERS 对构建文件的强制复核兜底。
+
+必须知道的三个语义：
+
+1. **bypass 的语义是「免于该 ruleset 的全部规则」**，不是「只免签名」：这个 App 被滥用即可往 `main` 推任意内容（绕过 PR、merge queue、签名）。缓解即上面的最小暴露清单，以及 `publish` 仍卡在 `environment` 审批。
+2. **App token 推送会触发新的 workflow 运行**（GitHub 只对 `GITHUB_TOKEN` 免触发）。版本提交会 `git add .changeset`——被消费的 changeset 以**删除**形式入库，命中本 workflow 的 `paths: ['.changeset/**']`，因此一次发布会多出一次运行：那次运行消费不到 changeset，`changed=false`，只跑 install 与 version 即空转退出，不会再推送，`concurrency: group: release` 亦保证两者串行。另外 `ci.yml` 的 `push: main` 没有 paths 过滤，同一次推送还会触发一轮完整 CI——每次发布固定多出的运行成本在此（`GITHUB_TOKEN` 推送时两者都不会发生）。
+3. **App token 推送的提交不会被 GitHub 自动签名**（`git push` 不产生签名）。这里无关紧要——bypass 让签名规则不适用；但若哪天想撤掉 bypass、改用「签名过 `required_signatures`」，就得在 workflow 里另配 GPG / SSH 签名并再放一份私钥。
