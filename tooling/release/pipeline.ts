@@ -113,7 +113,8 @@ export async function cmdPipeline(
 		return 0;
 	}
 
-	// 推送
+	// 推送（全仓唯一允许直推 main 的路径：其余改动一律走 PR，
+	// 见 AGENTS.md 的 git 提交流程节与 docs/process/release.md 第 2 节）
 	if (options.push) {
 		console.log("[pipeline] 📤 git push origin main");
 		const code = await run(

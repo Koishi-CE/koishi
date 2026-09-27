@@ -31,7 +31,7 @@
 
 ```bash
 bun install                     # 安装依赖（Bun workspaces，产出 bun.lock）
-bun run check                   # 全量门禁（九段，构成见 docs/guides/development.md §3）
+bun run check                   # 全量门禁（九段，构成见 docs/guides/development.md §4）
 bun run lint                    # biome check .（格式 + lint 唯一权威）
 bun run lint:client             # eslint 仅查 *.vue（biome 只解析 .vue 的 script，模板语义归 eslint）
 bun run typecheck               # TS7 类型检查 = 两条 bunx tsc（node 侧 + client 侧大一统串行）
@@ -40,7 +40,7 @@ bun run build                   # 根 tsdown：全部 node 侧包 → lib/（ESM
 bun test                        # 全量自有用例（126 个测试文件 / 1003 用例，2026-09-20 实测，覆盖全部 node 侧包）
 bun run test                    # 同上的脚本形态：bun test --isolate（每文件独立 global，隔离跨文件 mock.module）
 bun test --coverage             # 覆盖率（src 源码口径，All files 当前约 97% 行，以实跑输出为准）
-bun run sandbox                 # 外部沙盒实例生成（链接模式默认，--pack 为打包模式；详见 docs/guides/development.md §9）
+bun run sandbox                 # 外部沙盒实例生成（链接模式默认，--pack 为打包模式；详见 docs/guides/development.md §10）
 bun packages/web/builder/src/bin.ts build            # 宿主控制台前端 → plugins/webui/console/dist
 bun packages/web/builder/src/bin.ts build <插件目录>  # 单个 webui 插件的前端
 ```
@@ -56,7 +56,7 @@ bun packages/web/builder/src/bin.ts build <插件目录>  # 单个 webui 插件�
 - TS 双版本策略：根 `typescript` 实为 typescript6（供 @typescript-eslint/parser），类型检查走 `@typescript/native`（TS7 原生编译器）。
 - 显式 `any` 全仓为 0，保持住：动态边界用 `unknown` + 收窄。
 
-## 已知坑（一行一条，细节与机理见 docs/guides/development.md §7）
+## 已知坑（一行一条，细节与机理见 docs/guides/development.md §8）
 
 - **测试对 workspace 包加载 src 而非 lib**：改 src 跑测试无需先 build；各包 tsconfig 的 paths 块手工维护（`tooling/sync-test-paths.ts` 已删除）。
 - **`biome.json` 里不能写注释**：出现 `//` 会让 Biome **静默丢弃整个 `overrides` 数组**（`**/package.json` 被格式化、测试与 `.vue` 豁免全失效），配置说明写进 `docs/guides/development.md`。
@@ -72,10 +72,15 @@ bun packages/web/builder/src/bin.ts build <插件目录>  # 单个 webui 插件�
 - **测试断言新标准是 `bun:test` 的 `expect`**：不要新增 chai 断言（存量逐步迁移）。
 - **目录名 `apps/koishi-create` 与包名 `create-koishi-ce` 不一致**：引用一律以 `apps/koishi-create` 为准。
 
-## git 提交流程
+## git 提交流程（PR only —— 禁止直推 main）
 
-1. 先跑 `bun run check`（必要时先 `bun run format`），确保通过再提交；涉及构建改动加跑 `bun run build` 与 `bun test`。
-2. `git add -A` 后提交，提交信息用简体中文，格式参考现有历史（`feat:` / `fix:` / `docs:` / `chore:` / `build:`，可带 scope 如 `fix(core):`）。
-3. 提交到主分支 `main`；若当前不在主分支，先切回主分支再提交。
-4. 提交完成后向用户简要说明改了什么与提交哈希。
+**铁律：本仓一切改动都走 PR，任何 AI / agent 都不得直接推送 `main`。这是流程要求而非技术限制——即使 `main` 当前没有分支保护、改动再小也不例外**（唯一例外是发布链的版本提交，见第 6 条）。合并由维护者（用户）执行，AI 不自审自并。
+
+1. 从最新 `main` 切出改动分支：`git switch -c <type>/<范围>`（`type` 取 `feat` / `fix` / `docs` / `chore` / `build` / `refactor`，如 `docs/pr-only-workflow`）。
+2. 先跑 `bun run check`（必要时先 `bun run format`）确保通过；涉及构建改动加跑 `bun run build` 与 `bun test`。
+3. 在分支上提交（可小步多次）：`git add -A` 后提交，提交信息用简体中文，格式参考现有历史（`feat:` / `fix:` / `docs:` / `chore:` / `build:`，可带 scope 如 `fix(core):`）。
+4. 推分支并开 PR：`git push -u origin <分支>` → `gh pr create`，正文按 `.github/PULL_REQUEST_TEMPLATE.md`（改动说明 + 验证证据）。**禁止 `git push origin main`，禁止对 `main` 强推。**
+5. 等 CI 三个 job（`gate` / `client` / `fallow`）全绿后停在 ready 状态，把 PR 链接与验证证据汇报给用户，由用户合并；**AI 不自行合并**（用户明确指示合并时按指示办）。
+6. 例外只有一条：`bun run release pipeline` 的版本提交与推送 `main`（见 `docs/process/release.md`）——那是发布链的既定行为，不构成「人可以直推 main」的许可。
+7. PR 合并后同步本地产物：`git switch main` → `git pull --ff-only` → 删除已合并的本地 / 远程分支，再汇报最终状态。
 

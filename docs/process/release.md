@@ -1,6 +1,6 @@
 # 发布流程（RELEASE）
 
-> 本仓全部可发布包的版本与发布管理：changesets 管版本，`bun run release` 发布链（`tooling/release/`）管执行。**铁律：一切发布走发布链，禁止手动 `npm publish`。** 实现代码见 `tooling/release/index.ts`（该目录与 `apps/koishi-scripts` 的 release 链互不相干——后者面向宿主工作区的插件项目）。
+> 本仓全部可发布包的版本与发布管理：changesets 管版本，`bun run release` 发布链（`tooling/release/`）管执行。**铁律：一切发布走发布链，禁止手动 `npm publish`。** 实现代码见 `tooling/release/index.ts`（该目录与 `apps/koishi-scripts` 的 release 链互不相干——后者面向宿主工作区的插件项目）。发布链第 7 环会把版本提交直接推送 `main`，**这是全仓唯一允许直推 `main` 的路径**（其余一切改动走 PR，见 [../guides/development.md](../guides/development.md) §2）。
 > **先读**：开发与门禁见 [../guides/development.md](../guides/development.md)；版本基线与 shim 例外见 [../reference/architecture.md](../reference/architecture.md)。
 > **本文结构**：1 命令 · 2 发布链环节 · 3 changesets 约定 · 4 发布顺序与补发 · 5 暂存区（staged publish）与 409 · 6 事故记录。
 
@@ -28,7 +28,7 @@ bun run release pipeline                  # 一条龙：preflight → version �
 4. **build**：node 侧 lib 产物 + 宿主控制台总装 + 各 webui 插件前端。
 5. **test**：`bun test packages plugins/common plugins/webui/admin plugins/webui/commands`——范围化子集（源码 `runTestStep`），不含 apps 与 tooling 用例；全量测试仍以本地 `bun test` 为准。
 6. **publish**：按拓扑序逐包发布。publish 环负责把 `workspace:*` 协议改写为真实版本号（`workspace:^` 等其他协议形式直接拒绝），并带**终局断言**（依赖字段不得残留 `workspace:` / `file:` / `link:`）。
-7. **push**：推送 `main`（只推 main，不打 tag——tag 环已删除；对外 GitHub Release 的单整体 tag 手动补打，跟 core 版本走）。
+7. **push**：推送 `main`（只推 main，不打 tag——tag 环已删除；对外 GitHub Release 的单整体 tag 手动补打，跟 core 版本走）。**这是全仓唯一允许直推 `main` 的路径**：本仓一切改动都走 PR（见 [../guides/development.md](../guides/development.md) §2 与根 `AGENTS.md` 的 git 提交流程节），发布链的版本提交是既定例外，不构成人工直推 `main` 的许可。
 
 ## 3. changesets 约定
 

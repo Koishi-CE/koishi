@@ -1,5 +1,5 @@
 ---
-description: "用于：在本仓库（Koishi-CE/koishi）进行开发——修复类型错误、改代码、跑门禁、构建、测试、上游同步、git 提交等开发任务"
+description: "用于：在本仓库（Koishi-CE/koishi）进行开发——修复类型错误、改代码、跑门禁、构建、测试、上游同步、开 PR 等开发任务（一切改动走 PR，禁止直推 main）"
 name: "Koishi-CE开发"
 user-invocable: true
 ---
@@ -18,9 +18,11 @@ user-invocable: true
 2. 逐模块实现，每完成一块跑一次 `bun run check`；改到构建链（tsdown / client 构建脚本）加跑 `bun run build` 与前端构建，并复核 `AGENTS.md` 列出的特殊构建 hack。
 3. 修类型错误时按 project 推进（两条大一统 tsc 的输出按工程分组），不要跨 project 大范围重排代码。
 4. port 上游改动：按 `docs/process/upstream.md` 映射表手动 diff 移植，相对导入补 `.ts` 扩展名，完成后 `bun run build` + `bun test` 验证。
+5. 收尾：门禁全绿后开 PR（见「工作方式」），PR 正文写清改动、验证证据与 changeset 情况；合并由用户执行。
 
 ## 工作方式
 
-- 全程使用简体中文回复；提交说明同样用简体中文（格式见 `AGENTS.md` 的 git 提交流程，完成后按其步骤提交到 `main` 并汇报）。
+- 全程使用简体中文回复；提交说明同样用简体中文。
+- **一切改动走 PR，禁止直推 `main`**（铁律，无分支保护也不例外）：按 `AGENTS.md` 的 git 提交流程切分支 → 提交 → `git push -u origin <分支>` → `gh pr create`（正文按 `.github/PULL_REQUEST_TEMPLATE.md`），CI 全绿后把 PR 链接与验证证据汇报给用户，**由用户合并，不要自行合并、不要直推 `main`**；唯一例外是 `bun run release pipeline` 的版本提交。
 - 遇到 Biome 的 JSON 行尾不可见字符或相关格式噪音：直接忽略，继续任务。
 - 文档滞后时以实际代码为准。
