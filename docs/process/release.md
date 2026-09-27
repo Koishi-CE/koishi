@@ -65,21 +65,21 @@ npm 的暂存发布（staged publishing）会在版本公开前插入人工批�
 
 本地发布链之外，仓库另有 `.github/workflows/release.yml`：**携带 changeset 的 PR 合并进 main 后，由 CI 自动消费 changeset 并把包发上 npm**，全程无需本地发包。npm 侧走**可信发布（Trusted Publisher / OIDC）**，不存在任何长期 token（本机也从此不持有发布能力）。
 
-### 7.1 触发与三 job 分工
+### 7.1 触发与两 job 分工
 
 触发为 `push: main` 且 `paths: ['.changeset/**']`（只有携带 changeset 的合并才值得跑），外加 `workflow_dispatch` 作补发 / 重跑逃生舱；`concurrency: group: release` 且不取消进行中的运行，避免两个运行同时消费 changeset 撞版本号。
 
 | job | 职责 | 权限 |
 | --- | --- | --- |
-| `version` | `release version --commit --push`：消费 changeset、写 CHANGELOG、提交并推 main | `contents: write` |
-| `build` | `release build` + `release test`，把工作区打包成 artifact | 无 `id-token` |
-| `publish` | 解包 artifact → `release publish`（逐包 npm publish） | `id-token: write` + `environment: release` 审批 |
+| `prepare` | `release version --commit` → `release build` → `release test` → 推送版本提交 → 打包 artifact | `contents: write`，**无** `id-token` |
+| `publish` | 解包 artifact → `release publish`（逐包 npm publish） | `id-token: write` + `environment: release` 审批，**无** `contents: write` |
 
-两点设计约束：
+设计约束：
 
-- **`build` 精确构建 `version` 输出的那个 SHA**（不是 main HEAD）。否则「版本提交之后、发布之前又合并了别的 PR」时，构建产物会包含未写进 CHANGELOG 的改动——即所谓发布窗口污染。
+- **消费 changeset 与构建必须同处一个 job**。早先拆成两个 job、由 version 输出提交 SHA 供 build 用 `actions/checkout` 的 `ref: ${{ needs.version.outputs.sha }}` 检出，被 CodeQL 的 `actions/cache-poisoning` 判定为「可被 `workflow_dispatch` 影响的 ref 被特权 job 检出并执行」，在该文件上稳定报 3 条 high（Cache Poisoning via execution of untrusted code）。合成一个 job 后用默认 checkout，既消掉这个污点，也免掉 SHA 传递这笔状态——构建与测试跑的就是本 job 里刚提交的那棵树。
+- **推送排在构建与测试之后**：这样构建或测试失败时，main 上不会留下「版本已升、包却没发出去」的提交。推送用 `git push origin HEAD:main`（runner 上未必存在名为 `main` 的本地分支）。
 - **`publish` 不跑 `bun install`**：`release publish` 只用 `node:` 内建模块与 npm CLI，不需要 `node_modules`；而 install 与构建是构建期代码执行的主要入口，不该出现在持 OIDC token 的 job 里。构建期可执行的代码（`package.json` 脚本、`tsdown.config.ts`、各插件 `build/client.ts`）若与 token 同处一个 job，一处被改坏即可发布这 53 个包的任意版本。附带说明：Bun 本身不执行依赖的 postinstall（`bun install --help` 原文 "dependency scripts are never run"，根 `package.json` 亦无 `trustedDependencies`），该层默认即关闭，此处仍按最小权限切分。
-- **版本先落 main、发布待审批**：`version` job 不挂 environment，故版本提交与 CHANGELOG 在合并后立即进 main，而包要等 `environment: release` 的批准才真正上线。若某次审批长期不点，main 的版本会暂时领先 npm——`release publish` 的 registry 比对（`filterDowngrades`）能安全处理这种中间态，但排查「版本号对不上」时要知道它的存在。
+- **版本先落 main、发布待审批**：`prepare` 不挂 environment，故版本提交与 CHANGELOG 会在构建测试通过后立即进 main，而包要等 `environment: release` 的批准才真正上线。若某次审批长期不点，main 的版本会暂时领先 npm——`release publish` 的 registry 比对（`filterDowngrades`）能安全处理这种中间态，但排查「版本号对不上」时要知道它的存在。
 
 ### 7.2 OIDC 的信任边界（改本文件前必读）
 
@@ -87,6 +87,7 @@ npm 的信任配置把 `repository` / `workflow_ref.file` / `environment` 三个
 
 - **job 上的 `environment: release` 不可删**。npm 侧声明了 environment claim，缺了它 OIDC 校验直接不通过；反过来说，若当初不声明 environment，删掉这一行就能绕过 GitHub 的审批——这正是声明它的意义。
 - **`.github/workflows/**` 与 `tooling/release/**` 必须开 CODEOWNERS 复核**：本模型下改这两处等于拿到发布权。
+- **`release` Environment 的 Deployment branches 必须限制为 `main`**：`workflow_dispatch` 是在**被 dispatch 的那个 ref** 上取 workflow 文件的，不限制的话，有写权限者可以在分支上改本文件后 dispatch，借这个 environment 拿到 OIDC。限制到 `main` 后，非 main ref 的运行访不到该 environment，`environment: release` 的 claim 也就无从满足。
 - 三个 claim 任何一处与实际不符 OIDC 都不认（仓库名大小写、workflow 文件名、environment 名）。要改必须 revoke 后重建——registry 每包只允许一条信任配置，没有 update 语义。
 
 ### 7.3 与本地链的关系
@@ -99,7 +100,8 @@ npm 的信任配置把 `repository` / `workflow_ref.file` / `environment` 三个
 
 ### 7.4 仓库侧前置（非代码）
 
-1. `release` Environment + Required reviewers（名字须与 claim 严格同名）；
-2. 主分支 ruleset 放行 GitHub Actions 的 bypass，否则 `version` job 推不上去；
-3. 开启 `require_code_owner_review`；
-4. npm 侧 53 个包的信任配置与上表一致：`repository=Koishi-CE/koishi`、`workflow_ref.file=release.yml`、`environment=release`、权限仅 `publish`（不含 stage publish，避免引入人工批准环节的暂存流程）。
+1. `release` Environment + Required reviewers（名字须与 claim 严格同名）。评审人可列多位，语义是「**其中任意一位**批准即可」（GitHub 文档原文：Only one of the required reviewers needs to approve the job for it to proceed）；
+2. 同一 Environment 的 **Deployment branches 限制为 `main`**（动机见 §7.2）；
+3. 主分支 ruleset 放行 GitHub Actions 的 bypass，否则 `prepare` job 推不上去；
+4. 开启 `require_code_owner_review`；
+5. npm 侧 53 个包的信任配置与上表一致：`repository=Koishi-CE/koishi`、`workflow_ref.file=release.yml`、`environment=release`、权限仅 `publish`（不含 stage publish，避免引入人工批准环节的暂存流程）。

@@ -40,3 +40,42 @@ test("旗标：未知旗标返回 null；--only 缺参或缺值同样返回 null
 	expect(parseOptions(["--only"])).toBeNull();
 	expect(parseOptions(["--only", "--push"])).toBeNull();
 });
+
+test("旗标：其余旗标逐一可解析（--dry-run / --allow-dirty / --skip-build / --skip-test）", () => {
+	expect(parseOptions(["--dry-run"])?.dryRun).toBe(true);
+	expect(parseOptions(["--allow-dirty"])?.allowDirty).toBe(
+		true,
+	);
+	expect(parseOptions(["--skip-build"])?.skipBuild).toBe(
+		true,
+	);
+	expect(parseOptions(["--skip-test"])?.skipTest).toBe(
+		true,
+	);
+});
+
+test("旗标：全部旗标同时给出时互不干扰（覆盖 switch 的每个分支）", () => {
+	// 一次性走遍所有 case：既锁住「新增旗标不会挤掉旧旗标」，也让本文件
+	// 行覆盖保持 100%（该文件进入覆盖率报告靠本测试 import，缺口会直接
+	// 拉低 Codecov 的 patch/project 两个口径）
+	expect(
+		parseOptions([
+			"--dry-run",
+			"--only",
+			"@koishi-ce/core",
+			"--commit",
+			"--push",
+			"--allow-dirty",
+			"--skip-build",
+			"--skip-test",
+		]),
+	).toEqual({
+		dryRun: true,
+		push: true,
+		allowDirty: true,
+		skipBuild: true,
+		skipTest: true,
+		commit: true,
+		only: ["@koishi-ce/core"],
+	});
+});
