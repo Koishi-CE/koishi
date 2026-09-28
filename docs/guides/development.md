@@ -16,7 +16,7 @@
 
 ## 2. PR 工作流（禁止直推 main）
 
-**铁律：本仓一切改动都走 PR，禁止直接推送 `main`**——含人类维护者与各类 AI / agent 工具产出的改动，改动再小也不例外。这是流程要求而非技术限制：`main` 当前没有分支保护，但「没有保护」不等于「可以直推」。合并由维护者执行，AI / agent 产出的 PR 不自审自并。精简版纪律见根 [AGENTS.md](../../AGENTS.md) 的 git 提交流程节，面向人类贡献者的版本见 [.github/CONTRIBUTING.md](../../.github/CONTRIBUTING.md)。
+**铁律：本仓一切改动都走 PR，禁止直接推送 `main`**——含人类维护者与各类 AI / agent 工具产出的改动，改动再小也不例外。这是流程要求而非技术限制：`main` 现由仓库 ruleset「保护主分支」约束（要求走 PR、签名提交与 merge queue，2026-09-28 核对），但被 bypass 放行不等于「可以直推」。合并由维护者执行，AI / agent 产出的 PR 不自审自并。精简版纪律见根 [AGENTS.md](../../AGENTS.md) 的 git 提交流程节，面向人类贡献者的版本见 [.github/CONTRIBUTING.md](../../.github/CONTRIBUTING.md)。
 
 ```bash
 git switch -c docs/pr-only-workflow     # 1. 从最新 main 切出改动分支（<type>/<范围>）
@@ -32,7 +32,7 @@ git switch main && git pull --ff-only    # 6. 合并后同步 main 并删除已�
 - **提交粒度**：分支内可小步多次提交；提交信息格式与 scope 约定同主历史（`feat:` / `fix:` / `docs:` / `chore:` / `build:`）。
 - **PR 正文**：按仓库 PR 模板写全——`.github/PULL_REQUEST_TEMPLATE/` 下按改动领域分模板（修复 / 特性 / 文档 / 依赖与上游 / 重构与性能 / 发布，兜底「通用」，清单见该目录 `config.yml`）；改动说明、验证证据（实跑的门禁段与结论）、changeset 情况、影响面与风险四件是各模板的公共要求。
 - **合并条件**：CI 三 job（`gate` / `client` / `fallow`）全绿 + 评审通过 + squash merge；有行为变化的包同步写 changeset（见 [../process/release.md](../process/release.md) 第 3 节）。
-- **评审路由（CODEOWNERS）**：[.github/CODEOWNERS](../../.github/CODEOWNERS) 按路径指派 code owner（`*` 兜底 + 发布链 / 根配置 / CI / 预编译产物等敏感路径两人共管）。仓库 ruleset「保护主分支」当前**未**开启 "Require review from Code Owners"（2026-09-27 核对），故它现在只做路由与通知；新增高风险路径时记得在该文件补规则。
+- **评审路由（CODEOWNERS）**：[.github/CODEOWNERS](../../.github/CODEOWNERS) 按路径指派 code owner（`*` 兜底 + 发布链 / 根配置 / CI / 预编译产物等敏感路径两人共管）。仓库 ruleset「保护主分支」**已**开启 "Require review from Code Owners"（2026-09-28 核对），即命中敏感路径的 PR 需对应 code owner 批准才能合并（`*` 兜底那条同样生效）；新增高风险路径时记得在该文件补规则。
 - **唯一例外**：`bun run release pipeline` 的版本提交（含 `bun.lock`）由发布链直接推送 `main`（见 [../process/release.md](../process/release.md) 第 2 节第 7 环）——这是发布链的既定设计，不构成直推 `main` 的许可。
 - **并行会话注意**：同一时刻 HEAD / `main` 可能被其它会话推进，动手前重核 `git status` 与 `git log --oneline -1`，PR 合并前先 rebase 最新 `main`。
 
@@ -93,11 +93,13 @@ bun run release status                   # 发布链概览（详见 ../process/r
 9. **check:console-wiring**：`tooling/checks/console-wiring.ts`（零依赖）——console 类型源头共享的接线对账：node 侧声明 console 增强的插件包集合与接线文件 `packages/web/client/console-services.d.ts` 的导入包集合双向一致（漏接线则该插件的 store 键 / 事件类型在浏览器端静默缺失），基座 tsconfig.client.json 的 paths 键集必须被 tsconfig.web.json 完整重写（extends 整体替换语义，漏写即全程序断链）。问题 exit 1。
 10. **check:pr-templates**：`tooling/checks/pr-templates.ts`（零依赖，bun 直跑）——PR 模板选择器 `.github/PULL_REQUEST_TEMPLATE/config.yml` 与模板文件对账：清单登记的 `body` 文件必须存在、目录内的 `.md`（README 除外）不得是清单外的孤儿、`name` 不得重复、字段只认 GitHub 的 `name` / `description` / `body` 三键。该目录漂移不会让其它门禁变红，只会让开 PR 的人选到空模板或 404。问题 exit 1；模板口径见 `.github/PULL_REQUEST_TEMPLATE/README.md`。
 
-**CI（`.github/workflows/ci.yml`）**：PR 与 main push 自动触发（也支持手动 dispatch），三个并行 job：`gate`（build → 宿主前端构建 → check → test，test 附带 lcov 覆盖率产出并经 codecov-action 上传 Codecov）、`client`（宿主 + 全部 webui 插件的前端构建，即 `.vue` 的实际类型门禁）、`fallow`（`bun run fallow` 死代码与依赖审计）。三个顺序要点：
+**CI（`.github/workflows/ci.yml`）**：PR 与 main push 自动触发（也响应 merge queue 的 `merge_group` 与手动 dispatch），三个并行 job：`gate`（build → 宿主前端构建 → check → test，test 附带 lcov 覆盖率产出并经 codecov-action 上传 Codecov）、`client`（宿主 + 全部 webui 插件的前端构建，即 `.vue` 的实际类型门禁）、`fallow`（`bun run fallow` 死代码与依赖审计）。三个顺序要点：
 
 - **gate 里 build 前置于 check**：`tsconfig.web.json` 的部分 paths 指向各包 `lib/index.d.ts` 产物，全新环境无 lib 时 web 侧 tsc 直接 TS2307（已实测）；本地因 lib 常在而感知不到该依赖。
 - **gate 里前端构建前置于 test**：console 插件的「静态资源托管」用例读 `plugins/webui/console/dist` 真实产物（index.html / logo.png），干净环境不构建前端则整套用例必失败（首次上 CI 实证）；本地因 dist 常在而感知不到。
 - **Bun 版本不在 workflow 硬编码**：`oven-sh/setup-bun` 自动读根 `packageManager`（bun@1.4.2），升级只改根字段。
+
+**必需状态检查与 merge queue（2026-09-28 起）**：主分支 ruleset「保护主分支」（id `24072025`）启用了 merge queue，并把 `gate` / `client` / `fallow` 三个 job 定为必需状态检查（ruleset 侧于 2026-09-28 开启，workflow 侧只需保证上文 CI 段里的 `merge_group` 触发）。队列只认在它自建的 `gh-readonly-queue/<base>/pr-*` 临时 ref 上跑出来的那次检查，`pull_request` 那次不算数——因此 `ci.yml` 的 `on` 里**必须保留 `merge_group:`**：删掉它，队列会永远等不到检查上报，超时（该 ruleset 的 status check timeout，当前 12 分钟）后把 PR 从队列剔除，合并必然失败。依据 [managing a merge queue](https://docs.github.com/zh/repositories/configuring-branches-and-merges-in-your-repository/configuring-pull-request-merges/managing-a-merge-queue)。另注两点：ruleset 里检查名只认 `<job name>`（不含 workflow 名、不含矩阵与事件维度），所以配置时该填的就是上面三个 job 名；ruleset 编辑器那个搜索框是「输入才搜」的懒加载，打开时不显示任何候选属正常，键入 `gate` 即可命中。
 
 **依赖与死代码审计（fallow）**：`bun run fallow` = `bunx fallow@<pin> dead-code`，即 CI 的 `fallow` job 口径；工具不进 devDependencies（bunx 直跑，与 knip 时代的既有策略一致），但版本在 `package.json` 脚本内 **pin 到精确版**——浮动的 `fallow@3` 会让门禁口径随上游发布漂移（fallow 迭代极快，2026-08 单月发布 11 个 minor），而 dead-code 退出码直接决定 CI 红绿、审计基线数字又常被 PR 引用，必须可复现；升级即改脚本内版本号（单点）并复核审计基线。全部豁免与规则开关集中在根 `.fallowrc.jsonc`，三条要点：
 
