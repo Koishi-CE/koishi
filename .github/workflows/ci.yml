@@ -31,13 +31,25 @@
 
 name: CI
 
+# 触发面：merge_group 不可省。主分支 ruleset「保护主分支」（id 24072025）启用了
+# merge queue，且 gate / client / fallow 是必需状态检查。GitHub 对必需检查只认
+# 「在队列建的 gh-readonly-queue/<base>/pr-* 临时 ref 上跑出来的」那一次，
+# pull_request 那次不算数：缺 merge_group 时队列永远等不到检查上报，超时（该
+# ruleset 的 status check timeout，12 分钟）后把 PR 从队列里剔除，等于合并必然
+# 失败。官方原文：「You must update your CI configuration to trigger and report on
+# merge group events when requiring a merge queue.」
+# 见 https://docs.github.com/zh/repositories/configuring-branches-and-merges-in-your-repository/configuring-pull-request-merges/managing-a-merge-queue
 on:
   push:
     branches: [main]
   pull_request:
+  merge_group:
   workflow_dispatch:
 
-# 同一分支 / PR 的旧跑自动取消，不占额度
+# 同一分支 / PR 的旧跑自动取消，不占额度。merge_group 的 ref 逐 entry 独立
+# （gh-readonly-queue/... 带该 entry 的 sha），因此不会跨 entry 误取消；同一 ref
+# 被重新请求检查时取消旧跑也无害——新跑约 2 分钟，远低于队列 12 分钟的超时。
+# 故此处不对 merge_group 做例外（该例外是「ruleset workflow」的要求，非本形态）。
 concurrency:
   group: ci-${{ github.ref }}
   cancel-in-progress: true
