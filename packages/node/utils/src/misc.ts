@@ -120,10 +120,24 @@ export function coerce(val: unknown) {
 			? val
 			: new Error(String(val));
 	const lines = stack?.split("\n") ?? [message];
+	// 快路径：定位「以整条消息结尾」的那一行（堆栈首行即 "Error: <消息>"），
+	// 并从该行起截断，丢掉与抛出点无关的外层帧
 	const index = lines.findIndex((line) =>
 		line.endsWith(message),
 	);
-	return lines.slice(index).join("\n");
+	if (index >= 0) return lines.slice(index).join("\n");
+	// 慢路径：消息含换行时没有任何一行以整条消息结尾，findIndex 得 -1，而
+	// slice(-1) 只会留下最外层栈帧——调用方拿到的错误文本退化成一行
+	// 「    at ...」，消息本体丢失（实测于 CI 偶发：把一次 coerce 的文本再包
+	// 成 Error，消息即多行栈文本）。改用消息首行定位（堆栈首行恒为该首行的
+	// 后缀）；连首行都定位不到（如堆栈被替换）就把消息补回栈首，保证消息不丢。
+	const head = message.split("\n")[0] ?? message;
+	const headIndex = lines.findIndex((line) =>
+		line.endsWith(head),
+	);
+	if (headIndex >= 0)
+		return lines.slice(headIndex).join("\n");
+	return stack ? `${message}\n${stack}` : message;
 }
 
 /**

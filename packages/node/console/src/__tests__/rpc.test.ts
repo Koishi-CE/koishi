@@ -28,6 +28,7 @@ declare module "@koishi-ce/console" {
 		"test/echo"(...args: unknown[]): unknown[];
 		"test/secret"(): string;
 		"test/boom"(): never;
+		"test/multiline"(): never;
 	}
 }
 
@@ -149,6 +150,34 @@ describe("@koishi-ce/console 基座", () => {
 			expect(response?.body.id).toBe(3);
 			expect(String(response?.body.error)).toContain(
 				"boom",
+			);
+			socket.shutdown();
+		});
+
+		// 回归现场（CI 偶发红）：消息含换行的 Error 曾让 coerce 定位失败，回给
+		// 前端的错误文本退化成一行最外层栈帧，消息本体丢失（前端只看到 "    at ..."）
+		it("回调抛出的多行消息错误仍回传消息本体", async () => {
+			const socket = new FakeSocket();
+			service.acceptClient(socket.socket, fakeRequest());
+			await tick();
+			socket.sent.length = 0;
+
+			service.addListener("test/multiline", () => {
+				throw new Error("请先登录。\n第二行细节");
+			});
+			socket.receive(
+				JSON.stringify({
+					type: "test/multiline",
+					id: 4,
+					args: [],
+				}),
+			);
+			await tick();
+
+			const response = readSent(socket)[0];
+			expect(response?.body.id).toBe(4);
+			expect(String(response?.body.error)).toContain(
+				"请先登录。",
 			);
 			socket.shutdown();
 		});
