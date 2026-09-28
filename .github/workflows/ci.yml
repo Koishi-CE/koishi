@@ -68,6 +68,11 @@ jobs:
     name: gate (build / check / test)
     runs-on: ubuntu-latest
     timeout-minutes: 30
+    # id-token: write 仅用于换取（短命的）Turborepo 远程缓存凭据：job 级声明，
+    # 不扩散到不需要它的地方
+    permissions:
+      contents: read
+      id-token: write
     steps:
       - uses: actions/checkout@v7
       - uses: oven-sh/setup-bun@v2
@@ -92,14 +97,27 @@ jobs:
       # CI 环境下 bun install 自动 frozen-lockfile；@parcel/watcher 的
       # postinstall 拦截提示属预期（平台预编译包就位即可用）
       - run: bun install
+      # 远程缓存凭据（OIDC）：把本次运行的 OIDC token 换成 Turborepo access token
+      # （短命、仅够访问 Remote Cache、绑定团队），由 action 写入 TURBO_TOKEN /
+      # TURBO_TEAM 供后续步骤使用。**换取失败不阻断门禁**（continue-on-error +
+      # 下方告警）：必需检查不允许因第三方服务抖动变红；此时退化为纯本地缓存，
+      # 语义与未接远程缓存完全一致，只是不快。
+      - name: 换取 Turborepo 远程缓存凭据（OIDC）
+        id: turbo-cache-token
+        uses: vercel/setup-turborepo-remote-cache-action@v1.1.0
+        continue-on-error: true
+        with:
+          team: ${{ vars.TURBO_TEAM }}
+      - name: 远程缓存未就绪告警（不阻断门禁）
+        if: steps.turbo-cache-token.outcome != 'success'
+        run: |
+          echo "::warning::Turborepo 远程缓存凭据换取失败（OIDC policy / TURBO_TEAM 未就绪，或 Vercel 侧异常）。本次退回纯本地缓存：门禁语义不变，只是不快。"
       # 门禁经 turbo 执行：任务图、依赖与缓存口径见根 turbo.jsonc。命中远程
       # 缓存时 build / check / test 整轮跳过（merge_group 那一遍复用
-      # pull_request 那一遍即此情形）；未配 TURBO_TOKEN 时降级为纯本地缓存。
+      # pull_request 那一遍即此情形）。
       - name: 门禁（turbo：build → 宿主前端 → check → test，含 lcov 覆盖率）
         run: bunx turbo run //#build //#build:console //#check //#test:ci
         env:
-          TURBO_TOKEN: ${{ secrets.TURBO_TOKEN }}
-          TURBO_TEAM: ${{ vars.TURBO_TEAM }}
           TURBO_TELEMETRY_DISABLED: "1"
       - name: 上传覆盖率到 Codecov
         uses: codecov/codecov-action@v7
@@ -111,17 +129,28 @@ jobs:
     name: client (webui bundle build)
     runs-on: ubuntu-latest
     timeout-minutes: 30
+    permissions:
+      contents: read
+      id-token: write
     steps:
       - uses: actions/checkout@v7
       - uses: oven-sh/setup-bun@v2
       - run: bun install
+      - name: 换取 Turborepo 远程缓存凭据（OIDC）
+        id: turbo-cache-token
+        uses: vercel/setup-turborepo-remote-cache-action@v1.1.0
+        continue-on-error: true
+        with:
+          team: ${{ vars.TURBO_TEAM }}
+      - name: 远程缓存未就绪告警（不阻断门禁）
+        if: steps.turbo-cache-token.outcome != 'success'
+        run: |
+          echo "::warning::Turborepo 远程缓存凭据换取失败（OIDC policy / TURBO_TEAM 未就绪，或 Vercel 侧异常）。本次退回纯本地缓存：门禁语义不变，只是不快。"
       # 前端构建走 src 别名，理论上不依赖 lib；先 build 与本地已验证形态一致。
       # 两者都经 turbo：命中缓存即跳过（本 job 剩下的循环暂未纳入缓存）。
       - name: 根构建 + 宿主控制台前端（turbo）
         run: bunx turbo run //#build //#build:console
         env:
-          TURBO_TOKEN: ${{ secrets.TURBO_TOKEN }}
-          TURBO_TEAM: ${{ vars.TURBO_TEAM }}
           TURBO_TELEMETRY_DISABLED: "1"
       - name: 全部 webui 插件前端
         run: |
@@ -133,13 +162,24 @@ jobs:
     name: fallow (dead code & deps audit)
     runs-on: ubuntu-latest
     timeout-minutes: 10
+    permissions:
+      contents: read
+      id-token: write
     steps:
       - uses: actions/checkout@v7
       - uses: oven-sh/setup-bun@v2
       - run: bun install
+      - name: 换取 Turborepo 远程缓存凭据（OIDC）
+        id: turbo-cache-token
+        uses: vercel/setup-turborepo-remote-cache-action@v1.1.0
+        continue-on-error: true
+        with:
+          team: ${{ vars.TURBO_TEAM }}
+      - name: 远程缓存未就绪告警（不阻断门禁）
+        if: steps.turbo-cache-token.outcome != 'success'
+        run: |
+          echo "::warning::Turborepo 远程缓存凭据换取失败（OIDC policy / TURBO_TEAM 未就绪，或 Vercel 侧异常）。本次退回纯本地缓存：门禁语义不变，只是不快。"
       - name: 死代码与依赖审计（turbo）
         run: bunx turbo run //#fallow
         env:
-          TURBO_TOKEN: ${{ secrets.TURBO_TOKEN }}
-          TURBO_TEAM: ${{ vars.TURBO_TEAM }}
           TURBO_TELEMETRY_DISABLED: "1"
