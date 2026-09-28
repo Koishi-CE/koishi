@@ -14,10 +14,9 @@
 #   故本文件先写通配（`*` / `目录/**`），再写显式文件路径，后者压前者。
 # - 以 `/` 开头的模式锚定仓库根；`**` 跨目录；`*` 不跨 `/`。
 #
-# 现状（2026-09-27 核对）：本仓 ruleset「保护主分支」尚未开启
-# require_code_owner_review，故本文件现在只做「路由 + 通知」，不拦合并。
-# 要让它拦合并须在 Settings → Rules 的该 ruleset 里勾选
-# "Require review from Code Owners"（届时每个 PR 都需要下方 owner 之一批准）。
+# 现状（2026-09-28 核对）：本仓 ruleset「保护主分支」已开启
+# require_code_owner_review，即下方 owner 的批准已是合并的必要条件（哪些 PR
+# 需要另一位批准，见文末「已知限制」）。
 #
 # 维护纪律：新增高风险路径（发布链 / 根配置 / CI / 预编译产物等）时在本文件
 # 补一条规则，并在 docs/guides/development.md 的 PR 工作流节确认口径一致。
@@ -74,6 +73,9 @@
 /biome.json                         @Oppenheymu @PaperKoi
 /eslint.config.ts                   @Oppenheymu @PaperKoi
 /.fallowrc.jsonc                    @Oppenheymu @PaperKoi
+# turbo 的任务图与缓存口径（CI 门禁的执行面：改它等于改「哪些步骤算通过」，
+# 且远程缓存跨 run 复用，故与 CI 同列敏感路径）
+/turbo.jsonc                        @Oppenheymu @PaperKoi
 
 # CI、自动分诊与模板（门禁与流程的唯一执行面）
 /.github/workflows/**               @Oppenheymu @PaperKoi

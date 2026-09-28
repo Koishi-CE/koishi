@@ -78,6 +78,17 @@ bun run release status                   # 发布链概览（详见 ../process/r
 
 `apps/koishi-create` 与 `apps/koishi-scripts` 均在根 tsdown workspace 内：包级 `tsdown.config.ts` 只补 bin 入口等差异，平时随根 `bun run build` 一次产出，进目录单独 build 仅在调试该包时需要。
 
+CI 门禁的 turbo 形态（可选；等价于上面各条命令的组合，任务图见根 [`turbo.jsonc`](../../turbo.jsonc)，缓存机制见第 4 节）：
+
+```bash
+bunx turbo run //#build //#build:console //#check //#test:ci   # = CI 的 gate job（含 lcov 覆盖率产出）
+bunx turbo run //#build //#build:console                       # = CI 的 client job 里可缓存的那部分
+bunx turbo run //#fallow                                       # = CI 的 fallow job
+bunx turbo run //#build --force                                # 忽略缓存强制重跑（排查缓存相关问题时用）
+```
+
+本地缓存落在 `.turbo/`（已 gitignore）；设了 `TURBO_TOKEN` / `TURBO_TEAM` 才走远程缓存（CI 跨 run 复用的来源，见第 4 节）。
+
 ## 4. 门禁构成与现状
 
 `bun run check` 由十段组成：
@@ -100,6 +111,8 @@ bun run release status                   # 发布链概览（详见 ../process/r
 - **Bun 版本不在 workflow 硬编码**：`oven-sh/setup-bun` 自动读根 `packageManager`（bun@1.4.2），升级只改根字段。
 
 **必需状态检查与 merge queue（2026-09-28 起）**：主分支 ruleset「保护主分支」（id `24072025`）启用了 merge queue，并把 `gate` / `client` / `fallow` 三个 job 定为必需状态检查（ruleset 侧于 2026-09-28 开启，workflow 侧只需保证上文 CI 段里的 `merge_group` 触发）。队列只认在它自建的 `gh-readonly-queue/<base>/pr-*` 临时 ref 上跑出来的那次检查，`pull_request` 那次不算数——因此 `ci.yml` 的 `on` 里**必须保留 `merge_group:`**：删掉它，队列会永远等不到检查上报，超时（该 ruleset 的 status check timeout，当前 12 分钟）后把 PR 从队列剔除，合并必然失败。依据 [managing a merge queue](https://docs.github.com/zh/repositories/configuring-branches-and-merges-in-your-repository/configuring-pull-request-merges/managing-a-merge-queue)。另注两点：ruleset 里检查名只认 `<job name>`（不含 workflow 名、不含矩阵与事件维度），所以配置时该填的就是上面三个 job 名；ruleset 编辑器那个搜索框是「输入才搜」的懒加载，打开时不显示任何候选属正常，键入 `gate` 即可命中。
+
+**turbo 缓存（CI 门禁的执行层）**：三个 job 都改为经 turbo 跑根任务——任务图、`dependsOn` 与 `outputs` 集中在根 [`turbo.jsonc`](../../turbo.jsonc)，CI 编排不再自持顺序知识。三条要点：① **粒度**：本仓 node 侧是「根 tsdown 单遍构建全部包」，`check` / `test` 也是根级单命令，所以缓存单位就是这些根任务（`//#` 前缀），不是「每包一个任务」；包级粒度要等构建拆分，不在当前范围。② **命中条件**：turbo 按输入内容哈希（默认取包内未被 `.gitignore` 忽略的文件，故 `lib/` `dist/` `coverage/` `node_modules/` 都不进哈希），配远程缓存后 **merge_group 那一遍与 pull_request 那一遍内容逐字相同即整轮命中**（实测最近 5 个已合并 PR 的 tree 全等），这正是队列等待下降的来源；本地实测 `//#build` 冷 41.3s → 命中 0.3s，且删光 43 个 `lib/` 后命中仍能完整还原产物。③ **降级与安全**：未配 `TURBO_TOKEN`（secret）/ `TURBO_TEAM`（variable）时自动退化为纯本地缓存，语义与不加 turbo 等价，只是快不了；命中复用的一定是「该内容此前的执行结果（连同退出码）」——内容没通过就仍然红，不会因缓存变绿；写入方是各 run（含 PR run），而任务图在 `turbo.jsonc` 里，故该文件与 CI 同列 [CODEOWNERS](../../.github/CODEOWNERS) 敏感路径。
 
 **依赖与死代码审计（fallow）**：`bun run fallow` = `bunx fallow@<pin> dead-code`，即 CI 的 `fallow` job 口径；工具不进 devDependencies（bunx 直跑，与 knip 时代的既有策略一致），但版本在 `package.json` 脚本内 **pin 到精确版**——浮动的 `fallow@3` 会让门禁口径随上游发布漂移（fallow 迭代极快，2026-08 单月发布 11 个 minor），而 dead-code 退出码直接决定 CI 红绿、审计基线数字又常被 PR 引用，必须可复现；升级即改脚本内版本号（单点）并复核审计基线。全部豁免与规则开关集中在根 `.fallowrc.jsonc`，三条要点：
 

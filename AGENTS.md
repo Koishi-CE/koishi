@@ -39,6 +39,7 @@ bun run fallow                  # 死代码与依赖审计（bunx 直跑 fallow�
 bun run build                   # 根 tsdown：全部 node 侧包 → lib/（ESM-only）
 bun test                        # 全量自有用例（126 个测试文件 / 1003 用例，2026-09-20 实测，覆盖全部 node 侧包）
 bun run test                    # 同上的脚本形态：bun test --isolate（每文件独立 global，隔离跨文件 mock.module）
+bunx turbo run //#check         # CI 门禁口径（turbo 缓存；任务图见根 turbo.jsonc，机制见 docs/guides/development.md §4）
 bun test --coverage             # 覆盖率（src 源码口径，All files 当前约 97% 行，以实跑输出为准）
 bun run sandbox                 # 外部沙盒实例生成（链接模式默认，--pack 为打包模式；详见 docs/guides/development.md §10）
 bun packages/web/builder/src/bin.ts build            # 宿主控制台前端 → plugins/webui/console/dist
@@ -74,7 +75,7 @@ bun packages/web/builder/src/bin.ts build <插件目录>  # 单个 webui 插件�
 
 ## git 提交流程（PR only —— 禁止直推 main）
 
-**铁律：本仓一切改动都走 PR，任何 AI / agent 都不得直接推送 `main`。这是流程要求而非技术限制——即使 `main` 当前没有分支保护、改动再小也不例外**（唯一例外是发布链的版本提交，见第 6 条）。合并由维护者（用户）执行，AI 不自审自并。
+**铁律：本仓一切改动都走 PR，任何 AI / agent 都不得直接推送 `main`。这是流程要求而非技术限制——`main` 现由仓库 ruleset「保护主分支」约束（要求 PR / 签名 / merge queue / 必需状态检查），但被 bypass 放行、改动再小也不例外**（唯一例外是发布链的版本提交，见第 6 条）。合并由维护者（用户）执行，AI 不自审自并。
 
 1. 从最新 `main` 切出改动分支：`git switch -c <type>/<范围>`（`type` 取 `feat` / `fix` / `docs` / `chore` / `build` / `refactor`，如 `docs/pr-only-workflow`）。
 2. 先跑 `bun run check`（必要时先 `bun run format`）确保通过；涉及构建改动加跑 `bun run build` 与 `bun test`。
