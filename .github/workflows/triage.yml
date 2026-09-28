@@ -3,20 +3,26 @@
 
 # 自动分诊流水线
 #
-# 两个独立 job：
+# 三个独立 job：
 # - triage-issue 新 issue 自动分诊：assign 给仓库维护者并打
 #   「状态:待确认」作为待处理队列的初始状态；类型 label（缺陷/功能）
 #   由 issue 模板自带，此处兜底覆盖经 API/CLI 直建的 issue。
 #   assignee 写死 Oppenheymu（repository_owner 是组织名，不能作
-#   assignee）；引入第二维护者前没有按内容分派的空间。
+#   assignee）；issue 侧维持单人首责，只有 PR 侧全指两位 owner。
+# - assign-pr 新 PR 自动 assign 给 CODEOWNERS 里的两位 owner。挂
+#   pull_request_target 而非 pull_request：fork PR 在 pull_request 事件下
+#   拿到的 GITHUB_TOKEN 是只读的（除非仓库开启 "Send write tokens to
+#   workflows from pull requests"），assign 必然 403，而 fork PR 正是本仓的
+#   主要协作形态。pull_request_target 在 base 上下文授予写权限，对 fork PR
+#   同样可用。安全前提：本 job 不 checkout PR 的 head 代码，只经 gh 调 API，
+#   PR 内容不进入执行路径——改这个 job 时不得破坏该前提。
+#   同样跳过 Dependabot PR（理由见 label-pr）。
 # - label-pr 按 .github/labeler.yml 的路径规则自动打「范围」与
 #   「文档」label，只增不减（sync-labels 关闭）。Dependabot PR 显式跳过：
 #   由 Dependabot 触发的 workflow 按 fork 处理（secrets 不可用、
 #   GITHUB_TOKEN 只读），此处声明的 pull-requests: write 会被降级，
 #   actions/labeler 必然失败；Dependabot PR 的标签改由
 #   .github/dependabot.yml 的 labels 字段直接指定。
-# - PR 不做自动 assign：社区作者非协作者会导致 assign 失败，
-#   收益近零不如不做。
 
 name: Triage
 
@@ -25,6 +31,10 @@ on:
     types: [opened]
   pull_request:
     types: [opened, synchronize, reopened]
+  # 只为 assign-pr 存在：该事件在 base 上下文运行且授予写权限，
+  # 是 fork PR 唯一能 assign 的入口；types 收窄到 opened，重新指派无意义。
+  pull_request_target:
+    types: [opened]
 
 jobs:
   triage-issue:
@@ -39,6 +49,21 @@ jobs:
             --repo "$GITHUB_REPOSITORY" \
             --add-assignee "Oppenheymu" \
             --add-label "状态:待确认"
+        env:
+          GH_TOKEN: ${{ github.token }}
+
+  assign-pr:
+    if: github.event_name == 'pull_request_target' && github.actor != 'dependabot[bot]'
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: write
+    steps:
+      - name: 自动指派维护者
+        run: |
+          gh pr edit "${{ github.event.pull_request.number }}" \
+            --repo "$GITHUB_REPOSITORY" \
+            --add-assignee "Oppenheymu" \
+            --add-assignee "PaperKoi"
         env:
           GH_TOKEN: ${{ github.token }}
 
