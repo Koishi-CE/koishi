@@ -4,13 +4,24 @@
 	//
 	// 本仓 node 侧构建是「根 tsdown 单遍构建全部包」，check / test 也都是根级单命令，
 	// 所以可缓存的粒度就是这些根任务，而不是「每包一个构建任务」——用 //# 前缀声明
-	// 根包任务。turbo 仍按输入内容哈希做内容寻址缓存，配上远程缓存（TURBO_TOKEN /
-	// TURBO_TEAM）即可让 merge_group 那一遍直接复用 pull_request 那一遍的产物：
-	// 实测最近 5 个已合并 PR，合并提交与 PR head 的 tree 逐字相同（#35–#39）。
+	// 根包任务。turbo 按输入内容哈希做内容寻址缓存（只与内容有关、与检出目录无关），
+	// 配上远程缓存即可让 merge_group 那一遍复用 pull_request 那一遍的产物——前提是
+	// 期间 main 没被推进（队列时代 7 个已合并 PR 里 6 个满足）。凭据走 OIDC，
+	// 机制、Vercel 侧前置与降级行为见 docs/guides/development.md §4。
 	//
 	// inputs 不显式声明：默认按包内未被 .gitignore 忽略的文件哈希，而 lib/ dist/
 	// coverage/ node_modules/ 均已在 .gitignore 中，不会污染哈希。outputs 必须声明，
 	// 命中时 turbo 会把它们从缓存还原（否则后续步骤拿不到产物）。
+	//
+	// globalPassThroughEnv 是「透传给任务、但不进哈希」的白名单：OIDC 的
+	// ACTIONS_ID_TOKEN_REQUEST_URL / _REQUEST_TOKEN 每次运行都不同，一旦被算进哈希，
+	// 缓存键将永不命中（实测 CI 日志里 turbo 会就此告警）；RELEASE_REGISTRY 是发布链的
+	// registry 切换旋钮（见 tooling/release/core/registry.ts），与构建产物无关。
+	"globalPassThroughEnv": [
+		"ACTIONS_ID_TOKEN_REQUEST_URL",
+		"ACTIONS_ID_TOKEN_REQUEST_TOKEN",
+		"RELEASE_REGISTRY"
+	],
 	"tasks": {
 		"//#build": {
 			"outputs": [
