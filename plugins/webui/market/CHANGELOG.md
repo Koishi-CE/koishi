@@ -1,5 +1,13 @@
 # @koishi-ce/plugin-market
 
+## 1.4.1
+
+### Patch Changes
+
+- Updated dependencies [13b6aff]
+  - @koishi-ce/utils@1.1.1
+  - @koishi-ce/koishi@1.0.19
+
 ## 1.4.0
 
 ### Minor Changes

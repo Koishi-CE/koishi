@@ -1,5 +1,12 @@
 # create-koishi-ce
 
+## 1.9.1
+
+### Patch Changes
+
+- Updated dependencies [13b6aff]
+  - @koishi-ce/utils@1.1.1
+
 ## 1.9.0
 
 ### Minor Changes

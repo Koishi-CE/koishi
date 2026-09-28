@@ -1,5 +1,12 @@
 # @koishi-ce/core
 
+## 1.1.7
+
+### Patch Changes
+
+- Updated dependencies [13b6aff]
+  - @koishi-ce/utils@1.1.1
+
 ## 1.1.6
 
 ### Patch Changes
