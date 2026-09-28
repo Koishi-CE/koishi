@@ -1,7 +1,7 @@
 # CI 门禁流水线
 #
 # 三个并行 job：
-# - gate   主门禁：bun run build → 宿主前端构建 → bun run check → bun run test
+# - gate   主门禁：turbo 任务链 //#build → //#build:console → //#check → //#test:ci
 #          （test 附带 lcov 覆盖率产出，随后经 codecov-action 上传，驱动
 #            Codecov 在 PR 上的覆盖率评论与 status check；未配 CODECOV_TOKEN
 #            secret 时公开仓自动降级 tokenless 上传，fork PR 出不了评论属预期）
@@ -9,19 +9,25 @@
 #            GITHUB_TOKEN 只读，覆盖率上传同样降级；gate 内另有仅对
 #            Dependabot PR 生效的锁文件格式守门 step，动机与上游缺陷见
 #            .github/dependabot.yml 头部注释）
-#          （build 必须前置于 check：tsconfig.web.json 的部分 paths 指向各包
-#            lib/index.d.ts 产物，全新环境无 lib 时 web 侧 tsc 直接 TS2307，
-#            已实测；本地因 lib 常在而感知不到该顺序依赖）
-#          （test 必须走 bun run test 而非裸 bun test：前者经 package.json
-#            脚本带上 --isolate，否则跨文件 mock.module 互相串扰；前端构建
-#            前置于 test：console 的静态资源用例读 dist 真实产物）
-# - client 前端构建：宿主控制台 + 全部 webui 插件（vite 编程式构建，无配置
-#          文件）。前端构建是 .vue 的实际类型门禁（compiler-sfc 含
-#          defineProps 类型解析），tsc 侧 .vue 只是不透明 Component。
-# - fallow  死代码与依赖审计（bunx 直跑，不进 devDependencies；版本在根
-#          package.json 的 fallow 脚本内 pin 精确版，避免门禁口径随上游
-#          发布漂移；本地手动入口 bun run fallow）。豁免与规则见根目录
-#          .fallowrc.jsonc：
+#          （四条前后依赖写在根 turbo.jsonc 的 dependsOn 里，理由与旧版手写
+#            顺序相同：build 前置于 check——tsconfig.web.json 的部分 paths 指向
+#            各包 lib/index.d.ts 产物，全新环境无 lib 时 web 侧 tsc 直接
+#            TS2307（已实测）；宿主控制台前端前置于 test——console 的静态资源
+#            用例读 dist 真实产物；test 走 //#test:ci（= bun test --isolate …，
+#            缺 --isolate 会让跨文件 mock.module 互相串扰））
+#          （turbo 的收益全在缓存：内容寻址 + 远程缓存让 merge_group 那一遍直接
+#            复用 pull_request 那一遍的产物——两者内容逐字相同（实测最近 5 个
+#            已合并 PR 的合并提交与 PR head tree 全等），命中即整轮跳过 build /
+#            check / test，队列等待从 ~2 分钟降到 ~20 秒。未配 TURBO_TOKEN 时
+#            自动降级为纯本地缓存，语义与不加 turbo 完全等价，只是快不了）
+# - client 前端构建：turbo 跑 //#build + //#build:console，再就地循环构建全部
+#          webui 插件前端（vite 编程式构建，无配置文件）。前端构建是 .vue 的
+#          实际类型门禁（compiler-sfc 含 defineProps 类型解析），tsc 侧 .vue
+#          只是不透明 Component。
+# - fallow  死代码与依赖审计（turbo 任务 //#fallow；bunx 直跑，不进
+#          devDependencies；版本在根 package.json 的 fallow 脚本内 pin 精确版，
+#          避免门禁口径随上游发布漂移；本地手动入口 bun run fallow）。豁免与规则见
+#          根目录 .fallowrc.jsonc：
 #          循环依赖与 re-export 环为 error（全仓循环已于 2026-09 断环收官
 #          清零，升为 error 防回归），反射式 API（unused-class-members /
 #          component props）与 duplicate-exports 与 knip 时代口径一致地关闭。
@@ -86,15 +92,15 @@ jobs:
       # CI 环境下 bun install 自动 frozen-lockfile；@parcel/watcher 的
       # postinstall 拦截提示属预期（平台预编译包就位即可用）
       - run: bun install
-      - run: bun run build
-      # console 插件的「静态资源托管」用例读真实 dist 产物（index.html /
-      # logo.png），不构建前端则整套用例在干净环境下必失败；本地因 dist
-      # 常在而感知不到，此处必须先出宿主控制台前端
-      - name: 宿主控制台前端（console 静态资源测试的依赖）
-        run: bun packages/web/builder/src/bin.ts build
-      - run: bun run check
-      - name: test（含 lcov 覆盖率产出）
-        run: bun run test --coverage --coverage-reporter=text --coverage-reporter=lcov --coverage-dir=coverage
+      # 门禁经 turbo 执行：任务图、依赖与缓存口径见根 turbo.jsonc。命中远程
+      # 缓存时 build / check / test 整轮跳过（merge_group 那一遍复用
+      # pull_request 那一遍即此情形）；未配 TURBO_TOKEN 时降级为纯本地缓存。
+      - name: 门禁（turbo：build → 宿主前端 → check → test，含 lcov 覆盖率）
+        run: bunx turbo run //#build //#build:console //#check //#test:ci
+        env:
+          TURBO_TOKEN: ${{ secrets.TURBO_TOKEN }}
+          TURBO_TEAM: ${{ vars.TURBO_TEAM }}
+          TURBO_TELEMETRY_DISABLED: "1"
       - name: 上传覆盖率到 Codecov
         uses: codecov/codecov-action@v7
         with:
@@ -109,10 +115,14 @@ jobs:
       - uses: actions/checkout@v7
       - uses: oven-sh/setup-bun@v2
       - run: bun install
-      # 前端构建走 src 别名，理论上不依赖 lib；先 build 与本地已验证形态一致
-      - run: bun run build
-      - name: 宿主控制台前端
-        run: bun packages/web/builder/src/bin.ts build
+      # 前端构建走 src 别名，理论上不依赖 lib；先 build 与本地已验证形态一致。
+      # 两者都经 turbo：命中缓存即跳过（本 job 剩下的循环暂未纳入缓存）。
+      - name: 根构建 + 宿主控制台前端（turbo）
+        run: bunx turbo run //#build //#build:console
+        env:
+          TURBO_TOKEN: ${{ secrets.TURBO_TOKEN }}
+          TURBO_TEAM: ${{ vars.TURBO_TEAM }}
+          TURBO_TELEMETRY_DISABLED: "1"
       - name: 全部 webui 插件前端
         run: |
           for dir in plugins/webui/*/client; do
@@ -127,4 +137,9 @@ jobs:
       - uses: actions/checkout@v7
       - uses: oven-sh/setup-bun@v2
       - run: bun install
-      - run: bun run fallow
+      - name: 死代码与依赖审计（turbo）
+        run: bunx turbo run //#fallow
+        env:
+          TURBO_TOKEN: ${{ secrets.TURBO_TOKEN }}
+          TURBO_TEAM: ${{ vars.TURBO_TEAM }}
+          TURBO_TELEMETRY_DISABLED: "1"

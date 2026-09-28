@@ -22,6 +22,7 @@ pnpm-debug.log*
 
 # tool caches
 .eslintcache
+.turbo/
 
 # test coverage
 coverage/
