@@ -76,12 +76,12 @@
 		}
 	},
 	"devDependencies": {
+		"@cordisjs/plugin-server-proxy": "^0.2.0",
 		"@koishi-ce/client": "workspace:*",
 		"@koishi-ce/console-app": "workspace:*",
 		"@koishi-ce/console-builder": "workspace:*",
 		"@koishi-ce/loader": "workspace:*",
 		"@koishi-ce/plugin-server": "workspace:*",
-		"@koishijs/plugin-server-proxy": "^1.2.0",
 		"vite": "^8.2.2"
 	},
 	"dependencies": {

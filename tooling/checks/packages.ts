@@ -10,9 +10,10 @@
  * 中靠人工遵守的纪律固化为自动检查，共四类：
  *
  *   1. 包名纪律：依赖声明与源码导入一律 @koishi-ce/*，不得写回上游名
- *      （koishi 裸名 / @koishijs/*）。豁免仅 @koishijs/plugin-server-proxy
- *      ——console 的类型引用（硬性约束 2 的唯一例外），且只允许出现在
- *      devDependencies。cli 包 cordis.ecosystem.pattern 列官方插件名属
+ *      （koishi 裸名 / @koishijs/*）。无豁免：console 的类型引用已由上游薄壳
+ *      @koishijs/plugin-server-proxy 改用其转发源 @cordisjs/plugin-server-proxy
+ *      （2026-09-30）——薄壳自带 peer koishi ^4.17.6，会诱使 Bun 自动装官方全家桶。
+ *      cli 包 cordis.ecosystem.pattern 列官方插件名属
  *      运行时生态匹配字段，不属依赖声明，天然不在检查范围。
  *   2. 元数据统一：顶层类型字段一律 types，不混用旧别名 typings
  *      （exports 内的 types 条件是标准解析字段，不受约束）。
@@ -143,23 +144,12 @@ for (const glob of workspaceGlobs) {
 // 检查 1：包名纪律（依赖声明不写回上游名）
 // ---------------------------------------------------------------------------
 
-/** 上游名依赖豁免表：允许的Specifier → 允许出现的依赖块。 */
-const UPSTREAM_DEP_EXEMPT: Record<
-	string,
-	readonly string[]
-> = {
-	// 硬性约束 2 的唯一例外：console 的服务端代理类型引用，仅限测试类型面
-	"@koishijs/plugin-server-proxy": ["devDependencies"],
-};
-
 const UPSTREAM_NAME_RE = /^(?:koishi|@koishijs\/.+)$/;
 
 for (const pkg of packages) {
 	for (const block of DEP_BLOCKS) {
 		for (const dep of depNames(pkg.data, block)) {
 			if (!UPSTREAM_NAME_RE.test(dep)) continue;
-			if (UPSTREAM_DEP_EXEMPT[dep]?.includes(block))
-				continue;
 			report(
 				pkg.file,
 				`包名纪律：${block} 引用上游名 "${dep}"（应指向 @koishi-ce/*）`,
@@ -303,11 +293,6 @@ for (const pkg of packages) {
 // 检查 5：源码导入纪律（不 import 上游名）
 // ---------------------------------------------------------------------------
 
-/** 源码导入白名单：硬性约束 2 的唯一例外（console 的类型引用）。 */
-const UPSTREAM_IMPORT_EXEMPT = new Set([
-	"@koishijs/plugin-server-proxy",
-]);
-
 /**
  * 排除的路径段：第三方区 / 构建产物 / 脚手架模板 / vendor 上游拷贝物 /
  * 测试目录（__tests__ 内的 import 语句文本多为被测函数的样例载荷，
@@ -344,8 +329,6 @@ for (const abs of sourceGlob.scanSync({
 	const text = await Bun.file(abs).text();
 	for (const match of text.matchAll(IMPORT_RE)) {
 		const specifier = match[2];
-		if (specifier && UPSTREAM_IMPORT_EXEMPT.has(specifier))
-			continue;
 		const line = text
 			.slice(0, match.index ?? 0)
 			.split("\n").length;

@@ -64,7 +64,7 @@ The one directory deliberately **not** renamed is `plugins/webui/*/client/`: tha
 
 Naming rules:
 
-- Code inside this monorepo imports `@koishi-ce/*` exclusively. The only external upstream import is `@koishijs/plugin-server-proxy` (type-only, console). The test memory driver used to be `@koishijs/plugin-database-memory` and is now CE-native (`@koishi-ce/plugin-database-memory`, `plugins/infra/memory`).
+- Code inside this monorepo imports `@koishi-ce/*` exclusively. There is no external upstream import left: the console's type-only reference moved from the upstream shell `@koishijs/plugin-server-proxy` (which declares `peerDependencies: koishi ^4.17.6`, making Bun auto-install the official koishi family) to its re-export source `@cordisjs/plugin-server-proxy`. The test memory driver used to be `@koishijs/plugin-database-memory` and is now CE-native (`@koishi-ce/plugin-database-memory`, `plugins/infra/memory`).
 - `peerDependencies` of CE packages target CE names (`@koishi-ce/* ^1.0.0`) so that Bun never auto-installs the official npm packages. Downstream projects occupy the upstream names via npm aliases to the frozen shims (`@koishi-ce/koishi-shim`, `@koishi-ce/console-shim`) — see `packages/shim/README.md` and [../reference/architecture.md](../reference/architecture.md).
 - Dependencies on packages outside this monorepo keep their upstream names.
 

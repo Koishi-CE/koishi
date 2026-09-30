@@ -20,6 +20,7 @@
 
 import { existsSync } from "node:fs";
 import { dirname, extname, join, resolve } from "node:path";
+import type {} from "@cordisjs/plugin-server-proxy";
 import { Console, type Entry } from "@koishi-ce/console";
 import {
 	type Context,
@@ -29,7 +30,6 @@ import {
 	type Universal,
 } from "@koishi-ce/koishi";
 import type { WebSocketLayer } from "@koishi-ce/plugin-server";
-import type {} from "@koishijs/plugin-server-proxy";
 import open from "open";
 import type {
 	FileSystemServeOptions,

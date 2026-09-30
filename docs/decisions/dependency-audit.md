@@ -6,7 +6,7 @@
 > 运行环境：Bun 1.4.2（`packageManager` 钉定）· Node v24（辅：TS7 编译器与 vue-tsc 影子闸门宿主）· 包管理：Bun workspaces（`bun.lock`）
 > 范围：仓库内全部 **55 个 package.json**（**54 个 workspace 包** + 根）· **75 个外部依赖名**（不含 `workspace:*` 与 `@koishi-ce/*` 内部 peer 互引，后者单列于 §2.G）
 >
-> 修订：2026-09-22 —— ①-⑤ 延续 2026-09-21 的依赖收敛记录；⑥ `create-koishi-ce` 的远程模板解包由 `giget` 换为 Bun 1.4.2 原生 `Bun.Archive`，registry 版本倒序比较局部改用 `Bun.semver.order`；⑦ `k-markdown` 组件由 npm 包 `marked-vue` 就地 vendor 为本地实现（见 §4.13），声明面换成 `marked` + `xss` 两个直接依赖（名数 74 → 75）；⑧ 同日落地方案 B 之 B1，`marked` 9.1.6 → 18.0.14（见 §4.13），**非冻结 major 就此清零**（[旧] 5 → 4）；⑨ 同日续落地方案 B 之 B2，手写消毒层换成 `dompurify` 3.4.15（`xss` 出仓，见 §4.14），另引入测试期 `jsdom` + `@types/jsdom`（名数 75 → 77）。已按 §2 / §3 对账；其余内容仍为 2026-09-19 快照。
+> 修订：2026-09-22 —— ①-⑤ 延续 2026-09-21 的依赖收敛记录；⑥ `create-koishi-ce` 的远程模板解包由 `giget` 换为 Bun 1.4.2 原生 `Bun.Archive`，registry 版本倒序比较局部改用 `Bun.semver.order`；⑦ `k-markdown` 组件由 npm 包 `marked-vue` 就地 vendor 为本地实现（见 §4.13），声明面换成 `marked` + `xss` 两个直接依赖（名数 74 → 75）；⑧ 同日落地方案 B 之 B1，`marked` 9.1.6 → 18.0.14（见 §4.13），**非冻结 major 就此清零**（[旧] 5 → 4）；⑨ 同日续落地方案 B 之 B2，手写消毒层换成 `dompurify` 3.4.15（`xss` 出仓，见 §4.14），另引入测试期 `jsdom` + `@types/jsdom`（名数 75 → 77）。已按 §2 / §3 对账；其余内容仍为 2026-09-19 快照。⑩ 2026-09-30 —— console 的类型引用由上游薄壳 `@koishijs/plugin-server-proxy` 改用其转发源 `@cordisjs/plugin-server-proxy`（零依赖零 peer），薄壳 `peerDependencies: koishi ^4.17.6` 诱发的官方 koishi 全家桶（9 个包）随之退出依赖树，**全仓上游名外部依赖清零**、`check:packages` 的上游名豁免退休；直接依赖名数不变（§2.A 表末行）。
 
 状态图例：[新] 当前最新 · [缓] 落后(minor/patch) · [旧] 落后(major) · [预] 最新版本为预发布 · [废] 已弃用或未使用
 
@@ -35,7 +35,7 @@ Koishi-CE/
 
 - **CI 已建立**：`.github/workflows/ci.yml` 三 job——gate（build → 宿主前端 → check → test + lcov 上传 Codecov）、client（全部 webui 插件前端 bundle）、fallow（死代码与依赖审计）；另有 triage.yml 自动分诊（issue 指派 / PR 路径打标）。
 - **门禁八段齐备**：`bun run check` = biome lint + eslint(.vue) + TS7 双 project 类型检查 + locales / docs-links / vue-types / assertions / packages 五个自研闸门（脚本居 `tooling/checks/`）。
-- **peerDependencies 已全面 CE 化**：内部互引一律 `@koishi-ce/* ^1.0.0`（初版保留的上游名 `koishi ^4.18.11` peer 已清零）；唯一上游名残留是 console 的类型引用 `@koishijs/plugin-server-proxy`（dev，测试用）。
+- **peerDependencies 已全面 CE 化**：内部互引一律 `@koishi-ce/* ^1.0.0`（初版保留的上游名 `koishi ^4.18.11` peer 已清零）；上游名残留已于 2026-09-30 清零：console 的类型引用由上游薄壳 `@koishijs/plugin-server-proxy`（自带 peer `koishi ^4.17.6`，会诱使 Bun 自动装官方 koishi 全家桶共 9 个包）改用其转发源 `@cordisjs/plugin-server-proxy`（dev，零依赖零 peer）。
 - **vendored 三包不动**：`plugins/infra/{http,proxy,server}` 为预编译产物包（无 `src/`，根 tsdown 显式 exclude），内联再导出 `@cordisjs/plugin-*`。
 - **shim 四包占名**：`packages/shim/{koishi-shim,console-shim,client-shim,components-shim}` 是下游 npm alias 的占名目标，纯 JS 预编译、版本冻结跟随上游线、changesets ignore。
 - **版本自主演进**：workspace 包走 1.x 线（core 1.1.6 / plugin-console 1.3.5 / client 1.3.1 等），不再镜像上游版本号；发布一律走 `bun run release` 链，禁止手动 `npm publish`。
@@ -63,7 +63,7 @@ Koishi-CE/
 | reggol | ^2.1.0 (dev) | logger | 生态日志库（logger 前端渲染） | 2.1.0 | [新]（初版 1.7.1 → 已升 2.x） |
 | inaba | ^1.1.1 | utils | 随机数据生成 | 1.1.1 | [新] |
 | fastest-levenshtein | ^1.0.16 | core | 编辑距离（命令纠错建议） | 1.0.16 | [新] |
-| @koishijs/plugin-server-proxy | ^1.2.0 (dev) | webui console 宿主 | 代理支持（仅类型引用） | 1.2.0 | [新]（全仓唯一上游名导入例外） |
+| @cordisjs/plugin-server-proxy | ^0.2.0 (dev) | webui console 宿主 | 代理支持（仅类型引用；上游薄壳 `@koishijs/plugin-server-proxy` 的转发源） | 0.2.0 | [新]（原上游薄壳已移除，见 §1 关键结构事实） |
 
 **冻结纪律**：cordis / minato / @cordisjs 生态整体钉在 3.x 内洽线（Phase 5 已实证被 `@satorijs/core` 阻塞并整体回退）。本表 [旧] 状态属刻意落后、**不是升级欠账**，勿在线内单独升版；重启条件见 [upgrade-plan.md](upgrade-plan.md) Phase 5 节。
 

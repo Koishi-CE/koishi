@@ -101,7 +101,7 @@ bunx turbo run //#build --force                                # 忽略缓存强
 5. **check:docs-links**：`tooling/checks/docs-links.ts`（零依赖）——docs 全树 + 根部 / `.github` 文档（含 PR 模板目录）的相对链接与锚点存活检查，问题 exit 1。
 6. **check:vue-types**：`tooling/checks/vue-types.ts`——vue-tsc 影子基线闸门：用隔离安装的 vue-tsc（经典 TS 5.9 运行时，版本钉死于脚本常量，首次运行自动自举到 `node_modules/.cache/vue-tsc-shadow/`）对 `tsconfig.web.json` 全量检查（含 `.vue` 的模板与 script），错误快照与入库基线（`tooling/checks/vue-types-baseline.json`）对比，**只拦新增错误键、容忍存量**——归一化键为「文件 + 错误码 + 消息」（不含行列号），`node_modules/` 内第三方 `.vue` 的条目不计。修复存量无需动基线（消失的键自动不计）；新增错误若确认可接受，用 `bun run check:vue-types -- --update` 重拍基线一并提交。存量随修复自然消化，待 Volar 工具链支持 TS7 后影子基线即可转正退役。
 7. **check:assertions**：`tooling/checks/assertions.ts`（零依赖，bun 直跑）——双重断言（`as unknown as` / `as any as`）基线闸门：扫描非测试源文件（`packages` / `plugins` / `apps` / `tooling` 下 `.ts` / `.mts` / `.vue`；测试文件、vendor 目录、vendored 预编译包与产物目录出范围），与入库基线（`tooling/checks/assertions-baseline.json`，兼作保留台账）对比，**只拦新增、容忍存量**——归一化键为「文件 + 类别 + 断言行文本」（不含行号，同文件挪行不算新增；同行多次按次计）。新增断言须先穷尽根除 / 上移修法，确属务实妥协的登记基线附一行理由（`reason` 字段）后 `--update` 重扫；修复存量无需动基线。另设次级检查：`.vue` 模板表达式内 `as any`（biome / eslint 均不查模板，是显式 any 的唯一逃逸口）。覆盖边界（跨行形态、注释豁免、单重 `as` 不在范围）见脚本头部注释。
-8. **check:packages**：`tooling/checks/packages.ts`（零依赖）——把 AGENTS.md 硬性约束与 architecture.md §3 依赖纪律中靠人工遵守的部分固化为自动检查：包名纪律（依赖声明与源码导入不得写回上游名 `koishi` / `@koishijs/*`，豁免仅 console 的 `@koishijs/plugin-server-proxy` 类型引用）、顶层类型字段统一 `types`（不混用旧别名 `typings`）、ESM-only 形态（`type: module`、exports 无 `require` 条件、main 非 CJS 产物）、依赖方向负面规则（packages/web、packages/node、plugins/common、plugins 四个 scope，console 宿主的防御性 peer 在豁免表内附理由）。问题 exit 1；各豁免的理由见脚本头部与内联注释。
+8. **check:packages**：`tooling/checks/packages.ts`（零依赖）——把 AGENTS.md 硬性约束与 architecture.md §3 依赖纪律中靠人工遵守的部分固化为自动检查：包名纪律（依赖声明与源码导入不得写回上游名 `koishi` / `@koishijs/*`，无豁免——console 的类型引用已改用其转发源 `@cordisjs/plugin-server-proxy`）、顶层类型字段统一 `types`（不混用旧别名 `typings`）、ESM-only 形态（`type: module`、exports 无 `require` 条件、main 非 CJS 产物）、依赖方向负面规则（packages/web、packages/node、plugins/common、plugins 四个 scope，console 宿主的防御性 peer 在豁免表内附理由）。问题 exit 1；各豁免的理由见脚本头部与内联注释。
 9. **check:console-wiring**：`tooling/checks/console-wiring.ts`（零依赖）——console 类型源头共享的接线对账：node 侧声明 console 增强的插件包集合与接线文件 `packages/web/client/console-services.d.ts` 的导入包集合双向一致（漏接线则该插件的 store 键 / 事件类型在浏览器端静默缺失），基座 tsconfig.client.json 的 paths 键集必须被 tsconfig.web.json 完整重写（extends 整体替换语义，漏写即全程序断链）。问题 exit 1。
 10. **check:pr-templates**：`tooling/checks/pr-templates.ts`（零依赖，bun 直跑）——PR 模板选择器 `.github/PULL_REQUEST_TEMPLATE/config.yml` 与模板文件对账：清单登记的 `body` 文件必须存在、目录内的 `.md`（README 除外）不得是清单外的孤儿、`name` 不得重复、字段只认 GitHub 的 `name` / `description` / `body` 三键。该目录漂移不会让其它门禁变红，只会让开 PR 的人选到空模板或 404。问题 exit 1；模板口径见 `.github/PULL_REQUEST_TEMPLATE/README.md`。
 
@@ -154,7 +154,7 @@ fallow 另外还带重复代码、复杂度健康度、边界违规与 PR 变更
 
 ### 命名空间与依赖纪律
 
-- 代码内导入一律 `@koishi-ce/*`。外部上游导入仅有的例外：宿主 console 插件的类型引用 `@koishijs/plugin-server-proxy`（测试用 memory 驱动已 CE 化为 `@koishi-ce/plugin-database-memory`，不再算例外）。
+- 代码内导入一律 `@koishi-ce/*`，全仓无上游名导入例外（宿主 console 插件的类型引用已由上游薄壳改用其转发源 `@cordisjs/plugin-server-proxy`；测试用 memory 驱动已 CE 化为 `@koishi-ce/plugin-database-memory`）。
 - `peerDependencies` 一律指向 CE 包名（`@koishi-ce/koishi ^1.0.0` 等），不要写回上游名；详见 [../reference/architecture.md](../reference/architecture.md) 依赖纪律节。
 - 依赖方向：`plugins/webui/* → @koishi-ce/console → @koishi-ce/core`；`plugins/common/* → @koishi-ce/core`；`packages/web/*`（浏览器侧）不依赖 node 侧运行时。
 - cordis 生态冻结在 3.x 内洽线（cordis / minato / @cordisjs/* / @satorijs/* 不得跳 4.x / 1.x），依据与重启条件见 [../decisions/upgrade-plan.md](../decisions/upgrade-plan.md) Phase 5 节。

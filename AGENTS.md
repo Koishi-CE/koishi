@@ -17,7 +17,7 @@
 ## 硬性约束（违反 = 错误）
 
 1. **peerDependencies 一律指向 CE 包名**：`@koishi-ce/koishi ^1.0.0`、`@koishi-ce/plugin-console ^1.0.0`、`@koishi-ce/loader ^1.0.0` 等（peer 声明用于下游 `bun add` 解析与防 Bun 自动装官方包），**不要写回上游名**（`koishi` / `@koishijs/*`）。
-2. **代码内导入一律 `@koishi-ce/*`**；仅有的外部上游导入例外是 console 的类型引用 `@koishijs/plugin-server-proxy`（测试用 memory 驱动已 CE 化为 `@koishi-ce/plugin-database-memory`，`plugins/infra/memory`）。
+2. **代码内导入一律 `@koishi-ce/*`**，全仓已无上游名导入：console 原先唯一的类型引用例外 `@koishijs/plugin-server-proxy` 已于 2026-09-30 改用其转发源 `@cordisjs/plugin-server-proxy`——上游薄壳自带 `peerDependencies: koishi ^4.17.6`，会诱使 Bun 自动装官方 koishi 全家桶（9 个包），而原件零依赖零 peer（测试用 memory 驱动已 CE 化为 `@koishi-ce/plugin-database-memory`，`plugins/infra/memory`）。
 3. **cordis 生态冻结在 3.x 内洽线**：cordis / minato / @cordisjs/* / @satorijs/* 不得跳 4.x / 1.x——Phase 5 已实证被 `@satorijs/core`（内部携带 cordis ^3，无 cordis 4 线）阻塞并整体回退，重启条件见 `docs/decisions/upgrade-plan.md` Phase 5 节。
 4. **vendored 三包不动**：`plugins/infra/{http,proxy,server}` 是预编译产物包（无 `src/`、不走 tsdown、根 tsdown 配置显式 exclude），分别内联再导出 `@cordisjs/plugin-*`（`proxy` 目录系上游 `proxy-agent` 的本地改名，见 docs/process/upstream.md）。
 5. **ESM-only 产物 + Bun 运行时**：全部 54 个 workspace 包均为 `"type": "module"`，根 tsdown 单遍构建只出 ESM（`index.mjs` + `index.d.ts`），各包 exports 以 `default` 条件兜底；Bun 的 `require()` 可直接加载 ESM，loader 的插件加载链据此工作，**不要恢复 CJS 双格式产物**。运行时以 Bun 为准（Node 不作兼容目标）；`.yml` locale 走 copy loader 原样拷入产物，Bun 原生支持 yml 导入。

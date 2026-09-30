@@ -16,9 +16,9 @@
 
 ### 1.2 `@koishijs/*` 上游冻结包跟随
 
-- **目标**：宿主 console 插件的类型引用 `@koishijs/plugin-server-proxy` 随上游发布节奏跟进——这是全仓仅剩的一处上游名外部依赖。
-- **状态**：跟随上游——无法自主升级（上游冻结）。历史依赖已全部解决：测试 memory 驱动已 CE 化（`@koishi-ce/plugin-database-memory`，`plugins/infra/memory`）、market client 对 npm 包 `@koishijs/market` 的依赖已随 vendor 化解除（d8ce130）、analytics 曾用的 `@koishijs/assets` 已随依赖清理消失。
-- **依据**：[decisions/dependency-audit.md](decisions/dependency-audit.md) §2A；AGENTS.md 硬性约束 2（导入例外清单）。
+- **目标**：~~宿主 console 插件的类型引用 `@koishijs/plugin-server-proxy` 随上游发布节奏跟进——这是全仓仅剩的一处上游名外部依赖。~~
+- **状态**：**已达成并关闭（2026-09-30）**。该类型引用改用上游薄壳的转发源 `@cordisjs/plugin-server-proxy`（零依赖零 peer，MIT）；薄壳 `@koishijs/plugin-server-proxy` 及其 `peerDependencies: koishi ^4.17.6` 诱发的官方 koishi 全家桶（`koishi` + 7 个 `@koishijs/*`，共 9 个包）随之退出依赖树，`check:packages` 的上游名豁免同步退休——全仓上游名外部依赖自此清零。原「跟随上游」路径不再需要：上游包只是 `export * from '@cordisjs/plugin-server-proxy'` 的薄壳。历史依赖已全部解决：测试 memory 驱动已 CE 化（`@koishi-ce/plugin-database-memory`，`plugins/infra/memory`）、market client 对 npm 包 `@koishijs/market` 的依赖已随 vendor 化解除（d8ce130）、analytics 曾用的 `@koishijs/assets` 已随依赖清理消失。
+- **依据**：[decisions/dependency-audit.md](decisions/dependency-audit.md) §2A；AGENTS.md 硬性约束 2（导入纪律）。
 
 ### 1.3 服务归属反查的上游根治（待 cordis 4 stable）
 

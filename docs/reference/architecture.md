@@ -41,7 +41,7 @@ koishi/（Bun workspaces：packages/node/* · packages/shim/* · packages/web/* 
 
 ### packages/shim/*（占位 shim，纯 JS 预编译、不走 tsdown、版本冻结、changesets ignore）
 
-CE 包 peer 一律指 CE 名，但**下游项目的社区插件生态**仍消费上游名（本仓自身的上游名外部依赖现仅剩宿主 console 插件的类型引用 `@koishijs/plugin-server-proxy`——测试用的 memory 驱动已 CE 化为 `@koishi-ce/plugin-database-memory`（`plugins/infra/memory`），analytics 曾用的 `@koishijs/assets` 已随依赖清理消失）。shim 以 npm alias 的形式占用上游包名、把解析指回本仓对应包，阻止包管理器自动安装 npm 官方全家桶形成双实例。详见 `packages/shim/README.md`。
+CE 包 peer 一律指 CE 名，但**下游项目的社区插件生态**仍消费上游名（本仓自身的**上游名外部依赖已清零**：console 的类型引用已由上游薄壳 `@koishijs/plugin-server-proxy` 改用其转发源 `@cordisjs/plugin-server-proxy`（薄壳自带 peer `koishi ^4.17.6`，会诱使 Bun 自动装官方全家桶共 9 个包）——测试用的 memory 驱动已 CE 化为 `@koishi-ce/plugin-database-memory`（`plugins/infra/memory`），analytics 曾用的 `@koishijs/assets` 已随依赖清理消失）。shim 以 npm alias 的形式占用上游包名、把解析指回本仓对应包，阻止包管理器自动安装 npm 官方全家桶形成双实例。详见 `packages/shim/README.md`。
 
 | 目录 | 包名 | 版本冻结 | 形态 |
 |---|---|---|---|
@@ -107,7 +107,7 @@ node 侧在 `src/`、Vue 侧在 `client/`（上游约定），`koishi.public: ["
 
 ### 硬性规则
 
-- `peerDependencies` **一律指向 CE 包名**（`@koishi-ce/* ^1.0.0`），不要写回上游名；代码内导入同样一律 `@koishi-ce/*`（例外仅 `@koishijs/plugin-server-proxy` 一处外部包，宿主插件 console 的类型引用）。
+- `peerDependencies` **一律指向 CE 包名**（`@koishi-ce/* ^1.0.0`），不要写回上游名；代码内导入同样一律 `@koishi-ce/*`（已无例外：console 的类型引用改用其转发源 `@cordisjs/plugin-server-proxy`）。
 - vendored 三包（http / proxy / server）不动。
 - 依赖方向：`plugins/webui/* → @koishi-ce/console → @koishi-ce/core`；`plugins/common/* → @koishi-ce/core`；`packages/web/*` 中浏览器侧的 `app` / `client` / `components` 不依赖 node 侧运行时（`app` 消费 `client` 与 `components`；`builder` 是 node 侧构建器，依赖 `app` / `client` / `components` 与构建工具，方向为 `console 插件 → builder → app / client / components`）。
 - 以上包名纪律、顶层类型字段统一（`types`，不混用旧别名 `typings`）与 ESM-only 形态由 `check:packages` 门禁强制（`tooling/checks/packages.ts`，已并入 `bun run check`）；循环依赖为 fallow 的 error 级规则（`.fallowrc.jsonc`，CI 的 fallow job 生效）。
