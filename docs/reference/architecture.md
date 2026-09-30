@@ -12,14 +12,14 @@
 
 ## 2. 目录结构与包清单
 
-共 54 个 workspace 包（node ×8 · shim ×4 · web ×4 · common ×9 · infra ×8 · webui ×19 · apps ×2），全部 `"type": "module"`。
+共 53 个 workspace 包（node ×8 · shim ×4 · web ×4 · common ×8 · infra ×8 · webui ×19 · apps ×2），全部 `"type": "module"`。
 
 ```
 koishi/（Bun workspaces：packages/node/* · packages/shim/* · packages/web/* · plugins/{common,infra,webui}/* · apps/*）
 ├── packages/node/   Node 侧核心库（8 包，根 tsdown 统一构建 → lib/ ESM-only）
 ├── packages/shim/   上游包名占位 shim（4 包，纯 JS 预编译，不走 tsdown）
 ├── packages/web/    控制台前端（app 为宿主 SPA 源码，client / components 为浏览器库源码直出；builder 为 node 侧构建器）
-├── plugins/common/  通用 bot 插件 ×9（MIT）
+├── plugins/common/  通用 bot 插件 ×8（MIT）
 ├── plugins/infra/   基础设施插件 ×8（http/proxy/server 为 vendored 预编译）
 ├── plugins/webui/   控制台插件 ×19（src/=Node 侧，client/=Vue 侧）
 ├── apps/            可部署应用（koishi-create / koishi-scripts）

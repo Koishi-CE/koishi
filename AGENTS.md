@@ -12,7 +12,7 @@
 ## 关于 docs/ 文档
 
 - **开发手册**：`docs/guides/development.md`（环境 / 门禁 / 编码约定 / 测试 / 已知坑细节）、`docs/reference/architecture.md`（目录与包清单 / 构建体系 / 依赖纪律）、`docs/process/release.md`（发布流程）、`docs/process/upstream.md`（上游映射）——均以实际代码为准，文档滞后时听代码的。
-- **历史决策记录**：`docs/decisions/upgrade-plan.md`（依赖六阶段升级计划书，含 Phase 5 cordis 4 被阻塞的实证结论与重启条件）、`docs/decisions/dependency-audit.md`（外部依赖现势审计快照，2026-09-19 重拍 / 2026-09-21 修订，57 个外部依赖；初版 2026-08-27 见 git 历史）。
+- **历史决策记录**：`docs/decisions/upgrade-plan.md`（依赖六阶段升级计划书，含 Phase 5 cordis 4 被阻塞的实证结论与重启条件）、`docs/decisions/dependency-audit.md`（外部依赖现势审计快照，2026-09-30 重写重拍，79 个外部依赖；初版 2026-08-27 见 git 历史）。
 
 ## 硬性约束（违反 = 错误）
 
@@ -20,7 +20,7 @@
 2. **代码内导入一律 `@koishi-ce/*`**，全仓已无上游名导入：console 原先唯一的类型引用例外 `@koishijs/plugin-server-proxy` 已于 2026-09-30 改用其转发源 `@cordisjs/plugin-server-proxy`——上游薄壳自带 `peerDependencies: koishi ^4.17.6`，会诱使 Bun 自动装官方 koishi 全家桶（9 个包），而原件零依赖零 peer（测试用 memory 驱动已 CE 化为 `@koishi-ce/plugin-database-memory`，`plugins/infra/memory`）。
 3. **cordis 生态冻结在 3.x 内洽线**：cordis / minato / @cordisjs/* / @satorijs/* 不得跳 4.x / 1.x——Phase 5 已实证被 `@satorijs/core`（内部携带 cordis ^3，无 cordis 4 线）阻塞并整体回退，重启条件见 `docs/decisions/upgrade-plan.md` Phase 5 节。
 4. **vendored 三包不动**：`plugins/infra/{http,proxy,server}` 是预编译产物包（无 `src/`、不走 tsdown、根 tsdown 配置显式 exclude），分别内联再导出 `@cordisjs/plugin-*`（`proxy` 目录系上游 `proxy-agent` 的本地改名，见 docs/process/upstream.md）。
-5. **ESM-only 产物 + Bun 运行时**：全部 54 个 workspace 包均为 `"type": "module"`，根 tsdown 单遍构建只出 ESM（`index.mjs` + `index.d.ts`），各包 exports 以 `default` 条件兜底；Bun 的 `require()` 可直接加载 ESM，loader 的插件加载链据此工作，**不要恢复 CJS 双格式产物**。运行时以 Bun 为准（Node 不作兼容目标）；`.yml` locale 走 copy loader 原样拷入产物，Bun 原生支持 yml 导入。
+5. **ESM-only 产物 + Bun 运行时**：全部 53 个 workspace 包均为 `"type": "module"`，根 tsdown 单遍构建只出 ESM（`index.mjs` + `index.d.ts`），各包 exports 以 `default` 条件兜底；Bun 的 `require()` 可直接加载 ESM，loader 的插件加载链据此工作，**不要恢复 CJS 双格式产物**。运行时以 Bun 为准（Node 不作兼容目标）；`.yml` locale 走 copy loader 原样拷入产物，Bun 原生支持 yml 导入。
 6. **许可证分区**：`packages/web/*` 与 `plugins/webui/*` 全部（含 console 宿主插件）为 AGPL-3.0，其余目录 MIT——以 `NOTICE` 为准；在 AGPL 目录新增文件同样受 AGPL 约束。
 7. **market 插件为上游原版再分发**：`plugins/webui/market/`（`@koishi-ce/plugin-market`）对齐自上游 webui `plugins/market`（原版 v2.11.11），社区版 `plugin-marketn` 已被其取代并移除。client 逻辑层自 `@koishijs/market` 4.2.10 vendor 进 `client/vendor/`（AGPL 同许可，对 npm 包的依赖已解除），**已按用户授权（2026-09-25）整体豁免上游逐字对齐纪律并现代化重组**：拆为 `domain` / `search` / `sort` / `icons` 四模块，图标实体收敛进集中 .svg 资产（注册表 `client/vendor/icons.ts`，`<market-icon>` 渲染层与 name 契约不变），原仅 zh-CN 的局部 scope 词典并入 `client/locales/`（`market:` 根）并补齐 en-US——上游逻辑改动按语义评估移植，勿再对上游 `client/utils.ts` 做逐字 diff；视图四组件（`client/market/`）为本地化 fork，同样按语义评估移植勿整覆盖；client 词典（`client/locales/`）与包根 `locales/` 均为本地真翻译（上游原版系 Crowdin 机器人写入的未翻中文占位物），同步时手动 diff 勿整覆盖。宿主构建保留 `@koishijs/components` alias 作下游防御：第三方插件以 npm 名引用组件库时重定向到本仓 workspace 版，避免双实例。
 8. **packages/shim 四包不动**：`@koishi-ce/koishi-shim`（4.18.11）、`@koishi-ce/console-shim`（5.30.11）、`@koishi-ce/client-shim`（5.30.11）与 `@koishi-ce/components-shim`（1.5.22）是下游 npm alias 的占名目标——纯 JS 预编译、版本冻结跟随上游线、changesets ignore（**勿写 changeset、勿 bump、勿改回 1.x 基线**）。下游项目以六行 alias 钉名（`"koishi": "npm:@koishi-ce/koishi-shim@^4.18.11"`、`"@koishijs/client": "npm:@koishi-ce/client-shim@^5.30.11"` 等），机理与维护纪律详见 `packages/shim/README.md`。
