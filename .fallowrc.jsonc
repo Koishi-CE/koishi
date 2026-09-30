@@ -77,7 +77,10 @@
 		"@koishi-ce/plugin-config",
 		"@koishi-ce/plugin-hmr",
 		"@koishi-ce/plugin-locales",
-		"@koishijs/plugin-server-proxy",
+		// console 的类型来源：源码是 `import type {} from "@cordisjs/plugin-server-proxy"`
+		// 的空类型导入（只为拉入 cordis 侧 'server.proxy' 的 Context 增强），
+		// 无具名绑定，fallow 不视作引用（原上游薄壳 @koishijs/plugin-server-proxy 同理）
+		"@cordisjs/plugin-server-proxy",
 		// 插件前端由宿主 console 构建，vue 系依赖由宿主/工作区根提供，
 		// 各插件包自身不声明（vite 经 collectWorkspaceAliases 解析）
 		"@koishijs/client",
