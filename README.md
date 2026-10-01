@@ -35,7 +35,7 @@
 * **运行时升级**\
 　以 [Bun](https://bun.sh) 为核心运行时与包管理器，使用了大量Bun原生模块
 * **工具链升级**\
-　一条 `bun run check` 串起八段门禁，配套 release 发布链、沙盒实例生成器与上游巡检等 tooling 脚本
+　一条 `bun run check` 串起十段门禁，沙盒实例生成器等 tooling 脚本
 
 <!-- -->
 
