@@ -3,6 +3,9 @@
 	"description": "Test Your Virtual Bot in Console",
 	"version": "1.0.5",
 	"type": "module",
+	"scripts": {
+		"build:client": "bun ../../../packages/web/builder/src/bin.ts build ."
+	},
 	"main": "lib/index.mjs",
 	"types": "lib/index.d.ts",
 	"files": [
