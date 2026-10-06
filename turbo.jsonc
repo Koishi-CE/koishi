@@ -54,11 +54,14 @@
 		// 本地 / 兼容入口：command 是十段串行（bun run check），CI 不请求它，
 		// 请求的是上面四组（turbo 不支持 //#check:* 通配，命令行须显式列出）。
 		"//#check": {},
-		// test 与 check 并行：test 只等构建产物（console dist 供插件的静态资源
-		// 用例），不再 dependsOn check——顺序门禁语义换成并行，CI 关键路径因此
-		// 省掉整整一段；check 变红仍会让整个 gate 变红。
+		// test 不依赖 //#build：本仓测试对 workspace 包加载 src 而非 lib
+		// （见 AGENTS「已知坑」），只有插件的静态资源用例读
+		// plugins/webui/console/dist 真实产物，故依赖收窄到 //#build:console——
+		// test 由此与 //#build 及两组类型检查并行，不再排在它们之后（旧版经
+		// //#check 传递依赖，等于把整条 check 链串在 test 前面）。
+		// check 或 test 任一变红仍会让整个 gate 变红。
 		"//#test:ci": {
-			"dependsOn": ["//#build", "//#build:console"],
+			"dependsOn": ["//#build:console"],
 			"outputs": ["coverage/**"]
 		},
 		"//#fallow": {}
