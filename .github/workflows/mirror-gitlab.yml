@@ -1,0 +1,125 @@
+# GitLab 镜像同步流水线
+#
+# 目标：把 GitHub（本仓 origin，唯一真源）的 main 与全部 tag 单向镜像到
+# gitlab.com。单向是刻意的——回流会让「真源是谁」变得不确定，而镜像仓一旦有人
+# 直推就会与 GitHub 分叉，下一次同步直接 force 覆盖掉，不如从一开始就写明只读。
+#
+# 触发面四处，各有其职：
+# - push main     主干一动就同步（PR 合并、发布链的版本提交都走这条）
+# - push tag      打 tag 不进 main，不单独触发就会永远漏掉 tag 这一半同步面
+# - schedule      兜底对账：workflow 被禁用、单次运行失败、GitHub 侧故障都会造成
+#                 静默漏同步，每日重推一遍可自愈（漏同步是本流水线唯一要紧的
+#                 故障模式，故宁可多跑一次空转）
+# - workflow_dispatch  人工补跑：改完配置要立刻验证，或对账时才想起来
+#
+# 同步面是 main + 全部 tag（维护者 2026-10-06 选定），刻意**不用**
+# `git push --mirror`：开发分支不暴露到 GitLab，GitLab 侧多余的分支 / 标签也不会
+# 被删。语义是「GitHub 有的，GitLab 一定有」，不是「两边逐字相等」。若日后要真
+# 镜像，把末尾两条 push 换成一条 `--mirror`，同时接受它会删除 GitLab 侧多余 ref。
+#
+# 为什么 tag 触发时推 refs/remotes/origin/main 而不是 HEAD：tag 触发的 checkout
+# 处于 detached HEAD，HEAD 指向被推的那个 tag 的提交；写成 HEAD:main 会把某个
+# tag 的提交当成 main 推上去。按 ref 明确指定则与触发面无关（分支触发时二者等价）。
+#
+# 为什么带 --force：本仓是上游 fork 合并仓，main 可能被上游合并重写，非快进历史
+# 只有强制推送才推得上去。**代价必须写清**：GitLab 项目要为 main 打开
+# 「Allowed to force push」（Settings → Repository → Protected branches），否则
+# 本 workflow 会以 `pre-receive hook declined` 失败——这是刻意保留的失败模式：
+# 宁可显式报错，也不要悄悄漏掉一次同步。镜像仓打开 force push 是安全的，它没有
+# 本地改动可供覆盖（见文件头的单向设计）。
+#
+# 凭据与配置：GITLAB_TOKEN（secret）＋ GITLAB_REPO（variable，形如
+# `<namespace>/<project>`），二者缺一则直接报错退出——不静默跳过，漏同步必须能
+# 看见。token 建议用 GitLab 的 **Project Access Token**（项目 Settings →
+# Access tokens，角色 Maintainer、scope `write_repository`）而不是个人 PAT：前者
+# 只对这一个项目有写权限，泄露面小得多。HTTPS 用法是 `oauth2:<token>` 作密码位。
+# token 经 env 传入而**不内联进 run 脚本**：脚本原文会进日志，内联等于明文落盘
+# （GitHub 的 secret 掩码只是兜底，不作为唯一防线）。
+#
+# 权限：本流水线只读 checkout GitHub、只写 GitLab，不碰任何 GitHub 侧写操作，
+# 故 contents: read；persist-credentials: false 让 checkout 不把 GITHUB_TOKEN 写进
+# .git/config——推的是 GitLab，用不到它，少一份凭证在场。
+#
+# 攻击面（诚实写清）：tag 触发意味着**任何有写权限的人**推一个任意 tag，就能让本
+# workflow 在该 tag 指向的提交上运行——GitHub 对 push 事件取的是「被推 ref 里的
+# workflow 文件」，于是对方可以连带改动本文件，main 的 PR / ruleset 保护对 tag 无效。
+# 缓解不在本文件内，而在 token 的授权面：用 Project Access Token 时，被滥用或泄露
+# 的后果上限于「能往这一个镜像项目写内容」（镜像仓本就无本地改动可覆盖），拿不到
+# GitHub 侧任何东西（contents: read + persist-credentials: false，本文件也不读其他
+# secret）。若日后需要更紧的边界，去掉 tags 触发、只靠每日对账同步 tag 即可。
+#
+# 前置（均为仓库 / 站点设置，非代码）：
+#   1. gitlab.com 建**空**项目，不要勾 README / .gitignore 初始化——空仓才能被首次
+#      推送直接填满；带初始提交时 main 是默认受保护分支，首次推送会被拒。
+#   2. 该项目建 Project Access Token（Maintainer + write_repository）。
+#   3. 本仓设变量与密钥：
+#        gh variable set GITLAB_REPO --body '<namespace>/<project>'
+#        gh secret set GITLAB_TOKEN   # 交互式粘贴 token
+#      （GITLAB_USER 一般不必设；认证失败时再设为 token 名，见下方 user 逃生舱）
+#   4. GitLab 项目 Settings → Repository → Protected branches：main 打开
+#      「Allowed to force push」（理由见上）。
+
+name: Mirror to GitLab
+
+on:
+  push:
+    branches: [main]
+    tags: ['**']
+  schedule:
+    # 每日 03:17（Asia/Shanghai）兜底对账；cron 一律按 UTC 解释
+    - cron: '17 19 * * *'
+  workflow_dispatch:
+
+# 同步是「全量重推」，并发跑没有意义还会互抢引用锁。排队串行即可，不取消在跑的
+# 那次：取消会让本轮半途而废，而它本来只有几秒。
+concurrency:
+  group: mirror-gitlab
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  mirror:
+    name: 推送 main 与全部 tag
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      # fetch-depth: 0 = 全历史 + 全部分支 + 全部 tag（`git push --tags` 依赖本地
+      # 真有这些 tag，浅克隆下会静默少推，故这里不能省）。
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - name: 同步到 GitLab
+        env:
+          GITLAB_TOKEN: ${{ secrets.GITLAB_TOKEN }}
+          GITLAB_REPO: ${{ vars.GITLAB_REPO }}
+          GITLAB_USER: ${{ vars.GITLAB_USER }}
+        run: |
+          set -euo pipefail
+
+          if [ -z "${GITLAB_TOKEN}" ]; then
+            echo '::error::缺少 GITLAB_TOKEN secret（Settings → Secrets and variables → Actions）'
+            exit 1
+          fi
+          if [ -z "${GITLAB_REPO}" ]; then
+            echo '::error::缺少 GITLAB_REPO variable（形如 <namespace>/<project>）'
+            exit 1
+          fi
+
+          # HTTPS 用户名位：PAT / Project Access Token 走 oauth2 即可，但 GitLab 对
+          # 各类 token 的用户名要求变过（部分文档示例用 token 的名字），故留
+          # GITLAB_USER variable 作逃生舱——认证失败时把它设成 token 名，无需再改本
+          # 文件。密码位始终是 token 本身，鉴权实际由 token 决定。
+          user="${GITLAB_USER:-oauth2}"
+          remote="https://${user}:${GITLAB_TOKEN}@gitlab.com/${GITLAB_REPO}.git"
+
+          echo "main → $(git rev-parse --short refs/remotes/origin/main)"
+          # core.hooksPath 指向空处禁用 hook：与 release.yml 的推送同理，避免
+          # .git/hooks 里的东西在持有 token 的这一步被触发。
+          git -c core.hooksPath=/dev/null push --force "$remote" \
+            refs/remotes/origin/main:refs/heads/main
+
+          echo "tag → 共 $(git tag | wc -l) 个"
+          git -c core.hooksPath=/dev/null push --force --tags "$remote"
