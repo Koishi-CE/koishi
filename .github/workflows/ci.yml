@@ -18,18 +18,20 @@
 #            Cannot find module（run 37446712058 实证，5 个用例）；宿主控制台
 #            前端前置于 test——console 的静态资源用例读 dist 真实产物；静态两组
 #            不读 lib/dist，与构建同刻起跑。test 走 //#test:ci（= bun test
-#            --isolate …，缺 --isolate 会让跨文件 mock.module 互相串扰），
-#            它与 check 四组并行、仍等构建产物）
+#            --isolate --parallel=4 …：缺 --isolate 会让跨文件 mock.module
+#            互相串扰；缺 --parallel 则 134 个测试文件只占 1 核、在 4 vCPU
+#            runner 上串行跑），它与 check 四组并行、仍等构建产物）
 #          （turbo 的收益全在缓存：内容寻址 + 远程缓存让 merge_group 那一遍直接
 #            复用 pull_request 那一遍的产物——两者内容逐字相同（实测最近 5 个
 #            已合并 PR 的合并提交与 PR head tree 全等），命中即整轮跳过 build /
 #            check / test，队列等待从 ~2 分钟降到 ~20 秒。未配 TURBO_TOKEN 时
 #            自动降级为纯本地缓存，语义与不加 turbo 完全等价，只是快不了）
-# - client 前端构建：turbo 跑 //#build + //#build:console + 16 个插件的
-#          build:client（包级任务，vite 编程式构建、无配置文件，产物 dist/ 按包
-#          缓存；并发压到 4 与 4 vCPU runner 匹配）。前端构建是 .vue 的实际类型
-#          门禁（compiler-sfc 含 defineProps 类型解析），tsc 侧 .vue 只是不透明
-#          Component。
+# - client 前端构建：turbo 跑 //#build:console + 16 个插件的 build:client（包级
+#          任务，vite 编程式构建、无配置文件，产物 dist/ 按包缓存；并发压到 4
+#          与 4 vCPU runner 匹配）。**不跑 //#build**：前端构建全程只经 src 别名，
+#          不读 lib（实测见 job 内注释），省下一次约 40s 的重复根构建。前端构建是
+#          .vue 的实际类型门禁（compiler-sfc 含 defineProps 类型解析），tsc 侧
+#          .vue 只是不透明 Component。
 # - fallow  死代码与依赖审计（turbo 任务 //#fallow；bunx 直跑，不进
 #          devDependencies；版本在根 package.json 的 fallow 脚本内 pin 精确版，
 #          避免门禁口径随上游发布漂移；本地手动入口 bun run fallow）。豁免与规则见
@@ -124,6 +126,8 @@ jobs:
       # 通配（实测报 Could not find task），而它们之间无相互依赖、与 test 亦
       # 无依赖，由 turbo 并行调度：静态两组同刻起跑，test 与类型两组都等
       # //#build 的 lib 产物（跨包裸名导入经 exports 落到 lib，见 turbo.jsonc）。
+      # test 自身是 4 个 worker 进程的池（--parallel=4，见 //#test:ci 脚本）：
+      # 与 check 并发时最多约 6 个进程争 4 vCPU，是刻意保留的轻度超订。
       - name: 门禁（turbo：构建 → check 四组 ∥ test，含 lcov 覆盖率）
         run: bunx turbo run //#build //#build:console //#check:lint //#check:tooling //#check:types //#check:template //#test:ci
         env:
@@ -155,13 +159,20 @@ jobs:
         if: steps.turbo-cache-token.outcome != 'success'
         run: |
           echo "::warning::Turborepo 远程缓存凭据换取失败（OIDC policy / TURBO_TEAM 未就绪，或 Vercel 侧异常）。本次退回纯本地缓存：门禁语义不变，只是不快。"
-      # 前端构建走 src 别名，理论上不依赖 lib；先 build 与本地已验证形态一致。
-      # 三者都经 turbo：命中缓存即跳过。插件前端是包级任务（16 个含 client/ 的
+      # 本 job 不跑 //#build：前端构建全程只经 src——builder 自身只 import node:
+      # 与第三方包，工作区别名（packages/web/builder 的 collectWorkspaceAliases）
+      # 把所有工作区包名映射到 src{,/client} 入口，图标资产也按包名解析到
+      # @koishi-ce/components 的源码目录，没有一处读 lib。2026-10 实测：同一次
+      # 检出下「无 lib 的干净环境」与「补上 lib 后」各强制跑一遍本 job，64 个
+      # 产物文件逐个 SHA256 一致（此前一次跨检出比对出现的 3 处哈希差异已追到
+      # 本地 node_modules 残留的旧 @intlify/message-compiler@11.4.10，与 lib
+      # 无关）。省下的是 4 vCPU runner 上一次约 40s 的重复根构建。
+      # 两者都经 turbo：命中缓存即跳过。插件前端是包级任务（16 个含 client/ 的
       # 插件各一条 build:client），turbo 并行调度、按包缓存 dist/——旧版这里是
       # 逐目录串行的 shell 循环，既不可缓存也不并行。并发压到 4，与 4 vCPU
       # runner 匹配（16 个 vite 构建同时起跑会互相拖慢）。
-      - name: 根构建 + 宿主前端 + 全部 webui 插件前端（turbo）
-        run: bunx turbo run //#build //#build:console build:client --concurrency=4
+      - name: 宿主前端 + 全部 webui 插件前端（turbo）
+        run: bunx turbo run //#build:console build:client --concurrency=4
         env:
           TURBO_TELEMETRY_DISABLED: "1"
 

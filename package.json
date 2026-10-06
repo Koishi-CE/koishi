@@ -39,7 +39,7 @@
         "build": "tsdown",
         "build:console": "bun packages/web/builder/src/bin.ts build",
         "test": "bun test --isolate",
-        "test:ci": "bun test --isolate --coverage --coverage-reporter=text --coverage-reporter=lcov --coverage-dir=coverage",
+        "test:ci": "bun test --isolate --parallel=4 --coverage --coverage-reporter=text --coverage-reporter=lcov --coverage-dir=coverage",
         "changeset": "changeset",
         "release": "bun tooling/release/index.ts"
     },
