@@ -2,7 +2,7 @@
 #
 # 三个并行 job：
 # - gate   主门禁：turbo 任务图——build 与宿主前端并行起步；check 四组
-#          （静态两组不依赖构建、类型两组等构建）与 test 全部并行
+#          （静态两组不依赖构建、类型两组等构建）与 test 并行（test 也要 lib）
 #          （test 附带 lcov 覆盖率产出，随后经 codecov-action 上传，驱动
 #            Codecov 在 PR 上的覆盖率评论与 status check；未配 CODECOV_TOKEN
 #            secret 时公开仓自动降级 tokenless 上传，fork PR 出不了评论属预期）
@@ -13,11 +13,13 @@
 #          （依赖关系写在根 turbo.jsonc 的 dependsOn 里，理由与旧版手写顺序
 #            相同：build 前置于两组类型检查——tsconfig.web.json 的部分 paths
 #            指向各包 lib/index.d.ts 产物，全新环境无 lib 时 web 侧 tsc 直接
-#            TS2307（已实测）；宿主控制台前端前置于 test——console 的静态资源
-#            用例读 dist 真实产物，而测试本身加载各包 src（不读 lib），故 test
-#            只依赖 //#build:console；静态两组不读 lib/dist，与构建同刻起跑。
-#            test 走 //#test:ci（= bun test --isolate …，缺 --isolate 会让跨文件
-#            mock.module 互相串扰），它与构建、两组类型检查全部并行）
+#            TS2307（已实测）；build 前置于 test——测试文件自身加载各包 src，
+#            但跨 workspace 的裸包名导入经 exports 落到 lib，无 lib 时 CI 上报
+#            Cannot find module（run 37446712058 实证，5 个用例）；宿主控制台
+#            前端前置于 test——console 的静态资源用例读 dist 真实产物；静态两组
+#            不读 lib/dist，与构建同刻起跑。test 走 //#test:ci（= bun test
+#            --isolate …，缺 --isolate 会让跨文件 mock.module 互相串扰），
+#            它与 check 四组并行、仍等构建产物）
 #          （turbo 的收益全在缓存：内容寻址 + 远程缓存让 merge_group 那一遍直接
 #            复用 pull_request 那一遍的产物——两者内容逐字相同（实测最近 5 个
 #            已合并 PR 的合并提交与 PR head tree 全等），命中即整轮跳过 build /
@@ -119,8 +121,8 @@ jobs:
       # 缓存时全部任务整轮跳过（merge_group 那一遍复用 pull_request 那一遍
       # 即此情形）。check 四组必须在此显式列出——turbo 不支持 //#check:*
       # 通配（实测报 Could not find task），而它们之间无相互依赖、与 test 亦
-      # 无依赖，由 turbo 并行调度：静态两组同刻起跑，test 只等宿主前端产物
-      # （测试加载各包 src，不读 lib），类型两组等的是 //#build 的 lib 产物。
+      # 无依赖，由 turbo 并行调度：静态两组同刻起跑，test 与类型两组都等
+      # //#build 的 lib 产物（跨包裸名导入经 exports 落到 lib，见 turbo.jsonc）。
       - name: 门禁（turbo：构建 → check 四组 ∥ test，含 lcov 覆盖率）
         run: bunx turbo run //#build //#build:console //#check:lint //#check:tooling //#check:types //#check:template //#test:ci
         env:
