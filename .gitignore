@@ -23,6 +23,9 @@ pnpm-debug.log*
 # tool caches
 .eslintcache
 .turbo/
+# fallow 的本地缓存目录：它自带的 .fallow/.gitignore（内容 `*`）对 turbo 无效，
+# 该文件仍会被算进根任务 inputs，使本地缓存键与 CI 永久错开——整目录显式忽略
+.fallow/
 
 # test coverage
 coverage/

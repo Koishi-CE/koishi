@@ -2,9 +2,13 @@
 	"$schema": "https://turborepo.com/schema.json",
 	// CI 缓存配置（根级任务）。
 	//
-	// 本仓 node 侧构建是「根 tsdown 单遍构建全部包」，check / test 也都是根级单命令，
-	// 所以可缓存的粒度就是这些根任务，而不是「每包一个构建任务」——用 //# 前缀声明
-	// 根包任务。turbo 按输入内容哈希做内容寻址缓存（只与内容有关、与检出目录无关），
+	// 本仓 node 侧构建是「根 tsdown 单遍构建全部包」，check（按执行层拆成
+	// lint / tooling / types / template 四组）与 test 也都是根级单命令，
+	// 所以可缓存的粒度就是这些根任务，而不是「每包一个构建任务」——用 //# 前缀
+	// 声明根包任务。粒度粗的另一面是并行空间大：无依赖关系的根任务由 turbo
+	// 同刻起跑（本地实测 //#build 与 //#build:console 在 0.47s 内双双启动），
+	// 于是四组 check 与 test 的调度关系本身就是性能设计，见下方 tasks 注释。
+	// turbo 按输入内容哈希做内容寻址缓存（只与内容有关、与检出目录无关），
 	// 配上远程缓存即可让 merge_group 那一遍复用 pull_request 那一遍的产物——前提是
 	// 期间 main 没被推进（队列时代 7 个已合并 PR 里 6 个满足）。凭据走 OIDC，
 	// 机制、Vercel 侧前置与降级行为见 docs/guides/development.md §4。
@@ -33,11 +37,32 @@
 		"//#build:console": {
 			"outputs": ["plugins/webui/console/dist/**"]
 		},
-		"//#check": {
-			"dependsOn": ["//#build", "//#build:console"]
+		// check 按执行层拆四组根任务（十段本身不变，只是分组暴露给 turbo）：
+		// CI 显式请求这四组，turbo 按依赖图并行调度；本地 `bun run check`
+		// 仍是这四组串行的组合，口径与 CI 完全一致。
+		// 静态两组不依赖构建——实测 biome / eslint 与 tooling/checks 下的六个
+		// 检查脚本均不读 lib 或 dist，故与 //#build 同刻起跑；类型两组读各包
+		// lib/index.d.ts（tsconfig.web.json 的部分 paths 指向产物），必须等构建。
+		"//#check:lint": {},
+		"//#check:tooling": {},
+		"//#check:types": {
+			"dependsOn": ["//#build"]
 		},
+		"//#check:template": {
+			"dependsOn": ["//#build"]
+		},
+		// 本地 / 兼容入口：command 是十段串行（bun run check），CI 不请求它，
+		// 请求的是上面四组（turbo 不支持 //#check:* 通配，命令行须显式列出）。
+		"//#check": {},
+		// test 与 check 四组并行（旧版经 //#check 传递依赖，等于把整条 check 链
+		// 串在 test 前面），但**仍必须等 //#build**：测试文件自身加载各包 src，
+		// 跨 workspace 的裸包名导入却经 package.json 的 exports 落到 lib
+		// （apps/koishi-create/src/registry.ts 的 @koishi-ce/utils 即此情形），
+		// 无 lib 时 CI 上有 5 个用例报 Cannot find module（run 37446712058 实证；
+		// 本地因 lib 常在而感知不到）。//#build:console 是插件静态资源用例读
+		// dist 真实产物的前置。
 		"//#test:ci": {
-			"dependsOn": ["//#check"],
+			"dependsOn": ["//#build", "//#build:console"],
 			"outputs": ["coverage/**"]
 		},
 		"//#fallow": {}
