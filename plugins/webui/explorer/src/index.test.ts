@@ -146,9 +146,12 @@ describe("explorer 文件管理服务", () => {
 	it("read 返回二进制文件的 MIME 探测", async () => {
 		const file = (await call("explorer/read", "a.png")) as {
 			base64: string;
+			encoding?: string;
 			mime?: string;
 		};
 		expect(file.mime).toBe("image/png");
+		// 已识别出 MIME 的文件不做编码探测（客户端只消费 mime）
+		expect(file.encoding).toBeUndefined();
 	});
 
 	it("write 支持文本与 base64 二进制写入", async () => {
