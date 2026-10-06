@@ -42,7 +42,10 @@
 		// webui 插件前端（16 个含 client/ 的插件各有一条 build:client 脚本）：
 		// 唯一的包级任务，取代 CI 里逐目录的 shell 串行循环——turbo 并行调度、
 		// 按包缓存 dist/**（改一个插件只重建它，命中则整段跳过）。无 dependsOn：
-		// vite 构建经 collectWorkspaceAliases 走各包 src/client 入口，不读 lib。
+		// vite 构建经 collectWorkspaceAliases 走各包 src/client 入口，不读 lib，
+		// 故 CI 的 client job 只请求 //#build:console + build:client，不请求
+		// //#build（2026-10 实测：同一检出下无 lib 与补上 lib 两次跑出的 64 个
+		// 产物文件逐个 SHA256 一致，省下一次约 40s 的重复根构建）。
 		"build:client": {
 			"outputs": ["dist/**"]
 		},
@@ -70,6 +73,12 @@
 		// 无 lib 时 CI 上有 5 个用例报 Cannot find module（run 37446712058 实证；
 		// 本地因 lib 常在而感知不到）。//#build:console 是插件静态资源用例读
 		// dist 真实产物的前置。
+		// 任务内部的串行度由脚本决定：test:ci 带 --parallel=4，即 4 个 worker
+		// 进程按动态派发瓜分 134 个测试文件。这比把 test 拆成 4 个 --shard 根
+		// 任务更好：① 动态派发天然均衡，而 --shard 实测不均衡（最慢分片 25.2s、
+		// 最快 8.0s，1.93 倍）；② 根任务 inputs 是全仓内容，拆成 4 份不带来任何
+		// 缓存粒度收益，只会把覆盖率拆成 4 份 lcov 再设法合并。本地实测
+		// 43.9s → 19.3s，覆盖范围与串行逐条相同（lcov 的 207 个 SF 条目零差异）。
 		"//#test:ci": {
 			"dependsOn": ["//#build", "//#build:console"],
 			"outputs": ["coverage/**"]
