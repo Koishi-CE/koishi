@@ -3,6 +3,9 @@
 	"description": "Override Command Config for Koishi",
 	"version": "1.0.4",
 	"type": "module",
+	"scripts": {
+		"build:client": "bun ../../../packages/web/builder/src/bin.ts build ."
+	},
 	"main": "lib/index.mjs",
 	"types": "lib/index.d.ts",
 	"files": [

@@ -25,10 +25,11 @@
 #            已合并 PR 的合并提交与 PR head tree 全等），命中即整轮跳过 build /
 #            check / test，队列等待从 ~2 分钟降到 ~20 秒。未配 TURBO_TOKEN 时
 #            自动降级为纯本地缓存，语义与不加 turbo 完全等价，只是快不了）
-# - client 前端构建：turbo 跑 //#build + //#build:console，再就地循环构建全部
-#          webui 插件前端（vite 编程式构建，无配置文件）。前端构建是 .vue 的
-#          实际类型门禁（compiler-sfc 含 defineProps 类型解析），tsc 侧 .vue
-#          只是不透明 Component。
+# - client 前端构建：turbo 跑 //#build + //#build:console + 16 个插件的
+#          build:client（包级任务，vite 编程式构建、无配置文件，产物 dist/ 按包
+#          缓存；并发压到 4 与 4 vCPU runner 匹配）。前端构建是 .vue 的实际类型
+#          门禁（compiler-sfc 含 defineProps 类型解析），tsc 侧 .vue 只是不透明
+#          Component。
 # - fallow  死代码与依赖审计（turbo 任务 //#fallow；bunx 直跑，不进
 #          devDependencies；版本在根 package.json 的 fallow 脚本内 pin 精确版，
 #          避免门禁口径随上游发布漂移；本地手动入口 bun run fallow）。豁免与规则见
@@ -155,16 +156,14 @@ jobs:
         run: |
           echo "::warning::Turborepo 远程缓存凭据换取失败（OIDC policy / TURBO_TEAM 未就绪，或 Vercel 侧异常）。本次退回纯本地缓存：门禁语义不变，只是不快。"
       # 前端构建走 src 别名，理论上不依赖 lib；先 build 与本地已验证形态一致。
-      # 两者都经 turbo：命中缓存即跳过（本 job 剩下的循环暂未纳入缓存）。
-      - name: 根构建 + 宿主控制台前端（turbo）
-        run: bunx turbo run //#build //#build:console
+      # 三者都经 turbo：命中缓存即跳过。插件前端是包级任务（16 个含 client/ 的
+      # 插件各一条 build:client），turbo 并行调度、按包缓存 dist/——旧版这里是
+      # 逐目录串行的 shell 循环，既不可缓存也不并行。并发压到 4，与 4 vCPU
+      # runner 匹配（16 个 vite 构建同时起跑会互相拖慢）。
+      - name: 根构建 + 宿主前端 + 全部 webui 插件前端（turbo）
+        run: bunx turbo run //#build //#build:console build:client --concurrency=4
         env:
           TURBO_TELEMETRY_DISABLED: "1"
-      - name: 全部 webui 插件前端
-        run: |
-          for dir in plugins/webui/*/client; do
-            bun packages/web/builder/src/bin.ts build "$(dirname "$dir")"
-          done
 
   fallow:
     name: fallow (dead code & deps audit)

@@ -4,10 +4,12 @@
 	//
 	// 本仓 node 侧构建是「根 tsdown 单遍构建全部包」，check（按执行层拆成
 	// lint / tooling / types / template 四组）与 test 也都是根级单命令，
-	// 所以可缓存的粒度就是这些根任务，而不是「每包一个构建任务」——用 //# 前缀
-	// 声明根包任务。粒度粗的另一面是并行空间大：无依赖关系的根任务由 turbo
-	// 同刻起跑（本地实测 //#build 与 //#build:console 在 0.47s 内双双启动），
-	// 于是四组 check 与 test 的调度关系本身就是性能设计，见下方 tasks 注释。
+	// 所以这些的缓存粒度就是根任务（//# 前缀），不是「每包一个任务」；唯一的
+	// 包级任务是 webui 插件前端（build:client，每个含 client/ 的插件一条，
+	// 产物 dist/ 按包缓存）。粒度粗的另一面是并行空间大：无依赖关系的任务由
+	// turbo 同刻起跑（本地实测 //#build 与 //#build:console 在 0.47s 内双双
+	// 启动），于是 check 四组与 test 的调度关系本身就是性能设计，见下方 tasks
+	// 注释。
 	// turbo 按输入内容哈希做内容寻址缓存（只与内容有关、与检出目录无关），
 	// 配上远程缓存即可让 merge_group 那一遍复用 pull_request 那一遍的产物——前提是
 	// 期间 main 没被推进（队列时代 7 个已合并 PR 里 6 个满足）。凭据走 OIDC，
@@ -36,6 +38,13 @@
 		},
 		"//#build:console": {
 			"outputs": ["plugins/webui/console/dist/**"]
+		},
+		// webui 插件前端（16 个含 client/ 的插件各有一条 build:client 脚本）：
+		// 唯一的包级任务，取代 CI 里逐目录的 shell 串行循环——turbo 并行调度、
+		// 按包缓存 dist/**（改一个插件只重建它，命中则整段跳过）。无 dependsOn：
+		// vite 构建经 collectWorkspaceAliases 走各包 src/client 入口，不读 lib。
+		"build:client": {
+			"outputs": ["dist/**"]
 		},
 		// check 按执行层拆四组根任务（十段本身不变，只是分组暴露给 turbo）：
 		// CI 显式请求这四组，turbo 按依赖图并行调度；本地 `bun run check`
