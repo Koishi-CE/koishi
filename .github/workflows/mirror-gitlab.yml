@@ -40,6 +40,14 @@
 # 故 contents: read；persist-credentials: false 让 checkout 不把 GITHUB_TOKEN 写进
 # .git/config——推的是 GitLab，用不到它，少一份凭证在场。
 #
+# 攻击面（诚实写清）：tag 触发意味着**任何有写权限的人**推一个任意 tag，就能让本
+# workflow 在该 tag 指向的提交上运行——GitHub 对 push 事件取的是「被推 ref 里的
+# workflow 文件」，于是对方可以连带改动本文件，main 的 PR / ruleset 保护对 tag 无效。
+# 缓解不在本文件内，而在 token 的授权面：用 Project Access Token 时，被滥用或泄露
+# 的后果上限于「能往这一个镜像项目写内容」（镜像仓本就无本地改动可覆盖），拿不到
+# GitHub 侧任何东西（contents: read + persist-credentials: false，本文件也不读其他
+# secret）。若日后需要更紧的边界，去掉 tags 触发、只靠每日对账同步 tag 即可。
+#
 # 前置（均为仓库 / 站点设置，非代码）：
 #   1. gitlab.com 建**空**项目，不要勾 README / .gitignore 初始化——空仓才能被首次
 #      推送直接填满；带初始提交时 main 是默认受保护分支，首次推送会被拒。
