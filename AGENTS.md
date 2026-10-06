@@ -39,7 +39,7 @@ bun run fallow                  # 死代码与依赖审计（bunx 直跑 fallow�
 bun run build                   # 根 tsdown：全部 node 侧包 → lib/（ESM-only）
 bun test                        # 全量自有用例（126 个测试文件 / 1003 用例，2026-09-20 实测，覆盖全部 node 侧包）
 bun run test                    # 同上的脚本形态：bun test --isolate（每文件独立 global，隔离跨文件 mock.module）
-bunx turbo run //#check         # CI 门禁口径（turbo 缓存；任务图见根 turbo.jsonc，机制见 docs/guides/development.md §4）
+bunx turbo run //#build //#build:console //#check:lint //#check:tooling //#check:types //#check:template //#test:ci   # CI 门禁口径（turbo 缓存 + 并行；任务图见根 turbo.jsonc，机制见 docs/guides/development.md §4）
 bun test --coverage             # 覆盖率（src 源码口径，All files 当前约 97% 行，以实跑输出为准）
 bun run sandbox                 # 外部沙盒实例生成（链接模式默认，--pack 为打包模式；详见 docs/guides/development.md §10）
 bun packages/web/builder/src/bin.ts build            # 宿主控制台前端 → plugins/webui/console/dist

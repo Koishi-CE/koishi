@@ -82,17 +82,18 @@ bun run release status                   # 发布链概览（详见 ../process/r
 CI 门禁的 turbo 形态（可选；等价于上面各条命令的组合，任务图见根 [`turbo.jsonc`](../../turbo.jsonc)，缓存机制见第 4 节）：
 
 ```bash
-bunx turbo run //#build //#build:console //#check //#test:ci   # = CI 的 gate job（含 lcov 覆盖率产出）
+bunx turbo run //#build //#build:console //#check:lint //#check:tooling //#check:types //#check:template //#test:ci   # = CI 的 gate job（含 lcov 覆盖率产出）
 bunx turbo run //#build //#build:console                       # = CI 的 client job 里可缓存的那部分
 bunx turbo run //#fallow                                       # = CI 的 fallow job
+bunx turbo run //#check                                        # 十段串行入口（本地 / 兼容；CI 不用它，用上面四组）
 bunx turbo run //#build --force                                # 忽略缓存强制重跑（排查缓存相关问题时用）
 ```
 
-本地缓存落在 `.turbo/`（已 gitignore）。要与 CI 共用同一份远程缓存，本地执行 `bunx turbo login`（Vercel 账号 OAuth，凭据落在本机）；CI 侧的凭据走 OIDC，两种前置于 Vercel 的配置见第 4 节。
+本地缓存落在 `.turbo/`（已 gitignore）。要与 CI 共用同一份远程缓存，本地执行 `bunx turbo login`（Vercel 账号 OAuth，凭据落在本机）；CI 侧的凭据走 OIDC，两种前置于 Vercel 的配置见第 4 节。另有一个会让本地键与 CI 永久错开的坑：本地跑过 `bun run fallow` 后，它生成的 `.fallow/.gitignore`（内容 `*`）本身仍会被 turbo 算进根任务 inputs，故根 `.gitignore` 显式忽略整个 `.fallow/`（2026-10 修，实测该行让该条目从 inputs 中消失）。
 
 ## 4. 门禁构成与现状
 
-`bun run check` 由十段组成：
+`bun run check` 由十段组成，按执行层归为四组（`check:lint` = lint + lint:client、`check:types` = typecheck、`check:tooling` = 六段 tooling 检查、`check:template` = check:vue-types）——CI 经 turbo 并行跑这四组，该命令本身仍是四组串行、十段一段不少：
 
 1. **lint（biome）**：全仓格式 + lint（`biome check .`）。biome 尊重 `.gitignore`（`vcs.useIgnoreFile`），跳过 lib/dist 等。格式以 biome 为唯一权威——`.editorconfig` 已与之一致（代码 tab；文档 `.md`/`.yml`、`.vue` 与脚手架模板 2 空格），手写文件仍统一跑 `bun run format` 收尾。
 2. **lint:client（eslint）**：只查 `.vue` 文件，与 biome 零重叠；核心规则 `vue/no-undef-components`（忽略 `^K`、`^el-`、`^router-` 全局组件）。不做类型感知。
@@ -105,15 +106,16 @@ bunx turbo run //#build --force                                # 忽略缓存强
 9. **check:console-wiring**：`tooling/checks/console-wiring.ts`（零依赖）——console 类型源头共享的接线对账：node 侧声明 console 增强的插件包集合与接线文件 `packages/web/client/console-services.d.ts` 的导入包集合双向一致（漏接线则该插件的 store 键 / 事件类型在浏览器端静默缺失），基座 tsconfig.client.json 的 paths 键集必须被 tsconfig.web.json 完整重写（extends 整体替换语义，漏写即全程序断链）。问题 exit 1。
 10. **check:pr-templates**：`tooling/checks/pr-templates.ts`（零依赖，bun 直跑）——PR 模板选择器 `.github/PULL_REQUEST_TEMPLATE/config.yml` 与模板文件对账：清单登记的 `body` 文件必须存在、目录内的 `.md`（README 除外）不得是清单外的孤儿、`name` 不得重复、字段只认 GitHub 的 `name` / `description` / `body` 三键。该目录漂移不会让其它门禁变红，只会让开 PR 的人选到空模板或 404。问题 exit 1；模板口径见 `.github/PULL_REQUEST_TEMPLATE/README.md`。
 
-**CI（`.github/workflows/ci.yml`）**：PR 与 main push 自动触发（也响应 merge queue 的 `merge_group` 与手动 dispatch），三个并行 job：`gate`（build → 宿主前端构建 → check → test，test 附带 lcov 覆盖率产出并经 codecov-action 上传 Codecov）、`client`（宿主 + 全部 webui 插件的前端构建，即 `.vue` 的实际类型门禁）、`fallow`（`bun run fallow` 死代码与依赖审计）。三个顺序要点：
+**CI（`.github/workflows/ci.yml`）**：PR 与 main push 自动触发（也响应 merge queue 的 `merge_group` 与手动 dispatch），三个并行 job：`gate`（经 turbo 跑构建、check 四组与 test，test 附带 lcov 覆盖率产出并经 codecov-action 上传 Codecov）、`client`（宿主 + 全部 webui 插件的前端构建，即 `.vue` 的实际类型门禁）、`fallow`（`bun run fallow` 死代码与依赖审计）。四个顺序要点：
 
-- **gate 里 build 前置于 check**：`tsconfig.web.json` 的部分 paths 指向各包 `lib/index.d.ts` 产物，全新环境无 lib 时 web 侧 tsc 直接 TS2307（已实测）；本地因 lib 常在而感知不到该依赖。
-- **gate 里前端构建前置于 test**：console 插件的「静态资源托管」用例读 `plugins/webui/console/dist` 真实产物（index.html / logo.png），干净环境不构建前端则整套用例必失败（首次上 CI 实证）；本地因 dist 常在而感知不到。
+- **gate 里 build 前置于两组类型检查**：`tsconfig.web.json` 的部分 paths 指向各包 `lib/index.d.ts` 产物，全新环境无 lib 时 web 侧 tsc 直接 TS2307（已实测）；本地因 lib 常在而感知不到该依赖。
+- **静态两组不等构建**：`check:lint`（biome + eslint）与 `check:tooling`（`tooling/checks/*` 六段）实测都不读 `lib/` 或 `dist/`，故在 turbo 图里无 `dependsOn`，与构建同刻起跑——这是 gate 关键路径缩短的主要来源。
+- **gate 里前端构建前置于 test**：console 插件的「静态资源托管」用例读 `plugins/webui/console/dist` 真实产物（index.html / logo.png），干净环境不构建前端则整套用例必失败（首次上 CI 实证）；本地因 dist 常在而感知不到。test 不再串在 check 之后：它与 check 四组并行，只共同等待构建产物。
 - **Bun 版本不在 workflow 硬编码**：`oven-sh/setup-bun` 自动读根 `packageManager`（bun@1.4.2），升级只改根字段。
 
 **必需状态检查与 merge queue（2026-09-28 起）**：主分支 ruleset「保护主分支」（id `24072025`）启用了 merge queue，并把 `gate` / `client` / `fallow` 三个 job 定为必需状态检查（ruleset 侧于 2026-09-28 开启，workflow 侧只需保证上文 CI 段里的 `merge_group` 触发）。队列只认在它自建的 `gh-readonly-queue/<base>/pr-*` 临时 ref 上跑出来的那次检查，`pull_request` 那次不算数——因此 `ci.yml` 的 `on` 里**必须保留 `merge_group:`**：删掉它，队列会永远等不到检查上报，超时（该 ruleset 的 status check timeout，当前 12 分钟）后把 PR 从队列剔除，合并必然失败。依据 [managing a merge queue](https://docs.github.com/zh/repositories/configuring-branches-and-merges-in-your-repository/configuring-pull-request-merges/managing-a-merge-queue)。另注两点：ruleset 里检查名只认 `<job name>`（不含 workflow 名、不含矩阵与事件维度），所以配置时该填的就是上面三个 job 名；ruleset 编辑器那个搜索框是「输入才搜」的懒加载，打开时不显示任何候选属正常，键入 `gate` 即可命中。
 
-**turbo 缓存（CI 门禁的执行层）**：三个 job 都改为经 turbo 跑根任务——任务图、`dependsOn` 与 `outputs` 集中在根 [`turbo.jsonc`](../../turbo.jsonc)，CI 编排不再自持顺序知识。四条要点：① **粒度**：本仓 node 侧是「根 tsdown 单遍构建全部包」，`check` / `test` 也是根级单命令，所以缓存单位就是这些根任务（`//#` 前缀），不是「每包一个任务」；包级粒度要等构建拆分，不在当前范围。② **命中条件**：turbo 按输入内容哈希（默认取包内未被 `.gitignore` 忽略的文件，故 `lib/` `dist/` `coverage/` `node_modules/` 都不进哈希），且**只与内容有关、与检出目录无关**——把同一提交检出到两个不同路径，四个任务的 task hash 逐字相同（实测）。于是 merge_group 那一遍能否命中，等价于「队列建的那棵树与 PR 那遍是否逐字相同」，也就是「期间 main 有没有被推进」：队列时代 7 个已合并 PR 里 6 个满足（#35–#40）；#41 因期间落了 #40 的合并与发布链版本提交而不满足 → 那一遍正确地重跑了全部任务。③ **凭据与降级**：远程缓存凭据走 **OIDC**（无长期 secret）——三个 job 各声明 `permissions`（`contents: read` + `id-token: write`），由 `vercel/setup-turborepo-remote-cache-action@v1.1.0` 把本次运行的 OIDC token 换成短命的 Turborepo access token，并注入 `TURBO_TOKEN` / `TURBO_TEAM`（`TURBO_TEAM` 是 repository variable，值为 Vercel team slug）。该步骤 `continue-on-error` + 一条告警 step：换取失败**不会让必需检查变红**，退化为纯本地缓存（语义与未接远程缓存完全一致，只是不快）。Vercel 侧两处前置：team Settings → **Billing** 打开 Remote Caching（新账号默认不开），以及 Settings → Build and Deployment → **OIDC Policies for CLI Access** 建一条 Turborepo CLI policy——**ref 限制别只写 `main`**：merge queue 的 ref 是 `gh-readonly-queue/main/pr-<n>-<sha>`，只放 `main` 会让队列那一遍换不到凭据（而它正是要加速的那条腿）。④ **安全边界**：命中复用的一定是「该内容此前的执行结果（连同退出码）」——内容没通过就仍然红，不会因缓存变绿；写入方是各 run（含 PR run），而任务图在 `turbo.jsonc` 里，故该文件与 CI 同列 [CODEOWNERS](../../.github/CODEOWNERS) 敏感路径。
+**turbo 缓存（CI 门禁的执行层）**：三个 job 都改为经 turbo 跑根任务——任务图、`dependsOn` 与 `outputs` 集中在根 [`turbo.jsonc`](../../turbo.jsonc)，CI 编排不再自持顺序知识。四条要点：① **粒度与并行**：本仓 node 侧是「根 tsdown 单遍构建全部包」，`check` / `test` 也是根级单命令，所以缓存单位就是这些根任务（`//#` 前缀），不是「每包一个任务」；包级粒度要等构建拆分，不在当前范围。粒度粗换来的是并行空间，而并行度由 `dependsOn` 决定：无依赖的根任务由 turbo 同刻起跑（实测 `//#build` 与 `//#build:console` 在 0.47s 内双双启动），故 gate 把 check 拆成四组并让 test 与 check 并行——**缓存买的是「同一内容重跑整轮跳过」，并行买的是「首次运行的关键路径」**，两者互不替代。check 四组须在命令行显式列出（turbo 不支持 `//#check:*` 通配，实测报 Could not find task）。② **命中条件**：turbo 按输入内容哈希（默认取包内未被 `.gitignore` 忽略的文件，故 `lib/` `dist/` `coverage/` `node_modules/` 都不进哈希），且**只与内容有关、与检出目录无关**——把同一提交检出到两个不同路径，四个任务的 task hash 逐字相同（实测）。于是 merge_group 那一遍能否命中，等价于「队列建的那棵树与 PR 那遍是否逐字相同」，也就是「期间 main 有没有被推进」：队列时代 7 个已合并 PR 里 6 个满足（#35–#40）；#41 因期间落了 #40 的合并与发布链版本提交而不满足 → 那一遍正确地重跑了全部任务。③ **凭据与降级**：远程缓存凭据走 **OIDC**（无长期 secret）——三个 job 各声明 `permissions`（`contents: read` + `id-token: write`），由 `vercel/setup-turborepo-remote-cache-action@v1.1.0` 把本次运行的 OIDC token 换成短命的 Turborepo access token，并注入 `TURBO_TOKEN` / `TURBO_TEAM`（`TURBO_TEAM` 是 repository variable，值为 Vercel team slug）。该步骤 `continue-on-error` + 一条告警 step：换取失败**不会让必需检查变红**，退化为纯本地缓存（语义与未接远程缓存完全一致，只是不快）。Vercel 侧两处前置：team Settings → **Billing** 打开 Remote Caching（新账号默认不开），以及 Settings → Build and Deployment → **OIDC Policies for CLI Access** 建一条 Turborepo CLI policy——**ref 限制别只写 `main`**：merge queue 的 ref 是 `gh-readonly-queue/main/pr-<n>-<sha>`，只放 `main` 会让队列那一遍换不到凭据（而它正是要加速的那条腿）。④ **安全边界**：命中复用的一定是「该内容此前的执行结果（连同退出码）」——内容没通过就仍然红，不会因缓存变绿；写入方是各 run（含 PR run），而任务图在 `turbo.jsonc` 里，故该文件与 CI 同列 [CODEOWNERS](../../.github/CODEOWNERS) 敏感路径。
 
 **依赖与死代码审计（fallow）**：`bun run fallow` = `bunx fallow@<pin> dead-code`，即 CI 的 `fallow` job 口径；工具不进 devDependencies（bunx 直跑，与 knip 时代的既有策略一致），但版本在 `package.json` 脚本内 **pin 到精确版**——浮动的 `fallow@3` 会让门禁口径随上游发布漂移（fallow 迭代极快，2026-08 单月发布 11 个 minor），而 dead-code 退出码直接决定 CI 红绿、审计基线数字又常被 PR 引用，必须可复现；升级即改脚本内版本号（单点）并复核审计基线。全部豁免与规则开关集中在根 `.fallowrc.jsonc`，三条要点：
 
