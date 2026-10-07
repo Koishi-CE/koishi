@@ -51,7 +51,7 @@ workspace 内部不需要这些 shim（本仓代码一律直接 `import ... from
 `create-koishi-ce` 模板（1.8.0 起）与 sandbox 生成器为下游实例预置了完整的防污染体系：
 
 1. **六行钉名**（dependencies 占位）：常规满足层，peer 与 dependencies 声明靠落盘版本复用槽位；market 安装器的 `isGuardedRequest()` 同步护栏防改写；
-2. **overrides 强制重写**（`overrides` 块，41 个上游名 → CE 对应包）：兜底层，**不看版本满足性**把整棵依赖树中对这些上游名的解析一律改指 CE 包——第三方插件声明钉名清单外的上游名（如 `@koishijs/plugin-admin`、`@koishijs/utils`）或超出冻结线的范围（如未来上游升线后的 `^6`）时由本层兜住；清单 = CE 已再分发且官方同名的包（CE 原创包与上游裸名社区对应物不在列，不拦官方生态的真实依赖）；
+2. **overrides 强制重写**（`overrides` 块，42 个上游名/裸名 → CE 对应包）：兜底层，**不看版本满足性**把整棵依赖树中对这些名字的解析一律改指 CE 包——第三方插件声明钉名清单外的上游名（如 `@koishijs/plugin-admin`、`@koishijs/utils`）或超出冻结线的范围（如未来上游升线后的 `^6`）时由本层兜住；清单 = CE 已再分发且官方同名的包（CE 原创包与无第三方声明证据的上游裸名社区对应物不在列，不拦官方生态的真实依赖），外加按需收录的裸名社区包——CE 以 `@koishi-ce/plugin-<名>` 改名再分发、且其上游名被第三方插件当 peer / 依赖声明者（当前仅 `koishi-plugin-puppeteer`，证据是 `koishi-plugin-market-tracker` 的 peer 声明），否则官方实现会被自动装下、形成同名服务的第二实现；注意 overrides 会连带静默顶替用户的显式直连声明（Bun 不报错也不提示）；
 3. **market 护栏**：`isGuardedRequest()` 把 `npm:@koishi-ce` 前缀与 `workspace:` 声明同等保护，市场安装不改写钉名行。
 
 ## 维护纪律

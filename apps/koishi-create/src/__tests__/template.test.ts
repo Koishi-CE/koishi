@@ -267,9 +267,9 @@ test("renderManifest 渲染内置模板：常规改写生效，prod 模式保留
 	);
 });
 
-test("内置模板 overrides 兜底层：41 个上游名强制重定向 CE 包", () => {
+test("内置模板 overrides 兜底层：42 个上游名/裸名强制重定向 CE 包", () => {
 	const table = baseManifest().overrides ?? {};
-	expect(Object.keys(table)).toHaveLength(41);
+	expect(Object.keys(table)).toHaveLength(42);
 	const keys = Object.keys(table);
 	// 核心九名（钉名六行之外由 overrides 补齐覆盖面）
 	expect(table["koishi"]).toBe(
@@ -299,7 +299,9 @@ test("内置模板 overrides 兜底层：41 个上游名强制重定向 CE 包",
 	expect(table["@koishijs/registry"]).toBe(
 		"npm:@koishi-ce/registry@^1.0.0",
 	);
-	// CE 原创与上游裸名社区对应物不进清单（不拦官方生态的真实依赖）
+	// CE 原创与无第三方声明证据的裸名社区对应物不进清单（不拦官方生态的
+	// 真实依赖）：welcome / theme-vanilla 是 CE 原创；cron 上游虽是裸名社区
+	// 包 koishi-plugin-cron，但未收进按需增补的裸名社区表
 	expect(keys.includes("@koishijs/plugin-welcome")).toBe(
 		false,
 	);
@@ -309,14 +311,25 @@ test("内置模板 overrides 兜底层：41 个上游名强制重定向 CE 包",
 	expect(keys.includes("@koishijs/plugin-cron")).toBe(
 		false,
 	);
+	expect(keys.includes("koishi-plugin-cron")).toBe(false);
+	// 裸名社区包按需收录：CE 以 @koishi-ce/plugin-<名> 改名再分发，第三方插件
+	// 的 peer 声明（market-tracker 声明了 koishi-plugin-puppeteer）无归属时
+	// 包管理器会自动装下官方实现，故须顶替
+	expect(table["koishi-plugin-puppeteer"]).toBe(
+		"npm:@koishi-ce/plugin-puppeteer@^1.0.0",
+	);
 	// plugin-assets 的 CE 对应物无 plugin 前缀
 	expect(table["@koishijs/plugin-assets"]).toBe(
 		"npm:@koishi-ce/assets@^1.0.0",
 	);
-	// 全部值为 npm:@koishi-ce/ 前缀，键全为 @koishijs/ 上游名或 koishi 裸名
+	// 全部值为 npm:@koishi-ce/ 前缀，键为 koishi 裸名、@koishijs/ 上游名，
+	// 或按需收录的裸名社区包（当前仅 koishi-plugin-puppeteer）
+	const renamedCommunityKeys = ["koishi-plugin-puppeteer"];
 	for (const key of keys) {
 		expect(
-			key === "koishi" || key.startsWith("@koishijs/"),
+			key === "koishi" ||
+				key.startsWith("@koishijs/") ||
+				renamedCommunityKeys.includes(key),
 		).toBe(true);
 		expect(table[key]).toMatch(/^npm:@koishi-ce\//);
 	}

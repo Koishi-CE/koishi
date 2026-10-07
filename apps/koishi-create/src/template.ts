@@ -101,6 +101,7 @@ export const templateFiles: Record<string, string> =
  *   作用域）；
  * - plugin-welcome / plugin-theme-vanilla 不在列（CE 原创，上游无此名）；
  * - plugin-assets 的 CE 对应物是 @koishi-ce/assets（无 plugin 前缀）。
+ * 裸名社区包另见 RENAMED_COMMUNITY_OVERRIDES（按需收录，非机械生成）。
  * 新增 CE 再分发包时须同步本表与 sandbox 生成器的同款清单
  * （tooling/sandbox/manifest.ts，对账测试防漂移）。
  */
@@ -155,15 +156,44 @@ for (const name of [
 		`@koishi-ce/plugin-${name}`;
 }
 
+/**
+ * 裸名社区包 → CE 改名再分发的 overrides 兜底映射（包装方式同上）。
+ *
+ * 与 UPSTREAM_OVERRIDES 的区别：上游是裸名社区包（不在 @koishijs 作用域
+ * 内），CE 以改名包 `@koishi-ce/plugin-<名>` 再分发，落盘版本永远满足不了
+ * 第三方插件的 `koishi-plugin-<名>` 声明——没有归属时包管理器会自动装下
+ * 官方实现，同一份服务就有了第二个实现（CE 宿主里凭空多出官方包）。
+ *
+ * 收录条件是「有第三方插件把该裸名写进 peer / dependencies」，故本表按需
+ * 增补而非按 CE 再分发清单机械生成：puppeteer 的直接证据是
+ * koishi-plugin-market-tracker 的 peerDependencies（CE 对应物
+ * @koishi-ce/plugin-puppeteer 提供同名 puppeteer 服务）；无此证据的裸名
+ * 社区包（如 koishi-plugin-cron）不入列，不无谓拦下官方生态的真实依赖。
+ *
+ * 代价须知（2026-10-07 实测）：overrides 是包管理器级强制重写，Bun 遇到
+ * 与用户显式直连依赖冲突时既不报错也不提示（npm 会抛 EOVERRIDE），会把
+ * `koishi-plugin-puppeteer` 静默替换为 CE 包——即本模板项目里装不上官方
+ * 同名实现。这是 CE 生态的取舍得当与否，改本表前须一并权衡。
+ */
+const RENAMED_COMMUNITY_OVERRIDES: Record<string, string> =
+	{
+		"koishi-plugin-puppeteer":
+			"@koishi-ce/plugin-puppeteer",
+	};
+
 /** 生成模板 overrides 块：键为上游名，值统一 npm:<CE 包>@^1.0.0。 */
 export function buildUpstreamOverrides(): Record<
 	string,
 	string
 > {
 	return Object.fromEntries(
-		Object.entries(UPSTREAM_OVERRIDES).map(
-			([name, target]) => [name, `npm:${target}@^1.0.0`],
-		),
+		Object.entries({
+			...UPSTREAM_OVERRIDES,
+			...RENAMED_COMMUNITY_OVERRIDES,
+		}).map(([name, target]) => [
+			name,
+			`npm:${target}@^1.0.0`,
+		]),
 	);
 }
 
@@ -269,7 +299,8 @@ export function baseManifest(): Manifest {
 			"@koishijs/components":
 				"npm:@koishi-ce/components-shim@^1.5.22",
 		},
-		// overrides 兜底层（语义见 UPSTREAM_OVERRIDES 注释）：不看版本
+		// overrides 兜底层（语义见 UPSTREAM_OVERRIDES 与
+		// RENAMED_COMMUNITY_OVERRIDES 注释）：不看版本
 		// 满足性强制重写整棵依赖树，拦住钉名覆盖面之外的上游声明
 		overrides: buildUpstreamOverrides(),
 		devDependencies: {

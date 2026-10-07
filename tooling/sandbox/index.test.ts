@@ -218,7 +218,7 @@ describe("buildSandboxPackageJson", () => {
 		// overrides 兜底层随 link 模板预置
 		expect(
 			Object.keys(manifest.overrides ?? {}),
-		).toHaveLength(41);
+		).toHaveLength(42);
 	});
 
 	test("打包模式：全部 tgz 以 file: 声明，上游钉名保留", () => {
