@@ -96,12 +96,29 @@ for (const name of [
 		`@koishi-ce/plugin-${name}`;
 }
 
+/**
+ * 裸名社区包 → CE 改名再分发的兜底映射（与脚手架模板的
+ * RENAMED_COMMUNITY_OVERRIDES 刻意克隆，语义见彼处注释）：CE 以
+ * `@koishi-ce/plugin-<名>` 再分发的裸名社区包，其上游名被第三方插件当
+ * peer / 依赖声明时官方实现会自动落盘，须一并拦下。
+ */
+const RENAMED_COMMUNITY_OVERRIDE_TARGETS: Record<
+	string,
+	string
+> = {
+	"koishi-plugin-puppeteer": "@koishi-ce/plugin-puppeteer",
+};
+
 /** 生成沙盒 overrides 块：键为上游名，值统一 npm:<CE 包>@^1.0.0。 */
 function buildUpstreamOverrides(): Record<string, string> {
 	return Object.fromEntries(
-		Object.entries(UPSTREAM_OVERRIDE_TARGETS).map(
-			([name, target]) => [name, `npm:${target}@^1.0.0`],
-		),
+		Object.entries({
+			...UPSTREAM_OVERRIDE_TARGETS,
+			...RENAMED_COMMUNITY_OVERRIDE_TARGETS,
+		}).map(([name, target]) => [
+			name,
+			`npm:${target}@^1.0.0`,
+		]),
 	);
 }
 
