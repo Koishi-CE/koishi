@@ -141,7 +141,7 @@ bypass 模式必须选让规则对该 actor **不生效**的那一档：`Always`
 
 提交的**署名**与推送的**认证**是两件事，别混为一谈：
 
-- **署名**由 `prepare` 里 `git config user.name / user.email` 决定，只影响「这些提交计入谁的贡献主页」——workflow 里显式配成维护者 **PaperKoi**（`PaperKoi` / `331636065+PaperKoi@users.noreply.github.com`，即其 GitHub 账号与绑定邮箱）。此前用 `github-actions[bot]`，结果版本提交在仓库贡献墙上挂了一个 bot 账号（2026-09-27 那次 `chore(release): 消费 changeset…` 即此）。
+- **署名**由 `prepare` 里 `git config user.name / user.email` 决定，只影响「这些提交计入谁的贡献主页」——workflow 里固定为 GitHub Actions 的官方 bot 身份（`github-actions[bot]` / `41898282+github-actions[bot]@users.noreply.github.com`）。这些提交由流水线自动生成，GitHub 的贡献统计认 author/committer 邮箱，**不得**改配成任何真人的账号与绑定邮箱（2026-09-28 至 2026-10-08 期间曾配成维护者 PaperKoi 以求贡献墙好看，已按要求改回 bot：机器提交不计入任何人的贡献主页）。
 - **认证**仍是 GitHub App 的 installation token（见 §7.5），即绕过 ruleset 的身份不受署名影响。
 
 两者都改不产生额外权限：署名只是 `git config`，App token 仍只出现在推送那一步。
