@@ -206,12 +206,19 @@ jobs:
       - if: steps.bump.outputs.changed == 'true'
         name: 打包工作区
         run: tar --exclude=./node_modules --exclude=./.git -czf "$RUNNER_TEMP/release-workspace.tgz" .
+      # retention 必须长于「等人工审批」这段不可控时长：publish 卡在 environment
+      # 审批上，多久有人点没人能保证。原写 retention-days: 1，2026-10-07 那次发布
+      # 等到次日才获批（run 37633548554，prepare 完成到 publish 开始间隔约 25 小时），
+      # 产物在审批通过前已被清理，publish 第一步 download-artifact 就以
+      # `Artifact not found` 失败——版本提交已推 main 而包一个没发，只能 skip-version
+      # 补发。30 天 = 仓库默认（Settings → Actions → Artifact and log retention，
+      # 上限 90），足以覆盖任何正常的审批延迟。
       - if: steps.bump.outputs.changed == 'true'
         uses: actions/upload-artifact@v7
         with:
           name: release-workspace
           path: ${{ runner.temp }}/release-workspace.tgz
-          retention-days: 1
+          retention-days: 30
 
   publish:
     name: publish（OIDC 发包，需 environment 审批）
