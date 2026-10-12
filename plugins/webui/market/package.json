@@ -73,8 +73,8 @@
         "@vueuse/core": "^15.0.0",
         "cosmokit": "^1.8.1",
         "vue": "^3.5.12",
-        "vue-i18n": "^11.4.10",
-        "vue-router": "^5.2.0"
+        "vue-i18n": "^11.4.13",
+        "vue-router": "^5.4.0"
     },
     "dependencies": {
         "@koishi-ce/console": "workspace:*",
