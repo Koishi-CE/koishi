@@ -257,7 +257,7 @@ bun run sandbox --start          # 生成完成后立即在本进程前台拉起
 
 ## 11. 依赖更新（Dependabot）
 
-依赖漂移由 `.github/dependabot.yml` 驱动，两条 update 条目：`bun`（根目录一条，沿根 `package.json` 的 `workspaces` 字段递归覆盖全部 workspace 包，同一依赖只开一个 PR）与 `github-actions`。每周一 09:00（Asia/Shanghai）开 PR，上限 bun 侧 5 个 / Actions 侧 3 个。
+依赖漂移由 `.github/dependabot.yml` 驱动，两条 update 条目：`bun`（根目录一条，沿根 `package.json` 的 `workspaces` 字段递归覆盖全部 workspace 包，并通过 `all-dependencies` 组将符合规则的版本更新汇总为一个 PR）与 `github-actions`。每周一 09:00（Asia/Shanghai）开 PR，上限 bun 侧 5 个 / Actions 侧 3 个。分组规则作用于后续版本更新，不会自动合并已打开的 PR。
 
 **分工：Dependabot 只做非结构性升版**（minor / patch 与安全更新），major 一律人工评估——现势清单与判据见 [dependency-audit.md](../decisions/dependency-audit.md)，cordis 生态的跳代时机见 [upgrade-plan.md](../decisions/upgrade-plan.md) 的 Phase 5 节。`ignore` 清单就是第 5 节的依赖纪律在配置里的投影，改配置前先读：
 

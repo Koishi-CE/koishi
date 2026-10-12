@@ -43,6 +43,11 @@ updates:
     commit-message:
       prefix: "chore(deps)"
       prefix-development: "chore(deps-dev)"
+    # 将本轮所有符合 ignore 规则的 Bun 版本更新汇总为一个 PR。
+    groups:
+      all-dependencies:
+        patterns:
+          - "*"
     labels:
       - "范围:工具链与构建"
     assignees:
