@@ -70,6 +70,6 @@
         "@koishi-ce/plugin-server": "workspace:*",
         "@koishi-ce/utils": "workspace:*",
         "picocolors": "^1.1.1",
-        "cac": "^7.0.0"
+        "cac": "^7.0.1"
     }
 }
