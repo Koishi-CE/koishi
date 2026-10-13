@@ -567,7 +567,7 @@
     },
     "plugins/webui/console": {
       "name": "@koishi-ce/plugin-console",
-      "version": "1.4.1",
+      "version": "1.4.2",
       "dependencies": {
         "@koishi-ce/console": "workspace:*",
         "open": "^11.0.1",
@@ -714,7 +714,7 @@
     },
     "plugins/webui/market": {
       "name": "@koishi-ce/plugin-market",
-      "version": "1.4.1",
+      "version": "1.4.2",
       "dependencies": {
         "@koishi-ce/console": "workspace:*",
         "@koishi-ce/registry": "workspace:*",
