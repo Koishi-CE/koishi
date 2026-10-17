@@ -68,9 +68,9 @@ bun create koishi-ce
 
 ## 维护
 
-* **文档指南**：[项目架构与包清单](https://www.google.com/search?q=./docs/reference/architecture.md&utm_source=gemini) ｜ [开发与维护流程](https://www.google.com/search?q=./docs/README.md&utm_source=gemini)
-* **代码治理**：[贡献指南](https://www.google.com/search?q=./.github/CONTRIBUTING.md&utm_source=gemini) ｜ [仓库约定](https://www.google.com/search?q=./AGENTS.md&utm_source=gemini) ｜ [安全策略](https://www.google.com/search?q=./.github/SECURITY.md&utm_source=gemini)
-* **授权说明**：MIT 与 AGPL-3.0 分区授权，各目录源码出处见 [NOTICE](https://www.google.com/search?q=./NOTICE&utm_source=gemini)
+* **文档指南**：[项目架构与包清单](./docs/reference/architecture.md) ｜ [开发与维护流程](./docs/README.md)
+* **代码治理**：[贡献指南](./.github/CONTRIBUTING.md) ｜ [仓库约定](./AGENTS.md) ｜ [安全策略](./.github/SECURITY.md)
+* **授权说明**：MIT 与 AGPL-3.0 分区授权，各目录源码出处见 [NOTICE](./NOTICE)
 
 ---
 
@@ -82,11 +82,11 @@ bun create koishi-ce
 
 ## English
 
-Koishi-CE is a **Bun-first community redistribution** of the [Koishi](https://koishi.chat?utm_source=gemini) chatbot framework. It reorganizes [koishijs/koishi](https://github.com/koishijs/koishi?utm_source=gemini) (MIT) and [koishijs/webui](https://github.com/koishijs/webui?utm_source=gemini) (partly AGPL-3.0) into an integrated monorepo published under `@koishi-ce`.
+Koishi-CE is a **Bun-first community redistribution** of the [Koishi](https://koishi.chat) chatbot framework. It reorganizes [koishijs/koishi](https://github.com/koishijs/koishi) (MIT) and [koishijs/webui](https://github.com/koishijs/webui) (partly AGPL-3.0) into an integrated monorepo published under `@koishi-ce`.
 
 ```bash
 bun create koishi-ce
 ```
 
-*Not affiliated with the official Koishijs organization. See [NOTICE](https://www.google.com/search?q=./NOTICE&utm_source=gemini) for license details.*
+*Not affiliated with the official Koishijs organization. See [NOTICE](./NOTICE) for license details.*
 
