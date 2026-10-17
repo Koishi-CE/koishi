@@ -43,6 +43,11 @@ import {
  *    ENEEDAUTH。真正的原因（该包没有信任配置 / claims 不符 / id_token
  *    取不到）只出现在 verbose 日志里；CI 的发布步骤已设
  *    NPM_CONFIG_LOGLEVEL=verbose（见 .github/workflows/release.yml）。
+ *    2026-10-17 实证（run 39008703163）：id_token 请求 200，交换
+ *    `POST 404 …/oidc/token/exchange/package/<包名>`，npm 报
+ *    `OIDC token exchange error - package not found`——就是该包在 registry
+ *    侧没有匹配的信任配置；逐包补配置后重发即可（见 docs/process/release.md
+ *    §7.4 第 5 条）。
  */
 function printPublishFailureHints(pkg: PkgInfo): void {
 	console.log(
@@ -64,10 +69,13 @@ function printPublishFailureHints(pkg: PkgInfo): void {
 		"[publish]    这不是「没登录」。npm 用 GitHub 的 id_token 换包级发布 token，换不到时它不报原因、直接退回无凭证发布，registry 才回 ENEEDAUTH。",
 	);
 	console.log(
-		`[publish]    真实原因只在 npm 的 verbose 日志里（CI 发布步骤已开 NPM_CONFIG_LOGLEVEL=verbose）：先核对 npmjs.com 上 ${pkg.name} 的 Trusted Publisher 是否与 release.yml 一致（repository / workflow 文件 / environment 三项 claim）。`,
+		"[publish]    看 npm 的 verbose 行（CI 发布步骤已开 NPM_CONFIG_LOGLEVEL=verbose）：出现 POST 404 …/oidc/token/exchange/package/… 与「OIDC token exchange error - package not found」，即该包在 registry 侧没有匹配的信任配置（配置存在但 claims 不符也报同一句）。",
 	);
 	console.log(
-		"[publish]    该包若从未经 CI 发布过，多半是信任配置缺失——这是逐包配置，不是仓库级开关。",
+		`[publish]    处置：npm trust github ${pkg.name} --file release.yml --repo Koishi-CE/koishi --environment release --allow-publish（npm CLI 须 ≥ 11.15，先 npm login；已有配置只能 revoke 后重建）。`,
+	);
+	console.log(
+		"[publish]    该包若从未经 CI 发布过，多半就是这一条——信任配置逐包，不是仓库级开关。",
 	);
 }
 
