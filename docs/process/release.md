@@ -89,6 +89,7 @@ npm 的暂存发布（staged publishing）会在版本公开前插入人工批�
   - publish step 现已设 `NPM_CONFIG_LOGLEVEL=verbose`（见 §7.4 末条），重跑即会打印 npm 的真实报错：`oidc Failed token exchange request with body message: …`（交换被拒 → 信任配置或 claims 不符）或 `oidc Failed to fetch id_token from GitHub: …`（id_token 取不到）。必要时也可读 runner 上的 `/home/runner/.npm/_logs/*.log`——npm 的 debug 文件记录全部级别，含 `verbose` / `silly`。
   - **按包核对信任配置**：`@koishi-ce/plugin-console` 的 latest（1.4.1，09-25）由人工本机发布、无 provenance，从未经 CI 通道发过；同批的 `plugin-market` 则是 09-28 由 CI 发布并带 provenance。信任配置是**逐包**对象，缺一个就只卡一个包，且卡在它第一次经 CI 发布的时候。
   - **2026-10-17 实证（run 39008703163）**：开启 verbose 后重跑，日志给出完整链条——`npm http fetch GET …/idtoken/…?audience=npm%3Aregistry.npmjs.org 200`（id_token 取到，权限无误），紧接着 `npm http fetch POST 404 https://registry.npmjs.org/-/npm/v1/oidc/token/exchange/package/@koishi-ce%2fplugin-console`，npm 的 `oidc` 消息为 `Failed token exchange request with body message: OIDC token exchange error - package not found`。**「package not found」不是包不存在，而是该包在 registry 侧没有与本工作流匹配的信任配置**（已存在但与 claims 不符时，registry 同样按「查不到」回应，不区分）。修法见 §7.4 第 5 条。
+  - **同日同形态再犯（run 39013464620，PR #64 合并后）**：`@koishi-ce/console-builder@1.0.5` 正常发出，紧接着 `@koishi-ce/plugin-admin@1.1.3` 换 token 404 并中断，让同批另外 13 个包全部卡住。根因不只是「没配」：npm 新建的信任配置 **2 天内不完成首次发布就失效**（§7.4 第 5 条），所以提前配好的那批包一旦跨过发布窗口就集体作废；而发布链又在首个失败处中断，一轮只能撞出一个缺口。现在 publish 环会在发包前做预检（§7.4 第 6 条）：缺配置一次列全，且一个包都不发。
 
 ### 7.2 OIDC 的信任边界（改本文件前必读）
 
@@ -113,27 +114,32 @@ npm 的信任配置把 `repository` / `workflow_ref.file` / `environment` 三个
 2. 同一 Environment 的 **Deployment branches 限制为 `main`**（动机见 §7.2）；
 3. 主分支 ruleset 的 **bypass 名单里加入发布用的 GitHub App（模式 `Always` 或 `exempt`）**，否则 `prepare` job 推不上去——不能按「放行 GitHub Actions」来配，`GITHUB_TOKEN` 进不了该名单（见 §7.5）；
 4. 开启 `require_code_owner_review`；
-5. npm 侧 53 个包的信任配置与上表一致：`repository=Koishi-CE/koishi`、`workflow_ref.file=release.yml`、`environment=release`、权限仅 `publish`（不含 stage publish，避免引入人工批准环节的暂存流程）。**逐包配置，非仓库级开关**——少配一个，只会卡那一个包，且卡在它第一次经 CI 发布时。核对口径（2026-10-13 实拍，以 `npm view` 与 registry 元数据为准）：53 个包里只有 6 个的 latest 版本经 CI 发布过（带 provenance、`_npmUser` 为 `GitHub Actions`）——`create-koishi-ce`、`@koishi-ce/koishi`、`@koishi-ce/core`、`@koishi-ce/utils`、`@koishi-ce/console-builder`、`@koishi-ce/plugin-market`；其余 47 个的 latest 都是 OIDC 上线（2026-09-27）之前由本机人工发布的，其信任配置**从未被实际验证过**。自查命令：`npm view <包名> version` 拿 latest，再看 npmjs.com 包页的 Trusted Publisher（或登录后 `npm trust list <包名>`；OIDC 运行里没有登录态，查不了）。
-   - **补配置**（本机 `npm login` 后逐包，npm CLI 必须 ≥ 11.15——`permissions` 字段由 `--allow-publish` 生成，更早版本会被 registry 以 400 拒绝）：
+5. npm 侧各包的信任配置与上表一致：`repository=Koishi-CE/koishi`、`workflow_ref.file=release.yml`、`environment=release`、权限仅 `publish`（不含 stage publish，避免引入人工批准环节的暂存流程）。**逐包配置，非仓库级开关**。核对口径（2026-10-17 实拍，以 `npm view` 与 registry 元数据为准）：53 个包里只有 7 个的 latest 版本经 CI 发布过（带 provenance、`_npmUser` 为 `GitHub Actions`）——`create-koishi-ce`、`@koishi-ce/koishi`、`@koishi-ce/core`、`@koishi-ce/utils`、`@koishi-ce/console-builder`、`@koishi-ce/plugin-console`、`@koishi-ce/plugin-market`；其余 46 个的 latest 都是 OIDC 上线（2026-09-27）之前由本机人工发布的，其信任配置**从未被实际验证过**。自查：`npm view <包名> version` 拿 latest，再看 npmjs.com 包页的 Trusted Publisher（或登录后 `npm trust list <包名>`；OIDC 运行里没有登录态，查不了）。
+   - **两天过期规则（最容易被忽略的一条）**：npm 文档「Trusted publisher configuration expiry」（2026-10-06 补记）——新建的信任配置必须在 **2 天内完成首次成功发布**，才算验证通过并绑定到仓库的不可变身份；逾期即失效，且失效记录**不可编辑**，只能 `npm trust revoke` 后重建。
+   - **所以不要提前把 53 个包一次配齐**：没在本批发布窗口里验证的配置，两天后全部作废，还会制造「明明配过却仍 404」的假象。正确姿势是**按批配置、配完当天就发**：以发布链列出的本批待发名单为准（本地可先 `bun run release status` 预览，OIDC 预检也会列出缺配置的那几个），只给这批建配置，并在 2 天内完成发布——`environment` 的审批也别拖过两天。
+   - 已在 CI 成功发布过的包不受影响：配置一旦被首次发布验证，长期有效。
+   - **补配置 / 重建**（本机 `npm login` 后，npm CLI 必须 ≥ 11.15——`permissions` 字段由 `--allow-publish` 生成，更早版本会被 registry 以 400 拒绝）：
 
      ```bash
-     npm trust github @koishi-ce/plugin-console \
-       --file release.yml --repo Koishi-CE/koishi --environment release --allow-publish
-     npm trust list @koishi-ce/plugin-console   # 核对三项 claim 与 permissions
+     npm trust list @koishi-ce/plugin-admin        # 有旧记录（含已过期）→ 先 revoke，没有则直接建
+     npm trust revoke @koishi-ce/plugin-admin --id=<id>
+     npm trust github @koishi-ce/plugin-admin \
+       --file release.yml --repo Koishi-CE/koishi --environment release --allow-publish --yes
+     npm trust list @koishi-ce/plugin-admin        # 核对三项 claim 与 permissions
      ```
 
-     已配置的包会报「已有信任配置」——忽略即可。**要改已有配置只能 `npm trust revoke <包名> --id <id>` 后重建**（registry 每包只允许一条，无 update 语义）。
-   - **批量补**（在仓库根执行，Windows PowerShell；名单与 `release` 环的 workspace 发现口径一致，`--yes` 跳过逐包确认，已配置的包报错可忽略）：
+     registry 每包只允许一条信任配置，没有 update 语义：过期或 claim 不符都只能 revoke 后重建。
+   - **按批补**（把 `$names` 换成发布链列出的包；每建一条都要在 2 天内发出去）：
 
      ```powershell
-     Get-ChildItem packages,plugins,apps -Recurse -Filter package.json |
-       Where-Object { $_.FullName -notmatch '\\node_modules\\' } |
-       ForEach-Object { Get-Content $_.FullName -Raw | ConvertFrom-Json } |
-       Where-Object { $_.name -and -not $_.private } |
-       Select-Object -ExpandProperty name -Unique |
-       ForEach-Object { npm trust github $_ --file release.yml --repo Koishi-CE/koishi --environment release --allow-publish --yes }
+     $names = @('@koishi-ce/plugin-admin', '@koishi-ce/plugin-analytics')
+     foreach ($n in $names) {
+       npm trust list $n   # 先看有没有旧记录：有（或已过期）就先 npm trust revoke $n --id <id>
+       npm trust github $n --file release.yml --repo Koishi-CE/koishi --environment release --allow-publish --yes
+     }
      ```
-6. publish 步骤必须保留 `NPM_CONFIG_LOGLEVEL=verbose`：npm 的 OIDC 换 token 失败只写 `log.verbose`，退回无凭证发布后只剩一句 `ENEEDAUTH need auth`（机理与判例见 §7.1 末两条）。删掉它等于把这类故障重新变成「看不出原因」。
+6. **publish 环在真正发包前做 OIDC 信任预检**（`tooling/release/core/trust.ts`）：用 Actions 的 id_token 逐包换一次发布 token（只换不发，token 用完即弃、不落日志），换不到（404＝没配 / claim 不符 / 已过期）就**整批不发**，并列出名单与处置命令。这修的是旧行为「撞一个、停一个」：2026-10-13 死在 `plugin-console`，10-17 死在 `plugin-admin`，每轮只暴露一个缺口，而且中断前那半批已经推上 npm（`console-builder` 那回就独自发了出去，同批 13 个全卡住）。探测本身失联（非 404 的网络/5xx）只告警不拦截，避免把网络问题误判成配置问题。
+7. publish 步骤必须保留 `NPM_CONFIG_LOGLEVEL=verbose`：npm 的 OIDC 换 token 失败只写 `log.verbose`，退回无凭证发布后只剩一句 `ENEEDAUTH need auth`（机理与判例见 §7.1 末两条）。删掉它等于把这类故障重新变成「看不出原因」。
 
 ### 7.5 版本提交的推送凭证（GitHub App）
 
