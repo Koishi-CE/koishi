@@ -34,55 +34,55 @@
 *                                   @Oppenheymu
 
 # 核心框架与插件生态
-/packages/node/**                   @Oppenheymu @PaperKoi
-/plugins/common/**                  @Oppenheymu @PaperKoi
+/packages/node/**                   @Oppenheymu @PaperKoi001
+/plugins/common/**                  @Oppenheymu @PaperKoi001
 
 # 浏览器侧与 webui（AGPL 分区，见 NOTICE）
-/packages/web/**                    @Oppenheymu @PaperKoi
-/plugins/webui/**                   @Oppenheymu @PaperKoi
+/packages/web/**                    @Oppenheymu @PaperKoi001
+/plugins/webui/**                   @Oppenheymu @PaperKoi001
 
 # 工具链、脚手架与应用
-/tooling/**                         @Oppenheymu @PaperKoi
-/apps/**                            @Oppenheymu @PaperKoi
+/tooling/**                         @Oppenheymu @PaperKoi001
+/apps/**                            @Oppenheymu @PaperKoi001
 
 # 文档与社区健康文件
-/docs/**                            @Oppenheymu @PaperKoi
-.github/CODEOWNERS                  @Oppenheymu @PaperKoi
+/docs/**                            @Oppenheymu @PaperKoi001
+.github/CODEOWNERS                  @Oppenheymu @PaperKoi001
 
 # 敏感路径：冻结与预编译产物——改动必须两人过目（规则见 packages/shim/README.md）
-/packages/shim/**                   @Oppenheymu @PaperKoi
-/plugins/infra/http/**              @Oppenheymu @PaperKoi
-/plugins/infra/proxy/**             @Oppenheymu @PaperKoi
-/plugins/infra/server/**            @Oppenheymu @PaperKoi
+/packages/shim/**                   @Oppenheymu @PaperKoi001
+/plugins/infra/http/**              @Oppenheymu @PaperKoi001
+/plugins/infra/proxy/**             @Oppenheymu @PaperKoi001
+/plugins/infra/server/**            @Oppenheymu @PaperKoi001
 
 # ---- 显式文件路径（最后命中即生效，压住上方通配） ----
 
 # 发布链与版本管理（一切发布走发布链，禁止手动 npm publish）
-/tooling/release/**                 @Oppenheymu @PaperKoi
-/.changeset/**                      @Oppenheymu @PaperKoi
+/tooling/release/**                 @Oppenheymu @PaperKoi001
+/.changeset/**                      @Oppenheymu @PaperKoi001
 
 # 依赖面与仓库级配置（改动影响全仓解析与门禁口径）
-/package.json                       @Oppenheymu @PaperKoi
-/bun.lock                           @Oppenheymu @PaperKoi
-/bunfig.toml                        @Oppenheymu @PaperKoi
-/tsdown.config.ts                   @Oppenheymu @PaperKoi
-/tsconfig.json                      @Oppenheymu @PaperKoi
-/tsconfig.base.json                 @Oppenheymu @PaperKoi
-/tsconfig.web.json                  @Oppenheymu @PaperKoi
-/tsconfig.client.json               @Oppenheymu @PaperKoi
-/biome.json                         @Oppenheymu @PaperKoi
-/eslint.config.ts                   @Oppenheymu @PaperKoi
-/.fallowrc.jsonc                    @Oppenheymu @PaperKoi
+/package.json                       @Oppenheymu @PaperKoi001
+/bun.lock                           @Oppenheymu @PaperKoi001
+/bunfig.toml                        @Oppenheymu @PaperKoi001
+/tsdown.config.ts                   @Oppenheymu @PaperKoi001
+/tsconfig.json                      @Oppenheymu @PaperKoi001
+/tsconfig.base.json                 @Oppenheymu @PaperKoi001
+/tsconfig.web.json                  @Oppenheymu @PaperKoi001
+/tsconfig.client.json               @Oppenheymu @PaperKoi001
+/biome.json                         @Oppenheymu @PaperKoi001
+/eslint.config.ts                   @Oppenheymu @PaperKoi001
+/.fallowrc.jsonc                    @Oppenheymu @PaperKoi001
 # turbo 的任务图与缓存口径（CI 门禁的执行面：改它等于改「哪些步骤算通过」，
 # 且远程缓存跨 run 复用，故与 CI 同列敏感路径）
-/turbo.jsonc                        @Oppenheymu @PaperKoi
+/turbo.jsonc                        @Oppenheymu @PaperKoi001
 
 # CI、自动分诊与模板（门禁与流程的唯一执行面）
-/.github/workflows/**               @Oppenheymu @PaperKoi
-/.github/dependabot.yml             @Oppenheymu @PaperKoi
-/.github/labeler.yml                @Oppenheymu @PaperKoi
-/.github/PULL_REQUEST_TEMPLATE/**   @Oppenheymu @PaperKoi
+/.github/workflows/**               @Oppenheymu @PaperKoi001
+/.github/dependabot.yml             @Oppenheymu @PaperKoi001
+/.github/labeler.yml                @Oppenheymu @PaperKoi001
+/.github/PULL_REQUEST_TEMPLATE/**   @Oppenheymu @PaperKoi001
 
 # 仓库常驻指令与贡献入口（改规矩的人与审规矩的人至少两位之一同意）
-/AGENTS.md                          @Oppenheymu @PaperKoi
-/.github/CONTRIBUTING.md            @Oppenheymu @PaperKoi
+/AGENTS.md                          @Oppenheymu @PaperKoi001
+/.github/CONTRIBUTING.md            @Oppenheymu @PaperKoi001
