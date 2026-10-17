@@ -22,19 +22,38 @@ import { dirname, resolve } from "node:path";
 /**
  * 剥除 svg 根元素之前的注释（许可头、版权头等）。
  *
- * 这些注释位于 <svg> 之前，unplugin-icons 的 vue3 编译器调
- * compileTemplate 时未透传 comments 选项，注释去留随构建进程的
- * NODE_ENV 漂移：development 环境下注释被保留进产物，图标组件被
- * 编译成「注释 + svg」的多根 fragment。Vue 运行时对这种 fragment 的
- * attribute 透传修复（getChildRoot，DEV_ROOT_FRAGMENT）仅在 dev
- * 运行时生效，prod 运行时外部传入的 class 落不到 svg 上，图标
- * 回落 .k-icon { height: 1em } 的 1em 尺寸（侧栏图标变小）。
- * 在 loader 层剥除后产物恒为单根，与编译模式无关。
+ * 图标组件必须保持单根：多根 fragment 在 prod 运行时丢弃外部传入的
+ * attribute，`<k-icon class="...">` 的 class 就落不到 svg 上，尺寸
+ * 回落到组件内联的 `.k-icon { height: 1em }`。@iconify/utils 的
+ * getCustomIcon 目前已把 `<svg` 之前的内容整体切掉，本函数是 loader
+ * 层的兜底（不依赖该实现的版本行为），与编译期 NODE_ENV 无关。
  */
 export function stripLeadingSvgComments(
 	svg: string,
 ): string {
 	return svg.replace(/^(?:\s|<!--[\s\S]*?-->)*/, "");
+}
+
+/**
+ * 不向图标产物注入 width / height：写入 iconify 的「取消」关键字 unset。
+ *
+ * unplugin-icons 经 @iconify/utils 的 mergeIconProps 生成组件时，先调用
+ * iconCustomizer，随后才由 configureSvgSize 按 scale（默认 1.2）补写
+ * width / height；因此在这里 delete 是空操作（删的是尚未写入的键），产物
+ * 仍带 width="1.2em" height="1.2em"。只有写入 iconify 的取消关键字
+ * （isUnsetKeyword 识别 unset / undefined / none），configureSvgSize 才会
+ * 真正丢弃这两项。
+ *
+ * 保留默认尺寸的实际后果：svg 视口被 width="1.2em" 锁在 16px 字号下的
+ * 约 19px，而 CSS 只设 height（侧栏 .activity-button-icon 为 1.5rem），
+ * preserveAspectRatio 按宽度贴边，方形与扁形图标撑不满高度——来自
+ * assets/icons 的图标因此比无 width 属性的内联图标小一圈甚至一半。
+ */
+export function unsetIconSize(
+	props: Record<string, string>,
+) {
+	props["width"] = "unset";
+	props["height"] = "unset";
 }
 
 /** 创建图标编译插件；返回单个 vite 插件，调用方直接并入 plugins 数组 */
@@ -61,12 +80,10 @@ export async function iconsPlugin() {
 				stripLeadingSvgComments(svg),
 			),
 		},
-		// 现有尺寸行为依赖「svg 不带固定宽高 + .k-icon 样式的 height: 1em」
-		// （非方形图标宽度按 viewBox 比例展开）；unplugin-icons 默认注入
-		// width/height="1em" 会把非方形图标压成正方形留白，这里剥除
+		// 尺寸完全交给 CSS（.k-icon 的 height）：产物若有固定宽高，非方形
+		// 图标会被宽度锁死（机理见 unsetIconSize）
 		iconCustomizer(_collection, _icon, props) {
-			delete props["width"];
-			delete props["height"];
+			unsetIconSize(props);
 		},
 	});
 }
