@@ -17,6 +17,11 @@ import {
 	fetchAllPublished,
 	filterDowngrades,
 } from "../core/shared.ts";
+import type { TrustProbeResult } from "../core/trust.ts";
+import {
+	fetchGithubIdToken,
+	probeTrustConfigs,
+} from "../core/trust.ts";
 import type { PkgInfo } from "../core/workspace.ts";
 import {
 	discoverPackages,
@@ -77,6 +82,114 @@ function printPublishFailureHints(pkg: PkgInfo): void {
 	console.log(
 		"[publish]    该包若从未经 CI 发布过，多半就是这一条——信任配置逐包，不是仓库级开关。",
 	);
+	console.log(
+		"[publish]    若它此前确实配过信任却仍 404：多半是新建后超过 2 天没发出，配置已过期且不可编辑（npm 文档「Trusted publisher configuration expiry」）——revoke 后重建，并在当天发出。",
+	);
+}
+
+/**
+ * OIDC 信任配置预检（只在 OIDC 模式跑）。
+ *
+ * 发布前先逐包换一次发布 token：换得到＝该包当前有可用配置；404＝没配 /
+ * claim 不符 / 已过期（npm 对三者同码回应，机制见 core/trust.ts）。命中就
+ * **一个包都不发**——否则半批已推上 npm、main 上的版本只发了一半，事后要
+ * 靠补发擦屁股；而且下一轮又会撞上「再下一个」缺配置的包，每轮只暴露一个
+ * 缺口，正是 2026-10-13 / 10-17 连续两次发布失败的形态。
+ *
+ * 返回 true 表示拦下本次发布。
+ */
+export async function preflightTrustConfigs(
+	ordered: readonly PkgInfo[],
+	published: Map<string, Set<string>>,
+	prefix: string,
+	fetchImpl: typeof fetch = fetch,
+): Promise<boolean> {
+	const hasVersions = (pkg: PkgInfo): boolean =>
+		(published.get(pkg.name)?.size ?? 0) > 0;
+	const existing = ordered.filter(hasVersions);
+	const fresh = ordered.filter((pkg) => !hasVersions(pkg));
+	if (fresh.length > 0) {
+		// 信任配置挂在 npmjs.com 的包设置页上，包在 registry 里还不存在就
+		// 无从创建，换 token 必然 404——首发不纳入预检，避免误拦。
+		console.log(
+			`${prefix} ℹ️ 首发包不参与预检（registry 无任何版本）：${fresh.map((pkg) => pkg.name).join(", ")}`,
+		);
+	}
+	if (existing.length === 0) {
+		return false;
+	}
+	let idToken: string;
+	try {
+		idToken = await fetchGithubIdToken(fetchImpl);
+	} catch (err) {
+		const message =
+			err instanceof Error ? err.message : String(err);
+		console.log(
+			`${prefix} ⚠️ 跳过信任配置预检（${message}）——发布继续，缺配置的包仍会在 npm publish 处失败`,
+		);
+		return false;
+	}
+	console.log(
+		`${prefix} 🔐 预检 OIDC 信任配置（${existing.length} 个包）…`,
+	);
+	const results = await probeTrustConfigs(
+		idToken,
+		existing.map((pkg) => pkg.name),
+		fetchImpl,
+	);
+	const byName = new Map(
+		results.map((result) => [result.name, result]),
+	);
+	const missing: PkgInfo[] = [];
+	const uncertain: TrustProbeResult[] = [];
+	for (const pkg of existing) {
+		const result = byName.get(pkg.name);
+		if (result === undefined) {
+			continue;
+		}
+		if (result.status === "missing") {
+			missing.push(pkg);
+		} else if (result.status === "error") {
+			uncertain.push(result);
+		}
+	}
+	for (const result of uncertain) {
+		console.log(
+			`${prefix} ⚠️ 探测不确定 ${result.name}：${result.detail}（不据此拦截）`,
+		);
+	}
+	if (missing.length === 0) {
+		const ok = existing.length - uncertain.length;
+		console.log(
+			`${prefix} ✅ 预检通过：${ok} 个可用${uncertain.length > 0 ? `，${uncertain.length} 个探测不确定（不拦截）` : ""}`,
+		);
+		return false;
+	}
+	console.log(
+		`${prefix} ❌ 以下 ${missing.length} 个包当前没有可用的 OIDC 信任配置，本次一个包都不发：`,
+	);
+	for (const pkg of missing) {
+		console.log(`  ⛔ ${pkg.name}@${pkg.version}`);
+	}
+	console.log(
+		`${prefix} 💡 原因只有三种，registry 一律回 404「package not found」：没配过 / claim 与 release.yml 不符 / 配了但超过 2 天没完成首次发布而失效（npm 文档「Trusted publisher configuration expiry」；失效记录不可编辑，只能删掉重建）。`,
+	);
+	console.log(
+		`${prefix} 💡 处置（本机 npm login，npm CLI ≥ 11.15）：`,
+	);
+	console.log(
+		`${prefix}    逐包：npm trust list <包名> → 有记录先 npm trust revoke <包名> --id <id> → npm trust github <包名> --file release.yml --repo Koishi-CE/koishi --environment release --allow-publish --yes`,
+	);
+	console.log(
+		`${prefix}    核对：npm trust list <包名> 应看到 file=release.yml / repo=Koishi-CE/koishi / env=release / permissions 只含 publish`,
+	);
+	console.log(
+		`${prefix} ⏳ 新配置须在 2 天内完成首次发布才生效：配完立刻重跑本链并批准，别隔天再发。`,
+	);
+	console.log(
+		`${prefix}    只补本批是刻意的——提前把全部包配好，没在本批验证的那些两天后照样过期。`,
+	);
+	return true;
 }
 
 /** publish 环：registry 比对 → 所有权预检 → 拓扑序逐包发布。 */
@@ -199,6 +312,18 @@ export async function runPublishSteps(
 	if (options.dryRun) {
 		console.log("[publish] [dry-run] 未执行发布");
 		return 0;
+	}
+	// OIDC 预检：逐包换一次 token，缺配置就整批不发（见 preflightTrustConfigs）
+	if (isOidcTrustedPublishing()) {
+		if (
+			await preflightTrustConfigs(
+				ordered,
+				published,
+				"[publish]",
+			)
+		) {
+			return 1;
+		}
 	}
 	// 逐包发布：发布前把 workspace:* 改写为 caret 真实版本（npm 不认该协议），
 	// finally 还原原文件（不落盘，工作区保持洁净）
