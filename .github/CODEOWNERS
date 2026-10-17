@@ -14,18 +14,19 @@
 #   故本文件先写通配（`*` / `目录/**`），再写显式文件路径，后者压前者。
 # - 以 `/` 开头的模式锚定仓库根；`**` 跨目录；`*` 不跨 `/`。
 #
-# 现状（2026-09-28 核对）：本仓 ruleset「保护主分支」已开启
-# require_code_owner_review，即下方 owner 的批准已是合并的必要条件（哪些 PR
-# 需要另一位批准，见文末「已知限制」）。
+# 现状（2026-10-17 核对）：本仓 ruleset「保护主分支」仍开着
+# require_code_owner_review，但 owner 已收敛为单人（@Oppenheymu），实际口径见
+# 文末「已知限制」。
 #
 # 维护纪律：新增高风险路径（发布链 / 根配置 / CI / 预编译产物等）时在本文件
 # 补一条规则，并在 docs/guides/development.md 的 PR 工作流节确认口径一致。
 #
 # 已知限制：GitHub 的 CODEOWNERS 没有排除语法，规则一律是「附加」。`*` 兜底
-# 使 @Oppenheymu 成为所有文件的 owner，因此开着 "Require review from Code
-# Owners" 时，由 @Oppenheymu 自己提的 PR 若只触及他独有的路径，无需他人批准；
-# 触及下方两人共有的显式路径时，必须由 @PaperKoi 批准。
-# 若将来要把「谁的代码谁回避」写成硬约束，需要 GitHub 的 team 机制
+# 使 @Oppenheymu 成为所有文件的 owner；2026-10-17 起第二位 owner 已从全文移除，
+# 本文件回到单人 owner——按既有观测，owner 自己提的 PR 在其路径上无需他人批准，
+# 故实际已无路径能强制第二人复核，门禁退化为「PR + 必需状态检查」。要恢复双人
+# 复核，把第二位 owner 加回对应行，并同步 docs/guides/development.md 的 PR
+# 工作流节；若要写成「谁的代码谁回避」的硬约束，需要 GitHub 的 team 机制
 # （组织当前没有 team），届时把下方 owner 换成 @Koishi-CE/<team> 即可。
 
 # ---- 通配兜底与范围划分（自上而下，越靠下越具体） ----
@@ -34,55 +35,55 @@
 *                                   @Oppenheymu
 
 # 核心框架与插件生态
-/packages/node/**                   @Oppenheymu @PaperKoi001
-/plugins/common/**                  @Oppenheymu @PaperKoi001
+/packages/node/**                   @Oppenheymu
+/plugins/common/**                  @Oppenheymu
 
 # 浏览器侧与 webui（AGPL 分区，见 NOTICE）
-/packages/web/**                    @Oppenheymu @PaperKoi001
-/plugins/webui/**                   @Oppenheymu @PaperKoi001
+/packages/web/**                    @Oppenheymu
+/plugins/webui/**                   @Oppenheymu
 
 # 工具链、脚手架与应用
-/tooling/**                         @Oppenheymu @PaperKoi001
-/apps/**                            @Oppenheymu @PaperKoi001
+/tooling/**                         @Oppenheymu
+/apps/**                            @Oppenheymu
 
 # 文档与社区健康文件
-/docs/**                            @Oppenheymu @PaperKoi001
-.github/CODEOWNERS                  @Oppenheymu @PaperKoi001
+/docs/**                            @Oppenheymu
+.github/CODEOWNERS                  @Oppenheymu
 
-# 敏感路径：冻结与预编译产物——改动必须两人过目（规则见 packages/shim/README.md）
-/packages/shim/**                   @Oppenheymu @PaperKoi001
-/plugins/infra/http/**              @Oppenheymu @PaperKoi001
-/plugins/infra/proxy/**             @Oppenheymu @PaperKoi001
-/plugins/infra/server/**            @Oppenheymu @PaperKoi001
+# 敏感路径：冻结与预编译产物——改动须格外谨慎（规则见 packages/shim/README.md）
+/packages/shim/**                   @Oppenheymu
+/plugins/infra/http/**              @Oppenheymu
+/plugins/infra/proxy/**             @Oppenheymu
+/plugins/infra/server/**            @Oppenheymu
 
 # ---- 显式文件路径（最后命中即生效，压住上方通配） ----
 
 # 发布链与版本管理（一切发布走发布链，禁止手动 npm publish）
-/tooling/release/**                 @Oppenheymu @PaperKoi001
-/.changeset/**                      @Oppenheymu @PaperKoi001
+/tooling/release/**                 @Oppenheymu
+/.changeset/**                      @Oppenheymu
 
 # 依赖面与仓库级配置（改动影响全仓解析与门禁口径）
-/package.json                       @Oppenheymu @PaperKoi001
-/bun.lock                           @Oppenheymu @PaperKoi001
-/bunfig.toml                        @Oppenheymu @PaperKoi001
-/tsdown.config.ts                   @Oppenheymu @PaperKoi001
-/tsconfig.json                      @Oppenheymu @PaperKoi001
-/tsconfig.base.json                 @Oppenheymu @PaperKoi001
-/tsconfig.web.json                  @Oppenheymu @PaperKoi001
-/tsconfig.client.json               @Oppenheymu @PaperKoi001
-/biome.json                         @Oppenheymu @PaperKoi001
-/eslint.config.ts                   @Oppenheymu @PaperKoi001
-/.fallowrc.jsonc                    @Oppenheymu @PaperKoi001
+/package.json                       @Oppenheymu
+/bun.lock                           @Oppenheymu
+/bunfig.toml                        @Oppenheymu
+/tsdown.config.ts                   @Oppenheymu
+/tsconfig.json                      @Oppenheymu
+/tsconfig.base.json                 @Oppenheymu
+/tsconfig.web.json                  @Oppenheymu
+/tsconfig.client.json               @Oppenheymu
+/biome.json                         @Oppenheymu
+/eslint.config.ts                   @Oppenheymu
+/.fallowrc.jsonc                    @Oppenheymu
 # turbo 的任务图与缓存口径（CI 门禁的执行面：改它等于改「哪些步骤算通过」，
 # 且远程缓存跨 run 复用，故与 CI 同列敏感路径）
-/turbo.jsonc                        @Oppenheymu @PaperKoi001
+/turbo.jsonc                        @Oppenheymu
 
 # CI、自动分诊与模板（门禁与流程的唯一执行面）
-/.github/workflows/**               @Oppenheymu @PaperKoi001
-/.github/dependabot.yml             @Oppenheymu @PaperKoi001
-/.github/labeler.yml                @Oppenheymu @PaperKoi001
-/.github/PULL_REQUEST_TEMPLATE/**   @Oppenheymu @PaperKoi001
+/.github/workflows/**               @Oppenheymu
+/.github/dependabot.yml             @Oppenheymu
+/.github/labeler.yml                @Oppenheymu
+/.github/PULL_REQUEST_TEMPLATE/**   @Oppenheymu
 
-# 仓库常驻指令与贡献入口（改规矩的人与审规矩的人至少两位之一同意）
-/AGENTS.md                          @Oppenheymu @PaperKoi001
-/.github/CONTRIBUTING.md            @Oppenheymu @PaperKoi001
+# 仓库常驻指令与贡献入口
+/AGENTS.md                          @Oppenheymu
+/.github/CONTRIBUTING.md            @Oppenheymu
