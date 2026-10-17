@@ -267,6 +267,18 @@ jobs:
           mkdir -p "$GITHUB_WORKSPACE"
           tar -xzf "$RUNNER_TEMP/release-workspace.tgz" -C "$GITHUB_WORKSPACE"
       # 不跑 bun install：工具链只用 node: 内建模块，npm publish 也不需要 node_modules
+      #
+      # NPM_CONFIG_LOGLEVEL=verbose 不是调试残留，而是唯一的故障可见性来源：
+      # npm 的 OIDC 换 token（npm/lib/utils/oidc.js）每个失败分支都只写
+      # log.verbose，然后静默退回「无凭证发布」，registry 于是回 ENEEDAUTH——
+      # 线上日志里一句原因都没有。2026-10-13 的 run 38395363229 即此：prepare
+      # 全绿、隔 55 秒 publish 就死在 `npm error code ENEEDAUTH`，看不出是信任
+      # 配置缺失、claims 不符还是 id_token 取不到。开 verbose 后 npm 会打印
+      # `oidc Failed token exchange request with body message: …`（或
+      # `Failed to fetch id_token from GitHub: …`），那才是真正的报错。
+      # 不泄露凭证：换来的 token 只进请求头，npm 的 http 日志不打印请求头。
       - name: 逐包发布
         working-directory: ${{ github.workspace }}
+        env:
+          NPM_CONFIG_LOGLEVEL: verbose
         run: bun run release publish

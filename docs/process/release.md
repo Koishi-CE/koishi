@@ -85,6 +85,9 @@ npm 的暂存发布（staged publishing）会在版本公开前插入人工批�
 - **版本先落 main、发布待审批**：`prepare` 不挂 environment，故版本提交与 CHANGELOG 会在构建测试通过后立即进 main，而包要等 `environment: release` 的批准才真正上线。若某次审批长期不点，main 的版本会暂时领先 npm——`release publish` 的 registry 比对（`filterDowngrades`）能安全处理这种中间态，但排查「版本号对不上」时要知道它的存在。
 - **artifact 的 retention 必须长于「等人工审批」**：`publish` 的产物来自 `prepare` 上传的 artifact（`release-workspace`），而审批什么时候点没人能保证。原写 `retention-days: 1`，2026-10-07 那次发布等到次日才获批（run 37633548554，`prepare` 完成 14:04Z 到 `publish` 开始 15:10Z 间隔约 25 小时），产物在审批通过前已过期，`publish` 第一步 `download-artifact` 直接 `Unable to download artifact(s): Artifact not found`——版本提交已进 main 而包一个没发，只能走 `skip-version` 补发（输入说明见本节上文，操作路径见 §7.3）。现定为 30 天（= 仓库默认，Settings → Actions → Artifact and log retention，上限 90）。**排查「publish 失败但 prepare 全绿」时，先对照审批时间与产物的 `expires_at`**（`gh api /repos/Koishi-CE/koishi/actions/runs/<run-id>/artifacts`）。
 - **publish 升级 npm 必须走用户级 prefix**：runner 的 npm 是系统级安装（`/usr/local`，属 root），`npm install -g npm@11` 会因写 `/usr/local/share/man/man5` 而 EACCES——2026-09-27 首次跑通 `prepare` 后 publish 即死在这一步（run 36331787266，此前 `publish` 从未真正执行过）。现改为 `npm install -g npm@11 --prefix "$HOME/.npm-global"` 并把该 bin 写进 `GITHUB_PATH`（后者只对后续步骤生效，故安装与写 PATH 必须在同一步）。
+- **publish 报 `ENEEDAUTH need auth` ≠ 没登录**：OIDC 模式下 npm 用 GitHub 的 id_token 换**包级**发布 token（`npm/lib/utils/oidc.js` 的 `/-/npm/v1/oidc/token/exchange/package/<包名>`），而该文件**每个失败分支都只写 `log.verbose`**，随后静默退回「无凭证发布」，registry 才回 ENEEDAUTH——线上日志里一句原因都没有，极易被误读成「npm 登录态丢了」或「token 被人撤了」。2026-10-13 的 run 38395363229 即此：`prepare` 全绿，55 秒后 publish 死在发布序**第一个**包 `@koishi-ce/plugin-console@1.4.2`，报错只有 `need auth`，而发布链打的 E409（暂存区）提示与该故障毫无关系。处置：
+  - publish step 现已设 `NPM_CONFIG_LOGLEVEL=verbose`（见 §7.4 末条），重跑即会打印 npm 的真实报错：`oidc Failed token exchange request with body message: …`（交换被拒 → 信任配置或 claims 不符）或 `oidc Failed to fetch id_token from GitHub: …`（id_token 取不到）。必要时也可读 runner 上的 `/home/runner/.npm/_logs/*.log`——npm 的 debug 文件记录全部级别，含 `verbose` / `silly`。
+  - **按包核对信任配置**：`@koishi-ce/plugin-console` 的 latest（1.4.1，09-25）由人工本机发布、无 provenance，从未经 CI 通道发过；同批的 `plugin-market` 则是 09-28 由 CI 发布并带 provenance。信任配置是**逐包**对象，缺一个就只卡一个包，且卡在它第一次经 CI 发布的时候。
 
 ### 7.2 OIDC 的信任边界（改本文件前必读）
 
@@ -109,7 +112,8 @@ npm 的信任配置把 `repository` / `workflow_ref.file` / `environment` 三个
 2. 同一 Environment 的 **Deployment branches 限制为 `main`**（动机见 §7.2）；
 3. 主分支 ruleset 的 **bypass 名单里加入发布用的 GitHub App（模式 `Always` 或 `exempt`）**，否则 `prepare` job 推不上去——不能按「放行 GitHub Actions」来配，`GITHUB_TOKEN` 进不了该名单（见 §7.5）；
 4. 开启 `require_code_owner_review`；
-5. npm 侧 53 个包的信任配置与上表一致：`repository=Koishi-CE/koishi`、`workflow_ref.file=release.yml`、`environment=release`、权限仅 `publish`（不含 stage publish，避免引入人工批准环节的暂存流程）。
+5. npm 侧 53 个包的信任配置与上表一致：`repository=Koishi-CE/koishi`、`workflow_ref.file=release.yml`、`environment=release`、权限仅 `publish`（不含 stage publish，避免引入人工批准环节的暂存流程）。**逐包配置，非仓库级开关**——少配一个，只会卡那一个包，且卡在它第一次经 CI 发布时。核对口径（2026-10-13 实拍，以 `npm view` 与 registry 元数据为准）：53 个包里只有 6 个的 latest 版本经 CI 发布过（带 provenance、`_npmUser` 为 `GitHub Actions`）——`create-koishi-ce`、`@koishi-ce/koishi`、`@koishi-ce/core`、`@koishi-ce/utils`、`@koishi-ce/console-builder`、`@koishi-ce/plugin-market`；其余 47 个的 latest 都是 OIDC 上线（2026-09-27）之前由本机人工发布的，其信任配置**从未被实际验证过**。自查命令：`npm view <包名> version` 拿 latest，再看 npmjs.com 包页的 Trusted Publisher（或登录后 `npm trust list <包名>`；OIDC 运行里没有登录态，查不了）。
+6. publish 步骤必须保留 `NPM_CONFIG_LOGLEVEL=verbose`：npm 的 OIDC 换 token 失败只写 `log.verbose`，退回无凭证发布后只剩一句 `ENEEDAUTH need auth`（机理与判例见 §7.1 末两条）。删掉它等于把这类故障重新变成「看不出原因」。
 
 ### 7.5 版本提交的推送凭证（GitHub App）
 
