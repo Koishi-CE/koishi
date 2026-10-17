@@ -4,10 +4,11 @@
 /**
  * stripLeadingSvgComments（根元素前注释剥除）的单元测试。
  *
- * 图标 .svg 资产的许可头注释位于 <svg> 之前，unplugin-icons 在
- * development 编译模式下会把它保留进产物使组件变成多根 fragment，
- * prod 运行时下外部 class 透传断裂（图标变小）。此处验证剥除逻辑
- * 的边界：许可头剥离、无注释原样、svg 内部注释保留、注释后置空行。
+ * 图标 .svg 资产的许可头注释位于 <svg> 之前：注释一旦进入组件模板根层，
+ * 图标就会变成多根 fragment，prod 运行时丢弃外部传入的 class（透传
+ * 断裂）。@iconify/utils 目前已在 getCustomIcon 里切掉 `<svg` 之前的
+ * 内容，本函数是 loader 层兜底。此处验证剥除逻辑的边界：许可头剥离、
+ * 无注释原样、svg 内部注释保留、注释后置空行。
  */
 
 import { describe, expect, it } from "bun:test";
