@@ -123,7 +123,7 @@ npm 的信任配置把 `repository` / `workflow_ref.file` / `environment` 三个
      ```
 
      已配置的包会报「已有信任配置」——忽略即可。**要改已有配置只能 `npm trust revoke <包名> --id <id>` 后重建**（registry 每包只允许一条，无 update 语义）。
-   - **批量补**（在仓库根执行，Windows PowerShell；名单与 `release` 环的 workspace 发现口径一致，已配置的包报错可忽略）：
+   - **批量补**（在仓库根执行，Windows PowerShell；名单与 `release` 环的 workspace 发现口径一致，`--yes` 跳过逐包确认，已配置的包报错可忽略）：
 
      ```powershell
      Get-ChildItem packages,plugins,apps -Recurse -Filter package.json |
@@ -131,7 +131,7 @@ npm 的信任配置把 `repository` / `workflow_ref.file` / `environment` 三个
        ForEach-Object { Get-Content $_.FullName -Raw | ConvertFrom-Json } |
        Where-Object { $_.name -and -not $_.private } |
        Select-Object -ExpandProperty name -Unique |
-       ForEach-Object { npm trust github $_ --file release.yml --repo Koishi-CE/koishi --environment release --allow-publish }
+       ForEach-Object { npm trust github $_ --file release.yml --repo Koishi-CE/koishi --environment release --allow-publish --yes }
      ```
 6. publish 步骤必须保留 `NPM_CONFIG_LOGLEVEL=verbose`：npm 的 OIDC 换 token 失败只写 `log.verbose`，退回无凭证发布后只剩一句 `ENEEDAUTH need auth`（机理与判例见 §7.1 末两条）。删掉它等于把这类故障重新变成「看不出原因」。
 
