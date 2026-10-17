@@ -32,8 +32,8 @@ git switch main && git pull --ff-only    # 6. 合并后同步 main 并删除已�
 - **提交粒度**：分支内可小步多次提交；提交信息格式与 scope 约定同主历史（`feat:` / `fix:` / `docs:` / `chore:` / `build:`）。
 - **PR 正文**：按仓库 PR 模板写全——`.github/PULL_REQUEST_TEMPLATE/` 下按改动领域分模板（修复 / 特性 / 文档 / 依赖与上游 / 重构与性能 / 发布，兜底「通用」，清单见该目录 `config.yml`）；改动说明、验证证据（实跑的门禁段与结论）、changeset 情况、影响面与风险四件是各模板的公共要求。
 - **合并条件**：CI 三 job（`gate` / `client` / `fallow`）全绿 + 评审通过 + squash merge；有行为变化的包同步写 changeset（见 [../process/release.md](../process/release.md) 第 3 节）。
-- **评审路由（CODEOWNERS）**：[.github/CODEOWNERS](../../.github/CODEOWNERS) 按路径指派 code owner（`*` 兜底 + 发布链 / 根配置 / CI / 预编译产物等敏感路径两人共管）。仓库 ruleset「保护主分支」**已**开启 "Require review from Code Owners"（2026-09-28 核对），即命中敏感路径的 PR 需对应 code owner 批准才能合并（`*` 兜底那条同样生效）；新增高风险路径时记得在该文件补规则。
-- **自动分诊**：[.github/workflows/triage.yml](../../.github/workflows/triage.yml) 在 issue 打开时指派 `@Oppenheymu` 并打「状态:待确认」；PR 打开时指派两位 owner（`@Oppenheymu`、`@PaperKoi`）并按 [.github/labeler.yml](../../.github/labeler.yml) 的路径规则打「范围」/「文档」label。PR 指派挂在 `pull_request_target` 上——`pull_request` 事件下 fork PR 拿到的 `GITHUB_TOKEN` 只读，assign 必然 403；该 job 不 checkout PR 代码，故无 `pull_request_target` 的越权执行风险。Dependabot PR 两侧均跳过（见 §11 坑 2）。
+- **评审路由（CODEOWNERS）**：[.github/CODEOWNERS](../../.github/CODEOWNERS) 按路径指派 code owner（`*` 兜底 + 发布链 / 根配置 / CI / 预编译产物等敏感路径）。2026-10-17 起 owner 收敛为单人 `@Oppenheymu`：仓库 ruleset「保护主分支」虽仍开着 "Require review from Code Owners"（2026-09-28 核对），但已无路径能强制第二人批准，实际门禁退化为「PR + 必需状态检查」；新增高风险路径时记得在该文件补规则。
+- **自动分诊**：[.github/workflows/triage.yml](../../.github/workflows/triage.yml) 在 issue 打开时指派 `@Oppenheymu` 并打「状态:待确认」；PR 打开时指派 owner `@Oppenheymu`（与单人 CODEOWNERS 同步）并按 [.github/labeler.yml](../../.github/labeler.yml) 的路径规则打「范围」/「文档」label。PR 指派挂在 `pull_request_target` 上——`pull_request` 事件下 fork PR 拿到的 `GITHUB_TOKEN` 只读，assign 必然 403；该 job 不 checkout PR 代码，故无 `pull_request_target` 的越权执行风险。Dependabot PR 两侧均跳过（见 §11 坑 2）。
 - **唯一例外**：`bun run release pipeline` 的版本提交（含 `bun.lock`）由发布链直接推送 `main`（见 [../process/release.md](../process/release.md) 第 2 节第 7 环）——这是发布链的既定设计，不构成直推 `main` 的许可。
 - **并行会话注意**：同一时刻 HEAD / `main` 可能被其它会话推进，动手前重核 `git status` 与 `git log --oneline -1`，PR 合并前先 rebase 最新 `main`。
 
