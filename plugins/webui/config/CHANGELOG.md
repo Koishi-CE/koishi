@@ -1,5 +1,16 @@
 # @koishi-ce/plugin-config
 
+## 1.1.8
+
+### Patch Changes
+
+- Updated dependencies [e9258a1]
+  - @koishi-ce/console@1.1.1
+  - @koishi-ce/loader@1.1.2
+  - @koishi-ce/registry@1.0.6
+  - @koishi-ce/plugin-console@1.4.4
+  - @koishi-ce/koishi@1.0.20
+
 ## 1.1.7
 
 ### Patch Changes

@@ -1,5 +1,14 @@
 # @koishi-ce/plugin-auth
 
+## 1.1.6
+
+### Patch Changes
+
+- Updated dependencies [e9258a1]
+  - @koishi-ce/console@1.1.1
+  - @koishi-ce/plugin-console@1.4.4
+  - @koishi-ce/koishi@1.0.20
+
 ## 1.1.5
 
 ### Patch Changes

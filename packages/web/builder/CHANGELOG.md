@@ -1,5 +1,14 @@
 # @koishi-ce/console-builder
 
+## 1.0.6
+
+### Patch Changes
+
+- Updated dependencies [e9258a1]
+  - @koishi-ce/client@1.4.3
+  - @koishi-ce/components@1.1.1
+  - @koishi-ce/console-app@1.0.4
+
 ## 1.0.5
 
 ### Patch Changes

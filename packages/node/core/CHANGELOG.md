@@ -1,5 +1,13 @@
 # @koishi-ce/core
 
+## 1.1.8
+
+### Patch Changes
+
+- Updated dependencies [e9258a1]
+  - @koishi-ce/i18n-utils@1.0.2
+  - @koishi-ce/utils@1.1.1
+
 ## 1.1.7
 
 ### Patch Changes
