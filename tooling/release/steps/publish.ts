@@ -28,13 +28,21 @@ import {
 /**
  * 发布失败后的排查提示。
  *
- * 高频且易被误判为「网络 / 权限问题」的是 E409：`Cannot publish
- * over previously staged version "<version>"`——该版本已进入 npm
- * 暂存区（staged publish）等待人工批准；暂存版本不在 registry 的
- * versions 列表里，发布链的比对无从感知，重跑只会再次撞 409。
- * 处置：npmjs.com 的 Staged Packages 标签页 Approve（转为正式
- * 发布）或 Reject（丢弃后重发），或用 npm ≥ 11.15 的
- * `npm stage list` / `npm stage approve|reject`。
+ * 两类高频误判：
+ *
+ * 1. E409：`Cannot publish over previously staged version "<version>"`——
+ *    该版本已进入 npm 暂存区（staged publish）等待人工批准；暂存版本不在
+ *    registry 的 versions 列表里，发布链的比对无从感知，重跑只会再次撞 409。
+ *    处置：npmjs.com 的 Staged Packages 标签页 Approve（转为正式发布）或
+ *    Reject（丢弃后重发），或用 npm ≥ 11.15 的 `npm stage list` /
+ *    `npm stage approve|reject`。
+ *
+ * 2. ENEEDAUTH `need auth`：OIDC 模式下**不代表没登录**。npm 用 GitHub 的
+ *    id_token 换包级发布 token（npm/lib/utils/oidc.js），而该函数每个失败
+ *    分支都只写 log.verbose、随后静默退回无凭证发布——registry 因此回
+ *    ENEEDAUTH。真正的原因（该包没有信任配置 / claims 不符 / id_token
+ *    取不到）只出现在 verbose 日志里；CI 的发布步骤已设
+ *    NPM_CONFIG_LOGLEVEL=verbose（见 .github/workflows/release.yml）。
  */
 function printPublishFailureHints(pkg: PkgInfo): void {
 	console.log(
@@ -48,6 +56,18 @@ function printPublishFailureHints(pkg: PkgInfo): void {
 	);
 	console.log(
 		"[publish]    同批其余未发布包可先用 --only <包名> 单独补发。",
+	);
+	console.log(
+		"[publish] 💡 若上方报错为 ENEEDAUTH「need auth」：",
+	);
+	console.log(
+		"[publish]    这不是「没登录」。npm 用 GitHub 的 id_token 换包级发布 token，换不到时它不报原因、直接退回无凭证发布，registry 才回 ENEEDAUTH。",
+	);
+	console.log(
+		`[publish]    真实原因只在 npm 的 verbose 日志里（CI 发布步骤已开 NPM_CONFIG_LOGLEVEL=verbose）：先核对 npmjs.com 上 ${pkg.name} 的 Trusted Publisher 是否与 release.yml 一致（repository / workflow 文件 / environment 三项 claim）。`,
+	);
+	console.log(
+		"[publish]    该包若从未经 CI 发布过，多半是信任配置缺失——这是逐包配置，不是仓库级开关。",
 	);
 }
 
