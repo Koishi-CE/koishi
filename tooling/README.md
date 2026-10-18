@@ -62,7 +62,7 @@ bun run sandbox -- --force         # 清空重建（仅限本工具生成的目�
 bun run sandbox -- --start         # 生成完成后立即在本进程前台拉起实例
 ```
 
-默认落点为工作区同级 `koishi-ce-sandbox`。两种模式的机理、已知坑与启动方式详见 [开发手册 §10](../docs/guides/development.md)。与本仓 `plugins/webui/sandbox` 插件（控制台内嵌调试沙盒）无任何关系。
+默认落点为工作区同级 `Debug/koishi-ce-sandbox`（本地调试产物统一收在 `Debug/`）。两种模式的机理、已知坑与启动方式详见 [开发手册 §10](../docs/guides/development.md)。与本仓 `plugins/webui/sandbox` 插件（控制台内嵌调试沙盒）无任何关系。
 
 ## upstream-audit/ — 上游巡检
 

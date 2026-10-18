@@ -12,6 +12,7 @@
  *   bun run sandbox [目录]           链接模式（默认）：沙盒 node_modules 里为
  *                                    全部 CE 作用域 workspace 包建 junction；
  *                                    改 src → bun run build 后实例即刻生效。
+ *                                    落点缺省为工作区同级 Debug/koishi-ce-sandbox。
  *   bun run sandbox [目录] --pack    打包模式：逐包 bun pm pack 出 tgz（与
  *                                    npm 发布物同构，workspace:* 自动重写为
  *                                    版本号），走真实 bun install，供发版前

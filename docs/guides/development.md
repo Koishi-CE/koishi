@@ -243,7 +243,7 @@ expect(app.database.getUser("mock", "A")).resolves.toHaveShape({ authority: 1 })
 在工作区之外生成由本仓 workspace 包组成的 koishi-ce 运行实例，用于「先测试再发包」：数据写回、市场装插件等运行时副作用全部落在沙盒目录（loader 的 baseDir 取自进程 cwd 与配置文件位置），工作区零污染。
 
 ```bash
-bun run sandbox [目录]           # 链接模式（默认落点 ../koishi-ce-sandbox）
+bun run sandbox [目录]           # 链接模式（默认落点 ../Debug/koishi-ce-sandbox）
 bun run sandbox [目录] --pack    # 打包模式：逐包 pack → 真实 bun install
 bun run sandbox -- --force       # 清空重建（仅限本工具生成的目录）
 bun run sandbox --start          # 生成完成后立即在本进程前台拉起实例

@@ -22,10 +22,14 @@ export const MARKER = ".koishi-ce-sandbox.json";
 /** 身份标记的 generator 取值；旧版单文件时代的 "tooling/sandbox.ts" 同样被识别。 */
 export const GENERATOR = "tooling/sandbox";
 
-/** 默认落点：工作区同级目录（不在仓库内部，天然隔离）。 */
+/**
+ * 默认落点：工作区同级的 Debug/ 下（不在仓库内部，天然隔离；本地调试产物
+ * 统一收在 Debug/）。当前解析为 C:\Dev\Bot-Dev\Debug\koishi-ce-sandbox。
+ */
 export const DEFAULT_TARGET = resolve(
 	ROOT,
 	"..",
+	"Debug",
 	"koishi-ce-sandbox",
 );
 

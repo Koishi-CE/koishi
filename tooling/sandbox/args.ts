@@ -3,7 +3,7 @@
 
 /** 命令行参数的解析结果。 */
 export interface SandboxOptions {
-	/** 沙盒落点（缺省用工作区同级 koishi-ce-sandbox）。 */
+	/** 沙盒落点（缺省用工作区同级 Debug/koishi-ce-sandbox）。 */
 	target?: string;
 	/** 打包模式（bun pm pack + 真实 install）。 */
 	pack: boolean;
