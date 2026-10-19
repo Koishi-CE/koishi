@@ -153,7 +153,10 @@ function createWorker(options: WorkerOptions) {
 	 */
 	function shouldExit(
 		code: number | null,
-		signal: number | null,
+		// @types/bun 1.4.3 起 signalCode 的类型放宽为 NodeJS.Signals | number | null
+		// （Bun 在 posix 下可能回报名而非编号）；本函数只判断是否收到信号，
+		// 故按并集接收即可
+		signal: NodeJS.Signals | number | null,
 	) {
 		// 尚未收到 start 消息即退出，说明启动失败
 		if (!config) return true;
