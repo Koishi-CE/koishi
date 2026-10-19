@@ -72,8 +72,8 @@
         "@types/semver": "^7.5.8",
         "@vueuse/core": "^15.0.0",
         "cosmokit": "^1.8.1",
-        "vue": "^3.5.12",
-        "vue-i18n": "^11.4.13",
+        "vue": "^3.5.44",
+        "vue-i18n": "^11.4.14",
         "vue-router": "^5.4.0"
     },
     "dependencies": {
