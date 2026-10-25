@@ -17,6 +17,7 @@ import {
 	app,
 	http,
 	itQuiet,
+	registryData,
 	registryServer,
 	setSearchResponse,
 	startApp,
@@ -276,6 +277,70 @@ describe("MarketProvider 市场数据服务", () => {
 				).toBeUndefined();
 			} finally {
 				delete manifest.dependencies["koishi-plugin-ghost"];
+				await Bun.write(
+					manifestPath,
+					JSON.stringify(manifest, null, "\t"),
+				);
+			}
+		},
+		15000,
+	);
+
+	itQuiet(
+		"unpublish 骨架包(200 无 versions)按 not-found 负缓存",
+		async () => {
+			// npm unpublish 后的 packument 是 200 骨架(仅剩元键,
+			// 无 versions 字段),fetchVersions 须归一化为空表而非抛
+			// TypeError(实测样本: koishi-plugin-feature-tester)
+			registryData["koishi-plugin-unpublished"] = {
+				name: "koishi-plugin-unpublished",
+				time: {},
+			};
+			const manifestPath = join(tmp, "package.json");
+			const manifest = JSON.parse(
+				await Bun.file(manifestPath).text(),
+			) as {
+				dependencies: Record<string, string>;
+			};
+			manifest.dependencies["koishi-plugin-unpublished"] =
+				"^1.0.0";
+			await Bun.write(
+				manifestPath,
+				JSON.stringify(manifest, null, "\t"),
+			);
+			try {
+				const service = app.get(
+					"console.services.dependencies",
+				);
+				const snapshot = await service?.get();
+				expect(
+					snapshot?.["koishi-plugin-unpublished"]?.request,
+				).toBe("1.0.0");
+				await new Promise((resolve) =>
+					setTimeout(resolve, 800),
+				);
+				// 空版本表归类 not-found(与 404 同口径)而非 network
+				expect(
+					snapshot?.["koishi-plugin-unpublished"]?.error,
+				).toBe("not-found");
+				expect(
+					app.installer.pkgErrors[
+						"koishi-plugin-unpublished"
+					]?.notFound,
+				).toBe(true);
+				// 驻留负缓存:重建快照仍标记 not-found 且不再拉取
+				const again = await service?.get();
+				expect(
+					again?.["koishi-plugin-unpublished"]?.error,
+				).toBe("not-found");
+				expect(
+					again?.["koishi-plugin-unpublished"]?.fetching,
+				).toBeUndefined();
+			} finally {
+				delete manifest.dependencies[
+					"koishi-plugin-unpublished"
+				];
+				delete registryData["koishi-plugin-unpublished"];
 				await Bun.write(
 					manifestPath,
 					JSON.stringify(manifest, null, "\t"),
