@@ -1,7 +1,7 @@
 {
     "name": "@koishi-ce/plugin-market",
     "description": "Manage your bots and plugins with console",
-    "version": "1.4.4",
+    "version": "1.4.5",
     "type": "module",
     "scripts": {
         "build:client": "bun ../../../packages/web/builder/src/bin.ts build ."

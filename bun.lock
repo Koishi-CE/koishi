@@ -714,7 +714,7 @@
     },
     "plugins/webui/market": {
       "name": "@koishi-ce/plugin-market",
-      "version": "1.4.4",
+      "version": "1.4.5",
       "dependencies": {
         "@koishi-ce/console": "workspace:*",
         "@koishi-ce/registry": "workspace:*",
