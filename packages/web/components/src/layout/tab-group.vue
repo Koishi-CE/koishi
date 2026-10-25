@@ -9,8 +9,8 @@
   条目数据通过作用域插槽传给内容。
 -->
 <template>
-  <template v-for="(item, key) in data" :key="key">
-    <k-tab-item v-model="model" :label="key"
+  <template v-for="(item, key) in data" :key="key ?? ''">
+    <k-tab-item v-model="model" :label="key ?? ''"
       v-if="filter ? filter(item) : true">
       <!-- item 经 v-for 自对象取出，此处断言为对象以通过 v-bind 展开检查
            （data prop 仅声明为 object，值类型无从静态得知） -->
@@ -30,8 +30,10 @@ const props = defineProps<{
 
 const emits = defineEmits(["update:modelValue"]);
 
+// modelValue 可选（未选中态为 undefined），k-tab-item 的模型为必填 string：
+// 空串不等于任何 label，选中判定与 undefined 等价
 const model = computed({
-	get: () => props.modelValue,
+	get: () => props.modelValue ?? "",
 	set: (val) => emits("update:modelValue", val),
 });
 </script>

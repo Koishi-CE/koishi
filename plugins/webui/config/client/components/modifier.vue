@@ -15,6 +15,8 @@
  * （决定插件在哪些会话/频道生效的上下文过滤条件）。
  * 以 v-model 形式与父级配置对象双向绑定。
  */
+
+import type { FilterExpr } from "@koishi-ce/components";
 import { computed } from "vue";
 import { useI18n } from "vue-i18n";
 
@@ -26,9 +28,14 @@ const props = defineProps<{
 
 const emit = defineEmits(["update:modelValue"]);
 
-// 读写都代理到 modelValue.$filter 这一个字段
-const filter = computed({
-	get: () => props.modelValue?.["$filter"],
+// 读写都代理到 modelValue.$filter 这一个字段；$filter 字段在宿主配置里是
+// unknown 形态（Record<string, unknown>），读侧按 k-filter 的模型契约收窄
+const filter = computed<FilterExpr | null>({
+	get: () =>
+		(props.modelValue?.["$filter"] as
+			| FilterExpr
+			| null
+			| undefined) ?? null,
 	set: (value) =>
 		emit("update:modelValue", {
 			...props.modelValue,

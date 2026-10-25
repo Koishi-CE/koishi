@@ -38,11 +38,11 @@
         </div>
         <div class="k-tab-group-title">用户组</div>
         <k-tab-group :data="data.group" v-model="activeGroup" #="{ id }">
-          {{ store.locales?.[`permission.${id}`] || data.group[id]?.name || '未命名' }}
+          {{ store.locales?.[`permission.${id as string}`] || data.group[id as string]?.name || '未命名' }}
         </k-tab-group>
         <div class="k-tab-group-title">用户组路线</div>
         <k-tab-group :data="data.track" v-model="activeTrack" #="{ id }">
-          {{ store.locales?.[`permission-track.${id}`] || data.track[id]?.name || '未命名' }}
+          {{ store.locales?.[`permission-track.${id as string}`] || data.track[id as string]?.name || '未命名' }}
         </k-tab-group>
       </el-scrollbar>
     </template>

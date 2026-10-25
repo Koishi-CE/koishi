@@ -81,7 +81,7 @@ export const KSlot = defineComponent({
 });
 
 /** 插槽条目包装组件（k-slot-item）：仅透传 order 排序权重 */
-const KSlotItem = defineComponent({
+export const KSlotItem = defineComponent({
 	props: {
 		order: Number,
 	},
@@ -91,7 +91,7 @@ const KSlotItem = defineComponent({
 });
 
 /** 生成绑定固定插槽名的单选 k-slot 快捷组件 */
-function defineSlotComponent(name: string) {
+export function defineSlotComponent(name: string) {
 	return defineComponent({
 		inheritAttrs: false,
 		setup(_, { slots, attrs }) {

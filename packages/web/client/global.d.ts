@@ -10,6 +10,9 @@
 // 工程解析因此全覆盖；声明本体在 components 的 virtual.d.ts，大一统门禁经
 // components/src 的 include 另行覆盖
 /// <reference path="../components/src/icons/virtual.d.ts" />
+// 全局组件 / 指令（<k-*> 家族、<virtual-list>、v-loading）的 GlobalComponents /
+// GlobalDirectives 声明，同样随本文件经基座 files 下发进所有 client 子工程
+/// <reference path="../components/src/global-components.d.ts" />
 
 // 以下为消费本包（@koishi-ce/client/global）的插件工程提供的环境类型垫片：
 // .vue 单文件组件与 yaml / yml 文案文件在此仅声明为无结构导出，

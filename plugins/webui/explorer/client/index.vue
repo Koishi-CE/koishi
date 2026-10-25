@@ -65,9 +65,9 @@
       </div>
     </div>
     <template v-else-if="files[active]?.mime">
-      <k-image-viewer v-if="files[active]?.mime?.startsWith('image/')" :src="files[active]?.newValue" />
-      <audio v-else-if="files[active]?.mime?.startsWith('audio/')" :src="files[active]?.newValue" controls />
-      <video v-else-if="files[active]?.mime?.startsWith('video/')" :src="files[active]?.newValue" controls />
+      <k-image-viewer v-if="files[active]?.mime?.startsWith('image/')" :src="files[active]?.newValue ?? ''" />
+      <audio v-else-if="files[active]?.mime?.startsWith('audio/')" :src="files[active]?.newValue ?? ''" controls />
+      <video v-else-if="files[active]?.mime?.startsWith('video/')" :src="files[active]?.newValue ?? ''" controls />
       <div v-else>{{ t('explorer.view.unsupported', [files[active]?.mime]) }}</div>
     </template>
     <div ref="editor" v-else class="editor"></div>

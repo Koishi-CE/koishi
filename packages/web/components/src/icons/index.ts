@@ -124,20 +124,20 @@ export function register(
 	registry[name] = markRaw(component);
 }
 
-/** 注册 <k-icon> 全局组件：按 name 从注册表查找并渲染对应图标 */
+/** <k-icon> 全局组件实体：按 name 从注册表查找并渲染对应图标 */
+export const KIcon = defineComponent({
+	props: {
+		name: String,
+	},
+	render(props: { name?: string }) {
+		const component = props.name
+			? registry[props.name]
+			: undefined;
+		return component && h(component);
+	},
+});
+
+/** 注册 <k-icon> 全局组件 */
 export function install(app: App) {
-	app.component(
-		"k-icon",
-		defineComponent({
-			props: {
-				name: String,
-			},
-			render(props: { name?: string }) {
-				const component = props.name
-					? registry[props.name]
-					: undefined;
-				return component && h(component);
-			},
-		}),
-	);
+	app.component("k-icon", KIcon);
 }

@@ -27,6 +27,9 @@ form.extensions.add({
 });
 
 export * from "schemastery-vue/client";
+// k-filter 的模型类型：供消费方（如 config 插件的 modifier）对 $filter 字段
+// 做 v-model 双向绑定的类型收窄
+export type { FilterExpr } from "./filter-types";
 
 /**
  * Vue 插件安装函数：启用 schemastery-vue 表单并注册 k-filter 全局组件。

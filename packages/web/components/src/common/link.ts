@@ -13,7 +13,7 @@ import { useContext } from "../core/injection";
  * 无缓存则回退到页面路由路径（去掉动态参数段）；默认插槽为空时
  * 以页面名称作为链接文案。
  */
-const KActivityLink = defineComponent({
+export const KActivityLink = defineComponent({
 	props: {
 		/** 目标 activity 的 id */
 		id: String,
