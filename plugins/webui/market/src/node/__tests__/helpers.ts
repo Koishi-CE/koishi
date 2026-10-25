@@ -117,7 +117,8 @@ export class FakeLoader extends Service {
 /** registry 协议最小 JSON 服务（Bun.serve，随机端口）。 */
 export const registryData: {
 	[key: string]: {
-		versions: Record<
+		/** unpublish 骨架条目无 versions（模拟 200 无 versions 的 packument） */
+		versions?: Record<
 			string,
 			{
 				version: string;
@@ -126,6 +127,8 @@ export const registryData: {
 			}
 		>;
 		time?: Record<string, string>;
+		/** 骨架条目保留的包名元键（不影响 registry 桩的行为） */
+		name?: string;
 	};
 } = {};
 

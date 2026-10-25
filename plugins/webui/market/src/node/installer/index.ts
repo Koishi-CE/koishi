@@ -137,7 +137,13 @@ class Installer extends Service {
 	private async _getPackage(name: string) {
 		try {
 			const versions = await fetchVersions(this.http, name);
-			delete this.pkgErrors[name];
+			// 空版本表 = unpublish 骨架（200 无 versions）或全部版本被
+			// 兼容性过滤：按 not-found 归类，依赖页徽标与 404 口径一致
+			if (Object.keys(versions).length) {
+				delete this.pkgErrors[name];
+			} else {
+				this.pkgErrors[name] = { notFound: true };
+			}
 			this.fullCache[name] = this.tempCache[name] =
 				versions;
 			this.flushData();
@@ -154,7 +160,7 @@ class Installer extends Service {
 				// 本任务自身 catch 后恒 resolve，直接移除即可让下次调用重试
 				delete this.pkgTasks[name];
 			}
-			logger.warn(error);
+			logger.warn(`获取 ${name} 的版本表失败:`, error);
 			return {};
 		}
 	}

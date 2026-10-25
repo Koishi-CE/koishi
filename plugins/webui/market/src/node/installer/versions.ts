@@ -60,8 +60,12 @@ export async function fetchVersions(
 	name: string,
 ): Promise<VersionMap> {
 	const registry = await http.get<Registry>(`/${name}`);
+	// unpublish / 平台下架后的 packument 是 HTTP 200 的骨架响应（无
+	// versions 字段，仅剩 _id / name / time 等元键），按「无可用版本」
+	// 归一化为空表，避免 Object.values(undefined) 抛 TypeError
+	const versions = registry?.versions ?? {};
 	return getVersions(
-		Object.values(registry.versions).filter((remote) => {
+		Object.values(versions).filter((remote) => {
 			if (name === "koishi")
 				return satisfies(remote.version, "4");
 			return (
