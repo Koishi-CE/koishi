@@ -36,7 +36,7 @@
         "typecheck": "bunx tsc -p tsconfig.json && bunx tsc -p tsconfig.web.json",
         "typecheck:legacy": "tsc6 --noEmit -p tsconfig.json --tsBuildInfoFile ./node_modules/.cache/tsc/node-legacy.tsbuildinfo",
         "ts7": "node node_modules/@typescript/native/bin/tsc",
-        "build": "tsdown",
+        "build": "NODE_OPTIONS=--max-old-space-size=6144 tsdown",
         "build:console": "bun packages/web/builder/src/bin.ts build",
         "test": "bun test --isolate",
         "test:ci": "bun test --isolate --parallel=4 --coverage --coverage-reporter=text --coverage-reporter=lcov --coverage-dir=coverage",
