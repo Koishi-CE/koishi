@@ -1,5 +1,12 @@
 # @koishi-ce/client
 
+## 1.4.4
+
+### Patch Changes
+
+- Updated dependencies [28e0a85]
+  - @koishi-ce/components@1.1.2
+
 ## 1.4.3
 
 ### Patch Changes
