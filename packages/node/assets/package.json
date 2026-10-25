@@ -38,7 +38,7 @@
 		"@koishi-ce/plugin-http": "workspace:*"
 	},
 	"dependencies": {
-		"file-type": "^22.0.2"
+		"file-type": "^22.2.0"
 	},
 	"exports": {
 		".": {
