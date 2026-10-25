@@ -59,7 +59,7 @@
     },
     "packages/node/cli": {
       "name": "@koishi-ce/koishi",
-      "version": "1.0.20",
+      "version": "1.0.21",
       "bin": {
         "koishi": "lib/cli/index.mjs",
       },
@@ -364,7 +364,7 @@
     },
     "plugins/infra/http": {
       "name": "@koishi-ce/plugin-http",
-      "version": "1.0.1",
+      "version": "1.0.2",
       "dependencies": {
         "@cordisjs/plugin-http": "^0.6.3",
       },
@@ -403,7 +403,7 @@
     },
     "plugins/infra/proxy": {
       "name": "@koishi-ce/plugin-proxy-agent",
-      "version": "1.0.1",
+      "version": "1.0.2",
       "dependencies": {
         "@cordisjs/plugin-proxy-agent": "^0.3.3",
       },
@@ -417,7 +417,7 @@
     },
     "plugins/infra/server": {
       "name": "@koishi-ce/plugin-server",
-      "version": "1.0.1",
+      "version": "1.0.2",
       "dependencies": {
         "@cordisjs/plugin-server": "^0.2.9",
       },
