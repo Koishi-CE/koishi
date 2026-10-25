@@ -9,9 +9,9 @@
       <div class="user-container">
         <el-scrollbar>
           <k-tab-group :data="userMap" v-model="config.user" #="{ name }">
-            <div class="avatar">{{ name[0] }}</div>
+            <div class="avatar">{{ (name as string)[0] }}</div>
             <div class="nick">{{ name }}</div>
-            <div class="close" @click="removeUser(name)">
+            <div class="close" @click="removeUser(name as string)">
               <k-icon name="times-full"></k-icon>
             </div>
           </k-tab-group>

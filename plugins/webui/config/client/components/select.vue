@@ -24,7 +24,7 @@
       <el-scrollbar>
         <div class="package" v-for="({ name, shortname, manifest }) in packages" :key="name" @click.stop="configure(shortname)">
           <h3>{{ shortname }}</h3>
-          <k-markdown inline class="desc" :source="tt(manifest.description)"></k-markdown>
+          <k-markdown inline class="desc" :source="tt(manifest.description) ?? ''"></k-markdown>
         </div>
       </el-scrollbar>
     </div>

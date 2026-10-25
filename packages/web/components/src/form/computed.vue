@@ -23,7 +23,7 @@
   >
     <template #title><slot name="title"></slot></template>
     <template #desc>
-      <k-markdown :source="tt(schema?.meta.description ?? schema?.list?.[0]?.meta.description)"></k-markdown>
+      <k-markdown :source="tt(schema?.meta.description ?? schema?.list?.[0]?.meta.description) ?? ''"></k-markdown>
     </template>
     <template #menu>
       <div class="k-menu-separator"></div>
@@ -96,6 +96,10 @@
 
 <script lang="ts" setup>
 import { clone } from "cosmokit";
+// 刻意从 "schemastery-vue/client" 虚拟子路径导入而非包名本身：裸名会把
+// 仅以 TS 源码发布的 schemastery-vue 源码拉进类型程序（不满足超严格
+// 配置），类型由 shims.d.ts 的 ambient 与 schemastery-client.ts 双轨提供
+// （缘由见 form/index.ts 头注释）
 import {
 	IconArrowDown,
 	IconArrowUp,
@@ -105,7 +109,7 @@ import {
 	IconInsertBefore,
 	type Schema,
 	useI18nText,
-} from "schemastery-vue";
+} from "schemastery-vue/client";
 import { computed, type PropType } from "vue";
 import KFilterButton from "./filter-button.vue";
 import type { FilterExpr } from "./filter-types";

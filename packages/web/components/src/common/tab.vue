@@ -4,7 +4,8 @@
 
 <!--
   k-tab：水平选项卡（文字式切换器）。
-  data 为 "键 → 文案" 映射，点击某项时通过 v-model 更新选中键；
+  data 为 "键 → 文案" 映射，或纯文案数组（此时选中键为数组索引），
+  点击某项时通过 v-model 更新选中键；
   相邻项之间以 "|" 分隔，选中项高亮。
 -->
 <template>
@@ -18,7 +19,7 @@
 
 <script lang="ts" setup>
 defineProps<{
-	data: Record<string | number, string>;
+	data: Record<string | number, string> | readonly string[];
 	modelValue: string | number;
 }>();
 

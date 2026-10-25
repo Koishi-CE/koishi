@@ -10,7 +10,7 @@
   <!-- content 缺省时回退空串（与 el-tooltip 自身的空默认一致） -->
   <el-tooltip v-if="!hidden" :disabled="disabled" :content="toValue(item.label) ?? ''" placement="bottom">
     <span class="menu-item" :class="[toValue(item.type), { disabled }]" @click="trigger">
-      <k-icon class="menu-icon" :name="toValue(item.icon)"></k-icon>
+      <k-icon class="menu-icon" :name="toValue(item.icon) ?? ''"></k-icon>
     </span>
   </el-tooltip>
 </template>
