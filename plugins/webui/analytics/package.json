@@ -61,7 +61,7 @@
 		"@koishi-ce/client": "workspace:*",
 		"echarts": "^6.1.0",
 		"@koishi-ce/koishi": "workspace:*",
-		"vite": "^8.3.4",
+		"vite": "^8.3.5",
 		"vue-echarts": "^8.3.2"
 	},
 	"dependencies": {
