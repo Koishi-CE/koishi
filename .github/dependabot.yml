@@ -68,7 +68,12 @@ updates:
       # ④ npm: alias 形态的依赖（TS 双版本策略载体）
       - dependency-name: "typescript"
       - dependency-name: "@typescript/native"
-      # ⑤ 全局：major 升版一律人工评估
+      # ⑤ Biome 2.6 暂缓：2.6 改了 CSS / YAML / Markdown 的默认格式化面
+      #    （全仓约 180 个文件需重排），且 correctness/noUnknownUnit 对 SCSS
+      #    自定义属性里的十六进制颜色误报（biomejs/biome#12332，2.6.3 仍未修）。
+      #    待上游修复后单独开迁移 PR，届时删除本条。
+      - dependency-name: "@biomejs/biome"
+      # ⑥ 全局：major 升版一律人工评估
       #    （ignore 不作用于 security updates，安全更新仍会照常提出）
       - dependency-name: "*"
         update-types: ["version-update:semver-major"]
