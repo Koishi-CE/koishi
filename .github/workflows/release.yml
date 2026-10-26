@@ -1,6 +1,6 @@
 # 发布流水线（npm OIDC 可信发布）
 #
-# 形态：两个串联 job，按「能不能换到 OIDC token」切分——只有 publish 持
+# 形态：三个串联 job，按「持有什么凭证」切分——只有 publish 持
 # id-token: write 且挂 environment 审批。动机：npm 的可信发布把发布权授给
 # 「谁能让本文件在 main 上跑起来」，因此**构建期可执行的代码绝不能与 OIDC
 # token 同处一个 job**。package.json 的脚本、tsdown.config.ts、各插件
@@ -11,6 +11,32 @@
 #            （contents: write，**无** id-token）
 #   publish  解包 artifact → 逐包 npm publish
 #            （id-token: write + environment 审批，**无** contents: write）
+#   tag      发布成功后打两类 tag（contents: write，**无** id-token，
+#            不 checkout 构建、不 install）：
+#              · release/<日期>-<序号>  每批一个，轻量、无 Release
+#              · milestone/<major>.<minor>  该兼容线首次出现时，annotated + draft Release
+#
+# tag 环为什么排在 publish 之后、且单独成 job：
+# - 顺序：tag 是「这批已经上线」的记录；publish 失败或审批被拒时不该留下 tag。
+# - 独立性：publish 已持 id-token，再给 contents: write 就等于同时握着「发任意
+#   包版本」与「写仓库」两种能力；tag 环只需要后者，拆开才是最小权限。本 job
+#   不 checkout、不 install、不构建，只用 gh api 与下载好的正文。
+# - 为什么每批都打 release tag：本仓是 53 条独立版本线的 monorepo，没有整仓
+#   版本号；批次 tag 只回答「npm 上这套版本对应哪棵树」。2026-09-14～10-25 有
+#   27 个发布提交（单日最多 4 个），故名字必须带日期 + 当日序号；它不建
+#   Release 对象（一年约 240 个，Release 页面会被刷屏）。
+# - 为什么里程碑跟 core 的 minor：`@koishi-ce/core` 的 major.minor 恰是插件
+#   peer（`^1.0.0`）的兼容边界，适合当「线」的标记；里程碑只在线的首个 tag
+#   不存在时创建，频率是几条/年，正好放 GitHub Releases 页面。早期按 core
+#   完整版本打的 v1.1.5 / v1.1.8 属历史遗留（不可变 Release），1.1 线由它们
+#   代表，故不会再补 milestone/1.1——判定见 prepare。
+# - 正文只建 draft：本仓 Release 发布后不可修改（immutable），自动产出的骨架
+#   必须先经人按主题改写再发布。里程碑 tag 在建 draft 时已单独建好（draft 本身
+#   不建 tag），因此 draft 拖着不发不影响 git 侧的标签记录。
+# - 凭证用默认 GITHUB_TOKEN：仓库规则集只有 target=branch 的「保护主分支」，
+#   tag 不受保护，GITHUB_TOKEN 足够；代价是它不触发 push 事件，GitLab 镜像的
+#   `push: tags` 收不到，靠 mirror-gitlab.yml 每日 03:17 的兜底对账补上（最多
+#   一天延迟）。
 #
 # 为什么 version 与 build 合成一个 job、不再跨 job 传 SHA：
 # 早先的写法是 version job 输出提交 SHA，build job 用
@@ -126,6 +152,12 @@ jobs:
       contents: write # 提交版本变化 + 推送 main
     outputs:
       changed: ${{ steps.bump.outputs.changed }}
+      # 版本提交 SHA：批次 tag 与里程碑 tag 都打在这个提交上（publish 可能等审批
+      # 跨夜，届时 main 已前进，打 main 的当前 tip 会指到一棵没发布出去的树）
+      commit: ${{ steps.bump.outputs.commit }}
+      # 需要新建里程碑时的兼容线（`<major>.<minor>`）；为空表示该线已有里程碑或
+      # 由历史 v<major>.<minor>.x tag 代表，本次不建
+      milestone: ${{ steps.bump.outputs.milestone }}
     steps:
       # persist-credentials: false —— checkout 默认把 GITHUB_TOKEN 写进
       # .git/config 的 http.<url>.extraheader 并一直生效；推送已改用 App token，
@@ -151,21 +183,44 @@ jobs:
       - id: bump
         name: 消费 changeset（只提交，推送留到构建与测试通过之后）
         run: |
-          # skip-version（补发）：changeset 已被消费，跳过 version 环但继续构建与
-          # 发布——changed 在此处的含义是「本次运行要构建并发布」
+          # 本步产出三个输出：
+          #   changed    本次运行是否要构建并发布
+          #   commit     tag 环要打的提交（正常路径 = 版本提交；补发路径 = 当前 HEAD）
+          #   milestone  需要新建里程碑时的兼容线（`<major>.<minor>`）；为空表示不建
           if [ "${{ inputs.skip-version }}" = "true" ]; then
+            # 补发：changeset 已被消费，跳过 version 环但继续构建与发布。
+            # HEAD 就是要发布的那棵树（artifact 由它构建），tag 也打在它上面
             echo "changed=true" >> "$GITHUB_OUTPUT"
+            echo "commit=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
             echo "::notice::skip-version：跳过 changeset 消费，直接构建并发布当前提交"
-            exit 0
-          fi
-          before=$(git rev-parse HEAD)
-          bun run release version --commit
-          after=$(git rev-parse HEAD)
-          if [ "$before" = "$after" ]; then
-            echo "changed=false" >> "$GITHUB_OUTPUT"
-            echo "::notice::无版本变化（条目可能全部命中 changesets ignore 列表），跳过构建与发布"
           else
+            before=$(git rev-parse HEAD)
+            bun run release version --commit
+            after=$(git rev-parse HEAD)
+            if [ "$before" = "$after" ]; then
+              echo "changed=false" >> "$GITHUB_OUTPUT"
+              echo "::notice::无版本变化（条目可能全部命中 changesets ignore 列表），跳过构建与发布"
+              exit 0
+            fi
             echo "changed=true" >> "$GITHUB_OUTPUT"
+            echo "commit=$after" >> "$GITHUB_OUTPUT"
+          fi
+          # 批次 tag 每批都打（tag job 负责），这里只判断里程碑：core 的
+          # major.minor 是插件 peer 的兼容边界，该线还没有标记时才建。
+          # 两条「已有标记」的判据：
+          #   1. milestone/<线> 已存在——本机制上线后打过的线；
+          #   2. 历史遗留的 v<线>.x 存在——机制上线前按 core 完整版本打的
+          #      v1.1.5 / v1.1.8，1.1 线由它们代表，不再补 milestone/1.1。
+          # checkout 是 fetch-depth: 0，tag 都在本地，判据用 git 而非 API。
+          core=$(node -p "require('./packages/node/core/package.json').version")
+          line=$(echo "$core" | cut -d. -f1,2)
+          if git rev-parse -q --verify "refs/tags/milestone/${line}" > /dev/null; then
+            echo "::notice::里程碑 milestone/${line} 已存在，本次不建里程碑"
+          elif [ -n "$(git tag -l "v${line}.*" | head -n1)" ]; then
+            echo "::notice::里程碑 milestone/${line} 由历史 v${line}.x tag 代表，不补建"
+          else
+            echo "milestone=${line}" >> "$GITHUB_OUTPUT"
+            echo "::notice::发布成功后将创建里程碑 milestone/${line} 并建 draft Release"
           fi
       - if: steps.bump.outputs.changed == 'true'
         run: bun run release build
@@ -202,6 +257,19 @@ jobs:
           GH_TOKEN: ${{ steps.app-token.outputs.token }}
         run: |
           git -c core.hooksPath=/dev/null push "https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" HEAD:main
+      # 里程碑正文骨架只在这次要建里程碑时才需要（`milestone` 非空），与 tag 环
+      # 的里程碑分支同条件——批次 tag 不需要正文。走 notes 子命令：上一个
+      # milestone/* 或历史 v* tag → HEAD 的 CHANGELOG 新增条目 + 版本表 + PR 列表。
+      # 正文写 stdout、进度写 stderr，故这里直接重定向取文件。
+      - if: steps.bump.outputs.changed == 'true' && steps.bump.outputs.milestone != ''
+        name: 生成里程碑正文骨架
+        run: bun run release notes > "$RUNNER_TEMP/release-notes.md"
+      - if: steps.bump.outputs.changed == 'true' && steps.bump.outputs.milestone != ''
+        uses: actions/upload-artifact@v7
+        with:
+          name: release-notes
+          path: ${{ runner.temp }}/release-notes.md
+          retention-days: 30
       # 打包给 publish job；node_modules 与 .git 都不需要
       - if: steps.bump.outputs.changed == 'true'
         name: 打包工作区
@@ -240,7 +308,9 @@ jobs:
     environment:
       name: release
     permissions:
-      contents: read # tag / GitHub Release 仍由人工补打，此处不需要写权限
+      # tag / GitHub Release 由后面的 tag job 负责（它只持 contents: write），
+      # 本 job 保持只读——持有 OIDC 的 job 不再额外获得写仓库能力
+      contents: read
       id-token: write # OIDC：换包级短时 token + 自动 provenance
     steps:
       - uses: oven-sh/setup-bun@v2
@@ -282,3 +352,97 @@ jobs:
         env:
           NPM_CONFIG_LOGLEVEL: verbose
         run: bun run release publish
+
+  tag:
+    name: tag（批次 tag + 里程碑）
+    needs: [prepare, publish]
+    # publish 成功才打 tag：审批被拒 / 发包中断时不该留下「已发布」的记录。
+    # commit 为空只发生在 changed=false（本次没有要发布的提交），此时也不该打 tag。
+    if: needs.publish.result == 'success' && needs.prepare.outputs.commit != ''
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    # 写仓库（建 tag 与 draft Release）但不持 OIDC。本 job 不 checkout、不 install、
+    # 不执行任何构建期代码——只用 gh / jq / date 与下载好的正文，攻击面限于「写 tag」。
+    permissions:
+      contents: write
+    steps:
+      # 批次 tag：每批发布一个，轻量（不造 tag 对象）、不建 Release。
+      # 它只回答「npm 上这套版本对应哪棵树」，名字必须带日期与当日序号：
+      # 2026-09-14～10-25 的 27 个发布提交里，单日最多 4 个。
+      - name: 打批次 tag
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          COMMIT: ${{ needs.prepare.outputs.commit }}
+        run: |
+          # 日期取版本提交的 committer 时间、按 Asia/Shanghai 渲染：仓内 CHANGELOG
+          # 与维护者的日历口径都是 +08，用 runner 的 UTC 会把「凌晨发布的批次」
+          # 记到前一天。
+          iso=$(gh api "repos/${GITHUB_REPOSITORY}/commits/${COMMIT}" --jq '.commit.committer.date')
+          day=$(TZ=Asia/Shanghai date -d "$iso" +%Y.%m.%d)
+          refs=$(gh api --paginate "repos/${GITHUB_REPOSITORY}/git/matching-refs/tags/release/${day}-" 2>/dev/null || echo '[]')
+          if [ -z "$refs" ]; then refs='[]'; fi
+          # 幂等：同一提交已有批次 tag（tag job 重跑）→ 跳过，不追加 -2
+          same=$(echo "$refs" | jq -r --arg c "$COMMIT" '[.[] | select(.object.sha == $c)] | length')
+          if [ "$same" -gt 0 ]; then
+            echo "::warning::提交 ${COMMIT} 已有批次 tag，跳过"
+            exit 0
+          fi
+          seq=$(echo "$refs" | jq -r '[.[] | .ref | capture("-(?<n>[0-9]+)$").n | tonumber] | (max // 0) + 1')
+          tag="release/${day}-${seq}"
+          gh api -X POST "repos/${GITHUB_REPOSITORY}/git/refs" \
+            -f ref="refs/tags/${tag}" \
+            -f sha="$COMMIT" > /dev/null
+          echo "::notice::已创建批次 tag ${tag} → ${COMMIT}"
+      # 里程碑才有正文：只在 prepare 判定「该兼容线还没有标记」时下载骨架。
+      - if: needs.prepare.outputs.milestone != ''
+        uses: actions/download-artifact@v8
+        with:
+          name: release-notes
+          path: ${{ runner.temp }}/release-notes
+      # 里程碑 tag 用 annotated（与历史 v1.1.5 / v1.1.8 同形态：带 tagger 与
+      # message）。指向版本提交 SHA 而非 main 的 tip：publish 可能等审批跨夜，
+      # 期间 main 已前进，打 tip 会指到一棵没发布出去的树。
+      - if: needs.prepare.outputs.milestone != ''
+        name: 打里程碑 tag
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          COMMIT: ${{ needs.prepare.outputs.commit }}
+          MILESTONE: ${{ needs.prepare.outputs.milestone }}
+        run: |
+          tag="milestone/${MILESTONE}"
+          if gh api "repos/${GITHUB_REPOSITORY}/git/ref/tags/${tag}" > /dev/null 2>&1; then
+            echo "::warning::里程碑 ${tag} 已存在，跳过创建（上一轮可能已建好）"
+            exit 0
+          fi
+          # 两段式：先造 tag 对象（annotated），再把它挂到 refs/tags/<tag>。
+          # 用默认 GITHUB_TOKEN 即可——仓库规则集只保护分支，tag 不在保护范围。
+          object=$(gh api -X POST "repos/${GITHUB_REPOSITORY}/git/tags" \
+            -f tag="$tag" \
+            -f message="Koishi-CE ${tag}（core ${MILESTONE}.x 兼容线里程碑）" \
+            -f object="$COMMIT" \
+            -f type=commit \
+            --jq .sha)
+          gh api -X POST "repos/${GITHUB_REPOSITORY}/git/refs" \
+            -f ref="refs/tags/${tag}" \
+            -f sha="$object" > /dev/null
+          echo "::notice::已创建里程碑 tag ${tag} → ${COMMIT}"
+      # draft 不建 tag、也不对外可见：人在这里把正文按主题改写后再点发布。
+      # 发布后不可修改（immutable），所以正文的最后一道关必须是人。
+      - if: needs.prepare.outputs.milestone != ''
+        name: 建里程碑 draft Release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          MILESTONE: ${{ needs.prepare.outputs.milestone }}
+        run: |
+          tag="milestone/${MILESTONE}"
+          # 幂等：重跑时 Release 可能已存在，不当成失败——tag 与正文都已在上一轮落地
+          if gh release view "$tag" > /dev/null 2>&1; then
+            echo "::warning::Release ${tag} 已存在，跳过创建"
+            exit 0
+          fi
+          gh release create "$tag" \
+            --verify-tag \
+            --draft \
+            --title "Koishi-CE ${MILESTONE} 线里程碑" \
+            --notes-file "$RUNNER_TEMP/release-notes/release-notes.md"
+          echo "::notice::draft Release ${tag} 已创建：改写正文后发布即可"

@@ -11,6 +11,7 @@ bun run release status                    # 概览：pending changeset、本地�
 bun run release version                   # 消费 .changeset/ 条目（changeset version）+ bun install 刷新 lockfile
 bun run release build                     # 根 tsdown → 宿主控制台总装（console/dist）→ 各 webui 插件前端 dist
 bun run release test                      # 范围化自有用例（bun test --isolate 的子集）
+bun run release notes                     # 生成里程碑 Release 的正文骨架（上一个 milestone/* 或历史 v* tag → HEAD，写 stdout）
 bun run release publish                   # registry 比对 → 所有权预检 → 拓扑序逐包 npm publish（workspace 协议改写）
 bun run release pipeline                  # 一条龙：preflight → version → 提交 → build → test → publish → push
 ```
@@ -29,7 +30,7 @@ bun run release pipeline                  # 一条龙：preflight → version �
 4. **build**：node 侧 lib 产物 + 宿主控制台总装 + 各 webui 插件前端。
 5. **test**：`bun run release test` = `bun test --isolate packages plugins/common plugins/webui/admin plugins/webui/commands`——范围化子集（源码 `runTestStep`），不含 apps 与 tooling 用例；全量测试仍以本地 `bun test` 为准。`--isolate` 不可省（缺了跨文件 `mock.module` 互相串扰）。
 6. **publish**：按拓扑序逐包发布。publish 环负责把 `workspace:*` 协议改写为真实版本号（`workspace:^` 等其他协议形式直接拒绝），并带**终局断言**（依赖字段不得残留 `workspace:` / `file:` / `link:`）。
-7. **push**：推送 `main`（只推 main，不打 tag——tag 环已删除；对外 GitHub Release 的单整体 tag 手动补打，跟 core 版本走）。**这是全仓唯一允许直推 `main` 的路径**：本仓一切改动都走 PR（见 [../guides/development.md](../guides/development.md) §2 与根 `AGENTS.md` 的 git 提交流程节），发布链的版本提交是既定例外，不构成人工直推 `main` 的许可。
+7. **push**：推送 `main`。**本地链不打 tag**——CI 的 `tag` job 在每批发布成功后打轻量批次 tag `release/<日期>-<序号>`，并在兼容线首次出现时打里程碑 `milestone/<major>.<minor>` + 建 draft Release（见 §7.1）。**这是全仓唯一允许直推 `main` 的路径**：本仓一切改动都走 PR（见 [../guides/development.md](../guides/development.md) §2 与根 `AGENTS.md` 的 git 提交流程节），发布链的版本提交是既定例外，不构成人工直推 `main` 的许可。
 
 ## 3. changesets 约定
 
@@ -65,7 +66,7 @@ npm 的暂存发布（staged publishing）会在版本公开前插入人工批�
 
 本地发布链之外，仓库另有 `.github/workflows/release.yml`：**携带 changeset 的 PR 合并进 main 后，由 CI 自动消费 changeset 并把包发上 npm**，全程无需本地发包。npm 侧走**可信发布（Trusted Publisher / OIDC）**，不存在任何长期 token（本机也从此不持有发布能力）。
 
-### 7.1 触发与两 job 分工
+### 7.1 触发与三个 job 分工
 
 触发为 `push: main` 且 `paths: ['.changeset/**']`（只有携带 changeset 的合并才值得跑），外加 `workflow_dispatch` 作补发 / 重跑逃生舱；`concurrency: group: release` 且不取消进行中的运行，避免两个运行同时消费 changeset 撞版本号。
 
@@ -75,6 +76,7 @@ npm 的暂存发布（staged publishing）会在版本公开前插入人工批�
 | --- | --- | --- |
 | `prepare` | `release version --commit` → `release build` → `release test` → 用 GitHub App token 推送版本提交 → 打包 artifact | `contents: write`，**无** `id-token` |
 | `publish` | 解包 artifact → `release publish`（逐包 npm publish） | `id-token: write` + `environment: release` 审批，**无** `contents: write` |
+| `tag` | 每批打 `release/<日期>-<序号>` 轻量 tag；该兼容线首次出现时另打 `milestone/<major>.<minor>` 并建 draft Release | `contents: write`，**无** `id-token` |
 
 设计约束：
 
@@ -90,6 +92,15 @@ npm 的暂存发布（staged publishing）会在版本公开前插入人工批�
   - **按包核对信任配置**：`@koishi-ce/plugin-console` 的 latest（1.4.1，09-25）由人工本机发布、无 provenance，从未经 CI 通道发过；同批的 `plugin-market` 则是 09-28 由 CI 发布并带 provenance。信任配置是**逐包**对象，缺一个就只卡一个包，且卡在它第一次经 CI 发布的时候。
   - **2026-10-17 实证（run 39008703163）**：开启 verbose 后重跑，日志给出完整链条——`npm http fetch GET …/idtoken/…?audience=npm%3Aregistry.npmjs.org 200`（id_token 取到，权限无误），紧接着 `npm http fetch POST 404 https://registry.npmjs.org/-/npm/v1/oidc/token/exchange/package/@koishi-ce%2fplugin-console`，npm 的 `oidc` 消息为 `Failed token exchange request with body message: OIDC token exchange error - package not found`。**「package not found」不是包不存在，而是该包在 registry 侧没有与本工作流匹配的信任配置**（已存在但与 claims 不符时，registry 同样按「查不到」回应，不区分）。修法见 §7.4 第 5 条。
   - **同日同形态再犯（run 39013464620，PR #64 合并后）**：`@koishi-ce/console-builder@1.0.5` 正常发出，紧接着 `@koishi-ce/plugin-admin@1.1.3` 换 token 404 并中断，让同批另外 13 个包全部卡住。根因不只是「没配」：npm 新建的信任配置 **2 天内不完成首次发布就失效**（§7.4 第 5 条），所以提前配好的那批包一旦跨过发布窗口就集体作废；而发布链又在首个失败处中断，一轮只能撞出一个缺口。现在 publish 环会在发包前做预检（§7.4 第 6 条）：缺配置一次列全，且一个包都不发。
+- **tag 分两类，回答的是两个不同问题**：
+  - `release/<YYYY.MM.DD>-<序号>`：**每批发布一个**，轻量 tag、不建 Release。本仓是 53 条独立版本线的 monorepo，没有整仓版本号——这类 tag 只回答「npm 上这套版本对应哪棵树」，故打在 `prepare` 输出的版本提交 SHA 上。日期按 Asia/Shanghai 取版本提交的 committer 时间，序号取同日最大值 +1：2026-09-14 至 10-25 的 27 个发布提交里单日最多 4 个，纯日期必撞。同一提交已有批次 tag 时跳过（tag job 重跑幂等）。
+  - `milestone/<major>.<minor>`：**该兼容线首次出现时**打 annotated tag 并建 draft Release，跟 core 的 major.minor 走——它正是插件 peer（`^1.0.0`）的兼容边界，频率是几条/年，适合放 GitHub Releases 页面。1.1 线由历史遗留的 `v1.1.5` / `v1.1.8` 代表（按 core 完整版本打的、已 immutable），故不补 `milestone/1.1`；判据在 `prepare`：`milestone/<线>` 或 `v<线>.*` 任一存在即不建。
+- **为什么不再按 core 完整版本打整仓 tag**：`v1.1.8`（及更早的 `v1.1.5`）把 `@koishi-ce/core` 一个包的版本说成了整仓版本——`plugin-market@1.4.5` 与它没有对应关系；而 27 个发布提交里只有 3 个升了 core，另外 24 批在旧规则下根本没有 tag 可打。里程碑只保留「线」的语义，批次 tag 承担溯源；两个旧 tag 保留为历史，不再新增同类。
+- **`tag` 必须是独立 job，不能塞进 `publish`**：`publish` 已持 `id-token: write`，再给它 `contents: write` 就等于同一个 job 同时握着「发这 53 个包的任意版本」与「写仓库」两种能力；tag 环只需要后者。该 job 不 checkout、不 install、不构建，只用 `gh` / `jq` / `date` 与下载好的 artifact，攻击面限于「写 tag」。
+- **tag 指向版本提交 SHA，不指向 main 的 tip**：`publish` 可能等审批跨夜（见上一条事故里的 25 小时），期间 main 已前进；打 tip 会把 tag 指到一棵没有发布出去的树。`prepare` 输出 `commit` 供 `tag` job 使用。
+- **只给里程碑建 draft Release**：本仓 Release 发布后不可修改（`v1.1.5`、`v1.1.8` 的 `isImmutable` 均为 true），自动生成的骨架必须先经人按主题改写再发布。批次 tag 不建 Release——一年约 240 个，会把 Releases 页面刷屏。draft 本身不建 tag——里程碑 tag 已在同 job 的前一步单独建好，因此 draft 拖着不发不影响 git 侧的标签记录，GitLab 镜像也能照常收到。
+- **tag 用默认 `GITHUB_TOKEN` 建**：仓库规则集只有 `target=branch` 的「保护主分支」，tag 不在保护范围，不需要 App token 的 bypass。代价是 `GITHUB_TOKEN` 不触发 `push` 事件，`mirror-gitlab.yml` 的 `push: tags` 收不到——靠它每日 03:17 的兜底对账补上（最多一天延迟）。
+- **正文骨架由 `release notes` 生成**（`tooling/release/steps/notes.ts`）：区间为「上一个 `milestone/*` → HEAD」，没有里程碑 tag 时回退历史 `v*`，都没有才回退仓库首个提交。版本表只列区间内升版的包（changesets ignore 的 shim 四包除外）；变更明细分「跨包批量变更」与「单包明细」两节，超长 changeset 截断到 160 字并标注「详见 CHANGELOG」；尾部附区间内 PR 的折叠列表作为按主题归并的素材。本地可 `bun run release notes` 直接预览（只读；正文写 stdout、进度写 stderr）。
 
 ### 7.2 OIDC 的信任边界（改本文件前必读）
 
@@ -102,7 +113,7 @@ npm 的信任配置把 `repository` / `workflow_ref.file` / `environment` 三个
 
 ### 7.3 与本地链的关系
 
-- 本地 `bun run release pipeline` 仍可用（走本机 2FA 认证），适合演练与排查；**日常发布不再需要它**。
+- 本地 `bun run release pipeline` 仍可用（走本机 2FA 认证），适合演练与排查；**日常发布不再需要它**。本地链不打 tag——批次 / 里程碑 tag 都只在 CI 上打；演练需要对外记录时，发布后按 §7.1 的口径自行补打，里程碑正文可先用 `bun run release notes` 生成骨架。
 - 补发 / 重发坏版本：优先 `workflow_dispatch` 重跑 CI 链——**changeset 已被消费时必须置 `skip-version=true`**（见 §7.1），否则 `prepare` 会 `changed=false`、publish 直接跳过；确实要在本地补发时仍走 `bun run release publish --only <包名>`。
 - OIDC 模式下 `npm whoami` / `npm owner ls` 必然失败（没有登录态——npm 换到的是**包级**短时 token，见 npm CLI 的 `lib/utils/oidc.js`），故 `release` 工具检测到 `ACTIONS_ID_TOKEN_REQUEST_URL` 时自动跳过登录与所有权预检；本地路径行为不变。
 - **npm CLI 需 ≥ 11.15.0**：`permissions` 字段（由 `--allow-publish` 生成）自该版本起才随 trust 请求下发，更早版本会被 registry 以 `400 Bad Request` 拒绝（症状极具迷惑性：读取现状全部成功、逐包创建全部 E400）。CI 里由 workflow 显式 `npm install -g npm@11` 保证，本地开发口径为 11.20.0。

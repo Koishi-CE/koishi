@@ -12,6 +12,7 @@
  *   status    概览：pending changeset、本地版本 vs registry、发布序
  *   version   消费 .changeset/ 条目（changeset version）+ bun install 刷新 lockfile
  *   build     根 tsdown → 宿主控制台总装（console/dist）→ 各 webui 插件前端 dist
+ *   notes     生成里程碑 Release 的正文骨架（上一个 milestone/* 或 v* tag → HEAD，stdout）
  *   publish   registry 比对 → 所有权预检 → 拓扑序逐包 npm publish（workspace:* 改写）
  *   pipeline  一条龙：preflight → version → 提交 → build → test → publish → push
  *
@@ -22,7 +23,7 @@
  * 字段自动推导而非手工列举。
  *
  * 模块划分：index / pipeline（命令与编排）留根 → steps/（status,
- * version, build, publish 四个阶段实现）→ core/（proc, registry,
+ * version, build, notes, publish 五个阶段实现）→ core/（proc, registry,
  * workspace, shared, options 底层能力：进程执行 / registry 查询 /
  * workspace 纯逻辑 / 并发池 / 参数解析），依赖严格单向、无回边。
  */
@@ -32,6 +33,7 @@ import {
 	runBuildSteps,
 	runTestStep,
 } from "./steps/build.ts";
+import { cmdNotes } from "./steps/notes.ts";
 import { runPublishSteps } from "./steps/publish.ts";
 import { cmdStatus } from "./steps/status.ts";
 import { cmdVersion } from "./steps/version.ts";
@@ -46,6 +48,9 @@ const HELP = `Koishi-CE 发布工具链（tooling/release）
   build             根 tsdown + 宿主控制台总装 + 各 webui 插件前端 dist
   test              自有用例子集（bun test --isolate packages plugins/common
                     plugins/webui/admin plugins/webui/commands）
+  notes             生成里程碑 Release 的正文骨架（上一个 milestone/* 或保留
+                    的历史 v* tag → HEAD；写 stdout、进度走 stderr，CI 以
+                    重定向取正文）
   publish           registry 比对 → 所有权预检 → 拓扑序逐包 npm publish
   pipeline          一条龙：preflight → version → 提交 → build → test → publish
 
@@ -64,10 +69,14 @@ const HELP = `Koishi-CE 发布工具链（tooling/release）
 
 环境变量：RELEASE_REGISTRY 可切换 registry 查询源（默认 registry.npmjs.org）。
 
-CI（.github/workflows/release.yml）把发布拆成三个 job：version 提交版本、
-build 构建并测试（无 id-token）、publish 在 environment 审批下用 OIDC 发包。
-GitHub Actions 里授予了 id-token: write 时（ACTIONS_ID_TOKEN_REQUEST_URL 存在），
-npm 登录态预检与所有权预检自动跳过——OIDC 下没有 token，这两项必然失败。`;
+CI（.github/workflows/release.yml）把发布拆成三个 job：prepare 消费
+changeset、构建、测试并推送版本提交（无 id-token）；publish 在 environment
+审批下用 OIDC 发包（无 contents: write）；tag 在发布成功后打批次 tag
+（release/<日期>-<序号>，轻量、无 Release），并在 core 的 minor 兼容线首次
+出现时另打里程碑 milestone/<major>.<minor> + 建 draft Release（无 id-token）。
+GitHub Actions 里授予了 id-token: write 时（ACTIONS_ID_TOKEN_REQUEST_URL
+存在），npm 登录态预检与所有权预检自动跳过——OIDC 下没有 token，这两项必然
+失败。notes 只读，可在本地预览里程碑正文骨架。`;
 
 /** CLI 入口：解析命令与旗标并分发。 */
 async function main(): Promise<number> {
@@ -100,6 +109,9 @@ async function main(): Promise<number> {
 		}
 		case "test": {
 			return await runTestStep();
+		}
+		case "notes": {
+			return await cmdNotes();
 		}
 		case "publish": {
 			return await runPublishSteps(options);
