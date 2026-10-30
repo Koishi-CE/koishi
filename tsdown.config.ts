@@ -55,7 +55,13 @@ const workspace = {
 		"plugins/infra/*",
 		"plugins/webui/*",
 	],
+	// tsdown 的 exclude 是「整体替换」语义：显式写 exclude 会让内置默认
+	// （**/node_modules/**、**/dist/** 等）全部失效，而 include 都是单层
+	// 通配，于是 glob 父层上的 node_modules（如 packages/node/node_modules）
+	// 也会被当成一个包，生成 entry=src/index.ts 的构建配置并以
+	// UNRESOLVED_ENTRY 失败（2026-10-30 实证）。首行补回该默认值。
 	exclude: [
+		"**/node_modules/**",
 		"plugins/infra/http",
 		"plugins/infra/proxy",
 		"plugins/infra/server",
