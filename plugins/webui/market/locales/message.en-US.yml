@@ -24,7 +24,7 @@ commands.plugin.upgrade:
     self: Upgrade Koishi core
   messages:
     all-updated: All plugins are already up to date.
-    available: Dependency updates are available:
+    available: "Dependency updates are available:"
     prompt: Enter "Y" to upgrade all dependencies, or "N" to cancel.
     cancelled: Operation canceled.
     success: Upgrade Successful!

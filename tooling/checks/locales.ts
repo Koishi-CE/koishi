@@ -34,11 +34,14 @@ const LOCALES = [
 ] as const;
 
 /**
- * 完全跳过检查的路径（相对仓库根，正斜杠分隔）：
+ * 跳过「内容检查」的路径（相对仓库根，正斜杠分隔）：
  * - market：上游原版再分发（硬约束 7，词典为 message./schema. 双前缀
- *   形态，且不随本仓改动，检查无意义）；
+ *   形态，且不随本仓改动，内容检查无意义）；
  * - plugins/webui/locales：plugin-locales 包目录（目录名恰好为
  *   locales，但词条内容来自用户数据目录，包内无词典文件）。
+ *
+ * 这些目录仍会做 YAML 可解析性检查：语法错误会让运行时读取失败，
+ * 与是否对齐上游无关（2026-10-30 修的四份 message.*.yml 即此问题）。
  */
 const SKIP_DIRS = new Set([
 	"plugins/webui/market/locales",
@@ -153,8 +156,23 @@ if (!dirs.length) {
 
 for (const dir of dirs) {
 	const relDir = relative(ROOT, dir).replaceAll("\\", "/");
-	// 完全跳过名单内的路径（上游再分发 / 非词典目录）
-	if (SKIP_DIRS.has(relDir)) continue;
+	// 跳过名单内只豁免内容检查（键对齐 / 语种 / 假翻译），
+	// 语法仍须可解析：这些 .yml 同样会被运行时按 YAML 读取
+	if (SKIP_DIRS.has(relDir)) {
+		for (const name of readdirSync(dir)) {
+			if (!name.endsWith(".yml")) continue;
+			try {
+				Bun.YAML.parse(
+					readFileSync(join(dir, name), "utf8"),
+				);
+			} catch (error) {
+				problems.push(
+					`${relDir}/${name}：YAML 解析失败（${error}）`,
+				);
+			}
+		}
+		continue;
+	}
 	const files = readdirSync(dir).filter((name) =>
 		name.endsWith(".yml"),
 	);
