@@ -24,7 +24,7 @@ commands.plugin.upgrade:
     self: Koishi selbst aktualisieren
   messages:
     all-updated: Alle Plugins sind bereits auf dem neuesten Stand.
-    available: Verfügbare Abhängigkeits-Updates:
+    available: "Verfügbare Abhängigkeits-Updates:"
     prompt: Geben Sie "Y" ein, um alle Abhängigkeiten zu aktualisieren, oder "N", um abzubrechen.
     cancelled: Vorgang abgebrochen.
     success: Aktualisierung erfolgreich!

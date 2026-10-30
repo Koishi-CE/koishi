@@ -24,7 +24,7 @@ commands.plugin.upgrade:
     self: Mettre à jour le noyau de Koishi
   messages:
     all-updated: Tous les plugins sont déjà à jour.
-    available: Mises à jour de dépendances disponibles :
+    available: "Mises à jour de dépendances disponibles :"
     prompt: Saisissez « Y » pour mettre à jour toutes les dépendances, ou « N » pour annuler.
     cancelled: Opération annulée.
     success: Mise à jour réussie !
