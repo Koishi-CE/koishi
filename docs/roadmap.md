@@ -11,6 +11,7 @@
 - **目标**：cordis / minato / @cordisjs/* 整体升入 4.x / 1.x 内洽线，并以 tsdown 从 `@cordisjs/plugin-server` 1.x 重建 vendored `plugins/infra/server`。
 - **状态**：阻塞。2026-08-27 实证：`@satorijs/core@4.6.0` 内部携带 cordis ^3（无 cordis 4 线），同进程双 DI 容器并存、服务注入互相不可见，14/20 测试文件失败，已整体回退至 3.x 内洽线。
 - **补记（2026-09-10 首次上游巡检复核）**：重启条件仍未满足——`@satorijs/core@4.6.0`（npm latest）依赖 cordis ^3.18.1；cordis npm latest 为 `4.0.0-rc.10`（RC 未 stable）；上游 koishi master 无 cordis 4 迁移迹象（基线 4.18.11 后仅 1 个测试提交）。minato 线（仓库已改名 cordiverse/database）3 线止步于 driver-memory 3.7.0 / driver-sqlite 4.7.0，master 全量 4 线。详见 [process/upstream.md](process/upstream.md) 巡检日志。
+- **补记（2026-10-30 复核）**：重启条件仍未满足——cordis npm latest 已至 `4.0.0-rc.12`（仍 RC 未 stable，较上轮 +2 个 rc）；`@satorijs/core` npm latest 仍依赖 `cordis ^3.18.1`；本轮仅核对 npm dist-tags 与依赖声明，未做全量巡检。
 - **重启条件（满足其一）**：`@satorijs/core` 发布依赖 cordis 4 的版本（哪怕 next / beta tag）；或上游 koishi 官方启动 cordis 4 迁移；或本仓决定自建 `@satorijs/core` fork（工作量大，需单独立项）。
 - **依据**：[decisions/upgrade-plan.md](decisions/upgrade-plan.md) Phase 5 节；AGENTS.md 硬性约束 3。
 
@@ -47,6 +48,7 @@
 原「计划与候选」中已完成的条目移此存档，细节以对应文档为准：
 
 - **CI 门禁流水线**（2026-09-10 落地）：`.github/workflows/ci.yml` 三并行 job——`gate`（build → 宿主前端 → check → test + Codecov 覆盖率）、`client`（宿主 + 全部 webui 插件前端构建）、`fallow`（死代码与依赖审计，2026-09-11 由 knip 迁移至 fallow）；词典与文档链接检查同批并入 `bun run check`。详见 [guides/development.md](guides/development.md) §4。另有 triage.yml 自动分诊（issue 指派 / PR 路径打标）已另批落地。
+- **CI 门禁 turbo 化与 merge queue**（2026-09-28 ruleset 起用 merge queue；2026-10 门禁整体迁入 turbo 任务图）：三个必需状态检查 job 全部改为经 turbo 调度（构建 / check 四组 / test 的依赖与并行关系集中在根 `turbo.jsonc`），远程缓存凭据走 OIDC、跨 run 复用，覆盖率经 Codecov 上报。任务图、缓存口径与 merge queue 语义见 [guides/development.md](guides/development.md) §4。
 - **上游同步常态化**（2026-09-10 落地）：巡检机制（`bun run upstream:audit` + triage 分级 + port 规则）与首轮全量结论见 [process/upstream.md](process/upstream.md)。
 
 ## 5. 近期收尾池（backlog）

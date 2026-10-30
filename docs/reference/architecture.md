@@ -137,7 +137,7 @@ node 侧在 `src/`、Vue 侧在 `client/`（上游约定），`koishi.public: ["
 
 ## 5. 测试体系
 
-- 运行器 `bun test`（裸跑即全量，覆盖全部 node 侧包与 tooling 回归；提交前与 CI 走 `bun run test`，带 `--isolate` 隔离跨文件 mock；文件与用例数以实跑输出为准，2026-09-20 实测 126 文件 / 1003 用例）；断言标准为 `bun:test` 的 `expect`（chai 及其插件已于 2026-09-02 全量迁出）；shape 断言用 `packages/node/core/src/__tests__/shape.ts` 注册的 `toHaveShape`。写法与坑见 [../guides/development.md](../guides/development.md) §6。
+- 运行器 `bun test`（裸跑即全量，覆盖全部 node 侧包与 tooling 回归；提交前与 CI 走 `bun run test`，带 `--isolate` 隔离跨文件 mock；文件与用例数以实跑输出为准）；断言标准为 `bun:test` 的 `expect`（chai 及其插件已于 2026-09-02 全量迁出）；shape 断言用 `packages/node/core/src/__tests__/shape.ts` 注册的 `toHaveShape`。写法与坑见 [../guides/development.md](../guides/development.md) §6。
 
 ## 6. 许可证分区（权威：`NOTICE`）
 
