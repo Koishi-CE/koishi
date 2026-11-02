@@ -51,7 +51,7 @@
         "@koishi-ce/console-app": "workspace:*",
         "@vitejs/plugin-vue": "^6.0.10",
         "@vueuse/core": "^15.0.0",
-        "sass-embedded": "^1.106.1",
+        "sass-embedded": "^1.107.0",
         "typescript": "^5.0.0",
         "unocss": "^66.12.0",
         "unplugin-icons": "^24.0.0",
