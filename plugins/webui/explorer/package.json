@@ -96,7 +96,7 @@
     "dependencies": {
         "@koishi-ce/console": "workspace:*",
         "chardet": "^2.2.0",
-        "file-type": "^22.2.0",
+        "file-type": "^22.3.0",
         "picomatch": "^4.0.7"
     }
 }
