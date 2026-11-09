@@ -7,7 +7,7 @@
 # 核心约束：不要改成单文件挂载 koishi.yml。Linux 下单文件 bind mount 绑定
 # 的是宿主机 inode，控制台写回或编辑器原子保存（rename）会让 inode 悬空、
 # 报 EBUSY。必须用目录级挂载，让整个工作区一起持久化。
-name: koishi-ce
+# 不写死 name：compose 默认取目录名，同一主机跑多个 bot 项目时卷名不会撞。
 
 services:
   koishi:
