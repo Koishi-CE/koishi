@@ -1,0 +1,3 @@
+# 构建上下文只保留 Dockerfile 需要的生成物
+seed/node_modules
+seed/bun.lock

@@ -20,6 +20,8 @@
 		"**/tsdown.config.ts",
 		"apps/koishi-create/src/bin.ts",
 		"apps/koishi-scripts/src/bin.ts",
+		// 官方镜像的构建前准备脚本：由 image.yml 与本地构建手动调用
+		"docker/official/prepare.ts",
 		"packages/node/cli/src/cli/index.ts",
 		"packages/node/cli/src/worker/*.ts",
 		"packages/node/core/src/context/index.ts",

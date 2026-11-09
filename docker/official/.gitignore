@@ -1,0 +1,3 @@
+# prepare.ts 的生成物：seed/ 与 entrypoint 副本不入库，避免与模板双份漂移
+seed/
+docker-entrypoint.sh
