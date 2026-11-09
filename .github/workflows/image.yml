@@ -38,11 +38,17 @@ jobs:
     # arm64 走 QEMU，seed 阶段的 bun install 较慢；给足余量
     timeout-minutes: 60
     steps:
-      # workflow_run 用触发它的 main 提交；dispatch 用当前 ref
+      # 不显式指定 ref：workflow_run 下 actions/checkout 默认检出默认分支
+      # （即 Release 刚落地的 main），dispatch 下检出所选 ref。
+      #
+      # 刻意不写 `ref: github.event.workflow_run.head_sha`——那是事件提供的
+      # 任意提交，配上本 workflow 的 packages: write 就是 CodeQL 的
+      # 「privileged workflow 检出不信任代码」（本文件的 if 已限制只接受
+      # main 上的 Release，但静态分析看不到这层守卫）。默认检出根本不读
+      # 事件里的 ref，消除该面；代价是镜像取 main 当前 tip 而非 Release
+      # 那一提交，对「跟随 npm 上 1.x 当前版本」的官方镜像无实质差别。
       - name: Checkout
         uses: actions/checkout@v7
-        with:
-          ref: ${{ github.event.workflow_run.head_sha || github.sha }}
 
       - name: Setup Bun
         uses: oven-sh/setup-bun@v2
