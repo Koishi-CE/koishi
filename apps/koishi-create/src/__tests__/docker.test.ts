@@ -44,6 +44,8 @@ describe("容器化模板文件", () => {
 		);
 		// 降权工具：gosu 是 exec 语义，PID 1 仍是 Koishi CLI
 		expect(file).toContain("gosu");
+		// debian-slim 默认不含时区数据库，TZ 才能生效
+		expect(file).toContain("tzdata");
 	});
 
 	it("entrypoint：空工作区初始化 + 属主对齐 + 降权启动", () => {

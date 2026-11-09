@@ -29,7 +29,7 @@ docker compose up -d --build
 - **持久化边界**：`compose.yaml` 用目录级挂载 `.:/app`（不要改成单文件挂载 `koishi.yml`——Linux 下单文件 bind mount 绑定的是 inode，控制台写回或编辑器原子保存会让 inode 悬空、报 `EBUSY`）。`koishi.yml`、`package.json`、`bun.lock`、`node_modules` 与 `data/` 都在宿主目录里。
 - **端口**：容器内固定 5140；改宿主端口用 `HOST_PORT=8080 docker compose up -d`。容器默认只绑定 `127.0.0.1`，公网访问请加反向代理（需支持 WebSocket）。
 - **时区**：默认 `TZ=Asia/Shanghai`，改环境变量即可。
-- **权限**：容器以镜像自带的 `bun` 用户（uid 1000）运行，entrypoint 会自动对齐挂载目录属主；Linux / WSL2 默认用户即 1000，通常无需手动 `chown`。
+- **权限**：容器以镜像自带的 `bun` 用户（uid 1000）运行，entrypoint 会自动把挂载目录属主对齐到 `1000:1000`；Linux / WSL2 默认用户即 1000，通常无需手动 `chown`。
 - **依赖锁**：请提交 `bun.lock`。有锁时构建与首启都走 `--frozen-lockfile`；没有锁时退化为普通安装（首次会生成锁文件）。
 - **插件市场**：容器内安装 / 更新插件走真实的 `bun install`，`bun-cache` 命名卷缓存安装包，二次安装可命中缓存。
 - **无源码部署**：把 `compose.yaml` 中的 `.:/app` 换成 `koishi-data:/app`，镜像会用内置的 `/seed` 初始化一个空工作区。

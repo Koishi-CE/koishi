@@ -23,8 +23,9 @@ COPY koishi.yml /seed/koishi.yml
 
 # 运行时以 root 启动入口脚本，完成工作区初始化与属主对齐后降权到 bun。
 # gosu 以 exec 方式切换用户，PID 1 仍是 Koishi CLI，SIGTERM 可直达。
+# tzdata 必须显式安装：debian-slim 默认不含时区数据库，只设 TZ 不会生效。
 RUN apt-get update \
- && apt-get install -y --no-install-recommends gosu \
+ && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends gosu tzdata \
  && rm -rf /var/lib/apt/lists/* \
  && mkdir -p /home/bun/.bun/install/cache \
  && chown -R bun:bun /home/bun/.bun
