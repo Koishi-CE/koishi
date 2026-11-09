@@ -1,0 +1,57 @@
+# Koishi CE 容器编排（可变工作区模式）。
+#
+#   docker compose up -d --build      首次构建并启动
+#   docker compose logs -f koishi     跟踪日志
+#   docker compose down               停止（数据保留在宿主工作区）
+#
+# 核心约束：不要改成单文件挂载 koishi.yml。Linux 下单文件 bind mount 绑定
+# 的是宿主机 inode，控制台写回或编辑器原子保存（rename）会让 inode 悬空、
+# 报 EBUSY。必须用目录级挂载，让整个工作区一起持久化。
+name: koishi-ce
+
+services:
+  koishi:
+    build:
+      context: .
+    image: koishi-ce-app:latest
+    # 容器内 PID 1 之外的孤儿进程回收（Puppeteer / FFmpeg 等插件会派生进程）
+    init: true
+    restart: unless-stopped
+    ports:
+      # 默认只绑定回环；公网访问请走反向代理（HTTPS / WebSocket 都要）
+      - "${HOST_BIND:-127.0.0.1}:${HOST_PORT:-5140}:5140"
+    environment:
+      TZ: ${TZ:-Asia/Shanghai}
+      # plugin-server 默认 127.0.0.1，容器内必须监听全部网卡
+      KOISHI_HOST: 0.0.0.0
+      # 容器内端口；如需修改，同时改 koishi.yml 的 server.port 与上面的端口映射
+      KOISHI_PORT: "5140"
+      # 无浏览器环境关闭控制台自动打开
+      KOISHI_CONSOLE_OPEN: "0"
+    volumes:
+      # 工作区目录级挂载：控制台写入的 koishi.yml / package.json / bun.lock /
+      # node_modules 与 data 全部落在宿主项目目录，重启 / 重建容器不丢。
+      - .:/app
+      # 命名卷模式（不挂源码、只用镜像内置种子）把上面一行换成：
+      # - koishi-data:/app
+      # Bun 安装缓存：市场里二次安装 / 更新插件时命中缓存，避免整树重下
+      - bun-cache:/home/bun/.bun/install/cache
+    healthcheck:
+      # 探针不硬编码端口（KOISHI_PORT 由上面注入）；间隔放宽到 60s，
+      # 因为每次探测都会拉起一个 Bun 运行时
+      test:
+        - CMD
+        - bun
+        - -e
+        - 'fetch(`http://127.0.0.1:$${process.env.KOISHI_PORT || 5140}/status`).then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))'
+      interval: 60s
+      timeout: 5s
+      retries: 3
+      start_period: 45s
+    # 给 daemon 的 exit 清理留足时间（CLI 父进程内部还有 10s 兜底）
+    stop_grace_period: 30s
+
+volumes:
+  bun-cache:
+  # 命名卷模式使用（与上面的 koishi-data:/app 挂载配套）
+  koishi-data:

@@ -16,6 +16,26 @@ bun run dev          # 启动（开发模式，启用 HMR 热更新）
 
 启动后访问控制台：<http://127.0.0.1:5140>
 
+## 容器部署（Docker Compose）
+
+用 `bun create koishi-ce --docker` 生成时，项目自带 `Dockerfile`、`docker-entrypoint.sh`、`compose.yaml` 与 `.dockerignore`：
+
+```bash
+docker compose up -d --build
+```
+
+打开控制台 <http://127.0.0.1:5140>。容器是**可变工作区**：控制台插件市场的安装 / 卸载 / 更新、配置保存都会直接写回宿主项目目录，`docker compose down && docker compose up -d` 后全部保留。
+
+- **持久化边界**：`compose.yaml` 用目录级挂载 `.:/app`（不要改成单文件挂载 `koishi.yml`——Linux 下单文件 bind mount 绑定的是 inode，控制台写回或编辑器原子保存会让 inode 悬空、报 `EBUSY`）。`koishi.yml`、`package.json`、`bun.lock`、`node_modules` 与 `data/` 都在宿主目录里。
+- **端口**：容器内固定 5140；改宿主端口用 `HOST_PORT=8080 docker compose up -d`。容器默认只绑定 `127.0.0.1`，公网访问请加反向代理（需支持 WebSocket）。
+- **时区**：默认 `TZ=Asia/Shanghai`，改环境变量即可。
+- **权限**：容器以镜像自带的 `bun` 用户（uid 1000）运行，entrypoint 会自动对齐挂载目录属主；Linux / WSL2 默认用户即 1000，通常无需手动 `chown`。
+- **依赖锁**：请提交 `bun.lock`。有锁时构建与首启都走 `--frozen-lockfile`；没有锁时退化为普通安装（首次会生成锁文件）。
+- **插件市场**：容器内安装 / 更新插件走真实的 `bun install`，`bun-cache` 命名卷缓存安装包，二次安装可命中缓存。
+- **无源码部署**：把 `compose.yaml` 中的 `.:/app` 换成 `koishi-data:/app`，镜像会用内置的 `/seed` 初始化一个空工作区。
+- **备份**：停止容器后复制 `data/` 与 `koishi.yml` 即可；sqlite 的 WAL 在容器停止时已收敛。
+- **Windows 注意**：宿主 `node_modules` 若由 Windows 安装，Linux 容器内不可用；建议先删除宿主 `node_modules` 再启动，或改用命名卷模式。
+
 ## 预装与预写
 
 - **已预装**：基础与控制台插件（@koishi-ce 全家桶）。`koishi.yml` 为配置页导出形态：插件键带 uid 实例后缀，分组带中文 `$label` 标签。其中依赖数据库但非必需的（admin / bind / broadcast / callme / auth）与暂无需启用的（inspect / server-temp / mock）以 `~` 前缀保持禁用——数据库已默认启用，去掉对应 `~` 即可。
