@@ -68,8 +68,8 @@
 		"@koishi-ce/plugin-console": "workspace:*",
 		"@types/d3-force": "^3.0.9",
 		"@vueuse/core": "^15.0.0",
-		"d3-force": "^3.0.0",
-		"vue": "^3.5.44"
+		"d3-force": "^3.0.1",
+		"vue": "^3.5.45"
 	},
 	"dependencies": {
 		"@koishi-ce/console": "workspace:*"
