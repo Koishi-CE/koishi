@@ -64,6 +64,17 @@ bun create koishi-ce
 > [!TIP]
 > 模板项目通过 npm alias 锁住上游依赖避免版本冲突。用户可从插件市场自行添加插件
 
+也可以直接运行官方容器镜像（容器内仍可在控制台插件市场安装 / 卸载 / 更新插件，数据落在 `/app` 卷）：
+
+```bash
+docker run -d --name koishi \
+  -p 127.0.0.1:5140:5140 \
+  -v koishi-data:/app \
+  ghcr.io/koishi-ce/koishi:latest
+```
+
+详见 [docker/official/README.md](docker/official/README.md)。
+
 ---
 
 ## 维护

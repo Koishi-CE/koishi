@@ -1,0 +1,42 @@
+# Koishi CE 官方镜像的 Compose 示例。
+#
+#   docker compose up -d
+#
+# 数据全部落在 koishi-data 命名卷（/app），重建容器不丢；首次启动由镜像内
+# /seed 初始化。升级镜像只需改 tag，工作区与已装插件保留。
+services:
+  koishi:
+    image: ghcr.io/koishi-ce/koishi:latest
+    # 容器内 PID 1 之外的孤儿进程回收（Puppeteer / FFmpeg 等插件会派生进程）
+    init: true
+    restart: unless-stopped
+    ports:
+      # 默认只绑定回环；公网访问请走反向代理（HTTPS / WebSocket 都要）
+      - "${HOST_BIND:-127.0.0.1}:${HOST_PORT:-5140}:5140"
+    environment:
+      TZ: ${TZ:-Asia/Shanghai}
+      # 容器内端口；改它需同时改 /app 卷里 koishi.yml 的 server.port
+      KOISHI_PORT: "5140"
+      KOISHI_CONSOLE_OPEN: "0"
+    volumes:
+      - koishi-data:/app
+      # Bun 安装缓存：市场里二次安装 / 更新插件时命中缓存
+      - bun-cache:/home/bun/.bun/install/cache
+    healthcheck:
+      # 探针不硬编码端口（KOISHI_PORT 由镜像环境注入）；间隔放宽到 60s，
+      # 因为每次探测都会拉起一个 Bun 运行时
+      test:
+        - CMD
+        - bun
+        - -e
+        - 'fetch(`http://127.0.0.1:$${process.env.KOISHI_PORT || 5140}/status`).then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))'
+      interval: 60s
+      timeout: 5s
+      retries: 3
+      start_period: 45s
+    # 给 daemon 的 exit 清理留足时间（CLI 父进程内部还有 10s 兜底）
+    stop_grace_period: 30s
+
+volumes:
+  koishi-data:
+  bun-cache:

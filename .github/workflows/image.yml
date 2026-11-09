@@ -1,0 +1,91 @@
+# 官方镜像构建与发布（GHCR）。
+#
+# 权限隔离：本 workflow 只持 contents: read + packages: write，不持
+# id-token（GHCR 登录用 GITHUB_TOKEN），不执行任何 npm publish。与
+# release.yml 的 OIDC 发布链没有共享凭证，镜像构建期执行的代码拿不到
+# npm 发布能力。
+#
+# 触发：
+# - Release workflow 在 main 上成功后自动构建（workflow_run 只看默认分支，
+#   PR 代码不会进入镜像）；
+# - workflow_dispatch 作补发 / 重跑逃生舱。
+#
+# 镜像 tag：latest（默认分支）、sha-<短哈希>、YYYYMMDD-<短哈希>。
+name: Image
+
+on:
+  workflow_run:
+    workflows: [Release]
+    types: [completed]
+  workflow_dispatch:
+
+concurrency:
+  group: image
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  build:
+    # workflow_run：只接受 main 上成功的 Release；dispatch：任意手动触发
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      (github.event.workflow_run.conclusion == 'success' &&
+      github.event.workflow_run.head_branch == 'main')
+    runs-on: ubuntu-latest
+    # arm64 走 QEMU，seed 阶段的 bun install 较慢；给足余量
+    timeout-minutes: 60
+    steps:
+      # workflow_run 用触发它的 main 提交；dispatch 用当前 ref
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          ref: ${{ github.event.workflow_run.head_sha || github.sha }}
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          # 与镜像基础镜像及 packageManager 钉线保持一致
+          bun-version: 1.4.2
+
+      # 从 create-koishi-ce 的默认模板生成 seed/ 与 entrypoint 副本
+      - name: Prepare seed
+        run: bun docker/official/prepare.ts
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+
+      - name: Set up Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ghcr.io/koishi-ce/koishi
+          tags: |
+            type=raw,value=latest,enable={{is_default_branch}}
+            type=sha,prefix=sha-
+            type=raw,value={{date 'YYYYMMDD'}}-{{sha}}
+
+      - name: Build and push
+        uses: docker/build-push-action@v6
+        with:
+          context: docker/official
+          platforms: linux/amd64,linux/arm64
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          provenance: true
+          sbom: true
