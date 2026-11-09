@@ -47,8 +47,14 @@ export function apply(ctx: Context, config: Config = {}) {
 	/**
 	 * 信号处理：先通知父进程"本次是主动退出"（防止被当作崩溃重启），
 	 * 再广播 exit 事件等待各插件清理完毕后结束进程。
+	 *
+	 * 幂等：本地终端 Ctrl+C 会同时把 SIGINT 发给父进程与 worker，父进程
+	 * 还会再转发一次，同一进程可能收到两遍信号；退出流程只能走一遍。
 	 */
+	let stopping = false;
 	function handleSignal(signal: NodeJS.Signals) {
+		if (stopping) return;
+		stopping = true;
 		// 子进程主动退出时须防止父进程按 autoRestart 策略重启
 		if (config.autoRestart) {
 			process.send?.({ type: "exit" });

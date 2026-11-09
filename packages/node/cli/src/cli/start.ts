@@ -46,10 +46,86 @@ namespace Event {
 
 let child: Bun.Subprocess;
 
+/**
+ * 收到停止信号后置位：此后 worker 的任何退出都只跟随退出，不再触发
+ * 自动重启。容器场景下父进程是 PID 1，docker stop 的 SIGTERM 只到这里，
+ * 必须显式转发给 worker，否则 worker 会被容器回收时直接 SIGKILL。
+ */
+let stopping = false;
+
+/** 信号处理器只安装一次：createWorker 会在重启时递归调用，不能重复注册 */
+let signalsInstalled = false;
+
+/** 转发停止信号后等待 worker 优雅退出的兜底时长，超时强杀 */
+const STOP_TIMEOUT = 10_000;
+
+/**
+ * 把停止信号转发给 worker，并等待其走完 daemon 的 exit 清理。
+ *
+ * 本地终端 Ctrl+C 会把 SIGINT 同时发给父进程与 worker，worker 侧
+ * daemon 对重复信号做了幂等处理；容器内则只有 PID 1（本进程）收到。
+ */
+function handleSignal(signal: NodeJS.Signals) {
+	if (stopping) return;
+	stopping = true;
+	// child 可能恰好已退出（kill 会以 ESRCH 抛错），停止流程不能被它打断
+	try {
+		child?.kill(signal);
+	} catch {}
+	const timer = setTimeout(() => {
+		try {
+			child?.kill("SIGKILL");
+		} catch {}
+		process.exit(1);
+	}, STOP_TIMEOUT);
+	// 定时器不应阻止事件循环退出（worker 正常退出后父进程立即结束）
+	timer.unref?.();
+}
+
+/** 首次拉起 worker 时安装信号处理器（模块导入本身不产生副作用） */
+function installSignalHandlers() {
+	if (signalsInstalled) return;
+	signalsInstalled = true;
+	process.on("SIGINT", handleSignal);
+	process.on("SIGTERM", handleSignal);
+}
+
 // 跨重启保留的共享数据：首次启动仅记录启动时间，后续由子进程回传覆盖
 process.env["KOISHI_SHARED"] = JSON.stringify({
 	startTime: Date.now(),
 });
+
+/**
+ * 退出决策（纯函数，导出供单测）：返回退出码表示父进程退出，返回 null
+ * 表示按 daemon 的 autoRestart 策略重新拉起 worker。
+ *
+ * 竞态边界：stopping 优先于一切退出码判断——收到 SIGTERM/SIGINT 后，
+ * 即使 worker 恰好以「请求重启」的退出码 51 结束（或崩溃），也不能再次
+ * 拉起，否则 docker stop 会因进程不断重启而卡到超时 SIGKILL。
+ */
+export function resolveExit(
+	code: number | null,
+	signal: NodeJS.Signals | number | null,
+	config: Config | undefined,
+	stopping: boolean,
+): number | null {
+	// 停止信号已发出：无条件跟随退出，退出码缺省按 0 处理
+	if (stopping) return code ?? 0;
+
+	// 尚未收到 start 消息即退出，说明启动失败
+	if (!config) return code ?? 1;
+
+	// 手动退出（正常退出码或被信号终止）
+	if (code === 0) return 0;
+	if (signal !== null) return code ?? 1;
+
+	// 手动重启 / 手动停止
+	if (code === 51) return null;
+	if (code === 52) return code;
+
+	// 其余情况交由 autoRestart 配置决定
+	return config.autoRestart ? null : (code ?? 1);
+}
 
 /**
  * 将 cac 解析出的选项键转换为命令行参数形式。
@@ -70,6 +146,9 @@ function toArg(key: string) {
  * 启动后若配置了心跳超时，则心跳超时视为进程假死，直接 SIGKILL。
  */
 function createWorker(options: WorkerOptions) {
+	// 容器内父进程即 PID 1：信号转发必须先于 spawn 安装（见 handleSignal）
+	installSignalHandlers();
+
 	// 将选项对象还原为 Node/Bun 可识别的 execArgv 数组
 	const execArgv = Object.entries(options).flatMap<string>(
 		([key, value]) => {
@@ -137,41 +216,17 @@ function createWorker(options: WorkerOptions) {
 			stdout: "inherit",
 			stderr: "inherit",
 			onExit: (_, code, signal) => {
-				if (shouldExit(code, signal)) {
-					process.exit(code ?? 1);
-				}
+				const exitCode = resolveExit(
+					code,
+					signal,
+					config,
+					stopping,
+				);
+				if (exitCode !== null) process.exit(exitCode);
 				createWorker(options);
 			},
 		},
 	);
-
-	/**
-	 * 判断子进程退出后父进程应跟随退出还是重新拉起。
-	 *
-	 * 退出码约定：0 表示正常退出；51 表示请求重启（如 loader 的整进程重载）；
-	 * 52 表示请求退出；收到信号一律视为外部终止，跟随退出。
-	 */
-	function shouldExit(
-		code: number | null,
-		// @types/bun 1.4.3 起 signalCode 的类型放宽为 NodeJS.Signals | number | null
-		// （Bun 在 posix 下可能回报名而非编号）；本函数只判断是否收到信号，
-		// 故按并集接收即可
-		signal: NodeJS.Signals | number | null,
-	) {
-		// 尚未收到 start 消息即退出，说明启动失败
-		if (!config) return true;
-
-		// 手动退出（正常退出码或被信号终止）
-		if (code === 0) return true;
-		if (signal !== null) return true;
-
-		// 手动重启 / 手动停止
-		if (code === 51) return false;
-		if (code === 52) return true;
-
-		// 其余情况交由 autoRestart 配置决定
-		return !config.autoRestart;
-	}
 }
 
 /**
