@@ -26,7 +26,7 @@
     },
     "apps/koishi-create": {
       "name": "create-koishi-ce",
-      "version": "1.9.2",
+      "version": "1.10.0",
       "bin": {
         "create-koishi-ce": "lib/bin.mjs",
       },
@@ -59,7 +59,7 @@
     },
     "packages/node/cli": {
       "name": "@koishi-ce/koishi",
-      "version": "1.0.21",
+      "version": "1.0.22",
       "bin": {
         "koishi": "lib/cli/index.mjs",
       },
