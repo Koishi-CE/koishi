@@ -4,6 +4,9 @@ plugins:
     $label: 服务器
     server:nhf2rf:
       port: 5140
+      # 容器部署必须监听 0.0.0.0（plugin-server 默认 127.0.0.1，端口映射会
+      # 看起来成功但外部连不上）；本地直跑不设变量即保持仅本机监听
+      host: "${{ env.KOISHI_HOST ?? '127.0.0.1' }}"
       maxPort: 5149
     ~server-temp:z9nmes: {}
     ~adapter-satori:euyuu6: {}
@@ -17,7 +20,9 @@ plugins:
     $collapsed: true
     $label: 控制台
     console:p179rv:
-      open: true
+      # 无浏览器环境（容器 / CI）设 KOISHI_CONSOLE_OPEN=0 关闭自动打开；
+      # 字符串 "0" / "false" 在 JS 中为真值，必须显式按字面比较
+      open: "${{ env.KOISHI_CONSOLE_OPEN ? env.KOISHI_CONSOLE_OPEN !== '0' && env.KOISHI_CONSOLE_OPEN !== 'false' : true }}"
     ~auth:decpjz: {}
     oobe:kw667y: {}
     config:hrvlki: {}

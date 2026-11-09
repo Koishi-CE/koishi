@@ -128,6 +128,18 @@ test("内置模板静态文件齐备，koishi.yml 预配 market 镜像源", () =
 	);
 });
 
+test("koishi.yml 的监听地址与自动打开均为环境变量插值：默认行为不变，容器可覆盖", () => {
+	const yml = templateFiles["koishi.yml"] ?? "";
+	// 默认仍是仅本机监听；容器设 KOISHI_HOST=0.0.0.0 才能被端口映射访问
+	expect(yml).toContain(
+		"host: \"${{ env.KOISHI_HOST ?? '127.0.0.1' }}\"",
+	);
+	// console.open 必须按字面比较 "0" / "false"：字符串 "0" 在 JS 中为真值
+	expect(yml).toContain("env.KOISHI_CONSOLE_OPEN");
+	expect(yml).toContain("!== '0'");
+	expect(yml).toContain("!== 'false'");
+});
+
 test("koishi.yml 预写策略：sqlite 默认启用开箱数据库，非必需件与官方 adapter 保持 ~ 禁用", () => {
 	const yml = templateFiles["koishi.yml"] ?? "";
 	// 配置页导出形态：插件键带 uid 实例后缀，分组带 $collapsed / $label 元数据

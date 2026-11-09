@@ -33,6 +33,7 @@ import { parseArgs } from "node:util";
 import * as p from "@clack/prompts";
 import pc from "picocolors";
 import pkg from "../package.json" with { type: "json" };
+import { dockerFiles } from "./docker.ts";
 import {
 	type Manifest,
 	renderManifest,
@@ -70,6 +71,7 @@ interface Args {
 	forced?: boolean;
 	git?: boolean;
 	prod?: boolean;
+	docker?: boolean;
 	template?: string;
 	yes?: boolean;
 	help?: boolean;
@@ -87,6 +89,7 @@ const { values, positionals } = parseArgs({
 		forced: { type: "boolean", short: "f" },
 		git: { type: "boolean", short: "g" },
 		prod: { type: "boolean", short: "p" },
+		docker: { type: "boolean" },
 		template: { type: "string", short: "t" },
 		yes: { type: "boolean", short: "y" },
 		help: { type: "boolean", short: "h" },
@@ -161,12 +164,22 @@ async function prepare() {
 /**
  * 写入内置模板（默认路径）：静态文件（src/template.ts 的 templateFiles）
  * 加上由 baseManifest() 渲染出的 package.json。纯本地写入，无网络请求。
+ *
+ * --docker 时追加容器化文件（src/docker.ts 的 dockerFiles）：Dockerfile /
+ * docker-entrypoint.sh / compose.yaml / .dockerignore。
  */
 function scaffoldBuiltin() {
 	for (const [file, content] of Object.entries(
 		templateFiles,
 	)) {
 		writeFileSync(join(rootDir, file), content);
+	}
+	if (argv.docker) {
+		for (const [file, content] of Object.entries(
+			dockerFiles,
+		)) {
+			writeFileSync(join(rootDir, file), content);
+		}
 	}
 	writeFileSync(
 		join(rootDir, "package.json"),
@@ -206,6 +219,13 @@ async function scaffold() {
 		});
 	} else {
 		scaffoldBuiltin();
+		if (argv.docker) {
+			console.log(
+				pc.dim(
+					"  已生成容器化文件：docker compose up -d --build",
+				),
+			);
+		}
 	}
 
 	console.log(pc.green("  完成。\n"));
@@ -294,6 +314,7 @@ export async function start() {
     -r, --ref <引用>        远程模板版本引用（默认 latest）
     -f, --forced            强制清空目标目录
     -g, --git               初始化 git 仓库
+        --docker            生成 Docker 部署文件（Dockerfile / compose.yaml 等）
         --registry <地址>   指定 npm registry（如 https://registry.npmmirror.com）
     -p, --prod              生产模式（移除 devDependencies 与 workspaces）
     -y, --yes               跳过全部询问

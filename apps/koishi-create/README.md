@@ -21,6 +21,7 @@ npm create koishi-ce my-app
 | `-g, --git` | - | 初始化 git 仓库（分支取 init.defaultBranch，未配置则 main） |
 | `--registry <地址>` | 参数 > npm_config_registry > .npmrc > 官方源 | npm registry |
 | `-p, --prod` | - | 生产模式：删除模板的 workspaces 与 devDependencies |
+| `--docker` | - | 生成 Docker 部署文件（Dockerfile / docker-entrypoint.sh / compose.yaml / .dockerignore） |
 | `-y, --yes` | - | 跳过全部询问（含跳过依赖安装） |
 
 交互流程：项目名；目标目录非空时确认是否清空；最后确认是否立即安装依赖并启动（包管理器一律使用 Bun）。
@@ -30,6 +31,7 @@ npm create koishi-ce my-app
 - **package.json**：`type: module`、`packageManager` 钉 Bun、workspaces 含 `plugins/*` 与 `external/*`；dependencies 预装全套 `@koishi-ce` 常用插件（console、config、market、auth、admin、help、sandbox、database-sqlite 等），并预置六行 npm alias 钉住上游名——`koishi` / `@koishijs/core` / `@koishijs/loader` 指向 `@koishi-ce/koishi-shim`、`@koishijs/plugin-console` 指向 `@koishi-ce/console-shim`、`@koishijs/client` / `@koishijs/components` 分别指向 `@koishi-ce/client-shim` / `@koishi-ce/components-shim`，社区插件（含把上游前端库写进 dependencies 的 webui 插件）由此全部解析到 CE 对应包；
 - **koishi.yml**：按 server（端口 5140-5149）/ basic / console（自动打开、市场指向 registry.koishi.chat 镜像）/ storage / adapter / develop（开发模式启用热重载）分组预写；官方 adapter 插件以 `~` 停用条目预写、不预装，装好后在控制台按需启用；数据库开箱即用——`database-sqlite` 默认启用，mongo / mysql / postgres 等其余 database 不预写占位条目，市场安装后自动出现；
 - **开发工具链**：devDependencies 预置 `@koishi-ce/client`、`@koishi-ce/console-app`（宿主 SPA 源码，devMode 的 vite root）、`@koishi-ce/console-builder`（控制台 devMode 的 Vite 开发服务器）、`@koishi-ce/plugin-hmr` 与 `@koishi-ce/scripts`（`koishi-scripts setup` 可在 external/ 下继续创建插件项目）。
+- **容器化（`--docker`）**：额外生成 `Dockerfile`、`docker-entrypoint.sh`、`compose.yaml`、`.dockerignore`。采用可变工作区模式：容器内可直接在控制台插件市场安装 / 卸载 / 更新插件，`koishi.yml`、`package.json`、`bun.lock`、`node_modules` 与 `data/` 写回宿主目录，重启或重建容器不丢。
 
 不预装任何 adapter——官方 adapter 可后续从市场安装，peer 已被 alias 钉住不会形成双实例；数据库已由默认启用的 `database-sqlite` 覆盖，其他官方 database 同样可从市场安装。
 
@@ -60,6 +62,7 @@ npm create koishi-ce my-app
 | `-g, --git` | - | Initialize a git repository (branch from init.defaultBranch, fallback main) |
 | `--registry <url>` | arg > npm_config_registry > .npmrc > official | npm registry |
 | `-p, --prod` | - | Production mode: drop workspaces and devDependencies from the template |
+| `--docker` | - | Generate Docker deployment files (Dockerfile / docker-entrypoint.sh / compose.yaml / .dockerignore) |
 | `-y, --yes` | - | Skip all prompts (including dependency installation) |
 
 Interactive flow: project name; confirm cleaning a non-empty target directory; confirm installing dependencies and starting right away (Bun is always the package manager).
@@ -69,6 +72,7 @@ Interactive flow: project name; confirm cleaning a non-empty target directory; c
 - **package.json** — `type: module`, `packageManager` pinned to Bun, workspaces covering `plugins/*` and `external/*`; dependencies preinstall the common `@koishi-ce` plugin set (console, config, market, auth, admin, help, sandbox, database-sqlite, etc.) plus the four npm-alias lines pinning the upstream names (`koishi` / `@koishijs/core` / `@koishijs/loader` to `@koishi-ce/koishi-shim`, `@koishijs/plugin-console` to `@koishi-ce/console-shim`), so community plugins all resolve to the CE framework.
 - **koishi.yml** — grouped prewrites for server (ports 5140-5149), basic, console (auto-open, market pointed at the registry.koishi.chat mirror), storage, adapter and develop (HMR in development mode); official adapter plugins are prewritten as `~`-disabled entries without being installed — enable them in the console after installing; the database works out of the box (`database-sqlite` enabled by default), while other official databases (mongo / mysql / postgres, ...) leave no placeholder entries and appear automatically once installed from the market.
 - **Toolchain** — devDependencies include `@koishi-ce/client`, `@koishi-ce/console-app` (the host SPA source serving as the devMode vite root), `@koishi-ce/console-builder` (the Vite dev server behind the console devMode), `@koishi-ce/plugin-hmr` and `@koishi-ce/scripts` (`koishi-scripts setup` scaffolds further plugin projects under external/).
+- **Containerization (`--docker`)** — additionally emits `Dockerfile`, `docker-entrypoint.sh`, `compose.yaml` and `.dockerignore`. It uses a mutable-workspace model: plugins can be installed / removed / updated from the console market inside the container, while `koishi.yml`, `package.json`, `bun.lock`, `node_modules` and `data/` are written back to the host directory and survive container recreation.
 
 No adapter is preinstalled — official adapters can be installed from the market later, with their peers already pinned by the aliases; the database is covered by the default-enabled `database-sqlite`, and other official databases are equally one market install away.
 

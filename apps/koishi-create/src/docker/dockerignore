@@ -1,0 +1,9 @@
+# 构建上下文只保留必要的项目文件：依赖与运行期数据一律不进镜像
+node_modules
+data
+temp
+.git
+.gitignore
+.env
+.env.local
+*.log
