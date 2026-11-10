@@ -1,5 +1,8 @@
 
+# 语言统计口径（GitHub Linguist）：以下文件不计入仓库语言统计
 *.test.ts linguist-detectable=false
+tooling/** linguist-detectable=false
+*.mjs linguist-detectable=false
 
 * text eol=lf
 
