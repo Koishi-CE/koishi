@@ -20,6 +20,16 @@ export interface TrustProbeResult {
 	detail: string;
 }
 
+/**
+ * fetch 的窄化调用面（真实 fetch 可赋值）。不用 `typeof fetch`：Bun 全局
+ * fetch 挂了非标准的 `fetch.preconnect()` 扩展（bun-types globals.d.ts，
+ * 函数 + 命名空间合并），裸函数 fake 断言成 `typeof fetch` 必然缺该成员。
+ */
+export type FetchLike = (
+	input: string | URL | Request,
+	init?: RequestInit,
+) => Promise<Response>;
+
 /** 某包的 OIDC 换 token 端点（包名转路径段：@scope/name → @scope%2Fname）。 */
 export function exchangeUrl(name: string): string {
 	return `${REGISTRY}/-/npm/v1/oidc/token/exchange/package/${name.replaceAll("/", "%2F")}`;
@@ -27,7 +37,7 @@ export function exchangeUrl(name: string): string {
 
 /** 取 Actions 的 id_token（audience 与 npm CLI 一致：npm:<registry 主机名>）。 */
 export async function fetchGithubIdToken(
-	fetchImpl: typeof fetch = fetch,
+	fetchImpl: FetchLike = fetch,
 ): Promise<string> {
 	const requestUrl =
 		process.env["ACTIONS_ID_TOKEN_REQUEST_URL"];
@@ -82,7 +92,7 @@ async function readErrorMessage(
 export async function probePackageTrust(
 	idToken: string,
 	name: string,
-	fetchImpl: typeof fetch = fetch,
+	fetchImpl: FetchLike = fetch,
 ): Promise<TrustProbeResult> {
 	let res: Response;
 	try {
@@ -150,7 +160,7 @@ export async function probePackageTrust(
 export async function probeTrustConfigs(
 	idToken: string,
 	names: readonly string[],
-	fetchImpl: typeof fetch = fetch,
+	fetchImpl: FetchLike = fetch,
 ): Promise<TrustProbeResult[]> {
 	const results = new Map<string, TrustProbeResult>();
 	await runPool(names, 4, async (name) => {

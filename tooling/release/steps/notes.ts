@@ -61,11 +61,12 @@ export function parseChangelogDiff(
 			const bullet = /^-\s+(\S.*)$/.exec(body);
 			if (bullet !== null) {
 				const text = bullet[1]?.trim() ?? "";
-				const noise = text === "" || isNoise(text);
-				last = noise
-					? undefined
-					: { package: current, text };
-				if (!noise) entries.push(last);
+				if (text === "" || isNoise(text)) {
+					last = undefined;
+				} else {
+					last = { package: current, text };
+					entries.push(last);
+				}
 			} else if (last && /^\s{2,}\S/.test(body)) {
 				last.text += ` ${body.trim()}`;
 			}

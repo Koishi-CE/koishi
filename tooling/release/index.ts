@@ -8,6 +8,7 @@
 // 编排发布链：status / version / build / test / notes / publish / pipeline。
 // 模块划分：index / pipeline（命令与编排）→ steps/（五个阶段实现）→ core/
 // （utils / registry / workspace / trust / options 底层能力），依赖单向无回边。
+import type { Options } from "./core/options.ts";
 import { parseOptions } from "./core/options.ts";
 import { cmdPipeline } from "./pipeline.ts";
 import {
@@ -80,7 +81,7 @@ async function main(): Promise<number> {
 	}
 	const handlers: Record<
 		string,
-		(options: typeof options) => Promise<number>
+		(options: Options) => Promise<number>
 	> = {
 		status: () => cmdStatus(),
 		version: cmdVersion,

@@ -15,7 +15,10 @@ import {
 	probeRegistry,
 	REGISTRY,
 } from "../core/registry.ts";
-import type { TrustProbeResult } from "../core/trust.ts";
+import type {
+	FetchLike,
+	TrustProbeResult,
+} from "../core/trust.ts";
 import {
 	fetchGithubIdToken,
 	probeTrustConfigs,
@@ -56,7 +59,7 @@ export async function preflightTrustConfigs(
 	ordered: readonly PkgInfo[],
 	published: Map<string, Set<string>>,
 	prefix: string,
-	fetchImpl: typeof fetch = fetch,
+	fetchImpl: FetchLike = fetch,
 ): Promise<boolean> {
 	const hasVersions = (pkg: PkgInfo): boolean =>
 		(published.get(pkg.name)?.size ?? 0) > 0;

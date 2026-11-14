@@ -2,7 +2,7 @@
 // Copyright (c) 2026-present Koishi-CE contributors.
 
 import { expect, test } from "bun:test";
-import { parseOptions } from "./options.ts";
+import { parseOptions } from "../options.ts";
 
 test("旗标：默认全关；全部旗标同时给出时互不干扰", () => {
 	// 回归点：CI 的 version job 跑 `release version --commit --push`，

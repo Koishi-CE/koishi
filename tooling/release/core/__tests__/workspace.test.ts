@@ -10,14 +10,14 @@ import {
 } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import type { PkgInfo } from "./workspace.ts";
+import type { PkgInfo } from "../workspace.ts";
 import {
 	discoverPackages,
 	filterDowngrades,
 	isDowngrade,
 	rewriteWorkspaceProtocol,
 	topoSort,
-} from "./workspace.ts";
+} from "../workspace.ts";
 
 /** 造一个最小 PkgInfo（发布序测试只关心依赖字段）。 */
 function pkg(
@@ -176,12 +176,18 @@ test("协议改写：catalog: 与 catalog:<名> 替换为根清单定义，覆�
 		string,
 		Record<string, string>
 	>;
-	expect(manifest.dependencies!.cosmokit).toBe("^1.8.1");
-	expect(manifest.devDependencies!.jsdom).toBe("^30.1.3");
-	expect(manifest.optionalDependencies!.semver).toBe(
+	expect(manifest["dependencies"]!["cosmokit"]).toBe(
+		"^1.8.1",
+	);
+	expect(manifest["devDependencies"]!["jsdom"]).toBe(
+		"^30.1.3",
+	);
+	expect(manifest["optionalDependencies"]!["semver"]).toBe(
 		"^7.8.6",
 	);
-	expect(manifest.peerDependencies!.vue).toBe("^3.5.45");
+	expect(manifest["peerDependencies"]!["vue"]).toBe(
+		"^3.5.45",
+	);
 	expect(changes).toHaveLength(4);
 });
 
@@ -231,8 +237,12 @@ test("协议改写：workspace:* 行为不变（caret 真实版本），与 cata
 		string,
 		Record<string, string>
 	>;
-	expect(manifest.dependencies!["@t/core"]).toBe("^1.2.3");
-	expect(manifest.dependencies!.cosmokit).toBe("^1.8.1");
+	expect(manifest["dependencies"]!["@t/core"]).toBe(
+		"^1.2.3",
+	);
+	expect(manifest["dependencies"]!["cosmokit"]).toBe(
+		"^1.8.1",
+	);
 	expect(changes).toHaveLength(2);
 });
 

@@ -2,13 +2,13 @@
 // Copyright (c) 2026-present Koishi-CE contributors.
 
 import { expect, test } from "bun:test";
-import type { ChangelogEntry } from "./notes.ts";
+import type { ChangelogEntry } from "../notes.ts";
 import {
 	BULLET_LIMIT,
 	clipBullet,
 	formatNotes,
 	parseChangelogDiff,
-} from "./notes.ts";
+} from "../notes.ts";
 
 const nameByPath = new Map([
 	["packages/node/core", "@koishi-ce/core"],
