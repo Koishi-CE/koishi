@@ -55,16 +55,26 @@ export interface PublishPlan {
 	skipped: SkippedPkg[];
 }
 
-/** 从根清单读 workspaces globs（非字符串项忽略）。 */
+/**
+ * 从根清单读 workspaces globs。兼容数组形态与 { packages: [...] } 对象形态
+ * （后者是 Bun catalog 协议对 workspaces 的强制形态），非字符串项忽略。
+ */
 function readWorkspaceGlobs(root: string): string[] {
 	try {
 		const manifest = JSON.parse(
 			readFileSync(join(root, "package.json"), "utf8"),
 		) as { workspaces?: unknown };
-		if (!Array.isArray(manifest.workspaces)) {
+		const declared = Array.isArray(manifest.workspaces)
+			? manifest.workspaces
+			: (
+					manifest.workspaces as
+						| { packages?: unknown }
+						| undefined
+				)?.packages;
+		if (!Array.isArray(declared)) {
 			return [];
 		}
-		return manifest.workspaces.filter(
+		return declared.filter(
 			(item): item is string => typeof item === "string",
 		);
 	} catch {

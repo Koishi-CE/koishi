@@ -106,6 +106,23 @@ describe("resolveWorkspacePackages", () => {
 			"create-x",
 		]);
 	});
+
+	test("对象形态 workspaces（Bun catalog 协议形态）同样可枚举", () => {
+		root = mkdtempSync(
+			join(tmpdir(), "koishi-ce-sandbox-test-"),
+		);
+		writePackage(join(root, "pkgs/one"), "@koishi-ce/one");
+		writeFileSync(
+			join(root, "package.json"),
+			JSON.stringify({
+				workspaces: { packages: ["pkgs/*"] },
+			}),
+		);
+		const packages = resolveWorkspacePackages(root);
+		expect(packages.map((pkg) => pkg.name)).toEqual([
+			"@koishi-ce/one",
+		]);
+	});
 });
 
 describe("planLinks / applyLinks", () => {

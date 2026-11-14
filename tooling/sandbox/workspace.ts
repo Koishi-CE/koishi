@@ -22,8 +22,12 @@ export function resolveWorkspacePackages(
 ): WorkspacePackage[] {
 	const manifest = JSON.parse(
 		readFileSync(join(root, "package.json"), "utf8"),
-	) as { workspaces?: string[] };
-	const workspaces = manifest.workspaces ?? [];
+	) as { workspaces?: string[] | { packages?: string[] } };
+	// 兼容数组形态与 { packages: [...] } 对象形态（后者为 Bun catalog 协议
+	// 对 workspaces 的强制形态）
+	const workspaces = Array.isArray(manifest.workspaces)
+		? manifest.workspaces
+		: (manifest.workspaces?.packages ?? []);
 	const packages: WorkspacePackage[] = [];
 	const seen = new Set<string>();
 	for (const pattern of workspaces) {
