@@ -49,7 +49,7 @@
 
 - **CI 门禁流水线**（2026-09-10 落地）：`.github/workflows/ci.yml` 三并行 job——`gate`（build → 宿主前端 → check → test + Codecov 覆盖率）、`client`（宿主 + 全部 webui 插件前端构建）、`fallow`（死代码与依赖审计，2026-09-11 由 knip 迁移至 fallow）；词典与文档链接检查同批并入 `bun run check`。详见 [guides/development.md](guides/development.md) §4。另有 triage.yml 自动分诊（issue 指派 / PR 路径打标）已另批落地。
 - **CI 门禁 turbo 化与 merge queue**（2026-09-28 ruleset 起用 merge queue；2026-10 门禁整体迁入 turbo 任务图）：三个必需状态检查 job 全部改为经 turbo 调度（构建 / check 四组 / test 的依赖与并行关系集中在根 `turbo.jsonc`），远程缓存凭据走 OIDC、跨 run 复用，覆盖率经 Codecov 上报。任务图、缓存口径与 merge queue 语义见 [guides/development.md](guides/development.md) §4。
-- **上游同步常态化**（2026-09-10 落地）：巡检机制（`bun run upstream:audit` + triage 分级 + port 规则）与首轮全量结论见 [process/upstream.md](process/upstream.md)。
+- **上游同步常态化**（2026-09-10 落地）：巡检流程（triage 分级 + port 规则）与首轮全量结论见 [process/upstream.md](process/upstream.md)；配套巡检脚本 `bun run upstream:audit` 已于 2026-11-14 移除。
 
 ## 5. 近期收尾池（backlog）
 

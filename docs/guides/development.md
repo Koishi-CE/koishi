@@ -53,7 +53,6 @@ bun run check:packages          # 包名纪律 / 元数据统一 / ESM-only / �
 bun run check:console-wiring    # console 类型源头共享的接线对账（零依赖，已并入 check）
 bun run check:pr-templates      # PR 模板与 .github/PULL_REQUEST_TEMPLATE/config.yml 清单对账（零依赖，已并入 check）
 bun run fallow                  # 死代码与依赖审计（bunx 直跑 fallow：不占 devDependencies、脚本内 pin 精确版；配置见根 .fallowrc.jsonc）
-bun run upstream:audit          # 上游巡检：刷新仓外上游缓存并产出目录对比底稿（流程见 ../process/upstream.md）
 bun run typecheck               # TS7 类型检查（node 侧 + client 侧两条 bunx tsc 串行）
 bun run build                   # 根 tsdown：全部 node 侧包 → 各包 lib/（ESM-only）
 bun test                        # 全量自有用例（覆盖全部 node 侧包与 tooling 回归，秒级；文件与用例数以实跑输出为准）

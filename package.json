@@ -56,7 +56,6 @@
         "check:console-wiring": "bun tooling/checks/console-wiring.ts",
         "check:pr-templates": "bun tooling/checks/pr-templates.ts",
         "sandbox": "bun tooling/sandbox/index.ts",
-        "upstream:audit": "bun tooling/upstream-audit/index.ts",
         "fallow": "bunx fallow@3.25.0 dead-code",
         "fallow:full": "bunx fallow@3.25.0",
         "format": "biome format --write .",

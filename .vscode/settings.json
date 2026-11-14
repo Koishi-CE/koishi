@@ -40,7 +40,6 @@
 		"installer": "download",
 		// tooling
 		"checks": "guard",
-		"upstream-audit": "tasks",
 		// docs
 		"decisions": "policy",
 		"guides": "instructions",

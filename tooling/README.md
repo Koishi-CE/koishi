@@ -17,7 +17,6 @@
 | [checks/](./checks/) | `bun run check:*`（已并入 `bun run check`） | 门禁检查脚本：词典 / 文档链接 / vue 类型基线 / 包纪律 |
 | [release/](./release/) | `bun run release <命令>` | 发布一条龙：version / build / publish / pipeline |
 | [sandbox/](./sandbox/) | `bun run sandbox` | 在工作区之外生成真实可运行的 koishi-ce 沙盒实例 |
-| [upstream-audit/](./upstream-audit/) | `bun run upstream:audit` | 刷新上游仓库缓存，产出与本仓映射目录的对比底稿 |
 
 ## checks/ — 门禁检查脚本
 
@@ -64,22 +63,9 @@ bun run sandbox -- --start         # 生成完成后立即在本进程前台拉�
 
 默认落点为工作区同级 `Debug/koishi-ce-sandbox`（本地调试产物统一收在 `Debug/`）。两种模式的机理、已知坑与启动方式详见 [开发手册 §10](../docs/guides/development.md)。与本仓 `plugins/webui/sandbox` 插件（控制台内嵌调试沙盒）无任何关系。
 
-## upstream-audit/ — 上游巡检
-
-对比上游仓库与本仓的映射目录，产出 markdown「底稿」：单侧存在的文件、共同文件的 diff 改动量排行。是否 port、是否本仓刻意分叉的语义判断由人工完成：
-
-```bash
-bun run upstream:audit               # 刷新上游缓存（浅克隆 / pull）并输出底稿
-bun run upstream:audit --no-refresh  # 只对比不联网
-bun run upstream:audit --only webui  # 只处理名称含该子串的上游
-bun run upstream:audit --out <file>  # 底稿写入文件而不打印 stdout
-```
-
-上游源码一律克隆到仓库之外的缓存目录（默认 `../cache/upstream`，环境变量 `KOISHI_CE_UPSTREAM_CACHE` 可改写）。映射表、巡检流程与判定标准见 [上游同步](../docs/process/upstream.md)。
-
 ## 新增工具时
 
 - 放进对应主题子目录（或新建子目录），单文件入口 + 头部 JSDoc 写清用法（现有脚本即模板：SPDX 头 + 用法块）。
 - 遵守通用约定：零第三方依赖、bun 直跑、可测逻辑配 `*.test.ts`。
-- 高频入口挂到根 package.json 的 scripts：门禁类命名 `check:*`，流程类用动词（如 `sandbox`、`upstream:audit`、`release`）。
+- 高频入口挂到根 package.json 的 scripts：门禁类命名 `check:*`，流程类用动词（如 `sandbox`、`release`）。
 - 相关流程落在 docs/ 时，回本 README 补一条索引。
