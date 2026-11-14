@@ -16,7 +16,7 @@
 
 <!-- 实跑结论，不写「应该没问题」：门禁与测试的实际输出摘要。 -->
 
-- [ ] `bun run check` 全绿（九段构成见 `docs/guides/development.md`）
+- [ ] `bun run check` 全绿（七段构成见 `docs/guides/development.md`）
 - [ ] `bun run test` 全绿（有测试改动时写清新增 / 修改的用例数与文件）
 - [ ] `bun run build` 通过（改了源码 / 构建链时必跑）
 - [ ] `bun run fallow` 无问题（动了依赖 / 导出面时必跑）

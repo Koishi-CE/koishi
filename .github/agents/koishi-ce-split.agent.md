@@ -74,7 +74,7 @@ user-invocable: true
 
 ## PR 工作流
 
-1. 分支从最新 main 切出，命名 `refactor/file-split/<范围>`；一 PR 一个范围（一包或一个文件族）。**禁止直推 main**：所有产出经 `git push -u origin <分支>` + `gh pr create` 进入评审（正文按 `.github/PULL_REQUEST_TEMPLATE.md` 补全拆分专属字段）。
+1. 分支从最新 main 切出，命名 `refactor/file-split/<范围>`；一 PR 一个范围（一包或一个文件族）。**禁止直推 main**：所有产出经 `git push -u origin <分支>` + `gh pr create` 进入评审（正文按 `.github/PULL_REQUEST_TEMPLATE/refactor_perf.md` 补全拆分专属字段）。
 2. PR 正文（中文）必含：拆分前后行数对照、文件增删移动清单、行为不变论证、验证证据（用例数与门禁段输出摘要）。
 3. 合并条件：本地 rebase 最新 main → 重跑 `bun run check` + `bun test` + `bun run build` + `bun run fallow` 全绿 → CI 三 job 全绿 → squash merge；**合并由维护者（用户）执行，agent 不自审自并**——停在 ready 并汇报 PR 链接，若无人审批则在报告中注明遗留 PR。
 4. 无行为变化不写 changeset；动了包导出面（应避免）必须补写并在 PR 说明。

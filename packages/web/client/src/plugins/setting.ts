@@ -118,6 +118,7 @@ export const original = useStorage<Config>(
 	"config",
 	undefined,
 	() =>
+		// biome-ignore lint/plugin/no-double-cast: R1 变体：字面量是相对任意插件增强后 Config 的恒定部分默认值（上游裸字面量，本仓严格化产物）
 		({
 			theme: {
 				mode: "auto",

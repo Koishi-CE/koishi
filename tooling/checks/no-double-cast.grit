@@ -1,0 +1,16 @@
+// 双重断言闸门（GritQL 插件，由根 biome.json 的 plugins 加载）。
+// 匹配 `as unknown as` / `as any as` / 括号形态；测试文件、vendor 与
+// vendored 包由 biome.json 的插件级 includes 负向 glob 豁免。
+language js(typescript)
+
+or {
+	`$expr as unknown as $type` where {
+		register_diagnostic(span=$expr, message="禁止新增双重断言（as unknown as）：先穷尽根除 / 上移修法，确属务实妥协的用 biome-ignore lint/plugin/no-double-cast 附一行理由豁免")
+	},
+	`($expr as unknown) as $type` where {
+		register_diagnostic(span=$expr, message="禁止新增双重断言：先穷尽根除 / 上移修法，确属务实妥协的用 biome-ignore lint/plugin/no-double-cast 附一行理由豁免")
+	},
+	`$expr as any as $type` where {
+		register_diagnostic(span=$expr, message="禁止新增双重断言（as any as）：先穷尽根除 / 上移修法，确属务实妥协的用 biome-ignore lint/plugin/no-double-cast 附一行理由豁免")
+	}
+}

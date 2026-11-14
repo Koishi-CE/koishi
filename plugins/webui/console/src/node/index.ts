@@ -119,6 +119,7 @@ class NodeConsole extends Console {
 				// @types/ws 未为 `dispatchEvent` 提供类型声明，
 				// ws 的 WebSocket 与 Universal.WebSocket 结构不一致，故经 unknown 双重断言
 				this.accept(
+					// biome-ignore lint/plugin/no-double-cast: R2 @types/ws 与 satori Universal.WebSocket 两套第三方类型体系错位（dispatchEvent 缺声明、事件形态不同），垫片不可行
 					socket as unknown as Universal.WebSocket,
 					request,
 				);

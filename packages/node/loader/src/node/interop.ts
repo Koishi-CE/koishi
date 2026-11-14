@@ -294,6 +294,7 @@ function trySeed(
 		children: [],
 	};
 	require.cache[bunEntry] =
+		// biome-ignore lint/plugin/no-double-cast: R4 鸭子模块注入 require.cache：刻意只造消费方读取的 5 字段，补齐 @types/node 全量 10 必填成员是更差的撒谎（CE 原创 interop，非上游）
 		entry as unknown as (typeof require.cache)[string];
 	seeded.add(key);
 	logger.debug(
@@ -307,6 +308,7 @@ function trySeed(
 		const real = realpathSync(bunEntry);
 		if (real !== bunEntry && !(real in require.cache)) {
 			require.cache[real] =
+				// biome-ignore lint/plugin/no-double-cast: R4 鸭子模块注入 require.cache：刻意只造消费方读取的 5 字段，补齐 @types/node 全量 10 必填成员是更差的撒谎（CE 原创 interop，非上游）
 				entry as unknown as (typeof require.cache)[string];
 		}
 	} catch {}

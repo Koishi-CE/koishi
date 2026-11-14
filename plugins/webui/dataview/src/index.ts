@@ -123,6 +123,7 @@ class DatabaseProvider extends DataService<DatabaseInfo> {
 				// 必须经宿主对象成员调用：minato 的方法内部依赖 this（如
 				// get 首行即 this.select），取出引用裸调会丢 this 直接抛
 				// TypeError，前端表现为整表空白
+				// biome-ignore lint/plugin/no-double-cast: R4 RPC 动态分发边界：方法集有限但参数经反序列化为 unknown[]，unknown 函数视图是正确终点；switch 展开仍须逐方法断言纯噪音
 				const database = this.ctx
 					.database as unknown as Record<
 					Methods,

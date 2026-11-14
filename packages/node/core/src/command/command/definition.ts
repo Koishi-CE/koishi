@@ -88,6 +88,7 @@ export class CommandDefinition<
 		this._userFields.push(fields);
 		// 运行时是同一实例，只是拓宽 U：User 字段均为必选，U 变体之间
 		// 不存在结构关系（Session 内嵌 Argv 泛型导致无限递归），只能双重断言
+		// biome-ignore lint/plugin/no-double-cast: R3 宽化链死局（保留范本）：User/Channel.Observed 的 $diff/$merge 双位置不变，U|T / G|T 变体间无结构关系且 Session 内嵌 Argv 泛型致无限递归（上游 as any）
 		return this as unknown as Command<U | T, G, A, O>;
 	}
 
@@ -97,6 +98,7 @@ export class CommandDefinition<
 	): Command<U, G | T, A, O> {
 		this._channelFields.push(fields);
 		// 同 userFields：G 变体之间无结构关系（Observed 双位置不变）
+		// biome-ignore lint/plugin/no-double-cast: R3 宽化链死局（保留范本）：User/Channel.Observed 的 $diff/$merge 双位置不变，U|T / G|T 变体间无结构关系且 Session 内嵌 Argv 泛型致无限递归（上游 as any）
 		return this as unknown as Command<U, G | T, A, O>;
 	}
 

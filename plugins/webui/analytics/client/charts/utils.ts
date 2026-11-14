@@ -146,6 +146,7 @@ export const Tooltip = {
 			Tooltip.FormatterCallbackParams<T>
 		>,
 	) {
+		// biome-ignore lint/plugin/no-double-cast: R2 echarts tooltip.formatter 参数类型无泛型入口（TopLevelFormatterParams 固定），本仓 FormatterCallbackParams<T> 才是 series data 真实类型，垫片须 re-declare 组件（工厂内部封装不外溢）
 		return {
 			trigger: "item",
 			formatter,
@@ -162,6 +163,7 @@ export const Tooltip = {
 			Tooltip.FormatterCallbackParams<T>[]
 		>,
 	) {
+		// biome-ignore lint/plugin/no-double-cast: R2 echarts tooltip.formatter 参数类型无泛型入口（TopLevelFormatterParams 固定），本仓 FormatterCallbackParams<T> 才是 series data 真实类型，垫片须 re-declare 组件（工厂内部封装不外溢）
 		return {
 			trigger: "axis",
 			axisPointer: {

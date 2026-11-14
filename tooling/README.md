@@ -14,25 +14,24 @@
 
 | 子目录 | 调用方式 | 用途 |
 | --- | --- | --- |
-| [checks/](./checks/) | `bun run check:*`（已并入 `bun run check`） | 门禁检查脚本：词典 / 文档链接 / vue 类型基线 / 包纪律 |
+| [checks/](./checks/) | `bun run check:*`（已并入 `bun run check`） | 门禁检查脚本：词典 / vue 类型基线 / 包纪律 / console 接线 |
 | [release/](./release/) | `bun run release <命令>` | 发布一条龙：version / build / publish / pipeline |
 | [sandbox/](./sandbox/) | `bun run sandbox` | 在工作区之外生成真实可运行的 koishi-ce 沙盒实例 |
 
 ## checks/ — 门禁检查脚本
 
-七个零依赖脚本，均已并入 `bun run check`（门禁十段的构成见 [开发手册](../docs/guides/development.md) §4）：
+四个零依赖脚本，均已并入 `bun run check`（门禁七段的构成见 [开发手册](../docs/guides/development.md) §4）：
 
 | 脚本 | script 名 | 检查内容 |
 | --- | --- | --- |
 | locales.ts | `check:locales` | 词典键对齐（以 zh-CN 为基准）/ 语种齐全 / 假翻译（非中文语种的叶值仍为中文） |
-| docs-links.ts | `check:docs-links` | docs、根部门面与 `.github`（含 PR 模板目录）markdown 的相对链接与锚点存活 |
 | vue-types.ts | `check:vue-types` | vue-tsc 影子基线闸门：.vue 全量类型错误只拦新增（`--update` 重拍同目录基线 JSON） |
-| assertions.ts | `check:assertions` | 双重断言（`as unknown as`）基线闸门：非测试源文件只拦新增（`--update` 重拍基线） |
 | packages.ts | `check:packages` | 包名纪律（一律 `@koishi-ce/*`）/ 元数据统一 / ESM-only / 依赖方向 |
 | console-wiring.ts | `check:console-wiring` | console 类型源头共享的接线与 paths 层对账 |
-| pr-templates.ts | `check:pr-templates` | PR 模板与 `.github/PULL_REQUEST_TEMPLATE/config.yml` 清单对账（孤儿文件 / 字段形态） |
 
 发现任何问题退出码置 1；具体规则与豁免清单见各脚本头部注释。
+
+另有一份非脚本的 [no-double-cast.grit](./checks/no-double-cast.grit)：双重断言（`as unknown as` / `as any as`）闸门，以 Biome GritQL 插件形态随 `bun run lint`（`biome check .`）执行——全量硬拦、无基线，确属务实妥协的用行内 `// biome-ignore lint/plugin/no-double-cast: <理由>` 豁免；测试文件、vendor 与 vendored 包由根 biome.json 的插件级 `includes` 负向 glob 豁免。`.vue` 模板表达式内的双重断言与 `as any` 由 eslint 侧拦截（见 eslint.config.ts）。
 
 ## release/ — 发布一条龙
 

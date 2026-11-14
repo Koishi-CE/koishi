@@ -119,6 +119,7 @@ export class Command<
 		// A 可实例化为定长元组，空数组无法证明可赋给未解析的 A
 		//（never[] 与 A 连断言重叠都不可证），双重断言是泛型数组
 		// 空默认值的唯一写法（上游此处为 as any）
+		// biome-ignore lint/plugin/no-double-cast: R3 泛型数组空默认值：A 可实例化为定长元组，空数组不可证可赋，never[] 与 A 连断言重叠都不可证（上游 as any）
 		const args = (argv.args ??= [] as unknown as A);
 		const options = (argv.options ??= {} as O);
 		const { error } = argv;

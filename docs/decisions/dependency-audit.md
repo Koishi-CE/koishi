@@ -16,7 +16,7 @@
   - **上游名外部依赖为 0**：内部互引与 `peerDependencies` 一律使用 `@koishi-ce/* ^1.0.0`，防止 Bun 自动拉取官方全家桶。
   - **共享依赖版本真源 = 根 catalog（2026-11-14 起）**：跨包共享的外部依赖（本轮 15 个）由根 `workspaces.catalog` / `catalogs.{web,build,test}` 单点定义，成员以 `catalog:` 引用（Bun catalog 协议，`workspaces` 为对象形态）；升版只改根一行，`check:packages` 强制入册与双向对账。本报告后文的「版本分布」口径自此以根清单为准，成员 manifest 不再承载共享依赖的字面版本。
   - **前端编程式构建**：无 Vite 配置文件，统一走 `vite.build()`（宿主入口 `packages/web/builder/src/bin.ts`）。
-  - **CI 三任务（Turbo + OIDC 远程缓存）**：`gate`（build → 宿主前端 → 十段 check → test:ci + Codecov）、`client`（webui 插件打包）、`fallow`（死代码与依赖审计）。
+  - **CI 三任务（Turbo + OIDC 远程缓存）**：`gate`（build → 宿主前端 → 七段 check → test:ci + Codecov）、`client`（webui 插件打包）、`fallow`（死代码与依赖审计）。
 
 ---
 
@@ -89,10 +89,10 @@
 | 维度 | 当前实况与基线数据 |
 | :--- | :--- |
 | **TypeScript 三轨** | ① 类型检查：`@typescript/native`（TS 7.0.2，node + web 双工程）· ② ESLint 解析：`@typescript/typescript6@6.0.2` · ③ `.vue` 影子闸门：`vue-tsc@3.3.11` + 自举 `TS 5.9.3` |
-| **十段门禁 (`check`)** | Biome + ESLint (`.vue`) + TS7 + 6 个自研检查（`locales` / `docs-links` / `vue-types` / `assertions` / `packages` / `console-wiring` / `pr-templates`） |
+| **七段门禁 (`check`)** | Biome（含双重断言 GritQL 插件）+ ESLint (`.vue`，含模板断言内联规则) + TS7 + 4 个自研检查（`locales` / `vue-types` / `packages` / `console-wiring`） |
 | **测试规模** | `bun run test`（`--isolate`）：**133 文件 / 1082 用例 / 2957 断言 / 0 失败**（约 50s） |
 | **覆盖率（双口径）** | ① `bun test --coverage`：**93.72% 行 / 96.1% 分支** · ② `test:ci` lcov：全量 **93.05%**（排除 `tooling/` 与 `vendor/` 为 **94.15%**；纯 `src/` 为 **94.31%**） |
-| **技术债基线** | `vue-types-baseline.json`：**31 条** · `assertions-baseline.json`（`as unknown as`）：**17 处**（均只拦新增） |
+| **技术债基线** | `vue-types-baseline.json`：**31 条**（只拦新增）；双重断言 2026-11 起由 Biome GritQL 插件全量硬拦，17 处存量经行内 `biome-ignore` 附理由豁免（基线 JSON 已废） |
 | **锁文件规模** | `bun.lock` 共 **781 条**解析项（非 `@koishi-ce/*` 729 条，同名多版本嵌套 40 条） |
 | **自动化更新与发布** | Dependabot 每周一更新 minor/patch（已屏蔽冻结线、内部包与 major，CI 设锁文件降级守门）；发布走 Changesets + npm OIDC 可信发布 |
 
