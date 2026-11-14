@@ -1,30 +1,30 @@
 // SPDX-License-Identifier: MIT
 // Copyright (c) 2026-present Koishi-CE contributors.
 
-/** publish 环：registry 比对、所有权预检、拓扑序逐包 npm publish。 */
+// publish 环：registry 比对 → 所有权预检 → OIDC 信任预检 → 拓扑序逐包
+// npm publish。发布前把 workspace:* / catalog: 改写为真实版本，finally 还原
+// package.json（不落盘，工作区保持洁净）。
 import { readFileSync, writeFileSync } from "node:fs";
 import type { Options } from "../core/options.ts";
 import { ROOT } from "../core/options.ts";
-import { runNpm } from "../core/proc.ts";
 import {
+	fetchAllPublished,
 	isOidcTrustedPublishing,
 	npmOwners,
 	npmWhoami,
 	probeRegistry,
 	REGISTRY,
 } from "../core/registry.ts";
-import {
-	fetchAllPublished,
-	filterDowngrades,
-} from "../core/shared.ts";
 import type { TrustProbeResult } from "../core/trust.ts";
 import {
 	fetchGithubIdToken,
 	probeTrustConfigs,
 } from "../core/trust.ts";
+import { runNpm } from "../core/utils.ts";
 import type { PkgInfo } from "../core/workspace.ts";
 import {
 	discoverPackages,
+	filterDowngrades,
 	planPublish,
 	readCatalogSpecs,
 	rewriteWorkspaceProtocol,
@@ -32,72 +32,25 @@ import {
 } from "../core/workspace.ts";
 
 /**
- * 发布失败后的排查提示。
- *
- * 两类高频误判：
- *
- * 1. E409：`Cannot publish over previously staged version "<version>"`——
- *    该版本已进入 npm 暂存区（staged publish）等待人工批准；暂存版本不在
- *    registry 的 versions 列表里，发布链的比对无从感知，重跑只会再次撞 409。
- *    处置：npmjs.com 的 Staged Packages 标签页 Approve（转为正式发布）或
- *    Reject（丢弃后重发），或用 npm ≥ 11.15 的 `npm stage list` /
- *    `npm stage approve|reject`。
- *
- * 2. ENEEDAUTH `need auth`：OIDC 模式下**不代表没登录**。npm 用 GitHub 的
- *    id_token 换包级发布 token（npm/lib/utils/oidc.js），而该函数每个失败
- *    分支都只写 log.verbose、随后静默退回无凭证发布——registry 因此回
- *    ENEEDAUTH。真正的原因（该包没有信任配置 / claims 不符 / id_token
- *    取不到）只出现在 verbose 日志里；CI 的发布步骤已设
- *    NPM_CONFIG_LOGLEVEL=verbose（见 .github/workflows/release.yml）。
- *    2026-10-17 实证（run 39008703163）：id_token 请求 200，交换
- *    `POST 404 …/oidc/token/exchange/package/<包名>`，npm 报
- *    `OIDC token exchange error - package not found`——就是该包在 registry
- *    侧没有匹配的信任配置；逐包补配置后重发即可（见 docs/process/release.md
- *    §7.4 第 5 条）。
+ * 发布失败后的排查提示（两类高频误判）：E409 = 版本已进 npm 暂存区
+ * （staged publish）等人工批准，暂存版本不在 registry 的 versions 列表里，
+ * 比对无从感知，重跑只会再次 409；ENEEDAUTH = OIDC 模式下不代表没登录
+ * ——npm 换包级 token 失败时不报原因、静默退回无凭证发布，真正原因只在
+ * verbose 日志里（CI 发布步骤已开 NPM_CONFIG_LOGLEVEL=verbose）。
  */
 function printPublishFailureHints(pkg: PkgInfo): void {
-	console.log(
-		"[publish] 💡 若上方报错为 E409「Cannot publish over previously staged version」：",
-	);
-	console.log(
-		"[publish]    该版本已进入 npm 暂存区（staged publish）等待批准；暂存版本不在 registry 的 versions 列表内，比对无法感知，重跑必然再次 409。",
-	);
-	console.log(
-		`[publish]    处置：到 npmjs.com 的 Staged Packages 标签页对 ${pkg.name}@${pkg.version} 执行 Approve（转为正式发布）或 Reject（丢弃后重发）；npm ≥ 11.15 可用 npm stage list / npm stage approve|reject。`,
-	);
-	console.log(
-		"[publish]    同批其余未发布包可先用 --only <包名> 单独补发。",
-	);
-	console.log(
-		"[publish] 💡 若上方报错为 ENEEDAUTH「need auth」：",
-	);
-	console.log(
-		"[publish]    这不是「没登录」。npm 用 GitHub 的 id_token 换包级发布 token，换不到时它不报原因、直接退回无凭证发布，registry 才回 ENEEDAUTH。",
-	);
-	console.log(
-		"[publish]    看 npm 的 verbose 行（CI 发布步骤已开 NPM_CONFIG_LOGLEVEL=verbose）：出现 POST 404 …/oidc/token/exchange/package/… 与「OIDC token exchange error - package not found」，即该包在 registry 侧没有匹配的信任配置（配置存在但 claims 不符也报同一句）。",
-	);
-	console.log(
-		`[publish]    处置：npm trust github ${pkg.name} --file release.yml --repo Koishi-CE/koishi --environment release --allow-publish（npm CLI 须 ≥ 11.15，先 npm login；已有配置只能 revoke 后重建）。`,
-	);
-	console.log(
-		"[publish]    该包若从未经 CI 发布过，多半就是这一条——信任配置逐包，不是仓库级开关。",
-	);
-	console.log(
-		"[publish]    若它此前确实配过信任却仍 404：多半是新建后超过 2 天没发出，配置已过期且不可编辑（npm 文档「Trusted publisher configuration expiry」）——revoke 后重建，并在当天发出。",
-	);
+	console.log(`[publish] 💡 E409「Cannot publish over previously staged version」：${pkg.name}@${pkg.version} 已进入 npm 暂存区（staged publish）等待批准；暂存版本不在 registry 的 versions 列表内，比对无法感知，重跑必然再次 409。
+[publish]    处置：npmjs.com 的 Staged Packages 标签页 Approve（转为正式发布）或 Reject（丢弃后重发）；npm ≥ 11.15 可用 npm stage list / approve|reject。同批其余未发布包可先用 --only <包名> 单独补发。
+[publish] 💡 ENEEDAUTH「need auth」：这不是「没登录」。npm 用 GitHub 的 id_token 换包级发布 token，换不到时它不报原因、直接退回无凭证发布，registry 才回 ENEEDAUTH。
+[publish]    看 npm 的 verbose 行：出现 POST 404 …/oidc/token/exchange/package/… 与「OIDC token exchange error - package not found」，即该包在 registry 侧没有匹配的信任配置（没配过 / claims 与 release.yml 不符 / 配置超 2 天未完成首次发布已过期，三者同码）。
+[publish]    处置：npm trust github ${pkg.name} --file release.yml --repo Koishi-CE/koishi --environment release --allow-publish（npm CLI ≥ 11.15，先 npm login；已有配置只能 revoke 后重建）。该包若从未经 CI 发布过，多半就是这一条——信任配置逐包，不是仓库级开关。`);
 }
 
 /**
- * OIDC 信任配置预检（只在 OIDC 模式跑）。
- *
- * 发布前先逐包换一次发布 token：换得到＝该包当前有可用配置；404＝没配 /
- * claim 不符 / 已过期（npm 对三者同码回应，机制见 core/trust.ts）。命中就
- * **一个包都不发**——否则半批已推上 npm、main 上的版本只发了一半，事后要
- * 靠补发擦屁股；而且下一轮又会撞上「再下一个」缺配置的包，每轮只暴露一个
- * 缺口，正是 2026-10-13 / 10-17 连续两次发布失败的形态。
- *
- * 返回 true 表示拦下本次发布。
+ * OIDC 信任配置预检（只在 OIDC 模式跑）：发布前逐包换一次发布 token，换不
+ * 到就一个包都不发——否则半批已推上 npm，且每轮发布只撞出一个缺口（
+ * 2026-10-13 / 10-17 两次发布失败即此形态）。首发包不参与预检：包在
+ * registry 不存在就无从创建配置，换 token 必然 404，避免误拦。
  */
 export async function preflightTrustConfigs(
 	ordered: readonly PkgInfo[],
@@ -110,15 +63,11 @@ export async function preflightTrustConfigs(
 	const existing = ordered.filter(hasVersions);
 	const fresh = ordered.filter((pkg) => !hasVersions(pkg));
 	if (fresh.length > 0) {
-		// 信任配置挂在 npmjs.com 的包设置页上，包在 registry 里还不存在就
-		// 无从创建，换 token 必然 404——首发不纳入预检，避免误拦。
 		console.log(
 			`${prefix} ℹ️ 首发包不参与预检（registry 无任何版本）：${fresh.map((pkg) => pkg.name).join(", ")}`,
 		);
 	}
-	if (existing.length === 0) {
-		return false;
-	}
+	if (existing.length === 0) return false;
 	let idToken: string;
 	try {
 		idToken = await fetchGithubIdToken(fetchImpl);
@@ -145,12 +94,9 @@ export async function preflightTrustConfigs(
 	const uncertain: TrustProbeResult[] = [];
 	for (const pkg of existing) {
 		const result = byName.get(pkg.name);
-		if (result === undefined) {
-			continue;
-		}
-		if (result.status === "missing") {
+		if (result?.status === "missing") {
 			missing.push(pkg);
-		} else if (result.status === "error") {
+		} else if (result?.status === "error") {
 			uncertain.push(result);
 		}
 	}
@@ -166,30 +112,14 @@ export async function preflightTrustConfigs(
 		);
 		return false;
 	}
-	console.log(
-		`${prefix} ❌ 以下 ${missing.length} 个包当前没有可用的 OIDC 信任配置，本次一个包都不发：`,
-	);
-	for (const pkg of missing) {
-		console.log(`  ⛔ ${pkg.name}@${pkg.version}`);
-	}
-	console.log(
-		`${prefix} 💡 原因只有三种，registry 一律回 404「package not found」：没配过 / claim 与 release.yml 不符 / 配了但超过 2 天没完成首次发布而失效（npm 文档「Trusted publisher configuration expiry」；失效记录不可编辑，只能删掉重建）。`,
-	);
-	console.log(
-		`${prefix} 💡 处置（本机 npm login，npm CLI ≥ 11.15）：`,
-	);
-	console.log(
-		`${prefix}    逐包：npm trust list <包名> → 有记录先 npm trust revoke <包名> --id <id> → npm trust github <包名> --file release.yml --repo Koishi-CE/koishi --environment release --allow-publish --yes`,
-	);
-	console.log(
-		`${prefix}    核对：npm trust list <包名> 应看到 file=release.yml / repo=Koishi-CE/koishi / env=release / permissions 只含 publish`,
-	);
-	console.log(
-		`${prefix} ⏳ 新配置须在 2 天内完成首次发布才生效：配完立刻重跑本链并批准，别隔天再发。`,
-	);
-	console.log(
-		`${prefix}    只补本批是刻意的——提前把全部包配好，没在本批验证的那些两天后照样过期。`,
-	);
+	const listed = missing
+		.map((pkg) => `  ⛔ ${pkg.name}@${pkg.version}`)
+		.join("\n");
+	console.log(`${prefix} ❌ 以下 ${missing.length} 个包当前没有可用的 OIDC 信任配置，本次一个包都不发：
+${listed}
+${prefix} 💡 原因只有三种（registry 一律回 404「package not found」）：没配过 / claim 与 release.yml 不符 / 配了但超 2 天没完成首次发布而失效（失效记录不可编辑，只能删掉重建）。
+${prefix} 💡 处置（本机 npm login，npm CLI ≥ 11.15）：逐包 npm trust list <包名> → 有记录先 npm trust revoke <包名> --id <id> → npm trust github <包名> --file release.yml --repo Koishi-CE/koishi --environment release --allow-publish --yes；核对 file=release.yml / repo=Koishi-CE/koishi / env=release / permissions 只含 publish。
+${prefix} ⏳ 新配置须在 2 天内完成首次发布才生效：配完立刻重跑本链并批准，别隔天再发。只补本批是刻意的——提前把全部包配好，没在本批验证的那些两天后照样过期。`);
 	return true;
 }
 
@@ -220,8 +150,8 @@ export async function runPublishSteps(
 				"本地版本低于 registry 已发布版本（源码落后，先同步源码）",
 		});
 	}
-	// --only：精确发布名单（补发漏发 / 重发坏版本）；名单外的待发布包
-	// 记入 skipped 本次不动。名单内拼写错误早报，避免静默漏发。
+	// --only：精确发布名单（补发漏发 / 重发坏版本）；名单外记入 skipped，
+	// 名单内拼写错误早报，避免静默漏发。
 	if (options.only.length > 0) {
 		const known = new Set(pkgs.map((pkg) => pkg.name));
 		const unknown = options.only.filter(
@@ -234,11 +164,11 @@ export async function runPublishSteps(
 			return 1;
 		}
 		const only = new Set(options.only);
-		const kept: PkgInfo[] = [];
+		const kept = toPublish.filter((pkg) =>
+			only.has(pkg.name),
+		);
 		for (const pkg of toPublish) {
-			if (only.has(pkg.name)) {
-				kept.push(pkg);
-			} else {
+			if (!only.has(pkg.name)) {
 				plan.skipped.push({
 					pkg,
 					reason: "不在 --only 名单内",
@@ -248,14 +178,11 @@ export async function runPublishSteps(
 		toPublish.length = 0;
 		toPublish.push(...kept);
 	}
-	// 所有权预检：别人的包（版本领先于 registry 的第三方插件）跳过而非 403 中断；
-	// 首发包不做预检（首个发布者自动成为 owner）。
-	//
-	// OIDC 可信发布下跳过整个预检：没有登录态，`npm whoami` 必然 E401、
-	// `npm owner ls` 只会拿到空集——而空集会命中下面的「不是 owner」分支，
-	// 把本仓所有已发布过的包静默判成他人插件全部跳过（＝什么都没发）。
-	// 跳过是安全的：本仓 workspaces 只含自有目录（packages/* plugins/* apps/*），
-	// 不存在需要靠 owner 查询甄别的第三方包。
+	// 所有权预检：别人的包（版本领先于 registry 的第三方插件）跳过而非 403
+	// 中断；首发包不做预检（首个发布者自动成为 owner）。OIDC 下跳过整个预检
+	// ——没有登录态，whoami 必然 E401、owner ls 只会拿到空集，空集会把本仓
+	// 已发布过的包全部静默判成他人插件（＝什么都没发）。跳过是安全的：本仓
+	// workspaces 只含自有目录，不存在需要靠 owner 查询甄别的第三方包。
 	if (!options.dryRun) {
 		if (isOidcTrustedPublishing()) {
 			console.log(
@@ -290,44 +217,42 @@ export async function runPublishSteps(
 		}
 	}
 	if (plan.skipped.length > 0) {
+		const listed = plan.skipped
+			.map(
+				({ pkg, reason }) =>
+					`  ⏭  ${pkg.name}@${pkg.version}（${reason}）`,
+			)
+			.join("\n");
 		console.log(
-			`[publish] 跳过 ${plan.skipped.length} 个：`,
+			`[publish] 跳过 ${plan.skipped.length} 个：\n${listed}`,
 		);
-		for (const { pkg, reason } of plan.skipped) {
-			console.log(
-				`  ⏭  ${pkg.name}@${pkg.version}（${reason}）`,
-			);
-		}
 	}
 	if (toPublish.length === 0) {
 		console.log("[publish] 无需发布");
 		return 0;
 	}
 	const ordered = topoSort(toPublish);
+	const order = ordered
+		.map((pkg) => `  ${pkg.name}@${pkg.version}`)
+		.join("\n");
 	console.log(
-		`[publish] 发布序（${ordered.length} 个${options.dryRun ? "，dry-run" : ""}）：`,
+		`[publish] 发布序（${ordered.length} 个${options.dryRun ? "，dry-run" : ""}）：\n${order}`,
 	);
-	for (const pkg of ordered) {
-		console.log(`  ${pkg.name}@${pkg.version}`);
-	}
 	if (options.dryRun) {
 		console.log("[publish] [dry-run] 未执行发布");
 		return 0;
 	}
 	// OIDC 预检：逐包换一次 token，缺配置就整批不发（见 preflightTrustConfigs）
-	if (isOidcTrustedPublishing()) {
-		if (
-			await preflightTrustConfigs(
-				ordered,
-				published,
-				"[publish]",
-			)
-		) {
-			return 1;
-		}
+	if (
+		isOidcTrustedPublishing() &&
+		(await preflightTrustConfigs(
+			ordered,
+			published,
+			"[publish]",
+		))
+	) {
+		return 1;
 	}
-	// 逐包发布：发布前把本地协议依赖（workspace:* / catalog:）改写为真实版本
-	// （npm 不认这些协议），finally 还原原文件（不落盘，工作区保持洁净）
 	const versions = new Map(
 		pkgs.map((pkg) => [pkg.name, pkg.version]),
 	);
@@ -347,15 +272,12 @@ export async function runPublishSteps(
 		}
 		try {
 			// stdin 直通终端：本地发布走 npm 的 OTP 浏览器认证，要求 stdin/stdout
-			// 双 TTY，断开 stdin 会直接抛 EOTP（逐包弹浏览器逐包认证，属预期流程）。
-			// OIDC 模式（CI）下不需要 OTP——npm 会用 id_token 换包级短时 token，
-			// 此处 inherit 在 runner 上无害，保留以免两条路径分叉。
+			// 双 TTY，断开 stdin 会直接抛 EOTP（逐包弹浏览器属预期流程）。OIDC
+			// 模式下不需要 OTP，inherit 在 runner 上无害，保留以免两条路径分叉。
 			const code = await runNpm(
 				["publish", "--access", "public"],
 				pkg.dir,
-				{
-					stdin: "inherit",
-				},
+				"inherit",
 			);
 			if (code !== 0) {
 				console.log(

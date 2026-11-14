@@ -8,7 +8,6 @@ import {
 	clipBullet,
 	formatNotes,
 	parseChangelogDiff,
-	splitEntries,
 } from "./notes.ts";
 
 const nameByPath = new Map([
@@ -68,29 +67,6 @@ test("解析 CHANGELOG diff：未登记的路径整段忽略（不误归到上�
 	]);
 });
 
-test("分组：跨包重复的条目单独成节、只出现一次，单包条目留在明细", () => {
-	const { shared, scoped } = splitEntries([
-		{
-			package: "@koishi-ce/core",
-			text: "e9258a1: 验证 OIDC 信任配置",
-		},
-		{
-			package: "@koishi-ce/utils",
-			text: "e9258a1: 验证 OIDC 信任配置",
-		},
-		{
-			package: "@koishi-ce/utils",
-			text: "13b6aff: coerce 不再退化成裸栈帧",
-		},
-	]);
-	expect(shared.map((entry) => entry.text)).toEqual([
-		"e9258a1: 验证 OIDC 信任配置",
-	]);
-	expect(scoped.map((entry) => entry.text)).toEqual([
-		"13b6aff: coerce 不再退化成裸栈帧",
-	]);
-});
-
 test("截断：短条目原样保留，超长条目按上限截断并标注出处", () => {
 	const short = "a".repeat(BULLET_LIMIT);
 	expect(clipBullet(short)).toBe(short);
@@ -113,7 +89,7 @@ test("骨架：区间内没有升版时给出一句话而不是空表", () => {
 	expect(notes).not.toContain("| 包 | 版本 |");
 });
 
-test("骨架：版本表、跨包节、按包分节、PR 折叠块与安装说明齐备", () => {
+test("骨架：版本表、跨包节去重、按包分节、PR 折叠块与安装说明齐备", () => {
 	const notes = formatNotes({
 		tag: "v1.1.8",
 		previousTag: "v1.1.5",
@@ -152,9 +128,13 @@ test("骨架：版本表、跨包节、按包分节、PR 折叠块与安装说�
 	expect(notes).toContain(
 		"| `@koishi-ce/new` | 首发 1.0.0 |",
 	);
+	// 同一 changeset 连带写进两个包 → 跨包节只出现一次，明细节不再重复
 	expect(notes).toContain(
 		"## 跨包批量变更\n\n- e9258a1: 信任配置验证",
 	);
+	expect(
+		notes.match(/e9258a1: 信任配置验证/g),
+	).toHaveLength(1);
 	expect(notes).toContain(
 		"### `@koishi-ce/core`（1.1.5 → 1.1.8）",
 	);

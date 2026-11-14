@@ -1,82 +1,45 @@
 // SPDX-License-Identifier: MIT
 // Copyright (c) 2026-present Koishi-CE contributors.
 
-/**
- * notes 子命令：生成**里程碑** Release 的正文骨架（stdout）。
- *
- * 背景：本仓是 53 条独立版本线的 changesets monorepo，没有「整仓版本」。
- * 早先按 `@koishi-ce/core` 的版本打 `v1.1.8` 这类 tag 是错的——它既把单个
- * 包的版本说成整仓版本，也代表不了同一时期另外 24 批不升 core 的发布。
- * 现在的 tag 分两类：
- *
- * - 批次 tag `release/<日期>-<序号>`：每次发布一个，轻量、无 Release，
- *   只回答「npm 上这套版本对应哪棵树」；
- * - 里程碑 tag `milestone/<major>.<minor>`：跟 core 的 minor 兼容线走
- *   （与插件 peer `^1.0.0` 的边界一致），annotated + GitHub Release，
- *   封面正文由本命令生成骨架，人改完再发布。
- *
- * 正文口径：区间是「上一个里程碑 tag → HEAD」，没有里程碑 tag 时回退到
- * 历史遗留的 `v*` tag（1.1 线由 v1.1.5 / v1.1.8 代表）；版本表只列区间内
- * 升版的包（changesets ignore 的 shim 四包除外）；条目取各包 CHANGELOG 的
- * 新增 bullet，剔除 `Updated dependencies` 与纯 `@koishi-ce/x@1.2.3` 连带
- * 升版行；同一 changeset 在多个包下重复（连带升版）时只保留一次。
- *
- * 为什么正文写到 stdout、进度写到 stderr：CI 里以重定向取正文
- * （`bun run release notes > release-notes.md`），同一条流上混进度会污染
- * markdown。
- */
+// notes 子命令：生成里程碑 Release 正文骨架（只读）。区间＝上一个
+// milestone/* tag → HEAD（无则回退历史 v* tag，再无则首个提交）；版本表只
+// 列升版的包（changesets ignore 的 shim 四包除外），条目取各包 CHANGELOG
+// 新增 bullet，剔除 Updated dependencies 与纯版本号连带升版噪音。正文写
+// stdout、进度写 stderr：CI 以重定向取正文，同流混进度会污染 markdown。
 import { readFileSync } from "node:fs";
 import { join, relative, sep } from "node:path";
 import { ROOT } from "../core/options.ts";
-import { capture } from "../core/proc.ts";
+import { capture } from "../core/utils.ts";
 import { discoverPackages } from "../core/workspace.ts";
 
-/** 一个 changeset 条目（归属包 + 正文）。 */
+/** changeset 条目（归属包 + 正文）。 */
 export interface ChangelogEntry {
-	/** 条目所属包名。 */
 	package: string;
-	/** 条目正文（续行以空格并入）。 */
 	text: string;
 }
 
-/** 与上一个 tag 相比的版本变化；`before` 为 null 表示该包首发。 */
-export interface VersionBump {
+/** 版本变化；before 为 null 表示该包首发。 */
+interface VersionBump {
 	name: string;
 	before: string | null;
 	after: string;
 }
 
-/** 骨架输入。 */
-export interface NotesInput {
-	/** 本次要打的 tag（如 `v1.1.8`）。 */
+interface NotesInput {
 	tag: string;
-	/** 上一个 v* tag（如 `v1.1.5`）。 */
 	previousTag: string;
-	/** 区间内提交数。 */
 	commits: number;
-	/** 升版的包（版本表顺序即发布面顺序）。 */
 	bumps: readonly VersionBump[];
-	/** 已去重的 changeset 条目。 */
 	entries: readonly ChangelogEntry[];
-	/** 区间内带 PR 号的提交标题。 */
 	pulls: readonly string[];
 }
 
-/** 是否属于「依赖连带升版」噪音行（含 `Updated dependencies` 块）。 */
-function isDependencyNoise(text: string): boolean {
-	return (
-		text.startsWith("Updated dependencies") ||
-		/^@koishi-ce\/[\w-]+@\d/.test(text)
-	);
-}
+/** 依赖连带升版噪音行（Updated dependencies 块与纯版本号行）。 */
+const isNoise = (text: string): boolean =>
+	text.startsWith("Updated dependencies") ||
+	/^@koishi-ce\/[\w-]+@\d/.test(text);
 
-/**
- * 解析 `git diff prev..HEAD -- '**\/CHANGELOG.md'` 的新增行。
- *
- * 只认 `+++ b/<包目录>/CHANGELOG.md` 切包、`+- ` 开头的 bullet，以及缩进
- * 续行（changeset 正文的多段描述）；`+## 1.2.3` 之类的版本小节标题不单独
- * 输出——骨架按包归并，版本区间已由版本表表达。
- */
+/** 解析 CHANGELOG diff 新增行：`+++ b/` 切包、`- ` 为条目、缩进续行并入。 */
 export function parseChangelogDiff(
 	diff: string,
 	nameByPath: ReadonlyMap<string, string>,
@@ -86,106 +49,73 @@ export function parseChangelogDiff(
 	let last: ChangelogEntry | undefined;
 	for (const line of diff.split("\n")) {
 		if (line.startsWith("+++ b/")) {
-			const path = line
-				.slice("+++ b/".length)
-				.replace(/\/CHANGELOG\.md$/, "");
-			current = nameByPath.get(path);
+			current = nameByPath.get(
+				line.slice(6).replace(/\/CHANGELOG\.md$/, ""),
+			);
 			last = undefined;
-			continue;
-		}
-		if (current === undefined || !line.startsWith("+")) {
-			continue;
-		}
-		const body = line.slice(1);
-		const bullet = /^-\s+(\S.*)$/.exec(body);
-		if (bullet !== null) {
-			const text = (bullet[1] ?? "").trim();
-			if (text === "" || isDependencyNoise(text)) {
-				last = undefined;
-				continue;
+		} else if (
+			current !== undefined &&
+			line.startsWith("+")
+		) {
+			const body = line.slice(1);
+			const bullet = /^-\s+(\S.*)$/.exec(body);
+			if (bullet !== null) {
+				const text = bullet[1]?.trim() ?? "";
+				const noise = text === "" || isNoise(text);
+				last = noise
+					? undefined
+					: { package: current, text };
+				if (!noise) entries.push(last);
+			} else if (last && /^\s{2,}\S/.test(body)) {
+				last.text += ` ${body.trim()}`;
 			}
-			last = { package: current, text };
-			entries.push(last);
-			continue;
-		}
-		// changeset 正文的续行（缩进段落）：并进上一条，保留细节
-		if (last !== undefined && /^\s{2,}\S/.test(body)) {
-			last.text = `${last.text} ${body.trim()}`;
 		}
 	}
 	return entries;
 }
 
-/** 按包归并条目，保持首次出现的顺序（与 CHANGELOG 的目录序一致）。 */
-function groupByPackage(
-	entries: readonly ChangelogEntry[],
-): [string, ChangelogEntry[]][] {
-	const grouped = new Map<string, ChangelogEntry[]>();
-	for (const entry of entries) {
-		const list = grouped.get(entry.package) ?? [];
-		list.push(entry);
-		grouped.set(entry.package, list);
-	}
-	return [...grouped];
-}
-
-/** 单条 bullet 的最大展示长度（changeset 正文常是数千字，骨架不该整段搬）。 */
+/** 单条 bullet 的最大展示长度（changeset 正文常数千字，不整段搬）。 */
 export const BULLET_LIMIT = 160;
 
-/** 截断超长条目；尾部加省略号并指向 CHANGELOG，正文细节仍在原地可查。 */
+/** 截断超长条目并指向 CHANGELOG（细节仍在原地可查）。 */
 export function clipBullet(text: string): string {
 	return text.length <= BULLET_LIMIT
 		? text
 		: `${text.slice(0, BULLET_LIMIT)}…（详见 CHANGELOG）`;
 }
 
-/**
- * 把条目拆成「跨包批量变更」与「单包明细」两组。
- *
- * 同一 changeset 常以连带升版的形式写进多个包的 CHANGELOG（如 OIDC 信任
- * 验证一次性覆盖 27 个包），按首次出现归到某一个包名下会误导读者；这里
- * 把出现次数 > 1 的条目单独成节，单包条目才按包分节。
- */
-export function splitEntries(
-	entries: readonly ChangelogEntry[],
-): {
+/** 跨包重复条目（连带升版写进多个包）只保留一次，单包条目归组。 */
+function splitEntries(entries: readonly ChangelogEntry[]): {
 	shared: ChangelogEntry[];
 	scoped: ChangelogEntry[];
 } {
 	const counts = new Map<string, number>();
-	for (const entry of entries) {
-		counts.set(
-			entry.text,
-			(counts.get(entry.text) ?? 0) + 1,
-		);
+	for (const { text } of entries) {
+		counts.set(text, (counts.get(text) ?? 0) + 1);
 	}
 	const shared: ChangelogEntry[] = [];
 	const scoped: ChangelogEntry[] = [];
 	const emitted = new Set<string>();
 	for (const entry of entries) {
 		if ((counts.get(entry.text) ?? 0) > 1) {
-			if (emitted.has(entry.text)) {
-				continue;
+			if (!emitted.has(entry.text)) {
+				emitted.add(entry.text);
+				shared.push(entry);
 			}
-			emitted.add(entry.text);
-			shared.push(entry);
-			continue;
+		} else {
+			scoped.push(entry);
 		}
-		scoped.push(entry);
 	}
 	return { shared, scoped };
 }
 
-/** 版本区间文本（首发带前缀）。 */
-function versionRange(bump: VersionBump): string {
-	return bump.before === null
-		? `首发 ${bump.after}`
-		: `${bump.before} → ${bump.after}`;
-}
-
-/** 由上述素材拼出 markdown 骨架。 */
+/** 由素材拼出 markdown 骨架。 */
 export function formatNotes(input: NotesInput): string {
-	const lines: string[] = [
+	const range = (bump: VersionBump): string =>
+		bump.before === null
+			? `首发 ${bump.after}`
+			: `${bump.before} → ${bump.after}`;
+	const lines = [
 		"<!-- 自动生成的 Release 骨架（bun run release notes）。发布前请按主题改写：",
 		"     本仓 Release 发布后不可修改（immutable），正文只能在 draft 阶段调整。 -->",
 		"",
@@ -199,31 +129,36 @@ export function formatNotes(input: NotesInput): string {
 	} else {
 		lines.push("| 包 | 版本 |", "|---|---|");
 		for (const bump of input.bumps) {
-			lines.push(
-				`| \`${bump.name}\` | ${versionRange(bump)} |`,
-			);
+			lines.push(`| \`${bump.name}\` | ${range(bump)} |`);
 		}
 	}
+	const { shared, scoped } = splitEntries(input.entries);
 	const bumpByPackage = new Map(
 		input.bumps.map((bump) => [bump.name, bump]),
 	);
-	const { shared, scoped } = splitEntries(input.entries);
 	if (shared.length > 0) {
 		lines.push("", "## 跨包批量变更", "");
-		for (const entry of shared) {
-			lines.push(`- ${clipBullet(entry.text)}`);
+		for (const { text } of shared) {
+			lines.push(`- ${clipBullet(text)}`);
 		}
 	}
 	if (scoped.length > 0) {
 		lines.push("", "## 变更明细");
-		for (const [name, list] of groupByPackage(scoped)) {
+		const grouped = new Map<string, ChangelogEntry[]>();
+		for (const entry of scoped) {
+			grouped.set(entry.package, [
+				...(grouped.get(entry.package) ?? []),
+				entry,
+			]);
+		}
+		for (const [name, list] of grouped) {
 			const bump = bumpByPackage.get(name);
 			lines.push(
 				"",
-				`### \`${name}\`${bump === undefined ? "" : `（${versionRange(bump)}）`}`,
+				`### \`${name}\`${bump === undefined ? "" : `（${range(bump)}）`}`,
 			);
-			for (const entry of list) {
-				lines.push(`- ${clipBullet(entry.text)}`);
+			for (const { text } of list) {
+				lines.push(`- ${clipBullet(text)}`);
 			}
 		}
 	}
@@ -251,40 +186,29 @@ export function formatNotes(input: NotesInput): string {
 /** 从 manifest 文本取 version（畸形 / 缺失 → null）。 */
 function readVersion(raw: string): string | null {
 	try {
-		const manifest = JSON.parse(raw) as {
+		const { version } = JSON.parse(raw) as {
 			version?: unknown;
 		};
-		return typeof manifest.version === "string"
-			? manifest.version
-			: null;
+		return typeof version === "string" ? version : null;
 	} catch {
 		return null;
 	}
 }
 
-/** 包目录相对仓库根的 posix 路径（git 输出口径）。 */
-function posixDir(dir: string): string {
-	return relative(ROOT, dir).split(sep).join("/");
-}
-
-/**
- * changesets ignore 名单（shim 四包：版本冻结跟随上游线、不参与变更集）。
- * 它们若在区间内首次出现会被 `git show` 判成「首发」，写进版本表会误导
- * ——版本表只列 changesets 管理的包。
- */
+/** changesets ignore 名单（shim 四包版本冻结，不参与变更集与版本表）。 */
 function readIgnoredNames(
 	root: string,
 ): ReadonlySet<string> {
 	try {
-		const config = JSON.parse(
+		const { ignore } = JSON.parse(
 			readFileSync(
 				join(root, ".changeset", "config.json"),
 				"utf8",
 			),
 		) as { ignore?: unknown };
 		return new Set(
-			Array.isArray(config.ignore)
-				? config.ignore.filter(
+			Array.isArray(ignore)
+				? ignore.filter(
 						(name): name is string =>
 							typeof name === "string",
 					)
@@ -295,15 +219,7 @@ function readIgnoredNames(
 	}
 }
 
-/**
- * notes：只读，输出 markdown 到 stdout。
- *
- * tag 名取 core 的 major.minor（`milestone/1.1`）。基线用
- * `git describe --match 'milestone/*' --match 'v*'` 取：优先上一个里程碑，
- * 没有里程碑时回退到历史遗留的 `v*` tag（1.1 线由 v1.1.5 / v1.1.8 代表）；
- * 两者都没有才回退到仓库首个提交。`--exclude` 排掉同名 tag，本地在已打
- * 里程碑的提交上重跑时不会退化成空 diff。
- */
+/** notes：只读，markdown 写 stdout；tag 名取 core 的 major.minor。 */
 export async function cmdNotes(): Promise<number> {
 	const pkgs = discoverPackages(ROOT);
 	const core = pkgs.find(
@@ -315,62 +231,38 @@ export async function cmdNotes(): Promise<number> {
 		);
 		return 1;
 	}
-	const line = core.version
-		.split(".")
-		.slice(0, 2)
-		.join(".");
-	const tag = `milestone/${line}`;
+	const tag = `milestone/${core.version.split(".").slice(0, 2).join(".")}`;
+	const posixDir = (dir: string): string =>
+		relative(ROOT, dir).split(sep).join("/");
+	// 固定参数命令按空格切分：git 不允许 tag / SHA 含空格，包路径是仓库内
+	// 固定名（posixDir 相对 ROOT，与仓库落盘位置无关），均无空格
+	const git = (cmd: string): string =>
+		capture("git", cmd.split(" "), ROOT) ?? "";
+	// 基线：优先上一个里程碑（--exclude 防止在已打 tag 的提交上重跑退化成
+	// 空 diff）；没有里程碑回退历史 v*，再无则首个提交
 	const previousTag =
-		capture(
-			"git",
-			[
-				"describe",
-				"--tags",
-				"--abbrev=0",
-				"--match",
-				"milestone/*",
-				"--match",
-				"v*",
-				"--exclude",
-				tag,
-				"HEAD",
-			],
-			ROOT,
-		) ||
-		capture(
-			"git",
-			["rev-list", "--max-parents=0", "HEAD"],
-			ROOT,
-		);
-	if (previousTag === null || previousTag === "") {
+		git(
+			`describe --tags --abbrev=0 --match milestone/* --match v* --exclude ${tag} HEAD`,
+		) || git("rev-list --max-parents=0 HEAD");
+	if (previousTag === "") {
 		process.stderr.write(
 			"[notes] ❌ 找不到基线（既无里程碑 / v* tag，也无提交历史）\n",
 		);
 		return 1;
 	}
-	const commits = Number.parseInt(
-		capture(
-			"git",
-			["rev-list", "--count", `${previousTag}..HEAD`],
-			ROOT,
-		) ?? "0",
-		10,
-	);
-	const bumps: VersionBump[] = [];
+	const commits =
+		Number.parseInt(
+			git(`rev-list --count ${previousTag}..HEAD`),
+			10,
+		) || 0;
 	const ignored = readIgnoredNames(ROOT);
+	const bumps: VersionBump[] = [];
 	for (const pkg of pkgs) {
-		if (ignored.has(pkg.name)) {
-			continue;
-		}
-		const raw = capture(
-			"git",
-			[
-				"show",
-				`${previousTag}:${posixDir(pkg.dir)}/package.json`,
-			],
-			ROOT,
+		if (ignored.has(pkg.name)) continue;
+		const raw = git(
+			`show ${previousTag}:${posixDir(pkg.dir)}/package.json`,
 		);
-		const before = raw === null ? null : readVersion(raw);
+		const before = raw === "" ? null : readVersion(raw);
 		if (before !== pkg.version) {
 			bumps.push({
 				name: pkg.name,
@@ -382,31 +274,15 @@ export async function cmdNotes(): Promise<number> {
 	const nameByPath = new Map(
 		pkgs.map((pkg) => [posixDir(pkg.dir), pkg.name]),
 	);
-	const diff =
-		capture(
-			"git",
-			[
-				"diff",
-				"--unified=0",
-				`${previousTag}..HEAD`,
-				"--",
-				"*/CHANGELOG.md",
-			],
-			ROOT,
-		) ?? "";
-	const entries = parseChangelogDiff(diff, nameByPath);
+	const entries = parseChangelogDiff(
+		git(
+			`diff --unified=0 ${previousTag}..HEAD -- */CHANGELOG.md`,
+		),
+		nameByPath,
+	);
 	const { shared, scoped } = splitEntries(entries);
-	const pulls = (
-		capture(
-			"git",
-			[
-				"log",
-				"--format=%s",
-				"--reverse",
-				`${previousTag}..HEAD`,
-			],
-			ROOT,
-		) ?? ""
+	const pulls = git(
+		`log --format=%s --reverse ${previousTag}..HEAD`,
 	)
 		.split("\n")
 		.map((line) => line.trim())

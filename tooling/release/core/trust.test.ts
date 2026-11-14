@@ -8,7 +8,6 @@ import {
 	test,
 } from "bun:test";
 import {
-	escapePackageName,
 	exchangeUrl,
 	fetchGithubIdToken,
 	probePackageTrust,
@@ -30,14 +29,11 @@ afterAll(() => {
 });
 
 test("包名转路径段：作用域名只转斜杠，@ 保留（与 npm CLI 一致）", () => {
-	expect(escapePackageName("@koishi-ce/plugin-admin")).toBe(
-		"@koishi-ce%2Fplugin-admin",
-	);
-	expect(escapePackageName("create-koishi-ce")).toBe(
-		"create-koishi-ce",
-	);
 	expect(exchangeUrl("@koishi-ce/core")).toBe(
 		"https://registry.npmjs.org/-/npm/v1/oidc/token/exchange/package/@koishi-ce%2Fcore",
+	);
+	expect(exchangeUrl("create-koishi-ce")).toBe(
+		"https://registry.npmjs.org/-/npm/v1/oidc/token/exchange/package/create-koishi-ce",
 	);
 });
 

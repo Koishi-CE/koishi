@@ -1,14 +1,10 @@
 // SPDX-License-Identifier: MIT
 // Copyright (c) 2026-present Koishi-CE contributors.
 
-/**
- * CLI 旗标解析层：仓库根常量、Options 契约与旗标解析。
- *
- * 各子命令模块共享的输入面——旗标集在入口解析一次，之后以
- * Options 对象在步骤函数间传递（不再回头读 process.argv）。
- */
+// CLI 旗标解析层：旗标在入口解析一次，之后以 Options 对象在步骤函数间传递。
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
+import { parseArgs } from "node:util";
 
 /** 仓库根（tooling/release/core/ 的上三级）。 */
 export const ROOT = resolve(
@@ -31,62 +27,37 @@ export interface Options {
 	only: string[];
 }
 
-/** 解析旗标；遇到未知旗标 / --only 缺参返回 null。 */
+/** 解析旗标（strict 模式）；未知旗标 / --only 缺参或值以 -- 开头 → null。 */
 export function parseOptions(
 	args: readonly string[],
 ): Options | null {
-	const options: Options = {
-		dryRun: false,
-		push: false,
-		allowDirty: false,
-		skipBuild: false,
-		skipTest: false,
-		commit: false,
-		only: [],
-	};
-	for (let i = 0; i < args.length; i += 1) {
-		const arg = args[i];
-		switch (arg) {
-			case "--dry-run": {
-				options.dryRun = true;
-				break;
-			}
-			case "--only": {
-				const value = args[i + 1];
-				if (value === undefined || value.startsWith("--")) {
-					return null;
-				}
-				options.only = value
-					.split(",")
-					.map((name) => name.trim())
-					.filter((name) => name !== "");
-				i += 1;
-				break;
-			}
-			case "--push": {
-				options.push = true;
-				break;
-			}
-			case "--commit": {
-				options.commit = true;
-				break;
-			}
-			case "--allow-dirty": {
-				options.allowDirty = true;
-				break;
-			}
-			case "--skip-build": {
-				options.skipBuild = true;
-				break;
-			}
-			case "--skip-test": {
-				options.skipTest = true;
-				break;
-			}
-			default: {
-				return null;
-			}
-		}
+	try {
+		const { values } = parseArgs({
+			args: [...args],
+			options: {
+				"dry-run": { type: "boolean" },
+				push: { type: "boolean" },
+				"allow-dirty": { type: "boolean" },
+				"skip-build": { type: "boolean" },
+				"skip-test": { type: "boolean" },
+				commit: { type: "boolean" },
+				only: { type: "string" },
+			},
+			strict: true,
+		});
+		return {
+			dryRun: values["dry-run"] === true,
+			push: values.push === true,
+			allowDirty: values["allow-dirty"] === true,
+			skipBuild: values["skip-build"] === true,
+			skipTest: values["skip-test"] === true,
+			commit: values.commit === true,
+			only: (values.only ?? "")
+				.split(",")
+				.map((name) => name.trim())
+				.filter((name) => name !== ""),
+		};
+	} catch {
+		return null;
 	}
-	return options;
 }

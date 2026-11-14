@@ -13,6 +13,8 @@ import { join } from "node:path";
 import type { PkgInfo } from "./workspace.ts";
 import {
 	discoverPackages,
+	filterDowngrades,
+	isDowngrade,
 	rewriteWorkspaceProtocol,
 	topoSort,
 } from "./workspace.ts";
@@ -232,4 +234,47 @@ test("协议改写：workspace:* 行为不变（caret 真实版本），与 cata
 	expect(manifest.dependencies!["@t/core"]).toBe("^1.2.3");
 	expect(manifest.dependencies!.cosmokit).toBe("^1.8.1");
 	expect(changes).toHaveLength(2);
+});
+
+test("降级判定：完整版本序（major/minor/patch 与 prerelease 字典序）", () => {
+	// 2026-11 改用 Bun.semver.order：prerelease 参与比较（旧数值解析忽略
+	// 预发布段，1.2.3-alpha 不被判成降级），prerelease 字典序按数字段比较
+	const published = new Set(["1.2.3", "1.2.3-beta.11"]);
+	expect(isDowngrade("1.2.2", published)).toBe(true);
+	expect(isDowngrade("1.2.3-alpha", published)).toBe(true);
+	expect(isDowngrade("1.2.3-beta.2", published)).toBe(true);
+	// 对 1.2.3-beta.11 这条线是数字段比较；但 registry 同时存在正式版
+	// 1.2.3，semver 规则下任何 1.2.3-beta.* 都小于它 → 仍是降级
+	expect(
+		isDowngrade(
+			"1.2.3-beta.12",
+			new Set(["1.2.3-beta.11"]),
+		),
+	).toBe(false);
+	expect(isDowngrade("1.2.3-beta.12", published)).toBe(
+		true,
+	);
+	expect(isDowngrade("1.2.3", published)).toBe(false);
+	expect(isDowngrade("1.3.0", published)).toBe(false);
+	expect(isDowngrade("1.2.3", new Set())).toBe(false);
+	expect(isDowngrade("not-semver", published)).toBe(false);
+});
+
+test("降级过滤：downgraded 从 toPublish 剔除，其余保持顺序", () => {
+	const a = pkg("@t/a");
+	const b = pkg("@t/b");
+	const c = pkg("@t/c");
+	const plan = {
+		toPublish: [a, b, c],
+		skipped: [],
+	};
+	const { toPublish, downgraded } = filterDowngrades(
+		plan,
+		new Map([
+			["@t/b", new Set(["2.0.0"])],
+			["@t/a", new Set()],
+		]),
+	);
+	expect(downgraded).toEqual([b]);
+	expect(toPublish).toEqual([a, c]);
 });
