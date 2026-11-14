@@ -36,15 +36,15 @@
 		"vue-router": "^5"
 	},
 	"dependencies": {
-		"@satorijs/element": "^3.2.0",
-		"cosmokit": "^1.8.1",
+		"@satorijs/element": "catalog:",
+		"cosmokit": "catalog:",
 		"dompurify": "^3.4.17",
 		"marked": "^18.1.3",
 		"schemastery-vue": "^7.3.15"
 	},
 	"devDependencies": {
 		"@koishi-ce/koishi": "workspace:*",
-		"jsdom": "^30.1.3"
+		"jsdom": "catalog:test"
 	},
 	"exports": {
 		".": {

@@ -45,7 +45,7 @@
     "dependencies": {
         "@clack/prompts": "^1.7.0",
         "@koishi-ce/utils": "workspace:*",
-        "picocolors": "^1.1.1"
+        "picocolors": "catalog:"
     },
     "exports": {
         ".": {

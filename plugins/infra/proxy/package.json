@@ -52,7 +52,7 @@
 		"@koishi-ce/koishi": "^1.0.0"
 	},
 	"devDependencies": {
-		"cordis": "^3.18.1",
+		"cordis": "catalog:",
 		"@koishi-ce/koishi": "workspace:*"
 	},
 	"dependencies": {

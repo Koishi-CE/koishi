@@ -33,7 +33,7 @@
       "dependencies": {
         "@clack/prompts": "^1.7.0",
         "@koishi-ce/utils": "workspace:*",
-        "picocolors": "^1.1.1",
+        "picocolors": "catalog:",
       },
     },
     "apps/koishi-scripts": {
@@ -47,7 +47,7 @@
       "name": "@koishi-ce/assets",
       "version": "1.0.3",
       "dependencies": {
-        "file-type": "^22.3.0",
+        "file-type": "catalog:",
       },
       "devDependencies": {
         "@koishi-ce/koishi": "workspace:*",
@@ -71,7 +71,7 @@
         "@koishi-ce/plugin-server": "workspace:*",
         "@koishi-ce/utils": "workspace:*",
         "cac": "^7.1.0",
-        "picocolors": "^1.1.1",
+        "picocolors": "catalog:",
       },
     },
     "packages/node/console": {
@@ -88,10 +88,10 @@
         "@koishi-ce/i18n-utils": "workspace:*",
         "@koishi-ce/utils": "workspace:*",
         "@satorijs/core": "^4.6.0",
-        "cordis": "^3.18.1",
-        "cosmokit": "^1.8.1",
+        "cordis": "catalog:",
+        "cosmokit": "catalog:",
         "fastest-levenshtein": "^1.0.16",
-        "minato": "^3.7.0",
+        "minato": "catalog:",
       },
       "devDependencies": {
         "@koishi-ce/koishi": "workspace:*",
@@ -103,7 +103,7 @@
       "name": "@koishi-ce/i18n-utils",
       "version": "1.0.2",
       "dependencies": {
-        "cosmokit": "^1.8.1",
+        "cosmokit": "catalog:",
       },
     },
     "packages/node/loader": {
@@ -122,18 +122,18 @@
       "name": "@koishi-ce/registry",
       "version": "1.0.6",
       "dependencies": {
-        "cosmokit": "^1.8.1",
-        "semver": "^7.8.6",
+        "cosmokit": "catalog:",
+        "semver": "catalog:",
       },
       "devDependencies": {
-        "@types/semver": "^7.5.8",
+        "@types/semver": "catalog:test",
       },
     },
     "packages/node/utils": {
       "name": "@koishi-ce/utils",
       "version": "1.1.1",
       "dependencies": {
-        "cosmokit": "^1.8.1",
+        "cosmokit": "catalog:",
         "inaba": "^1.1.1",
       },
       "devDependencies": {
@@ -174,11 +174,11 @@
       "dependencies": {
         "@koishi-ce/client": "workspace:*",
         "@koishi-ce/components": "workspace:*",
-        "@vueuse/core": "^15.0.0",
-        "element-plus": "^2.14.5",
-        "vue": "^3.5.45",
-        "vue-i18n": "^11.4.18",
-        "vue-router": "^5.4.0",
+        "@vueuse/core": "catalog:web",
+        "element-plus": "catalog:web",
+        "vue": "catalog:web",
+        "vue-i18n": "catalog:web",
+        "vue-router": "catalog:web",
       },
     },
     "packages/web/builder": {
@@ -192,15 +192,15 @@
         "@koishi-ce/components": "workspace:*",
         "@koishi-ce/console-app": "workspace:*",
         "@vitejs/plugin-vue": "^6.0.10",
-        "@vueuse/core": "^15.0.0",
+        "@vueuse/core": "catalog:web",
         "sass-embedded": "^1.107.1",
         "typescript": "^5.0.0",
         "unocss": "^66.12.0",
         "unplugin-icons": "^24.0.0",
-        "vite": "^8.3.6",
-        "vue": "^3.5.45",
-        "vue-i18n": "^11.4.18",
-        "vue-router": "^5.4.0",
+        "vite": "catalog:build",
+        "vue": "catalog:web",
+        "vue-i18n": "catalog:web",
+        "vue-router": "catalog:web",
       },
     },
     "packages/web/client": {
@@ -209,35 +209,35 @@
       "dependencies": {
         "@koishi-ce/components": "workspace:*",
         "@satorijs/protocol": "^1.7.0",
-        "@vueuse/core": "^15.0.0",
-        "cordis": "^3.18.1",
-        "cosmokit": "^1.8.1",
-        "element-plus": "^2.14.5",
-        "vue": "^3.5.45",
-        "vue-i18n": "^11.4.18",
-        "vue-router": "^5.4.0",
+        "@vueuse/core": "catalog:web",
+        "cordis": "catalog:",
+        "cosmokit": "catalog:",
+        "element-plus": "catalog:web",
+        "vue": "catalog:web",
+        "vue-i18n": "catalog:web",
+        "vue-router": "catalog:web",
       },
       "devDependencies": {
         "@koishi-ce/koishi": "workspace:*",
         "@koishi-ce/plugin-console": "workspace:*",
         "@types/jsdom": "^30.0.0",
-        "jsdom": "^30.1.3",
-        "vite": "^8.3.6",
+        "jsdom": "catalog:test",
+        "vite": "catalog:build",
       },
     },
     "packages/web/components": {
       "name": "@koishi-ce/components",
       "version": "1.1.2",
       "dependencies": {
-        "@satorijs/element": "^3.2.0",
-        "cosmokit": "^1.8.1",
+        "@satorijs/element": "catalog:",
+        "cosmokit": "catalog:",
         "dompurify": "^3.4.17",
         "marked": "^18.1.3",
         "schemastery-vue": "^7.3.15",
       },
       "devDependencies": {
         "@koishi-ce/koishi": "workspace:*",
-        "jsdom": "^30.1.3",
+        "jsdom": "catalog:test",
       },
       "peerDependencies": {
         "element-plus": "^2",
@@ -251,8 +251,8 @@
       "version": "1.0.3",
       "dependencies": {
         "@koishi-ce/assets": "workspace:*",
-        "cosmokit": "^1.8.1",
-        "file-type": "^22.3.0",
+        "cosmokit": "catalog:",
+        "file-type": "catalog:",
       },
       "devDependencies": {
         "@koishi-ce/koishi": "workspace:*",
@@ -379,8 +379,8 @@
       "name": "@koishi-ce/plugin-database-memory",
       "version": "1.1.2",
       "dependencies": {
-        "cosmokit": "^1.8.1",
-        "minato": "^3.7.0",
+        "cosmokit": "catalog:",
+        "minato": "catalog:",
       },
       "devDependencies": {
         "@koishi-ce/koishi": "workspace:*",
@@ -409,7 +409,7 @@
       },
       "devDependencies": {
         "@koishi-ce/koishi": "workspace:*",
-        "cordis": "^3.18.1",
+        "cordis": "catalog:",
       },
       "peerDependencies": {
         "@koishi-ce/koishi": "^1.0.0",
@@ -423,7 +423,7 @@
       },
       "devDependencies": {
         "@koishi-ce/koishi": "workspace:*",
-        "cordis": "^3.18.1",
+        "cordis": "catalog:",
       },
       "peerDependencies": {
         "@koishi-ce/koishi": "^1.0.0",
@@ -446,8 +446,8 @@
       "version": "1.2.3",
       "dependencies": {
         "@minatojs/sql-utils": "^5.6.0",
-        "cosmokit": "^1.8.1",
-        "minato": "^3.7.0",
+        "cosmokit": "catalog:",
+        "minato": "catalog:",
       },
       "devDependencies": {
         "@koishi-ce/koishi": "workspace:*",
@@ -475,7 +475,7 @@
         "@koishi-ce/plugin-database-memory": "workspace:*",
         "@koishi-ce/plugin-locales": "workspace:*",
         "@koishi-ce/plugin-mock": "workspace:*",
-        "@vueuse/core": "^15.0.0",
+        "@vueuse/core": "catalog:web",
       },
       "peerDependencies": {
         "@koishi-ce/koishi": "^1.0.0",
@@ -496,7 +496,7 @@
         "@koishi-ce/koishi": "workspace:*",
         "@koishi-ce/plugin-database-memory": "workspace:*",
         "echarts": "^6.1.0",
-        "vite": "^8.3.6",
+        "vite": "catalog:build",
         "vue-echarts": "^8.3.2",
       },
       "peerDependencies": {
@@ -513,8 +513,8 @@
       "devDependencies": {
         "@koishi-ce/client": "workspace:*",
         "@koishi-ce/plugin-database-memory": "workspace:*",
-        "vue": "^3.5.45",
-        "vue-router": "^5.4.0",
+        "vue": "catalog:web",
+        "vue-router": "catalog:web",
       },
       "peerDependencies": {
         "@koishi-ce/koishi": "^1.0.0",
@@ -555,9 +555,9 @@
       "devDependencies": {
         "@koishi-ce/client": "workspace:*",
         "@koishi-ce/plugin-hmr": "workspace:*",
-        "element-plus": "^2.14.5",
-        "vue": "^3.5.45",
-        "vue-router": "^5.4.0",
+        "element-plus": "catalog:web",
+        "vue": "catalog:web",
+        "vue-router": "catalog:web",
       },
       "peerDependencies": {
         "@koishi-ce/koishi": "^1.0.0",
@@ -579,7 +579,7 @@
         "@koishi-ce/console-builder": "workspace:*",
         "@koishi-ce/loader": "workspace:*",
         "@koishi-ce/plugin-server": "workspace:*",
-        "vite": "^8.3.6",
+        "vite": "catalog:build",
       },
       "peerDependencies": {
         "@koishi-ce/client": "^1.0.0",
@@ -614,7 +614,7 @@
       "dependencies": {
         "@koishi-ce/console": "workspace:*",
         "chardet": "^2.2.0",
-        "file-type": "^22.3.0",
+        "file-type": "catalog:",
         "picomatch": "^4.0.7",
       },
       "devDependencies": {
@@ -639,11 +639,11 @@
         "@koishi-ce/koishi": "workspace:*",
         "@koishi-ce/plugin-console": "workspace:*",
         "@types/picomatch": "^4.0.3",
-        "@vueuse/core": "^15.0.0",
+        "@vueuse/core": "catalog:web",
         "codemirror": "^6.0.2",
-        "element-plus": "^2.14.5",
-        "vue": "^3.5.45",
-        "vue-router": "^5.4.0",
+        "element-plus": "catalog:web",
+        "vue": "catalog:web",
+        "vue-router": "catalog:web",
       },
       "peerDependencies": {
         "@koishi-ce/koishi": "^1.0.0",
@@ -662,9 +662,9 @@
         "@koishi-ce/loader": "workspace:*",
         "@koishi-ce/plugin-console": "workspace:*",
         "@types/d3-force": "^3.0.9",
-        "@vueuse/core": "^15.0.0",
+        "@vueuse/core": "catalog:web",
         "d3-force": "^3.0.1",
-        "vue": "^3.5.45",
+        "vue": "catalog:web",
       },
       "peerDependencies": {
         "@koishi-ce/koishi": "^1.0.0",
@@ -681,7 +681,7 @@
         "@koishi-ce/client": "workspace:*",
         "@koishi-ce/koishi": "workspace:*",
         "@koishi-ce/plugin-console": "workspace:*",
-        "element-plus": "^2.14.5",
+        "element-plus": "catalog:web",
       },
       "peerDependencies": {
         "@koishi-ce/koishi": "^1.0.0",
@@ -719,7 +719,7 @@
         "@koishi-ce/console": "workspace:*",
         "@koishi-ce/registry": "workspace:*",
         "@koishi-ce/utils": "workspace:*",
-        "semver": "^7.8.6",
+        "semver": "catalog:",
       },
       "devDependencies": {
         "@koishi-ce/client": "workspace:*",
@@ -728,12 +728,12 @@
         "@koishi-ce/plugin-config": "workspace:*",
         "@koishi-ce/plugin-database-memory": "workspace:*",
         "@noble/hashes": "^2.4.0",
-        "@types/semver": "^7.5.8",
-        "@vueuse/core": "^15.0.0",
-        "cosmokit": "^1.8.1",
-        "vue": "^3.5.45",
-        "vue-i18n": "^11.4.18",
-        "vue-router": "^5.4.0",
+        "@types/semver": "catalog:test",
+        "@vueuse/core": "catalog:web",
+        "cosmokit": "catalog:",
+        "vue": "catalog:web",
+        "vue-i18n": "catalog:web",
+        "vue-router": "catalog:web",
       },
       "peerDependencies": {
         "@koishi-ce/koishi": "^1.0.0",
@@ -748,7 +748,7 @@
       "version": "1.0.3",
       "devDependencies": {
         "@koishi-ce/client": "workspace:*",
-        "@satorijs/element": "^3.2.0",
+        "@satorijs/element": "catalog:",
       },
       "peerDependencies": {
         "@koishi-ce/console": "^1.0.0",
@@ -776,7 +776,7 @@
         "@koishi-ce/plugin-database-memory": "workspace:*",
         "@koishi-ce/plugin-server": "workspace:*",
         "@satorijs/components-vue": "^0.7.8",
-        "@satorijs/element": "^3.2.0",
+        "@satorijs/element": "catalog:",
       },
       "peerDependencies": {
         "@koishi-ce/koishi": "^1.0.0",
@@ -820,13 +820,38 @@
         "@koishi-ce/client": "workspace:*",
         "@koishi-ce/koishi": "workspace:*",
         "lottie-web": "^5.13.0",
-        "vite": "^8.3.6",
+        "vite": "catalog:build",
       },
       "peerDependencies": {
         "@koishi-ce/console": "^1.0.0",
         "@koishi-ce/koishi": "^1.0.0",
         "@koishi-ce/plugin-console": "^1.0.0",
       },
+    },
+  },
+  "catalog": {
+    "@satorijs/element": "^3.2.0",
+    "cordis": "^3.18.1",
+    "cosmokit": "^1.8.1",
+    "file-type": "^22.3.0",
+    "minato": "^3.7.0",
+    "picocolors": "^1.1.1",
+    "semver": "^7.8.6",
+  },
+  "catalogs": {
+    "build": {
+      "vite": "^8.3.6",
+    },
+    "test": {
+      "@types/semver": "^7.5.8",
+      "jsdom": "^30.1.3",
+    },
+    "web": {
+      "@vueuse/core": "^15.0.0",
+      "element-plus": "^2.14.5",
+      "vue": "^3.5.45",
+      "vue-i18n": "^11.4.18",
+      "vue-router": "^5.4.0",
     },
   },
   "packages": {

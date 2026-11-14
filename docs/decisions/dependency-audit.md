@@ -14,6 +14,7 @@
 - **目录分布（53 个子包）**：`packages/node` 核心（8）· `packages/web` 前端（4：app / builder / client / components）· `packages/shim` 占名（4，版本冻结）· `plugins/common`（8，`cron` 已迁出）· `plugins/infra`（8，含 http / proxy / server 三个预编译 vendored 包）· `plugins/webui`（19）· `apps`（2：`create-koishi-ce` / `@koishi-ce/scripts`）。
 - **核心工程纪律**：
   - **上游名外部依赖为 0**：内部互引与 `peerDependencies` 一律使用 `@koishi-ce/* ^1.0.0`，防止 Bun 自动拉取官方全家桶。
+  - **共享依赖版本真源 = 根 catalog（2026-11-14 起）**：跨包共享的外部依赖（本轮 15 个）由根 `workspaces.catalog` / `catalogs.{web,build,test}` 单点定义，成员以 `catalog:` 引用（Bun catalog 协议，`workspaces` 为对象形态）；升版只改根一行，`check:packages` 强制入册与双向对账。本报告后文的「版本分布」口径自此以根清单为准，成员 manifest 不再承载共享依赖的字面版本。
   - **前端编程式构建**：无 Vite 配置文件，统一走 `vite.build()`（宿主入口 `packages/web/builder/src/bin.ts`）。
   - **CI 三任务（Turbo + OIDC 远程缓存）**：`gate`（build → 宿主前端 → 十段 check → test:ci + Codecov）、`client`（webui 插件打包）、`fallow`（死代码与依赖审计）。
 

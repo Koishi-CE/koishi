@@ -288,7 +288,7 @@ export function isDowngrade(
 	return false;
 }
 
-/** package.json 中可含 workspace:* 依赖的字段（发布前必须全部改写）。 */
+/** package.json 中可含本地协议依赖（workspace:* / catalog:）的字段（发布前必须全部改写）。 */
 const DEP_FIELDS = [
 	"dependencies",
 	"devDependencies",
@@ -296,31 +296,78 @@ const DEP_FIELDS = [
 	"peerDependencies",
 ] as const;
 
+/** 根清单 catalog 定义（发布改写的事实源）。 */
+export interface CatalogSpecs {
+	/** 默认目录（spec 值 "catalog:" 引用）。 */
+	default: Map<string, string>;
+	/** 命名目录（spec 值 "catalog:<名>" 引用）。 */
+	named: Map<string, Map<string, string>>;
+}
+
+/** 从根清单读 catalog 定义（workspaces 对象形态；缺失或缺项返回空表）。 */
+export function readCatalogSpecs(
+	root: string,
+): CatalogSpecs {
+	let workspaces: {
+		catalog?: Record<string, unknown>;
+		catalogs?: Record<string, Record<string, unknown>>;
+	};
+	try {
+		const manifest = JSON.parse(
+			readFileSync(join(root, "package.json"), "utf8"),
+		) as { workspaces?: unknown };
+		workspaces = (manifest.workspaces ??
+			{}) as typeof workspaces;
+	} catch {
+		return { default: new Map(), named: new Map() };
+	}
+	const strings = (
+		record: Record<string, unknown> | undefined,
+	) =>
+		new Map(
+			Object.entries(record ?? {}).filter(
+				(entry): entry is [string, string] =>
+					typeof entry[1] === "string",
+			),
+		);
+	return {
+		default: strings(workspaces.catalog),
+		named: new Map(
+			Object.entries(workspaces.catalogs ?? {}).map(
+				([name, entries]) => [name, strings(entries)],
+			),
+		),
+	};
+}
+
 /** 单个依赖改写记录。 */
 export interface WorkspaceRewrite {
 	/** 所在字段。 */
 	field: string;
 	/** 依赖包名。 */
 	dep: string;
-	/** 改写后的版本范围（caret）。 */
+	/** 改写后的版本范围。 */
 	range: string;
 }
 
 /**
- * 把 manifest 文本中全部 workspace:* 依赖改写为 caret 真实版本（npm 不认
- * workspace 协议；changeset version 不改写 workspace:*，发布前必须处理）。
+ * 把 manifest 文本中全部本地协议依赖改写为真实版本（npm 不认 workspace /
+ * catalog 协议；changeset version 不改写它们，发布前必须处理）：
+ * - `workspace:*` → caret 真实版本（本仓库约定仅此形式，其他形式拒绝）；
+ * - `catalog:` / `catalog:<名>` → 根清单 catalog 定义的 spec（键不存在即
+ *   抛错——发布物上的版本必须可追溯到根清单真源）。
  * 返回改写文本与记录；无改写时原样返回（不改写不重排）。
- * 依赖不在版本表 / 出现 workspace:^ 等其他协议形式 → 抛错（发布链中断，
- * 禁止带 workspace 协议出包）。
  *
  * 改写后另有终局断言：依赖字段不得残留任何本地协议（workspace:/file:/
- * link:）。2026-08-31 事故（config@1.0.5 / market@1.0.6 / hmr@1.0.3 带
- * workspace:* 原样发布、下游 install 全炸）的教训——改写逻辑再完备也
- * 防不住绕过发布链的手动 publish，但至少保证走发布链的包永远干净。
+ * link:/catalog:）。2026-08-31 事故（config@1.0.5 / market@1.0.6 /
+ * hmr@1.0.3 带 workspace:* 原样发布、下游 install 全炸）的教训——改写
+ * 逻辑再完备也防不住绕过发布链的手动 publish，但至少保证走发布链的包
+ * 永远干净；catalog 断言把 catalog 迁移后的同型风险一并钉死。
  */
 export function rewriteWorkspaceProtocol(
 	raw: string,
 	versions: ReadonlyMap<string, string>,
+	catalogs: CatalogSpecs,
 ): { text: string; changes: WorkspaceRewrite[] } {
 	const manifest = JSON.parse(raw) as Record<
 		string,
@@ -335,10 +382,25 @@ export function rewriteWorkspaceProtocol(
 		for (const [dep, range] of Object.entries(
 			deps as Record<string, unknown>,
 		)) {
-			if (
-				typeof range !== "string" ||
-				!range.startsWith("workspace:")
-			) {
+			if (typeof range !== "string") {
+				continue;
+			}
+			if (range.startsWith("catalog:")) {
+				const group = range.slice("catalog:".length);
+				const spec =
+					group === ""
+						? catalogs.default.get(dep)
+						: catalogs.named.get(group)?.get(dep);
+				if (spec === undefined) {
+					throw new Error(
+						`${field}.${dep} 声明了 ${range}，但根清单 catalog 未定义该依赖（无法改写为真实版本），拒绝发布`,
+					);
+				}
+				(deps as Record<string, string>)[dep] = spec;
+				changes.push({ field, dep, range: spec });
+				continue;
+			}
+			if (!range.startsWith("workspace:")) {
 				continue;
 			}
 			if (range !== "workspace:*") {
@@ -366,7 +428,7 @@ export function rewriteWorkspaceProtocol(
 		)) {
 			if (
 				typeof range === "string" &&
-				/^(workspace|file|link):/.test(range)
+				/^(workspace|file|link|catalog):/.test(range)
 			) {
 				throw new Error(
 					`${field}.${dep} 改写后仍残留本地协议 ${range}，拒绝发布`,

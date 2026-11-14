@@ -29,7 +29,7 @@ bun run release pipeline                  # 一条龙：preflight → version �
 3. **提交**：版本变更落为一个 git 提交。
 4. **build**：node 侧 lib 产物 + 宿主控制台总装 + 各 webui 插件前端。
 5. **test**：`bun run release test` = `bun test --isolate packages plugins/common plugins/webui/admin plugins/webui/commands`——范围化子集（源码 `runTestStep`），不含 apps 与 tooling 用例；全量测试仍以本地 `bun test` 为准。`--isolate` 不可省（缺了跨文件 `mock.module` 互相串扰）。
-6. **publish**：按拓扑序逐包发布。publish 环负责把 `workspace:*` 协议改写为真实版本号（`workspace:^` 等其他协议形式直接拒绝），并带**终局断言**（依赖字段不得残留 `workspace:` / `file:` / `link:`）。
+6. **publish**：按拓扑序逐包发布。publish 环负责把本地协议依赖改写为真实版本号——`workspace:*` 改写为 caret 版本（`workspace:^` 等其他协议形式直接拒绝）、`catalog:` / `catalog:<名>` 改写为根清单 `workspaces.catalog` / `catalogs.*` 的定义（键缺失直接拒绝），并带**终局断言**（依赖字段不得残留 `workspace:` / `file:` / `link:` / `catalog:`）。
 7. **push**：推送 `main`。**本地链不打 tag**——CI 的 `tag` job 在每批发布成功后打轻量批次 tag `release/<日期>-<序号>`，并在兼容线首次出现时打里程碑 `milestone/<major>.<minor>` + 建 draft Release（见 §7.1）。**这是全仓唯一允许直推 `main` 的路径**：本仓一切改动都走 PR（见 [../guides/development.md](../guides/development.md) §2 与根 `AGENTS.md` 的 git 提交流程节），发布链的版本提交是既定例外，不构成人工直推 `main` 的许可。
 
 ## 3. changesets 约定

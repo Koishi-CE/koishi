@@ -64,6 +64,6 @@
 	},
 	"devDependencies": {
 		"@koishi-ce/client": "workspace:*",
-		"@satorijs/element": "^3.2.0"
+		"@satorijs/element": "catalog:"
 	}
 }

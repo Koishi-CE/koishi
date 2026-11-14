@@ -82,7 +82,7 @@
 		"@koishi-ce/console-builder": "workspace:*",
 		"@koishi-ce/loader": "workspace:*",
 		"@koishi-ce/plugin-server": "workspace:*",
-		"vite": "^8.3.6"
+		"vite": "catalog:build"
 	},
 	"dependencies": {
 		"@koishi-ce/console": "workspace:*",

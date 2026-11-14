@@ -50,14 +50,14 @@
         "@koishi-ce/components": "workspace:*",
         "@koishi-ce/console-app": "workspace:*",
         "@vitejs/plugin-vue": "^6.0.10",
-        "@vueuse/core": "^15.0.0",
+        "@vueuse/core": "catalog:web",
         "sass-embedded": "^1.107.1",
         "typescript": "^5.0.0",
         "unocss": "^66.12.0",
         "unplugin-icons": "^24.0.0",
-        "vite": "^8.3.6",
-        "vue": "^3.5.45",
-        "vue-i18n": "^11.4.18",
-        "vue-router": "^5.4.0"
+        "vite": "catalog:build",
+        "vue": "catalog:web",
+        "vue-i18n": "catalog:web",
+        "vue-router": "catalog:web"
     }
 }

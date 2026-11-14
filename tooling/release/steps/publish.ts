@@ -26,6 +26,7 @@ import type { PkgInfo } from "../core/workspace.ts";
 import {
 	discoverPackages,
 	planPublish,
+	readCatalogSpecs,
 	rewriteWorkspaceProtocol,
 	topoSort,
 } from "../core/workspace.ts";
@@ -325,21 +326,23 @@ export async function runPublishSteps(
 			return 1;
 		}
 	}
-	// 逐包发布：发布前把 workspace:* 改写为 caret 真实版本（npm 不认该协议），
-	// finally 还原原文件（不落盘，工作区保持洁净）
+	// 逐包发布：发布前把本地协议依赖（workspace:* / catalog:）改写为真实版本
+	// （npm 不认这些协议），finally 还原原文件（不落盘，工作区保持洁净）
 	const versions = new Map(
 		pkgs.map((pkg) => [pkg.name, pkg.version]),
 	);
+	const catalogs = readCatalogSpecs(ROOT);
 	for (const pkg of ordered) {
 		const original = readFileSync(pkg.manifestPath, "utf8");
 		const { text, changes } = rewriteWorkspaceProtocol(
 			original,
 			versions,
+			catalogs,
 		);
 		if (changes.length > 0) {
 			writeFileSync(pkg.manifestPath, text, "utf8");
 			console.log(
-				`[publish] ✍️  ${pkg.name}: workspace:* → ${changes.map((c) => `${c.dep}@${c.range}`).join(", ")}`,
+				`[publish] ✍️  ${pkg.name}: 协议改写 → ${changes.map((c) => `${c.dep}@${c.range}`).join(", ")}`,
 			);
 		}
 		try {

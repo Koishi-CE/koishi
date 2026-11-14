@@ -53,8 +53,8 @@
 		"@koishi-ce/koishi": "workspace:*"
 	},
 	"dependencies": {
-		"cosmokit": "^1.8.1",
-		"minato": "^3.7.0"
+		"cosmokit": "catalog:",
+		"minato": "catalog:"
 	},
 	"exports": {
 		".": {
