@@ -107,8 +107,17 @@ interface WorkspacePackage {
 const rootConfig = asRecord(
 	await Bun.file(join(ROOT, "package.json")).json(),
 );
-const workspaceGlobs = Array.isArray(rootConfig?.workspaces)
-	? rootConfig.workspaces.filter(
+// 兼容数组形态与 { packages: [...] } 对象形态（后者为 Bun catalog 协议
+// 对 workspaces 的强制形态）；两形态都未命中时空集，由下方包发现护栏拦截
+const declaredGlobs = Array.isArray(rootConfig?.workspaces)
+	? rootConfig.workspaces
+	: (
+			rootConfig?.workspaces as
+				| { packages?: unknown }
+				| undefined
+		)?.packages;
+const workspaceGlobs = Array.isArray(declaredGlobs)
+	? declaredGlobs.filter(
 			(glob): glob is string => typeof glob === "string",
 		)
 	: [];
@@ -138,6 +147,16 @@ for (const glob of workspaceGlobs) {
 			data,
 		});
 	}
+}
+
+// 包发现护栏：根 workspaces 形态未被适配（或清单损坏）时，上面会静默收集
+// 到 0 个包、所有检查在空集上 vacuous 通过——静默失职比报错危险，空集直接
+// 判死（本仓 53 个包，空集只可能是解析问题而非真实状态）
+if (packages.length === 0) {
+	console.error(
+		"check:packages 异常终止：workspace 包发现结果为空（根 package.json 的 workspaces 形态未被适配？）",
+	);
+	process.exit(1);
 }
 
 // ---------------------------------------------------------------------------

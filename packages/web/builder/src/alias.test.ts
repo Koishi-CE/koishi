@@ -205,4 +205,29 @@ describe("collectWorkspaceAliases", () => {
 			"package.json 解析失败",
 		);
 	});
+
+	it("对象形态 workspaces（Bun catalog 协议形态）同样生成别名", async () => {
+		const root = join(
+			tmpdir(),
+			`console-builder-alias-obj-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+		);
+		cleanup = root;
+		await mkdir(root, { recursive: true });
+		await writeFile(
+			join(root, "package.json"),
+			JSON.stringify({
+				workspaces: { packages: ["pkgs/*"] },
+			}),
+		);
+		await makePackage(
+			root,
+			"pkgs/lib-pkg",
+			'{"name":"@t/lib-pkg"}',
+			["src"],
+		);
+		const aliases = await collectWorkspaceAliases(root);
+		expect(normalize(aliases["@t/lib-pkg"]!)).toBe(
+			`${normalize(root)}/pkgs/lib-pkg/src/index.ts`,
+		);
+	});
 });

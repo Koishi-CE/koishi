@@ -2,8 +2,16 @@
 // Copyright (c) 2026-present Koishi-CE contributors.
 
 import { expect, test } from "bun:test";
+import {
+	mkdirSync,
+	mkdtempSync,
+	rmSync,
+	writeFileSync,
+} from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 import type { PkgInfo } from "./workspace.ts";
-import { topoSort } from "./workspace.ts";
+import { discoverPackages, topoSort } from "./workspace.ts";
 
 /** 造一个最小 PkgInfo（发布序测试只关心依赖字段）。 */
 function pkg(
@@ -71,4 +79,65 @@ test("发布序：真实依赖成环仍抛错（环检测不因放宽 peer 而�
 			}),
 		]),
 	).toThrow("内部依赖存在环");
+});
+
+/** 在临时目录写一个最小 manifest。 */
+function writePkg(
+	dir: string,
+	manifest: Record<string, unknown>,
+) {
+	mkdirSync(dir, { recursive: true });
+	writeFileSync(
+		join(dir, "package.json"),
+		JSON.stringify(manifest),
+	);
+}
+
+test("包发现：数组形态 workspaces 枚举可发布包并排除 private", () => {
+	const root = mkdtempSync(
+		join(tmpdir(), "release-workspace-test-"),
+	);
+	try {
+		writePkg(join(root, "pkgs/one"), {
+			name: "@t/one",
+			version: "1.0.0",
+		});
+		writePkg(join(root, "pkgs/hidden"), {
+			name: "@t/hidden",
+			version: "1.0.0",
+			private: true,
+		});
+		writeFileSync(
+			join(root, "package.json"),
+			JSON.stringify({ workspaces: ["pkgs/*"] }),
+		);
+		expect(
+			discoverPackages(root).map((item) => item.name),
+		).toEqual(["@t/one"]);
+	} finally {
+		rmSync(root, { recursive: true, force: true });
+	}
+});
+
+test("包发现：对象形态 workspaces（Bun catalog 协议形态）同样可枚举", () => {
+	const root = mkdtempSync(
+		join(tmpdir(), "release-workspace-test-"),
+	);
+	try {
+		writePkg(join(root, "pkgs/one"), {
+			name: "@t/one",
+			version: "1.0.0",
+		});
+		writeFileSync(
+			join(root, "package.json"),
+			JSON.stringify({
+				workspaces: { packages: ["pkgs/*"] },
+			}),
+		);
+		expect(
+			discoverPackages(root).map((item) => item.name),
+		).toEqual(["@t/one"]);
+	} finally {
+		rmSync(root, { recursive: true, force: true });
+	}
 });

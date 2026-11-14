@@ -42,7 +42,9 @@ export async function collectWorkspaceAliases(
 	// 任何仓库根：读不到清单即没有 workspace 源码可映射，空表即正确
 	// 语义
 	if (!existsSync(manifestPath)) return {};
-	let manifest: { workspaces?: string[] };
+	let manifest: {
+		workspaces?: string[] | { packages?: string[] };
+	};
 	try {
 		manifest = await Bun.file(manifestPath).json();
 	} catch (error) {
@@ -53,7 +55,12 @@ export async function collectWorkspaceAliases(
 		return {};
 	}
 	const aliases: Record<string, string> = {};
-	for (const pattern of manifest.workspaces ?? []) {
+	// 兼容数组形态与 { packages: [...] } 对象形态（后者为 Bun catalog 协议
+	// 对 workspaces 的强制形态）
+	const globs = Array.isArray(manifest.workspaces)
+		? manifest.workspaces
+		: (manifest.workspaces?.packages ?? []);
+	for (const pattern of globs) {
 		// scanSync 产出的相对路径在 Windows 上是反斜杠,统一归一化为正斜杠
 		const files = new Bun.Glob(
 			`${pattern}/package.json`,
