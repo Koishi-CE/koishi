@@ -11,7 +11,11 @@ import {
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import type { PkgInfo } from "./workspace.ts";
-import { discoverPackages, topoSort } from "./workspace.ts";
+import {
+	discoverPackages,
+	rewriteWorkspaceProtocol,
+	topoSort,
+} from "./workspace.ts";
 
 /** 造一个最小 PkgInfo（发布序测试只关心依赖字段）。 */
 function pkg(
@@ -140,4 +144,92 @@ test("包发现：对象形态 workspaces（Bun catalog 协议形态）同样可
 	} finally {
 		rmSync(root, { recursive: true, force: true });
 	}
+});
+
+test("协议改写：catalog: 与 catalog:<名> 替换为根清单定义，覆盖四个依赖字段", () => {
+	const raw = JSON.stringify({
+		name: "x",
+		version: "1.0.0",
+		dependencies: { cosmokit: "catalog:" },
+		devDependencies: { jsdom: "catalog:test" },
+		optionalDependencies: { semver: "catalog:" },
+		peerDependencies: { vue: "catalog:web" },
+	});
+	const catalogs = {
+		default: new Map([
+			["cosmokit", "^1.8.1"],
+			["semver", "^7.8.6"],
+		]),
+		named: new Map([
+			["test", new Map([["jsdom", "^30.1.3"]])],
+			["web", new Map([["vue", "^3.5.45"]])],
+		]),
+	};
+	const { text, changes } = rewriteWorkspaceProtocol(
+		raw,
+		new Map(),
+		catalogs,
+	);
+	const manifest = JSON.parse(text) as Record<
+		string,
+		Record<string, string>
+	>;
+	expect(manifest.dependencies!.cosmokit).toBe("^1.8.1");
+	expect(manifest.devDependencies!.jsdom).toBe("^30.1.3");
+	expect(manifest.optionalDependencies!.semver).toBe(
+		"^7.8.6",
+	);
+	expect(manifest.peerDependencies!.vue).toBe("^3.5.45");
+	expect(changes).toHaveLength(4);
+});
+
+test("协议改写：catalog 键（默认或命名）在根清单缺失时抛错，拒绝发布", () => {
+	const missingDefault = JSON.stringify({
+		name: "x",
+		version: "1.0.0",
+		dependencies: { nope: "catalog:" },
+	});
+	expect(() =>
+		rewriteWorkspaceProtocol(missingDefault, new Map(), {
+			default: new Map(),
+			named: new Map(),
+		}),
+	).toThrow("根清单 catalog 未定义");
+	const missingGroup = JSON.stringify({
+		name: "x",
+		version: "1.0.0",
+		dependencies: { vue: "catalog:web" },
+	});
+	expect(() =>
+		rewriteWorkspaceProtocol(missingGroup, new Map(), {
+			default: new Map(),
+			named: new Map(),
+		}),
+	).toThrow("根清单 catalog 未定义");
+});
+
+test("协议改写：workspace:* 行为不变（caret 真实版本），与 catalog 改写互不干扰", () => {
+	const raw = JSON.stringify({
+		name: "x",
+		version: "1.0.0",
+		dependencies: {
+			"@t/core": "workspace:*",
+			cosmokit: "catalog:",
+		},
+	});
+	const { text, changes } = rewriteWorkspaceProtocol(
+		raw,
+		new Map([["@t/core", "1.2.3"]]),
+		{
+			default: new Map([["cosmokit", "^1.8.1"]]),
+			named: new Map(),
+		},
+	);
+	const manifest = JSON.parse(text) as Record<
+		string,
+		Record<string, string>
+	>;
+	expect(manifest.dependencies!["@t/core"]).toBe("^1.2.3");
+	expect(manifest.dependencies!.cosmokit).toBe("^1.8.1");
+	expect(changes).toHaveLength(2);
 });

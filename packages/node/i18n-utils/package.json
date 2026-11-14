@@ -39,7 +39,7 @@
 		"fallback"
 	],
 	"dependencies": {
-		"cosmokit": "^1.8.1"
+		"cosmokit": "catalog:"
 	},
 	"exports": {
 		".": {

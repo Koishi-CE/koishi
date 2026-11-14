@@ -26,6 +26,7 @@
 8. **packages/shim 四包不动**：`@koishi-ce/koishi-shim`（4.18.11）、`@koishi-ce/console-shim`（5.30.11）、`@koishi-ce/client-shim`（5.30.11）与 `@koishi-ce/components-shim`（1.5.22）是下游 npm alias 的占名目标——纯 JS 预编译、版本冻结跟随上游线、changesets ignore（**勿写 changeset、勿 bump、勿改回 1.x 基线**）。下游项目以六行 alias 钉名（`"koishi": "npm:@koishi-ce/koishi-shim@^4.18.11"`、`"@koishijs/client": "npm:@koishi-ce/client-shim@^5.30.11"` 等），机理与维护纪律详见 `packages/shim/README.md`。
 9. **create-koishi-ce 的默认模板是内置的纯 `@koishi-ce` 模板**（`apps/koishi-create/src/template/` 目录），不下载上游官方 `@koishijs/boilerplate`；`--template <包名>` 保留为远程模板逃生舱。模板与 sandbox 生成器预置六行钉名 + 42 名 overrides 兜底（41 个与上游同名的再分发名 + 1 个按需收录的裸名社区包 `koishi-plugin-puppeteer`，语义见 `packages/shim/README.md`「三层防线」；两处清单刻意克隆、对账测试防漂移，新增再分发包须两处同步）。
 10. **一切发布走 `bun run release` 发布链，禁止手动 `npm publish`**（2026-08-31 事故：绕链发布把 `workspace:*` 原样带上 npm，下游全炸）。补发用 `bun run release publish --only <包名>`；流程与约定见 `docs/process/release.md`。
+11. **跨包共享外部依赖一律走根 catalog**：根 `workspaces` 为对象形态（Bun catalog 协议的强制形态），`workspaces.catalog` 与 `workspaces.catalogs.*` 是全部跨包共享外部依赖的唯一版本真源——成员 `dependencies` / `devDependencies` / `optionalDependencies` 一律以 `catalog:` / `catalog:<组名>` 引用，不写字面 spec（`peerDependencies` 豁免，保持手写主版本契约）；升版只改根清单一行。`check:packages` 强制入册并做悬空/孤儿双向对账，发布链 `rewriteWorkspaceProtocol` 发包时把 `catalog:` 改写为真实 spec 并终局断言无残留——禁止手动 publish 的铁律同样覆盖 `catalog:` 残留（2026-11 迁移：15 个共享依赖 / 67 条引用）。
 
 ## 门禁与工作流
 

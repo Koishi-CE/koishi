@@ -7,7 +7,7 @@
  * 用法：bun tooling/checks/packages.ts
  *
  * 把 AGENTS.md「硬性约束」与 docs/reference/architecture.md §3「依赖纪律」
- * 中靠人工遵守的纪律固化为自动检查，共四类：
+ * 中靠人工遵守的纪律固化为自动检查，共五类：
  *
  *   1. 包名纪律：依赖声明与源码导入一律 @koishi-ce/*，不得写回上游名
  *      （koishi 裸名 / @koishijs/*）。无豁免：console 的类型引用已由上游薄壳
@@ -28,6 +28,12 @@
  *      - plugins/common/* 不得依赖 webui 宿主（console）；
  *      - plugins/** 的声明依赖与 peer 不得依赖浏览器侧包（client /
  *        components 仅允许 devDependencies 测试面）。
+ *   5. catalog 纪律：跨包共享外部依赖（≥2 成员包引用，deps / devDeps /
+ *      optionalDeps 口径）一律以 catalog: / catalog:<名> 引用根清单
+ *      workspaces.catalog / catalogs.* 的定义（唯一版本真源，字面 spec
+ *      即漂移温床）；peerDependencies 豁免强制（components 对 vue 系的
+ *      宽松主版本契约与 catalog 精确 spec 分属两套语义），但悬空引用
+ *      检查覆盖全字段；根清单定义另做孤儿条目对账。
  *
  * 经评估**不**纳入检查的项：`sideEffects` 字段声明（2026-09-18 拍板不做）
  * ——上游官方包同样不标；cordis 插件包顶层副作用多（Schema / provide /
@@ -355,6 +361,148 @@ for (const abs of sourceGlob.scanSync({
 			`${file}:${line}`,
 			`包名纪律：源码导入上游名 "${specifier ?? ""}"（应导入 @koishi-ce/*）`,
 		);
+	}
+}
+
+// ---------------------------------------------------------------------------
+// 检查 6：catalog 纪律（根清单为跨包共享外部依赖的唯一版本真源）
+// ---------------------------------------------------------------------------
+
+// 强制范围：deps / devDeps / optionalDeps；peerDependencies 是运行时
+// 兼容性契约（components 对 vue 系声明的是刻意宽松的主版本范围，与
+// catalog 的精确 spec 分属两套语义），不做共享统计也不强制入册，
+// 但悬空引用检查覆盖它（peer 里写 catalog: 同样必须可解析）
+const CATALOG_CHECK_FIELDS = [
+	"dependencies",
+	"devDependencies",
+	"optionalDependencies",
+	"peerDependencies",
+] as const;
+
+const memberNames = new Set(
+	packages
+		.map((pkg) => pkg.name)
+		.filter((name) => name !== "(无名)"),
+);
+
+/** 根清单 catalog 定义（default + named），spec 非字符串的条目忽略。 */
+const workspacesRecord = (rootConfig?.workspaces ?? {}) as {
+	catalog?: Record<string, unknown>;
+	catalogs?: Record<string, Record<string, unknown>>;
+};
+const catalogDefault = new Map(
+	Object.entries(workspacesRecord.catalog ?? {}).filter(
+		(entry): entry is [string, string] =>
+			typeof entry[1] === "string",
+	),
+);
+const catalogNamed = new Map(
+	Object.entries(workspacesRecord.catalogs ?? {}).map(
+		([name, entries]) => [
+			name,
+			new Map(
+				Object.entries(entries ?? {}).filter(
+					(entry): entry is [string, string] =>
+						typeof entry[1] === "string",
+				),
+			),
+		],
+	),
+);
+
+interface DepRef {
+	file: string;
+	field: string;
+	name: string;
+	spec: string;
+	isPeer: boolean;
+}
+
+const depRefs: DepRef[] = [];
+for (const pkg of packages) {
+	for (const field of CATALOG_CHECK_FIELDS) {
+		const block = asRecord(pkg.data[field]);
+		if (!block) continue;
+		for (const [name, value] of Object.entries(block)) {
+			depRefs.push({
+				file: pkg.file,
+				field,
+				name,
+				spec: typeof value === "string" ? value : "",
+				isPeer: field === "peerDependencies",
+			});
+		}
+	}
+}
+
+// 共享外部依赖统计（deps/devDeps/optionalDeps 口径，≥2 个成员包引用）
+const consumers = new Map<string, Set<string>>();
+for (const ref of depRefs) {
+	if (ref.isPeer || memberNames.has(ref.name)) continue;
+	const set = consumers.get(ref.name);
+	if (set) {
+		set.add(ref.file);
+	} else {
+		consumers.set(ref.name, new Set([ref.file]));
+	}
+}
+const sharedNames = new Set(
+	[...consumers.entries()]
+		.filter(([, set]) => set.size >= 2)
+		.map(([name]) => name),
+);
+
+// 共享依赖必须以 catalog: 引用（字面 spec 即漂移温床）
+for (const ref of depRefs) {
+	if (ref.isPeer || !sharedNames.has(ref.name)) continue;
+	if (ref.spec.startsWith("catalog:")) continue;
+	report(
+		ref.file,
+		`catalog 纪律：${ref.field} 的共享外部依赖 "${ref.name}" 应以 catalog: 引用（现 "${ref.spec}"；根清单为唯一版本真源）`,
+	);
+}
+
+// 悬空引用：catalog: 指向的键必须在根清单存在
+for (const ref of depRefs) {
+	if (!ref.spec.startsWith("catalog:")) continue;
+	const group = ref.spec.slice("catalog:".length);
+	const resolved =
+		group === ""
+			? catalogDefault.get(ref.name)
+			: catalogNamed.get(group)?.get(ref.name);
+	if (resolved === undefined) {
+		report(
+			ref.file,
+			`catalog 纪律：${ref.field} 引用 "${ref.spec}" 在根清单 catalog 中无定义（${group === "" ? "默认目录" : `目录 "${group}"`}缺失该键）`,
+		);
+	}
+}
+
+// 孤儿条目：根清单 catalog 定义的键必须至少被一个成员引用
+const usedKeys = new Set<string>();
+for (const ref of depRefs) {
+	if (!ref.spec.startsWith("catalog:")) continue;
+	const group = ref.spec.slice("catalog:".length);
+	usedKeys.add(
+		group === "" ? `:${ref.name}` : `${group}:${ref.name}`,
+	);
+}
+for (const [name] of catalogDefault) {
+	if (!usedKeys.has(`:${name}`)) {
+		report(
+			"package.json",
+			`catalog 纪律：默认目录条目 "${name}" 无任何成员引用（孤儿条目）`,
+		);
+	}
+}
+for (const [group, entries] of catalogNamed) {
+	for (const [name] of entries) {
+		if (!usedKeys.has(`${group}:${name}`)) {
+			report(
+				"package.json",
+				`catalog 纪律：目录 "${group}" 条目 "${name}" 无任何成员引用（孤儿条目）`,
+			);
+		}
 	}
 }
 

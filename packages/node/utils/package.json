@@ -34,7 +34,7 @@
 		"@koishi-ce/koishi": "workspace:*"
 	},
 	"dependencies": {
-		"cosmokit": "^1.8.1",
+		"cosmokit": "catalog:",
 		"inaba": "^1.1.1"
 	},
 	"exports": {

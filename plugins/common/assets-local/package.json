@@ -54,8 +54,8 @@
 	},
 	"dependencies": {
 		"@koishi-ce/assets": "workspace:*",
-		"cosmokit": "^1.8.1",
-		"file-type": "^22.3.0"
+		"cosmokit": "catalog:",
+		"file-type": "catalog:"
 	},
 	"exports": {
 		".": {

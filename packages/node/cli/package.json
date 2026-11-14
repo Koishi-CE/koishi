@@ -69,7 +69,7 @@
         "@koishi-ce/plugin-proxy-agent": "workspace:*",
         "@koishi-ce/plugin-server": "workspace:*",
         "@koishi-ce/utils": "workspace:*",
-        "picocolors": "^1.1.1",
+        "picocolors": "catalog:",
         "cac": "^7.1.0"
     }
 }

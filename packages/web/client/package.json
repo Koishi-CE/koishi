@@ -44,19 +44,19 @@
     "dependencies": {
         "@koishi-ce/components": "workspace:*",
         "@satorijs/protocol": "^1.7.0",
-        "@vueuse/core": "^15.0.0",
-        "cordis": "^3.18.1",
-        "cosmokit": "^1.8.1",
-        "element-plus": "^2.14.5",
-        "vue": "^3.5.45",
-        "vue-i18n": "^11.4.18",
-        "vue-router": "^5.4.0"
+        "@vueuse/core": "catalog:web",
+        "cordis": "catalog:",
+        "cosmokit": "catalog:",
+        "element-plus": "catalog:web",
+        "vue": "catalog:web",
+        "vue-i18n": "catalog:web",
+        "vue-router": "catalog:web"
     },
     "devDependencies": {
         "@koishi-ce/koishi": "workspace:*",
         "@koishi-ce/plugin-console": "workspace:*",
         "@types/jsdom": "^30.0.0",
-        "jsdom": "^30.1.3",
-        "vite": "^8.3.6"
+        "jsdom": "catalog:test",
+        "vite": "catalog:build"
     }
 }

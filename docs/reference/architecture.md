@@ -108,6 +108,7 @@ node 侧在 `src/`、Vue 侧在 `client/`（上游约定），`koishi.public: ["
 ### 硬性规则
 
 - `peerDependencies` **一律指向 CE 包名**（`@koishi-ce/* ^1.0.0`），不要写回上游名；代码内导入同样一律 `@koishi-ce/*`（已无例外：console 的类型引用改用其转发源 `@cordisjs/plugin-server-proxy`）。
+- **共享外部依赖的版本真源 = 根 catalog**：根 `workspaces` 为对象形态（Bun catalog 协议强制），跨包共享的外部依赖（≥2 成员包引用）在 `workspaces.catalog`（node 侧运行时 7 个）与 `workspaces.catalogs.{web,build,test}`（vue 系 5 / vite 1 / 测试与类型 2）单点定义，成员 `dependencies` / `devDependencies` / `optionalDependencies` 一律 `catalog:` / `catalog:<名>` 引用（2026-11 迁移，15 个依赖 / 67 条引用）；`peerDependencies` 豁免强制——components 对 vue 系的宽松主版本契约与 catalog 精确 spec 分属两套语义。`check:packages` 做共享强制入册 + 悬空引用 / 孤儿条目双向对账；发布链 `rewriteWorkspaceProtocol` 发包时把 `catalog:` 改写为根清单定义并终局断言无残留。cordis 系入册使 3.x 冻结线在根清单单点可见，Phase 5 重启时解冻 = 根一次编辑。
 - vendored 三包（http / proxy / server）不动。
 - 依赖方向：`plugins/webui/* → @koishi-ce/console → @koishi-ce/core`；`plugins/common/* → @koishi-ce/core`；`packages/web/*` 中浏览器侧的 `app` / `client` / `components` 不依赖 node 侧运行时（`app` 消费 `client` 与 `components`；`builder` 是 node 侧构建器，依赖 `app` / `client` / `components` 与构建工具，方向为 `console 插件 → builder → app / client / components`）。
 - 以上包名纪律、顶层类型字段统一（`types`，不混用旧别名 `typings`）与 ESM-only 形态由 `check:packages` 门禁强制（`tooling/checks/packages.ts`，已并入 `bun run check`）；循环依赖为 fallow 的 error 级规则（`.fallowrc.jsonc`，CI 的 fallow job 生效）。

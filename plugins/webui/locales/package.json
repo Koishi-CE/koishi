@@ -61,7 +61,7 @@
 		"@koishi-ce/client": "workspace:*",
 		"@koishi-ce/koishi": "workspace:*",
 		"@koishi-ce/plugin-console": "workspace:*",
-		"element-plus": "^2.14.5"
+		"element-plus": "catalog:web"
 	},
 	"dependencies": {
 		"@koishi-ce/console": "workspace:*"
