@@ -10,11 +10,9 @@
  * 中靠人工遵守的纪律固化为自动检查，共五类：
  *
  *   1. 包名纪律：依赖声明与源码导入一律 @koishi-ce/*，不得写回上游名
- *      （koishi 裸名 / @koishijs/*）。无豁免：console 的类型引用已由上游薄壳
- *      @koishijs/plugin-server-proxy 改用其转发源 @cordisjs/plugin-server-proxy
- *      （2026-09-30）——薄壳自带 peer koishi ^4.17.6，会诱使 Bun 自动装官方全家桶。
- *      cli 包 cordis.ecosystem.pattern 列官方插件名属
- *      运行时生态匹配字段，不属依赖声明，天然不在检查范围。
+ *      （koishi 裸名 / @koishijs/*）。无豁免：上游薄壳自带 peer koishi，
+ *      会诱使 Bun 自动装官方全家桶；cli 包 cordis.ecosystem.pattern 列
+ *      官方插件名属运行时生态匹配字段，不属依赖声明，天然不在检查范围。
  *   2. 元数据统一：顶层类型字段一律 types，不混用旧别名 typings
  *      （exports 内的 types 条件是标准解析字段，不受约束）。
  *   3. ESM-only：全部 workspace 包 type: module，exports 不得出现
@@ -35,21 +33,24 @@
  *      宽松主版本契约与 catalog 精确 spec 分属两套语义），但悬空引用
  *      检查覆盖全字段；根清单定义另做孤儿条目对账。
  *
- * 经评估**不**纳入检查的项：`sideEffects` 字段声明（2026-09-18 拍板不做）
- * ——上游官方包同样不标；cordis 插件包顶层副作用多（Schema / provide /
- * inject 声明），逐包判断误摇风险的成本高于 tree-shaking 收益（本仓产物
- * 为 bundle 单文件）。再收到补标建议时引本条，勿重复评估。
+ * `sideEffects` 字段不纳入检查：上游官方包同样不标；cordis 插件包顶层
+ * 副作用多（Schema / provide / inject 声明），逐包判断误摇风险高于
+ * tree-shaking 收益（本仓产物为 bundle 单文件）。
  *
  * 发现任何问题时退出码置 1。
  */
-import { join, relative, resolve, sep } from "node:path";
+import { join, relative } from "node:path";
+import {
+	discoverWorkspaceDirs,
+	ROOT,
+	readCatalogSpecs,
+	readJsonFile,
+	toPosix,
+} from "../shared/workspace.ts";
 
-/** 仓库根目录（本脚本位于 tooling/checks/ 下）。 */
-const ROOT = resolve(import.meta.dirname, "../..");
-
-/** path 分隔符归一为 posix（win32 下 Bun.Glob 返回反斜杠路径）。 */
-function toPosix(path: string): string {
-	return path.split(sep).join("/");
+const issues: string[] = [];
+function report(target: string, message: string): void {
+	issues.push(`${target}\n    ${message}`);
 }
 
 function asRecord(
@@ -90,12 +91,6 @@ function depNames(
 	return value ? Object.keys(value) : [];
 }
 
-/** 违规项收集：目标（文件或 文件:行）加一行描述。 */
-const issues: string[] = [];
-function report(target: string, message: string): void {
-	issues.push(`${target}\n    ${message}`);
-}
-
 // ---------------------------------------------------------------------------
 // workspace 包收集（以根 package.json 的 workspaces 声明为准）
 // ---------------------------------------------------------------------------
@@ -110,49 +105,22 @@ interface WorkspacePackage {
 	data: PackageJson;
 }
 
-const rootConfig = asRecord(
-	await Bun.file(join(ROOT, "package.json")).json(),
-);
-// 兼容数组形态与 { packages: [...] } 对象形态（后者为 Bun catalog 协议
-// 对 workspaces 的强制形态）；两形态都未命中时空集，由下方包发现护栏拦截
-const declaredGlobs = Array.isArray(rootConfig?.workspaces)
-	? rootConfig.workspaces
-	: (
-			rootConfig?.workspaces as
-				| { packages?: unknown }
-				| undefined
-		)?.packages;
-const workspaceGlobs = Array.isArray(declaredGlobs)
-	? declaredGlobs.filter(
-			(glob): glob is string => typeof glob === "string",
-		)
-	: [];
-
 const packages: WorkspacePackage[] = [];
-for (const glob of workspaceGlobs) {
-	const pattern = `${glob}/package.json`;
-	for (const abs of new Bun.Glob(pattern).scanSync({
-		cwd: ROOT,
-		dot: true,
-		absolute: true,
-	})) {
-		const file = toPosix(relative(ROOT, abs));
-		// 脚手架模板内同名文件不是 workspace 包
-		if (file.includes("/template/")) continue;
-		const data = asRecord(
-			await Bun.file(abs).json(),
-		) as PackageJson | null;
-		if (!data) continue;
-		packages.push({
-			file,
-			dir: file.slice(0, -"/package.json".length),
-			name:
-				typeof data.name === "string"
-					? data.name
-					: "(无名)",
-			data,
-		});
-	}
+for (const dir of discoverWorkspaceDirs(ROOT)) {
+	const data = readJsonFile(
+		join(dir, "package.json"),
+	) as PackageJson | null;
+	if (!data) continue;
+	const file = toPosix(
+		relative(ROOT, join(dir, "package.json")),
+	);
+	packages.push({
+		file,
+		dir: file.slice(0, -"/package.json".length),
+		name:
+			typeof data.name === "string" ? data.name : "(无名)",
+		data,
+	});
 }
 
 // 包发现护栏：根 workspaces 形态未被适配（或清单损坏）时，上面会静默收集
@@ -385,30 +353,10 @@ const memberNames = new Set(
 		.filter((name) => name !== "(无名)"),
 );
 
-/** 根清单 catalog 定义（default + named），spec 非字符串的条目忽略。 */
-const workspacesRecord = (rootConfig?.workspaces ?? {}) as {
-	catalog?: Record<string, unknown>;
-	catalogs?: Record<string, Record<string, unknown>>;
-};
-const catalogDefault = new Map(
-	Object.entries(workspacesRecord.catalog ?? {}).filter(
-		(entry): entry is [string, string] =>
-			typeof entry[1] === "string",
-	),
-);
-const catalogNamed = new Map(
-	Object.entries(workspacesRecord.catalogs ?? {}).map(
-		([name, entries]) => [
-			name,
-			new Map(
-				Object.entries(entries ?? {}).filter(
-					(entry): entry is [string, string] =>
-						typeof entry[1] === "string",
-				),
-			),
-		],
-	),
-);
+/** 根清单 catalog 定义（default + named，解析逻辑在 shared 层）。 */
+const catalogs = readCatalogSpecs(ROOT);
+const catalogDefault = catalogs.default;
+const catalogNamed = catalogs.named;
 
 interface DepRef {
 	file: string;

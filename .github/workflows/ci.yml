@@ -129,7 +129,7 @@ jobs:
       # test 自身是 4 个 worker 进程的池（--parallel=4，见 //#test:ci 脚本）：
       # 与 check 并发时最多约 6 个进程争 4 vCPU，是刻意保留的轻度超订。
       - name: 门禁（turbo：构建 → check 四组 ∥ test，含 lcov 覆盖率）
-        run: bunx turbo run //#build //#build:console //#check:lint //#check:tooling //#check:types //#check:template //#test:ci
+        run: bunx turbo run //#build //#build:console //#check:lint //#check:tooling //#check:types //#test:ci
         env:
           TURBO_TELEMETRY_DISABLED: "1"
       - name: 上传覆盖率到 Codecov

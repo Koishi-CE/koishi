@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: MIT
 // Copyright (c) 2026-present Koishi-CE contributors.
 
+import { parseArgs } from "node:util";
+
 /** 命令行参数的解析结果。 */
 export interface SandboxOptions {
 	/** 沙盒落点（缺省用工作区同级 Debug/koishi-ce-sandbox）。 */
@@ -14,32 +16,41 @@ export interface SandboxOptions {
 }
 
 /**
- * 解析命令行参数：首个非旗标位置参数为落点目录；`--`（bun run 透传分隔符）
- * 忽略；`--pack` / `--force` / `--start` 为旗标。其余旗标不识别，报错退出。
+ * 解析命令行参数：首个非旗标位置参数为落点目录；`--pack` / `--force` /
+ * `--start` 为旗标；其余旗标不识别，报错退出。`--`（bun run 透传分隔符，
+ * 如 `bun run sandbox -- --pack`）在解析前剥除——parseArgs 会把 `--` 之后的
+ * 词元一律当位置参数，不剥会吃掉旗标。
  */
 export function parseArgv(argv: string[]): SandboxOptions {
-	const options: SandboxOptions = {
-		pack: false,
-		force: false,
-		start: false,
+	let parsed: {
+		values: Record<string, string | boolean | undefined>;
+		positionals: string[];
 	};
-	for (const arg of argv) {
-		if (arg === "--") continue;
-		if (arg === "--pack") {
-			options.pack = true;
-		} else if (arg === "--force") {
-			options.force = true;
-		} else if (arg === "--start") {
-			options.start = true;
-		} else if (arg.startsWith("--")) {
-			throw new Error(
-				`未知旗标：${arg}（仅支持 --pack / --force / --start）`,
-			);
-		} else if (options.target === undefined) {
-			options.target = arg;
-		} else {
-			throw new Error(`多余的落点参数：${arg}`);
-		}
+	try {
+		parsed = parseArgs({
+			args: argv.filter((arg) => arg !== "--"),
+			options: {
+				pack: { type: "boolean" },
+				force: { type: "boolean" },
+				start: { type: "boolean" },
+			},
+			strict: true,
+			allowPositionals: true,
+		});
+	} catch (err) {
+		throw new Error(
+			`参数错误：${err instanceof Error ? err.message : String(err)}（仅支持 [目录] / --pack / --force / --start）`,
+		);
 	}
-	return options;
+	if (parsed.positionals.length > 1) {
+		throw new Error(
+			`多余的落点参数：${parsed.positionals[1]}`,
+		);
+	}
+	return {
+		target: parsed.positionals[0],
+		pack: parsed.values.pack === true,
+		force: parsed.values.force === true,
+		start: parsed.values.start === true,
+	};
 }

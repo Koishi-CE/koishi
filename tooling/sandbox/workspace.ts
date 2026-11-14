@@ -1,54 +1,47 @@
 // SPDX-License-Identifier: MIT
 // Copyright (c) 2026-present Koishi-CE contributors.
 
-import { existsSync, readFileSync } from "node:fs";
-import { join, resolve } from "node:path";
-import { ROOT } from "./config.ts";
+import { existsSync } from "node:fs";
+import { join } from "node:path";
+import {
+	discoverWorkspaceDirs,
+	ROOT,
+	readJsonFile,
+} from "../shared/workspace.ts";
 
-/** 枚举出的一个 workspace 包（目录 + 包名）。 */
+/** 枚举出的一个 workspace 包（目录 + 包名 + 版本）。 */
 export interface WorkspacePackage {
 	/** 包名（如 @koishi-ce/core）。 */
 	name: string;
 	/** 包目录绝对路径。 */
 	dir: string;
+	/** package.json 的 version（缺失为 undefined）。 */
+	version: string | undefined;
 }
 
 /**
- * 按根 package.json 的 workspaces 声明枚举全部包：glob 扫出目录，取其中
- * 含 package.json 且带 name 的子目录。不检查作用域（由调用方按需过滤）。
+ * 按根 package.json 的 workspaces 声明枚举全部包（目录枚举策略见
+ * shared/workspace.ts）。不检查作用域（由调用方按需过滤）。
  */
 export function resolveWorkspacePackages(
 	root: string,
 ): WorkspacePackage[] {
-	const manifest = JSON.parse(
-		readFileSync(join(root, "package.json"), "utf8"),
-	) as { workspaces?: string[] | { packages?: string[] } };
-	// 兼容数组形态与 { packages: [...] } 对象形态（后者为 Bun catalog 协议
-	// 对 workspaces 的强制形态）
-	const workspaces = Array.isArray(manifest.workspaces)
-		? manifest.workspaces
-		: (manifest.workspaces?.packages ?? []);
 	const packages: WorkspacePackage[] = [];
-	const seen = new Set<string>();
-	for (const pattern of workspaces) {
-		// Bun 1.4.2 win32 下 scanSync 的位置参数形态恒返回空，须用对象形态传 cwd
-		for (const entry of new Bun.Glob(pattern).scanSync({
-			cwd: root,
-			onlyFiles: false,
-		})) {
-			const dir = resolve(root, entry);
-			if (seen.has(dir)) continue;
-			seen.add(dir);
-			const file = join(dir, "package.json");
-			if (!existsSync(file)) continue;
-			const name = (
-				JSON.parse(readFileSync(file, "utf8")) as {
-					name?: string;
-				}
-			).name;
-			if (!name) continue;
-			packages.push({ name, dir });
+	for (const dir of discoverWorkspaceDirs(root)) {
+		const manifest = readJsonFile(
+			join(dir, "package.json"),
+		);
+		const name = manifest?.["name"];
+		if (typeof name !== "string" || name === "") {
+			continue;
 		}
+		const version = manifest?.["version"];
+		packages.push({
+			name,
+			dir,
+			version:
+				typeof version === "string" ? version : undefined,
+		});
 	}
 	return packages;
 }

@@ -96,14 +96,14 @@ export const templateFiles: Record<string, string> =
  * 这些上游名的解析一律改指 CE 对应包，与钉名构成双层防线（napuketto
  * 事件 2026-09-19 后补）。
  *
- * 清单 = CE 已再分发且官方同名的包，2026-09-19 逐一 npm view 核实：
+ * 清单 = CE 已再分发且官方同名的包，逐一 npm view 核实：
  * - plugin-cron 不在列（上游是裸名社区包 koishi-plugin-cron，非 @koishijs
  *   作用域）；
  * - plugin-welcome / plugin-theme-vanilla 不在列（CE 原创，上游无此名）；
  * - plugin-assets 的 CE 对应物是 @koishi-ce/assets（无 plugin 前缀）。
  * 裸名社区包另见 RENAMED_COMMUNITY_OVERRIDES（按需收录，非机械生成）。
- * 新增 CE 再分发包时须同步本表与 sandbox 生成器的同款清单
- * （tooling/sandbox/manifest.ts，对账测试防漂移）。
+ * 新增 CE 再分发包时只改本表——tooling/sandbox 的沙盒 package.json
+ * 经 buildUpstreamOverrides 同源复用，无须另行同步。
  */
 const UPSTREAM_OVERRIDES: Record<string, string> = {
 	koishi: "@koishi-ce/koishi",
@@ -198,6 +198,45 @@ export function buildUpstreamOverrides(): Record<
 }
 
 /**
+ * 上游名 npm alias 钉名（baseManifest 的依赖块尾部展开；tooling/sandbox
+ * 生成的沙盒 package.json 同源复用本表）。
+ *
+ * "koishi" 裸名与 @koishijs/core / @koishijs/loader / @koishijs/plugin-console /
+ * @koishijs/client / @koishijs/components 上游名用 npm alias 钉到 @koishi-ce
+ * shim（版本冻结线，见 packages/shim）：上游官方 adapter / database 插件与
+ * 社区 koishi-plugin-* 的 peer 由此满足，webui 插件写进 dependencies 的
+ * client / components 亦被钉住（满足性判定看落盘版本），不会拉入 npm
+ * 官方全家桶形成第二份框架副本；市场安装亦不改写该声明
+ * （installer 的 isGuardedRequest 护栏将 npm:@koishi-ce alias 与
+ * workspace: 同等保护）。
+ */
+export const UPSTREAM_ALIASES: Record<string, string> = {
+	// 上游裸名占位：npm alias 钉到 @koishi-ce 的 koishi shim（勿删，
+	// 语义见上方）；版本必须保持 4.18.x 冻结线以满足 ^4 peer
+	koishi: "npm:@koishi-ce/koishi-shim@^4.18.11",
+	// 上游 console 名占位：CE 插件的 peer 声明上游名，无归属时 Bun
+	// 会自动装下 npm 官方 console 全家桶形成双实例；版本冻结 5.30.x
+	"@koishijs/plugin-console":
+		"npm:@koishi-ce/console-shim@^5.30.11",
+	// 上游 core 名占位：@koishi-ce/loader 的 peer 精确锁 4.18.11，
+	// alias 须逐字相等（不带 ^），版本冻结勿 bump。core 与 loader
+	// 两个名字共用 koishi-shim：@koishi-ce/koishi 是 core + loader
+	// 的合并再导出（与上游 koishi 主包同构），named 导出全覆盖
+	"@koishijs/core": "npm:@koishi-ce/koishi-shim@4.18.11",
+	// 上游 loader 名占位：config / hmr 插件的 peer；同样指向
+	// koishi-shim（4.18.11 满足 ^4.6.11），勿指回已废弃的 loader-shim
+	"@koishijs/loader": "npm:@koishi-ce/koishi-shim@^4.18.11",
+	// 上游 client 名占位：第三方 webui 插件常把 @koishijs/client 写进
+	// dependencies（非 peer），无归属时 Bun 装下官方 client 并连带官方
+	// components 全家桶；版本冻结 5.30.x 线满足 ^5.x
+	"@koishijs/client": "npm:@koishi-ce/client-shim@^5.30.11",
+	// 上游 components 名占位：官方 client 的硬依赖，插件生态亦常直接
+	// 依赖（element-plus 系共享组件库）；版本冻结 1.5.x 线满足 ^1.5
+	"@koishijs/components":
+		"npm:@koishi-ce/components-shim@^1.5.22",
+};
+
+/**
  * 内置模板的 package.json 基础内容（name/version 会被 renderManifest 覆写，
  * prod 模式下 workspaces 与 devDependencies 会被移除）。
  */
@@ -272,32 +311,7 @@ export function baseManifest(): Manifest {
 			"@koishi-ce/plugin-status": "^1.0.0",
 			"@koishi-ce/plugin-theme-vanilla": "^1.0.0",
 			"@koishi-ce/plugin-welcome": "^1.0.0",
-			// 上游裸名占位：npm alias 钉到 @koishi-ce 的 koishi shim（勿删，
-			// 语义见文件头注释）；版本必须保持 4.18.x 冻结线以满足 ^4 peer
-			koishi: "npm:@koishi-ce/koishi-shim@^4.18.11",
-			// 上游 console 名占位：CE 插件的 peer 声明上游名，无归属时 Bun
-			// 会自动装下 npm 官方 console 全家桶形成双实例；版本冻结 5.30.x
-			"@koishijs/plugin-console":
-				"npm:@koishi-ce/console-shim@^5.30.11",
-			// 上游 core 名占位：@koishi-ce/loader 的 peer 精确锁 4.18.11，
-			// alias 须逐字相等（不带 ^），版本冻结勿 bump。core 与 loader
-			// 两个名字共用 koishi-shim：@koishi-ce/koishi 是 core + loader
-			// 的合并再导出（与上游 koishi 主包同构），named 导出全覆盖
-			"@koishijs/core":
-				"npm:@koishi-ce/koishi-shim@4.18.11",
-			// 上游 loader 名占位：config / hmr 插件的 peer；同样指向
-			// koishi-shim（4.18.11 满足 ^4.6.11），勿指回已废弃的 loader-shim
-			"@koishijs/loader":
-				"npm:@koishi-ce/koishi-shim@^4.18.11",
-			// 上游 client 名占位：第三方 webui 插件常把 @koishijs/client 写进
-			// dependencies（非 peer，napuketto 实证），无归属时 Bun 装下官方
-			// client 并连带官方 components 全家桶；版本冻结 5.30.x 线满足 ^5.x
-			"@koishijs/client":
-				"npm:@koishi-ce/client-shim@^5.30.11",
-			// 上游 components 名占位：官方 client 的硬依赖，插件生态亦常直接
-			// 依赖（element-plus 系共享组件库）；版本冻结 1.5.x 线满足 ^1.5
-			"@koishijs/components":
-				"npm:@koishi-ce/components-shim@^1.5.22",
+			...UPSTREAM_ALIASES,
 		},
 		// overrides 兜底层（语义见 UPSTREAM_OVERRIDES 与
 		// RENAMED_COMMUNITY_OVERRIDES 注释）：不看版本

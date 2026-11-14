@@ -2,17 +2,10 @@
 // Copyright (c) 2026-present Koishi-CE contributors.
 
 // CLI 旗标解析层：旗标在入口解析一次，之后以 Options 对象在步骤函数间传递。
-import { dirname, resolve } from "node:path";
-import { fileURLToPath } from "node:url";
 import { parseArgs } from "node:util";
 
-/** 仓库根（tooling/release/core/ 的上三级）。 */
-export const ROOT = resolve(
-	dirname(fileURLToPath(import.meta.url)),
-	"..",
-	"..",
-	"..",
-);
+/** 仓库根（tooling/shared/workspace.ts 按本目录位置解析）。 */
+export { ROOT } from "../../shared/workspace.ts";
 
 /** CLI 旗标集。 */
 export interface Options {

@@ -8,8 +8,8 @@
 // stdout、进度写 stderr：CI 以重定向取正文，同流混进度会污染 markdown。
 import { readFileSync } from "node:fs";
 import { join, relative, sep } from "node:path";
+import { capture } from "../../shared/exec.ts";
 import { ROOT } from "../core/options.ts";
-import { capture } from "../core/utils.ts";
 import { discoverPackages } from "../core/workspace.ts";
 
 /** changeset 条目（归属包 + 正文）。 */
@@ -110,18 +110,13 @@ function splitEntries(entries: readonly ChangelogEntry[]): {
 	return { shared, scoped };
 }
 
-/** 由素材拼出 markdown 骨架。 */
+/** 由素材拼出 markdown 骨架：里程碑头 + 版本表 + 跨包节 + 明细分节 + PR 列表。 */
 export function formatNotes(input: NotesInput): string {
 	const range = (bump: VersionBump): string =>
 		bump.before === null
 			? `首发 ${bump.after}`
 			: `${bump.before} → ${bump.after}`;
 	const lines = [
-		"<!-- 自动生成的 Release 骨架（bun run release notes）。发布前请按主题改写：",
-		"     本仓 Release 发布后不可修改（immutable），正文只能在 draft 阶段调整。 -->",
-		"",
-		"本仓库是 [koishijs/koishi](https://github.com/koishijs/koishi)（MIT）与 [koishijs/webui](https://github.com/koishijs/webui)（部分 AGPL-3.0）的社区再分发 monorepo，npm 作用域 `@koishi-ce`。tag 分两类：`release/<日期>-<序号>` 标记每次发布，`milestone/<major>.<minor>` 标记 core 的兼容线里程碑。",
-		"",
 		`里程碑 \`${input.tag}\`：自 \`${input.previousTag}\` 以来 ${input.commits} 个提交，升版的包 ${input.bumps.length} 个。`,
 		"",
 	];
@@ -174,13 +169,6 @@ export function formatNotes(input: NotesInput): string {
 		}
 		lines.push("", "</details>");
 	}
-	lines.push(
-		"",
-		"## 安装",
-		"",
-		"新项目经脚手架生成：`bun create koishi-ce`（内置纯 `@koishi-ce` 模板）。全部包以 `@koishi-ce` 作用域发布于 npm。",
-		"",
-	);
 	return lines.join("\n");
 }
 
@@ -235,16 +223,24 @@ export async function cmdNotes(): Promise<number> {
 	const tag = `milestone/${core.version.split(".").slice(0, 2).join(".")}`;
 	const posixDir = (dir: string): string =>
 		relative(ROOT, dir).split(sep).join("/");
-	// 固定参数命令按空格切分：git 不允许 tag / SHA 含空格，包路径是仓库内
-	// 固定名（posixDir 相对 ROOT，与仓库落盘位置无关），均无空格
-	const git = (cmd: string): string =>
-		capture("git", cmd.split(" "), ROOT) ?? "";
+	// git 的 tag / SHA 不允许空格，包路径是仓库内 posix 相对名，均无空格
+	const git = (...args: readonly string[]): string =>
+		capture("git", args, ROOT) ?? "";
 	// 基线：优先上一个里程碑（--exclude 防止在已打 tag 的提交上重跑退化成
 	// 空 diff）；没有里程碑回退历史 v*，再无则首个提交
 	const previousTag =
 		git(
-			`describe --tags --abbrev=0 --match milestone/* --match v* --exclude ${tag} HEAD`,
-		) || git("rev-list --max-parents=0 HEAD");
+			"describe",
+			"--tags",
+			"--abbrev=0",
+			"--match",
+			"milestone/*",
+			"--match",
+			"v*",
+			"--exclude",
+			tag,
+			"HEAD",
+		) || git("rev-list", "--max-parents=0", "HEAD");
 	if (previousTag === "") {
 		process.stderr.write(
 			"[notes] ❌ 找不到基线（既无里程碑 / v* tag，也无提交历史）\n",
@@ -253,7 +249,7 @@ export async function cmdNotes(): Promise<number> {
 	}
 	const commits =
 		Number.parseInt(
-			git(`rev-list --count ${previousTag}..HEAD`),
+			git("rev-list", "--count", `${previousTag}..HEAD`),
 			10,
 		) || 0;
 	const ignored = readIgnoredNames(ROOT);
@@ -261,7 +257,8 @@ export async function cmdNotes(): Promise<number> {
 	for (const pkg of pkgs) {
 		if (ignored.has(pkg.name)) continue;
 		const raw = git(
-			`show ${previousTag}:${posixDir(pkg.dir)}/package.json`,
+			"show",
+			`${previousTag}:${posixDir(pkg.dir)}/package.json`,
 		);
 		const before = raw === "" ? null : readVersion(raw);
 		if (before !== pkg.version) {
@@ -277,13 +274,20 @@ export async function cmdNotes(): Promise<number> {
 	);
 	const entries = parseChangelogDiff(
 		git(
-			`diff --unified=0 ${previousTag}..HEAD -- */CHANGELOG.md`,
+			"diff",
+			"--unified=0",
+			`${previousTag}..HEAD`,
+			"--",
+			"*/CHANGELOG.md",
 		),
 		nameByPath,
 	);
 	const { shared, scoped } = splitEntries(entries);
 	const pulls = git(
-		`log --format=%s --reverse ${previousTag}..HEAD`,
+		"log",
+		"--format=%s",
+		"--reverse",
+		`${previousTag}..HEAD`,
 	)
 		.split("\n")
 		.map((line) => line.trim())

@@ -40,8 +40,7 @@ const HELP = `Koishi-CE 发布工具链（tooling/release）
   --dry-run         只看计划，不做任何变更
   --only <名单>     publish 仅发布名单内的包（逗号分隔包名）。补发漏发 /
                     重发坏版本用（须先 bump 版本），同样走 workspace:*
-                    改写与终局断言——2026-08-31 事故（绕链手动发布把
-                    workspace:* 带上 npm、下游 install 全炸）后，禁止手动 npm publish
+                    改写与终局断言（禁止手动 npm publish 的铁律由此落到链上）
   --commit          version 消费后提交版本变化（CI 拆分 job 用；须在 main）
   --push            version / pipeline 推送 main（须在 main）
   --allow-dirty     跳过工作区洁净检查（版本提交仍只含版本相关文件）

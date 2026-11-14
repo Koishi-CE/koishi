@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT
 // Copyright (c) 2026-present Koishi-CE contributors.
 
+import { capture, run } from "../shared/exec.ts";
 // pipeline 子命令：preflight → version → 提交 → build → test → publish →
 // push。每环失败即中断；全部环节重跑幂等（已发布版本经 registry 比对自动
 // 跳过）。推 main 是全仓唯一允许直推 main 的路径（见 AGENTS.md git 提交流
@@ -11,7 +12,6 @@ import {
 	isOidcTrustedPublishing,
 	npmWhoami,
 } from "./core/registry.ts";
-import { capture, run } from "./core/utils.ts";
 import {
 	runBuildSteps,
 	runTestStep,

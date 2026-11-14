@@ -203,7 +203,7 @@ describe("planLinks / applyLinks", () => {
 });
 
 describe("buildSandboxPackageJson", () => {
-	// 上游名钉名（与脚手架模板逐字同构）：market 安装触发的真实 bun
+	// 上游名钉名（与脚手架模板同源）：market 安装触发的真实 bun
 	// install 靠它防止官方全家桶落盘，两模式都必须携带
 	const aliasKeys = [
 		"koishi",
@@ -238,6 +238,29 @@ describe("buildSandboxPackageJson", () => {
 		).toHaveLength(42);
 	});
 
+	test("链接模式：默认插件依赖的版本取 workspace 真实版本的 caret 区间", () => {
+		const manifest = buildSandboxPackageJson(
+			"link",
+			undefined,
+			new Map([
+				["@koishi-ce/plugin-http", "2.3.4"],
+				["@koishi-ce/plugin-server", "1.9.9"],
+			]),
+		) as { dependencies: Record<string, string> };
+		expect(
+			manifest.dependencies["@koishi-ce/plugin-http"],
+		).toBe("^2.3.4");
+		expect(
+			manifest.dependencies["@koishi-ce/plugin-server"],
+		).toBe("^1.9.9");
+		// 未提供版本的包回退 ^1.0.0（仅为测试直调形态兜底）
+		expect(
+			manifest.dependencies[
+				"@koishi-ce/plugin-proxy-agent"
+			],
+		).toBe("^1.0.0");
+	});
+
 	test("打包模式：全部 tgz 以 file: 声明，上游钉名保留", () => {
 		const manifest = buildSandboxPackageJson("pack", [
 			{
@@ -253,8 +276,8 @@ describe("buildSandboxPackageJson", () => {
 		expect(manifest.dependencies?.["@koishi-ce/core"]).toBe(
 			"file:./vendor/koishi-ce-core-1.0.0.tgz",
 		);
-		// 钉名行不受 tgz 替换影响（napuketto 实证：dependencies 形态的
-		// 上游声明也靠落盘版本满足性拦截）
+		// 钉名行不受 tgz 替换影响（dependencies 形态的上游声明也靠
+		// 落盘版本满足性拦截）
 		expect(
 			manifest.dependencies?.["@koishijs/client"],
 		).toBe("npm:@koishi-ce/client-shim@^5.30.11");
@@ -263,11 +286,12 @@ describe("buildSandboxPackageJson", () => {
 		);
 	});
 
-	test("overrides 清单与脚手架模板逐字对账（防两处克隆漂移）", async () => {
+	test("overrides 兜底层复用脚手架模板的单一真源（非手工克隆）", async () => {
 		const manifest = buildSandboxPackageJson("link") as {
 			overrides: Record<string, string>;
 		};
-		// 跨目录对账：create 模板是同一防线的事实源，两处清单漂移即红
+		// 沙盒直接 import 模板的 buildUpstreamOverrides，两处取值恒等；
+		// 本用例锁定该复用关系不被改回手工拷贝
 		const { buildUpstreamOverrides } = await import(
 			"../../apps/koishi-create/src/template.ts"
 		);
