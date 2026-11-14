@@ -1,12 +1,17 @@
 // SPDX-License-Identifier: MIT
 // Copyright (c) 2026-present Koishi-CE contributors.
 
-/** version 子命令：changeset 消费、lockfile 刷新与版本提交。 */
+// version 子命令：消费 .changeset/ 条目 + bun install 刷新 lockfile + 可选
+// 提交推送。CI 里「构建」与「发布」必须拆成权限不同的两个 job（发布 job 才
+// 拿 id-token: write），一条 pipeline 串不完，故把提交与推送开放为旗标。
+// 带 --commit / --push 时强制在 main 上：版本提交直推 main 是全仓唯一的既定
+// 例外（见 AGENTS.md 的 git 提交流程节），但绝不允许从别的分支 --push 把该
+// 分支的提交推到 main。
 import { existsSync } from "node:fs";
 import { join, relative } from "node:path";
 import type { Options } from "../core/options.ts";
 import { ROOT } from "../core/options.ts";
-import { capture, run } from "../core/proc.ts";
+import { capture, run } from "../core/utils.ts";
 import {
 	countPendingChangesets,
 	discoverPackages,
@@ -21,15 +26,20 @@ export async function runVersion(
 	bumpedDirs: string[];
 }> {
 	const pending = countPendingChangesets(ROOT);
+	const stop = (code: number, consumed: boolean) => ({
+		code,
+		consumed,
+		bumpedDirs: [] as string[],
+	});
 	if (pending.count === 0) {
 		console.log("[version] 无 pending changeset，跳过");
-		return { code: 0, consumed: false, bumpedDirs: [] };
+		return stop(0, false);
 	}
 	if (options.dryRun) {
 		console.log(
 			`[version] [dry-run] 将执行 changeset version 消费 ${pending.count} 个条目，随后 bun install 刷新 lockfile`,
 		);
-		return { code: 0, consumed: false, bumpedDirs: [] };
+		return stop(0, false);
 	}
 	const bin = join(
 		ROOT,
@@ -42,7 +52,7 @@ export async function runVersion(
 		process.stderr.write(
 			"[version] ❌ 未找到 @changesets/cli（先 bun install）\n",
 		);
-		return { code: 1, consumed: false, bumpedDirs: [] };
+		return stop(1, false);
 	}
 	const before = new Map(
 		discoverPackages(ROOT).map((pkg) => [
@@ -62,7 +72,7 @@ export async function runVersion(
 		console.log(
 			`[version] ❌ changeset version 失败（退出码 ${code}）`,
 		);
-		return { code, consumed: false, bumpedDirs: [] };
+		return stop(code, false);
 	}
 	console.log(
 		"[version] 🔒 bun install 刷新 bun.lock（workspace 版本已变）",
@@ -72,7 +82,7 @@ export async function runVersion(
 		console.log(
 			`[version] ❌ bun install 失败（退出码 ${code}）`,
 		);
-		return { code, consumed: true, bumpedDirs: [] };
+		return stop(code, true);
 	}
 	const after = discoverPackages(ROOT);
 	const bumpedDirs: string[] = [];
@@ -85,23 +95,22 @@ export async function runVersion(
 		console.log(
 			"[version] ⚠️ 条目已消费但无版本变化（可能全部命中 ignore）",
 		);
-	} else {
-		console.log(
-			`[version] ✅ ${bumpedDirs.length} 个包升版本：`,
-		);
-		for (const pkg of after) {
-			const old = before.get(pkg.name);
-			if (old !== undefined && old !== pkg.version) {
-				console.log(
-					`  ${pkg.name}: ${old} → ${pkg.version}`,
-				);
-			}
-		}
+		return stop(0, true);
 	}
+	const bumped = after
+		.filter((pkg) => before.get(pkg.name) !== pkg.version)
+		.map((pkg) => {
+			const old = before.get(pkg.name);
+			return `  ${pkg.name}: ${old} → ${pkg.version}`;
+		})
+		.join("\n");
+	console.log(
+		`[version] ✅ ${bumpedDirs.length} 个包升版本：\n${bumped}`,
+	);
 	return { code: 0, consumed: true, bumpedDirs };
 }
 
-/** 把版本相关变化提交（只 add 版本相关路径，绝不 git add -A——防 --allow-dirty 时卷入无关改动）。 */
+/** 把版本相关变化提交（只 add 版本相关路径，绝不 git add -A——防 --allow-dirty 卷入无关改动）。 */
 export async function commitVersionBumps(
 	bumpedDirs: readonly string[],
 ): Promise<number> {
@@ -146,22 +155,13 @@ export async function commitVersionBumps(
 	return code;
 }
 
-/**
- * version 子命令：消费 changeset，可选提交与推送。
- *
- * CI 里「构建」与「发布」必须拆成权限不同的两个 job（发布 job 才拿
- * id-token: write），一条 pipeline 串不完，故把提交与推送开放为旗标。
- *
- * 带 --commit / --push 时强制在 main 上：版本提交直推 main 是全仓唯一的
- * 既定例外（见 AGENTS.md 的 git 提交流程节），但绝不允许从别的分支
- * `--push` 把该分支的提交推到 main。
- */
+/** version 子命令：消费 changeset，可选提交与推送。 */
 export async function cmdVersion(
 	options: Options,
 ): Promise<number> {
-	// 护栏必须前置：若放在 runVersion 之后，在非 main 分支上执行
-	// `version --commit` 会先把 changeset 白白消费掉、把工作区改脏，然后才
-	// 拒绝——那已经不是「拒绝」，而是「半途改完再报错」。
+	// 护栏前置：若放在 runVersion 之后，非 main 分支上执行 `version --commit`
+	// 会先把 changeset 白白消费掉、把工作区改脏，然后才拒绝——那不是「拒绝」，
+	// 是「半途改完再报错」。
 	if (!options.dryRun && (options.commit || options.push)) {
 		const branch = capture(
 			"git",
@@ -176,9 +176,7 @@ export async function cmdVersion(
 		}
 	}
 	const version = await runVersion(options);
-	if (version.code !== 0) {
-		return version.code;
-	}
+	if (version.code !== 0) return version.code;
 	if (
 		options.dryRun ||
 		(!options.commit && !options.push)
@@ -189,9 +187,7 @@ export async function cmdVersion(
 		const commitCode = await commitVersionBumps(
 			version.bumpedDirs,
 		);
-		if (commitCode !== 0) {
-			return commitCode;
-		}
+		if (commitCode !== 0) return commitCode;
 	}
 	if (options.push) {
 		const code = await run(

@@ -2,31 +2,13 @@
 // SPDX-License-Identifier: MIT
 // Copyright (c) 2026-present Koishi-CE contributors.
 
-/**
- * Koishi-CE monorepo 构建发布一条龙（零第三方依赖，Bun 运行时）。
- *
- * 面向本仓库 workspace 自身的全部可发布包；与 apps/koishi-scripts 的
- * release 链（面向宿主工作区 external/* 插件项目）互不相干。版本由
- * changesets 管理（.changeset/config.json），本工具编排发布链：
- *
- *   status    概览：pending changeset、本地版本 vs registry、发布序
- *   version   消费 .changeset/ 条目（changeset version）+ bun install 刷新 lockfile
- *   build     根 tsdown → 宿主控制台总装（console/dist）→ 各 webui 插件前端 dist
- *   notes     生成里程碑 Release 的正文骨架（上一个 milestone/* 或 v* tag → HEAD，stdout）
- *   publish   registry 比对 → 所有权预检 → 拓扑序逐包 npm publish（workspace:* 改写）
- *   pipeline  一条龙：preflight → version → 提交 → build → test → publish → push
- *
- * 设计取向（同 qq-releases / koishi-scripts 工具先例）：任何一步失败立即
- * 中断并保留现场；重跑幂等（已发布版本经 registry 比对自动跳过）；
- * --dry-run 只打印计划不落盘。webui 插件 dist 不入 git，发布前必须现
- * 构建——build 环遗漏任一插件都会导致发布缺前端，故 targets 由 files
- * 字段自动推导而非手工列举。
- *
- * 模块划分：index / pipeline（命令与编排）留根 → steps/（status,
- * version, build, notes, publish 五个阶段实现）→ core/（proc, registry,
- * workspace, shared, options 底层能力：进程执行 / registry 查询 /
- * workspace 纯逻辑 / 并发池 / 参数解析），依赖严格单向、无回边。
- */
+// Koishi-CE monorepo 构建发布一条龙（零第三方依赖，Bun 运行时）。面向本仓
+// workspace 自身的全部可发布包；与 apps/koishi-scripts 的 release 链（面向
+// 宿主工作区 external/* 插件项目）互不相干。版本由 changesets 管理，本工具
+// 编排发布链：status / version / build / test / notes / publish / pipeline。
+// 模块划分：index / pipeline（命令与编排）→ steps/（五个阶段实现）→ core/
+// （utils / registry / workspace / trust / options 底层能力），依赖单向无回边。
+import type { Options } from "./core/options.ts";
 import { parseOptions } from "./core/options.ts";
 import { cmdPipeline } from "./pipeline.ts";
 import {
@@ -97,36 +79,27 @@ async function main(): Promise<number> {
 		console.log(HELP);
 		return 1;
 	}
-	switch (command) {
-		case "status": {
-			return await cmdStatus();
-		}
-		case "version": {
-			return await cmdVersion(options);
-		}
-		case "build": {
-			return await runBuildSteps(options);
-		}
-		case "test": {
-			return await runTestStep();
-		}
-		case "notes": {
-			return await cmdNotes();
-		}
-		case "publish": {
-			return await runPublishSteps(options);
-		}
-		case "pipeline": {
-			return await cmdPipeline(options);
-		}
-		default: {
-			process.stderr.write(
-				`[release] ❌ 未知命令 ${JSON.stringify(command)}\n`,
-			);
-			console.log(HELP);
-			return 1;
-		}
+	const handlers: Record<
+		string,
+		(options: Options) => Promise<number>
+	> = {
+		status: () => cmdStatus(),
+		version: cmdVersion,
+		build: runBuildSteps,
+		test: () => runTestStep(),
+		notes: () => cmdNotes(),
+		publish: runPublishSteps,
+		pipeline: cmdPipeline,
+	};
+	const handler = handlers[command];
+	if (handler === undefined) {
+		process.stderr.write(
+			`[release] ❌ 未知命令 ${JSON.stringify(command)}\n`,
+		);
+		console.log(HELP);
+		return 1;
 	}
+	return await handler(options);
 }
 
 try {

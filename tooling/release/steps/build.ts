@@ -1,20 +1,21 @@
 // SPDX-License-Identifier: MIT
 // Copyright (c) 2026-present Koishi-CE contributors.
 
-/** build / test 环：根 tsdown、宿主控制台总装、webui 插件前端并发构建。 */
+// build / test 环：根 tsdown → 宿主控制台总装 → 各 webui 插件前端并发构建。
+// webui 插件 dist 不入 git，发布前必须现构建——build 环遗漏任一插件都会导
+// 致发布缺前端，故 targets 由 files 字段自动推导而非手工列举。
 import { existsSync } from "node:fs";
 import { join } from "node:path";
 import type { Options } from "../core/options.ts";
 import { ROOT } from "../core/options.ts";
-import { run } from "../core/proc.ts";
-import { runPool } from "../core/shared.ts";
+import { run, runPool } from "../core/utils.ts";
 import type { PkgInfo } from "../core/workspace.ts";
 import { discoverPackages } from "../core/workspace.ts";
 
 /** webui 插件前端的并发构建数（vite 单构建内存可观，不宜拉满）。 */
 const BUILD_CONCURRENCY = 4;
 
-/** webui 插件中需要 vite 构建前端 dist 的子集（files 含 dist 且有 client/；console 由宿主总装覆盖）。 */
+/** webui 插件中需要 vite 构建前端 dist 的子集（console 由宿主总装覆盖）。 */
 function frontendTargets(
 	pkgs: readonly PkgInfo[],
 ): PkgInfo[] {
@@ -28,18 +29,18 @@ function frontendTargets(
 	);
 }
 
-/** build 环：根 tsdown → 宿主控制台总装 → 各 webui 插件前端（并发池，失败即中断）。 */
+/** build 环：根 tsdown → 宿主控制台总装 → 各 webui 插件前端（失败即中断）。 */
 export async function runBuildSteps(
 	options: Options,
 ): Promise<number> {
 	if (options.dryRun) {
 		const targets = frontendTargets(discoverPackages(ROOT));
+		const listed = targets
+			.map((pkg) => `  • ${pkg.name}`)
+			.join("\n");
 		console.log(
-			`[build] [dry-run] 将执行：根 tsdown → 宿主控制台总装 → ${targets.length} 个插件前端`,
+			`[build] [dry-run] 将执行：根 tsdown → 宿主控制台总装 → ${targets.length} 个插件前端${targets.length > 0 ? `\n${listed}` : ""}`,
 		);
-		for (const pkg of targets) {
-			console.log(`  • ${pkg.name}`);
-		}
 		return 0;
 	}
 	console.log(
@@ -117,8 +118,6 @@ export async function runTestStep(): Promise<number> {
 		[
 			"test",
 			// --isolate 不可省：缺了跨文件 mock.module 会互相串扰
-			// （根 bun run test 脚本带它，ci.yml 亦有同样注释）；
-			// 原地发布链曾漏掉该旗标，CI 发布路径与本地路径因此不一致
 			"--isolate",
 			"packages",
 			"plugins/common",

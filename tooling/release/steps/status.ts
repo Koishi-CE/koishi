@@ -1,19 +1,17 @@
 // SPDX-License-Identifier: MIT
 // Copyright (c) 2026-present Koishi-CE contributors.
 
-/** status 子命令：pending changeset、本地版本 vs registry、发布序。 */
+// status 子命令：pending changeset、本地版本 vs registry、发布序（只读）。
 import { ROOT } from "../core/options.ts";
 import {
+	fetchAllPublished,
 	probeRegistry,
 	REGISTRY,
 } from "../core/registry.ts";
 import {
-	fetchAllPublished,
-	filterDowngrades,
-} from "../core/shared.ts";
-import {
 	countPendingChangesets,
 	discoverPackages,
+	filterDowngrades,
 	planPublish,
 	topoSort,
 } from "../core/workspace.ts";

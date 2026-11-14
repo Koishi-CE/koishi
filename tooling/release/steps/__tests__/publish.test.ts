@@ -7,8 +7,9 @@ import {
 	expect,
 	test,
 } from "bun:test";
-import type { PkgInfo } from "../core/workspace.ts";
-import { preflightTrustConfigs } from "./publish.ts";
+import type { FetchLike } from "../../core/trust.ts";
+import type { PkgInfo } from "../../core/workspace.ts";
+import { preflightTrustConfigs } from "../publish.ts";
 
 const ID_TOKEN_ENDPOINT = "https://actions.test/id-token";
 const ID_TOKEN_KEY = "ACTIONS_ID_TOKEN_REQUEST_URL";
@@ -55,7 +56,7 @@ function fakeFetch(options: {
 	missing?: readonly string[];
 	notFoundElsewhere?: boolean;
 	idTokenFails?: boolean;
-}): typeof fetch {
+}): FetchLike {
 	return (async (input: string | URL | Request) => {
 		const url =
 			typeof input === "string"
@@ -97,7 +98,7 @@ function fakeFetch(options: {
 				status: 200,
 			},
 		);
-	}) as typeof fetch;
+	}) as FetchLike;
 }
 
 test("全部换到 token → 不拦截发布", async () => {
@@ -148,7 +149,7 @@ test("id_token 取不到 → 跳过预检继续发布（不误拦）", async () 
 
 test("首发包（registry 无版本）不参与预检，也不发探测请求", async () => {
 	let exchangeCalls = 0;
-	const counting: typeof fetch = (async (
+	const counting: FetchLike = (async (
 		input: string | URL | Request,
 	) => {
 		const url =
@@ -172,7 +173,7 @@ test("首发包（registry 无版本）不参与预检，也不发探测请求",
 				status: 200,
 			},
 		);
-	}) as typeof fetch;
+	}) as FetchLike;
 	const blocked = await preflightTrustConfigs(
 		[pkg("@koishi-ce/plugin-new")],
 		seen(),

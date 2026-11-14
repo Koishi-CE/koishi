@@ -1,25 +1,28 @@
 // SPDX-License-Identifier: MIT
 // Copyright (c) 2026-present Koishi-CE contributors.
 
+// pipeline 子命令：preflight → version → 提交 → build → test → publish →
+// push。每环失败即中断；全部环节重跑幂等（已发布版本经 registry 比对自动
+// 跳过）。推 main 是全仓唯一允许直推 main 的路径（见 AGENTS.md git 提交流
+// 程节与 docs/process/release.md 第 2 节）。
 import type { Options } from "./core/options.ts";
 import { ROOT } from "./core/options.ts";
-import { capture, run } from "./core/proc.ts";
 import {
 	isOidcTrustedPublishing,
 	npmWhoami,
 } from "./core/registry.ts";
+import { capture, run } from "./core/utils.ts";
 import {
 	runBuildSteps,
 	runTestStep,
 } from "./steps/build.ts";
-/** pipeline 子命令：preflight → version → 提交 → build → test → publish → push。 */
 import { runPublishSteps } from "./steps/publish.ts";
 import {
 	commitVersionBumps,
 	runVersion,
 } from "./steps/version.ts";
 
-/** pipeline：一条龙。每环失败即中断；全部环节重跑幂等。 */
+/** pipeline：一条龙。 */
 export async function cmdPipeline(
 	options: Options,
 ): Promise<number> {
@@ -73,24 +76,18 @@ export async function cmdPipeline(
 
 	// version 环 + 版本提交
 	const version = await runVersion(options);
-	if (version.code !== 0) {
-		return version.code;
-	}
+	if (version.code !== 0) return version.code;
 	if (!options.dryRun && version.consumed) {
 		const commitCode = await commitVersionBumps(
 			version.bumpedDirs,
 		);
-		if (commitCode !== 0) {
-			return commitCode;
-		}
+		if (commitCode !== 0) return commitCode;
 	}
 
 	// build 环
 	if (!options.skipBuild) {
 		const buildCode = await runBuildSteps(options);
-		if (buildCode !== 0) {
-			return buildCode;
-		}
+		if (buildCode !== 0) return buildCode;
 	} else {
 		console.log("[pipeline] ⏭ 跳过构建（--skip-build）");
 	}
@@ -114,17 +111,12 @@ export async function cmdPipeline(
 
 	// publish 环
 	const publishCode = await runPublishSteps(options);
-	if (publishCode !== 0) {
-		return publishCode;
-	}
+	if (publishCode !== 0) return publishCode;
 
 	if (options.dryRun) {
 		console.log("[pipeline] [dry-run] 结束，未做任何变更");
 		return 0;
 	}
-
-	// 推送（全仓唯一允许直推 main 的路径：其余改动一律走 PR，
-	// 见 AGENTS.md 的 git 提交流程节与 docs/process/release.md 第 2 节）
 	if (options.push) {
 		console.log("[pipeline] 📤 git push origin main");
 		const code = await run(

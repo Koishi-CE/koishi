@@ -7,12 +7,12 @@ import {
 	expect,
 	test,
 } from "bun:test";
+import type { FetchLike } from "../trust.ts";
 import {
-	escapePackageName,
 	exchangeUrl,
 	fetchGithubIdToken,
 	probePackageTrust,
-} from "./trust.ts";
+} from "../trust.ts";
 
 const ID_TOKEN = "header.payload.signature";
 const ID_TOKEN_ENDPOINT = "https://actions.test/id-token";
@@ -30,14 +30,11 @@ afterAll(() => {
 });
 
 test("包名转路径段：作用域名只转斜杠，@ 保留（与 npm CLI 一致）", () => {
-	expect(escapePackageName("@koishi-ce/plugin-admin")).toBe(
-		"@koishi-ce%2Fplugin-admin",
-	);
-	expect(escapePackageName("create-koishi-ce")).toBe(
-		"create-koishi-ce",
-	);
 	expect(exchangeUrl("@koishi-ce/core")).toBe(
 		"https://registry.npmjs.org/-/npm/v1/oidc/token/exchange/package/@koishi-ce%2Fcore",
+	);
+	expect(exchangeUrl("create-koishi-ce")).toBe(
+		"https://registry.npmjs.org/-/npm/v1/oidc/token/exchange/package/create-koishi-ce",
 	);
 });
 
@@ -137,7 +134,7 @@ test("id_token 请求：audience 与 npm CLI 一致，用 request token 换 id t
 				status: 200,
 			},
 		);
-	}) as typeof fetch);
+	}) as FetchLike);
 	expect(token).toBe("id-token");
 	const url = new URL(requested);
 	expect(url.origin + url.pathname).toBe(ID_TOKEN_ENDPOINT);
@@ -152,7 +149,7 @@ test("id_token 请求非 2xx / 响应缺 value → 抛错（由调用方决定�
 			(async () =>
 				new Response("nope", {
 					status: 500,
-				})) as typeof fetch,
+				})) as FetchLike,
 		),
 	).rejects.toThrow("HTTP 500");
 	await expect(
@@ -160,7 +157,7 @@ test("id_token 请求非 2xx / 响应缺 value → 抛错（由调用方决定�
 			(async () =>
 				new Response(JSON.stringify({}), {
 					status: 200,
-				})) as typeof fetch,
+				})) as FetchLike,
 		),
 	).rejects.toThrow("缺少 value");
 });
@@ -171,7 +168,7 @@ test("缺 Actions 的 id_token 环境变量 → 直接抛错，不发请求", as
 	const fake = (async () => {
 		called += 1;
 		return new Response("{}", { status: 200 });
-	}) as typeof fetch;
+	}) as FetchLike;
 	await expect(fetchGithubIdToken(fake)).rejects.toThrow(
 		"ACTIONS_ID_TOKEN_REQUEST_URL",
 	);

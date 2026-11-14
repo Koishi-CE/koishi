@@ -56,7 +56,11 @@
 		"plugins/webui/sandbox/src",
 		"plugins/webui/status/src",
 		"plugins/webui/theme-vanilla/src",
-		"plugins/webui/welcome/src"
+		"plugins/webui/welcome/src",
+		// 发布链是 CI 关键路径，纳入 node 侧类型程序（此前不在 include 并集，
+		// 是 typecheck 盲区——bun-types 给全局 fetch 挂的 preconnect 扩展就是
+		// 在盲区里漏进来的）
+		"tooling/release"
 	],
 	// koishi-scripts 的模板载荷是给下游脚手架项目的源文件（依赖 koishi /
 	// @koishijs/client 等下游包名），不参与本仓类型程序
