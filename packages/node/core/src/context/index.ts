@@ -155,6 +155,7 @@ export class Context extends satori.Context {
 	// defineContextConfig 在运行时 defineProperty 延迟注入（断开初始化顺序环），
 	// 构造点类型上不可见；且 cordis Schema<T> 泛型双位置不变，Schema<{}> 与
 	// Schema<Context.Config> 互相连单断言都不可达（上游此处为单断言，系旧类型面更松）
+	// biome-ignore lint/plugin/no-double-cast: R2×2：Static 成员由 config.ts 运行时 defineProperty 延迟注入（断初始化环）构造点不可见 + Schema<T> 双位置不变；minato 泛型构造器与具体化 Plugin.Constructor 互转不可达（运行时官方组合保证）
 	static Config = Schema.intersect([
 		Schema.object({}),
 	]) as unknown as Context.Config.Static;
@@ -204,6 +205,7 @@ export class Context extends satori.Context {
 		// 之间泛型签名不可互转（垫片等任何"根除"都只是换皮断言）；运行时
 		// 兼容由 cordis/minato 官方组合保证
 		this.plugin(
+			// biome-ignore lint/plugin/no-double-cast: R2×2：Static 成员由 config.ts 运行时 defineProperty 延迟注入（断初始化环）构造点不可见 + Schema<T> 双位置不变；minato 泛型构造器与具体化 Plugin.Constructor 互转不可达（运行时官方组合保证）
 			minato.Database as unknown as cordis.Plugin.Constructor<Context>,
 		);
 		this.plugin(Koishi, this.config);

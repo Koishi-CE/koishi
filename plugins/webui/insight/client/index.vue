@@ -89,6 +89,7 @@ const nodes = reactive<Node[]>(
 // 同一对象跨生命周期两种形状（推送态 Insight.Link vs 渲染态 Link），
 // 互不可赋值只能双重断言；.vue 不进 tsc，此处仅作文档性精确化
 const links = computed<Link[]>(
+	// biome-ignore lint/plugin/no-double-cast: R3 d3-force 就地变异：forceLink 初始化把边源 number 变异为节点引用，同一对象跨生命周期两种形状互不可赋值；.vue 不进 tsc，断言仅文档性
 	() => (store.insight?.edges ?? []) as unknown as Link[],
 );
 
@@ -241,6 +242,7 @@ watch(
 		}
 		simulation.nodes(nodes);
 		// 同上：推送态 edges 到渲染态 Link 的就地变异边界（见 links 声明处注释）
+		// biome-ignore lint/plugin/no-double-cast: R3 d3-force 就地变异：forceLink 初始化把边源 number 变异为节点引用，同一对象跨生命周期两种形状互不可赋值；.vue 不进 tsc，断言仅文档性
 		forceLink.links(value.edges as unknown as Link[]);
 		simulation.alpha(0.3).restart();
 	},

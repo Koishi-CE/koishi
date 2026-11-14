@@ -181,6 +181,7 @@ export abstract class PackageProvider extends DataService<
 		}
 
 		// 附加应用全局设置（使用 Context.Config 作为 schema，name 为空串）
+		// biome-ignore lint/plugin/no-double-cast: R4 Data 双形态：全局设置条目天然无市场元数据（shortname/manifest/version 必填不成立），根治须拆联合类型连锁 config/market 前端全部访问点
 		objects.unshift({
 			name: "",
 			runtime: {

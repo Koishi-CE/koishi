@@ -49,11 +49,11 @@
 		"build:client": {
 			"outputs": ["dist/**"]
 		},
-		// check 按执行层拆四组根任务（十段本身不变，只是分组暴露给 turbo）：
+		// check 按执行层拆四组根任务（七段本身不变，只是分组暴露给 turbo）：
 		// CI 显式请求这四组，turbo 按依赖图并行调度；本地 `bun run check`
 		// 仍是这四组串行的组合，口径与 CI 完全一致。
-		// 静态两组不依赖构建——实测 biome / eslint 与 tooling/checks 下的六个
-		// 检查脚本均不读 lib 或 dist，故与 //#build 同刻起跑；类型两组读各包
+		// 静态两组不依赖构建——实测 biome / eslint 与 tooling/checks 下的检查
+		// 脚本均不读 lib 或 dist，故与 //#build 同刻起跑；类型两组读各包
 		// lib/index.d.ts（tsconfig.web.json 的部分 paths 指向产物），必须等构建。
 		"//#check:lint": {},
 		"//#check:tooling": {},
@@ -63,7 +63,7 @@
 		"//#check:template": {
 			"dependsOn": ["//#build"]
 		},
-		// 本地 / 兼容入口：command 是十段串行（bun run check），CI 不请求它，
+		// 本地 / 兼容入口：command 是七段串行（bun run check），CI 不请求它，
 		// 请求的是上面四组（turbo 不支持 //#check:* 通配，命令行须显式列出）。
 		"//#check": {},
 		// test 与 check 四组并行（旧版经 //#check 传递依赖，等于把整条 check 链

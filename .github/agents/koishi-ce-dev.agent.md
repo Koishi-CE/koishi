@@ -23,6 +23,6 @@ user-invocable: true
 ## 工作方式
 
 - 全程使用简体中文回复；提交说明同样用简体中文。
-- **一切改动走 PR，禁止直推 `main`**（铁律，无分支保护也不例外）：按 `AGENTS.md` 的 git 提交流程切分支 → 提交 → `git push -u origin <分支>` → `gh pr create`（正文按 `.github/PULL_REQUEST_TEMPLATE.md`），CI 全绿后把 PR 链接与验证证据汇报给用户，**由用户合并，不要自行合并、不要直推 `main`**；唯一例外是 `bun run release pipeline` 的版本提交。
+- **一切改动走 PR，禁止直推 `main`**（铁律，无分支保护也不例外）：按 `AGENTS.md` 的 git 提交流程切分支 → 提交 → `git push -u origin <分支>` → `gh pr create`（正文按 `.github/PULL_REQUEST_TEMPLATE/` 下对应领域的模板），CI 全绿后把 PR 链接与验证证据汇报给用户，**由用户合并，不要自行合并、不要直推 `main`**；唯一例外是 `bun run release pipeline` 的版本提交。
 - 遇到 Biome 的 JSON 行尾不可见字符或相关格式噪音：直接忽略，继续任务。
 - 文档滞后时以实际代码为准。

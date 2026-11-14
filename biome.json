@@ -52,6 +52,21 @@
 			}
 		}
 	},
+	"plugins": [
+		{
+			"path": "./tooling/checks/no-double-cast.grit",
+			"includes": [
+				"**",
+				"!**/*.{test,spec}.*",
+				"!**/__tests__/**",
+				"!**/__mocks__/**",
+				"!**/vendor/**",
+				"!packages/shim/**",
+				"!plugins/infra/{http,proxy,server}/**",
+				"!apps/*/src/template/**"
+			]
+		}
+	],
 	"overrides": [
 		{
 			"includes": ["**/tests/**", "**/*.{spec,test}.*"],

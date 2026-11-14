@@ -32,12 +32,16 @@ class BrowserConsole extends Console {
 	override start() {
 		// 浏览器宿主在 loader 上挂载的 socket 是运行时约定，仅以全局 symbol 注册表键存在，
 		// 无法在 Loader 类型上声明（Symbol.for 的返回值不是 unique symbol，不能用作接口键）
-		const socket = (
-			this.ctx.loader as unknown as Record<symbol, unknown>
-		)[Symbol.for("koishi.socket")];
+		// biome-ignore lint/plugin/no-double-cast: R4×2：symbol 注册表键（Symbol.for 返回值非 unique symbol 不能作接口键，无本仓挂载方可声明）+ 浏览器宿主无 HTTP 升级请求的壳对象（根除须放宽 console 公开类型并连锁改 auth 行为，超出类型收敛边界）
+		const registry = this.ctx.loader as unknown as Record<
+			symbol,
+			unknown
+		>;
+		const socket = registry[Symbol.for("koishi.socket")];
 		// 浏览器宿主没有 HTTP 升级请求，构造仅含空 headers 的壳对象以满足 Client.request 形状
 		this.accept(
 			socket as Universal.WebSocket,
+			// biome-ignore lint/plugin/no-double-cast: R4×2：symbol 注册表键（Symbol.for 返回值非 unique symbol 不能作接口键，无本仓挂载方可声明）+ 浏览器宿主无 HTTP 升级请求的壳对象（根除须放宽 console 公开类型并连锁改 auth 行为，超出类型收敛边界）
 			{
 				headers: {},
 			} as unknown as IncomingMessage,
