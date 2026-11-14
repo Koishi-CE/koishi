@@ -276,3 +276,12 @@ bun run sandbox --start          # 生成完成后立即在本进程前台拉起
 2. **Dependabot PR 的 token 是只读的**：GitHub 把 Dependabot 触发的 workflow 按 fork 处理——secrets 不可用、`GITHUB_TOKEN` 无写权限。故三处配套：triage 的 labeler 与 assigner 两个 job 都显式跳过 Dependabot PR（否则其 `pull-requests: write` 被降级后必然失败），PR 的标签与 assignee 改由 `dependabot.yml` 的 `labels` / `assignees` 字段直接指定；Codecov 上传在 Dependabot PR 上降级为 tokenless 或直接失败（`fail_ci_if_error` 默认 false，不影响门禁结论）。
 
 **启用前提（仓库设置，非代码）**：`dependabot.yml` 存在于默认分支即自动生效 version updates；**Dependabot alerts 与 security updates 须在仓库 Settings → Code security 里手动开启**，否则上表最后一行「安全更新照常提出」不成立。
+
+## 12. 供应链安全（Socket）
+
+依赖的供应链风险（恶意包、typosquat、install scripts、telemetry 等）由 **Socket for GitHub App** 在 PR 上把关：只对触达依赖清单（`bun.lock` / 各包 `package.json`）的改动出报告，以告警评论 + check run 呈现。仓库级配置在根 [socket.yml](../../socket.yml)（v2 schema 仅 `version` / `projectIgnorePaths` / `issueRules` / `githubApp` 四组键，多余键被静默丢弃；当前全默认值）。要点：
+
+- **安装在 GitHub 侧，非代码**：[github.com/apps/socket-security](https://github.com/apps/socket-security) → Install → Koishi-CE 组织 → 仅勾选本仓库。公开仓免费计划覆盖；无需 API key secret、不占 Actions 分钟（App 在 Socket 服务端运行，这是没选 CI Action 形态的主因之一）。
+- **与 Dependabot 天然兼容**：Dependabot 的依赖升版 PR 正是最需要扫的改动面，而 App 形态不受「Dependabot PR 拿不到 secrets」的限制（§11 坑 2），照常出报告。
+- **非必需检查**：ruleset 必需检查仍只有 gate / client / fallow，Socket 的 check run 红不挡合并；检查失败阈值在 Socket 控制台的组织 / 仓库 policy 里调。要升为必需检查时同步改 ruleset（.merge queue 对必需检查的 merge_group 要求见 §4 CI 头注释）。
+- Socket 官方自 2025-11 起原生支持 `bun.lock`（自动探测并分析依赖图），与本仓 Bun 锁文件开箱即用。

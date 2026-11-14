@@ -1,0 +1,27 @@
+# SPDX-License-Identifier: MIT
+# Copyright (c) 2026-present Koishi-CE contributors.
+
+# Socket for GitHub（供应链扫描 App）的仓库级声明式配置。
+#
+# 该 App 安装在 GitHub 网页侧（github.com/apps/socket-security → Install →
+# 选 Koishi-CE 组织并仅勾选本仓库），无需 API key、不消耗 Actions 分钟；
+# 装好后对触达依赖清单（bun.lock / 各包 package.json）的 PR 自动出风险
+# 告警评论与 check run，检测面含 install scripts、telemetry、已知恶意包、
+# typosquat 等（公开仓免费计划覆盖）。
+#
+# schema 为 v2，五个顶层键：version / projectIgnorePaths / issueRules /
+# githubApp（解析器 SocketDev/socket-config-js，additionalProperties: false，
+# 多余键被静默丢弃）；仅支持放在仓库根目录。当前全部取默认值，显式写出
+# 仅作文档化：
+# - projectIgnorePaths: []  —— 全仓清单都扫：packages/shim 四包与
+#   apps/koishi-create 脚手架模板的 package.json 同样在扫描面内（前者是
+#   下游 alias 的占名目标、后者随 create-koishi-ce 分发给下游），均值得扫
+# - githubApp.enabled: true —— PR 告警评论、依赖概览评论、commit 级项目
+#   报告三项均默认开启；如需局部静默（如 ignoreUsers）在此段加键
+# 规则级静默（issueRules 已弃用，计划迁移至控制台）与检查失败阈值
+# （何时把 check run 打红）都走 Socket 控制台的组织 / 仓库 policy，不在
+# 本文件；本 check 非 ruleset 必需检查，红不挡合并（见 development.md §12）。
+version: 2
+projectIgnorePaths: []
+githubApp:
+  enabled: true
