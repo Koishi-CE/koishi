@@ -5,6 +5,8 @@
 // npm publish。发布前把 workspace:* / catalog: 改写为真实版本，finally 还原
 // package.json（不落盘，工作区保持洁净）。
 import { readFileSync, writeFileSync } from "node:fs";
+import { runNpm } from "../../shared/exec.ts";
+import { readCatalogSpecs } from "../../shared/workspace.ts";
 import type { Options } from "../core/options.ts";
 import { ROOT } from "../core/options.ts";
 import {
@@ -23,37 +25,32 @@ import {
 	fetchGithubIdToken,
 	probeTrustConfigs,
 } from "../core/trust.ts";
-import { runNpm } from "../core/utils.ts";
 import type { PkgInfo } from "../core/workspace.ts";
 import {
 	discoverPackages,
 	filterDowngrades,
 	planPublish,
-	readCatalogSpecs,
 	rewriteWorkspaceProtocol,
 	topoSort,
 } from "../core/workspace.ts";
 
 /**
- * 发布失败后的排查提示（两类高频误判）：E409 = 版本已进 npm 暂存区
- * （staged publish）等人工批准，暂存版本不在 registry 的 versions 列表里，
- * 比对无从感知，重跑只会再次 409；ENEEDAUTH = OIDC 模式下不代表没登录
- * ——npm 换包级 token 失败时不报原因、静默退回无凭证发布，真正原因只在
- * verbose 日志里（CI 发布步骤已开 NPM_CONFIG_LOGLEVEL=verbose）。
+ * 发布失败后的排查提示（两类高频误判，原因与处置各一行）：E409 = 版本已进
+ * npm 暂存区等人工批准（暂存版本不在 registry versions 列表里，重跑必再
+ * 409）；ENEEDAUTH = npm 换 OIDC 包级 token 失败后静默退回无凭证发布，
+ * 非「没登录」，真正原因只在 verbose 日志里（CI 发布步骤已开
+ * NPM_CONFIG_LOGLEVEL=verbose）。
  */
 function printPublishFailureHints(pkg: PkgInfo): void {
-	console.log(`[publish] 💡 E409「Cannot publish over previously staged version」：${pkg.name}@${pkg.version} 已进入 npm 暂存区（staged publish）等待批准；暂存版本不在 registry 的 versions 列表内，比对无法感知，重跑必然再次 409。
-[publish]    处置：npmjs.com 的 Staged Packages 标签页 Approve（转为正式发布）或 Reject（丢弃后重发）；npm ≥ 11.15 可用 npm stage list / approve|reject。同批其余未发布包可先用 --only <包名> 单独补发。
-[publish] 💡 ENEEDAUTH「need auth」：这不是「没登录」。npm 用 GitHub 的 id_token 换包级发布 token，换不到时它不报原因、直接退回无凭证发布，registry 才回 ENEEDAUTH。
-[publish]    看 npm 的 verbose 行：出现 POST 404 …/oidc/token/exchange/package/… 与「OIDC token exchange error - package not found」，即该包在 registry 侧没有匹配的信任配置（没配过 / claims 与 release.yml 不符 / 配置超 2 天未完成首次发布已过期，三者同码）。
-[publish]    处置：npm trust github ${pkg.name} --file release.yml --repo Koishi-CE/koishi --environment release --allow-publish（npm CLI ≥ 11.15，先 npm login；已有配置只能 revoke 后重建）。该包若从未经 CI 发布过，多半就是这一条——信任配置逐包，不是仓库级开关。`);
+	console.log(`[publish] 💡 E409 staged publish：${pkg.name}@${pkg.version} 已进 npm 暂存区等待批准；到 npmjs.com 的 Staged Packages 标签页 Approve（转正式发布）或 Reject（丢弃重发），其余包可 --only 补发。
+[publish] 💡 ENEEDAUTH：npm 换 OIDC 包级 token 失败后静默退回无凭证发布，非「没登录」；verbose 日志见「OIDC token exchange error - package not found」即该包缺信任配置（没配 / claim 与 release.yml 不符 / 超 2 天未完成首发已过期，三者同码）。先 npm login 再执行：
+[publish]    npm trust github ${pkg.name} --file release.yml --repo Koishi-CE/koishi --environment release --allow-publish（已有配置只能 revoke 后重建）`);
 }
 
 /**
  * OIDC 信任配置预检（只在 OIDC 模式跑）：发布前逐包换一次发布 token，换不
- * 到就一个包都不发——否则半批已推上 npm，且每轮发布只撞出一个缺口（
- * 2026-10-13 / 10-17 两次发布失败即此形态）。首发包不参与预检：包在
- * registry 不存在就无从创建配置，换 token 必然 404，避免误拦。
+ * 到就一个包都不发——否则半批已推上 npm，且每轮发布只撞出一个缺口。首发包
+ * 不参与预检：包在 registry 不存在就无从创建配置，换 token 必然 404。
  */
 export async function preflightTrustConfigs(
 	ordered: readonly PkgInfo[],
@@ -118,11 +115,10 @@ export async function preflightTrustConfigs(
 	const listed = missing
 		.map((pkg) => `  ⛔ ${pkg.name}@${pkg.version}`)
 		.join("\n");
-	console.log(`${prefix} ❌ 以下 ${missing.length} 个包当前没有可用的 OIDC 信任配置，本次一个包都不发：
+	console.log(`${prefix} ❌ ${missing.length} 个包没有可用的 OIDC 信任配置，本次一个包都不发：
 ${listed}
-${prefix} 💡 原因只有三种（registry 一律回 404「package not found」）：没配过 / claim 与 release.yml 不符 / 配了但超 2 天没完成首次发布而失效（失效记录不可编辑，只能删掉重建）。
-${prefix} 💡 处置（本机 npm login，npm CLI ≥ 11.15）：逐包 npm trust list <包名> → 有记录先 npm trust revoke <包名> --id <id> → npm trust github <包名> --file release.yml --repo Koishi-CE/koishi --environment release --allow-publish --yes；核对 file=release.yml / repo=Koishi-CE/koishi / env=release / permissions 只含 publish。
-${prefix} ⏳ 新配置须在 2 天内完成首次发布才生效：配完立刻重跑本链并批准，别隔天再发。只补本批是刻意的——提前把全部包配好，没在本批验证的那些两天后照样过期。`);
+${prefix} 💡 404「package not found」＝没配 / claim 与 release.yml 不符 / 超 2 天未完成首发已过期。处置（本机 npm login）：npm trust list <包名> → 有旧记录先 revoke → npm trust github <包名> --file release.yml --repo Koishi-CE/koishi --environment release --allow-publish --yes
+${prefix} ⏳ 新配置须 2 天内完成首次发布：配完立刻重跑本链并批准。只补本批是刻意的——提前配好的包两天后照样过期。`);
 	return true;
 }
 

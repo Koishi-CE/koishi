@@ -27,7 +27,6 @@
  *
  * 与本仓 plugins/webui/sandbox 插件（控制台内嵌调试沙盒）无任何关系。
  */
-import { spawnSync } from "node:child_process";
 import {
 	mkdirSync,
 	renameSync,
@@ -35,12 +34,13 @@ import {
 	writeFileSync,
 } from "node:fs";
 import { join, resolve } from "node:path";
+import { execCapture, run } from "../shared/exec.ts";
+import { ROOT } from "../shared/workspace.ts";
 import { parseArgv } from "./args.ts";
 import {
 	DEFAULT_TARGET,
 	dim,
 	green,
-	ROOT,
 	red,
 	SCOPE,
 	yellow,
@@ -82,10 +82,21 @@ function cmdLink(target: string, force: boolean) {
 	const claim = claimTarget(target, force);
 	mkdirSync(target, { recursive: true });
 	if (claim.fresh) {
+		// 默认插件依赖声明取包的真实版本，主版本升级不静默漂移
+		const versions = new Map<string, string>();
+		for (const pkg of packages) {
+			if (pkg.version !== undefined) {
+				versions.set(pkg.name, pkg.version);
+			}
+		}
 		writeFileSync(
 			join(target, "package.json"),
 			`${JSON.stringify(
-				buildSandboxPackageJson("link"),
+				buildSandboxPackageJson(
+					"link",
+					undefined,
+					versions,
+				),
 				null,
 				"\t",
 			)}\n`,
@@ -122,7 +133,7 @@ function cmdLink(target: string, force: boolean) {
 }
 
 /** 打包模式主流程：逐包 bun pm pack → vendor/ → 真实 bun install。 */
-function cmdPack(target: string, force: boolean) {
+async function cmdPack(target: string, force: boolean) {
 	const packages = resolveWorkspacePackages(ROOT).filter(
 		(pkg) => pkg.name.startsWith(SCOPE),
 	);
@@ -157,18 +168,19 @@ function cmdPack(target: string, force: boolean) {
 	const failed: Array<{ name: string; reason: string }> =
 		[];
 	for (const pkg of packages) {
-		const result = spawnSync("bun", ["pm", "pack"], {
-			cwd: pkg.dir,
-			encoding: "utf8",
-		});
-		if (result.status !== 0) {
+		const result = execCapture(
+			"bun",
+			["pm", "pack"],
+			pkg.dir,
+		);
+		if (!result.ok) {
 			const reason =
-				(result.stderr ?? "").trim().split("\n").pop() ??
-				"";
+				result.stderr.trim().split("\n").pop() ??
+				"bun pm pack 失败";
 			failed.push({ name: pkg.name, reason });
 			continue;
 		}
-		const line = (result.stdout ?? "")
+		const line = result.stdout
 			.split("\n")
 			.map((row) => row.trim())
 			.find((row) => row.endsWith(".tgz"));
@@ -184,6 +196,25 @@ function cmdPack(target: string, force: boolean) {
 		packed.push({ name: pkg.name, file: line });
 	}
 
+	console.log(
+		`打包 ${packed.length} 个包 → vendor/（${failed.length} 个失败）`,
+	);
+	// 任一包打包失败即中止：残缺的 dependencies 清单会装出半残实例，
+	// 且失败被摘要掩盖；重跑幂等（vendor 整目录重建）
+	if (failed.length > 0) {
+		for (const item of failed) {
+			console.error(
+				red(`  - ${item.name}：${item.reason}`),
+			);
+		}
+		console.error(
+			red(
+				"存在打包失败的包，中止生成（未写 package.json、未执行安装）。",
+			),
+		);
+		process.exit(1);
+	}
+
 	writeFileSync(
 		join(target, "package.json"),
 		`${JSON.stringify(
@@ -194,22 +225,10 @@ function cmdPack(target: string, force: boolean) {
 	);
 	writeMarker(target, "pack");
 
-	console.log(
-		`打包 ${packed.length} 个包 → vendor/（${failed.length} 个失败）`,
-	);
-	for (const item of failed) {
-		console.error(red(`  - ${item.name}：${item.reason}`));
-	}
-	if (failed.length > 0 && packed.length === 0) {
-		process.exit(1);
-	}
-
 	console.log("安装依赖（外部依赖从 npm 拉取）...");
-	const install = spawnSync("bun", ["install"], {
-		cwd: target,
-		stdio: ["ignore", "inherit", "inherit"],
-	});
-	if (install.status !== 0) {
+	// 三路 stdio 直通（stderr 需透传供排错），退出码判成败
+	const installCode = await run("bun", ["install"], target);
+	if (installCode !== 0) {
 		console.error(
 			red("bun install 失败，请检查上方输出。"),
 		);
@@ -223,14 +242,15 @@ function cmdPack(target: string, force: boolean) {
  * 一并终止）；否则输出手动启动提示——分两行写，不用 `cd X && bun start`
  * 连写（Windows PowerShell 5.x 不支持 && 语句分隔符）。
  */
-function finish(target: string, start: boolean) {
+async function finish(
+	target: string,
+	start: boolean,
+): Promise<void> {
 	if (start) {
 		console.log(dim("正在拉起沙盒实例（Ctrl+C 退出）..."));
-		const child = spawnSync("bun", ["start"], {
-			cwd: target,
-			stdio: "inherit",
-		});
-		process.exit(child.status ?? 1);
+		process.exit(
+			await run("bun", ["start"], target, "inherit"),
+		);
 	}
 	console.log("启动（在沙盒目录执行）：");
 	console.log(`  cd ${target}`);
@@ -240,9 +260,32 @@ function finish(target: string, start: boolean) {
 	);
 }
 
+/** 用法说明（--help 输出）。 */
+const HELP = `外部沙盒实例生成器（tooling/sandbox）
+
+用法：bun run sandbox [目录] [旗标]
+
+模式：
+  （默认）          链接模式：为全部 CE 作用域 workspace 包建 junction，
+                    改 src → bun run build 后实例即刻生效
+  --pack            打包模式：逐包 bun pm pack → 真实 bun install（发布物终验）
+
+旗标：
+  --force           清空重建已存在的沙盒（仅限本工具生成的目录）
+  --start           生成完成后立即在前台拉起实例
+  -h, --help        显示本帮助
+
+落点缺省为工作区同级 Debug/koishi-ce-sandbox。机理与已知坑详见
+docs/guides/development.md §10。`;
+
 /** 入口：import.meta.main 守卫使本模块可被测试安全导入。 */
 if (import.meta.main) {
-	const options = parseArgv(process.argv.slice(2));
+	const argv = process.argv.slice(2);
+	if (argv.includes("--help") || argv.includes("-h")) {
+		console.log(HELP);
+		process.exit(0);
+	}
+	const options = parseArgv(argv);
 	const target = resolve(options.target ?? DEFAULT_TARGET);
 	console.log(
 		dim(
@@ -250,9 +293,9 @@ if (import.meta.main) {
 		),
 	);
 	if (options.pack) {
-		cmdPack(target, options.force);
+		await cmdPack(target, options.force);
 	} else {
 		cmdLink(target, options.force);
 	}
-	finish(target, options.start);
+	await finish(target, options.start);
 }

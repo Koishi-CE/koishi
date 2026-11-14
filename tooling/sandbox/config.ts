@@ -2,13 +2,7 @@
 // Copyright (c) 2026-present Koishi-CE contributors.
 
 import { join, resolve } from "node:path";
-
-/** 仓库根目录（本脚本位于 tooling/sandbox/ 下）。 */
-export const ROOT = resolve(
-	import.meta.dirname,
-	"..",
-	"..",
-);
+import { ROOT } from "../shared/workspace.ts";
 
 /** 脚手架内置模板目录（沙盒的 koishi.yml 等基线从这里复用）。 */
 export const TEMPLATE_DIR = join(
@@ -22,10 +16,7 @@ export const MARKER = ".koishi-ce-sandbox.json";
 /** 身份标记的 generator 取值；旧版单文件时代的 "tooling/sandbox.ts" 同样被识别。 */
 export const GENERATOR = "tooling/sandbox";
 
-/**
- * 默认落点：工作区同级的 Debug/ 下（不在仓库内部，天然隔离；本地调试产物
- * 统一收在 Debug/）。当前解析为 C:\Dev\Bot-Dev\Debug\koishi-ce-sandbox。
- */
+/** 默认落点：工作区同级的 Debug/ 下（不在仓库内部，本地调试产物统一收在 Debug/）。 */
 export const DEFAULT_TARGET = resolve(
 	ROOT,
 	"..",

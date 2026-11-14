@@ -6,49 +6,41 @@
  *
  * 用法：bun tooling/checks/console-wiring.ts
  *
- * 2026-09-25 起浏览器端对 console 服务类型的消费走「类型源头共享」：
- * 各插件 client 侧不再手写 declare module 镜像（原 packages/web/client/
- * src/shims.d.ts 骨架与各插件镜像已删），node 侧的 Services / Events
- * 增强声明（declare module "@koishi-ce/console"）经 lib 产物 d.ts 携带，
- * 由基座 paths + 接线文件（packages/web/client/console-services.d.ts 的
- * 副作用导入）拉入浏览器类型程序。本脚本把这套间接链路的两个易漂移点
- * 固化为对账：
+ * 浏览器端对 console 服务类型的消费走「类型源头共享」：各插件 client 侧
+ * 不写 declare module 镜像，node 侧的 Services / Events 增强声明
+ * （declare module "@koishi-ce/console"）经 lib 产物 d.ts 携带，由基座
+ * paths + 接线文件（packages/web/client/console-services.d.ts 的副作用
+ * 导入）拉入浏览器类型程序。本脚本把这套间接链路的两个易漂移点固化为
+ * 对账：
  *
  *   1. 接线对账：node 侧声明了 console 增强的插件包集合，须与接线文件
  *      的导入包集合双向一致——新增插件忘了接线会让其 store 键 / 事件
  *      类型在浏览器端静默缺失（推导退化为 never / any）；
  *   2. paths 层对账：基座 tsconfig.client.json 的 paths 键集必须被
  *      tsconfig.web.json 完整覆盖——extends 的 paths 是整体替换语义，
- *      大一统程序须手工重写基座映射，漏写即全程序断链（2026-09-25
- *      实证：paths 只改基座时 logger 增强在大一统程序静默失效）。
+ *      大一统程序须手工重写基座映射，漏写即全程序断链。
  *
  * 发现任何问题时退出码置 1。
  */
-import {
-	readdirSync,
-	readFileSync,
-	statSync,
-} from "node:fs";
-import { join, resolve } from "node:path";
-import ts from "typescript";
-
-const ROOT = resolve(import.meta.dirname, "../..");
+import { readdirSync, readFileSync } from "node:fs";
+import { join } from "node:path";
+import { ROOT, readJsonFile } from "../shared/workspace.ts";
 
 const problems: string[] = [];
 
-/** 读 JSONC（tsconfig 带注释，用 ts API 解析）。 */
+/** 读 JSONC（tsconfig 带注释与尾逗号，用 Bun 内置 JSONC 解析）。 */
 function readJsonc(
 	relativePath: string,
 ): Record<string, unknown> {
-	const result = ts.readConfigFile(
-		join(ROOT, relativePath),
-		(path) => readFileSync(path, "utf8"),
-	);
-	if (result.error) {
+	try {
+		const parsed: unknown = Bun.JSONC.parse(
+			readFileSync(join(ROOT, relativePath), "utf8"),
+		);
+		return parsed as Record<string, unknown>;
+	} catch {
 		problems.push(`${relativePath} 解析失败`);
 		return {};
 	}
-	return result.config as Record<string, unknown>;
 }
 
 // ---------------------------------------------------------- 1. 接线对账
@@ -83,22 +75,48 @@ function collectTsFiles(dir: string): string[] {
 	return out;
 }
 
-/** node 侧声明了 console 增强的插件包名集合。 */
+const AUGMENT_RE =
+	/declare\s+module\s+(['"])@koishi-ce\/console\1/;
+
+/** 是否声明 console 增强；整行注释不参与匹配（注释里的示例会假阳）。 */
+function declaresConsoleAugmentation(
+	text: string,
+): boolean {
+	return text.split("\n").some((line) => {
+		const trimmed = line.trim();
+		if (
+			trimmed.startsWith("//") ||
+			trimmed.startsWith("/*") ||
+			trimmed.startsWith("*")
+		) {
+			return false;
+		}
+		return AUGMENT_RE.test(line);
+	});
+}
+
+/** node 侧声明了 console 增强的插件包名集合（包名取 manifest 真实 name）。 */
 const WIRING_FILE =
 	"packages/web/client/console-services.d.ts";
 
 const augmentedPackages = new Set<string>();
 const webuiRoot = join(ROOT, "plugins/webui");
-for (const name of readdirSync(webuiRoot)) {
-	const dir = join(webuiRoot, name);
-	if (!statSync(dir).isDirectory()) continue;
-	const srcDir = join(dir, "src");
-	const marker = 'declare module "@koishi-ce/console"';
-	const hasAugmentation = collectTsFiles(srcDir).some(
-		(file) => readFileSync(file, "utf8").includes(marker),
+for (const entry of readdirSync(webuiRoot, {
+	withFileTypes: true,
+})) {
+	if (!entry.isDirectory()) continue;
+	const dir = join(webuiRoot, entry.name);
+	const name = readJsonFile(join(dir, "package.json"))?.[
+		"name"
+	];
+	if (typeof name !== "string") continue;
+	const hasAugmentation = collectTsFiles(
+		join(dir, "src"),
+	).some((file) =>
+		declaresConsoleAugmentation(readFileSync(file, "utf8")),
 	);
 	if (hasAugmentation) {
-		augmentedPackages.add(`@koishi-ce/plugin-${name}`);
+		augmentedPackages.add(name);
 	}
 }
 
@@ -108,10 +126,9 @@ for (const line of readFileSync(
 	join(ROOT, WIRING_FILE),
 	"utf8",
 ).split("\n")) {
-	const match =
-		/^import "(@koishi-ce\/plugin-[\w-]+)";$/.exec(
-			line.trim(),
-		);
+	const match = /^import "(@koishi-ce\/[^"]+)";$/.exec(
+		line.trim(),
+	);
 	if (match?.[1]) wiringPackages.add(match[1]);
 }
 

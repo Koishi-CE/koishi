@@ -9,9 +9,9 @@
 // 分支的提交推到 main。
 import { existsSync } from "node:fs";
 import { join, relative } from "node:path";
+import { capture, run } from "../../shared/exec.ts";
 import type { Options } from "../core/options.ts";
 import { ROOT } from "../core/options.ts";
-import { capture, run } from "../core/utils.ts";
 import {
 	countPendingChangesets,
 	discoverPackages,

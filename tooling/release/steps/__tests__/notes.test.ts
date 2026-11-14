@@ -139,6 +139,9 @@ test("骨架：版本表、跨包节去重、按包分节、PR 折叠块与安�
 		"### `@koishi-ce/core`（1.1.5 → 1.1.8）",
 	);
 	expect(notes).toContain("<summary>区间内合并的 PR（1 条");
-	expect(notes).toContain("## 安装");
 	expect(notes).toContain("自 `v1.1.5` 以来 243 个提交");
+	// 骨架只含版本表 / 变更明细 / PR 列表，无模板宣传文案与 HTML 注释
+	expect(notes).not.toContain("## 安装");
+	expect(notes).not.toContain("<!--");
+	expect(notes).not.toContain("monorepo，npm 作用域");
 });

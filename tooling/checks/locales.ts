@@ -17,10 +17,8 @@
  * 如此，维持对齐不强行补齐，详见 docs/guides/development.md）。
  */
 import { readdirSync, readFileSync } from "node:fs";
-import { join, relative, resolve } from "node:path";
-
-/** 仓库根目录（本脚本位于 tooling/checks/ 下）。 */
-const ROOT = resolve(import.meta.dirname, "../..");
+import { join, relative } from "node:path";
+import { ROOT } from "../shared/workspace.ts";
 
 /** 全仓标准的 7 个语种（zh-CN 为基准语种）。 */
 const LOCALES = [
@@ -41,7 +39,7 @@ const LOCALES = [
  *   locales，但词条内容来自用户数据目录，包内无词典文件）。
  *
  * 这些目录仍会做 YAML 可解析性检查：语法错误会让运行时读取失败，
- * 与是否对齐上游无关（2026-10-30 修的四份 message.*.yml 即此问题）。
+ * 与是否对齐上游无关。
  */
 const SKIP_DIRS = new Set([
 	"plugins/webui/market/locales",
@@ -64,6 +62,21 @@ const EXEMPT_DIRS = new Set([
 	"plugins/common/rate-limit/locales",
 	"plugins/infra/sqlite/locales",
 	"plugins/webui/market/client/locales",
+]);
+
+/** 判断文本是否包含汉字（用于非中文语种的假翻译检测）。 */
+const CHINESE_RE = /[\u4e00-\u9fa5]/;
+
+/**
+ * 参与假翻译检测的语种：仅拉丁 / 西里尔书写的语种。
+ * ja-JP 正常译文大量使用汉字、zh-TW 与简体同源，均无法按
+ * 字形区分真伪翻译，故不参与检测。
+ */
+const FAKE_CHECK_LOCALES = new Set([
+	"en-US",
+	"fr-FR",
+	"de-DE",
+	"ru-RU",
 ]);
 
 /** 递归收集仓库内全部名为 locales 的目录（跳过 node_modules / 产物目录）。 */
@@ -92,19 +105,26 @@ function collectLocaleDirs(dir: string): string[] {
 }
 
 /**
- * 递归提取词典对象的全部键路径。
- * - 普通对象的键拼入路径后继续下钻；
- * - 数组以下标拼入路径（保证列表形态词典的同构检查）；
- * - 其余值视为叶子。
+ * 单次递归遍历词典，同时完成两件事：
+ * - 键路径收集：普通对象的键拼入路径、数组以下标拼入路径（保证列表
+ *   形态词典的同构检查）、其余值视为叶子；
+ * - 假翻译检测：chineseHits 非 null 时（仅拉丁 / 西里尔语种开启），
+ *   仍含汉字的字符串叶值的键路径记入其中。
  */
-function extractKeys(
+function walkDictionary(
 	node: unknown,
 	prefix: string,
-	out: Set<string>,
-) {
+	keys: Set<string>,
+	chineseHits: string[] | null,
+): void {
 	if (Array.isArray(node)) {
 		node.forEach((item, index) => {
-			extractKeys(item, `${prefix}.${index}`, out);
+			walkDictionary(
+				item,
+				`${prefix}.${index}`,
+				keys,
+				chineseHits,
+			);
 		});
 		return;
 	}
@@ -112,34 +132,26 @@ function extractKeys(
 		for (const [key, value] of Object.entries(
 			node as Record<string, unknown>,
 		)) {
-			extractKeys(
+			walkDictionary(
 				value,
 				prefix ? `${prefix}.${key}` : key,
-				out,
+				keys,
+				chineseHits,
 			);
 		}
 		return;
 	}
 	// 叶节点：路径本身即键（把末级键名也计入，空对象除外）
-	if (prefix) out.add(prefix);
+	if (prefix) keys.add(prefix);
+	if (
+		chineseHits !== null &&
+		prefix &&
+		typeof node === "string" &&
+		CHINESE_RE.test(node)
+	) {
+		chineseHits.push(prefix);
+	}
 }
-
-/** 判断文本是否包含汉字（用于非中文语种的假翻译检测）。 */
-function containsChinese(text: string): boolean {
-	return /[\u4e00-\u9fa5]/.test(text);
-}
-
-/**
- * 参与假翻译检测的语种：仅拉丁 / 西里尔书写的语种。
- * ja-JP 正常译文大量使用汉字、zh-TW 与简体同源，均无法按
- * 字形区分真伪翻译，故不参与检测。
- */
-const FAKE_CHECK_LOCALES = new Set([
-	"en-US",
-	"fr-FR",
-	"de-DE",
-	"ru-RU",
-]);
 
 /** 收集全部报警，最后统一输出。 */
 const problems: string[] = [];
@@ -201,7 +213,7 @@ for (const dir of dirs) {
 		const base = Bun.YAML.parse(
 			readFileSync(join(dir, "zh-CN.yml"), "utf8"),
 		);
-		extractKeys(base, "", baseKeys);
+		walkDictionary(base, "", baseKeys, null);
 	} catch (error) {
 		problems.push(
 			`${relDir}/zh-CN.yml：YAML 解析失败（${error}）`,
@@ -209,7 +221,7 @@ for (const dir of dirs) {
 		continue;
 	}
 
-	// 逐语种检查键对齐与假翻译
+	// 逐语种检查键对齐与假翻译（单次遍历同时完成）
 	for (const locale of present) {
 		if (locale === "zh-CN") continue;
 		const file = join(dir, `${locale}.yml`);
@@ -225,7 +237,11 @@ for (const dir of dirs) {
 		}
 
 		const keys = new Set<string>();
-		extractKeys(parsed, "", keys);
+		// 拉丁 / 西里尔语种开启假翻译检测，其余传 null 跳过
+		const chineseHits = FAKE_CHECK_LOCALES.has(locale)
+			? []
+			: null;
+		walkDictionary(parsed, "", keys, chineseHits);
 
 		// 键对齐（相对基准报告缺失 / 多余）
 		for (const key of baseKeys) {
@@ -239,29 +255,12 @@ for (const dir of dirs) {
 			}
 		}
 
-		// 假翻译：拉丁 / 西里尔语种的叶值仍含汉字即视为占位
-		if (!FAKE_CHECK_LOCALES.has(locale)) continue;
-		const walk = (node: unknown, path: string) => {
-			if (Array.isArray(node)) {
-				node.forEach((item, index) =>
-					walk(item, `${path}.${index}`),
-				);
-			} else if (node && typeof node === "object") {
-				for (const [key, value] of Object.entries(
-					node as Record<string, unknown>,
-				)) {
-					walk(value, path ? `${path}.${key}` : key);
-				}
-			} else if (
-				typeof node === "string" &&
-				containsChinese(node)
-			) {
-				problems.push(
-					`${relFile}：键 ${path} 疑似假翻译（值仍为中文）`,
-				);
-			}
-		};
-		walk(parsed, "");
+		// 假翻译：叶值仍含汉字即视为占位
+		for (const path of chineseHits ?? []) {
+			problems.push(
+				`${relFile}：键 ${path} 疑似假翻译（值仍为中文）`,
+			);
+		}
 	}
 }
 

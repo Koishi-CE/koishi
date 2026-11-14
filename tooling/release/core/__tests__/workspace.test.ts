@@ -247,8 +247,8 @@ test("协议改写：workspace:* 行为不变（caret 真实版本），与 cata
 });
 
 test("降级判定：完整版本序（major/minor/patch 与 prerelease 字典序）", () => {
-	// 2026-11 改用 Bun.semver.order：prerelease 参与比较（旧数值解析忽略
-	// 预发布段，1.2.3-alpha 不被判成降级），prerelease 字典序按数字段比较
+	// Bun.semver.order 让 prerelease 参与比较（旧数值解析忽略预发布段，
+	// 1.2.3-alpha 不被判成降级），prerelease 字典序按数字段比较
 	const published = new Set(["1.2.3", "1.2.3-beta.11"]);
 	expect(isDowngrade("1.2.2", published)).toBe(true);
 	expect(isDowngrade("1.2.3-alpha", published)).toBe(true);

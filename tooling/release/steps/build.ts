@@ -6,9 +6,9 @@
 // 致发布缺前端，故 targets 由 files 字段自动推导而非手工列举。
 import { existsSync } from "node:fs";
 import { join } from "node:path";
+import { run, runPool } from "../../shared/exec.ts";
 import type { Options } from "../core/options.ts";
 import { ROOT } from "../core/options.ts";
-import { run, runPool } from "../core/utils.ts";
 import type { PkgInfo } from "../core/workspace.ts";
 import { discoverPackages } from "../core/workspace.ts";
 

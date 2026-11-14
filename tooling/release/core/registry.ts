@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 // Copyright (c) 2026-present Koishi-CE contributors.
 
-import { captureNpm, runPool } from "./utils.ts";
+import { captureNpm, runPool } from "../../shared/exec.ts";
 // npm registry / npm CLI 查询层。RELEASE_REGISTRY 环境变量可切换查询源
 // （tarball 发布始终走 npm CLI 当前配置，与本查询源解耦）；registry 直连在
 // 部分网络环境不稳定：15s 超时 + 3 次退避重试，404 视为首发（空集）。

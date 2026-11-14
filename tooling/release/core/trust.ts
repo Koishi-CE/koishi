@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT
 // Copyright (c) 2026-present Koishi-CE contributors.
 
+import { runPool } from "../../shared/exec.ts";
 // npm 可信发布（OIDC）信任配置探测层。信任配置是逐包的（repository +
 // workflow 文件 + environment 三项 claim 与包记录精确相符），且新建配置须
 // 在 2 天内完成首次发布否则失效不可编辑。registry 对「没配 / claim 不符 /
@@ -9,7 +10,6 @@
 // 可用；404＝当前没有可用配置；其余状态是探测本身的问题，不据此拦截发布。
 // 探测只换 token、不发布，换到的 token 用完即弃，绝不落日志。
 import { REGISTRY } from "./registry.ts";
-import { runPool } from "./utils.ts";
 
 const REQUEST_TIMEOUT_MS = 15_000;
 

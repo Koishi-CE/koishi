@@ -2,14 +2,19 @@
 // Copyright (c) 2026-present Koishi-CE contributors.
 
 // workspace 包发现与发布计划纯逻辑（文件系统访问集中在 discover / read*
-// 函数，其余全是纯函数）。包发现以根 package.json 的 workspaces globs 为
-// 唯一事实源（本仓全部是 "base/*" 单层形态，其余模式忽略），排除 private
-// 包。发布序按内部依赖（dependencies / optionalDependencies 命中 workspace
+// 函数，其余全是纯函数）。包发现复用 shared/workspace.ts 的统一实现（根
+// package.json 的 workspaces globs 为唯一事实源），private 包在此排除。
+// 发布序按内部依赖（dependencies / optionalDependencies 命中 workspace
 // 包名者）拓扑排序，被依赖者在前；peerDependencies 刻意不入边——peer 是
 // 消费方运行时自备的兼容声明，且框架⇄插件互 peer（koishi 依赖 server、
-// server peer koishi）纳入排序必成环，正是发布链曾因此整体中断的实证。
-import { readdirSync, readFileSync } from "node:fs";
+// server peer koishi）纳入排序必成环，发布链会因此整体中断。
+import { readdirSync } from "node:fs";
 import { join } from "node:path";
+import type { CatalogSpecs } from "../../shared/workspace.ts";
+import {
+	discoverWorkspaceDirs,
+	readJsonFile,
+} from "../../shared/workspace.ts";
 
 /** 工作区内一个可发布包（非 private、含 name 与 version）。 */
 export interface PkgInfo {
@@ -36,36 +41,9 @@ export interface PublishPlan {
 	skipped: { pkg: PkgInfo; reason: string }[];
 }
 
-/** 读指定目录的 package.json（缺失 / 畸形 → null）。 */
-function readManifest(
-	dir: string,
-): Record<string, unknown> | null {
-	try {
-		return JSON.parse(
-			readFileSync(join(dir, "package.json"), "utf8"),
-		) as Record<string, unknown>;
-	} catch {
-		return null;
-	}
-}
-
-/** 从根清单读 workspaces globs（数组形态与 Bun catalog 对象形态）。 */
-function readWorkspaceGlobs(root: string): string[] {
-	const declared = readManifest(root)?.["workspaces"];
-	const list = Array.isArray(declared)
-		? declared
-		: (declared as { packages?: unknown } | undefined)
-				?.packages;
-	return Array.isArray(list)
-		? list.filter(
-				(item): item is string => typeof item === "string",
-			)
-		: [];
-}
-
 /** 读取单个目录的 package.json；不可发布（无名/无版本/private）→ null。 */
 function loadPkg(dir: string): PkgInfo | null {
-	const manifest = readManifest(dir);
+	const manifest = readJsonFile(join(dir, "package.json"));
 	const name = manifest?.["name"];
 	const version = manifest?.["version"];
 	if (
@@ -102,32 +80,12 @@ function loadPkg(dir: string): PkgInfo | null {
 }
 
 /**
- * 发现工作区全部可发布包（按目录路径排序，顺序稳定）。只展开 "base/*"
- * 单层 glob（其余模式忽略）。注：Bun.Glob 在 win32 下对「1 段固定前缀 +
- * 星号匹配目录再下钻」的 glob 恒返回空集（packages 星号 slash package.json
- * 为 0，而两层固定前缀的写法正常，1.4.2 实测），故此处用 readdirSync。
+ * 发现工作区全部可发布包（按目录路径排序，顺序稳定；private 包排除，
+ * 目录枚举策略见 shared/workspace.ts——readdirSync 策略无 Bun.Glob 的
+ * win32 空集怪癖）。
  */
 export function discoverPackages(root: string): PkgInfo[] {
-	const dirs = new Set<string>();
-	for (const glob of readWorkspaceGlobs(root)) {
-		if (!glob.endsWith("/*")) {
-			continue;
-		}
-		const base = join(root, glob.slice(0, -2));
-		try {
-			for (const entry of readdirSync(base, {
-				withFileTypes: true,
-			})) {
-				if (entry.isDirectory()) {
-					dirs.add(join(base, entry.name));
-				}
-			}
-		} catch {
-			// 目录不存在等：忽略该 glob
-		}
-	}
-	return [...dirs]
-		.sort()
+	return discoverWorkspaceDirs(root)
 		.map(loadPkg)
 		.filter((pkg): pkg is PkgInfo => pkg !== null);
 }
@@ -248,42 +206,6 @@ const DEP_FIELDS = [
 	"peerDependencies",
 ] as const;
 
-/** 根清单 catalog 定义（发布改写的事实源）。 */
-export interface CatalogSpecs {
-	/** 默认目录（spec 值 "catalog:" 引用）。 */
-	default: Map<string, string>;
-	/** 命名目录（spec 值 "catalog:<名>" 引用）。 */
-	named: Map<string, Map<string, string>>;
-}
-
-/** 从根清单读 catalog 定义（缺失或缺项返回空表）。 */
-export function readCatalogSpecs(
-	root: string,
-): CatalogSpecs {
-	const strings = (
-		record: Record<string, unknown> | undefined,
-	) =>
-		new Map(
-			Object.entries(record ?? {}).filter(
-				(entry): entry is [string, string] =>
-					typeof entry[1] === "string",
-			),
-		);
-	const workspaces = (readManifest(root)?.["workspaces"] ??
-		{}) as {
-		catalog?: Record<string, unknown>;
-		catalogs?: Record<string, Record<string, unknown>>;
-	};
-	return {
-		default: strings(workspaces.catalog),
-		named: new Map(
-			Object.entries(workspaces.catalogs ?? {}).map(
-				([name, entries]) => [name, strings(entries)],
-			),
-		),
-	};
-}
-
 /** 单个依赖改写记录。 */
 export interface WorkspaceRewrite {
 	/** 所在字段。 */
@@ -299,8 +221,8 @@ export interface WorkspaceRewrite {
  * changeset version 不改写它们）：`workspace:*` → caret 真实版本（本仓约定
  * 仅此形式），`catalog:` / `catalog:<名>` → 根清单 catalog 定义的 spec（键
  * 缺失即抛错）。返回改写文本与记录；无改写时原样返回。末尾终局断言：依赖
- * 字段不得残留任何本地协议——2026-08-31 绕链发布把 workspace:* 带上 npm、
- * 下游 install 全炸的教训，改写逻辑再完备也要断言兜底。
+ * 字段不得残留任何本地协议——改写逻辑再完备也要断言兜底，这是下游 install
+ * 不被 `workspace:*` 毒害的最后防线。
  */
 export function rewriteWorkspaceProtocol(
 	raw: string,
